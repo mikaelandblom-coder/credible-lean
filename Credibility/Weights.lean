@@ -107,7 +107,8 @@ theorem mulVec_glsWeight {K : Matrix J J ℝ} (hK : K.PosDef) :
 /-- Eq. (24): the minimal portfolio error variance `s² = 1 / K⁻¹ₓₓ`. -/
 theorem glsWeight_value [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
     glsWeight K ⬝ᵥ (K *ᵥ glsWeight K) = (invTotal K)⁻¹ := by
-  sorry
+  rw [mulVec_glsWeight hK]
+  simp only [dotProduct, ← Finset.sum_mul, sum_glsWeight hK, one_mul]
 
 /-- `b = K⁻¹u / uᵀK⁻¹u` (just before (24)) minimises `bᵀKb` subject to `uᵀb = 1`. -/
 theorem glsWeight_optimal {K : Matrix J J ℝ} (hK : K.PosDef) (b : J → ℝ)
