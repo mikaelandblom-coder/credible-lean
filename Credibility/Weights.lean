@@ -114,7 +114,24 @@ theorem glsWeight_value [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
 theorem glsWeight_optimal {K : Matrix J J ℝ} (hK : K.PosDef) (b : J → ℝ)
     (hb : ∑ j, b j = 1) :
     glsWeight K ⬝ᵥ (K *ᵥ glsWeight K) ≤ b ⬝ᵥ (K *ᵥ b) := by
-  sorry
+  have : Nonempty J := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at hb
+  set w := glsWeight K
+  -- `K` is symmetric, so `wᵀ K b = (K w)ᵀ b`.
+  have hsymm : Kᵀ = K := by
+    rw [← conjTranspose_eq_transpose_of_trivial]; exact hK.isHermitian
+  have hbw : b ⬝ᵥ (K *ᵥ w) = (invTotal K)⁻¹ := by
+    rw [mulVec_glsWeight hK]
+    simp only [dotProduct, ← Finset.sum_mul, hb, one_mul]
+  have hwb : w ⬝ᵥ (K *ᵥ b) = (invTotal K)⁻¹ := by
+    rw [dotProduct_mulVec, ← hsymm, vecMul_transpose, hsymm, dotProduct_comm, hbw]
+  have hnn := hK.posSemidef.dotProduct_mulVec_nonneg (b - w)
+  simp only [star_trivial, mulVec_sub, dotProduct_sub, sub_dotProduct] at hnn
+  rw [hbw, hwb, glsWeight_value hK] at hnn
+  rw [glsWeight_value hK]
+  linarith
 
 end GLS
 end Credibility
