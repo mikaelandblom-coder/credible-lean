@@ -46,7 +46,12 @@ noncomputable def bestZ : ℝ :=
 /-- `errVar` is a parabola with its vertex at `bestZ`. -/
 theorem errVar_eq (h : m.gap ≠ 0) (z : ℝ) :
     m.errVar z = m.errVar m.bestZ + m.gap * (z - m.bestZ) ^ 2 := by
-  sorry
+  have hb : m.gap * m.bestZ =
+      m.varPortfolio - m.covEst + m.covCohortTarget - m.covPortfolioTarget := by
+    unfold bestZ; field_simp
+  unfold errVar
+  unfold gap at hb ⊢
+  linear_combination (2 * (z - m.bestZ)) * hb
 
 /-- Eq. (7) is optimal whenever `Var(μ̂ⱼ - μ̂) > 0`. -/
 theorem bestZ_optimal (h : 0 < m.gap) (z : ℝ) : m.errVar m.bestZ ≤ m.errVar z := by
