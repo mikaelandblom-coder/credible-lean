@@ -1,0 +1,54 @@
+Add 
+ - abstract
+ - acknowledgements
+
+a part -> apart
+
+Do I need "Equation (x)" or can I just use "(x)"?
+
+Equation 79 is terrible
+
+Equation 97, something else than numbers in circles (e.g. T_1 .. T_4)
+
+Figure 9-12 are especially small (maybe even the first ones as well)
+ - Remove small points, provides little value
+ - Use gray area, maybe one standard deviation? To see variance (or increase overall width)
+ - Make it clear what is shown
+
+Table 3 
+ - In millions, use two significant figures
+
+j -> cohort, subportfolio, group (of risks)
+ (figure 4 as well)
+
+Single correlation parameter better in practice?
+
+----------------------
+
+P34
+ - Varför just ekvation 127, varför just den?
+ - Varför inte bra att illustrera otransformerat
+ - Vad är det som skapar behovet av log transform? Är det lognormal fördelningen? Isf testa en trunkeringspunkt för att se om det är orsaken
+
+Plotta pseudo_log med x och log x (figur för att förstå transformationen)
+
+"See ref [x] page x"
+
+Add page number in the end of references where needed
+
+Explain star summation notation
+
+Replace italic header with \subsub*
+
+2.2.1 
+Börja med "Classical setting: Buhlmann Straub"
+
+Färtydliga vad risk är
+Simulering: Kan skriva 9 risker över 10 tidssteg
+Okej att repetera betydelsen av risk
+
+Front page
+ - Remove examiner
+ - Replace by supervisor 1 and 2
+
+Förklara bättre att vi siktar på att utvidga Buhlmann Straub
