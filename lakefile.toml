@@ -11,7 +11,7 @@ name = "mathlib"
 scope = "leanprover-community"
 # First session: run `lake update`, then pin this to the resulting commit
 # (see CLAUDE.md). Bump deliberately — each bump invalidates the cache.
-rev = "master"
+rev = "e293c42021c641734f10655c39b8023fa88ff6ee"
 
 [[lean_lib]]
 name = "Credibility"
