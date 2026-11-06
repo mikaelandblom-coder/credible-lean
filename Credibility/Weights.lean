@@ -83,7 +83,7 @@ noncomputable def glsWeight (K : Matrix J J ℝ) (j : J) : ℝ :=
   (K⁻¹ *ᵥ 1) j / invTotal K
 
 theorem invTotal_pos [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) : 0 < invTotal K := by
-  sorry
+  simpa [invTotal] using hK.inv.dotProduct_mulVec_pos (x := (1 : J → ℝ)) one_ne_zero
 
 theorem sum_glsWeight [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
     ∑ j, glsWeight K j = 1 := by
