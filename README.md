@@ -29,14 +29,19 @@ A full blueprint (`leanblueprint`, with a dependency graph) is planned once
 
 | Thesis | File |
 |---|---|
-| §2.1.1 best credibility factor, eq. (7) | `Credibility/Blend.lean` |
-| §2.5 inverse-variance and GLS weights, eqs. (23)–(25) | `Credibility/Weights.lean` |
-| §2.3–2.5 data model, `K`, eqs. (21), (22), (26) | `Credibility/Model.lean` |
-| §2.6 Bühlmann–Straub special case, §2.9 balance | `Credibility/BuhlmannStraub.lean` |
-| §2.7 two cohorts, eq. (32) | `Credibility/TwoCohorts.lean` |
+| §2.1.1 best credibility factor, eq. (10) | `Credibility/Blend.lean` |
+| §2.5 inverse-variance and GLS weights, eqs. (51), (58)–(61) | `Credibility/Weights.lean` |
+| §2.3–2.5 data model, `K`, eqs. (26), (37), (44), (62) | `Credibility/Model.lean` |
+| §2.6 Bühlmann–Straub special case, eq. (73); §2.9 balance | `Credibility/BuhlmannStraub.lean` |
+| §2.7 two cohorts, eq. (81) | `Credibility/TwoCohorts.lean` |
 
 Second moments are taken as given numbers. A probabilistic layer showing that
 they are actual covariances of random variables is a later goal.
+
+## Thesis source
+
+The original LaTeX is in [`thesis/original/`](thesis/); all equation numbers
+here refer to it.
 
 ## Building
 

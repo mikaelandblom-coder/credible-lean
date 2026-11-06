@@ -1,7 +1,7 @@
 import Mathlib
 
 /-!
-# The best credibility factor (thesis §2.1.1, eqs. (6)–(7))
+# The best credibility factor (thesis §2.1.1, eqs. (7)–(10))
 
 All second moments are taken as given real numbers here. A later
 probabilistic layer can show they are the actual variances and covariances
@@ -30,7 +30,7 @@ namespace BlendMoments
 
 variable (m : BlendMoments)
 
-/-- `Var(z μ̂ⱼ + (1 - z) μ̂ - μⱼ)`, eq. (6). -/
+/-- `Var(z μ̂ⱼ + (1 - z) μ̂ - μⱼ)`, eq. (7). -/
 def errVar (z : ℝ) : ℝ :=
   z ^ 2 * m.varCohort + (1 - z) ^ 2 * m.varPortfolio + m.varTarget
     + 2 * z * (1 - z) * m.covEst - 2 * z * m.covCohortTarget
@@ -39,7 +39,7 @@ def errVar (z : ℝ) : ℝ :=
 /-- `Var(μ̂ⱼ - μ̂)`, the curvature of `errVar`. -/
 def gap : ℝ := m.varPortfolio - 2 * m.covEst + m.varCohort
 
-/-- The general credibility factor, eq. (7). -/
+/-- The general credibility factor, eq. (10). -/
 noncomputable def bestZ : ℝ :=
   (m.varPortfolio - m.covEst + m.covCohortTarget - m.covPortfolioTarget) / m.gap
 
@@ -53,7 +53,7 @@ theorem errVar_eq (h : m.gap ≠ 0) (z : ℝ) :
   unfold gap at hb ⊢
   linear_combination (2 * (z - m.bestZ)) * hb
 
-/-- Eq. (7) is optimal whenever `Var(μ̂ⱼ - μ̂) > 0`. -/
+/-- Eq. (10) is optimal whenever `Var(μ̂ⱼ - μ̂) > 0`. -/
 theorem bestZ_optimal (h : 0 < m.gap) (z : ℝ) : m.errVar m.bestZ ≤ m.errVar z := by
   rw [m.errVar_eq h.ne' z]
   have := mul_nonneg h.le (sq_nonneg (z - m.bestZ))
