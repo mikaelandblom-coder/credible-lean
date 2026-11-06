@@ -55,7 +55,9 @@ theorem errVar_eq (h : m.gap ≠ 0) (z : ℝ) :
 
 /-- Eq. (7) is optimal whenever `Var(μ̂ⱼ - μ̂) > 0`. -/
 theorem bestZ_optimal (h : 0 < m.gap) (z : ℝ) : m.errVar m.bestZ ≤ m.errVar z := by
-  sorry
+  rw [m.errVar_eq h.ne' z]
+  have := mul_nonneg h.le (sq_nonneg (z - m.bestZ))
+  linarith
 
 /-- …and it is the unique optimum. -/
 theorem bestZ_unique (h : 0 < m.gap) {z : ℝ} (hz : m.errVar z ≤ m.errVar m.bestZ) :
