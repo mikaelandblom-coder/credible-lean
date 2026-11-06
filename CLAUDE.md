@@ -6,11 +6,11 @@ extending it. The owner wrote the thesis and steers from a phone; you grind
 tactics.
 
 ## Layout (thesis section → file)
-- §2.1.1 best credibility factor, eq. (10) → `Credibility/Blend.lean`
-- §2.5 inverse-variance and GLS weights, eqs. (51), (58)–(61) → `Credibility/Weights.lean`
-- §2.3–2.5 data model, `K`, eqs. (26), (37), (44), (62) → `Credibility/Model.lean`
-- §2.6 Bühlmann–Straub special case, eq. (73); §2.9 balance → `Credibility/BuhlmannStraub.lean`
-- §2.7 two cohorts, eq. (81) → `Credibility/TwoCohorts.lean`
+- §2.1.1 best credibility factor, eq. (7) → `Credibility/Blend.lean`
+- §2.5 inverse-variance and GLS weights, eqs. (23)–(25) → `Credibility/Weights.lean`
+- §2.3–2.5 data model, `K`, eqs. (16), (21), (22), (26) → `Credibility/Model.lean`
+- §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
+- §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 
 Second moments are taken as given numbers; a probabilistic layer proving
 they are actual covariances of random variables is a later goal.

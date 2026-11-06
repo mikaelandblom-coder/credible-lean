@@ -3,7 +3,7 @@ import Credibility.Weights
 
 /-!
 # The correlated data model and the proposed credibility factor
-(thesis §2.3–2.5, eqs. (23)–(63))
+(thesis §2.3–2.5, eqs. (15)–(27))
 
 `μⱼ = μ + τ εⱼ`, `μⱼₜ = μⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
 -/
@@ -29,22 +29,22 @@ namespace Model
 variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
 variable (M : Model J T)
 
-/-- `cov(μᵢₜ, μⱼₛ)` (the thesis's `Kᵢⱼᵗˢ`), eq. (26). -/
+/-- `cov(μᵢₜ, μⱼₛ)` (the thesis's `K̄ᵢⱼᵗˢ`), eq. (16). -/
 def obsCov (i j : J) (t s : T) : ℝ :=
   M.σ i t * M.σ j s * M.ρ i j * (if t = s then 1 else 0)
     + M.τ2 * (if i = j then 1 else 0)
 
-/-- Cohort weights `aⱼₜ`, eq. (51). -/
+/-- Cohort weights `aⱼₜ`, eq. (23). -/
 noncomputable def a (j : J) (t : T) : ℝ := invVarWeight (fun s => M.σ j s ^ 2) t
 
-/-- `σ²ᵢⱼ = Σₜ aᵢₜ aⱼₜ σᵢₜ σⱼₜ`, eq. (32). -/
+/-- `σ²ᵢⱼ = Σₜ aᵢₜ aⱼₜ σᵢₜ σⱼₜ`, eq. (18). -/
 noncomputable def σ2 (i j : J) : ℝ := ∑ t, M.a i t * M.a j t * M.σ i t * M.σ j t
 
-/-- `Kᵢⱼ = cov(μ̂ᵢ, μ̂ⱼ) = Σₜₛ aᵢₜ aⱼₛ Kᵢⱼᵗˢ`, eq. (37) (the thesis writes `K̄`). -/
+/-- `Kᵢⱼ = cov(μ̂ᵢ, μ̂ⱼ) = Σₜₛ aᵢₜ aⱼₛ K̄ᵢⱼᵗˢ`, eq. (21). -/
 noncomputable def K : Matrix J J ℝ :=
   fun i j => ∑ t, ∑ s, M.a i t * M.a j s * M.obsCov i j t s
 
-/-- `K̄ᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (63). -/
+/-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27). -/
 theorem K_apply [Nonempty T] (i j : J) :
     M.K i j = M.σ2 i j * M.ρ i j + M.τ2 * (if i = j then 1 else 0) := by
   sorry
@@ -72,19 +72,19 @@ noncomputable def moments (j : J) : BlendMoments where
   covCohortTarget := M.τ2
   covPortfolioTarget := M.b j * M.τ2
 
-/-- Eq. (44): the credibility factor for any linear model (28). -/
+/-- Eq. (22): the credibility factor for any linear model (17). -/
 theorem bestZ_linear (j : J) :
     (M.moments j).bestZ
       = (M.s2 - (M.K *ᵥ M.b) j + M.τ2 - M.b j * M.τ2)
         / (M.s2 - 2 * (M.K *ᵥ M.b) j + M.τ2 + M.σ2 j j) := by
   sorry
 
-/-- Eqs. (62)/(63): the proposed credibility factor at the optimal weights. -/
+/-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
   sorry
 
-/-- Eq. (62), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
+/-- Eq. (26), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
 theorem gap_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 := by
   sorry

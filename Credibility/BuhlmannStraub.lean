@@ -1,7 +1,7 @@
 import Credibility.Model
 
 /-!
-# The Bühlmann–Straub special case (thesis §2.6, eqs. (64)–(73), and §2.9, eqs. (115)–(120))
+# The Bühlmann–Straub special case (thesis §2.6, eqs. (28)–(30), and §2.9)
 
 `σⱼₜ² = σ²/wⱼₜ` and `ρᵢⱼ = δᵢⱼ`.
 -/
@@ -12,7 +12,7 @@ namespace Credibility
 
 variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
 
-/-- The model under the Bühlmann–Straub assumptions (64). -/
+/-- The model under the Bühlmann–Straub assumptions (28). -/
 noncomputable def bsModel (τ2 σsq : ℝ) (w : J → T → ℝ)
     (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : ∀ j t, 0 < w j t) : Model J T where
   τ2 := τ2
@@ -29,12 +29,12 @@ noncomputable def bsModel (τ2 σsq : ℝ) (w : J → T → ℝ)
 
 variable (τ2 σsq : ℝ) (w : J → T → ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : ∀ j t, 0 < w j t)
 
-/-- Eq. (65): inverse-variance weights become volume weights. -/
+/-- Eq. (29): inverse-variance weights become volume weights. -/
 theorem bs_a (j : J) (t : T) :
     (bsModel τ2 σsq w hτ hσ hw).a j t = w j t / ∑ s, w j s := by
   sorry
 
-/-- Eq. (66). -/
+/-- Eq. (30). -/
 theorem bs_σ2 [Nonempty T] (j : J) :
     (bsModel τ2 σsq w hτ hσ hw).σ2 j j = σsq / ∑ t, w j t := by
   sorry
@@ -53,7 +53,7 @@ theorem bs_b [Nonempty T] (j : J) :
   sorry
 
 /-- The proposed model reduces to Bühlmann–Straub (§2.6).
-Note: with a single cohort, `bⱼ = 1` and eq. (62) is `0/0`; the thesis
+Note: with a single cohort, `bⱼ = 1` and eq. (26) is `0/0`; the thesis
 derivation silently needs at least two cohorts. -/
 theorem bs_z [Nonempty T] (hJ : 1 < Fintype.card J) (j : J) :
     ((bsModel τ2 σsq w hτ hσ hw).moments j).bestZ = bsZ τ2 σsq w j := by

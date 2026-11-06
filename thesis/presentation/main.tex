@@ -1,0 +1,575 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{mystyle,upgreek,dsfont,xparse,mathtools} % See mystyle.sty for packages and own commands
+
+\NewDocumentCommand{\grad}{e{_^}}{%
+  \mathop{}\!% \mathop for good spacing before \nabla
+  \nabla
+  \IfValueT{#1}{_{\!#1}}% tuck in the subscript
+  \IfValueT{#2}{^{#2}}% possible superscript
+}
+
+%------------------------------------------------------------
+%Title page
+\title[Degree project in insurance mathematics]{Generalized Bühlmann-Straub credibility\\ theory for correlated data}
+%\subtitle{Degree project in insurance mathematics}
+\titlegraphic{\includegraphics[height=2.0cm]{Logos/widelogo.png}}
+\author[Mikael Andblom]{
+	Mikael Andblom}
+\institute[]{Department of Mathematics \\Stockholm University}
+\date{\today}
+
+%---------------------TITLE PAGE---------------------------------------
+\begin{document}
+\begin{frame}
+\maketitle
+\end{frame}
+%------------------------------------------------------------
+
+\logo{\includegraphics[height=1cm]{Logos/circlelogo.png}~%
+}
+
+%-------------------------------------------------------------------
+
+\begin{frame}
+\frametitle{Agenda}
+\tableofcontents
+\end{frame}
+
+%-------------------------------------------------------------------
+
+\section{Travel insurance pricing}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{Travel insurance pricing}
+
+\begin{itemize}
+    \item The cards are different due to coverages and customer segments
+    \item Incurred loss cost per cardholder $\mu_{jt}$ for payment card $j$ during underwriting year $t$
+    \item Due to travel demand $\mu_{it}$ and $\mu_{jt}$ may be correlated
+    \item Need to estimate $\mu_j$, but can't a priori tell the cards apart
+    \item Not enough data for GLM
+    \item Need individual pricing to avoid adverse selection and problems due to changes in the mix
+\end{itemize}
+
+% Some cards are larger than others, so for the smaller cards we might want to use data from other cards
+% Some tariff cells contain too little data for GLM
+% Enough data to confidently price $\mu$
+% No correlation across time
+
+\end{frame}
+
+%---------------------SLIDE---------------------------------------
+
+\begin{frame}{Travel insurance pricing (cont.)}
+
+\begin{itemize}
+    \item A relevant but volatile estimator $\hat\mu_j$ is based on data from the particular card
+    \item A less volatile but also less relevant estimator $\hat\mu$ is based on all observations
+    \item How can the two estimators be blended optimally?
+    \item Alternatively: how much trust or credibility $z_j$ should be put into the individual versus portfolio estimators?
+    \item Intuition: credibility should be determined by the number of cardholders and the portfolio homogeneity
+    \item Card by card basis
+\end{itemize}
+    
+\end{frame}
+
+\section{General setting}
+
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{General description - The key ratio}
+
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{Observed key ratio}
+   $\mu_{jt} = x_{jt}/w_{jt}$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+ 
+\begin{itemize}
+    \item $\mu_{jt} \colon$ loss ratio, risk premium rate, claim severity, etc
+    \item $x_{jt} \colon$ incurred loss cost, expected loss cost, etc
+    \item $w_{jt} \colon$ earned premium, risk volume, claim count, etc
+    \item The variance of $\mu_{jt}$ should be a decreasing function of $w_{jt}$
+    \item The key ratio $\mu_{jt}$ is an observation of the true key ratio $\mu_j$
+\end{itemize}
+
+\end{frame}
+
+% Cohort and term
+
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{General description - The data model} 
+
+
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{The true key ratio}
+   $\mu_j = \mu + \tau\upvarepsilon_j$
+    \end{block}
+   \begin{block}{The observed key ratio}
+   $\mu_{jt} = \mu_j + \sigma_{jt}\upvarepsilon_{jt}$
+    \end{block}
+    \begin{block}{The only non-zero covariance}
+        $\text{cov}(\upvarepsilon_{jt},\, \upvarepsilon_{it}) = \rho_{ij}$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item Two-urn model: $\mu_j$ realized before $\mu_{jt}$
+\end{itemize}
+
+\end{frame}
+
+% Correlation introduced between ejt and eit
+% 
+
+\section{Credibility theory}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{Credibility theory - The homogeneous model}
+
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{Individual estimator}
+   $\hat\mu_j = \sum_t a_{jt}\mu_{jt}, \quad a_{j\ast}=1$
+    \end{block}
+    \begin{block}{Portfolio estimator}
+   $\hat\mu = \sum_j b_j\hat\mu_j, \quad b_{\ast} = 1$
+    \end{block}
+    \begin{block}{Credibility blended estimator}
+   $\hat\mu_j^b = z_j \hat\mu_j + (1-z_j)\hat\mu$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item All estimators are unbiased by construction
+\end{itemize}
+    
+\end{frame}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{Credibility theory - Optimality conditions}
+
+\begin{columns}
+    \column{0.55\textwidth}
+    \begin{block}{Observation weights}
+   %$\grad_{\bm a_j} \, \mathds{E}[(\hat\mu_j - \mu_j)^2] = \bm 0 \quad \forall\, j$
+   $\underset{\bm a_j}{\text{argmin}} \quad \mathds{E}[(\hat\mu_j - \mu_j)^2]  \quad \text{s.t.} \quad a_{j\ast}=1$
+    \end{block}
+        \begin{block}{Estimator weights}
+   %$\grad_{\bm b} \,  \mathds{E}[(\hat\mu - \mu)^2] = \bm 0$
+   $\underset{\bm b}{\text{argmin}} \quad \mathds{E}[(\hat\mu - \mu)^2]  \,\,\,\,\quad \text{s.t.} \quad b_\ast=1$
+    \end{block}
+        \begin{block}{Credibility factor}
+   %$\frac{\partial}{\partial z_j} \, \mathds{E}[(\hat\mu_j^b - \mu_j)^2] = 0 \quad \forall\, j$
+   $\underset{z_j}{\text{argmin}} \quad \mathds{E}[(\hat\mu_j^b - \mu_j)^2]$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item The equations are not coupled
+\end{itemize}
+    
+\end{frame}
+
+
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{The Bühlmann-Straub model - Assumptions} 
+
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{Variance assumption}
+   $\sigma_{jt}^2 = \sigma^2/w_{jt}$
+    \end{block}
+    \begin{block}{Correlation assumption}
+    $\rho_{ij}=0$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item $\sigma^2$ is called the within-in-group variance
+    \item $\tau^2$ is called the out-of-group variance
+\end{itemize}
+
+\end{frame}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{The Bühlmann-Straub model} 
+
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{Credibility coefficient}
+    $\kappa_j \coloneqq \sigma^2/(w_{j\ast}\tau^2)>0$
+    \end{block}
+    \begin{block}{Credibility factor}
+    $z_j =  1/(1+\kappa_j) \in (0,\, 1)$
+    \end{block}
+    \begin{block}{Observation weights}
+   $a_{jt}=w_{jt}/w_{j\ast}$
+    \end{block}
+    \begin{block}{Estimator weights}
+   $b_j=z_j/z_\ast$
+    \end{block}
+\end{columns}
+\end{frame}
+
+\section{Thesis problem}
+
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{Problem formulation}
+How should the Bühlmann-Straub model be adjusted to include correlated observations and a more general variance structure?
+
+\pause
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item The estimator $\hat\mu_j$ should be independent of the correlation
+    \item The optimality conditions for $\hat\mu$ and $\hat\mu_j^b$ will contain non-zero covariance terms
+    \item On one hand: negative correlation should cancel observational noise in the portfolio estimator
+    \item On the other hand: changing the correlation will change the relative importance of the cohort in the portfolio estimator
+\end{itemize}
+
+    
+\end{frame}
+
+\section{Proposed model}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{The proposed model - Help variables}
+
+\begin{columns}
+    \column{0.6\textwidth}
+    \begin{block}{Variance matrix}
+    $\sigma_{ij}^2 \coloneqq \sum_t a_{it}a_{jt}\sigma_{it}\sigma_{jt}$
+    \end{block}
+    \begin{block}{Covariance matrix}
+    $\text{cov}(\hat\mu_i,\, \hat\mu_j) \coloneqq K_{ij} = \sigma_{ij}^2\rho_{ij} + \tau^2\delta_{ij}$
+    \end{block}
+    \begin{block}{Minimized portfolio estimator variance}
+    $\text{Var}(\hat\mu)\coloneqq s^2=1/K^{-1}_{\ast\ast}$
+    \end{block}
+\end{columns}
+
+\end{frame}
+
+%---------------------SLIDE---------------------------------------
+\begin{frame}{The proposed model - Results}
+
+\begin{columns}
+    \column{0.45\textwidth}
+    \begin{block}{Individual estimator}
+    $a_{jt} = \sigma_{jt}^{-2}/\sum_s \sigma_{js}^{-2}$
+    \end{block}
+    \begin{block}{Portfolio estimator}
+        $b_j = K^{-1}_{j\ast}/K^{-1}_{\ast\ast}$
+    \end{block}
+    \begin{block}{Credibility factor}
+        $z_j = (1-b_j)/(1 + (\sigma_{jj}^2 - s^2)/\tau^2)$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item The dependency on $\tau$, $\sigma_{jj}$, $b_j$ and $s$ seem to make sense
+    \item Correlation will impact both $b_j$ and $s$
+    \item Contains the Bühlmann-Straub model as a special case
+\end{itemize}
+
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+\begin{frame}{The proposed model - Results (cont.)}
+\begin{columns}
+    \column{0.6\textwidth}
+        \begin{block}{Credibility factor}
+        $z_j = (1-b_j)/(1 + (\sigma_{jj}^2 - s^2)/\tau^2) = \frac{\text{cov}(\hat\mu_j - \hat\mu,\, \mu_j)}{\text{Var}(\hat\mu_j - \hat\mu)}$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item The credibility factor is unbounded due to the singularity
+    \item The credibility factor may even be negative
+\end{itemize}
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+\begin{frame}{The balance property}
+
+\begin{columns}
+    \column{0.6\textwidth}
+        \begin{block}{The balance property}
+        $\sum_{jt} w_{jt}\hat\mu_j^b = \sum_{jt} w_{jt}\mu_{jt} = x_{\ast\ast}$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item Always satisfied by the Bühlmann-Straub model, but not for the proposed model
+\end{itemize}
+    
+\end{frame}
+
+\section{Two dimensional example}
+
+%---------------------SLIDE--------------------------------------
+\begin{frame}{Two cohorts with constant weights}
+\begin{columns}
+    \column{0.4\textwidth}
+    \begin{block}{Constant weights}
+    $w_{jt}=w_j$
+    \end{block}
+    \begin{block}{Variance assumption}
+    $\sigma_{jt}^2 = \sigma^2/w_{jt}$
+    \end{block}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item Two cohorts mean $j\in \{1,\, 2\}$
+    \item Only a single correlation coefficient $\rho$
+\end{itemize}
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\begin{frame}{Two cohorts with constant weights - Proposed model}
+
+The observation weights are given by $a_{jt}=\frac{1}{T}$
+
+\vspace{0.5cm}
+
+The credibility coefficient is given by $\kappa_j = \frac{\sigma^2}{w_{j\ast}\tau^2} = \frac{\sigma^2}{Tw_j\tau^2}$
+
+\vspace{0.5cm}
+
+For the first cohort we get
+
+\vspace{0.25cm}
+
+$z_1 = \frac{1}{1+\kappa_1 -\sqrt{\kappa_1\kappa_2}\rho}$ and $b_1 =  \frac{z_1}{z_1+z_2}$
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+\begin{frame}{A numerical example}
+Consider the previous two dimensional case with $\kappa_1=1$ and $\kappa_2 = 16$
+
+\vspace{0.5cm}
+
+Then there is a singularity at $\rho=1/2$
+
+\vspace{0.5cm}
+
+How does the proposed model compare to the Bühlmann-Straub model as a function of $\rho$?
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\begin{frame}{A numerical example - Error in $\hat\mu$}
+
+\includegraphics[width=0.9\textwidth]{Figures/2d_s.pdf}    
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\begin{frame}{A numerical example - $z_j$}
+
+\includegraphics[width=0.9\textwidth]{Figures/2d_cred.pdf}    
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\begin{frame}{A numerical example - Error in $\hat\mu_j^b$}
+
+\includegraphics[width=0.9\textwidth]{Figures/2d_muj.pdf}    
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\section{Conclusions}
+
+\begin{frame}{Conclusions}
+
+\begin{itemize}
+    \item The proposed model successfully extends the classical Bühlmann-Straub model
+    \item The cost is the extra model parameters, singularities, and losing the balance property
+    \item Further research is needed to better understand the practical implications
+\end{itemize}
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+
+\begin{frame}{Bonus slides - Simulation study}
+
+\begin{table}[H]
+\centering
+\caption{Parameter choice for simulation study}
+\label{tab:parameters}
+\begin{tabular}{ccc}
+\hline
+Variable     & Sampled from, if random  & Value, if fixed \\ \hline
+$\mu$ && 1 \\
+$\tau$ && 0.6 \\
+$J$ && 9 \\
+$T$ && 10 \\
+$N$ && $10^5$ \\
+$\mu_j$ & $\Gamma (\mu^2/\tau^2,\, \mu/\tau^2)$ &\\
+$\sigma_j^2$ &  $\text{Lognormal}(16,\, \sqrt{2})$ &\\
+$w_j$ & $\mathcal{N}(3\cdot 10^7,\, 3\cdot 10^5)$ &\\
+$w_{jt}$ & $\mathcal{N}(w_j,\, w_j/10)$& \\
+\hline
+\end{tabular}
+\end{table}
+    
+\end{frame}
+
+%---------------------SLIDE--------------------------------------
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.74\textwidth]{Figures/err_dist_mu.pdf}}
+  \caption{The distribution of relative error in the estimator $\hat\mu$}
+  \label{fig:err_dist_mu}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.74\textwidth]{Figures/err_dist_muj.pdf}}
+  \caption{The distribution of relative error in the estimator $\hat\mu_j^b$}
+  \label{fig:err_dist_muj}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.74\textwidth]{Figures/err_dist_tau.pdf}}
+  \caption{The distribution of relative error in the estimator $\hat\tau^2$}
+  \label{fig:err_dist_tau}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.74\textwidth]{Figures/err_dist_bp.pdf}}
+    \caption{The distribution of relative error in the balance property}
+  \label{fig:err_dist_bp}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.7\textwidth]{Figures/err_trend_mu.pdf}}
+  \caption{The $\rho$-dependency of the relative error in the estimator $\hat\mu$}
+  \label{fig:err_trend_mu}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.7\textwidth]{Figures/err_trend_muj.pdf}}
+ \caption{The $\rho$-dependency of the relative error in the estimator $\hat\mu_j$ }
+  \label{fig:err_trend_muj}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.7\textwidth]{Figures/err_trend_tau.pdf}}
+ \caption{The $\rho$-dependency of the relative error in the estimator $\hat\tau^2$ }
+  \label{fig:err_trend_tau}
+\end{figure}
+\end{frame}
+\begin{frame}{Bonus slides - Simulation study}
+\begin{figure}[H]
+ \center
+ \makebox[\textwidth][c]{\includegraphics[width=.7\textwidth]{Figures/err_trend_bp.pdf}}
+  \caption{The $\rho$-dependency of the relative error in the balance property}
+  \label{fig:err_trend_bp}
+\end{figure}
+\end{frame}
+
+
+
+
+
+
+%---------------------SLIDE--------------------------------------
+%\begin{frame}{A Theorem}
+%\begin{theorem}[Freshman's Dream] 
+% $(a+b)^p \equiv a^p + b^p \, (mod \,p)$ if p is a prime number.
+%\end{theorem} \pause
+%\begin{proof}
+%A valid proof.
+%\end{proof}
+%\begin{example}
+%Maybe an example?
+%\end{example}
+%\end{frame}
+%
+%-----------------------------SLIDE --------------------------------------
+
+%Below must be compiled using LuLaTex (for emoji package):
+
+% \begin{frame}{Summary}
+
+% \begin{itemize}
+%     \item[\emoji{check-mark-button}] Concept A
+%      \item[\emoji{check-mark-button}] Concept B
+%      \item[\emoji{check-mark-button}] Concept C
+% \end{itemize}
+% \end{frame}
+%
+%
+%%-----------------------------SLIDE --------------------------------------
+%\begin{frame}{The end.}
+%\begin{columns}
+%\column{0.4\textwidth}
+%This is a column.
+%
+%\column{0.4\textwidth}
+%\includegraphics[width=0.9\textwidth]{Figures/meme.png}    
+%\end{columns}    
+ %   
+ %   
+%\end{frame}
+%
+%%---------------------------------------------------------
+%\section{References}
+%\begin{frame}[allowframebreaks]\frametitle{References}
+%        \bibliographystyle{apalike}
+%        \bibliography{bib}
+%\end{frame}
+
+
+\end{document}
+
+% \alert{Bye}. 
