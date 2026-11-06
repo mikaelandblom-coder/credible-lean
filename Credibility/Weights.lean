@@ -44,7 +44,30 @@ theorem invVarWeight_value [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σs
 theorem invVarWeight_optimal (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t)
     (a : T → ℝ) (ha : ∑ t, a t = 1) :
     ∑ t, invVarWeight σsq t ^ 2 * σsq t ≤ ∑ t, a t ^ 2 * σsq t := by
-  sorry
+  have : Nonempty T := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at ha
+  set S := ∑ s, (σsq s)⁻¹
+  have hcross : ∑ t, a t * invVarWeight σsq t * σsq t = S⁻¹ := by
+    have hS := (sum_inv_pos σsq hσ).ne'
+    have : ∀ t, a t * invVarWeight σsq t * σsq t = a t / S := by
+      intro t
+      have := (hσ t).ne'
+      simp only [invVarWeight, S]
+      field_simp
+    simp only [this, ← Finset.sum_div, ha, one_div]
+  -- Σ (aₜ - wₜ)² σₜ² ≥ 0, and the cross term equals the optimum.
+  have hnn : 0 ≤ ∑ t, (a t - invVarWeight σsq t) ^ 2 * σsq t :=
+    Finset.sum_nonneg fun t _ => mul_nonneg (sq_nonneg _) (hσ t).le
+  have hexp : ∑ t, (a t - invVarWeight σsq t) ^ 2 * σsq t
+      = ∑ t, a t ^ 2 * σsq t - 2 * ∑ t, a t * invVarWeight σsq t * σsq t
+        + ∑ t, invVarWeight σsq t ^ 2 * σsq t := by
+    rw [Finset.mul_sum, ← Finset.sum_sub_distrib, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun t _ => by ring
+  rw [hexp, hcross, invVarWeight_value σsq hσ] at hnn
+  rw [invVarWeight_value σsq hσ]
+  linarith
 
 end InverseVariance
 
