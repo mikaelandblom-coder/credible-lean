@@ -92,11 +92,17 @@ theorem sum_glsWeight [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
   rw [invTotal, one_dotProduct] at h ⊢
   exact div_self h
 
+lemma glsWeight_eq_smul (K : Matrix J J ℝ) :
+    glsWeight K = (invTotal K)⁻¹ • (K⁻¹ *ᵥ 1) := by
+  ext j; simp [glsWeight, div_eq_inv_mul]
+
 /-- `v = K b = s² u`: every cohort estimate has the same covariance with the
 portfolio estimate, namely `Var(μ̂)`. -/
 theorem mulVec_glsWeight {K : Matrix J J ℝ} (hK : K.PosDef) :
     K *ᵥ glsWeight K = fun _ => (invTotal K)⁻¹ := by
-  sorry
+  have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
+  rw [glsWeight_eq_smul, mulVec_smul, mulVec_mulVec, mul_nonsing_inv K hdet, one_mulVec]
+  ext j; simp
 
 /-- Eq. (24): the minimal portfolio error variance `s² = 1 / K⁻¹ₓₓ`. -/
 theorem glsWeight_value [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
