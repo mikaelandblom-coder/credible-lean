@@ -25,7 +25,8 @@ they are actual covariances of random variables is a later goal.
 - Work on one `sorry` at a time and run `lake build` after each step.
 - Prefer existing Mathlib lemmas; search with `exact?`, `apply?`, or grep in
   `.lake/packages/mathlib`.
-- Commit each closed `sorry` separately with a short message.
+- Commit each closed `sorry` separately with a short message, and run
+  `python3 scripts/progress.py` first so `PROGRESS.md` stays current.
 - Replies are read on a phone: keep them short and give the math idea in
   words before any Lean.
 
@@ -41,6 +42,11 @@ they are actual covariances of random variables is a later goal.
   Mathlib, a fix to an upstream library), propose contributing it back
   upstream via a PR to the public repo. Tell the owner what it is and
   where it would go, and open the PR once they agree.
+
+## Blueprint (planned)
+Once `Weights` and `TwoCohorts` are proved, propose a full `leanblueprint`
+(`blueprint/` LaTeX with `\lean{}`/`\uses{}`, dependency graph, CI to
+GitHub Pages), seeded from `PROGRESS.md`, with `FINDINGS.md` as remarks.
 
 ## First session only (done 2026-11-06: Lean v4.36.0-rc2, Mathlib e293c420)
 1. If `.lake/packages/mathlib` is missing, run `bash scripts/fetch_mathlib.sh`.
