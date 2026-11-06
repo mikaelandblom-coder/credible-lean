@@ -29,7 +29,16 @@ they are actual covariances of random variables is a later goal.
 - Replies are read on a phone: keep them short and give the math idea in
   words before any Lean.
 
-## First session only
+## Workflow
+- One chat per file or batch of `sorry`s; the environment's setup script
+  reinstalls Lean and the Mathlib cache in each new session.
+- Push finished work to `main` (fast-forward; never force-push `main`).
+- If something real and general comes out of this (a lemma missing from
+  Mathlib, a fix to an upstream library), propose contributing it back
+  upstream via a PR to the public repo. Tell the owner what it is and
+  where it would go, and open the PR once they agree.
+
+## First session only (done 2026-11-06: Lean v4.36.0-rc2, Mathlib e293c420)
 1. If `.lake/packages/mathlib` is missing, run `bash scripts/fetch_mathlib.sh`.
 2. Run `lake update`, copy `.lake/packages/mathlib/lean-toolchain` to
    `./lean-toolchain`, pin `rev` in `lakefile.toml` to the Mathlib commit in
