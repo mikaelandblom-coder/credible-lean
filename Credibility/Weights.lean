@@ -87,7 +87,10 @@ theorem invTotal_pos [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) : 0 < inv
 
 theorem sum_glsWeight [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) :
     ∑ j, glsWeight K j = 1 := by
-  sorry
+  simp only [glsWeight, ← Finset.sum_div]
+  have h := (invTotal_pos hK).ne'
+  rw [invTotal, one_dotProduct] at h ⊢
+  exact div_self h
 
 /-- `v = K b = s² u`: every cohort estimate has the same covariance with the
 portfolio estimate, namely `Var(μ̂)`. -/
