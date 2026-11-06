@@ -51,7 +51,10 @@ Its text is a condensed §2 of `thesis/original/main.tex`; the owner wants it
 to become the up-to-date, shorter version of the thesis.
 
 The thesis source is in `thesis/original/` (never edit it). Equation numbers
-in docstrings must match it.
+in docstrings must match it. Collecting the original files is done
+(2026-11-06): `main.tex` is the final version, identical to the published PDF
+(link in `thesis/README.md`). The R code and the defence slides are there too.
+No need to look for other versions.
 
 ## First session only (done 2026-11-06: Lean v4.36.0-rc2, Mathlib e293c420)
 1. If `.lake/packages/mathlib` is missing, run `bash scripts/fetch_mathlib.sh`.
