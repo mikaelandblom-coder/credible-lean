@@ -1,0 +1,17 @@
+name = "credibility"
+version = "0.1.0"
+defaultTargets = ["Credibility"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+# First session: run `lake update`, then pin this to the resulting commit
+# (see CLAUDE.md). Bump deliberately — each bump invalidates the cache.
+rev = "master"
+
+[[lean_lib]]
+name = "Credibility"
