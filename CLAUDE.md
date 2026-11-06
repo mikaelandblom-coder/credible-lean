@@ -33,6 +33,10 @@ they are actual covariances of random variables is a later goal.
 - One chat per file or batch of `sorry`s; the environment's setup script
   reinstalls Lean and the Mathlib cache in each new session.
 - Push finished work to `main` (fast-forward; never force-push `main`).
+- At a natural break (a file done, a finding logged, context getting long),
+  say so and end the reply with a short, ready-to-paste prompt for the next
+  chat: the file or `sorry`s to tackle and any state the next chat can't
+  get from the repo (open questions, dead ends tried).
 - If something real and general comes out of this (a lemma missing from
   Mathlib, a fix to an upstream library), propose contributing it back
   upstream via a PR to the public repo. Tell the owner what it is and
