@@ -62,7 +62,13 @@ theorem bestZ_optimal (h : 0 < m.gap) (z : ℝ) : m.errVar m.bestZ ≤ m.errVar 
 /-- …and it is the unique optimum. -/
 theorem bestZ_unique (h : 0 < m.gap) {z : ℝ} (hz : m.errVar z ≤ m.errVar m.bestZ) :
     z = m.bestZ := by
-  sorry
+  rw [m.errVar_eq h.ne' z] at hz
+  have hsq : (z - m.bestZ) ^ 2 = 0 := by
+    have h0 : m.gap * (z - m.bestZ) ^ 2 ≤ 0 := by linarith
+    have := mul_nonneg h.le (sq_nonneg (z - m.bestZ))
+    have h1 : m.gap * (z - m.bestZ) ^ 2 = 0 := le_antisymm h0 this
+    exact (mul_eq_zero.mp h1).resolve_left h.ne'
+  exact sub_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp hsq)
 
 end BlendMoments
 end Credibility
