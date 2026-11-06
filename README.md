@@ -2,7 +2,8 @@
 
 A Lean 4 + Mathlib formalization of *Generalized Bühlmann–Straub credibility
 theory for correlated data* (M. Andblom, master thesis in actuarial
-mathematics, Stockholm University, 2023:2).
+mathematics, Stockholm University, 2023:2;
+[published version](https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872)).
 
 The thesis extends the Bühlmann–Straub model to observations that are
 correlated across cohorts within a period. The resulting credibility factor
@@ -41,7 +42,10 @@ they are actual covariances of random variables is a later goal.
 ## Thesis source
 
 The original LaTeX is in [`thesis/original/`](thesis/); all equation numbers
-here refer to it.
+here refer to it. The published PDF is at
+<https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872>; it numbers
+equations differently, see [`thesis/README.md`](thesis/README.md) for the
+mapping and the (minor) text differences.
 
 ## Building
 
