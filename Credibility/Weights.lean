@@ -31,7 +31,14 @@ theorem sum_invVarWeight [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq 
 /-- The minimal error variance. -/
 theorem invVarWeight_value [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t) :
     ∑ t, invVarWeight σsq t ^ 2 * σsq t = (∑ s, (σsq s)⁻¹)⁻¹ := by
-  sorry
+  have hS := (sum_inv_pos σsq hσ).ne'
+  have : ∀ t, invVarWeight σsq t ^ 2 * σsq t = (σsq t)⁻¹ / (∑ s, (σsq s)⁻¹) ^ 2 := by
+    intro t
+    have := (hσ t).ne'
+    simp only [invVarWeight]
+    field_simp
+  simp only [this, ← Finset.sum_div]
+  field_simp
 
 /-- Eq. (23) minimises `Σ aₜ² σₜ²` among weights summing to one. -/
 theorem invVarWeight_optimal (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t)
