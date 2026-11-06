@@ -19,9 +19,14 @@ variable {T : Type*} [Fintype T]
 noncomputable def invVarWeight (σsq : T → ℝ) (t : T) : ℝ :=
   (σsq t)⁻¹ / ∑ s, (σsq s)⁻¹
 
+lemma sum_inv_pos [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t) :
+    0 < ∑ s, (σsq s)⁻¹ :=
+  Finset.sum_pos (fun t _ => inv_pos.mpr (hσ t)) Finset.univ_nonempty
+
 theorem sum_invVarWeight [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t) :
     ∑ t, invVarWeight σsq t = 1 := by
-  sorry
+  simp only [invVarWeight, ← Finset.sum_div]
+  exact div_self (sum_inv_pos σsq hσ).ne'
 
 /-- The minimal error variance. -/
 theorem invVarWeight_value [Nonempty T] (σsq : T → ℝ) (hσ : ∀ t, 0 < σsq t) :
