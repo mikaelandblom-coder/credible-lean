@@ -39,10 +39,21 @@ theorem bs_a (j : J) (t : T) :
   simp only [Model.a, invVarWeight, h, inv_div]
   rw [← sum_div, div_div_div_cancel_right₀ hσ.ne']
 
+omit [Fintype J] [DecidableEq T] in
 /-- Eq. (30). -/
 theorem bs_σ2 [Nonempty T] (j : J) :
     (bsModel τ2 σsq w hτ hσ hw).σ2 j j = σsq / ∑ t, w j t := by
-  sorry
+  -- `σ²ⱼⱼ = Σₜ aⱼₜ² σⱼₜ²` is the minimal variance `(Σₜ wⱼₜ/σ²)⁻¹`.
+  set M := bsModel τ2 σsq w hτ hσ hw
+  have h : ∀ s, M.σ j s ^ 2 = σsq / w j s := fun s =>
+    Real.sq_sqrt (div_pos hσ (hw j s)).le
+  have := invVarWeight_value (fun s => M.σ j s ^ 2) (fun s => pow_pos (M.σ_pos j s) 2)
+  simp only [h, inv_div, ← sum_div] at this
+  rw [← this, Model.σ2]
+  refine sum_congr rfl fun t _ => ?_
+  simp only [Model.a, h]
+  rw [← h]
+  ring
 
 /-- `K` is diagonal. -/
 theorem bs_K [Nonempty T] :
