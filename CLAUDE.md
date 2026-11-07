@@ -13,7 +13,8 @@ tactics.
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 
 Second moments are taken as given numbers; a probabilistic layer proving
-they are actual covariances of random variables is a later goal.
+they are actual covariances of random variables is a later goal (see
+"Later goals" in `README.md`, which also lists cohort-dependent lengths `Tⱼ`).
 
 ## Rules
 - Theorem statements are the spec. Never weaken or change one to make it

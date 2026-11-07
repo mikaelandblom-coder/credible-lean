@@ -46,16 +46,28 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance | `Credibility/BuhlmannStraub.lean` |
 | §2.7 two cohorts, eq. (32) | `Credibility/TwoCohorts.lean` |
 
-Second moments are taken as given numbers. A probabilistic layer showing that
-they are actual covariances of random variables is a later goal.
+Second moments are taken as given numbers.
+
+## Later goals
+
+Once the thesis results are proved:
+
+- **Probabilistic layer.** Show that the second moments are actual
+  covariances of random variables.
+- **Cohort-dependent series length.** In practice cohorts have data series
+  of different lengths, so replace the common horizon `T` with a
+  cohort-dependent `Tⱼ` (index sets `Tⱼ ⊆ T`). Correlations then only act
+  on the periods two cohorts share. Not in the thesis.
 
 ## Thesis source
 
 The original LaTeX is in [`thesis/original/`](thesis/); all equation numbers
 here refer to it. It is the final version, identical
 in text and equation numbering to the published PDF at
-<https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872>. The R code and the
-defence slides are there too; see [`thesis/README.md`](thesis/README.md).
+<https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872>. (An earlier draft
+was replaced by it on 2026-11-06.) The R code and the defence slides are
+there too; the slides add no new results. See
+[`thesis/README.md`](thesis/README.md).
 
 ## Building
 

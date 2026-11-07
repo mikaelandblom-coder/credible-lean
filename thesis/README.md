@@ -18,8 +18,10 @@ the Lean statements:
 
 `presentation/` holds the Beamer slides from the thesis defence
 (`main.tex`, `mystyle.sty`, logos; `Figures` links to `original/`). They are a
-compact summary of §2. They also state the two-cohort results in their
-simplest form: `z₁ = 1/(1 + κ₁ − √(κ₁κ₂)ρ)` and `b₁ = z₁/(z₁ + z₂)`.
+compact summary of §2 and contain no results beyond it. They lead with the
+two-cohort results in their simplest form, `z₁ = 1/(1 + κ₁ − √(κ₁κ₂)ρ)` and
+`b₁ = z₁/(z₁ + z₂)`; both are in the thesis too (the last line of (32),
+and §2.7.1 just after (36)), only reached after long derivations.
 
 Equation numbers in the Lean files and `PROGRESS.md` follow `main.tex` as
 compiled. Only the 46 labelled equations are numbered, the same as in the
