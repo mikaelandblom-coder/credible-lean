@@ -14,6 +14,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `z₁ > 1` can happen and clips it in eq. (34), without saying when. In the
    two-cohort case `z₁ = τ² / (τ² + σ₁² - σ₁σ₂ρ)`, so below the singularity
    `z₁ > 1` exactly when `σ₁ < σ₂ρ` (`TwoCohorts.z1_gt_one_iff`).
+   *Proved.* Below the singularity the denominator `τ² + σ₁² - σ₁σ₂ρ` is
+   positive, so `z₁ > 1` iff `σ₁² < σ₁σ₂ρ`. The proof never uses `τ² > 0`:
+   the condition is independent of the between-cohort variance.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
