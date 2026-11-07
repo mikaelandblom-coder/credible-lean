@@ -62,12 +62,11 @@ Once the thesis results are proved:
 ## Thesis source
 
 The original LaTeX is in [`thesis/original/`](thesis/); all equation numbers
-here refer to it. It is the final version, identical
-in text and equation numbering to the published PDF at
-<https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872>. (An earlier draft
-was replaced by it on 2026-11-06.) The R code and the defence slides are
-there too; the slides add no new results. See
-[`thesis/README.md`](thesis/README.md).
+here refer to it. It is the final version and matches the published PDF at
+<https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872> in text and
+equation numbering, plus one later addition from the defence slides: the
+two-cohort identity `b₁ = z₁/(z₁ + z₂)` (§2.7.1). The R code and the slides
+are there too; see [`thesis/README.md`](thesis/README.md).
 
 ## Building
 

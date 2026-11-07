@@ -59,8 +59,8 @@ the thesis. CI builds it and deploys to GitHub Pages from `main`.
 
 The thesis source is in `thesis/original/` (never edit it). Equation numbers
 in docstrings must match it. Collecting the original files is done
-(2026-11-06): `main.tex` is the final version, identical to the published PDF
-(link in `thesis/README.md`). The R code and the defence slides are there too.
+(2026-11-06): `main.tex` is the final version: the published PDF (link in
+`thesis/README.md`) plus one later addition, `b₁ = z₁/(z₁+z₂)` in §2.7.1. The R code and the defence slides are there too.
 No need to look for other versions.
 
 ## First session only (done 2026-11-06: Lean v4.36.0-rc2, Mathlib e293c420)

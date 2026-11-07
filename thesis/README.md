@@ -9,8 +9,12 @@ Stockholm University, February 2023. Permanent link (DiVA):
 the Lean statements:
 
 - `main.tex`: the full thesis (single file, inline bibliography). Its text
-  matches the published PDF word for word. The only difference is the cover,
-  which the department adds.
+  matches the published PDF in text, notation and equation numbering, with
+  one addition made after publication: in §2.7.1, just after (36), `main.tex`
+  has `b₁ = … = z₁/(z₁ + z₂)`; the PDF stops at the κ fraction. Checked
+  against the PDF on 2026-11-07 (prose word by word, the draft-to-final
+  math changes and the §2.2.2, §2.4 and §2.7.1 pages visually). The cover
+  is added by the department.
 - `*.pdf`: figures (§2.7 numerical example, §3 simulation study)
 - `code/`: the R scripts behind the figures. `two_cohorts_example.R` covers
   §2.7 and `simulation_study.R` covers §3. They are renamed from
@@ -18,10 +22,11 @@ the Lean statements:
 
 `presentation/` holds the Beamer slides from the thesis defence
 (`main.tex`, `mystyle.sty`, logos; `Figures` links to `original/`). They are a
-compact summary of §2 and contain no results beyond it. They lead with the
-two-cohort results in their simplest form, `z₁ = 1/(1 + κ₁ − √(κ₁κ₂)ρ)` and
-`b₁ = z₁/(z₁ + z₂)`; both are in the thesis too (the last line of (32),
-and §2.7.1 just after (36)), only reached after long derivations.
+compact summary of §2. They lead with the two-cohort results in their
+simplest form, `z₁ = 1/(1 + κ₁ − √(κ₁κ₂)ρ)` and `b₁ = z₁/(z₁ + z₂)`. The
+first is the last line of (32) in the published thesis. The second is not
+in the published thesis; it first appears in the slides and was then added
+to `main.tex` (§2.7.1, just after (36)).
 
 Equation numbers in the Lean files and `PROGRESS.md` follow `main.tex` as
 compiled. Only the 46 labelled equations are numbered, the same as in the
