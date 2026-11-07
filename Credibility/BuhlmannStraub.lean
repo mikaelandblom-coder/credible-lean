@@ -29,10 +29,15 @@ noncomputable def bsModel (τ2 σsq : ℝ) (w : J → T → ℝ)
 
 variable (τ2 σsq : ℝ) (w : J → T → ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : ∀ j t, 0 < w j t)
 
+omit [Fintype J] [DecidableEq T] in
 /-- Eq. (29): inverse-variance weights become volume weights. -/
 theorem bs_a (j : J) (t : T) :
     (bsModel τ2 σsq w hτ hσ hw).a j t = w j t / ∑ s, w j s := by
-  sorry
+  -- `σⱼₜ⁻² = wⱼₜ/σ²`; the factor `1/σ²` cancels.
+  have h : ∀ s, (bsModel τ2 σsq w hτ hσ hw).σ j s ^ 2 = σsq / w j s := fun s =>
+    Real.sq_sqrt (div_pos hσ (hw j s)).le
+  simp only [Model.a, invVarWeight, h, inv_div]
+  rw [← sum_div, div_div_div_cancel_right₀ hσ.ne']
 
 /-- Eq. (30). -/
 theorem bs_σ2 [Nonempty T] (j : J) :
