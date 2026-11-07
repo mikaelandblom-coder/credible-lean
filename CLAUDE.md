@@ -32,11 +32,13 @@ they are actual covariances of random variables is a later goal (see
   words before any Lean.
 
 ## Workflow
-- Check the cloud environment first (`get_environment`). In **lean**,
-  everything is prepared for Lean work. In **Default**, the owner only
-  wants documentation or data changes: don't fetch Mathlib, don't build,
-  don't edit `.lean` files, and don't switch environments yourself. If the
-  request needs Lean, say so and suggest a new chat in **lean**.
+- Check the cloud environment first (`get_environment`). Do Lean work only
+  in **lean**, where everything is prepared. In any other environment
+  (usually **Default**) the owner wants only docs, data or discussion: don't
+  run `lake` or `lean`, fetch Mathlib, edit `.lean` files, or switch
+  environments yourself. If the request needs Lean, say so and suggest a
+  new chat in **lean**. The SessionStart hook prints "skipping Lean setup"
+  when the Lean hosts are blocked.
 - One chat per file or batch of `sorry`s; the environment's setup script
   reinstalls Lean and the Mathlib cache in each new session.
 - Push finished work to `main` (fast-forward; never force-push `main`).
