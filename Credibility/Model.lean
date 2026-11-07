@@ -76,7 +76,30 @@ theorem K_symm : M.Kᵀ = M.K := by
 /-- The thesis takes positive-definiteness of `K` for granted. Here it needs
 the correlations to form a positive-semidefinite matrix, and `τ² > 0`. -/
 theorem K_posDef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef := by
-  sorry
+  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
+  · rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, M.K_symm]
+  -- `xᵀKx = Σₜ yₜᵀ R yₜ + τ²‖x‖²` with `(yₜ)ⱼ = aⱼₜ σⱼₜ xⱼ`.
+  set y : T → J → ℝ := fun t j => M.a j t * M.σ j t * x j
+  have key : star x ⬝ᵥ (M.K *ᵥ x)
+      = ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) + M.τ2 * ∑ i, x i ^ 2 := by
+    simp only [dotProduct, mulVec, M.K_apply, star_trivial, of_apply, y, σ2, add_mul,
+      mul_add, sum_add_distrib, ite_mul, mul_ite, mul_one, mul_zero, zero_mul, sum_ite_eq,
+      mem_univ, ite_true, mul_sum, sum_mul]
+    congr 1
+    · symm
+      rw [sum_comm]
+      refine sum_congr rfl fun i _ => ?_
+      rw [sum_comm]
+      exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => by ring
+    · exact sum_congr rfl fun i _ => by ring
+  rw [key]
+  have h1 : 0 ≤ ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) :=
+    sum_nonneg fun t _ => hρ.dotProduct_mulVec_nonneg (y t)
+  have h2 : 0 < ∑ i, x i ^ 2 := by
+    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
+    exact sum_pos' (fun j _ => sq_nonneg (x j))
+      ⟨i, mem_univ _, lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 hi))⟩
+  nlinarith [M.τ2_pos]
 
 /-- Portfolio weights `bⱼ`. -/
 noncomputable def b : J → ℝ := glsWeight M.K
