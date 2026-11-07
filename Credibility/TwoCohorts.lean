@@ -115,6 +115,13 @@ the credibility above one ("noise cancellation") exactly when `σ₁ < σ₂ρ`.
 theorem z1_gt_one_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2)
     (hρ : ρ < (τ2 + σ1 ^ 2) / (σ1 * σ2)) :
     1 < τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) ↔ σ1 < σ2 * ρ := by
-  sorry
+  -- Below the singularity the denominator is positive, so z₁ > 1 iff
+  -- σ₁² < σ₁σ₂ρ, i.e. σ₁ < σ₂ρ.
+  have hden : 0 < τ2 + σ1 ^ 2 - σ1 * σ2 * ρ := by
+    rw [lt_div_iff₀ (mul_pos h1 h2)] at hρ; linarith
+  rw [one_lt_div hden]
+  constructor
+  · intro h; nlinarith
+  · intro h; nlinarith
 
 end Credibility.TwoCohorts
