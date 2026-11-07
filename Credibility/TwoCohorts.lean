@@ -93,7 +93,21 @@ theorem z1_neg_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
 theorem singularity_reachable_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
     (τ2 + σ1 ^ 2) / (σ1 * σ2) ≤ 1
       ↔ (1 + σ1 ^ 2 / τ2) ^ 2 / (σ1 ^ 2 / τ2) ≤ σ2 ^ 2 / τ2 := by
-  sorry
+  -- Both sides say (τ² + σ₁²)² ≤ σ₁²σ₂², i.e. τ² + σ₁² ≤ σ₁σ₂.
+  have hp := mul_pos h1 h2
+  have hA : 0 < τ2 + σ1 ^ 2 := by positivity
+  have hrhs : (1 + σ1 ^ 2 / τ2) ^ 2 / (σ1 ^ 2 / τ2) = (τ2 + σ1 ^ 2) ^ 2 / (τ2 * σ1 ^ 2) := by
+    field_simp
+  rw [hrhs, div_le_iff₀ hp, one_mul, div_le_div_iff₀ (by positivity) hτ]
+  constructor
+  · intro h
+    have := mul_le_mul h h hA.le hp.le
+    nlinarith
+  · intro h
+    by_contra h'
+    push Not at h'
+    have := mul_lt_mul'' h' h' hp.le hp.le
+    nlinarith
 
 /-- Sharpens §2.7: the thesis notes `z₁ > 1` can occur and clips it in
 eq. (34), but gives no condition. Below the singularity, correlation pushes
