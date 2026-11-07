@@ -127,7 +127,13 @@ theorem bestZ_linear (j : J) :
 /-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
-  sorry
+  -- `v = K b = s² u` (`mulVec_glsWeight`), substituted into eq. (22).
+  have hv : (M.K *ᵥ M.b) j = M.s2 := by
+    rw [b, mulVec_glsWeight hK, s2]
+  rw [BlendMoments.bestZ, show (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 by
+    simp only [BlendMoments.gap, moments, hv]; ring]
+  simp only [moments, hv]
+  ring
 
 /-- Eq. (26), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
 theorem gap_eq (hK : M.K.PosDef) (j : J) :
