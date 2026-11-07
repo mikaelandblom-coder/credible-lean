@@ -63,8 +63,15 @@ theorem K_apply [Nonempty T] (i j : J) :
         _ = M.τ2 := by rw [hsum]; ring
     · simp
 
+omit [Fintype J] in
 theorem K_symm : M.Kᵀ = M.K := by
-  sorry
+  ext i j
+  simp only [transpose_apply, K, obsCov]
+  rw [sum_comm]
+  refine sum_congr rfl fun t _ => sum_congr rfl fun s _ => ?_
+  rw [M.ρ_symm j i]
+  simp only [eq_comm (a := s), eq_comm (a := j)]
+  ring
 
 /-- The thesis takes positive-definiteness of `K` for granted. Here it needs
 the correlations to form a positive-semidefinite matrix, and `τ² > 0`. -/
