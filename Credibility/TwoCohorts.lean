@@ -38,7 +38,25 @@ theorem D_pos (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1) :
 theorem gls_two (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1) :
     glsWeight (K σ1 σ2 τ2 ρ) 0 = b1 σ1 σ2 τ2 ρ
       ∧ (invTotal (K σ1 σ2 τ2 ρ))⁻¹ = s2 σ1 σ2 τ2 ρ := by
-  sorry
+  have hD := (D_pos h1 h2 hτ (abs_lt.1 hρ).2.le).ne'
+  -- det K = (σ₁² + τ²)(σ₂² + τ²) - σ₁²σ₂²ρ² > 0 since ρ² < 1.
+  have hc : (σ1 * σ2 * ρ) ^ 2 < (σ1 * σ2) ^ 2 := by
+    have : ρ ^ 2 < 1 := by nlinarith [abs_lt.1 hρ]
+    rw [mul_pow]; exact mul_lt_of_lt_one_right (by positivity) this
+  set det := (σ1 ^ 2 + τ2) * (σ2 ^ 2 + τ2) - σ1 ^ 2 * σ2 ^ 2 * ρ ^ 2 with hdet_def
+  have hdet : det ≠ 0 := by
+    apply ne_of_gt; rw [hdet_def]; nlinarith [mul_pos h1 h2, sq_nonneg σ1, sq_nonneg σ2]
+  have hinv : (K σ1 σ2 τ2 ρ)⁻¹ = det⁻¹ • !![σ2 ^ 2 + τ2, -(σ1 * σ2 * ρ); -(σ1 * σ2 * ρ), σ1 ^ 2 + τ2] := by
+    rw [Matrix.inv_def, K, adjugate_fin_two_of, Matrix.det_fin_two_of, Ring.inverse_eq_inv]
+    congr 2; rw [hdet_def]; ring
+  have hv : (K σ1 σ2 τ2 ρ)⁻¹ *ᵥ 1 = ![det⁻¹ * (σ2 ^ 2 + τ2 - σ1 * σ2 * ρ),
+      det⁻¹ * (σ1 ^ 2 + τ2 - σ1 * σ2 * ρ)] := by
+    rw [hinv]; ext i; fin_cases i <;> simp [Matrix.mulVec, dotProduct, Fin.sum_univ_two] <;> ring
+  have htot : invTotal (K σ1 σ2 τ2 ρ) = det⁻¹ * D σ1 σ2 τ2 ρ := by
+    rw [invTotal, hv]; simp [dotProduct, Fin.sum_univ_two, D]; ring
+  refine ⟨?_, ?_⟩
+  · rw [glsWeight, htot, hv, b1]; simp; field_simp
+  · rw [htot, s2, ← hdet_def]; field_simp
 
 /-- Eq. (32) and the display before it. -/
 theorem z1_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
