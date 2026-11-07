@@ -55,10 +55,16 @@ theorem bs_σ2 [Nonempty T] (j : J) :
   rw [← h]
   ring
 
+omit [Fintype J] in
 /-- `K` is diagonal. -/
 theorem bs_K [Nonempty T] :
     (bsModel τ2 σsq w hτ hσ hw).K = diagonal fun j => τ2 + σsq / ∑ t, w j t := by
-  sorry
+  -- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ` with `ρᵢⱼ = δᵢⱼ`.
+  ext i j
+  rw [Model.K_apply, diagonal_apply]
+  by_cases h : i = j
+  · subst h; rw [bs_σ2]; simp [bsModel, add_comm]
+  · simp [bsModel, h]
 
 /-- The classical credibility factor `zⱼᴮ = wⱼ* / (wⱼ* + σ²/τ²)`. -/
 noncomputable def bsZ (j : J) : ℝ := (∑ t, w j t) / (∑ t, w j t + σsq / τ2)
