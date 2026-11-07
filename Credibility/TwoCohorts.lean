@@ -30,7 +30,9 @@ variable {σ1 σ2 τ2 ρ}
 
 theorem D_pos (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1) :
     0 < D σ1 σ2 τ2 ρ := by
-  sorry
+  -- D = (σ₁ - σ₂)² + 2τ² + 2σ₁σ₂(1 - ρ)
+  unfold D
+  nlinarith [sq_nonneg (σ1 - σ2), mul_pos h1 h2, mul_nonneg (mul_pos h1 h2).le (sub_nonneg.2 hρ)]
 
 /-- The general GLS weights specialise to (31) and the `s²` display before it. -/
 theorem gls_two (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1) :
