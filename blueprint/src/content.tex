@@ -492,15 +492,29 @@ zero, so the formula still typechecks there.)
   $K_{jj} = \tau^2/z_j^B$.
 \end{definition}
 
+\begin{lemma}\label{lem:bs_Kinv_one}
+  \lean{Credibility.bs_Kinv_one}
+  \leanok
+  \uses{lem:bs_K, def:bsZ}
+  If $T \ge 1$, $K^{-1}u = (z_j^B/\tau^2)_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:bs_K}
+  $K^{-1} = \operatorname{diag}\bigl(1/(\tau^2 + \sigma^2/w_{j*})\bigr)
+  = \operatorname{diag}(z_j^B/\tau^2)$.
+\end{proof}
+
 \begin{lemma}\label{lem:bs_b}
   \lean{Credibility.bs_b}
   \leanok
-  \uses{lem:bs_K, def:bsZ, def:Model.b}
+  \uses{lem:bs_Kinv_one, def:Model.b}
   If $T \ge 1$, $b_j = z_j^B/z_*^B$ where $z_*^B = \sum_i z_i^B$.
 \end{lemma}
 \begin{proof}
-  \uses{lem:bs_K}
-  $K^{-1} = \operatorname{diag}(z_j^B/\tau^2)$, so $K^{-1}_{j*} = z_j^B/\tau^2$
+  \leanok
+  \uses{lem:bs_Kinv_one}
+  By Lemma~\ref{lem:bs_Kinv_one}, $K^{-1}_{j*} = z_j^B/\tau^2$
   and $K^{-1}_{**} = z_*^B/\tau^2$.
 \end{proof}
 

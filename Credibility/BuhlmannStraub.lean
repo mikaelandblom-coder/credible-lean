@@ -69,10 +69,33 @@ theorem bs_K [Nonempty T] :
 /-- The classical credibility factor `zⱼᴮ = wⱼ* / (wⱼ* + σ²/τ²)`. -/
 noncomputable def bsZ (j : J) : ℝ := (∑ t, w j t) / (∑ t, w j t + σsq / τ2)
 
+omit [DecidableEq T] in
+include hτ hσ hw in
+/-- The inverse of a diagonal `K = diag(τ² + σ²/wⱼ*)` applied to `u` is `zⱼᴮ/τ²`. -/
+theorem bs_Kinv_one [Nonempty T] (K : Matrix J J ℝ)
+    (hK : K = diagonal fun j => τ2 + σsq / ∑ t, w j t) :
+    K⁻¹ *ᵥ 1 = fun j => bsZ τ2 σsq w j / τ2 := by
+  have hW : ∀ j, 0 < ∑ t, w j t := fun j => sum_pos (fun t _ => hw j t) univ_nonempty
+  have hd : ∀ j, τ2 + σsq / ∑ t, w j t ≠ 0 := fun j =>
+    (add_pos hτ (div_pos hσ (hW j))).ne'
+  have hinv : K⁻¹ = diagonal fun j => (τ2 + σsq / ∑ t, w j t)⁻¹ := by
+    rw [hK]
+    refine inv_eq_left_inv ?_
+    rw [diagonal_mul_diagonal]
+    simp only [inv_mul_cancel₀ (hd _), diagonal_one]
+  rw [hinv]
+  ext j
+  have := (hW j).ne'
+  have : (∑ t, w j t) + σsq / τ2 ≠ 0 := (add_pos (hW j) (div_pos hσ hτ)).ne'
+  simp only [mulVec_diagonal, Pi.one_apply, mul_one, bsZ]
+  field_simp
+
 /-- `bⱼ = zⱼᴮ / z*ᴮ`. -/
 theorem bs_b [Nonempty T] (j : J) :
     (bsModel τ2 σsq w hτ hσ hw).b j = bsZ τ2 σsq w j / ∑ i, bsZ τ2 σsq w i := by
-  sorry
+  -- `K⁻¹u = zᴮ/τ²`; the factor `1/τ²` cancels in `K⁻¹u / uᵀK⁻¹u`.
+  rw [Model.b, glsWeight, invTotal, bs_Kinv_one τ2 σsq w hτ hσ hw _ (bs_K τ2 σsq w hτ hσ hw),
+    one_dotProduct, ← sum_div, div_div_div_cancel_right₀ hτ.ne']
 
 /-- The proposed model reduces to Bühlmann–Straub (§2.6).
 Note: with a single cohort, `bⱼ = 1` and eq. (26) is `0/0`; the thesis
