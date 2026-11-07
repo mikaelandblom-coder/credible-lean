@@ -17,6 +17,15 @@ Gaps, extra hypotheses and new results found while formalizing.
    *Proved.* Below the singularity the denominator `τ² + σ₁² - σ₁σ₂ρ` is
    positive, so `z₁ > 1` iff `σ₁² < σ₁σ₂ρ`. The proof never uses `τ² > 0`:
    the condition is independent of the between-cohort variance.
+4. **Weights from credibility factors (new, two cohorts only).** For two
+   cohorts the GLS weight is `b₁ = z₁ / (z₁ + z₂)` (`TwoCohorts.b1_eq_z`,
+   *proved*), the same form as Bühlmann–Straub's `b_j = z_j / z_*`. This is
+   on the defence slides but not in the published thesis. So any binary
+   split of a portfolio (two segments of a rating factor) keeps the classical
+   weight formula under correlation. It fails for `J ≥ 3`: numerically with
+   random `σⱼ`, `ρᵢⱼ` (e.g. `b = (0.536, 0.226, 0.238)` against
+   `z/z_* = (0.564, 0.177, 0.259)`). Open: is there a clean condition on `ρ`
+   under which it holds for `J ≥ 3`?
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 

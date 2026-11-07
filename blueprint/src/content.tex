@@ -597,6 +597,34 @@ $\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
   $\tau^2 + \sigma_1^2 - s^2 = (A - c)^2/D$. Cancel $(A - c)/D$.
 \end{proof}
 
+\begin{theorem}[Weights from credibility factors]\label{thm:b1_eq_z}
+  \lean{Credibility.TwoCohorts.b1_eq_z}
+  \leanok
+  \uses{thm:gls_two, thm:z1_eq}
+  Away from both singularities, with $z_i = \tau^2/(\tau^2 + \sigma_i^2 - \sigma_1\sigma_2\rho)$,
+  \[
+    b_1 = \frac{\kappa_2 + 1 - \sqrt{\kappa_1\kappa_2}\,\rho}
+               {\kappa_1 + \kappa_2 + 2 - 2\sqrt{\kappa_1\kappa_2}\,\rho}
+        = \frac{z_1}{z_1 + z_2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  With $A_i = \tau^2 + \sigma_i^2 - \sigma_1\sigma_2\rho$ we have $z_i = \tau^2/A_i$,
+  so $z_1/(z_1+z_2) = A_2/(A_1 + A_2)$, and $A_1 + A_2 = D$.
+\end{proof}
+
+\begin{remark}[Finding 4: only for two cohorts]\label{rem:b1_eq_z}
+  \uses{thm:b1_eq_z}
+  The second equality is not in the published thesis; it comes from the
+  defence slides. It is the Bühlmann--Straub form $b_j = z_j/z_*$, which
+  therefore survives correlation for any binary split of a portfolio
+  (e.g.\ two segments of a rating factor). For three or more correlated
+  cohorts it fails in general (numerically, e.g.\ $J = 3$ with random
+  $\sigma_j$ and $\rho_{ij}$).
+\end{remark}
+
 \begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
   \lean{Credibility.TwoCohorts.z1_rho_zero}
   \leanok

@@ -74,6 +74,28 @@ theorem z1_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
   rw [h1b, hs]
   field_simp
 
+/-- Portfolio weight from the credibility factors: `b₁ = z₁ / (z₁ + z₂)`, with
+`zᵢ = τ² / (τ² + σᵢ² - σ₁σ₂ρ)` as in eq. (32). Not in the published thesis:
+it is on the defence slides and was later added to `main.tex` in §2.7.1, just
+after (36). It has the Bühlmann–Straub form `b_j = z_j / z_*`, which for
+correlated data holds with two cohorts but not with three or more. -/
+theorem b1_eq_z (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
+    (hs1 : τ2 + σ1 ^ 2 - σ1 * σ2 * ρ ≠ 0) (hs2 : τ2 + σ2 ^ 2 - σ1 * σ2 * ρ ≠ 0) :
+    b1 σ1 σ2 τ2 ρ = τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ)
+      / (τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) + τ2 / (τ2 + σ2 ^ 2 - σ1 * σ2 * ρ)) := by
+  -- With Aᵢ = τ² + σᵢ² - σ₁σ₂ρ: zᵢ = τ²/Aᵢ, so z₁/(z₁ + z₂) = A₂/(A₁ + A₂),
+  -- and A₁ + A₂ = D.
+  have hD := (D_pos h1 h2 hτ hρ).ne'
+  set A1 := τ2 + σ1 ^ 2 - σ1 * σ2 * ρ
+  set A2 := τ2 + σ2 ^ 2 - σ1 * σ2 * ρ
+  have hDA : D σ1 σ2 τ2 ρ = A1 + A2 := by rw [D]; ring
+  rw [hDA] at hD
+  have hz : τ2 / A1 + τ2 / A2 = τ2 * (A1 + A2) / (A1 * A2) := by
+    field_simp; ring
+  rw [hz, b1, hDA, div_div_eq_mul_div, eq_div_iff (by positivity)]
+  field_simp
+  ring
+
 /-- Bühlmann–Straub is recovered at `ρ = 0`. -/
 theorem z1_rho_zero : τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * 0) = τ2 / (τ2 + σ1 ^ 2) := by
   simp
