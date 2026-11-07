@@ -132,7 +132,10 @@ theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
 /-- Eq. (26), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
 theorem gap_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 := by
-  sorry
+  have hv : (M.K *ᵥ M.b) j = M.s2 := by
+    rw [b, mulVec_glsWeight hK, s2]
+  simp only [BlendMoments.gap, moments, hv]
+  ring
 
 end Model
 end Credibility
