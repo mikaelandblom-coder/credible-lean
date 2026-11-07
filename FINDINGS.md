@@ -24,8 +24,22 @@ Gaps, extra hypotheses and new results found while formalizing.
    split of a portfolio (two segments of a rating factor) keeps the classical
    weight formula under correlation. It fails for `J ≥ 3`: numerically with
    random `σⱼ`, `ρᵢⱼ` (e.g. `b = (0.536, 0.226, 0.238)` against
-   `z/z_* = (0.564, 0.177, 0.259)`). Open: is there a clean condition on `ρ`
-   under which it holds for `J ≥ 3`?
+   `z/z_* = (0.564, 0.177, 0.259)`). It also fails for equal correlations
+   `ρᵢⱼ = ρ` when the `σⱼ` differ. For `J ≥ 3` the right condition is
+   item 5.
+5. **Equal covariances (new, any `J`).** If all cohort pairs have the same
+   covariance `σ²ᵢⱼρᵢⱼ = c`, then `bⱼ = zⱼ/z_*` and the proposed factor is
+   `zⱼ = τ²/(τ² + σ²ⱼⱼ - c)`, i.e. eq. (32) with `σ₁σ₂ρ` replaced by `c`
+   (`Model.b_eq_of_equalCov`, `Model.bestZ_of_equalCov`, *proved*). Reason:
+   `K = diag(dⱼ) + c·11ᵀ`, and a rank-one term along `u` does not change the
+   direction of `K⁻¹u`. Bühlmann–Straub is `c = 0`, two cohorts are
+   `c = σ₁σ₂ρ`. Extra hypotheses: `τ² + σ²ⱼⱼ ≠ c` (the singularity of
+   Finding 3, now per cohort) and `bⱼ ≠ 1` (`0/0`, as in Finding 2).
+   *Converse (on paper, not in Lean).* `bⱼ = zⱼ/z_*` for all `j` iff some `λ`
+   gives `Σᵢ≠ⱼ (Kᵢⱼ + λ) bᵢ = 0` for every `j`. For `J = 3` with all `bⱼ ≠ 0`
+   this forces equal covariances. For `J ≥ 4` it does not: with equal `σⱼ`,
+   any correlation matrix with equal row sums gives `b = z/z_* = u/J`
+   (e.g. `J = 4`, off-diagonal covariances `0.5, -0.1, 0.2, 0.2, -0.1, 0.5`).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 

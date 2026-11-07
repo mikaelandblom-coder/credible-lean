@@ -640,7 +640,71 @@ $\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
   therefore survives correlation for any binary split of a portfolio
   (e.g.\ two segments of a rating factor). For three or more correlated
   cohorts it fails in general (numerically, e.g.\ $J = 3$ with random
-  $\sigma_j$ and $\rho_{ij}$).
+  $\sigma_j$ and $\rho_{ij}$), even with equal correlations
+  $\rho_{ij} = \rho$. What carries over is equal \emph{covariances}
+  (Theorem~\ref{thm:b_eq_of_equalCov}).
+\end{remark}
+
+\paragraph{More than two cohorts: equal covariances.}
+With two cohorts there is a single covariance $\sigma_1\sigma_2\rho$. The
+right generalisation is that all cohort pairs share one covariance
+$K_{ij} = \sigma_{ij}^2\rho_{ij} = c$ ($i \ne j$). Then
+$K = \operatorname{diag}(d_j) + c\,uu^\top$ with
+$d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
+
+\begin{lemma}\label{lem:Kinv_one_of_equalCov}
+  \lean{Credibility.Model.Kinv_one_of_equalCov}
+  \leanok
+  \uses{lem:K_apply, def:K}
+  If $K$ is positive definite, $K_{ij} = c$ for $i \ne j$ and all $d_j \ne 0$,
+  then with $v_j = 1/d_j$: $1 + c\,v_* \ne 0$ and
+  $K^{-1}u = v/(1 + c\,v_*)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Kv)_i = d_i v_i + c\,v_* = 1 + c\,v_*$, so $Kv = (1 + c\,v_*)u$. Apply
+  $K^{-1}$; if $1 + c\,v_* = 0$ then $v = 0$, impossible.
+\end{proof}
+
+\begin{theorem}[Weights from credibility factors, any $J$]\label{thm:b_eq_of_equalCov}
+  \lean{Credibility.Model.b_eq_of_equalCov}
+  \leanok
+  \uses{lem:Kinv_one_of_equalCov, def:Model.b}
+  Under the same hypotheses, with $z_j = \tau^2/(\tau^2 + \sigma_{jj}^2 - c)$,
+  $b_j = z_j/z_*$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $b = K^{-1}u/u^\top K^{-1}u = v/v_*$ and $z = \tau^2 v$.
+\end{proof}
+
+\begin{theorem}\label{thm:bestZ_of_equalCov}
+  \lean{Credibility.Model.bestZ_of_equalCov}
+  \leanok
+  \uses{lem:Kinv_one_of_equalCov, thm:bestZ_eq}
+  If moreover $b_j \ne 1$, the proposed factor is
+  $z_j = \tau^2/(\tau^2 + \sigma_{jj}^2 - c)$: eq.~\eqth{32} with
+  $\sigma_1\sigma_2\rho$ replaced by $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bestZ_eq}
+  $s^2 = (1 + c\,v_*)/v_* = c + 1/v_*$, so
+  $\tau^2 + \sigma_{jj}^2 - s^2 = d_j - 1/v_* = (v_* - v_j)/(v_j v_*)$ and
+  $1 - b_j = (v_* - v_j)/v_*$. Cancel $v_* - v_j \ne 0$.
+\end{proof}
+
+\begin{remark}[Finding 5: equal covariances is the right condition]\label{rem:equalCov}
+  \uses{thm:b_eq_of_equalCov}
+  For $J = 3$ the condition is also necessary (when all $b_j \ne 0$).
+  Writing $(Kb)_j = s^2$ shows that $b_j = z_j/z_*$ for all $j$ iff there is a
+  $\lambda$ with $\sum_{i \ne j} (K_{ij} + \lambda)\, b_i = 0$ for every $j$.
+  With $p, q, r$ the three values $K_{ij} + \lambda$ this is
+  $p b_2 + q b_3 = p b_1 + r b_3 = q b_1 + r b_2 = 0$, which forces
+  $p = q = r = 0$. For $J \ge 4$ it is not necessary: with equal $\sigma_j$, any
+  correlation matrix with equal row sums gives $b = z/z_* = u/J$, whether or not
+  the covariances are equal. Bühlmann--Straub is the case $c = 0$; two cohorts
+  are the case $c = \sigma_1\sigma_2\rho$. Not yet in Lean.
 \end{remark}
 
 \begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
