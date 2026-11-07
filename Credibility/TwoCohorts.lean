@@ -81,7 +81,13 @@ theorem z1_rho_zero : τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * 0) = τ2 / (τ2 + σ1 ^
 /-- The sign flip (displays after (32)) past `ρ* = (τ² + σ₁²) / (σ₁σ₂)`. -/
 theorem z1_neg_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
     τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) < 0 ↔ (τ2 + σ1 ^ 2) / (σ1 * σ2) < ρ := by
-  sorry
+  -- τ² > 0, so the sign is that of the denominator.
+  rw [div_lt_iff₀ (mul_pos h1 h2), div_neg_iff]
+  constructor
+  · rintro (⟨h, _⟩ | ⟨_, h⟩)
+    · linarith
+    · linarith
+  · intro h; left; constructor <;> nlinarith
 
 /-- The singularity lies in `[-1, 1]` iff `κ₂ ≥ (1 + κ₁)² / κ₁`. -/
 theorem singularity_reachable_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
