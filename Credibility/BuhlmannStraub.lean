@@ -102,7 +102,40 @@ Note: with a single cohort, `bⱼ = 1` and eq. (26) is `0/0`; the thesis
 derivation silently needs at least two cohorts. -/
 theorem bs_z [Nonempty T] (hJ : 1 < Fintype.card J) (j : J) :
     ((bsModel τ2 σsq w hτ hσ hw).moments j).bestZ = bsZ τ2 σsq w j := by
-  sorry
+  set M := bsModel τ2 σsq w hτ hσ hw
+  have hK := bs_K τ2 σsq w hτ hσ hw
+  have hz : ∀ i, 0 < bsZ τ2 σsq w i := fun i => by
+    have hW : 0 < ∑ t, w i t := sum_pos (fun t _ => hw i t) univ_nonempty
+    exact div_pos hW (add_pos hW (div_pos hσ hτ))
+  have hpd : M.K.PosDef := by
+    rw [hK, posDef_diagonal_iff]
+    intro i
+    exact add_pos hτ (div_pos hσ (sum_pos (fun t _ => hw i t) univ_nonempty))
+  -- With `Z = Σ zᵢᴮ`: `bⱼ = zⱼᴮ/Z`, `s² = τ²/Z` and `σ²ⱼⱼ = τ²/zⱼᴮ - τ²`, so eq. (26) is
+  -- `(1 - zⱼᴮ/Z)τ² / (τ²/zⱼᴮ - τ²/Z) = zⱼᴮ`, cancelling `Z - zⱼᴮ = Σᵢ≠ⱼ zᵢᴮ > 0` (`J ≥ 2`).
+  have hb := bs_b τ2 σsq w hτ hσ hw j
+  set Z := ∑ i, bsZ τ2 σsq w i
+  have hs2 : M.s2 = τ2 / Z := by
+    rw [Model.s2, invTotal, bs_Kinv_one τ2 σsq w hτ hσ hw _ hK, one_dotProduct, ← sum_div,
+      inv_div]
+  have hσz : M.σ2 j j = τ2 / bsZ τ2 σsq w j - τ2 := by
+    have hW : 0 < ∑ t, w j t := sum_pos (fun t _ => hw j t) univ_nonempty
+    rw [bs_σ2, bsZ]
+    field_simp
+    ring
+  have hZ : bsZ τ2 σsq w j < Z := by
+    obtain ⟨i, hij⟩ := Fintype.exists_ne_of_one_lt_card hJ j
+    change _ < ∑ i, _
+    rw [← add_sum_erase _ _ (mem_univ j)]
+    exact lt_add_of_pos_right _
+      (sum_pos (fun k _ => hz k) ⟨i, mem_erase.mpr ⟨hij, mem_univ i⟩⟩)
+  rw [M.bestZ_eq hpd, hb, hs2, hσz, show M.τ2 = τ2 from rfl]
+  have := (hz j).ne'
+  have hne : Z - bsZ τ2 σsq w j ≠ 0 := (sub_pos.mpr hZ).ne'
+  have : 0 < Z := (hz j).trans hZ
+  field_simp
+  rw [show Z * (bsZ τ2 σsq w j + (1 - bsZ τ2 σsq w j)) - bsZ τ2 σsq w j
+      = Z - bsZ τ2 σsq w j by ring, div_self hne]
 
 /-- The balance property (§2.9) holds for Bühlmann–Straub weights for any data,
 whether or not the model assumptions hold. Here `W j = wⱼ*`, `κ = σ²/τ²`,

@@ -525,7 +525,8 @@ zero, so the formula still typechecks there.)
   If $T \ge 1$ and $J \ge 2$, the proposed factor is $z_j = z_j^B$.
 \end{theorem}
 \begin{proof}
-  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2, lem:K_posDef}
+  \leanok
+  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2, lem:bs_Kinv_one}
   $K$ is diagonal with positive entries, hence positive definite. Then
   $s^2 = \tau^2/z_*^B = (\tau^2 + \sigma_{jj}^2)\,b_j$, so
   \[
