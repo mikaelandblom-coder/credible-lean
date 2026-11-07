@@ -44,10 +44,24 @@ noncomputable def σ2 (i j : J) : ℝ := ∑ t, M.a i t * M.a j t * M.σ i t * M
 noncomputable def K : Matrix J J ℝ :=
   fun i j => ∑ t, ∑ s, M.a i t * M.a j s * M.obsCov i j t s
 
+omit [Fintype J] in
 /-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27). -/
 theorem K_apply [Nonempty T] (i j : J) :
     M.K i j = M.σ2 i j * M.ρ i j + M.τ2 * (if i = j then 1 else 0) := by
-  sorry
+  have hsum : ∀ k, ∑ t, M.a k t = 1 := fun k =>
+    sum_invVarWeight _ (fun t => pow_pos (M.σ_pos k t) 2)
+  simp only [K, obsCov, mul_add, sum_add_distrib, mul_ite, mul_one, mul_zero,
+    sum_ite_eq, mem_univ, ite_true]
+  rw [σ2, sum_mul]
+  congr 1
+  · exact sum_congr rfl fun t _ => by ring
+  · split_ifs with h
+    · subst h
+      calc ∑ x, ∑ y, M.a i x * M.a i y * M.τ2
+          = (∑ x, M.a i x) * (∑ y, M.a i y) * M.τ2 := by
+            rw [sum_mul_sum, sum_mul]; simp_rw [sum_mul]
+        _ = M.τ2 := by rw [hsum]; ring
+    · simp
 
 theorem K_symm : M.Kᵀ = M.K := by
   sorry
