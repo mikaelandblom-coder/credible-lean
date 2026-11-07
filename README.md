@@ -17,14 +17,24 @@ when the correlations vanish.
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
 (regenerate with `python3 scripts/progress.py`). `Blend` (§2.1.1) is fully
-proved; the other files are stated, with some `sorry`s left.
+proved, and so are `Weights` and `TwoCohorts`; `Model` and
+`BuhlmannStraub` are stated, with `sorry`s left.
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
 found while formalizing, e.g. that two correlated cohorts can push the
 credibility factor above one.
 
-A full blueprint (`leanblueprint`, with a dependency graph) is planned once
-`Weights` and `TwoCohorts` are done.
+The **[blueprint](https://mikaelandblom-coder.github.io/credible-lean/)**
+([pdf](https://mikaelandblom-coder.github.io/credible-lean/blueprint.pdf)) is
+a condensed §2 of the thesis with every result linked to its Lean statement,
+a dependency graph, and the findings as remarks. Its source is
+`blueprint/src/content.tex`; CI (`.github/workflows/blueprint.yml`) builds it
+and deploys it to GitHub Pages on pushes to `main`. Locally:
+
+    pip install leanblueprint   # needs graphviz and a TeX install (xelatex)
+    cd blueprint && leanblueprint pdf && leanblueprint web
+    cd .. && python3 scripts/blueprint_check.py
+    lake env lean --run scripts/CheckDecls.lean blueprint/lean_decls
 
 ## Layout
 

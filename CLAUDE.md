@@ -43,12 +43,18 @@ they are actual covariances of random variables is a later goal.
   upstream via a PR to the public repo. Tell the owner what it is and
   where it would go, and open the PR once they agree.
 
-## Blueprint (planned)
-Once `Weights` and `TwoCohorts` are proved, propose a full `leanblueprint`
-(`blueprint/` LaTeX with `\lean{}`/`\uses{}`, dependency graph, CI to
-GitHub Pages), seeded from `PROGRESS.md`, with `FINDINGS.md` as remarks.
-Its text is a condensed §2 of `thesis/original/main.tex`; the owner wants it
-to become the up-to-date, shorter version of the thesis.
+## Blueprint
+`blueprint/src/content.tex` is a condensed §2 of `thesis/original/main.tex`
+(`leanblueprint`; `\lean{}`/`\uses{}`, dependency graph, `FINDINGS.md` items
+as remarks). The owner wants it to become the up-to-date, shorter version of
+the thesis. CI builds it and deploys to GitHub Pages from `main`.
+- When you close a `sorry`, add `\leanok` to that proof in `content.tex`;
+  new theorems need a blueprint entry. `python3 scripts/blueprint_check.py`
+  must pass before committing (it compares with the same test as
+  `PROGRESS.md`).
+- A new finding gets a `remark` next to the result it concerns.
+- `\lean{}` links go to the source line via `find/` (no doc-gen4 build;
+  it would document all of Mathlib).
 
 The thesis source is in `thesis/original/` (never edit it). Equation numbers
 in docstrings must match it. Collecting the original files is done

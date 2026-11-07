@@ -1,0 +1,66 @@
+name: Blueprint
+
+# Builds Lean, the blueprint (web + pdf) and checks they agree.
+# Deploys to GitHub Pages on pushes to main.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Lean project
+        uses: leanprover/lean-action@v1
+        with:
+          use-github-cache: true
+
+      - name: Install TeX, graphviz and leanblueprint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            graphviz libgraphviz-dev latexmk texlive-xetex texlive-latex-extra \
+            texlive-fonts-recommended texlive-science lmodern fonts-lmodern
+          pip install leanblueprint
+
+      - name: Build blueprint
+        working-directory: blueprint
+        run: |
+          leanblueprint pdf
+          leanblueprint web
+          cp print/print.pdf web/blueprint.pdf
+
+      - name: Check blueprint against Lean
+        run: |
+          python3 scripts/progress.py --check
+          python3 scripts/blueprint_check.py
+          lake env lean --run scripts/CheckDecls.lean blueprint/lean_decls
+          python3 scripts/blueprint_find.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: blueprint/web
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

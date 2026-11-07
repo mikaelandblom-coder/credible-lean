@@ -1,0 +1,23 @@
+\documentclass{report}
+
+\usepackage{amssymb, amsthm, amsmath}
+\usepackage{hyperref}
+\usepackage[showmore, dep_graph]{blueprint}
+
+\input{macros/common}
+\input{macros/web}
+
+\home{https://mikaelandblom-coder.github.io/credible-lean/}
+\github{https://github.com/mikaelandblom-coder/credible-lean}
+% No doc-gen4 build (it would document all of Mathlib). Instead `find/`
+% on the site redirects a declaration name to its line in the source;
+% see scripts/blueprint_find.py.
+\dochome{https://mikaelandblom-coder.github.io/credible-lean}
+
+\title{Correlated credibility\\{\large Generalized Bühlmann--Straub credibility for correlated data}}
+\author{M. Andblom}
+
+\begin{document}
+\maketitle
+\input{content}
+\end{document}

@@ -1,0 +1,693 @@
+% Blueprint content, shared by the web and pdf versions.
+%
+% A condensed §2 of thesis/original/main.tex. "Thesis (n)" cites equation
+% (n) of the thesis as compiled (the published PDF). Remarks marked
+% "Finding" mirror FINDINGS.md.
+%
+% \leanok on a statement: stated in Lean. \leanok in a proof: proved,
+% no sorry. Keep in sync with PROGRESS.md (scripts/blueprint_check.py).
+
+\chapter*{Introduction}
+
+A portfolio is split into cohorts $j = 1, \dots, J$, observed over periods
+$t = 1, \dots, T$. We want the true key ratio $\mu_j$ of each cohort. Two
+estimates are available: the cohort's own estimate $\hmu_j$, which is
+noisy, and the portfolio estimate $\hmu$, which is stable but ignores
+differences between cohorts. Credibility theory blends them:
+\[
+  \hmu_j^b = z_j \hmu_j + (1 - z_j)\hmu .
+\]
+The classical Bühlmann--Straub model assumes the observations of different
+cohorts are uncorrelated. The thesis drops that assumption: within a
+period, the noise of cohorts $i$ and $j$ has correlation $\rho_{ij}$. The
+weights inside $\hmu_j$ and $\hmu$, and the factor $z_j$, are each chosen to
+minimise an error variance (\eqth{3}--(5)). The result is the credibility
+factor
+\[
+  z_j = \frac{(1 - b_j)\tau^2}{\tau^2 + \sigma_{jj}^2 - s^2},
+\]
+with GLS portfolio weights $\bb = K^{-1}\bu / \bu^T K^{-1} \bu$. It reduces
+to Bühlmann--Straub when the correlations vanish.
+
+Second moments are taken as given numbers throughout: the statements are
+about the formulas the moments must satisfy, not (yet) about random
+variables.
+
+% ---------------------------------------------------------------------------
+\chapter{The best credibility factor}\label{ch:blend}
+% Thesis §2.1.1, eqs. (6)-(7). Lean: Credibility/Blend.lean
+
+Fix a cohort $j$ and suppose the blend is unbiased. Its error variance is a
+quadratic in $z$ whose coefficients are six second moments.
+
+\begin{definition}[Blend moments and error variance]\label{def:errVar}
+  \lean{Credibility.BlendMoments, Credibility.BlendMoments.errVar}
+  \leanok
+  Given $\Var(\hmu_j)$, $\Var(\hmu)$, $\Var(\mu_j)$, $\cov(\hmu_j, \hmu)$,
+  $\cov(\hmu_j, \mu_j)$ and $\cov(\hmu, \mu_j)$, let
+  \begin{align*}
+    E(z) = \Var(z\hmu_j + (1-z)\hmu - \mu_j)
+      &= z^2\Var(\hmu_j) + (1-z)^2\Var(\hmu) + \Var(\mu_j)
+         + 2z(1-z)\cov(\hmu_j, \hmu) \\
+      &\quad - 2z\cov(\hmu_j, \mu_j) - 2(1-z)\cov(\hmu, \mu_j),
+  \end{align*}
+  as in \eqth{6}.
+\end{definition}
+
+\begin{definition}[Curvature and the general credibility factor]\label{def:bestZ}
+  \lean{Credibility.BlendMoments.gap, Credibility.BlendMoments.bestZ}
+  \leanok
+  \uses{def:errVar}
+  Let $g = \Var(\hmu_j - \hmu) = \Var(\hmu) - 2\cov(\hmu_j, \hmu) + \Var(\hmu_j)$
+  and
+  \[
+    z^* = \frac{\Var(\hmu) - \cov(\hmu_j, \hmu) + \cov(\hmu_j, \mu_j) - \cov(\hmu, \mu_j)}{g},
+  \]
+  the general credibility factor \eqth{7}.
+\end{definition}
+
+\begin{lemma}[Vertex form]\label{lem:errVar_eq}
+  \lean{Credibility.BlendMoments.errVar_eq}
+  \leanok
+  \uses{def:bestZ}
+  If $g \neq 0$ then $E(z) = E(z^*) + g\,(z - z^*)^2$ for all $z$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides are quadratics in $z$ with leading coefficient $g$; since
+  $g z^*$ equals the numerator of $z^*$, their linear and constant terms
+  agree too.
+\end{proof}
+
+\begin{theorem}[Eq.\ (7) is optimal]\label{thm:bestZ_optimal}
+  \lean{Credibility.BlendMoments.bestZ_optimal}
+  \leanok
+  \uses{lem:errVar_eq}
+  If $g > 0$ then $E(z^*) \le E(z)$ for all $z$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $g(z - z^*)^2 \ge 0$.
+\end{proof}
+
+\begin{theorem}[\ldots and unique]\label{thm:bestZ_unique}
+  \lean{Credibility.BlendMoments.bestZ_unique}
+  \leanok
+  \uses{lem:errVar_eq}
+  If $g > 0$ and $E(z) \le E(z^*)$ then $z = z^*$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Then $g(z - z^*)^2 \le 0$, so $(z - z^*)^2 = 0$.
+\end{proof}
+
+% ---------------------------------------------------------------------------
+\chapter{The correlated data model}\label{ch:model}
+% Thesis §2.3-2.4, eqs. (15)-(22). Lean: Credibility/Model.lean
+
+\begin{definition}[Data model]\label{def:Model}
+  \lean{Credibility.Model}
+  \leanok
+  The model \eqth{15} is
+  \[
+    \mu_j = \mu + \tau\varepsilon_j, \qquad
+    \mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt},
+  \]
+  with $\varepsilon_j$, $\varepsilon_{jt}$ centred, of unit variance,
+  $\varepsilon_j$ uncorrelated with everything else, and
+  $\cov(\varepsilon_{it}, \varepsilon_{js}) = \rho_{ij}\delta_{ts}$.
+  Its parameters are $\tau^2 > 0$, noise levels $\sigma_{jt} > 0$, and a
+  symmetric correlation table $\rho$ with $\rho_{jj} = 1$.
+\end{definition}
+
+\begin{definition}[Observation covariance]\label{def:obsCov}
+  \lean{Credibility.Model.obsCov}
+  \leanok
+  \uses{def:Model}
+  By the law of total covariance,
+  $\bar K_{ij}^{ts} = \cov(\mu_{it}, \mu_{js})
+    = \sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2\delta_{ij}$
+  \eqth{16}.
+\end{definition}
+
+The estimators are weighted averages \eqth{17},
+$\hmu_j = \sum_t a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$, unbiased
+when the weights sum to one. The error variance of $\hmu_j$ is
+$\sigma_{jj}^2$ \eqth{19}, a special case of the following.
+
+\begin{definition}[Cohort weights and $\sigma_{ij}^2$]\label{def:sigma2}
+  \lean{Credibility.Model.a, Credibility.Model.σ2}
+  \leanok
+  \uses{def:Model, def:invVarWeight}
+  The cohort weights $a_{jt}$ are the inverse-variance weights of
+  $\sigma_{j1}^2, \dots, \sigma_{jT}^2$ (Definition~\ref{def:invVarWeight},
+  chosen in Chapter~\ref{ch:weights}), and
+  $\sigma_{ij}^2 = \sum_t a_{it}a_{jt}\sigma_{it}\sigma_{jt}$ \eqth{18}.
+\end{definition}
+
+\begin{definition}[The covariance matrix $K$]\label{def:K}
+  \lean{Credibility.Model.K}
+  \leanok
+  \uses{def:obsCov, def:sigma2}
+  $K_{ij} = \cov(\hmu_i, \hmu_j) = \sum_{t,s} a_{it}a_{js}\bar K_{ij}^{ts}$
+  \eqth{21}.
+\end{definition}
+
+\begin{lemma}[Entries of $K$]\label{lem:K_apply}
+  \lean{Credibility.Model.K_apply}
+  \leanok
+  \uses{def:K}
+  If $T \ge 1$ then $K_{ij} = \sigma_{ij}^2\rho_{ij} + \tau^2\delta_{ij}$
+  (\eqth{21}, last line; also in (27)).
+\end{lemma}
+\begin{proof}
+  Split the double sum. The $\delta_{ts}$ term collapses to $\sigma_{ij}^2\rho_{ij}$.
+  The $\tau^2\delta_{ij}$ term is $\tau^2\delta_{ij}(\sum_t a_{it})(\sum_s a_{js})
+  = \tau^2\delta_{ij}$, since inverse-variance weights sum to one
+  (Lemma~\ref{lem:sum_invVarWeight}; this is where $T \ge 1$ is needed).
+  \uses{lem:sum_invVarWeight}
+\end{proof}
+
+\begin{lemma}\label{lem:K_symm}
+  \lean{Credibility.Model.K_symm}
+  \leanok
+  \uses{def:K}
+  $K$ is symmetric.
+\end{lemma}
+\begin{proof}
+  $\bar K_{ij}^{ts} = \bar K_{ji}^{st}$ by symmetry of $\rho$; swap the
+  summation indices.
+\end{proof}
+
+\begin{lemma}[$K$ is positive definite]\label{lem:K_posDef}
+  \lean{Credibility.Model.K_posDef}
+  \leanok
+  \uses{lem:K_apply, lem:K_symm}
+  If $T \ge 1$ and the matrix $(\rho_{ij})$ is positive semidefinite, then
+  $K$ is positive definite.
+\end{lemma}
+\begin{proof}
+  \uses{lem:K_apply}
+  For $x \in \mathbb R^J$,
+  $x^T K x = \sum_t y_t^T R\, y_t + \tau^2\lVert x\rVert^2$ where
+  $R = (\rho_{ij})$ and $(y_t)_j = a_{jt}\sigma_{jt}x_j$. The first sum is
+  $\ge 0$ and the second is $> 0$ for $x \ne 0$.
+\end{proof}
+
+\begin{remark}[Finding 1: positive \emph{semi}definite is not enough]\label{rem:posdef}
+  \uses{lem:K_posDef}
+  After \eqth{20} the thesis says ``since $K$ is a covariance matrix it is
+  positive definite''. A covariance matrix is only positive semidefinite.
+  Here $K$ is positive definite because $\tau^2 > 0$ and the correlations
+  form a positive-semidefinite matrix; the latter is an extra hypothesis of
+  Lemma~\ref{lem:K_posDef}, automatic when $\rho$ really is a correlation
+  matrix.
+\end{remark}
+
+The blend of Chapter~\ref{ch:blend} needs six moments. With
+$\upsilon = K\bb$, so $\upsilon_j = \cov(\hmu, \hmu_j)$, the thesis computes
+them for the linear estimators.
+
+\begin{definition}[Blend moments of the model]\label{def:moments}
+  \lean{Credibility.Model.moments}
+  \leanok
+  \uses{def:K, def:bestZ, def:Model.b}
+  For cohort $j$: $\Var(\hmu_j) = \tau^2 + \sigma_{jj}^2$,
+  $\Var(\hmu) = s^2$, $\Var(\mu_j) = \tau^2$,
+  $\cov(\hmu_j, \hmu) = \upsilon_j$, $\cov(\hmu_j, \mu_j) = \tau^2$ and
+  $\cov(\hmu, \mu_j) = b_j\tau^2$ (§2.4).
+\end{definition}
+
+\begin{theorem}[Credibility for linear estimators]\label{thm:bestZ_linear}
+  \lean{Credibility.Model.bestZ_linear}
+  \leanok
+  \uses{def:moments}
+  \[
+    z_j = \frac{s^2 - \upsilon_j + \tau^2 - b_j\tau^2}{s^2 - 2\upsilon_j + \tau^2 + \sigma_{jj}^2}
+    \qquad\text{\eqth{22}.}
+  \]
+\end{theorem}
+\begin{proof}
+  Substitute Definition~\ref{def:moments} into \eqth{7}.
+\end{proof}
+
+% ---------------------------------------------------------------------------
+\chapter{The best unbiased linear weights}\label{ch:weights}
+% Thesis §2.5, eqs. (23)-(27). Lean: Credibility/Weights.lean, Model.lean
+
+\section{Cohort level: inverse-variance weights}
+
+Minimising $\Var(\hmu_j - \mu_j) = \sum_t a_{jt}^2\sigma_{jt}^2$ subject to
+$\sum_t a_{jt} = 1$ gives inverse-variance weights. The thesis uses a
+Lagrange multiplier; the Lean proof completes the square instead.
+
+\begin{definition}[Inverse-variance weights]\label{def:invVarWeight}
+  \lean{Credibility.invVarWeight}
+  \leanok
+  $a_t = \sigma_t^{-2} / \sum_s \sigma_s^{-2}$ \eqth{23}.
+\end{definition}
+
+\begin{lemma}\label{lem:sum_inv_pos}
+  \lean{Credibility.sum_inv_pos}
+  \leanok
+  If $T \ge 1$ and all $\sigma_t^2 > 0$ then $\sum_s \sigma_s^{-2} > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A nonempty sum of positive terms.
+\end{proof}
+
+\begin{lemma}\label{lem:sum_invVarWeight}
+  \lean{Credibility.sum_invVarWeight}
+  \leanok
+  \uses{def:invVarWeight, lem:sum_inv_pos}
+  Under the same hypotheses, $\sum_t a_t = 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_inv_pos}
+  The numerators sum to the denominator, which is nonzero.
+\end{proof}
+
+\begin{lemma}[Minimal value]\label{lem:invVarWeight_value}
+  \lean{Credibility.invVarWeight_value}
+  \leanok
+  \uses{def:invVarWeight, lem:sum_inv_pos}
+  $\sum_t a_t^2\sigma_t^2 = \bigl(\sum_s \sigma_s^{-2}\bigr)^{-1}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Each term is $\sigma_t^{-2} / (\sum_s \sigma_s^{-2})^2$.
+\end{proof}
+
+\begin{theorem}[Eq.\ (23) is optimal]\label{thm:invVarWeight_optimal}
+  \lean{Credibility.invVarWeight_optimal}
+  \leanok
+  \uses{lem:invVarWeight_value}
+  For any weights $c$ with $\sum_t c_t = 1$,
+  $\sum_t a_t^2\sigma_t^2 \le \sum_t c_t^2\sigma_t^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:invVarWeight_value}
+  $0 \le \sum_t (c_t - a_t)^2\sigma_t^2
+    = \sum_t c_t^2\sigma_t^2 - 2\sum_t c_t a_t\sigma_t^2 + \sum_t a_t^2\sigma_t^2$,
+  and $a_t\sigma_t^2$ is constant in $t$, so the cross term is
+  $2\sum_t c_t a_t\sigma_t^2 = 2(\sum_s\sigma_s^{-2})^{-1}$, twice the
+  minimal value.
+\end{proof}
+
+\section{Portfolio level: GLS weights}
+
+The estimates $\hmu_j$ are correlated, so inverse-variance weighting does
+not apply. Minimising $s^2 = \bb^T K \bb$ subject to $\bu^T\bb = 1$
+($\bu$ the vector of ones) gives generalised least squares weights.
+
+\begin{definition}[GLS weights]\label{def:glsWeight}
+  \lean{Credibility.invTotal, Credibility.glsWeight}
+  \leanok
+  Write $K^{-1}_{**} = \bu^T K^{-1}\bu$ and
+  $\bb = K^{-1}\bu / K^{-1}_{**}$, i.e.\ $b_j = K^{-1}_{j*}/K^{-1}_{**}$
+  (the display before \eqth{24}, and (25)).
+\end{definition}
+
+\begin{lemma}\label{lem:invTotal_pos}
+  \lean{Credibility.invTotal_pos}
+  \leanok
+  \uses{def:glsWeight}
+  If $J \ge 1$ and $K$ is positive definite then $K^{-1}_{**} > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $K^{-1}$ is positive definite and $\bu \ne 0$.
+\end{proof}
+
+\begin{lemma}\label{lem:sum_glsWeight}
+  \lean{Credibility.sum_glsWeight}
+  \leanok
+  \uses{lem:invTotal_pos}
+  Then $\sum_j b_j = 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invTotal_pos}
+  $\sum_j (K^{-1}\bu)_j = K^{-1}_{**}$, which is nonzero.
+\end{proof}
+
+\begin{lemma}\label{lem:glsWeight_eq_smul}
+  \lean{Credibility.glsWeight_eq_smul}
+  \leanok
+  \uses{def:glsWeight}
+  $\bb = (K^{-1}_{**})^{-1}\, K^{-1}\bu$ as vectors.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Definition.
+\end{proof}
+
+\begin{lemma}[$\upsilon = s^2\bu$]\label{lem:mulVec_glsWeight}
+  \lean{Credibility.mulVec_glsWeight}
+  \leanok
+  \uses{lem:glsWeight_eq_smul}
+  If $K$ is positive definite then
+  $\upsilon = K\bb = \bu / K^{-1}_{**}$: every cohort estimate has the same
+  covariance with the portfolio estimate, namely $\Var(\hmu)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:glsWeight_eq_smul}
+  $K$ is invertible, and $K K^{-1}\bu = \bu$.
+\end{proof}
+
+\begin{theorem}[Minimal portfolio variance]\label{thm:glsWeight_value}
+  \lean{Credibility.glsWeight_value}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  If $J \ge 1$ and $K$ is positive definite then
+  $s^2 = \bb^T K\bb = 1/K^{-1}_{**}$ \eqth{24}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $\bb^T\upsilon = (\sum_j b_j)/K^{-1}_{**}$.
+\end{proof}
+
+\begin{theorem}[GLS weights are optimal]\label{thm:glsWeight_optimal}
+  \lean{Credibility.glsWeight_optimal}
+  \leanok
+  \uses{thm:glsWeight_value}
+  If $K$ is positive definite and $\sum_j c_j = 1$ then
+  $\bb^T K\bb \le c^T K c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:glsWeight_value, lem:mulVec_glsWeight}
+  $0 \le (c - \bb)^T K (c - \bb) = c^TKc - 2c^TK\bb + \bb^TK\bb$, using
+  that $K$ is symmetric. By Lemma~\ref{lem:mulVec_glsWeight},
+  $c^TK\bb = (\sum_j c_j)s^2 = s^2 = \bb^TK\bb$.
+\end{proof}
+
+\section{The proposed credibility factor}
+
+\begin{definition}[Portfolio weights of the model]\label{def:Model.b}
+  \lean{Credibility.Model.b, Credibility.Model.s2}
+  \leanok
+  \uses{def:K, def:glsWeight}
+  $b_j$ are the GLS weights of the model's $K$, and $s^2 = 1/K^{-1}_{**}$.
+\end{definition}
+
+\begin{lemma}[The curvature]\label{lem:gap_eq}
+  \lean{Credibility.Model.gap_eq}
+  \leanok
+  \uses{def:moments, lem:mulVec_glsWeight}
+  If $K$ is positive definite then
+  $\Var(\hmu_j - \hmu) = \tau^2 + \sigma_{jj}^2 - s^2$.
+\end{lemma}
+\begin{proof}
+  \uses{lem:mulVec_glsWeight}
+  The denominator of \eqth{22} with $\upsilon_j = s^2$.
+\end{proof}
+
+\begin{theorem}[The proposed credibility factor]\label{thm:bestZ_eq}
+  \lean{Credibility.Model.bestZ_eq}
+  \leanok
+  \uses{thm:bestZ_linear, lem:mulVec_glsWeight, lem:gap_eq}
+  If $K$ is positive definite then
+  \[
+    z_j = \frac{(1-b_j)\tau^2}{\tau^2 + \sigma_{jj}^2 - s^2}
+        = \frac{\cov(\hmu_j - \hmu, \mu_j)}{\Var(\hmu_j - \hmu)}
+    \qquad\text{\eqth{26}.}
+  \]
+\end{theorem}
+\begin{proof}
+  \uses{thm:bestZ_linear, lem:mulVec_glsWeight}
+  Put $\upsilon_j = s^2$ (Lemma~\ref{lem:mulVec_glsWeight}) into
+  Theorem~\ref{thm:bestZ_linear}: the numerator becomes $(1-b_j)\tau^2$
+  and the denominator $\tau^2 + \sigma_{jj}^2 - s^2$.
+\end{proof}
+
+Together, \eqth{23}, (18), (21), (24), (25) and (26) are the proposed model
+summarised in \eqth{27}. The factor has a singularity where
+$\tau^2 + \sigma_{jj}^2 = s^2$, i.e.\ where $\Var(\hmu_j - \hmu) = 0$: then
+$\hmu_j = \hmu$ and every $z_j$ is optimal. (In Lean, division by zero is
+zero, so the formula still typechecks there.)
+
+% ---------------------------------------------------------------------------
+\chapter{The Bühlmann--Straub special case}\label{ch:bs}
+% Thesis §2.6, eqs. (28)-(30). Lean: Credibility/BuhlmannStraub.lean
+
+\begin{definition}[Bühlmann--Straub assumptions]\label{def:bsModel}
+  \lean{Credibility.bsModel}
+  \leanok
+  \uses{def:Model}
+  $\sigma_{jt}^2 = \sigma^2/w_{jt}$ with volumes $w_{jt} > 0$, and
+  $\rho_{ij} = \delta_{ij}$ \eqth{28}. Write $w_{j*} = \sum_t w_{jt}$.
+\end{definition}
+
+\begin{lemma}[Volume weights]\label{lem:bs_a}
+  \lean{Credibility.bs_a}
+  \leanok
+  \uses{def:bsModel, def:sigma2}
+  $a_{jt} = w_{jt}/w_{j*}$ \eqth{29}.
+\end{lemma}
+\begin{proof}
+  $\sigma_{jt}^{-2} = w_{jt}/\sigma^2$; the factor $\sigma^{-2}$ cancels.
+\end{proof}
+
+\begin{lemma}\label{lem:bs_σ2}
+  \lean{Credibility.bs_σ2}
+  \leanok
+  \uses{lem:bs_a}
+  If $T \ge 1$, $\sigma_{jj}^2 = \sigma^2/w_{j*}$ \eqth{30}.
+\end{lemma}
+\begin{proof}
+  \uses{lem:bs_a}
+  $\sum_t (w_{jt}/w_{j*})^2\,\sigma^2/w_{jt} = \sigma^2 w_{j*}/w_{j*}^2$.
+\end{proof}
+
+\begin{lemma}[$K$ is diagonal]\label{lem:bs_K}
+  \lean{Credibility.bs_K}
+  \leanok
+  \uses{lem:bs_σ2, lem:K_apply}
+  If $T \ge 1$, $K = \operatorname{diag}(\tau^2 + \sigma^2/w_{j*})$.
+\end{lemma}
+\begin{proof}
+  \uses{lem:bs_σ2, lem:K_apply}
+  Lemma~\ref{lem:K_apply} with $\rho_{ij} = \delta_{ij}$.
+\end{proof}
+
+\begin{definition}[Classical credibility factor]\label{def:bsZ}
+  \lean{Credibility.bsZ}
+  \leanok
+  $z_j^B = w_{j*}/(w_{j*} + \sigma^2/\tau^2)$, so that
+  $K_{jj} = \tau^2/z_j^B$.
+\end{definition}
+
+\begin{lemma}\label{lem:bs_b}
+  \lean{Credibility.bs_b}
+  \leanok
+  \uses{lem:bs_K, def:bsZ, def:Model.b}
+  If $T \ge 1$, $b_j = z_j^B/z_*^B$ where $z_*^B = \sum_i z_i^B$.
+\end{lemma}
+\begin{proof}
+  \uses{lem:bs_K}
+  $K^{-1} = \operatorname{diag}(z_j^B/\tau^2)$, so $K^{-1}_{j*} = z_j^B/\tau^2$
+  and $K^{-1}_{**} = z_*^B/\tau^2$.
+\end{proof}
+
+\begin{theorem}[Reduction to Bühlmann--Straub]\label{thm:bs_z}
+  \lean{Credibility.bs_z}
+  \leanok
+  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2}
+  If $T \ge 1$ and $J \ge 2$, the proposed factor is $z_j = z_j^B$.
+\end{theorem}
+\begin{proof}
+  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2, lem:K_posDef}
+  $K$ is diagonal with positive entries, hence positive definite. Then
+  $s^2 = \tau^2/z_*^B = (\tau^2 + \sigma_{jj}^2)\,b_j$, so
+  \[
+    z_j = \frac{(1-b_j)\tau^2}{(\tau^2+\sigma_{jj}^2)(1-b_j)}
+        = \frac{\tau^2}{\tau^2+\sigma_{jj}^2} = z_j^B .
+  \]
+  Cancelling $1 - b_j$ needs $b_j < 1$, which holds when $J \ge 2$
+  because every $z_i^B > 0$.
+\end{proof}
+
+\begin{remark}[Finding 2: at least two cohorts]\label{rem:two_cohorts}
+  \uses{thm:bs_z}
+  With $J = 1$ we get $b = 1$ and $s^2 = \tau^2 + \sigma^2$, so
+  \eqth{26} is $0/0$. The thesis never assumes $J \ge 2$, but the
+  cancellation in the last step of §2.6 needs it.
+\end{remark}
+
+% ---------------------------------------------------------------------------
+\chapter{Two cohorts with time-constant weights}\label{ch:two}
+% Thesis §2.7, eqs. (31)-(34). Lean: Credibility/TwoCohorts.lean
+
+With $J = 2$, $w_{jt} = w_j$ and $\sigma_{jt}^2 = \sigma^2/w_j$, we get
+$a_{jt} = 1/T$ and $\sigma_{ij}^2 = \sigma_i\sigma_j$ with
+$\sigma_i = \sigma/(T w_i)$. Write $\rho = \rho_{12}$ and
+$\kappa_i = \sigma_i^2/\tau^2$. The Lean statements avoid square roots:
+$\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
+
+\begin{definition}[Two-cohort quantities]\label{def:two}
+  \lean{Credibility.TwoCohorts.K, Credibility.TwoCohorts.D,
+        Credibility.TwoCohorts.s2, Credibility.TwoCohorts.b1}
+  \leanok
+  \[
+    K = \begin{pmatrix} \sigma_1^2 + \tau^2 & \sigma_1\sigma_2\rho \\
+                        \sigma_1\sigma_2\rho & \sigma_2^2 + \tau^2 \end{pmatrix},
+    \qquad D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho,
+  \]
+  $s^2 = \bigl((\sigma_1^2+\tau^2)(\sigma_2^2+\tau^2) - \sigma_1^2\sigma_2^2\rho^2\bigr)/D$
+  and $b_1 = (\sigma_2^2 + \tau^2 - \sigma_1\sigma_2\rho)/D$.
+\end{definition}
+
+\begin{lemma}\label{lem:D_pos}
+  \lean{Credibility.TwoCohorts.D_pos}
+  \leanok
+  \uses{def:two}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ and $\rho \le 1$ then $D > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $D = (\sigma_1 - \sigma_2)^2 + 2\tau^2 + 2\sigma_1\sigma_2(1 - \rho)$.
+\end{proof}
+
+\begin{theorem}[GLS weights for two cohorts]\label{thm:gls_two}
+  \lean{Credibility.TwoCohorts.gls_two}
+  \leanok
+  \uses{lem:D_pos, def:glsWeight}
+  If moreover $|\rho| < 1$, the GLS weight of cohort 1 is $b_1$ and
+  $1/K^{-1}_{**} = s^2$ (\eqth{31} and the display before it).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  $\det K = (\sigma_1^2+\tau^2)(\sigma_2^2+\tau^2) - \sigma_1^2\sigma_2^2\rho^2 > 0$
+  since $\rho^2 < 1$. Invert $K$ by the adjugate formula; the entries of
+  $K^{-1}\bu$ are $(\sigma_2^2+\tau^2-\sigma_1\sigma_2\rho)/\det K$ and
+  $(\sigma_1^2+\tau^2-\sigma_1\sigma_2\rho)/\det K$, which sum to
+  $D/\det K$.
+\end{proof}
+
+\begin{theorem}[Two-cohort credibility factor]\label{thm:z1_eq}
+  \lean{Credibility.TwoCohorts.z1_eq}
+  \leanok
+  \uses{thm:gls_two}
+  Away from the singularity $\tau^2 + \sigma_1^2 = \sigma_1\sigma_2\rho$,
+  \[
+    z_1 = \frac{(1 - b_1)\tau^2}{\tau^2 + \sigma_1^2 - s^2}
+        = \frac{\tau^2}{\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho}
+        = \frac{1}{1 + \kappa_1 - \sqrt{\kappa_1\kappa_2}\,\rho}
+    \qquad\text{\eqth{32}.}
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  With $A = \sigma_1^2 + \tau^2$ and $c = \sigma_1\sigma_2\rho$:
+  $1 - b_1 = (A - c)/D$ and $A D - \det K = (A - c)^2$, so
+  $\tau^2 + \sigma_1^2 - s^2 = (A - c)^2/D$. Cancel $(A - c)/D$.
+\end{proof}
+
+\begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
+  \lean{Credibility.TwoCohorts.z1_rho_zero}
+  \leanok
+  \uses{thm:z1_eq}
+  At $\rho = 0$, $z_1 = \tau^2/(\tau^2 + \sigma_1^2) = 1/(1 + \kappa_1)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  Immediate.
+\end{proof}
+
+Unlike Bühlmann--Straub, $z_1$ now depends on $\kappa_2$ and $\rho$ too. The
+singularity sits at
+$\rho^* = (\tau^2 + \sigma_1^2)/(\sigma_1\sigma_2) = (1+\kappa_1)/\sqrt{\kappa_1\kappa_2}$.
+
+\begin{theorem}[Sign flip past the singularity]\label{thm:z1_neg_iff}
+  \lean{Credibility.TwoCohorts.z1_neg_iff}
+  \leanok
+  \uses{thm:z1_eq}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ then $z_1 < 0$ iff $\rho > \rho^*$
+  (displays after \eqth{32}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\tau^2 > 0$, so $z_1$ has the sign of its denominator
+  $\sigma_1\sigma_2(\rho^* - \rho)$.
+\end{proof}
+
+\begin{theorem}[When the singularity is reachable]\label{thm:singularity_reachable_iff}
+  \lean{Credibility.TwoCohorts.singularity_reachable_iff}
+  \leanok
+  \uses{def:two}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ then $\rho^* \le 1$ iff
+  $\kappa_2 \ge (1 + \kappa_1)^2/\kappa_1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Both say $(\tau^2 + \sigma_1^2)^2 \le \sigma_1^2\sigma_2^2$, i.e.\
+  $\tau^2 + \sigma_1^2 \le \sigma_1\sigma_2$, as both sides are positive.
+\end{proof}
+
+The thesis shows that $s^2/\tau^2$ \eqth{33} is maximal at $\rho = \rho^*$,
+so $\hmu$ is least accurate there, and proposes clipping
+$\tilde z_i = \max(\min(z_i, 1), 0)$ \eqth{34}. It notes that $z_1 > 1$
+can occur, but not when. The following answers that.
+
+\begin{theorem}[Credibility above one]\label{thm:z1_gt_one_iff}
+  \lean{Credibility.TwoCohorts.z1_gt_one_iff}
+  \leanok
+  \uses{thm:z1_eq}
+  If $\sigma_1, \sigma_2 > 0$ and $\rho < \rho^*$ then
+  $z_1 > 1$ iff $\sigma_1 < \sigma_2\rho$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Below the singularity the denominator $\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho$
+  is positive, so $z_1 > 1$ iff $\sigma_1^2 < \sigma_1\sigma_2\rho$, i.e.\
+  $\sigma_1 < \sigma_2\rho$.
+\end{proof}
+
+\begin{remark}[Finding 3: when $z_1 > 1$]\label{rem:gt_one}
+  \uses{thm:z1_gt_one_iff}
+  This sharpens §2.7. In terms of $\kappa$: $z_1 > 1$ iff
+  $\sqrt{\kappa_1} < \sqrt{\kappa_2}\,\rho$: cohort 1 is the less noisy one
+  and the correlation is strong enough (``noise cancellation''), so the
+  optimal blend overshoots $\hmu_1$. The condition
+  does not involve $\tau^2$: the Lean statement carries the hypothesis
+  $\tau^2 > 0$, but the proof never uses it, so the condition is
+  independent of the between-cohort variance.
+\end{remark}
+
+% ---------------------------------------------------------------------------
+\chapter{The balance property}\label{ch:balance}
+% Thesis §2.9. Lean: Credibility/BuhlmannStraub.lean
+
+Blended estimates are \emph{balanced} if
+$\sum_{j,t} w_{jt}\mu_{jt} = \sum_{j,t} w_{jt}\hmu_j^b$: had the insurer
+charged $\hmu_j^b$ historically, the net result would be zero. With
+volume weights $a_{jt} = w_{jt}/w_{j*}$ this reads
+$\sum_j w_{j*}(1 - z_j)(\hmu_j - \hmu) = 0$. It fails for the proposed model
+in general (the simulation study measures by how much), but holds for
+Bühlmann--Straub.
+
+\begin{theorem}[Bühlmann--Straub is balanced]\label{thm:bs_balance}
+  \lean{Credibility.bs_balance}
+  \leanok
+  \uses{def:bsZ}
+  Let $W_j > 0$, $\kappa > 0$, $z_j = W_j/(W_j + \kappa)$ and
+  $\hmu = \sum_j z_j\hmu_j / \sum_j z_j$, with $J \ge 1$. Then for
+  \emph{any} numbers $\hmu_j$,
+  $\sum_j W_j(1 - z_j)(\hmu_j - \hmu) = 0$.
+\end{theorem}
+\begin{proof}
+  $W_j(1 - z_j) = W_j\kappa/(W_j + \kappa) = \kappa z_j$, so the sum is
+  $\kappa\bigl(\sum_j z_j\hmu_j - z_*\hmu\bigr) = 0$ by the definition of
+  $\hmu$.
+\end{proof}
+
+This holds whether or not the model assumptions \eqth{28} are met: it is
+an identity in the data.
