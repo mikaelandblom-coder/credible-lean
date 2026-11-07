@@ -63,7 +63,16 @@ theorem z1_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
     (hsing : τ2 + σ1 ^ 2 - σ1 * σ2 * ρ ≠ 0) :
     (1 - b1 σ1 σ2 τ2 ρ) * τ2 / (τ2 + σ1 ^ 2 - s2 σ1 σ2 τ2 ρ)
       = τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) := by
-  sorry
+  -- With A = σ₁² + τ², c = σ₁σ₂ρ: 1 - b₁ = (A - c)/D and A·D - det K = (A - c)²,
+  -- so the left side is ((A - c)τ²/D) / ((A - c)²/D).
+  have hD := (D_pos h1 h2 hτ hρ).ne'
+  have h1b : 1 - b1 σ1 σ2 τ2 ρ = (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) / D σ1 σ2 τ2 ρ := by
+    rw [b1, eq_div_iff hD, sub_mul, div_mul_cancel₀ _ hD, D]; ring
+  have hs : τ2 + σ1 ^ 2 - s2 σ1 σ2 τ2 ρ
+      = (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) ^ 2 / D σ1 σ2 τ2 ρ := by
+    rw [s2, eq_div_iff hD, sub_mul, div_mul_cancel₀ _ hD, D]; ring
+  rw [h1b, hs]
+  field_simp
 
 /-- Bühlmann–Straub is recovered at `ρ = 0`. -/
 theorem z1_rho_zero : τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * 0) = τ2 / (τ2 + σ1 ^ 2) := by
