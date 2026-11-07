@@ -121,7 +121,8 @@ theorem bestZ_linear (j : J) :
     (M.moments j).bestZ
       = (M.s2 - (M.K *ᵥ M.b) j + M.τ2 - M.b j * M.τ2)
         / (M.s2 - 2 * (M.K *ᵥ M.b) j + M.τ2 + M.σ2 j j) := by
-  sorry
+  simp only [BlendMoments.bestZ, BlendMoments.gap, moments]
+  ring
 
 /-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
