@@ -13,4 +13,5 @@ import Credibility.UnequalEstimation
 import Credibility.Moments
 import Credibility.UnequalMoments
 import Credibility.OffDiagonal
+import Credibility.Hierarchical
 import Credibility.KMeans

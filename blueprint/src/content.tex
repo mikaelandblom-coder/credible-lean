@@ -1962,6 +1962,100 @@ matrices whose correlations are damped by a common factor $\rho$.
   $\succ 0$ when $\rho < 1$ and the diagonal is positive.
 \end{proof}
 
+\chapter{Extension: a shared group level}\label{ch:hierarchical}
+% Not in the thesis: first bridge to two-level credibility (Finding 6).
+% Lean: Credibility/Hierarchical.lean
+
+Not in the thesis. A first step towards hierarchical credibility
+(Remark~\ref{rem:merge_reading}): the cohort levels $\mu_j$ share a fraction
+$\phi$ of their variance $\tau^2$, so $\operatorname{cov}(\mu_i,\mu_j) = \phi\tau^2$
+for $i \ne j$. The thesis is $\phi = 0$; one common level is $\phi = 1$.
+
+\begin{definition}[Level covariance and $K_\phi$]\label{def:Kphi}
+  \lean{Credibility.Model.levelCov, Credibility.Model.errCov, Credibility.Model.Kφ}
+  \leanok
+  \uses{def:shrinkOffDiag, def:K}
+  The level covariance is $\tau^2 (\mathbf 1\mathbf 1^T)^\phi$, with entries
+  $\tau^2$ on the diagonal and $\phi\tau^2$ off it. The error covariance is
+  $\Sigma_{ij} = \sigma^2_{ij}\rho_{ij}$, and
+  $K_\phi = \tau^2(\mathbf 1\mathbf 1^T)^\phi + \Sigma$.
+\end{definition}
+
+\begin{lemma}[Entries of the level covariance]\label{lem:levelCov_apply}
+  \lean{Credibility.Model.levelCov_apply}
+  \leanok
+  \uses{def:Kphi}
+  $\tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij} = \tau^2$ if $i = j$ and $\phi\tau^2$ otherwise.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Unfold the damping.
+\end{proof}
+
+\begin{lemma}[$\phi = 0$ is the thesis]\label{lem:Kphi_zero}
+  \lean{Credibility.Model.Kφ_zero, Credibility.Model.errCov_eq}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$, then $K_0 = K$ and $\Sigma = K - \tau^2 I$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:K_apply, lem:levelCov_apply}
+  Compare entries with $K_{ij} = \sigma^2_{ij}\rho_{ij} + \tau^2\delta_{ij}$.
+\end{proof}
+
+\begin{lemma}[The error covariance is positive semidefinite]\label{lem:errCov_posSemidef}
+  \lean{Credibility.Model.errCov_posSemidef}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$ and $(\rho_{ij}) \succeq 0$, then $\Sigma \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:K_posDef, lem:K_apply}
+  For every $\varepsilon > 0$, $\Sigma + \varepsilon I$ is the $K$ of the model
+  with $\tau^2 = \varepsilon$, which is positive definite. So
+  $x^T\Sigma x + \varepsilon\lVert x\rVert^2 > 0$ for all $\varepsilon > 0$;
+  let $\varepsilon \to 0$.
+\end{proof}
+
+\begin{theorem}[$K_\phi$ is positive definite]\label{thm:Kphi_posDef}
+  \lean{Credibility.Model.Kφ_posDef}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then
+  $K_\phi \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:shrinkOffDiag_posDef, lem:errCov_posSemidef}
+  $\mathbf 1\mathbf 1^T \succeq 0$ has unit diagonal, so
+  $(\mathbf 1\mathbf 1^T)^\phi \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef},
+  and $\tau^2 > 0$. Adding $\Sigma \succeq 0$ keeps it positive definite.
+\end{proof}
+
+\begin{lemma}[One common level]\label{lem:Kphi_one}
+  \lean{Credibility.Model.Kφ_one}
+  \leanok
+  \uses{def:Kphi}
+  $K_1 = \Sigma + \tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply}
+  Compare entries.
+\end{proof}
+
+\begin{remark}[The rank-one term of Finding 5]\label{rem:Kphi_rankOne}
+  \uses{lem:Kphi_one, lem:Kphi_zero, rem:equalCov}
+  In general $K_\phi = \Sigma + (1-\phi)\tau^2 I + \phi\tau^2\mathbf 1\mathbf 1^T$:
+  the thesis $K$ with $\tau^2$ replaced by $(1-\phi)\tau^2$, plus a rank-one
+  term along $\mathbf 1$. This is the structure behind Finding~5: a rank-one
+  term along $\mathbf 1$ does not change the direction of $K^{-1}\mathbf 1$.
+  At $\phi = 1$ the diagonal part is gone and $K_1$ is singular whenever
+  $\Sigma$ is, so positive definiteness needs $\phi < 1$ in general.
+\end{remark}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean
