@@ -199,7 +199,19 @@ theorem a_special (j : J) (t : T) : M.a j t = w j t / wtot w j := by
 /-- Eq. (37): `σ²ᵢⱼρᵢⱼ = (Sᵢⱼ/(wᵢ*wⱼ*)) σᵢσⱼρᵢⱼ`. -/
 theorem σ2ρ_special (i j : J) :
     M.σ2 i j * M.ρ i j = sqrtSum w i j / (wtot w i * wtot w j) * (sig i * sig j * M.ρ i j) := by
-  sorry
+  -- `aᵢₜσᵢₜ = σᵢ√wᵢₜ/wᵢ*`.
+  have key : ∀ k t, M.a k t * M.σ k t = sig k * √(w k t) / wtot w k := fun k t => by
+    rw [M.a_special sig hw hσ, hσ]
+    have := Real.sqrt_pos.mpr (hw k t)
+    rw [← Real.sq_sqrt (hw k t).le]
+    field_simp
+    rw [Real.sqrt_sq (Real.sqrt_nonneg _)]; ring
+  simp only [σ2, sqrtSum, sum_mul, div_mul_eq_mul_div, sum_div]
+  refine sum_congr rfl fun t _ => ?_
+  rw [Real.sqrt_mul (hw i t).le,
+    show M.a i t * M.a j t * M.σ i t * M.σ j t = (M.a i t * M.σ i t) * (M.a j t * M.σ j t) by ring,
+    key, key]
+  ring
 
 /-- Eq. (39), first line: `σ²ᵢⱼρᵢⱼ^` is unbiased. Needs `T ≥ 2`: with one
 period the denominator is `0`. -/
