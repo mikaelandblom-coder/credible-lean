@@ -70,6 +70,20 @@ theorem merge_iff {v1 v2 c τ2 d : ℝ} (hτ : 0 < τ2) (hV : 0 < V v1 v2 c)
     (hQ : 0 < Q v1 v2 c) (hd : 0 ≤ d) :
     excessLoss v1 v2 c d 0 < excessLoss v1 v2 c d (2 * τ2)
       ↔ d * (V v1 v2 c + τ2) < V v1 v2 c * τ2 := by
-  sorry
+  -- ΔL(x) ∝ (1/(V+x) - t)² with t = 1/(V+d). For a = 1/V > b = 1/(V+2τ²),
+  -- (a - t)² < (b - t)² ⟺ t > (a + b)/2 ⟺ d(V + τ²) < Vτ².
+  have hd' : 0 < V v1 v2 c + d := by linarith
+  have h2 : 0 < V v1 v2 c + 2 * τ2 := by linarith
+  rw [excessLoss_eq hd'.ne' (by simpa using hV.ne'), excessLoss_eq hd'.ne' h2.ne',
+    mul_lt_mul_iff_of_pos_left (mul_pos hQ hd'), add_zero, ← sub_pos, ← sub_pos (a := _ * τ2)]
+  have key : (1 / (V v1 v2 c + 2 * τ2) - 1 / (V v1 v2 c + d)) ^ 2
+      - (1 / V v1 v2 c - 1 / (V v1 v2 c + d)) ^ 2
+      = 4 * τ2 * (V v1 v2 c * τ2 - d * (V v1 v2 c + τ2))
+        / (V v1 v2 c ^ 2 * (V v1 v2 c + 2 * τ2) ^ 2 * (V v1 v2 c + d)) := by
+    field_simp
+    ring
+  have hden : 0 < V v1 v2 c ^ 2 * (V v1 v2 c + 2 * τ2) ^ 2 * (V v1 v2 c + d) := by positivity
+  rw [key, div_pos_iff_of_pos_right hden]
+  exact mul_pos_iff_of_pos_left (by positivity)
 
 end Credibility.Merging

@@ -1,7 +1,8 @@
 # When does merging two cohorts lower the credibility MSE?
 
 A note on the open question in FINDINGS item 6 and README "Later goals →
-Choosing cohorts from the data". On paper only, no Lean yet. Numbers are
+Choosing cohorts from the data". Result A (excess-loss identity and
+`merge_iff`) is in [`Credibility/Merging.lean`](../Credibility/Merging.lean). Numbers are
 checked by [`merging_cohorts.py`](merging_cohorts.py).
 
 **Short answer.** It depends on how far apart the pair's true levels are,

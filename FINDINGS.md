@@ -53,7 +53,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    lower the total MSE? Probably it depends on the data, not on `zᵢ = zⱼ`.
    Natural setting: two-level (hierarchical) credibility, cohorts nested in
    groups (Bühlmann & Gisler, ch. 6). See README "Later goals".
-   *Partly answered (on paper, `notes/merging-cohorts.md`).* With
+   *Partly answered (`notes/merging-cohorts.md`; the pair-alone result is
+   proved in `Credibility/Merging.lean`, `merge_iff`).* With
    `d = E(μ₁-μ₂)²` and `V = Var(μ̂₁-μ̂₂) = σ₁² + σ₂² - 2σ₁σ₂ρ`, for a pair
    on its own (§2.7, `μ` estimated) merging lowers the total MSE iff
    `d < Vτ²/(V+τ²)`, i.e. `1/d > 1/V + 1/τ²`. Correlation enters only via
