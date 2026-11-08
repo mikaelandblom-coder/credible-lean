@@ -58,7 +58,9 @@ theorem gls_two (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1) :
   · rw [glsWeight, htot, hv, b1]; simp; field_simp
   · rw [htot, s2, ← hdet_def]; field_simp
 
-/-- Eq. (32) and the display before it. -/
+/-- Eq. (32) and the display before it. For `|ρ| < 1` this is the case `J = 2`
+of `Core.bestZ_of_equalCov` with `c = σ₁σ₂ρ`; it is proved directly since it is an
+algebraic identity that needs only `ρ ≤ 1`, not `K ≻ 0` (e.g. `ρ = -3`). -/
 theorem z1_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
     (hsing : τ2 + σ1 ^ 2 - σ1 * σ2 * ρ ≠ 0) :
     (1 - b1 σ1 σ2 τ2 ρ) * τ2 / (τ2 + σ1 ^ 2 - s2 σ1 σ2 τ2 ρ)
