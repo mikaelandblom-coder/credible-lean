@@ -2056,6 +2056,149 @@ for $i \ne j$. The thesis is $\phi = 0$; one common level is $\phi = 1$.
   $\Sigma$ is, so positive definiteness needs $\phi < 1$ in general.
 \end{remark}
 
+\section{The shared level drops out of credibility}\label{sec:hier_bridge2}
+
+The remark above, proved: a rank-one term along $\mathbf 1$ moves neither the
+GLS weights nor the credibility factors. Write $\phi\tau^2 = c$ and let
+$M_\phi$ be the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
+
+\begin{lemma}[Inverse with a rank-one term along $\mathbf 1$]\label{lem:Kinv_one_add_rankOne}
+  \lean{Credibility.Kinv_one_add_rankOne}
+  \leanok
+  \uses{def:glsWeight}
+  If $K$ and $K + c\mathbf 1\mathbf 1^T$ are positive definite, then
+  $1 + c\,\mathbf 1^TK^{-1}\mathbf 1 > 0$ and
+  $(K + c\mathbf 1\mathbf 1^T)^{-1}\mathbf 1
+    = K^{-1}\mathbf 1 / (1 + c\,\mathbf 1^TK^{-1}\mathbf 1)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invTotal_pos}
+  With $w = K^{-1}\mathbf 1$ and $S = \mathbf 1^Tw$,
+  $(K + c\mathbf 1\mathbf 1^T)w = (1 + cS)\mathbf 1$. Positivity:
+  $w^T(K + c\mathbf 1\mathbf 1^T)w = (1+cS)S > 0$ and $S > 0$.
+\end{proof}
+
+\begin{theorem}[Rank-one invariance of the GLS weights]\label{thm:glsWeight_add_rankOne}
+  \lean{Credibility.glsWeight_add_rankOne, Credibility.invTotal_inv_add_rankOne}
+  \leanok
+  \uses{def:glsWeight}
+  Under the same hypotheses, $b(K + c\mathbf 1\mathbf 1^T) = b(K)$, and (with
+  $J \ne \emptyset$) $s^2(K + c\mathbf 1\mathbf 1^T) = s^2(K) + c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Kinv_one_add_rankOne, lem:invTotal_pos}
+  The factor $1/(1+cS)$ cancels in $b = K^{-1}\mathbf 1/\mathbf 1^TK^{-1}\mathbf 1$,
+  and $(1+cS)/S = 1/S + c$.
+\end{proof}
+
+\begin{definition}[Shifting the blend moments]\label{def:shift}
+  \lean{Credibility.BlendMoments.shift}
+  \leanok
+  \uses{def:errVar}
+  Add $c$ to all six second moments of the blend: what a common component
+  of variance $c$ in $\hmu_j$, $\hmu$ and $\mu_j$ does.
+\end{definition}
+
+\begin{lemma}[A common component cancels]\label{lem:shift}
+  \lean{Credibility.BlendMoments.errVar_shift, Credibility.BlendMoments.gap_shift,
+    Credibility.BlendMoments.bestZ_shift}
+  \leanok
+  \uses{def:shift, def:bestZ}
+  Shifting leaves the error variance (for every $z$), the curvature and
+  $z^\ast$ unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  In $z\hmu_j + (1-z)\hmu - \mu_j$ the common part has coefficient
+  $z + (1-z) - 1 = 0$.
+\end{proof}
+
+\begin{lemma}[$K_\phi$ is a thesis $K$ plus a rank-one term]\label{lem:Kphi_eq}
+  \lean{Credibility.Model.withLevel, Credibility.Model.levelCov_eq, Credibility.Model.Kφ_eq}
+  \leanok
+  \uses{def:Kphi, def:K}
+  $\tau^2(\mathbf 1\mathbf 1^T)^\phi = (1-\phi)\tau^2 I + \phi\tau^2\mathbf 1\mathbf 1^T$,
+  so for $T \ge 1$ and $\phi < 1$,
+  $K_\phi = K(M_\phi) + \phi\tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply, lem:Kphi_zero}
+  Compare entries; then $\Sigma = K(M_\phi) - (1-\phi)\tau^2 I$ by
+  Lemma~\ref{lem:Kphi_zero}, since $\Sigma$ does not involve $\tau^2$.
+\end{proof}
+
+\begin{theorem}[Weights and portfolio variance with a shared level]\label{thm:glsWeight_Kphi}
+  \lean{Credibility.Model.glsWeight_Kφ, Credibility.Model.s2_Kφ}
+  \leanok
+  \uses{lem:Kphi_eq, def:Model.b}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then
+  $b(K_\phi) = b(M_\phi)$ and $s^2(K_\phi) = s^2(M_\phi) + \phi\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Kphi_eq, thm:glsWeight_add_rankOne, thm:Kphi_posDef, lem:K_posDef}
+  Theorem~\ref{thm:glsWeight_add_rankOne} with $K = K(M_\phi)$ and $c = \phi\tau^2$.
+\end{proof}
+
+\begin{definition}[Blend moments with a shared level]\label{def:momentsPhi}
+  \lean{Credibility.Model.momentsφ}
+  \leanok
+  \uses{def:Kphi, def:errVar, def:glsWeight}
+  As Definition~\ref{def:moments}, with $b$ and $s^2$ from $K_\phi$,
+  $\cov(\hmu_j,\hmu) = (K_\phi b)_j$ and
+  $\cov(\hmu,\mu_j) = \sum_i b_i\cov(\mu_i,\mu_j)
+    = (\tau^2(\mathbf 1\mathbf 1^T)^\phi b)_j$.
+\end{definition}
+
+\begin{theorem}[The shared level drops out]\label{thm:momentsPhi}
+  \lean{Credibility.Model.momentsφ_eq, Credibility.Model.errVar_momentsφ,
+    Credibility.Model.bestZ_momentsφ}
+  \leanok
+  \uses{def:momentsPhi, def:shift, def:moments}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, the blend moments
+  with a shared level are those of $M_\phi$ shifted by $\phi\tau^2$. Hence the
+  error variance of every blend, and the best credibility factor, are those of
+  the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:glsWeight_Kphi, lem:mulVec_glsWeight, lem:sum_glsWeight, lem:Kphi_eq,
+    thm:Kphi_posDef, lem:K_posDef, lem:shift}
+  By Theorem~\ref{thm:glsWeight_Kphi},
+  $\cov(\hmu,\mu_j) = \phi\tau^2 + (1-\phi)\tau^2 b_j$ (using $\sum b_i = 1$), and
+  $\cov(\hmu_j,\hmu) = s^2(K_\phi) = s^2(M_\phi) + \phi\tau^2$. The other moments
+  are $\tau^2 = (1-\phi)\tau^2 + \phi\tau^2$ plus terms without $\tau^2$.
+  Then Lemma~\ref{lem:shift}.
+\end{proof}
+
+\begin{theorem}[Eq.\ (26) with a shared level]\label{thm:bestZ_phi_eq}
+  \lean{Credibility.Model.bestZ_φ_eq}
+  \leanok
+  \uses{def:momentsPhi}
+  Under the same hypotheses, with $b$ and $s^2$ from $K_\phi$,
+  \[
+    z_j = \frac{(1-b_j)(1-\phi)\tau^2}{(1-\phi)\tau^2 + \sigma^2_{jj} - (s^2 - \phi\tau^2)}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:momentsPhi, thm:bestZ_eq, thm:glsWeight_Kphi, lem:K_posDef}
+  Theorem~\ref{thm:bestZ_eq} for $M_\phi$, rewritten with
+  Theorem~\ref{thm:glsWeight_Kphi}.
+\end{proof}
+
+\begin{remark}[Reading]\label{rem:hier_reading}
+  \uses{thm:momentsPhi}
+  Credibility only sees the non-shared part $(1-\phi)\tau^2$ of the level
+  variance: the shared component enters $\hmu_j$, $\hmu$ and $\mu_j$ with
+  coefficient $1$ and cancels in the error of every blend. Not yet proved: the
+  §2.8 estimator of $\tau^2$, built from deviations between cohorts, should
+  then estimate $(1-\phi)\tau^2$, so plugging it in would already be right.
+\end{remark}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean
