@@ -67,6 +67,32 @@ moments are assumed). Never add a distributional assumption.
   upstream via a PR to the public repo. Tell the owner what it is and
   where it would go, and open the PR once they agree.
 
+## Architecture (avoiding proof bloat)
+Agreed 2026-11-08. Prove each fact once, at the most general level that
+still reads like the thesis; special cases are corollaries.
+- Three layers: **Core** (results that only need a positive definite `K` and
+  τ²: optimal weights, `bestZ`, GLS, MSE of the blend, balance); **models**
+  (`Model`, `Unequal`, future extensions: build `K`, prove `K.PosDef`, take
+  the Core results as one-line corollaries); **moments** (one generic
+  covariance lemma for linear combinations; each model supplies only its
+  weight vectors).
+- `Model` is `Unequal` with `obs j = univ`: `Model` results with an `Unequal`
+  twin should be proved from it (refactor in progress).
+- Thesis-facing theorems keep their exact statements and docstrings. Only the
+  proof becomes `simpa using <general result>`. In `content.tex`, `\uses{}`
+  points special cases at the general result.
+- Rule of three: generalize when a third instance of a pattern appears, not
+  before. Don't go more abstract than the `K` level (e.g. L² projections):
+  the blueprint must stay readable as actuarial math.
+- New extension: first ask which existing general result it instantiates.
+  Prove only what is genuinely new: its `K`, its positive definiteness, and
+  its moments.
+- Planned tooling: `progress.py` lists theorem names that appear in several
+  namespaces (the refactoring backlog), and a check that theorems tagged as
+  corollaries really use their general version.
+- Refactors are done in a dedicated chat, one file at a time, with
+  `lake build` passing after each file.
+
 ## Blueprint
 `blueprint/src/content.tex` is a condensed §2 of `thesis/original/main.tex`
 (`leanblueprint`; `\lean{}`/`\uses{}`, dependency graph, `FINDINGS.md` items
