@@ -1381,3 +1381,73 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   cohorts are also observed outside it: then $D_{ij} > 0$. This sharpens the
   $T \ge 2$ of Finding~7, where $\omega_i = \omega_j = 1$.
 \end{remark}
+
+\section{Diagonal $K$, equal covariances and balance}
+
+\begin{theorem}[Diagonal $K$]\label{thm:U_diag}
+  \lean{Credibility.Unequal.σ2_self_nonneg, Credibility.Unequal.K_eq_diagonal,
+        Credibility.Unequal.Kinv_one_of_diag, Credibility.Unequal.b_of_diag,
+        Credibility.Unequal.bestZ_of_diag}
+  \leanok
+  \uses{lem:U_K_apply, thm:U_bestZ_eq}
+  If $\sigma^2_{ij}\rho_{ij} = 0$ for all $i \ne j$, then
+  $K = \operatorname{diag}(\tau^2 + \sigma^2_{jj})$,
+  $b_j \propto (\tau^2 + \sigma^2_{jj})^{-1}$ and, for $J \ge 2$,
+  $z_j = \tau^2/(\tau^2 + \sigma^2_{jj})$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Invert the diagonal. With $V = \sum_i (\tau^2+\sigma^2_{ii})^{-1}$ and
+  $d_j = \tau^2 + \sigma^2_{jj}$, \eqth{26} is
+  $(1 - d_j^{-1}/V)\tau^2/(d_j - V^{-1}) = \tau^2/d_j$, using
+  $V > d_j^{-1}$ ($J \ge 2$).
+\end{proof}
+
+\begin{theorem}[Equal covariances with a disjoint pair]\label{thm:U_equalCov}
+  \lean{Credibility.Unequal.equalCov_eq_zero, Credibility.Unequal.b_of_equalCov,
+        Credibility.Unequal.bestZ_of_equalCov}
+  \leanok
+  \uses{lem:U_disjoint, thm:U_diag}
+  If $\sigma^2_{ij}\rho_{ij} = c$ for all $i \ne j$ and some two cohorts share
+  no period, then $c = 0$; so $b_j \propto (\tau^2 + \sigma^2_{jj} - c)^{-1}$
+  and $z_j = \tau^2/(\tau^2+\sigma^2_{jj}-c)$ as in
+  Theorems~\ref{thm:b_eq_of_equalCov} and~\ref{thm:bestZ_of_equalCov}, with
+  $c = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The disjoint pair has $\sigma^2_{ij} = 0$; then Theorem~\ref{thm:U_diag}.
+\end{proof}
+
+\begin{theorem}[Balance with unequal lengths]\label{thm:U_balance}
+  \lean{Credibility.Unequal.σ2_bs, Credibility.Unequal.bestZ_bs,
+        Credibility.Unequal.b_bs, Credibility.Unequal.balance,
+        Credibility.Unequal.balance_total}
+  \leanok
+  \uses{thm:U_diag, lem:U_special, thm:bs_balance}
+  Let $\sigma_{jt} = \sigma/\sqrt{w_{jt}}$ and $\rho_{ij} = \delta_{ij}$, with
+  $w_{j*} = \sum_{t\in T_j} w_{jt}$ and $\kappa = \sigma^2/\tau^2$. Then
+  $\sigma^2_{jj} = \sigma^2/w_{j*}$, $z_j = w_{j*}/(w_{j*}+\kappa)$,
+  $b_j = z_j/z_*$, and for $J \ge 2$ and any data
+  \[
+    \sum_j w_{j*}(1 - z_j)(\hmu_j - \hmu) = 0,\qquad
+    \sum_j\sum_{t\in T_j} w_{jt}\mu_{jt} = \sum_j\sum_{t\in T_j} w_{jt}\hmu_j^b .
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  $S_{jj} = w_{j*}$ in Lemma~\ref{lem:U_special} gives $\sigma^2_{jj}$;
+  Theorem~\ref{thm:U_diag} gives $z_j$ and $b_j$, and the balance is
+  Theorem~\ref{thm:bs_balance} with $W_j = w_{j*}$. It only uses
+  $w_{j*}(1-z_j) = \kappa z_j$ per cohort, so which periods enter
+  $w_{j*}$ does not matter.
+\end{proof}
+
+\begin{remark}[Finding 10: balance survives unequal lengths]\label{rem:unequal_balance}
+  \uses{thm:U_balance, thm:U_equalCov}
+  Bühlmann--Straub stays balanced when each cohort has its own observation
+  periods: both sides of the balance equation see only observed cells, and
+  $w_{j*}$ is the cohort's own observed volume. Equal covariances are less
+  flexible than in Finding~5: as soon as two cohorts share no period, the
+  common covariance must be $0$.
+\end{remark}

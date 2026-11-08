@@ -48,9 +48,9 @@ The optimality proof of (23) is per cohort, so it applies verbatim to `Tⱼ`.
 | `K_posDef` | carries over, **weaker hypothesis** | see §3 |
 | GLS weights (24)–(25), `b`, `s²` | verbatim | `Weights.lean` is generic in `K` |
 | eqs. (22), (26) (`bestZ_eq`) | verbatim | the blend only sees `K`, `σ²ⱼⱼ`, `τ²` |
-| equal covariances (Finding 5) | carries over | but pairs with no overlap have covariance `0`, so "all `σ²ᵢⱼρᵢⱼ = c`" with some disjoint pair forces `c = 0`, i.e. Bühlmann–Straub-like weights |
+| equal covariances (Finding 5) | carries over | but pairs with no overlap have covariance `0`, so "all `σ²ᵢⱼρᵢⱼ = c`" with some disjoint pair forces `c = 0`, i.e. Bühlmann–Straub-like weights (`equalCov_eq_zero`, `b_of_equalCov`, `bestZ_of_equalCov`) |
 | §2.8 estimators | carry over with a new count | see §4 |
-| balance (§2.9) | not looked at yet | |
+| balance (§2.9) | carries over | see §5 |
 
 Back to the thesis: with `Tⱼ = T` for all `j`, `a`, `σ²` and `K` are the
 thesis ones (`Unequal.K_eq_of_full`).
@@ -130,9 +130,24 @@ cell outside `Tⱼ`, `Unequal.Observed f` says `f` depends only on the
 observed cells, and `KHat_observed` checks it for `K̂`. The expectations then
 only involve `K̄ᵢⱼᵗˢ` with `t ∈ Tᵢ`, `s ∈ Tⱼ`.
 
-## 5. Open / next
+## 5. Balance (§2.9)
+
+Bühlmann–Straub case: `σⱼₜ = σ/√wⱼₜ` (same `σ` for all cohorts) and
+`ρᵢⱼ = δᵢⱼ`. Then `K` is diagonal with `σ²ⱼⱼ = σ²/wⱼ*`, `wⱼ* = Σ_{t∈Tⱼ} wⱼₜ`,
+so `zⱼ = wⱼ*/(wⱼ* + κ)`, `κ = σ²/τ²`, and `bⱼ = zⱼ/z*`. The thesis argument
+is per cohort, `wⱼ*(1 − zⱼ) = κzⱼ`, so
+
+    Σⱼ wⱼ*(1 − zⱼ)(μ̂ⱼ − μ̂) = κ(Σⱼ zⱼμ̂ⱼ − z*μ̂) = 0
+
+for any data, whatever periods each `wⱼ*` is summed over. In the original
+form: `Σⱼ Σ_{t∈Tⱼ} wⱼₜ μⱼₜ = Σⱼ Σ_{t∈Tⱼ} wⱼₜ μ̂ⱼᵇ`; only observed cells
+enter both sides. Lean (proved): `σ2_bs`, `bestZ_bs`, `b_bs`, `balance`,
+`balance_total` (needs `J ≥ 2`, as `bs_z`). More generally, any pattern with
+no covariance between distinct cohorts gives `zⱼ = τ²/(τ² + σ²ⱼⱼ)`
+(`bestZ_of_diag`).
+
+## 6. Open / next
 
 - Which pairs need `ρᵢⱼ`: only overlapping ones. A natural follow-up is a
   model where `ρ` itself is only given on overlapping pairs (a partial
   correlation table), which the block hypothesis of §3 already allows.
-- Balance (§2.9) with unequal lengths.

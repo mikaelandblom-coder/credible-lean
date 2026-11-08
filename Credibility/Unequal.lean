@@ -1,4 +1,5 @@
 import Credibility.Estimation
+import Credibility.BuhlmannStraub
 
 /-!
 # Cohort-dependent series lengths (extension, not in the thesis)
@@ -381,6 +382,8 @@ theorem den_of_overlap_singleton (hw : ∀ j t, 0 < w j t) {i j : J} {t : T}
   rw [hsq]
   ring
 
+section Special
+
 variable {w} (sig : J → ℝ) (hw : ∀ j t, 0 < w j t) (hσ : ∀ j t, M.σ j t = sig j / √(w j t))
 include hw hσ
 
@@ -596,6 +599,194 @@ theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
   simp only [overlap, inter_self]
   refine sum_congr rfl fun t _ => ?_
   rw [Real.sqrt_mul_self (hw j t).le]; ring
+
+end Special
+
+/-! ### Diagonal `K`: equal covariances (Finding 5) and Bühlmann–Straub -/
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- `σ²ⱼⱼ = Σ_{t∈Tⱼ} (aⱼₜσⱼₜ)² ≥ 0`. -/
+lemma σ2_self_nonneg (j : J) : 0 ≤ M.σ2 j j :=
+  sum_nonneg fun t _ => by
+    rw [show M.a j t * M.a j t * M.σ j t * M.σ j t = (M.a j t * M.σ j t) ^ 2 by ring]
+    exact sq_nonneg _
+
+omit [Fintype J] [Fintype T] in
+/-- If distinct cohorts never covary, `K = diag(τ² + σ²ⱼⱼ)`. -/
+theorem K_eq_diagonal (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) :
+    M.K = diagonal fun j => M.τ2 + M.σ2 j j := by
+  ext i j
+  rw [M.K_apply, diagonal_apply]
+  by_cases h : i = j
+  · subst h; simp [M.ρ_self, add_comm]
+  · simp [h0 i j h, h]
+
+omit [Fintype T] in
+/-- For diagonal `K`, `K⁻¹u = (τ² + σ²ⱼⱼ)⁻¹`. -/
+theorem Kinv_one_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) :
+    M.K⁻¹ *ᵥ 1 = fun j => (M.τ2 + M.σ2 j j)⁻¹ := by
+  have hd : ∀ j, M.τ2 + M.σ2 j j ≠ 0 := fun j =>
+    (add_pos_of_pos_of_nonneg M.τ2_pos (M.σ2_self_nonneg j)).ne'
+  have hinv : (diagonal fun j => M.τ2 + M.σ2 j j)⁻¹ = diagonal fun j => (M.τ2 + M.σ2 j j)⁻¹ := by
+    refine inv_eq_left_inv ?_
+    rw [diagonal_mul_diagonal]
+    simp only [inv_mul_cancel₀ (hd _), diagonal_one]
+  rw [M.K_eq_diagonal h0, hinv]
+  ext j
+  simp [mulVec_diagonal]
+
+omit [Fintype T] in
+/-- For diagonal `K`, `bⱼ = (τ² + σ²ⱼⱼ)⁻¹ / Σᵢ (τ² + σ²ᵢᵢ)⁻¹`. -/
+theorem b_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) (j : J) :
+    M.b j = (M.τ2 + M.σ2 j j)⁻¹ / ∑ i, (M.τ2 + M.σ2 i i)⁻¹ := by
+  rw [b, glsWeight, invTotal, M.Kinv_one_of_diag h0, one_dotProduct]
+
+omit [Fintype T] in
+/-- For diagonal `K` and `J ≥ 2`, `zⱼ = τ²/(τ² + σ²ⱼⱼ)`. -/
+theorem bestZ_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0)
+    (hJ : 1 < Fintype.card J) (j : J) :
+    (M.moments j).bestZ = M.τ2 / (M.τ2 + M.σ2 j j) := by
+  have hd : ∀ j, 0 < M.τ2 + M.σ2 j j := fun j =>
+    add_pos_of_pos_of_nonneg M.τ2_pos (M.σ2_self_nonneg j)
+  have hpd : M.K.PosDef := by rw [M.K_eq_diagonal h0, posDef_diagonal_iff]; exact hd
+  set V := ∑ i, (M.τ2 + M.σ2 i i)⁻¹
+  have hs2 : M.s2 = V⁻¹ := by rw [s2, invTotal, M.Kinv_one_of_diag h0, one_dotProduct]
+  -- `J ≥ 2`: `V > (τ² + σ²ⱼⱼ)⁻¹`, so there is no `0/0`.
+  have hV : (M.τ2 + M.σ2 j j)⁻¹ < V := by
+    obtain ⟨i, hij⟩ := Fintype.exists_ne_of_one_lt_card hJ j
+    change _ < ∑ i, _
+    rw [← add_sum_erase _ _ (mem_univ j)]
+    exact lt_add_of_pos_right _
+      (sum_pos (fun k _ => inv_pos.mpr (hd k)) ⟨i, mem_erase.mpr ⟨hij, mem_univ i⟩⟩)
+  rw [M.bestZ_eq hpd, M.b_of_diag h0, hs2, show ∑ x, (M.τ2 + M.σ2 x x)⁻¹ = V from rfl]
+  have hdj := (hd j).ne'
+  have hV0 : 0 < V := (inv_pos.mpr (hd j)).trans hV
+  have hne : V - (M.τ2 + M.σ2 j j)⁻¹ ≠ 0 := (sub_pos.mpr hV).ne'
+  have hne' : M.τ2 + M.σ2 j j - V⁻¹ ≠ 0 := by
+    rw [show M.τ2 + M.σ2 j j - V⁻¹ = (M.τ2 + M.σ2 j j) * (V - (M.τ2 + M.σ2 j j)⁻¹) / V by
+      field_simp]
+    exact div_ne_zero (mul_ne_zero hdj hne) hV0.ne'
+  rw [div_eq_div_iff hne' hdj]
+  field_simp
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- Finding 5 with unequal lengths: if all distinct pairs have the same covariance
+`σ²ᵢⱼρᵢⱼ = c` and some two cohorts share no period, then `c = 0`. -/
+theorem equalCov_eq_zero (c : ℝ) (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) {i k : J}
+    (hik : i ≠ k) (hdisj : Disjoint (M.obs i) (M.obs k)) : c = 0 := by
+  rw [← hc i k hik, M.σ2_eq_zero_of_disjoint hdisj, zero_mul]
+
+omit [Fintype T] in
+/-- …so the equal-covariance weights are `bⱼ ∝ (τ² + σ²ⱼⱼ - c)⁻¹` with `c = 0`. -/
+theorem b_of_equalCov (c : ℝ) (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) {i k : J}
+    (hik : i ≠ k) (hdisj : Disjoint (M.obs i) (M.obs k)) (j : J) :
+    M.b j = (M.τ2 + M.σ2 j j - c)⁻¹ / ∑ i, (M.τ2 + M.σ2 i i - c)⁻¹ := by
+  obtain rfl := M.equalCov_eq_zero c hc hik hdisj
+  simp only [sub_zero]
+  exact M.b_of_diag hc j
+
+omit [Fintype T] in
+/-- …and `zⱼ = τ²/(τ² + σ²ⱼⱼ - c)`, eq. (32) with `σ₁σ₂ρ` replaced by `c = 0`. The
+disjoint pair already gives `J ≥ 2`. -/
+theorem bestZ_of_equalCov (c : ℝ) (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) {i k : J}
+    (hik : i ≠ k) (hdisj : Disjoint (M.obs i) (M.obs k)) (j : J) :
+    (M.moments j).bestZ = M.τ2 / (M.τ2 + M.σ2 j j - c) := by
+  obtain rfl := M.equalCov_eq_zero c hc hik hdisj
+  rw [sub_zero]
+  exact M.bestZ_of_diag hc (Fintype.one_lt_card_iff.mpr ⟨i, k, hik⟩) j
+
+/-! ### Balance (§2.9) with unequal lengths -/
+
+section Balance
+
+variable {w} (s : ℝ) (hw : ∀ j t, 0 < w j t) (hσ : ∀ j t, M.σ j t = s / √(w j t))
+  (hρ : ∀ i j, M.ρ i j = if i = j then 1 else 0)
+include hw hσ hρ
+
+omit [Fintype J] [DecidableEq J] [Fintype T] hρ in
+/-- Bühlmann–Straub with unequal lengths, eq. (30): `σ²ⱼⱼ = s²/wⱼ*`, `wⱼ* = Σ_{t∈Tⱼ} wⱼₜ`. -/
+theorem σ2_bs (j : J) : M.σ2 j j = s ^ 2 / M.wtot w j := by
+  have h := M.σ2ρ_special (fun _ => s) hw hσ j j
+  have hS : M.sqrtSum w j j = M.wtot w j := by
+    simp only [sqrtSum, overlap, inter_self]
+    exact sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
+  have hW : 0 < M.wtot w j := sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  rw [M.ρ_self, mul_one, mul_one, hS] at h
+  rw [h]
+  field_simp
+
+omit [Fintype T] in
+/-- The Bühlmann–Straub factor is the proposed one: `zⱼ = wⱼ*/(wⱼ* + κ)`, `κ = s²/τ²`. -/
+theorem bestZ_bs (hJ : 1 < Fintype.card J) (j : J) :
+    (M.moments j).bestZ = M.wtot w j / (M.wtot w j + s ^ 2 / M.τ2) := by
+  have h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0 := fun i j h => by
+    simp [hρ, h]
+  have hW : 0 < M.wtot w j := sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  have := M.τ2_pos.ne'
+  rw [M.bestZ_of_diag h0 hJ, M.σ2_bs s hw hσ]
+  field_simp
+
+omit [Fintype T] in
+/-- `bⱼ = zⱼ / z*` with `zⱼ = wⱼ*/(wⱼ* + κ)`. -/
+theorem b_bs (j : J) :
+    M.b j = M.wtot w j / (M.wtot w j + s ^ 2 / M.τ2)
+      / ∑ i, M.wtot w i / (M.wtot w i + s ^ 2 / M.τ2) := by
+  have h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0 := fun i j h => by
+    simp [hρ, h]
+  have hτ := M.τ2_pos
+  have key : ∀ i, (M.τ2 + M.σ2 i i)⁻¹ = M.wtot w i / (M.wtot w i + s ^ 2 / M.τ2) / M.τ2 :=
+    fun i => by
+      have hW : 0 < M.wtot w i := sum_pos (fun s _ => hw i s) (M.obs_nonempty i)
+      have : 0 ≤ s ^ 2 / M.τ2 := div_nonneg (sq_nonneg s) hτ.le
+      have : M.wtot w i + s ^ 2 / M.τ2 ≠ 0 := by positivity
+      rw [M.σ2_bs s hw hσ]
+      field_simp
+  rw [M.b_of_diag h0, key]
+  simp only [key, ← sum_div]
+  rw [div_div_div_cancel_right₀ hτ.ne']
+
+omit [Fintype T] in
+/-- The balance property (§2.9) with unequal lengths: in the Bühlmann–Straub case,
+with `wⱼ*` summed over `Tⱼ` only, `Σⱼ wⱼ*(1 - zⱼ)(μ̂ⱼ - μ̂) = 0` for all data. -/
+theorem balance (hJ : 1 < Fintype.card J) (X : J × T → ℝ) :
+    ∑ j, M.wtot w j * (1 - (M.moments j).bestZ)
+      * (M.muHat w X j - ∑ i, M.b i * M.muHat w X i) = 0 := by
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  have hW : ∀ j, 0 < M.wtot w j := fun j => sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  have hs : s ≠ 0 := by
+    obtain ⟨j⟩ := this
+    obtain ⟨t, -⟩ := M.obs_nonempty j
+    intro h; have := M.σ_pos j t; rw [hσ, h, zero_div] at this; exact lt_irrefl _ this
+  have hκ : 0 < s ^ 2 / M.τ2 := div_pos (by positivity) M.τ2_pos
+  have key := bs_balance (M.wtot w) (s ^ 2 / M.τ2) hκ hW (M.muHat w X)
+  have hb : ∑ i, M.b i * M.muHat w X i
+      = (∑ i, M.wtot w i / (M.wtot w i + s ^ 2 / M.τ2) * M.muHat w X i)
+        / ∑ i, M.wtot w i / (M.wtot w i + s ^ 2 / M.τ2) := by
+    rw [sum_div]
+    exact sum_congr rfl fun i _ => by rw [M.b_bs s hw hσ hρ]; ring
+  simp only [M.bestZ_bs s hw hσ hρ hJ, hb]
+  exact key
+
+omit [Fintype T] in
+/-- The balance property in its original form: charging `μ̂ⱼᵇ = zⱼμ̂ⱼ + (1 - zⱼ)μ̂` on
+the observed periods reproduces the observed total, `Σⱼ Σ_{t∈Tⱼ} wⱼₜμⱼₜ`. -/
+theorem balance_total (hJ : 1 < Fintype.card J) (X : J × T → ℝ) :
+    ∑ j, ∑ t ∈ M.obs j, w j t * X (j, t)
+      = ∑ j, ∑ t ∈ M.obs j, w j t * ((M.moments j).bestZ * M.muHat w X j
+          + (1 - (M.moments j).bestZ) * ∑ i, M.b i * M.muHat w X i) := by
+  have h1 : ∀ j, ∑ t ∈ M.obs j, w j t * X (j, t) = M.wtot w j * M.muHat w X j := fun j => by
+    have hW : M.wtot w j ≠ 0 := (sum_pos (fun s _ => hw j s) (M.obs_nonempty j)).ne'
+    simp only [muHat, mul_sum]
+    refine sum_congr rfl fun t _ => ?_
+    field_simp
+  have h2 : ∀ j (c : ℝ), ∑ t ∈ M.obs j, w j t * c = M.wtot w j * c := fun j c => by
+    rw [← sum_mul]; rfl
+  rw [← sub_eq_zero, ← sum_sub_distrib, ← M.balance s hw hσ hρ hJ X]
+  refine sum_congr rfl fun j _ => ?_
+  rw [h1, h2]
+  ring
+
+end Balance
 
 end Unequal
 end Credibility

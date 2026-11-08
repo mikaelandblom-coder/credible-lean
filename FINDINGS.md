@@ -96,6 +96,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    (`Unequal.den_of_overlap_singleton`, `sigRhoHat_unbiased`,
    `tauHat_unbiased`, `KHat_unbiased`, *proved*).
 
+10. **Balance survives unequal lengths (new).** In the Bühlmann–Straub case
+   (`σⱼₜ = σ/√wⱼₜ`, `ρᵢⱼ = δᵢⱼ`) with cohort `j` observed in `Tⱼ`, the
+   proposed factor is `zⱼ = wⱼ*/(wⱼ* + σ²/τ²)` with `wⱼ* = Σ_{t∈Tⱼ} wⱼₜ`,
+   `bⱼ = zⱼ/z*`, and `Σⱼ wⱼ*(1 − zⱼ)(μ̂ⱼ − μ̂) = 0` for all data: the
+   thesis proof (§2.9) only uses `wⱼ*(1 − zⱼ) = κzⱼ` cohort by cohort.
+   Equivalently, `Σⱼ Σ_{t∈Tⱼ} wⱼₜμⱼₜ = Σⱼ Σ_{t∈Tⱼ} wⱼₜμ̂ⱼᵇ`. Also, Finding 5
+   for unequal lengths: equal covariances with one disjoint pair force
+   `c = 0` (`Unequal.balance`, `balance_total`, `equalCov_eq_zero`,
+   `bestZ_of_equalCov`, *proved*).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
 (Findings 1–3 come from the statements; confirm them as proofs land.)
