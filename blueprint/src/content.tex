@@ -2194,9 +2194,85 @@ $M_\phi$ be the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
   \uses{thm:momentsPhi}
   Credibility only sees the non-shared part $(1-\phi)\tau^2$ of the level
   variance: the shared component enters $\hmu_j$, $\hmu$ and $\mu_j$ with
-  coefficient $1$ and cancels in the error of every blend. Not yet proved: the
-  §2.8 estimator of $\tau^2$, built from deviations between cohorts, should
-  then estimate $(1-\phi)\tau^2$, so plugging it in would already be right.
+  coefficient $1$ and cancels in the error of every blend. The §2.8 estimators
+  see the same part (Section~\ref{sec:hier_bridge3}), so plugging them in is
+  already right.
+\end{remark}
+
+\section{The estimators see the non-shared part}\label{sec:hier_bridge3}
+
+With a shared level, $\cov(\mu_{it},\mu_{js}) =
+\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij}$.
+The shared part $\phi\tau^2$ is the same for every pair, exactly like the
+unknown mean $\mu^2$ in the second moment, and the §2.8 estimators are built
+to ignore $\mu$. No inverse is involved, so the results hold for every $\phi$,
+including the singular case $\phi = 1$.
+
+\begin{definition}[Expectation with a shared level]\label{def:Ephi}
+  \lean{Credibility.Model.obsCovφ, Credibility.Model.Eφ, Credibility.Model.Unbiasedφ}
+  \leanok
+  \uses{def:unbiased, def:Kphi}
+  As Definition~\ref{def:unbiased}, with $\bar K^{ts}_{ij}$ replaced by
+  $\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij}$.
+\end{definition}
+
+\begin{lemma}[Splitting the expectation]\label{lem:Ephi_split}
+  \lean{Credibility.Model.errPart, Credibility.Model.E_split, Credibility.Model.Eφ_split}
+  \leanok
+  \uses{def:Ephi}
+  With $A$ the noise part, $D = \sum_{p_1 = q_1} Q_{pq}$ and $S = \sum_{p,q} Q_{pq}$:
+  $\mathbb E_\mu = A + \tau^2 D + \mu^2 S$, and with a shared level
+  $A + (1-\phi)\tau^2 D + (\phi\tau^2 + \mu^2) S$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply}
+  Expand; $\tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij} = (1-\phi)\tau^2\delta_{ij} + \phi\tau^2$.
+\end{proof}
+
+\begin{theorem}[Unbiasedness with a shared level]\label{thm:unbiasedPhi_of}
+  \lean{Credibility.Model.unbiasedφ_of}
+  \leanok
+  \uses{def:Ephi, lem:Kphi_eq}
+  If $f$ is unbiased for $\theta$ in the thesis model and for $\theta'$ in
+  $M_\psi$ ($\psi < 1$, $\psi \ne 0$), then for every $\phi$ it is unbiased
+  for $\theta + \frac{\phi}{\psi}(\theta' - \theta)$ under the shared level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Ephi_split, lem:E_congr}
+  Unbiased for every $\mu$ forces $S = 0$ and $A + \tau^2 D = \theta$; in
+  $M_\psi$, $A + (1-\psi)\tau^2 D = \theta'$ (the expectation depends only on
+  $f$). So $\tau^2 D = (\theta - \theta')/\psi$, and the expectation with a
+  shared level is $A + (1-\phi)\tau^2 D = \theta - \phi\tau^2 D$.
+\end{proof}
+
+\begin{corollary}[The §2.8 estimators with a shared level]\label{cor:estimation_phi}
+  \lean{Credibility.Model.sigRhoHat_unbiasedφ, Credibility.Model.tauHat_unbiasedφ,
+    Credibility.Model.KHat_unbiasedφ}
+  \leanok
+  \uses{def:Ephi, def:estimators, def:Kphi}
+  In the setting of Corollary~\ref{cor:estimation} ($T \ge 2$, and $J \ge 2$
+  for the last two), for every $\phi$: $\widehat{\sigma^2_{ij}\rho_{ij}}$ is
+  unbiased for $\sigma^2_{ij}\rho_{ij}$, $\widehat{\tau^2}$ for $(1-\phi)\tau^2$,
+  and $\hat K_{ij}$ for $(K_\phi - \phi\tau^2\mathbf 1\mathbf 1^T)_{ij}$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedPhi_of, cor:estimation, lem:K_apply, lem:levelCov_apply}
+  Theorem~\ref{thm:unbiasedPhi_of} with $\psi = \tfrac12$ and
+  Corollary~\ref{cor:estimation} for $M$ and $M_{1/2}$.
+\end{proof}
+
+\begin{remark}[Reading: the plug-in is right, $\phi$ is not identified]\label{rem:hier_bridge3}
+  \uses{cor:estimation_phi, thm:momentsPhi}
+  $\hat K$ estimates $K(M_\phi)$, the thesis $K$ with $(1-\phi)\tau^2$, and by
+  Section~\ref{sec:hier_bridge2} that is all the blend needs: the thesis
+  procedure, applied unchanged, estimates the right weights and $z_j$. The
+  price: the shared part $\phi\tau^2$ is invisible to the data, as $\mu$ is.
+  At $\phi = 1$, $\widehat{\tau^2}$ has expectation $0$. One portfolio cannot
+  tell a shared level from the mean; estimating $\phi$ needs several groups
+  (the hierarchical setting).
 \end{remark}
 
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}

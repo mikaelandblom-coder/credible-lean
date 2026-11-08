@@ -1,4 +1,4 @@
-import Credibility.Model
+import Credibility.Estimation
 import Credibility.OffDiagonal
 
 /-!
@@ -23,6 +23,12 @@ move the GLS weights and adds its size to `s²` (`glsWeight_add_rankOne`,
 `invTotal_inv_add_rankOne`). The shared level then adds `φτ²` to all six
 moments of the blend, which changes neither its error variance nor `bestZ`
 (`BlendMoments.shift`): credibility only sees the non-shared part `(1-φ)τ²`.
+
+Bridge 3: the §2.8 estimators see the same part. With observation covariance
+`σᵢₜσⱼₛρᵢⱼδₜₛ + τ²(11ᵀ)^φᵢⱼ`, `τ̂²` has expectation `(1-φ)τ²` and `K̂` estimates
+`K_φ - φτ²·11ᵀ` (`tauHat_unbiasedφ`, `KHat_unbiasedφ`), for every `φ`: no
+inverse is involved, so `φ = 1` needs no separate case. The shared level acts
+like the unknown mean `μ`, which the estimators are built to ignore.
 -/
 
 open Matrix
@@ -308,6 +314,123 @@ theorem bestZ_φ_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} 
   rw [M.bestZ_momentsφ hρ h0 h1, Model.bestZ_eq _ ((M.withLevel φ h1).K_posDef hρ) j,
     M.glsWeight_Kφ hρ h0 h1, M.s2_Kφ hρ h0 h1, add_sub_cancel_right]
   rfl
+
+/-! ### Bridge 3: the §2.8 estimators with a shared level -/
+
+/-- `cov(μᵢₜ, μⱼₛ)` when the levels share `φτ²`: eq. (16) with the level
+covariance `τ²(11ᵀ)^φ` in place of `τ²δᵢⱼ`. -/
+noncomputable def obsCovφ (φ : ℝ) (i j : J) (t s : T) : ℝ :=
+  M.σ i t * M.σ j s * M.ρ i j * (if t = s then 1 else 0) + levelCov M.τ2 φ i j
+
+/-- Expectation of the quadratic form `quad Q` when the levels share `φτ²`
+(as `Model.E`, with `obsCovφ` in place of `obsCov`). -/
+noncomputable def Eφ (φ μ : ℝ) (Q : J × T → J × T → ℝ) : ℝ :=
+  ∑ p, ∑ q, Q p q * (M.obsCovφ φ p.1 q.1 p.2 q.2 + μ ^ 2)
+
+/-- `f` is unbiased for `θ` when the levels share `φτ²`: a quadratic form in the
+data with expectation `θ` for every mean `μ`. -/
+def Unbiasedφ (φ : ℝ) (f : (J × T → ℝ) → ℝ) (θ : ℝ) : Prop :=
+  ∃ Q : J × T → J × T → ℝ, (∀ X, quad Q X = f X) ∧ ∀ μ, M.Eφ φ μ Q = θ
+
+/-- The part of an expectation coming from the sampling noise. -/
+noncomputable def errPart (Q : J × T → J × T → ℝ) : ℝ :=
+  ∑ p, ∑ q, Q p q * (M.σ p.1 p.2 * M.σ q.1 q.2 * M.ρ p.1 q.1 * if p.2 = q.2 then 1 else 0)
+
+/-- Splitting an expectation: noise, level variance on same-cohort pairs, and
+the mean on all pairs. -/
+lemma E_split (μ : ℝ) (Q : J × T → J × T → ℝ) :
+    M.E μ Q = M.errPart Q
+      + M.τ2 * ∑ p, ∑ q, Q p q * (if p.1 = q.1 then 1 else 0) + μ ^ 2 * ∑ p, ∑ q, Q p q := by
+  simp only [E, mom2, obsCov, errPart, Finset.mul_sum, ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => by ring
+
+/-- …and with a shared level: the level adds `(1-φ)τ²` on same-cohort pairs
+and `φτ²` on all pairs, like the mean. -/
+lemma Eφ_split (φ μ : ℝ) (Q : J × T → J × T → ℝ) :
+    M.Eφ φ μ Q = M.errPart Q
+      + (1 - φ) * M.τ2 * ∑ p, ∑ q, Q p q * (if p.1 = q.1 then 1 else 0)
+      + (φ * M.τ2 + μ ^ 2) * ∑ p, ∑ q, Q p q := by
+  simp only [Eφ, obsCovφ, errPart, Finset.mul_sum, ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => ?_
+  rw [levelCov_apply]
+  split_ifs <;> ring
+
+/-- An estimator unbiased in the thesis model is unbiased with a shared level,
+for the value obtained by affine extrapolation in `φ`: if `f` is unbiased for
+`θ` in `M` and for `θ'` in `M_ψ` (`ψ ≠ 0`), then under `K_φ` it is unbiased for
+`θ + (φ/ψ)(θ' - θ)`, for every `φ`. -/
+theorem unbiasedφ_of {f : (J × T → ℝ) → ℝ} {θ θ' ψ : ℝ} (hf : M.Unbiased f θ) (h1 : ψ < 1)
+    (hψ : ψ ≠ 0) (hf' : (M.withLevel ψ h1).Unbiased f θ') (φ : ℝ) :
+    M.Unbiasedφ φ f (θ + φ / ψ * (θ' - θ)) := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  obtain ⟨Q', hQ', hE'⟩ := hf'
+  refine ⟨Q, hQ, fun μ => ?_⟩
+  have h0 := hE 0
+  have h1' := hE 1
+  -- In `M_ψ` the expectation of `f` is `θ'`, whatever matrix represents it.
+  have hW : (M.withLevel ψ h1).E 0 Q = θ' :=
+    ((M.withLevel ψ h1).E_congr 0 fun X => (hQ X).trans (hQ' X).symm).trans (hE' 0)
+  rw [E_split] at h0 h1' hW
+  rw [Eφ_split]
+  have hA : (M.withLevel ψ h1).errPart Q = M.errPart Q := rfl
+  have hτ : (M.withLevel ψ h1).τ2 = (1 - ψ) * M.τ2 := rfl
+  rw [hA, hτ] at hW
+  set A := M.errPart Q
+  set D := ∑ p, ∑ q, Q p q * (if p.1 = q.1 then (1 : ℝ) else 0)
+  set S := ∑ p, ∑ q, Q p q
+  norm_num at h0 h1' hW
+  -- The thesis estimator does not see the mean: `S = 0`.
+  have hS : S = 0 := by linarith
+  have key : M.τ2 * D = (θ - θ') / ψ := by
+    field_simp
+    linear_combination h0 - hW
+  rw [hS, show φ / ψ * (θ' - θ) = -φ * ((θ - θ') / ψ) by ring, ← key]
+  linear_combination h0
+
+variable {w : J → T → ℝ} (sig : J → ℝ) (hw : ∀ j t, 0 < w j t)
+  (hσ : ∀ j t, M.σ j t = sig j / √(w j t))
+include hw hσ
+
+/-- With a shared level, `σ²ᵢⱼρᵢⱼ^` is still unbiased for `σ²ᵢⱼρᵢⱼ`: it uses
+only deviations within a cohort, where the level cancels. -/
+theorem sigRhoHat_unbiasedφ (hT : 2 ≤ Fintype.card T) (φ : ℝ) (i j : J) :
+    M.Unbiasedφ φ (fun X => sigRhoHat w X i j) (M.σ2 i j * M.ρ i j) := by
+  have h := M.unbiasedφ_of (M.sigRhoHat_unbiased sig hw hσ hT i j)
+    (ψ := 1 / 2) (by norm_num) (by norm_num)
+    ((M.withLevel (1 / 2) (by norm_num)).sigRhoHat_unbiased sig hw hσ hT i j) φ
+  have hσ2 : (M.withLevel (1 / 2) (by norm_num)).σ2 = M.σ2 := rfl
+  have hρ : (M.withLevel (1 / 2) (by norm_num)).ρ = M.ρ := rfl
+  rw [hσ2, hρ] at h
+  simpa using h
+
+/-- Bridge 3: with a shared level, `τ̂²` (eq. (39)) is unbiased for the non-shared
+part `(1-φ)τ²`, for every `φ`. At `φ = 1` its expectation is `0`: a common
+level is invisible to the data, like the mean `μ`. -/
+theorem tauHat_unbiasedφ (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (φ : ℝ) :
+    M.Unbiasedφ φ (tauHat w) ((1 - φ) * M.τ2) := by
+  have h := M.unbiasedφ_of (M.tauHat_unbiased sig hw hσ hT hJ)
+    (ψ := 1 / 2) (by norm_num) (by norm_num)
+    ((M.withLevel (1 / 2) (by norm_num)).tauHat_unbiased sig hw hσ hT hJ) φ
+  have hτ : (M.withLevel (1 / 2) (by norm_num)).τ2 = (1 - 1 / 2) * M.τ2 := rfl
+  rw [hτ] at h
+  convert h using 1
+  ring
+
+/-- With a shared level, `K̂ᵢⱼ` is unbiased for `(K_φ - φτ²·11ᵀ)ᵢⱼ`, the thesis
+`K` with `τ²` replaced by `(1-φ)τ²`: by Bridge 2, all that credibility needs. -/
+theorem KHat_unbiasedφ (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (φ : ℝ)
+    (i j : J) : M.Unbiasedφ φ (fun X => KHat w X i j) (M.Kφ φ i j - φ * M.τ2) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have h := M.unbiasedφ_of (M.KHat_unbiased sig hw hσ hT hJ i j)
+    (ψ := 1 / 2) (by norm_num) (by norm_num)
+    ((M.withLevel (1 / 2) (by norm_num)).KHat_unbiased sig hw hσ hT hJ i j) φ
+  have hτ : (M.withLevel (1 / 2) (by norm_num)).τ2 = (1 - 1 / 2) * M.τ2 := rfl
+  have hσ2 : (M.withLevel (1 / 2) (by norm_num)).σ2 = M.σ2 := rfl
+  have hρ : (M.withLevel (1 / 2) (by norm_num)).ρ = M.ρ := rfl
+  rw [K_apply, K_apply, hτ, hσ2, hρ] at h
+  convert h using 1
+  rw [Kφ, Matrix.add_apply, levelCov_apply]
+  by_cases hij : i = j <;> simp [hij, errCov]; ring
 
 end Model
 end Credibility
