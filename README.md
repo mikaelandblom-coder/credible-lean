@@ -124,3 +124,9 @@ field), which installs elan and fetches the Mathlib cache.
 
 `CLAUDE.md` has the working rules: statements are the spec, one `sorry` per
 commit, and findings go in `FINDINGS.md`.
+
+## License
+
+Apache-2.0 (see [LICENSE](LICENSE)), the same as Mathlib. This covers the
+Lean code, blueprint, notes and scripts. The thesis source and slides in
+`thesis/` are © Mikael Andblom and not covered by it.
