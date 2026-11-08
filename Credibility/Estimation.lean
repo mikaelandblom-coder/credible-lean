@@ -37,7 +37,32 @@ def E (μ : ℝ) (Q : J × T → J × T → ℝ) : ℝ := ∑ p, ∑ q, Q p q * 
 /-- The expectation depends only on the estimator, not on the matrix representing it. -/
 lemma E_congr (μ : ℝ) {Q Q' : J × T → J × T → ℝ} (h : ∀ X, quad Q X = quad Q' X) :
     M.E μ Q = M.E μ Q' := by
-  sorry
+  set D : J × T → J × T → ℝ := fun p q => Q p q - Q' p q with hD
+  have h0 : ∀ X, quad D X = 0 := fun X => by
+    have := h X
+    simp only [quad, hD, sub_mul, sum_sub_distrib] at *
+    linarith
+  -- Polarization: `D` is antisymmetric.
+  have hanti : ∀ p q, D q p = -D p q := by
+    intro p q
+    have h1 := h0 (Pi.single p 1 + Pi.single q 1)
+    have h2 := h0 (Pi.single p 1)
+    have h3 := h0 (Pi.single q 1)
+    simp only [quad, Pi.add_apply, Pi.single_apply, mul_add, sum_add_distrib, mul_ite,
+      mul_one, mul_zero, sum_ite_eq', mem_univ, ite_true] at h1 h2 h3
+    linarith
+  have hsymm : ∀ p q, M.mom2 μ q p = M.mom2 μ p q := by
+    intro p q
+    simp only [mom2, obsCov, M.ρ_symm q.1 p.1, eq_comm (a := q.2), eq_comm (a := q.1)]
+    ring
+  have hE : M.E μ D = -M.E μ D := by
+    conv_lhs => rw [E, sum_comm]
+    simp only [E, ← sum_neg_distrib]
+    refine sum_congr rfl fun p _ => sum_congr rfl fun q _ => ?_
+    rw [hanti, hsymm]; ring
+  have : M.E μ D = 0 := by linarith
+  simp only [E, hD, sub_mul, sum_sub_distrib] at this
+  simp only [E]; linarith
 
 /-- `f` is unbiased for `θ`: a quadratic form in the data whose expectation is
 `θ` whatever the mean `μ`. -/
