@@ -239,6 +239,13 @@ theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.
     field_simp
     ring
 
+/-- `ĉⱼ` is unbiased for `cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ`, whenever the
+denominators are positive. -/
+theorem cHat_unbiased (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j) (j : J) :
+    M.toModel.Unbiased (fun X => M.cHat w X j)
+      (∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * (M.σ2 i j * M.ρ i j)) :=
+  Model.Unbiased.sum univ fun i _ => (M.sigRhoHat_unbiased sig hw hσ i j (hden i j)).const_mul _
+
 /-- Eq. (39): `τ̂²` is unbiased. Needs `J ≥ 2` and a positive denominator for every
 overlapping pair (e.g. `|Tᵢⱼ| ≠ 1` for all `i, j`, `den_pos_of_two_le`). -/
 theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
@@ -300,8 +307,7 @@ theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
     fun j => (M.toModel.unbiased_mul (ℓ j) (ℓ j) (hsum j)).congr (fun X => by rw [hlin, sq]) (hcov j)
   have hc : ∀ j, M.toModel.Unbiased (fun X => M.cHat w X j)
       (∑ i, ((if i = j then 1 else 0) - x i) * (M.σ2 i j * M.ρ i j)) :=
-    fun j => Model.Unbiased.sum univ fun i _ =>
-      (M.sigRhoHat_unbiased sig hw hσ i j (hden i j)).const_mul _
+    M.cHat_unbiased sig hw hσ hden
   refine (Model.Unbiased.const_mul (M.wall w * (1 - ∑ k, x k ^ 2))⁻¹ (Model.Unbiased.sum univ fun j _ =>
     ((hsq j).const_mul (M.wtot w j)).add ((hc j).const_mul (-M.wtot w j)))).congr
     (fun X => ?_) ?_

@@ -1080,13 +1080,14 @@ for every $\mu$.
 \begin{theorem}\label{thm:cHat_unbiased}
   \lean{Credibility.Model.cHat_unbiased}
   \leanok
-  \uses{thm:sigRhoHat_unbiased}
+  \uses{def:estimators, def:unbiased}
   If $T \ge 2$, $\hat c_j$ is unbiased for
   $c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$.
 \end{theorem}
 \begin{proof}
   \leanok
-  Linearity.
+  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly: linearity.
 \end{proof}
 
 \begin{theorem}[Unbiased $\tau^2$]\label{thm:tauHat_unbiased}
@@ -1578,13 +1579,13 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
 \end{proof}
 
 \begin{theorem}[Unbiasedness with unequal lengths]\label{thm:U_unbiased}
-  \lean{Credibility.Unequal.sigRhoHat_unbiased, Credibility.Unequal.tauHat_unbiased,
-        Credibility.Unequal.KHat_unbiased}
+  \lean{Credibility.Unequal.sigRhoHat_unbiased, Credibility.Unequal.cHat_unbiased,
+        Credibility.Unequal.tauHat_unbiased, Credibility.Unequal.KHat_unbiased}
   \leanok
   \uses{def:U_estimators, lem:U_unbiased_dev, lem:U_special, lem:U_K_apply}
   If $D_{ij} > 0$ whenever $T_{ij} \ne \emptyset$, then
-  $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$; if
-  moreover $J \ge 2$, then $\widehat{\tau^2}$ and $\hat K_{ij}$ are unbiased.
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$ and
+  $\hat c_j$ for $c_j$; if moreover $J \ge 2$, then $\widehat{\tau^2}$ and $\hat K_{ij}$ are unbiased.
 \end{theorem}
 \begin{proof}
   \leanok
