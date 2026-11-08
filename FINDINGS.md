@@ -76,14 +76,14 @@ Gaps, extra hypotheses and new results found while formalizing.
    but there are `J` of them, so it should be `σ̂² = (1/J) Σⱼ σ̂ⱼ²`. Lean
    does not touch eq. (13); `sigRhoHat_self` only uses `σ̂ⱼ²`.
 
-8. **Unequal lengths keep `K` positive definite (new, stated).** With
+8. **Unequal lengths keep `K` positive definite (new).** With
    cohort `j` observed in `Tⱼ ⊆ T` (README "Later goals"; notes in
    `notes/unequal-lengths.md`), `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ` still holds with
    `σ²ᵢⱼ` summed over `Tᵢ ∩ Tⱼ`, and `K ≻ 0` for any overlap pattern as soon
    as, for each period `t`, the correlations of the cohorts observed at `t`
    form a PSD block (`Unequal.K_posDef`). That is weaker than `ρ ⪰ 0`: with
    `T₁ = {1}`, `T₂ = {1,2}`, `T₃ = {2}`, `ρ₁₂ = ρ₂₃ = 0.9`, `ρ₁₃ = −0.9`,
-   `ρ` is not PSD but `K` is PD. *On paper; Lean statement only.*
+   `ρ` is not PSD but `K` is PD. *Proved* (`K_posDef`, `K_posDef_of_posSemidef`).
 9. **The `T − 2` of eq. (39) becomes a volume-weighted per-pair count (new,
    stated).** With unequal lengths the unbiased denominator of the
    `σ²ᵢⱼρᵢⱼ` estimator is `Sᵢⱼ + nᵢⱼwᵢ*wⱼ*/Sᵢⱼ` (sums over `Tᵢⱼ = Tᵢ ∩ Tⱼ`)

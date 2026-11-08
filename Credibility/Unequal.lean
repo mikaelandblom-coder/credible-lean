@@ -45,29 +45,77 @@ noncomputable def K : Matrix J J ℝ :=
 omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- The cohort weights sum to one over `Tⱼ`. -/
 theorem sum_a (j : J) : ∑ t ∈ M.obs j, M.a j t = 1 := by
-  sorry
+  have hpos : 0 < ∑ s ∈ M.obs j, (M.σ j s ^ 2)⁻¹ :=
+    sum_pos (fun s _ => inv_pos.mpr (pow_pos (M.σ_pos j s) 2)) (M.obs_nonempty j)
+  simp only [a]
+  rw [sum_ite_of_true (fun t ht => ht), ← sum_div, div_self hpos.ne']
 
 omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- Eq. (23) on `Tⱼ` minimises `Σ_{t∈Tⱼ} aₜ² σⱼₜ²` among weights on `Tⱼ` summing to one. -/
 theorem a_optimal (j : J) (c : T → ℝ) (hc : ∑ t ∈ M.obs j, c t = 1) :
     ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 ≤ ∑ t ∈ M.obs j, c t ^ 2 * M.σ j t ^ 2 := by
-  sorry
+  set S := ∑ s ∈ M.obs j, (M.σ j s ^ 2)⁻¹
+  have hS : S ≠ 0 :=
+    (sum_pos (fun s _ => inv_pos.mpr (pow_pos (M.σ_pos j s) 2)) (M.obs_nonempty j)).ne'
+  have hσ : ∀ t, M.σ j t ^ 2 ≠ 0 := fun t => pow_ne_zero 2 (M.σ_pos j t).ne'
+  have ha : ∀ t ∈ M.obs j, M.a j t = (M.σ j t ^ 2)⁻¹ / S := fun t ht => by
+    simp only [a, ht, ↓reduceIte, S]
+  -- `Σ a²σ² = Σ c a σ² = 1/S`, and `Σ (c - a)²σ² ≥ 0`.
+  have h1 : ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 = S⁻¹ := by
+    rw [sum_congr rfl fun t ht => by rw [ha t ht]]
+    have : ∀ t, ((M.σ j t ^ 2)⁻¹ / S) ^ 2 * M.σ j t ^ 2 = (M.σ j t ^ 2)⁻¹ / S ^ 2 := fun t => by
+      field_simp [hσ t]
+    simp only [this, ← sum_div]
+    change S / S ^ 2 = S⁻¹
+    field_simp
+  have h2 : ∑ t ∈ M.obs j, c t * M.a j t * M.σ j t ^ 2 = S⁻¹ := by
+    rw [sum_congr rfl fun t ht => by rw [ha t ht]]
+    have : ∀ t, c t * ((M.σ j t ^ 2)⁻¹ / S) * M.σ j t ^ 2 = c t / S := fun t => by
+      field_simp [hσ t, (M.σ_pos j t).ne']
+    simp only [this, ← sum_div, hc, one_div]
+  have hnn : 0 ≤ ∑ t ∈ M.obs j, (c t - M.a j t) ^ 2 * M.σ j t ^ 2 :=
+    sum_nonneg fun t _ => mul_nonneg (sq_nonneg _) (sq_nonneg _)
+  have hexp : ∑ t ∈ M.obs j, (c t - M.a j t) ^ 2 * M.σ j t ^ 2
+      = ∑ t ∈ M.obs j, c t ^ 2 * M.σ j t ^ 2 - 2 * ∑ t ∈ M.obs j, c t * M.a j t * M.σ j t ^ 2
+        + ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 := by
+    rw [mul_sum, ← sum_sub_distrib, ← sum_add_distrib]
+    exact sum_congr rfl fun t _ => by ring
+  rw [hexp, h1, h2] at hnn
+  rw [h1]
+  linarith
 
-omit [Fintype J] in
+omit [Fintype J] [Fintype T] in
 /-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27); no `T ≥ 1` needed since `Tⱼ ≠ ∅`. -/
 theorem K_apply (i j : J) :
     M.K i j = M.σ2 i j * M.ρ i j + M.τ2 * (if i = j then 1 else 0) := by
-  sorry
+  simp only [K, Model.obsCov, mul_add, sum_add_distrib]
+  congr 1
+  · simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, ← sum_filter, filter_mem_eq_inter]
+    rw [σ2, overlap, sum_mul]
+    exact sum_congr rfl fun t _ => by ring
+  · split_ifs with h
+    · subst h
+      calc ∑ x ∈ M.obs i, ∑ y ∈ M.obs i, M.a i x * M.a i y * (M.τ2 * 1)
+          = (∑ x ∈ M.obs i, M.a i x) * (∑ y ∈ M.obs i, M.a i y) * M.τ2 := by
+            rw [sum_mul_sum, sum_mul]; simp_rw [sum_mul, mul_one]
+        _ = M.τ2 * 1 := by rw [M.sum_a]; ring
+    · simp
 
 omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- Cohorts with no shared period have `σ²ᵢⱼ = 0`. -/
 theorem σ2_eq_zero_of_disjoint {i j : J} (h : Disjoint (M.obs i) (M.obs j)) :
     M.σ2 i j = 0 := by
-  sorry
+  simp [σ2, overlap, disjoint_iff_inter_eq_empty.mp h]
 
-omit [Fintype J] in
+omit [Fintype J] [Fintype T] in
 theorem K_symm : M.Kᵀ = M.K := by
-  sorry
+  ext i j
+  simp only [transpose_apply, K, Model.obsCov]
+  rw [sum_comm]
+  refine sum_congr rfl fun t _ => sum_congr rfl fun s _ => ?_
+  rw [M.ρ_symm j i]
+  simp only [eq_comm (a := s), eq_comm (a := j)]
+  ring
 
 /-- `K` stays positive definite for any overlap pattern. It suffices that for
 every period `t` the correlations of the cohorts observed at `t` form a
@@ -76,26 +124,69 @@ theorem K_posDef
     (hρ : ∀ t, ((Matrix.of M.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
       Subtype.val).PosSemidef) :
     M.K.PosDef := by
-  sorry
+  have ha0 : ∀ j t, t ∉ M.obs j → M.a j t = 0 := fun j t ht => by simp [a, ht]
+  -- `σ²ᵢⱼ` as a sum over all periods, since `aⱼₜ = 0` off `Tⱼ`.
+  have hσ2 : ∀ i j, M.σ2 i j = ∑ t, M.a i t * M.a j t * M.σ i t * M.σ j t := fun i j => by
+    refine sum_subset (subset_univ _) fun t _ ht => ?_
+    rcases not_and_or.mp (mt mem_inter.mpr ht) with h | h <;> simp [ha0 _ _ h]
+  -- Sums over `J` of terms vanishing off `Jₜ` are sums over `Jₜ`.
+  have hS : ∀ t (f : J → ℝ), (∀ j, t ∉ M.obs j → f j = 0) →
+      ∑ j, f j = ∑ j : {j // t ∈ M.obs j}, f j := fun t f hf => by
+    rw [← Fintype.sum_subtype_add_sum_subtype (fun j => t ∈ M.obs j) f,
+      Fintype.sum_eq_zero (fun j : {j // ¬t ∈ M.obs j} => f j) fun j => hf j j.2, add_zero]
+  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
+  · rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, M.K_symm]
+  -- `xᵀKx = Σₜ yₜᵀ R yₜ + τ²‖x‖²` with `(yₜ)ⱼ = aⱼₜ σⱼₜ xⱼ`, supported on `Jₜ`.
+  set y : T → J → ℝ := fun t j => M.a j t * M.σ j t * x j
+  have hy : ∀ t j, t ∉ M.obs j → y t j = 0 := fun t j h => by simp [y, ha0 _ _ h]
+  have key : star x ⬝ᵥ (M.K *ᵥ x)
+      = ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) + M.τ2 * ∑ i, x i ^ 2 := by
+    simp only [dotProduct, mulVec, M.K_apply, hσ2, star_trivial, of_apply, y, add_mul,
+      mul_add, sum_add_distrib, ite_mul, mul_ite, mul_one, mul_zero, zero_mul, sum_ite_eq,
+      mem_univ, ite_true, mul_sum, sum_mul]
+    congr 1
+    · symm
+      rw [sum_comm]
+      refine sum_congr rfl fun i _ => ?_
+      rw [sum_comm]
+      exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => by ring
+    · exact sum_congr rfl fun i _ => by ring
+  rw [key]
+  have h1 : 0 ≤ ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) := by
+    refine sum_nonneg fun t _ => ?_
+    have := (hρ t).dotProduct_mulVec_nonneg (fun j => y t j.1)
+    convert this using 1
+    simp only [dotProduct, mulVec, star_trivial, submatrix_apply, of_apply]
+    rw [hS t _ fun j h => by simp [hy t j h]]
+    refine sum_congr rfl fun i _ => ?_
+    rw [hS t _ fun j h => by simp [hy t j h]]
+  have h2 : 0 < ∑ i, x i ^ 2 := by
+    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
+    exact sum_pos' (fun j _ => sq_nonneg (x j))
+      ⟨i, mem_univ _, lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 hi))⟩
+  nlinarith [M.τ2_pos]
 
 /-- …in particular under the hypothesis of `Model.K_posDef`. -/
-theorem K_posDef_of_posSemidef (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef := by
-  sorry
+theorem K_posDef_of_posSemidef (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef :=
+  M.K_posDef fun _ => hρ.submatrix _
 
 omit [Fintype J] [DecidableEq J] in
 /-- With full series (`Tⱼ = T`) the weights are those of the thesis. -/
 theorem a_eq_of_full (h : ∀ j, M.obs j = univ) : M.a = M.toModel.a := by
-  sorry
+  funext j t
+  simp [a, Model.a, invVarWeight, h]
 
 omit [Fintype J] [DecidableEq J] in
 /-- With full series, `σ²ᵢⱼ` is that of the thesis, eq. (18). -/
 theorem σ2_eq_of_full (h : ∀ j, M.obs j = univ) : M.σ2 = M.toModel.σ2 := by
-  sorry
+  funext i j
+  simp [σ2, Model.σ2, overlap, h, M.a_eq_of_full h]
 
 omit [Fintype J] in
 /-- With full series, `K` is that of the thesis, eq. (21). -/
 theorem K_eq_of_full (h : ∀ j, M.obs j = univ) : M.K = M.toModel.K := by
-  sorry
+  funext i j
+  simp [K, Model.K, h, M.a_eq_of_full h]
 
 /-! ### Weights and the credibility factor (eqs. (24)–(26)): only `K` changes -/
 
@@ -114,10 +205,17 @@ noncomputable def moments (j : J) : BlendMoments where
   covCohortTarget := M.τ2
   covPortfolioTarget := M.b j * M.τ2
 
+omit [Fintype T] in
 /-- Eqs. (26)/(27) with unequal lengths: the same formula, with the new `σ²ⱼⱼ`, `b`, `s²`. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
-  sorry
+  -- `v = K b = s² u` (`mulVec_glsWeight`), substituted into eq. (22).
+  have hv : (M.K *ᵥ M.b) j = M.s2 := by
+    rw [b, mulVec_glsWeight hK, s2]
+  rw [BlendMoments.bestZ, show (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 by
+    simp only [BlendMoments.gap, moments, hv]; ring]
+  simp only [moments, hv]
+  ring
 
 /-! ### Parameter estimation (§2.8) with unequal lengths -/
 

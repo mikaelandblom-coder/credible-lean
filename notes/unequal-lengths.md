@@ -72,7 +72,7 @@ Example: three cohorts, `T₁ = {1}`, `T₂ = {1, 2}`, `T₃ = {2}`,
 blocks `{1,2}` and `{2,3}` are, so `K ≻ 0`.
 
 So differing overlap sets do not break positive-definiteness; `τ² > 0` still
-does all the work for strictness. Lean: `Unequal.K_posDef` (blocks) and
+does all the work for strictness. Lean (proved): `Unequal.K_posDef` (blocks) and
 `K_posDef_of_posSemidef` (full `R ⪰ 0`, the Model hypothesis).
 
 ## 4. Estimation (§2.8): the per-pair count
