@@ -63,6 +63,9 @@ moments are assumed). Never add a distributional assumption.
   sides in `content.tex`, `FINDINGS.md` and `Credibility.lean`; renumber
   your own finding if its number is taken. Then rerun `lake build` and
   `scripts/blueprint_check.py` before pushing again.
+- TeX is not installed in the sessions, so LaTeX errors only show in CI. After
+  pushing a `content.tex` change, check that the Blueprint run on `main`
+  passes (GitHub MCP `actions_list`, about 4 minutes), and fix it if not.
 - At a natural break (a file done, a finding logged, context getting long),
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
