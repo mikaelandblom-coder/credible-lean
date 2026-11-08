@@ -2,11 +2,15 @@
 """Regenerate PROGRESS.md from the Lean sources.
 
 One row per theorem/lemma: thesis equations (from its docstring), Lean name,
-and whether its proof still contains `sorry`.
+and whether its proof still contains `sorry`. A last section lists theorem
+names that occur in several namespaces: the refactoring backlog of CLAUDE.md
+(Architecture), where a special case should be a corollary of its general
+version.
 
     python3 scripts/progress.py          # rewrite PROGRESS.md
     python3 scripts/progress.py --check  # exit 1 if PROGRESS.md is stale
     python3 scripts/progress.py --proved # print the names counted as proved
+    python3 scripts/progress.py --dupes  # print the open backlog groups
 """
 import re
 import sys
@@ -90,9 +94,55 @@ def scan(path: Path):
                 done=not re.search(r"\bsorry\b", body),
                 eqs=eq_refs(doc),
                 note=short(doc),
+                body=body,
             )
         )
     return (title.group(1) if title else path.stem), rows
+
+
+def refers_to_namesake(row) -> bool:
+    """Does the proof mention its own short name qualified (`Core.x`,
+    `M.toUnequal.x`)? A theorem cannot use itself, so this is a namesake."""
+    leaf = row["name"].rsplit(".", 1)[-1]
+    return bool(re.search(r"\." + re.escape(leaf) + r"(?![\w'!?₀-₉])", row["body"]))
+
+
+def duplicates(files):
+    """Groups of theorems sharing a short name, as (leaf, rows, open)."""
+    groups = {}
+    for f in files:
+        for r in scan(f)[1]:
+            groups.setdefault(r["name"].rsplit(".", 1)[-1], []).append(dict(r, file=f.stem))
+    out = []
+    for leaf in sorted(groups):
+        rows = groups[leaf]
+        if len(rows) > 1:
+            out.append((leaf, rows, not any(refers_to_namesake(r) for r in rows)))
+    return out
+
+
+def backlog(files) -> str:
+    dups = duplicates(files)
+    n_open = sum(o for *_, o in dups)
+    lines = [
+        "## Refactoring backlog",
+        "",
+        "Theorem names that occur in several namespaces (CLAUDE.md, Architecture).",
+        "↳ marks a copy whose proof refers to a namesake (a corollary, probably",
+        "done); a group with no ↳ is open. `scripts/CheckUses.lean` checks the",
+        "blueprint `\\uses` edges exactly; this list is a textual hint.",
+        "",
+        f"**{n_open} open / {len(dups)} groups.**",
+        "",
+        "| | Name | Copies |",
+        "|---|---|---|",
+    ]
+    for leaf, rows, is_open in dups:
+        copies = ", ".join(
+            f"{'↳ ' if refers_to_namesake(r) else ''}`{r['name']}` ({r['file']})" for r in rows
+        )
+        lines.append(f"| {'⬜' if is_open else '✅'} | `{leaf}` | {copies} |")
+    return "\n".join(lines)
 
 
 def render() -> str:
@@ -119,6 +169,7 @@ def render() -> str:
         "",
         *summary,
     ]
+    sections.append(backlog(files))
     return "\n".join(head) + "\n\n" + "\n\n".join(sections) + "\n"
 
 
@@ -128,6 +179,11 @@ def proved():
 
 
 if __name__ == "__main__":
+    if "--dupes" in sys.argv:
+        for leaf, rows, is_open in duplicates(sorted(SRC.glob("*.lean"))):
+            if is_open:
+                print(leaf + ": " + ", ".join(r["name"] for r in rows))
+        sys.exit(0)
     if "--proved" in sys.argv:
         print("\n".join(proved()))
         sys.exit(0)

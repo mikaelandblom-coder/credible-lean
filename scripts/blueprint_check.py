@@ -9,6 +9,13 @@
 Whether the \\lean names really exist is checked by scripts/CheckDecls.lean.
 
     python3 scripts/blueprint_check.py
+    python3 scripts/blueprint_check.py --uses  # input for scripts/CheckUses.lean
+
+`--uses` prints one line per proved blueprint statement whose proof \\uses
+other results: `thm₁|thm₂ label=name₁|name₂ …` (its \\lean names, then each
+used label with that label's \\lean names). scripts/CheckUses.lean checks
+that the Lean proof really refers to each used result, so a special case
+marked as a corollary of a general result is one in Lean too.
 """
 import re
 import sys
@@ -44,7 +51,33 @@ def blueprint():
     return out, errors
 
 
+def uses_edges():
+    """(proved \\lean names, [(used label, its \\lean names)]) per proved statement."""
+    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    done = {r["name"] for f in SRC.glob("*.lean") for r in scan(f)[1] if r["done"]}
+    labels, entries = {}, []
+    for m in ENV.finditer(text):
+        body = m.group(2)
+        label = (re.search(r"\\label\{([^}]*)\}", body) or [None, "?"])[1]
+        names = [n.strip() for g in re.findall(r"\\lean\{([^}]*)\}", body) for n in g.split(",")]
+        labels[label] = names
+        p = PROOF.match(text, m.end()) if m.group(1) != "definition" else None
+        used = [u.strip() for g in re.findall(r"\\uses\{([^}]*)\}", p.group(1)) for u in g.split(",")] if p else []
+        entries.append((names, used))
+    out = []
+    for names, used in entries:
+        thms = [n for n in names if n in done]
+        reqs = [(u, labels[u]) for u in used if labels.get(u) and not set(labels[u]) & set(names)]
+        if thms and reqs:
+            out.append((thms, reqs))
+    return out
+
+
 def main() -> int:
+    if "--uses" in sys.argv:
+        for thms, reqs in uses_edges():
+            print("|".join(thms), " ".join(f"{u}={'|'.join(ns)}" for u, ns in reqs))
+        return 0
     bp, errors = blueprint()
     for f in sorted(SRC.glob("*.lean")):
         for r in scan(f)[1]:

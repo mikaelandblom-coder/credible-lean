@@ -602,13 +602,17 @@ zero, so the formula still typechecks there.)
 \begin{lemma}\label{lem:bs_σ2}
   \lean{Credibility.bs_σ2}
   \leanok
-  \uses{lem:bs_a}
+  \uses{def:bsModel, def:sigma2}
   If $T \ge 1$, $\sigma_{jj}^2 = \sigma^2/w_{j*}$ \eqth{30}.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:bs_a}
-  $\sum_t (w_{jt}/w_{j*})^2\,\sigma^2/w_{jt} = \sigma^2 w_{j*}/w_{j*}^2$.
+  \uses{lem:invVarWeight_value}
+  $\sigma_{jj}^2 = \sum_t a_{jt}^2\sigma_{jt}^2$ with inverse-variance weights,
+  so Lemma~\ref{lem:invVarWeight_value} gives
+  $\bigl(\sum_t \sigma_{jt}^{-2}\bigr)^{-1} = \bigl(\sum_t w_{jt}/\sigma^2\bigr)^{-1}
+  = \sigma^2/w_{j*}$. (Equivalently, with Lemma~\ref{lem:bs_a}:
+  $\sum_t (w_{jt}/w_{j*})^2\,\sigma^2/w_{jt} = \sigma^2 w_{j*}/w_{j*}^2$.)
 \end{proof}
 
 \begin{lemma}[$K$ is diagonal]\label{lem:bs_K}
@@ -639,8 +643,9 @@ zero, so the formula still typechecks there.)
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:bs_K, thm:Core_diag}
-  Theorem~\ref{thm:Core_diag}:
+  \uses{thm:Core_diag}
+  $K$ is diagonal (Lemma~\ref{lem:bs_K}; in Lean this is the hypothesis),
+  so Theorem~\ref{thm:Core_diag}:
   $K^{-1} = \operatorname{diag}\bigl(1/(\tau^2 + \sigma^2/w_{j*})\bigr)
   = \operatorname{diag}(z_j^B/\tau^2)$.
 \end{proof}

@@ -64,6 +64,13 @@ jobs:
           python3 scripts/progress.py --proved > "$RUNNER_TEMP/proved.txt"
           lake env lean --run scripts/CheckAxioms.lean "$RUNNER_TEMP/proved.txt"
 
+      # A blueprint proof that \uses a result must refer to it in Lean, so a
+      # special case marked as a corollary of a general result really is one.
+      - name: Check blueprint \uses against the Lean proofs
+        run: |
+          python3 scripts/blueprint_check.py --uses > "$RUNNER_TEMP/uses.txt"
+          lake env lean --run scripts/CheckUses.lean "$RUNNER_TEMP/uses.txt"
+
       - name: Install TeX, graphviz and leanblueprint
         run: |
           bash scripts/retry.sh sudo apt-get update

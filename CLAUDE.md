@@ -90,9 +90,11 @@ still reads like the thesis; special cases are corollaries.
 - New extension: first ask which existing general result it instantiates.
   Prove only what is genuinely new: its `K`, its positive definiteness, and
   its moments.
-- Planned tooling: `progress.py` lists theorem names that appear in several
-  namespaces (the refactoring backlog), and a check that theorems tagged as
-  corollaries really use their general version.
+- Tooling: `PROGRESS.md` ends with the refactoring backlog (theorem names in
+  several namespaces; `progress.py --dupes` prints the open ones), and
+  `scripts/CheckUses.lean` (CI) checks that every blueprint proof `\uses`
+  edge is a direct reference in the Lean proof. So when a proof changes,
+  update its `\uses{}` too.
 - Refactors are done in a dedicated chat, one file at a time, with
   `lake build` passing after each file.
 
