@@ -52,9 +52,10 @@ moments are assumed). Never add a distributional assumption.
 - One chat per file or batch of `sorry`s; the environment's setup script
   reinstalls Lean and the Mathlib cache in each new session.
 - Push finished work to `main` (fast-forward; never force-push `main`).
-  Don't create branches: commit on top of `main` and push to `main`. If the
-  session starts on a generated branch (`ccr-…`, `claude/…`), don't push it;
-  push `HEAD:main` instead. The owner's instruction here overrides
+  Don't create branches: commit on top of `main` and push to `main`. The
+  SessionStart hook (`scripts/session_branch.sh`) moves a fresh generated
+  branch (`ccr-…`, `claude/…`) onto `main` tracking `origin/main`; if you
+  still end up on one, don't push it; push `HEAD:main` instead. The owner's instruction here overrides
   session defaults that say to push to that branch.
 - Several chats may run in parallel, each on its own `.lean` file. Before
   every push, run `git pull --rebase origin main`. On a conflict: regenerate
