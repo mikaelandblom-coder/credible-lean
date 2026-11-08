@@ -1006,44 +1006,6 @@ for every $\mu$.
   Add or scale the matrices; for the product take $Q_{pq} = \ell_p m_q$.
 \end{proof}
 
-\begin{lemma}[Expected cross products of residuals]\label{lem:unbiased_dev}
-  \lean{Credibility.Model.unbiased_dev}
-  \leanok
-  \uses{def:unbiased, def:K}
-  For any $\sigma_{jt}$,
-  $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
-   = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
-\end{lemma}
-\begin{proof}
-  \leanok
-  \uses{lem:U_unbiased_dev, lem:U_full}
-  The case $T_j = T$ of Lemma~\ref{lem:U_unbiased_dev}.
-\end{proof}
-
-\begin{lemma}[Volume weights]\label{lem:a_special}
-  \lean{Credibility.Model.a_special}
-  \leanok
-  \uses{def:sigma2}
-  $a_{jt} = w_{jt}/w_{j*}$, as in \eqth{29}.
-\end{lemma}
-\begin{proof}
-  \leanok
-  \uses{lem:U_special, lem:U_full}
-  The case $T_j = T$ of Lemma~\ref{lem:U_special}.
-\end{proof}
-
-\begin{lemma}[\eqth{37}]\label{lem:sigma2rho_special}
-  \lean{Credibility.Model.σ2ρ_special}
-  \leanok
-  \uses{def:sigma2}
-  $\sigma^2_{ij}\rho_{ij} = \dfrac{S_{ij}}{w_{i*}w_{j*}}\,\sigma_i\sigma_j\rho_{ij}$.
-\end{lemma}
-\begin{proof}
-  \leanok
-  \uses{lem:U_special, lem:U_full, lem:U_estimators_full}
-  The case $T_j = T$ of Lemma~\ref{lem:U_special}.
-\end{proof}
-
 \begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
   \lean{Credibility.Model.wtot, Credibility.Model.wall, Credibility.Model.sqrtSum,
         Credibility.Model.muHat, Credibility.Model.sigRhoHat, Credibility.Model.cHat,
@@ -1060,81 +1022,41 @@ for every $\mu$.
   \end{align*}
 \end{definition}
 
-\begin{theorem}[Unbiased covariances]\label{thm:sigRhoHat_unbiased}
-  \lean{Credibility.Model.sigRhoHat_unbiased}
-  \leanok
-  \uses{def:estimators, def:unbiased}
-  If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$.
-\end{theorem}
-\begin{proof}
-  \leanok
-  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}; $T \ge 2$ makes every
-  denominator positive. Directly: by Lemma~\ref{lem:unbiased_dev},
-  $\sqrt{w_{it}w_{jt}}\,\mathbb{E}[\dots]
-  = (1 - w_{it}/w_{i*} - w_{jt}/w_{j*})\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$.
-  Summing over $t$ gives $(T-2)\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$,
-  which is the denominator times $\sigma^2_{ij}\rho_{ij}$ by \eqth{37}.
-\end{proof}
-
-\begin{theorem}\label{thm:cHat_unbiased}
-  \lean{Credibility.Model.cHat_unbiased}
-  \leanok
-  \uses{def:estimators, def:unbiased}
-  If $T \ge 2$, $\hat c_j$ is unbiased for
-  $c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$.
-\end{theorem}
-\begin{proof}
-  \leanok
-  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly: linearity.
-\end{proof}
-
-\begin{theorem}[Unbiased $\tau^2$]\label{thm:tauHat_unbiased}
-  \lean{Credibility.Model.tauHat_unbiased}
-  \leanok
-  \uses{def:estimators, def:unbiased}
-  If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}$ is unbiased for $\tau^2$.
-\end{theorem}
-\begin{proof}
-  \leanok
-  \uses{thm:U_unbiased, lem:U_estimators_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly:
-  $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2 = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$
-  with $v_i = w_{i*}/w_{**}$, by \eqth{38}. Weighting by $w_{j*}$, the
-  $\sigma^2\rho$ part is $\sum_j w_{j*}c_j$ and the $\tau^2$ part is
-  $(w_{**} - \sum_i w_{i*}^2/w_{**})\tau^2$. The denominator is positive iff $J \ge 2$.
-\end{proof}
-
-\begin{corollary}\label{cor:KHat_unbiased}
-  \lean{Credibility.Model.KHat_unbiased}
+\begin{corollary}[Estimation, \eqth{37}--\eqth{41}]\label{cor:estimation}
+  \lean{Credibility.Model.unbiased_dev, Credibility.Model.a_special,
+        Credibility.Model.σ2ρ_special, Credibility.Model.sigRhoHat_unbiased,
+        Credibility.Model.cHat_unbiased, Credibility.Model.tauHat_unbiased,
+        Credibility.Model.KHat_unbiased, Credibility.Model.sigRhoHat_self}
   \leanok
   \uses{def:estimators, def:unbiased, def:K}
-  If $T \ge 2$ and $J \ge 2$, $\hat K_{ij}$ is unbiased for $K_{ij}$.
+  \begin{enumerate}
+    \item For any $\sigma_{jt}$,
+      $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
+       = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
+    \item $a_{jt} = w_{jt}/w_{j*}$, as in \eqth{29}, and
+      $\sigma^2_{ij}\rho_{ij} = \dfrac{S_{ij}}{w_{i*}w_{j*}}\,\sigma_i\sigma_j\rho_{ij}$ \eqth{37}.
+    \item If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for
+      $\sigma^2_{ij}\rho_{ij}$, and $\hat c_j$ for
+      $c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$.
+    \item If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}$ is unbiased for $\tau^2$
+      and $\hat K_{ij}$ for $K_{ij}$.
+    \item \eqth{41}: $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with the
+      Bühlmann--Straub $\hat\sigma_j^2 = \frac{1}{T-1}\sum_t w_{jt}(\mu_{jt}-\hmu_j)^2$
+      of \eqth{13}.
+  \end{enumerate}
 \end{corollary}
 \begin{proof}
   \leanok
-  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly: linearity and
-  Lemma~\ref{lem:K_apply}.
-\end{proof}
-
-\begin{theorem}[Consistency with Bühlmann--Straub, \eqth{41}]\label{thm:sigRhoHat_self}
-  \lean{Credibility.Model.sigRhoHat_self}
-  \leanok
-  \uses{def:estimators}
-  $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with the Bühlmann--Straub
-  $\hat\sigma_j^2 = \frac{1}{T-1}\sum_t w_{jt}(\mu_{jt}-\hmu_j)^2$ of \eqth{13}.
-\end{theorem}
-\begin{proof}
-  \leanok
-  \uses{thm:U_sigRhoHat_self, lem:U_estimators_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_sigRhoHat_self}:
-  $S_{jj} = w_{j*}$, so the denominator is $(T-1)w_{j*}$.
+  \uses{lem:U_unbiased_dev, lem:U_special, thm:U_unbiased, thm:U_sigRhoHat_self,
+        lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Lemmas~\ref{lem:U_unbiased_dev} and~\ref{lem:U_special}
+  and Theorems~\ref{thm:U_unbiased} and~\ref{thm:U_sigRhoHat_self}: then
+  $T_{ij} = T$, the count $n_{ij}$ is $T - 2$, and $T \ge 2$ makes every denominator
+  positive (Lemma~\ref{lem:U_estimators_full}).
 \end{proof}
 
 \begin{remark}[Finding 7: sample sizes]\label{rem:estimation_sizes}
-  \uses{thm:sigRhoHat_unbiased, thm:tauHat_unbiased}
+  \uses{cor:estimation}
   The thesis does not state the conditions $T \ge 2$ and $J \ge 2$. With
   $T = 1$ the denominator of $\widehat{\sigma^2_{ij}\rho_{ij}}$ is
   $S_{ij} - w_{i*}w_{j*}/S_{ij} = 0$; with $J = 1$ the denominator of
@@ -1594,7 +1516,9 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   = D_{ij}\sigma^2_{ij}\rho_{ij}$ by Lemma~\ref{lem:U_special}. For
   $\widehat{\tau^2}$, $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2
   = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$ with $v_i = w_{i*}/w_{**}$,
-  and $K = \sigma^2\rho + \tau^2\delta$ as in Theorem~\ref{thm:tauHat_unbiased}.
+  and $K = \sigma^2\rho + \tau^2\delta$ (Lemma~\ref{lem:U_K_apply}). Weighting by
+  $w_{j*}$, the $\sigma^2\rho$ part is $\sum_j w_{j*}c_j$ and the $\tau^2$ part is
+  $(w_{**} - \sum_i w_{i*}^2/w_{**})\tau^2$; that denominator is positive iff $J \ge 2$.
 \end{proof}
 
 \begin{lemma}\label{lem:U_observed}
