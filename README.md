@@ -58,6 +58,24 @@ Once the thesis results are proved:
   of different lengths, so replace the common horizon `T` with a
   cohort-dependent `Tⱼ` (index sets `Tⱼ ⊆ T`). Correlations then only act
   on the periods two cohorts share. Not in the thesis.
+- **Choosing cohorts from the data.** Pick the partition into cohorts that
+  minimises the total credibility MSE itself, rather than clustering
+  credibility estimates by Euclidean distance (as in van Rijn, Weber, Merz,
+  *Credibility Clustering for Experience Rating*, arXiv:2611.07110).
+  Questions: when do the two criteria agree; how does choosing cohorts
+  from the same data bias the second-stage estimate (winner's curse); how
+  do correlations between cohorts change the optimal partition. Starting
+  points: Diao & Weng, *Regression tree credibility model*, NAAJ 23(2)
+  (2019) (greedy splits on a credibility loss); Campo & Antonio, *On
+  clustering levels of a hierarchical categorical risk factor*, AAS 18(3)
+  (2024), arXiv:2304.09046.
+- **Small lemmas from that paper.** (a) Optimal one-dimensional weighted
+  k-means groups are contiguous intervals of the sorted values, so they
+  can be found exactly by dynamic programming (Fisher 1958; Nielsen & Nock,
+  arXiv:1403.2485). Possibly worth contributing to Mathlib. (b) Multiplying the
+  off-diagonal entries of a covariance matrix `τ` by `ρ ∈ [0,1]` keeps it
+  positive semidefinite, and positive definite if `ρ < 1` and the diagonal
+  is positive.
 
 ## Thesis source
 
