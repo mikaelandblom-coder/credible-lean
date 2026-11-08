@@ -1,5 +1,6 @@
 # correlated-credibility
 
+[![Blueprint](https://github.com/mikaelandblom-coder/credible-lean/actions/workflows/blueprint.yml/badge.svg?branch=main)](https://github.com/mikaelandblom-coder/credible-lean/actions/workflows/blueprint.yml?query=branch%3Amain)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054632.svg)](https://doi.org/10.5281/zenodo.24054632)
 
 A Lean 4 + Mathlib formalization of *Generalized Bühlmann–Straub credibility
