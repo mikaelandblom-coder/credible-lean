@@ -53,6 +53,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    lower the total MSE? Probably it depends on the data, not on `zᵢ = zⱼ`.
    Natural setting: two-level (hierarchical) credibility, cohorts nested in
    groups (Bühlmann & Gisler, ch. 6). See README "Later goals".
+   *Partly answered (on paper, `notes/merging-cohorts.md`).* With
+   `d = E(μ₁-μ₂)²` and `V = Var(μ̂₁-μ̂₂) = σ₁² + σ₂² - 2σ₁σ₂ρ`, for a pair
+   on its own (§2.7, `μ` estimated) merging lowers the total MSE iff
+   `d < Vτ²/(V+τ²)`, i.e. `1/d > 1/V + 1/τ²`. Correlation enters only via
+   `V`: `ρ > 0` makes merging harder. Equal `z` plays no role, and under
+   the thesis model (`d = 2τ²`) merging never pays. Inside a large
+   portfolio (`μ` known) the threshold is lower (equal `σ`, `ρ = 0`:
+   merge iff the shared share of level variance `φ > (1+z²)/2`, against
+   `1/(2-z)` for the pair alone); it has no simple general form. Open: the
+   winner's curse when the merge is decided from the same data.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 

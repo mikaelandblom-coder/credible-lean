@@ -64,7 +64,8 @@ Once the thesis results are proved:
   *Credibility Clustering for Experience Rating*, arXiv:2611.07110).
   Questions: when do the two criteria agree; how does choosing cohorts
   from the same data bias the second-stage estimate (winner's curse); how
-  do correlations between cohorts change the optimal partition. Starting
+  do correlations between cohorts change the optimal partition (a first
+  answer for one pair: [`notes/merging-cohorts.md`](notes/merging-cohorts.md)). Starting
   points: Diao & Weng, *Regression tree credibility model*, NAAJ 23(2)
   (2019) (greedy splits on a credibility loss); Campo & Antonio, *On
   clustering levels of a hierarchical categorical risk factor*, AAS 18(3)

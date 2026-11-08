@@ -715,9 +715,16 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
   grouping, though. Equal $z$ means equal reliability, not equal level:
   premiums $z\hmu_j + (1-z)\hmu$ still differ. Merging $i$ and $j$ into one
   risk group assumes $\mu_i = \mu_j$, which changes their covariance from
-  $0$ to $\tau^2$ and hence $K$, every $z$ and $\hmu$. When merging lowers
-  the total mean squared error is open; a two-level (hierarchical) model is
-  the natural setting. Discussion only, not in Lean.
+  $0$ to $\tau^2$ and hence $K$, every $z$ and $\hmu$.
+
+  When merging pays off (on paper, \texttt{notes/merging-cohorts.md}): in a
+  two-level model, let $d = \mathbb{E}(\mu_1-\mu_2)^2$ and
+  $V = \operatorname{Var}(\hmu_1 - \hmu_2) = \sigma_1^2+\sigma_2^2-2\sigma_1\sigma_2\rho$.
+  For two cohorts on their own, merging lowers the total mean squared error
+  iff $d < V\tau^2/(V+\tau^2)$. Correlation enters only through $V$, and
+  $\rho > 0$ makes merging harder, since the gap $\hmu_1 - \hmu_2$ is then
+  measured more precisely. Equal $z$ plays no role. Under the thesis model,
+  $d = 2\tau^2$, merging never pays. Not in Lean.
 \end{remark}
 
 \begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
