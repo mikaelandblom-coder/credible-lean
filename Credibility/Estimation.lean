@@ -185,9 +185,16 @@ noncomputable def KHat (X : J × T → ℝ) (i j : J) : ℝ :=
 variable {w} (sig : J → ℝ) (hw : ∀ j t, 0 < w j t) (hσ : ∀ j t, M.σ j t = sig j / √(w j t))
 include hw hσ
 
+omit [Fintype J] [DecidableEq J] [DecidableEq T] in
 /-- §2.8, from eq. (29): the special case still gives `aⱼₜ = wⱼₜ/wⱼ*`. -/
 theorem a_special (j : J) (t : T) : M.a j t = w j t / wtot w j := by
-  sorry
+  have hs : sig j ≠ 0 := by
+    intro h; have := M.σ_pos j t; rw [hσ, h, zero_div] at this; exact lt_irrefl _ this
+  have hsq : ∀ s, M.σ j s ^ 2 = sig j ^ 2 / w j s := fun s => by
+    rw [hσ, div_pow, Real.sq_sqrt (hw j s).le]
+  have hW : wtot w j ≠ 0 := (sum_pos (fun s _ => hw j s) ⟨t, mem_univ _⟩).ne'
+  simp only [a, invVarWeight, hsq, inv_div]
+  rw [← sum_div, div_div_div_cancel_right₀ (pow_ne_zero 2 hs), wtot]
 
 /-- Eq. (37): `σ²ᵢⱼρᵢⱼ = (Sᵢⱼ/(wᵢ*wⱼ*)) σᵢσⱼρᵢⱼ`. -/
 theorem σ2ρ_special (i j : J) :
