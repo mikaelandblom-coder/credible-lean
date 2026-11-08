@@ -196,6 +196,7 @@ theorem a_special (j : J) (t : T) : M.a j t = w j t / wtot w j := by
   simp only [a, invVarWeight, hsq, inv_div]
   rw [← sum_div, div_div_div_cancel_right₀ (pow_ne_zero 2 hs), wtot]
 
+omit [Fintype J] [DecidableEq J] [DecidableEq T] in
 /-- Eq. (37): `σ²ᵢⱼρᵢⱼ = (Sᵢⱼ/(wᵢ*wⱼ*)) σᵢσⱼρᵢⱼ`. -/
 theorem σ2ρ_special (i j : J) :
     M.σ2 i j * M.ρ i j = sqrtSum w i j / (wtot w i * wtot w j) * (sig i * sig j * M.ρ i j) := by
@@ -217,7 +218,43 @@ theorem σ2ρ_special (i j : J) :
 period the denominator is `0`. -/
 theorem sigRhoHat_unbiased (hT : 2 ≤ Fintype.card T) (i j : J) :
     M.Unbiased (fun X => sigRhoHat w X i j) (M.σ2 i j * M.ρ i j) := by
-  sorry
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hW : ∀ k, 0 < wtot w k := fun k => sum_pos (fun s _ => hw k s) univ_nonempty
+  have hS : 0 < sqrtSum w i j :=
+    sum_pos (fun t _ => Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))) univ_nonempty
+  have hT' : (0 : ℝ) ≤ (Fintype.card T : ℝ) - 2 := by
+    rw [sub_nonneg]; exact_mod_cast hT
+  set den := sqrtSum w i j + ((Fintype.card T : ℝ) - 2) * wtot w i * wtot w j / sqrtSum w i j
+  have hden : 0 < den := by
+    have := mul_nonneg (mul_nonneg hT' (hW i).le) (hW j).le
+    positivity
+  have hmu : ∀ X k, muHat w X k = ∑ s, M.a k s * X (k, s) := fun X k => by
+    simp only [muHat, M.a_special sig hw hσ]
+  -- The estimator is a combination of the residual products of `unbiased_dev`.
+  refine (Unbiased.const_mul den⁻¹ (Unbiased.sum univ fun t _ =>
+    (M.unbiased_dev i j t).const_mul √(w i t * w j t))).congr (fun X => ?_) ?_
+  · simp only [sigRhoHat, hmu, div_eq_mul_inv, sum_mul, mul_sum, den]
+    exact sum_congr rfl fun t _ => by ring
+  · -- `√(wᵢₜwⱼₜ) σᵢₜσⱼₜ = σᵢσⱼ`, and `Σₜ (1 - aᵢₜ - aⱼₜ) = T - 2`.
+    have hterm : ∀ t, √(w i t * w j t) * ((1 - M.a i t - M.a j t) * M.σ i t * M.σ j t * M.ρ i j
+          + M.σ2 i j * M.ρ i j)
+        = (1 - w i t / wtot w i - w j t / wtot w j) * (sig i * sig j * M.ρ i j)
+          + √(w i t * w j t) * (M.σ2 i j * M.ρ i j) := fun t => by
+      rw [M.a_special sig hw hσ, M.a_special sig hw hσ, hσ, hσ, Real.sqrt_mul (hw i t).le]
+      have := Real.sqrt_pos.mpr (hw i t)
+      have := Real.sqrt_pos.mpr (hw j t)
+      field_simp
+    have hcount : ∑ t, (1 - w i t / wtot w i - w j t / wtot w j) = (Fintype.card T : ℝ) - 2 := by
+      simp only [sum_sub_distrib, ← sum_div, sum_const, card_univ, nsmul_eq_mul, mul_one]
+      rw [show ∑ t, w i t = wtot w i from rfl, show ∑ t, w j t = wtot w j from rfl,
+        div_self (hW i).ne', div_self (hW j).ne']
+      ring
+    simp only [hterm, sum_add_distrib, ← sum_mul, hcount]
+    rw [show ∑ t, √(w i t * w j t) = sqrtSum w i j from rfl, M.σ2ρ_special sig hw hσ, inv_mul_eq_iff_eq_mul₀ hden.ne']
+    simp only [den]
+    have := (hW i).ne'; have := (hW j).ne'; have := hS.ne'
+    field_simp
+    ring
 
 /-- `ĉⱼ` is unbiased for `cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ`. -/
 theorem cHat_unbiased (hT : 2 ≤ Fintype.card T) (j : J) :
