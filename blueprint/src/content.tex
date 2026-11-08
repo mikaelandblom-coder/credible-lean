@@ -1554,15 +1554,44 @@ moments matter'' a checked statement.
   $z\hmu_j + (1-z)\hmu$.
 \end{definition}
 
+\begin{lemma}[Linear combinations]\label{lem:moments_lin}
+  \lean{Credibility.Model.sqrt_τ2_mul, Credibility.Model.Noise.memLp_basic,
+        Credibility.Model.Noise.integral_basic, Credibility.Model.Noise.cov_basic,
+        Credibility.Model.Noise.memLp_term, Credibility.Model.Noise.memLp_sum,
+        Credibility.Model.Noise.memLp_lin, Credibility.Model.Noise.integral_lin,
+        Credibility.Model.Noise.cov_lin, Credibility.Model.Noise.var_lin,
+        Credibility.Model.Noise.trueMean_eq, Credibility.Model.Noise.obs_eq,
+        Credibility.Model.Noise.memLp_obs, Credibility.Model.Noise.memLp_trueMean,
+        Credibility.Model.Noise.cov_obs_trueMean, Credibility.Model.Noise.cov_trueMean,
+        Credibility.Model.Noise.memLp_cohortLin, Credibility.Model.Noise.integral_cohortLin,
+        Credibility.Model.Noise.cov_cohortLin, Credibility.Model.Noise.cov_cohortLin_trueMean}
+  \leanok
+  \uses{def:Noise}
+  Collect the $\eta_j$ and $\varepsilon_{jt}$ into one family $Z_u$,
+  $u \in J \sqcup (J\times T)$, with covariances $G_{uv}$. A variable
+  $X = c + \sum_u w_u Z_u$ is square-integrable with $\mathbb E X = c$, and
+  $\cov(c + \sum_u w_uZ_u,\ c' + \sum_v w'_vZ_v) = \sum_{u,v} w_uw'_vG_{uv}$.
+  Every $\mu_j$ and $\mu_{jt}$ is of this form; in particular
+  $\cov(\mu_{it},\mu_j) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$, and for any
+  weights $\cov(\sum_t c_t\mu_{it}, \sum_s c'_s\mu_{js})
+  = \sum_{t,s} c_tc'_s\bar K_{ij}^{ts}$,
+  $\cov(\sum_t c_t\mu_{it}, \mu_j) = (\sum_t c_t)\tau^2\delta_{ij}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
 \begin{theorem}[The covariances are the actual ones]\label{thm:cov_obs}
   \lean{Credibility.Model.Noise.obs_mean, Credibility.Model.Noise.cov_obs,
         Credibility.Model.Noise.cov_cohortEst}
   \leanok
-  \uses{def:Noise, def:obsCov, def:K}
+  \uses{lem:moments_lin, def:obsCov, def:K}
   $\mathbb E\mu_{jt} = \mu$, $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$
   \eqth{16} and $\cov(\hmu_i,\hmu_j) = K_{ij}$ \eqth{21}.
 \end{theorem}
 \begin{proof}
+  \leanok
   Bilinearity of covariance.
 \end{proof}
 
