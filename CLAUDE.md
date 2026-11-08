@@ -11,6 +11,7 @@ tactics.
 - §2.3–2.5 data model, `K`, eqs. (16), (21), (22), (26) → `Credibility/Model.lean`
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
+- §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean`
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 
 Second moments are taken as given numbers; a probabilistic layer proving

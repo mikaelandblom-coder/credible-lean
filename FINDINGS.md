@@ -64,6 +64,17 @@ Gaps, extra hypotheses and new results found while formalizing.
    merge iff the shared share of level variance `φ > (1+z²)/2`, against
    `1/(2-z)` for the pair alone); it has no simple general form. Open: the
    winner's curse when the merge is decided from the same data.
+7. **Estimation needs `T ≥ 2` and `J ≥ 2`; a typo in eq. (13).** The
+   §2.8 estimators (eq. (39)) are unbiased (`Estimation.sigRhoHat_unbiased`,
+   `tauHat_unbiased`, `KHat_unbiased`, *proved*), but the thesis never states
+   the sample sizes they need. With `T = 1` the denominator of the
+   `σ²ᵢⱼρᵢⱼ` estimator is `Sᵢⱼ - wᵢ*wⱼ*/Sᵢⱼ = 0` (`Sᵢⱼ = √(wᵢ₁wⱼ₁)`); with
+   `J = 1` the denominator of `τ̂²` is `w** - w** = 0`. Bühlmann–Straub needs
+   the same, so this is a gap in the statement, not in the method. On the
+   diagonal the estimator is `σ̂ⱼ²/wⱼ*` (eq. (41), `sigRhoHat_self`).
+   Unrelated typo: eq. (13) averages the Bühlmann–Straub `σ̂ⱼ²` with `1/T`,
+   but there are `J` of them, so it should be `σ̂² = (1/J) Σⱼ σ̂ⱼ²`. Lean
+   does not touch eq. (13); `sigRhoHat_self` only uses `σ̂ⱼ²`.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
