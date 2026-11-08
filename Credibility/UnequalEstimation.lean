@@ -1,5 +1,5 @@
 import Credibility.Unequal
-import Credibility.Estimation
+import Credibility.Expectation
 import Credibility.BuhlmannStraub
 
 /-!

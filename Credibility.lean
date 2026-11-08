@@ -6,6 +6,7 @@ import Credibility.Model
 import Credibility.BuhlmannStraub
 import Credibility.TwoCohorts
 import Credibility.Merging
+import Credibility.Expectation
 import Credibility.Estimation
 import Credibility.Unequal
 import Credibility.UnequalEstimation

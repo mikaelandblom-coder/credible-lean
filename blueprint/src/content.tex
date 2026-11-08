@@ -958,7 +958,7 @@ can occur, but not when. The following answers that.
 
 % ---------------------------------------------------------------------------
 \chapter{Parameter estimation}\label{ch:estimation}
-% Thesis §2.8. Lean: Credibility/Estimation.lean
+% Thesis §2.8. Lean: Credibility/Expectation.lean, Credibility/Estimation.lean
 
 Take $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$ with known volumes $w_{jt} > 0$:
 Bühlmann--Straub with a cohort-dependent $\sigma_j$ and correlations
@@ -1009,15 +1009,15 @@ for every $\mu$.
 \begin{lemma}[Expected cross products of residuals]\label{lem:unbiased_dev}
   \lean{Credibility.Model.unbiased_dev}
   \leanok
-  \uses{lem:unbiased_linear, def:K}
+  \uses{def:unbiased, def:K}
   For any $\sigma_{jt}$,
   $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
    = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
 \end{lemma}
 \begin{proof}
   \leanok
-  The means cancel since $\sum_t a_{jt} = 1$. Expand the covariance into four
-  terms; the $\tau^2\delta_{ij}$ parts cancel.
+  \uses{lem:U_unbiased_dev, lem:U_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_unbiased_dev}.
 \end{proof}
 
 \begin{lemma}[Volume weights]\label{lem:a_special}
@@ -1028,18 +1028,20 @@ for every $\mu$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $\sigma_{jt}^{-2} = w_{jt}/\sigma_j^2$, and $\sigma_j^2$ cancels.
+  \uses{lem:U_special, lem:U_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_special}.
 \end{proof}
 
 \begin{lemma}[\eqth{37}]\label{lem:sigma2rho_special}
   \lean{Credibility.Model.σ2ρ_special}
   \leanok
-  \uses{lem:a_special}
+  \uses{def:sigma2}
   $\sigma^2_{ij}\rho_{ij} = \dfrac{S_{ij}}{w_{i*}w_{j*}}\,\sigma_i\sigma_j\rho_{ij}$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $a_{it}\sigma_{it} = \sigma_i\sqrt{w_{it}}/w_{i*}$.
+  \uses{lem:U_special, lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_special}.
 \end{proof}
 
 \begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
@@ -1061,12 +1063,15 @@ for every $\mu$.
 \begin{theorem}[Unbiased covariances]\label{thm:sigRhoHat_unbiased}
   \lean{Credibility.Model.sigRhoHat_unbiased}
   \leanok
-  \uses{def:estimators, lem:unbiased_dev, lem:sigma2rho_special}
+  \uses{def:estimators, def:unbiased}
   If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$.
 \end{theorem}
 \begin{proof}
   \leanok
-  By Lemma~\ref{lem:unbiased_dev}, $\sqrt{w_{it}w_{jt}}\,\mathbb{E}[\dots]
+  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}; $T \ge 2$ makes every
+  denominator positive. Directly: by Lemma~\ref{lem:unbiased_dev},
+  $\sqrt{w_{it}w_{jt}}\,\mathbb{E}[\dots]
   = (1 - w_{it}/w_{i*} - w_{jt}/w_{j*})\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$.
   Summing over $t$ gives $(T-2)\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$,
   which is the denominator times $\sigma^2_{ij}\rho_{ij}$ by \eqth{37}.
@@ -1087,11 +1092,13 @@ for every $\mu$.
 \begin{theorem}[Unbiased $\tau^2$]\label{thm:tauHat_unbiased}
   \lean{Credibility.Model.tauHat_unbiased}
   \leanok
-  \uses{thm:cHat_unbiased, def:K}
+  \uses{def:estimators, def:unbiased}
   If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}$ is unbiased for $\tau^2$.
 \end{theorem}
 \begin{proof}
   \leanok
+  \uses{thm:U_unbiased, lem:U_estimators_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly:
   $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2 = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$
   with $v_i = w_{i*}/w_{**}$, by \eqth{38}. Weighting by $w_{j*}$, the
   $\sigma^2\rho$ part is $\sum_j w_{j*}c_j$ and the $\tau^2$ part is
@@ -1101,12 +1108,14 @@ for every $\mu$.
 \begin{corollary}\label{cor:KHat_unbiased}
   \lean{Credibility.Model.KHat_unbiased}
   \leanok
-  \uses{thm:sigRhoHat_unbiased, thm:tauHat_unbiased, lem:K_apply}
+  \uses{def:estimators, def:unbiased, def:K}
   If $T \ge 2$ and $J \ge 2$, $\hat K_{ij}$ is unbiased for $K_{ij}$.
 \end{corollary}
 \begin{proof}
   \leanok
-  Linearity and Lemma~\ref{lem:K_apply}.
+  \uses{thm:U_unbiased, lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_unbiased}. Directly: linearity and
+  Lemma~\ref{lem:K_apply}.
 \end{proof}
 
 \begin{theorem}[Consistency with Bühlmann--Straub, \eqth{41}]\label{thm:sigRhoHat_self}
@@ -1118,6 +1127,8 @@ for every $\mu$.
 \end{theorem}
 \begin{proof}
   \leanok
+  \uses{thm:U_sigRhoHat_self, lem:U_estimators_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_sigRhoHat_self}:
   $S_{jj} = w_{j*}$, so the denominator is $(T-1)w_{j*}$.
 \end{proof}
 
@@ -1523,6 +1534,22 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $n_{ij} = 1 - \omega_i - \omega_j$, $\omega_k = w_{kt}/w_{k*}$.
 \end{proof}
 
+\begin{lemma}[Back to the thesis]\label{lem:U_estimators_full}
+  \lean{Credibility.Model.toUnequal_wtot, Credibility.Model.toUnequal_wall,
+        Credibility.Model.toUnequal_muHat, Credibility.Model.toUnequal_sqrtSum,
+        Credibility.Model.toUnequal_sigRhoHat, Credibility.Model.toUnequal_tauHat,
+        Credibility.Model.toUnequal_KHat, Credibility.Model.toUnequal_den_pos}
+  \leanok
+  \uses{def:U_estimators, def:estimators, lem:U_full}
+  With $T_j = T$ the estimators are those of \eqth{39}, and $T \ge 2$ gives
+  $D_{ij} > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_count, lem:U_den}
+  $T_{ij} = T$, so $n_{ij} = T - 2$ (Lemma~\ref{lem:U_count}) and $|T_{ij}| \ge 2$.
+\end{proof}
+
 \begin{lemma}\label{lem:U_special}
   \lean{Credibility.Unequal.a_special, Credibility.Unequal.σ2ρ_special}
   \leanok
@@ -1532,7 +1559,8 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
 \end{lemma}
 \begin{proof}
   \leanok
-  As Lemmas~\ref{lem:a_special} and~\ref{lem:sigma2rho_special}.
+  $\sigma_{jt}^{-2} = w_{jt}/\sigma_j^2$, and $\sigma_j^2$ cancels. Then
+  $a_{it}\sigma_{it} = \sigma_i\sqrt{w_{it}}/w_{i*}$ on $T_i$.
 \end{proof}
 
 \begin{lemma}\label{lem:U_unbiased_dev}
@@ -1545,7 +1573,8 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
 \end{lemma}
 \begin{proof}
   \leanok
-  As Lemma~\ref{lem:unbiased_dev}.
+  The means cancel since $\sum_t a_{jt} = 1$. Expand the covariance into four
+  terms; the $\tau^2\delta_{ij}$ parts cancel.
 \end{proof}
 
 \begin{theorem}[Unbiasedness with unequal lengths]\label{thm:U_unbiased}
@@ -1562,8 +1591,9 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   Weighting Lemma~\ref{lem:U_unbiased_dev} by $\sqrt{w_{it}w_{jt}}$ and
   summing over $T_{ij}$ gives $\sigma_i\sigma_j\rho_{ij}n_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}
   = D_{ij}\sigma^2_{ij}\rho_{ij}$ by Lemma~\ref{lem:U_special}. For
-  $\widehat{\tau^2}$ the proof of Theorem~\ref{thm:tauHat_unbiased} only uses
-  $K = \sigma^2\rho + \tau^2\delta$.
+  $\widehat{\tau^2}$, $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2
+  = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$ with $v_i = w_{i*}/w_{**}$,
+  and $K = \sigma^2\rho + \tau^2\delta$ as in Theorem~\ref{thm:tauHat_unbiased}.
 \end{proof}
 
 \begin{lemma}\label{lem:U_observed}

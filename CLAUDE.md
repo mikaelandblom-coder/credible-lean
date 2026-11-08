@@ -13,7 +13,8 @@ tactics.
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
-- §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean`
+- §2.8 expectation of quadratic estimators, `Unbiased` → `Credibility/Expectation.lean`
+- §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean` (corollaries of `UnequalEstimation` via `Model.toUnequal`)
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
