@@ -1686,3 +1686,135 @@ moments matter'' a checked statement.
   Theorem~\ref{thm:exists_noise} this is not an extra assumption: it holds
   whenever the model's random variables exist at all.
 \end{remark}
+
+\section{Unequal lengths}
+% Lean: Credibility/UnequalMoments.lean
+
+The same layer for Chapter~\ref{ch:unequal}: random variables are assumed
+only on observed cells $(j,t)$, $t \in T_j$.
+
+\begin{definition}[Moment assumptions on observed cells]\label{def:U_Noise}
+  \lean{Credibility.Unequal.Noise, Credibility.Unequal.Noise.trueMean,
+        Credibility.Unequal.Noise.obsVal, Credibility.Unequal.Noise.cohortLin,
+        Credibility.Unequal.Noise.cohortEst, Credibility.Unequal.Noise.portLin,
+        Credibility.Unequal.Noise.portEst, Credibility.Unequal.Noise.blend}
+  \leanok
+  \uses{def:Noise, def:Unequal, thm:U_bestZ_eq}
+  As Definition~\ref{def:Noise}, but $\varepsilon_{jt}$ is only constrained
+  for $t \in T_j$: $\mathbb E\varepsilon_{jt} = 0$, $\cov(\eta_i,\varepsilon_{jt}) = 0$
+  and $\cov(\varepsilon_{it},\varepsilon_{js}) = \rho_{ij}\delta_{ts}$ for
+  $t \in T_i$, $s \in T_j$. So $\rho_{ij}$ enters only on shared periods.
+  Now $\hmu_j = \sum_{t\in T_j} a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$
+  with the $a$, $b$ of Chapter~\ref{ch:unequal}.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions]\label{lem:U_moments_lin}
+  \lean{Credibility.Unequal.cov_add_add, Credibility.Unequal.Noise.trueMean_def,
+        Credibility.Unequal.Noise.obsVal_def, Credibility.Unequal.Noise.memLp_trueMean,
+        Credibility.Unequal.Noise.memLp_obsVal, Credibility.Unequal.Noise.integral_trueMean,
+        Credibility.Unequal.Noise.cov_η_trueMean, Credibility.Unequal.Noise.cov_ε_trueMean,
+        Credibility.Unequal.Noise.cov_trueMean, Credibility.Unequal.Noise.cov_obsVal_trueMean,
+        Credibility.Unequal.Noise.memLp_cohortLin,
+        Credibility.Unequal.Noise.integral_cohortLin, Credibility.Unequal.Noise.cov_cohortLin,
+        Credibility.Unequal.Noise.cov_cohortLin_trueMean,
+        Credibility.Unequal.Noise.cov_cohortLin_self,
+        Credibility.Unequal.Noise.memLp_cohortEst, Credibility.Unequal.Noise.memLp_portLin,
+        Credibility.Unequal.Noise.cov_portLin, Credibility.Unequal.Noise.cov_cohortEst_portLin,
+        Credibility.Unequal.Noise.cov_portLin_trueMean,
+        Credibility.Unequal.Noise.integral_portLin}
+  \leanok
+  \uses{def:U_Noise, lem:U_sum_a}
+  The identities of Lemma~\ref{lem:moments_lin}, with sums over $T_j$ in
+  place of $T$. No $T \neq \emptyset$ is needed since $T_j \neq \emptyset$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:U_cov_obs}
+  \lean{Credibility.Unequal.Noise.obsVal_mean, Credibility.Unequal.Noise.cov_obsVal,
+        Credibility.Unequal.Noise.cov_cohortEst}
+  \leanok
+  \uses{lem:U_moments_lin, def:obsCov, def:Unequal}
+  For $t \in T_i$, $s \in T_j$: $\mathbb E\mu_{jt} = \mu$,
+  $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$, and
+  $\cov(\hmu_i,\hmu_j) = K_{ij}$ with the $K$ of Definition~\ref{def:Unequal}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance.
+\end{proof}
+
+\begin{theorem}[Optimal weights in true variance]\label{thm:U_weights_true}
+  \lean{Credibility.Unequal.Noise.var_cohortLin_err,
+        Credibility.Unequal.Noise.cohortEst_optimal, Credibility.Unequal.Noise.portEst_optimal}
+  \leanok
+  \uses{thm:U_cov_obs, thm:U_a_optimal, thm:glsWeight_optimal}
+  If $\sum_{t\in T_j} c_t = 1$, then
+  $\Var(\sum_{t\in T_j} c_t\mu_{jt} - \mu_j) = \sum_{t\in T_j} c_t^2\sigma_{jt}^2$,
+  minimised by $a_j$. If $K \succ 0$,
+  $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$ whenever $\sum_j d_j = 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Bilinearity, then Theorems~\ref{thm:U_a_optimal} and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with unequal lengths]\label{thm:U_bestZ_mse}
+  \lean{Credibility.Unequal.Noise.moments_eq, Credibility.Unequal.Noise.mse_blend,
+        Credibility.Unequal.Noise.bestZ_mse_optimal}
+  \leanok
+  \uses{thm:U_cov_obs, thm:U_bestZ_eq, lem:U_K_apply, thm:bestZ_optimal}
+  If $K \succ 0$, each field of the blend moments of
+  Theorem~\ref{thm:U_bestZ_eq} is the moment it names, the blend is unbiased,
+  its mean squared error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the
+  factor $z_j$ of Theorem~\ref{thm:U_bestZ_eq} minimises it over $z$, for
+  every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  As Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_mse}.
+\end{proof}
+
+\begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
+  \lean{Credibility.Unequal.block, Credibility.Unequal.corrAt, Credibility.Unequal.gram,
+        Credibility.Unequal.sum_eq_sum_block, Credibility.Unequal.corrAt_quad_nonneg,
+        Credibility.Unequal.gram_posSemidef}
+  \leanok
+  \uses{lem:gram_psd}
+  Let $C^t_{ij} = \rho_{ij}$ if $t \in T_i \cap T_j$ and $\delta_{ij}$
+  otherwise (unit noise, uncorrelated, on unobserved cells). If every block
+  $R_t = (\rho_{ij})_{i,j \in J_t}$, $J_t = \{j : t \in T_j\}$, is positive
+  semidefinite, so is the table $G$ with identity on the $\eta$ block,
+  $C^t_{ij}\delta_{ts}$ on the $\varepsilon$ block, zero across.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $v^TC^tv = w^TR_tw + \sum_{j\notin J_t} v_j^2$ with $w = v|_{J_t}$; then as
+  Lemma~\ref{lem:gram_psd}.
+\end{proof}
+
+\begin{theorem}[Consistent iff every block is PSD]\label{thm:U_exists_noise}
+  \lean{Credibility.Unequal.exists_noise_iff}
+  \leanok
+  \uses{def:U_Noise, lem:U_gram_psd}
+  Random variables as in Definition~\ref{def:U_Noise} exist on some
+  probability space iff every block $R_t$ is positive semidefinite.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Necessity: $x^TR_tx = \Var(\sum_{j\in J_t} x_j\varepsilon_{jt}) \ge 0$.
+  Sufficiency: a Gaussian vector with covariance $G$
+  (Lemma~\ref{lem:U_gram_psd}), only as a witness.
+\end{proof}
+
+\begin{remark}[Finding 12: the block condition is exactly consistency]\label{rem:U_moments_psd}
+  \uses{thm:U_exists_noise, rem:unequal_posdef, rem:moments_psd}
+  The hypothesis of Theorem~\ref{thm:U_K_posDef} (Finding~8) is not an extra
+  assumption either: it holds whenever the model with unequal lengths is
+  consistent at all. Then $K \succ 0$ and Theorem~\ref{thm:U_bestZ_mse}
+  applies. In particular, correlations of cohorts that never share a period
+  are not even constrained by consistency: the example of
+  Remark~\ref{rem:unequal_posdef} with $\rho_{13} = -0.9$ is realisable.
+\end{remark}

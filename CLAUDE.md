@@ -15,8 +15,9 @@ tactics.
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean`
+- extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
 
-Second moments are taken as given numbers, except in `Moments.lean`, which
+Second moments are taken as given numbers, except in `Moments.lean` and `UnequalMoments.lean`, which
 proves they are the actual covariances of *any* random variables with
 those moments. The model is distribution-free (only first and second
 moments are assumed). Never add a distributional assumption.

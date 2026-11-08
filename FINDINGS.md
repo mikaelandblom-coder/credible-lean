@@ -116,6 +116,18 @@ Gaps, extra hypotheses and new results found while formalizing.
    holds whenever the model is consistent at all (`Model.Noise.mse_blend`,
    `bestZ_mse_optimal`, `exists_noise_iff`, *proved*).
 
+12. **Unequal lengths: distribution-free, and the block condition is free (new).**
+   With cohort `j` observed in `Tⱼ` and moments assumed only on observed
+   cells, `K` (on `Tⱼ`) is the actual covariance of the `μ̂ⱼ`, the weights
+   are optimal in actual variance, and `zⱼ` minimises the actual mean
+   squared error. Such random variables exist iff, for every period `t`,
+   the correlations of the cohorts observed at `t` are positive
+   semidefinite: exactly the hypothesis of Finding 8. So `K ≻ 0` comes for
+   free whenever the model is consistent, and correlations of cohorts that
+   never share a period are unconstrained (Finding 8's example with
+   `ρ₁₃ = −0.9` is realisable) (`Unequal.Noise.mse_blend`,
+   `bestZ_mse_optimal`, `Unequal.exists_noise_iff`, *proved*).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
 (Findings 1–3 come from the statements; confirm them as proofs land.)

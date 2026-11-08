@@ -54,6 +54,7 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | extension: merging two cohorts ([notes](notes/merging-cohorts.md)) | `Credibility/Merging.lean` |
 | extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean` |
 | extension: moment layer (distribution-free) | `Credibility/Moments.lean` |
+| extension: moment layer for unequal lengths | `Credibility/UnequalMoments.lean` |
 
 Like the thesis, the formalization is **distribution-free**: only first and
 second moments are assumed. Most files take the second moments (`τ²`, `σⱼₜ`,
@@ -71,7 +72,9 @@ Once the thesis results are proved:
   eqs. (16) and (21) are the actual covariances, the weights are optimal
   in actual variance, and `zⱼ` minimises the actual mean squared error.
   Such variables exist exactly when `ρ` is positive semidefinite, the
-  condition `K` needs anyway (FINDINGS item 1).
+  condition `K` needs anyway (FINDINGS item 1). The same holds with
+  unequal lengths (`Credibility/UnequalMoments.lean`, FINDINGS item 12),
+  where consistency is exactly the per-period block condition of item 8.
 - ~~**Cohort-dependent series length.**~~ Done: cohorts observed on
   their own periods `Tⱼ ⊆ T`, correlations acting only on shared periods.
   Not in the thesis. Notes in

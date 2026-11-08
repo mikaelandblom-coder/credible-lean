@@ -7,3 +7,4 @@ import Credibility.Merging
 import Credibility.Estimation
 import Credibility.Unequal
 import Credibility.Moments
+import Credibility.UnequalMoments
