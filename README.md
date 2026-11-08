@@ -1,5 +1,7 @@
 # correlated-credibility
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054632.svg)](https://doi.org/10.5281/zenodo.24054632)
+
 A Lean 4 + Mathlib formalization of *Generalized Bühlmann–Straub credibility
 theory for correlated data* (M. Andblom, master thesis in actuarial
 mathematics, Stockholm University, 2023:2;
@@ -91,7 +93,9 @@ The thesis is the foundation: notation and model for all later work. Plan:
    regression model), each as its own `Credibility/<Topic>.lean` and
    blueprint chapter in the thesis notation.
 2. **Make the repo citable.** `CITATION.cff` (GitHub's "Cite this
-   repository"); Zenodo archiving so each tagged release gets a DOI;
+   repository"); Zenodo archives each tagged release (concept DOI
+   [10.5281/zenodo.24054632](https://doi.org/10.5281/zenodo.24054632),
+   always the latest version);
    GitHub topics `credibility-theory`, `actuarial-science`, `lean4`,
    `formalization`.
 3. **Preprint on arXiv** (q-fin.RM, cross-list stat.AP or math.ST) once the

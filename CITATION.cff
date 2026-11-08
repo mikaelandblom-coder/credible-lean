@@ -8,6 +8,7 @@ authors:
   - given-names: Mikael
     family-names: Andblom
 license: Apache-2.0
+doi: 10.5281/zenodo.24054632
 repository-code: "https://github.com/mikaelandblom-coder/credible-lean"
 url: "https://mikaelandblom-coder.github.io/credible-lean/"
 abstract: >-
