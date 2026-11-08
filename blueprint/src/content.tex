@@ -1922,3 +1922,42 @@ only on observed cells $(j,t)$, $t \in T_j$.
   are not even constrained by consistency: the example of
   Remark~\ref{rem:unequal_posdef} with $\rho_{13} = -0.9$ is realisable.
 \end{remark}
+
+\chapter{Extension: damping off-diagonal entries}\label{ch:offdiag}
+% Not in the thesis: README "Later goals -> Small lemmas" (b).
+% Lean: Credibility/OffDiagonal.lean
+
+Not in the thesis. A general fact about matrices, used for covariance
+matrices whose correlations are damped by a common factor $\rho$.
+
+\begin{definition}[Damped matrix]\label{def:shrinkOffDiag}
+  \lean{Credibility.shrinkOffDiag}
+  \leanok
+  For a square matrix $A$ and $\rho\in\mathbb{R}$, $A^\rho$ has the entries
+  $A^\rho_{ii} = A_{ii}$ and $A^\rho_{ij} = \rho A_{ij}$ for $i \ne j$.
+\end{definition}
+
+\begin{lemma}[Convex combination]\label{lem:shrinkOffDiag_eq}
+  \lean{Credibility.shrinkOffDiag_eq}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $A^\rho = \rho A + (1-\rho)\operatorname{diag}(A_{11},\dots,A_{nn})$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries.
+\end{proof}
+
+\begin{theorem}[Damping keeps positive (semi)definiteness]\label{thm:shrinkOffDiag_posDef}
+  \lean{Credibility.posSemidef_shrinkOffDiag, Credibility.posDef_shrinkOffDiag}
+  \leanok
+  \uses{lem:shrinkOffDiag_eq}
+  If $A \succeq 0$ and $0 \le \rho \le 1$, then $A^\rho \succeq 0$. If moreover
+  $\rho < 1$ and $A_{ii} > 0$ for all $i$, then $A^\rho \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  By Lemma~\ref{lem:shrinkOffDiag_eq}, $A^\rho$ is a sum of $\rho A \succeq 0$
+  and $(1-\rho)\operatorname{diag}(A_{ii})$, which is $\succeq 0$, and
+  $\succ 0$ when $\rho < 1$ and the diagonal is positive.
+\end{proof}

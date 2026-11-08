@@ -98,7 +98,7 @@ Once the thesis results are proved:
   arXiv:1403.2485). Possibly worth contributing to Mathlib. (b) Multiplying the
   off-diagonal entries of a covariance matrix `τ` by `ρ ∈ [0,1]` keeps it
   positive semidefinite, and positive definite if `ρ < 1` and the diagonal
-  is positive.
+  is positive. Done: `Credibility/OffDiagonal.lean`.
 
 ## Sharing results
 

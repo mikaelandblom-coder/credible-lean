@@ -20,6 +20,7 @@ tactics.
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
 - extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
+- extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 
 Second moments are taken as given numbers, except in `Moments.lean` and `UnequalMoments.lean`, which
 proves they are the actual covariances of *any* random variables with
