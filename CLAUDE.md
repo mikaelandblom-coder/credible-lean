@@ -16,8 +16,8 @@ tactics.
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
-- extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean`
 - extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
+- extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
 
 Second moments are taken as given numbers, except in `Moments.lean` and `UnequalMoments.lean`, which
 proves they are the actual covariances of *any* random variables with

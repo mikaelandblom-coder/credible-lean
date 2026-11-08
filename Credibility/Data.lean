@@ -38,5 +38,9 @@ def obsCov (i j : J) (t s : T) : ℝ :=
   M.σ i t * M.σ j s * M.ρ i j * (if t = s then 1 else 0)
     + M.τ2 * (if i = j then 1 else 0)
 
+omit [DecidableEq J] [DecidableEq T] in
+lemma sqrt_τ2_mul : Real.sqrt M.τ2 * Real.sqrt M.τ2 = M.τ2 :=
+  Real.mul_self_sqrt M.τ2_pos.le
+
 end Model
 end Credibility

@@ -1,4 +1,5 @@
 import Credibility.Model
+import Credibility.UnequalMoments
 
 /-!
 # The moment layer (extension, distribution-free)
@@ -16,6 +17,10 @@ Notation: cohort effect `ηⱼ` (the thesis's `εⱼ`), sampling noise `εⱼₜ
 
 Finally, such random variables exist exactly when the correlation table `ρ`
 is positive semidefinite (`exists_noise_iff`).
+
+Every cohort is observed in every period, so `Noise` is `Unequal.Noise` with
+`Tⱼ = T` (`Noise.toUnequal`): the theorems here are corollaries of
+`UnequalMoments.lean`.
 -/
 
 open Finset Matrix MeasureTheory ProbabilityTheory
@@ -51,20 +56,6 @@ def gram (M : Model J T) : J ⊕ (J × T) → J ⊕ (J × T) → ℝ
   | .inr _, .inl _ => 0
   | .inr p, .inr q => M.ρ p.1 q.1 * if p.2 = q.2 then 1 else 0
 
-/-- Weights of the true mean `μⱼ = μ + τ ηⱼ` on the basic variables. -/
-noncomputable def wTrue (M : Model J T) (j : J) : J ⊕ (J × T) → ℝ
-  | .inl k => if k = j then Real.sqrt M.τ2 else 0
-  | .inr _ => 0
-
-/-- Weights of the observation `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ` on the basic variables. -/
-noncomputable def wObs (M : Model J T) (j : J) (t : T) : J ⊕ (J × T) → ℝ
-  | .inl k => if k = j then Real.sqrt M.τ2 else 0
-  | .inr p => if p = (j, t) then M.σ j t else 0
-
-omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
-lemma sqrt_τ2_mul (M : Model J T) : Real.sqrt M.τ2 * Real.sqrt M.τ2 = M.τ2 :=
-  Real.mul_self_sqrt M.τ2_pos.le
-
 namespace Noise
 
 variable {M : Model J T} {P : Measure Ω} (N : M.Noise P) (μ : ℝ)
@@ -92,240 +83,114 @@ noncomputable def portEst : Ω → ℝ := N.portLin μ M.b
 noncomputable def blend (j : J) (z : ℝ) : Ω → ℝ :=
   fun ω => z * N.cohortEst μ j ω + (1 - z) * N.portEst μ ω
 
+/-- A noise for the thesis model is one for `Tⱼ = T`. -/
+def toUnequal [Nonempty T] : M.toUnequal.Noise P where
+  η := N.η
+  ε := N.ε
+  η_memLp := N.η_memLp
+  ε_memLp := fun j t _ => N.ε_memLp j t
+  η_mean := N.η_mean
+  ε_mean := fun j t _ => N.ε_mean j t
+  cov_η_η := N.cov_η_η
+  cov_η_ε := fun i j t _ => N.cov_η_ε i j t
+  cov_ε_ε := fun i j t _ s _ => N.cov_ε_ε i j t s
+
+/-- …and conversely. -/
+def ofUnequal [Nonempty T] (N : M.toUnequal.Noise P) : M.Noise P where
+  η := N.η
+  ε := N.ε
+  η_memLp := N.η_memLp
+  ε_memLp := fun j t => N.ε_memLp j t (mem_univ t)
+  η_mean := N.η_mean
+  ε_mean := fun j t => N.ε_mean j t (mem_univ t)
+  cov_η_η := N.cov_η_η
+  cov_η_ε := fun i j t => N.cov_η_ε i j t (mem_univ t)
+  cov_ε_ε := fun i j t s => N.cov_ε_ε i j t (mem_univ t) s (mem_univ s)
+
+section Full
+
+variable [Nonempty T]
+
+omit [Fintype J] in
+lemma toUnequal_trueMean (j : J) : N.toUnequal.trueMean μ j = N.trueMean μ j := rfl
+
+omit [Fintype J] in
+lemma toUnequal_obsVal (j : J) (t : T) : N.toUnequal.obsVal μ j t = N.obs μ j t := rfl
+
+omit [Fintype J] in
+lemma toUnequal_cohortLin (j : J) (c : T → ℝ) :
+    N.toUnequal.cohortLin μ j c = N.cohortLin μ j c := rfl
+
+omit [Fintype J] in
+lemma toUnequal_cohortEst (j : J) : N.toUnequal.cohortEst μ j = N.cohortEst μ j := by
+  rw [Unequal.Noise.cohortEst, toUnequal_a, toUnequal_cohortLin]; rfl
+
+lemma toUnequal_portLin (d : J → ℝ) : N.toUnequal.portLin μ d = N.portLin μ d := by
+  show (fun ω => ∑ j, d j * N.toUnequal.cohortEst μ j ω) = _
+  simp only [toUnequal_cohortEst]; rfl
+
+lemma toUnequal_portEst : N.toUnequal.portEst μ = N.portEst μ := by
+  rw [Unequal.Noise.portEst, toUnequal_b, toUnequal_portLin]; rfl
+
+lemma toUnequal_blend (j : J) (z : ℝ) : N.toUnequal.blend μ j z = N.blend μ j z := by
+  show (fun ω => z * N.toUnequal.cohortEst μ j ω + (1 - z) * N.toUnequal.portEst μ ω) = _
+  simp only [toUnequal_cohortEst, toUnequal_portEst]; rfl
+
+end Full
+
 variable [IsProbabilityMeasure P]
 
-/-! ### Linear combinations of the basic variables
-
-Every estimator here is a constant plus a linear combination of the `ηⱼ` and
-`εⱼₜ`. We index both by `J ⊕ (J × T)`; their covariances form `gram`. -/
-
-/-- The basic variables: `ηⱼ` at `inl j`, `εⱼₜ` at `inr (j, t)`. -/
-def basic : J ⊕ (J × T) → Ω → ℝ
-  | .inl j => N.η j
-  | .inr p => N.ε p.1 p.2
-
-omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
-lemma memLp_basic (u : J ⊕ (J × T)) : MemLp (N.basic u) 2 P := by
-  cases u with
-  | inl j => exact N.η_memLp j
-  | inr p => exact N.ε_memLp p.1 p.2
-
-omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
-lemma integral_basic (u : J ⊕ (J × T)) : P[N.basic u] = 0 := by
-  cases u with
-  | inl j => exact N.η_mean j
-  | inr p => exact N.ε_mean p.1 p.2
-
-omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
-lemma cov_basic (u v : J ⊕ (J × T)) : cov[N.basic u, N.basic v; P] = M.gram u v := by
-  cases u with
-  | inl i =>
-    cases v with
-    | inl j => exact N.cov_η_η i j
-    | inr q => exact N.cov_η_ε i q.1 q.2
-  | inr p =>
-    cases v with
-    | inl j => rw [basic, basic, covariance_comm]; exact N.cov_η_ε j p.1 p.2
-    | inr q => exact N.cov_ε_ε p.1 q.1 p.2 q.2
-
-/-- The random variable `c + Σᵤ wᵤ · basicᵤ`. -/
-noncomputable def lin (c : ℝ) (w : J ⊕ (J × T) → ℝ) : Ω → ℝ :=
-  fun ω => c + ∑ u, w u * N.basic u ω
-
-omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
-lemma memLp_term (w : J ⊕ (J × T) → ℝ) (u : J ⊕ (J × T)) :
-    MemLp (fun ω => w u * N.basic u ω) 2 P :=
-  (N.memLp_basic u).const_mul (w u)
-
-omit [IsProbabilityMeasure P] in
-lemma memLp_sum (w : J ⊕ (J × T) → ℝ) : MemLp (fun ω => ∑ u, w u * N.basic u ω) 2 P :=
-  memLp_finsetSum _ fun u _ => N.memLp_term w u
-
-lemma memLp_lin (c : ℝ) (w : J ⊕ (J × T) → ℝ) : MemLp (N.lin c w) 2 P :=
-  (memLp_const c).add (N.memLp_sum w)
-
-lemma integral_lin (c : ℝ) (w : J ⊕ (J × T) → ℝ) : P[N.lin c w] = c := by
-  have hi : ∀ u, Integrable (fun ω => w u * N.basic u ω) P :=
-    fun u => (N.memLp_term w u).integrable (by norm_num)
-  simp only [lin]
-  rw [integral_add (integrable_const c) (integrable_finsetSum _ fun u _ => hi u),
-    integral_finsetSum _ fun u _ => hi u]
-  simp only [integral_const, probReal_univ, smul_eq_mul, one_mul,
-    integral_const_mul, N.integral_basic, mul_zero, sum_const_zero, add_zero]
-
-lemma cov_lin (c c' : ℝ) (w w' : J ⊕ (J × T) → ℝ) :
-    cov[N.lin c w, N.lin c' w'; P] = ∑ u, ∑ v, w u * w' v * M.gram u v := by
-  have hi : ∀ w : J ⊕ (J × T) → ℝ, Integrable (fun ω => ∑ u, w u * N.basic u ω) P :=
-    fun w => (N.memLp_sum w).integrable (by norm_num)
-  unfold lin
-  rw [covariance_const_add_left (hi w), covariance_const_add_right (hi w'),
-    covariance_fun_sum_fun_sum (N.memLp_term w) (N.memLp_term w')]
-  refine sum_congr rfl fun u _ => sum_congr rfl fun v _ => ?_
-  rw [covariance_const_mul_left, covariance_const_mul_right, N.cov_basic]
-  ring
-
-lemma var_lin (c : ℝ) (w : J ⊕ (J × T) → ℝ) :
-    Var[N.lin c w; P] = ∑ u, ∑ v, w u * w v * M.gram u v := by
-  rw [← covariance_self (N.memLp_lin c w).aestronglyMeasurable.aemeasurable, N.cov_lin]
-
-omit [IsProbabilityMeasure P] in
-lemma trueMean_eq (j : J) : N.trueMean μ j = N.lin μ (M.wTrue j) := by
-  funext ω
-  simp [trueMean, lin, Fintype.sum_sum_type, wTrue, basic]
-
-omit [IsProbabilityMeasure P] in
-lemma obs_eq (j : J) (t : T) : N.obs μ j t = N.lin μ (M.wObs j t) := by
-  funext ω
-  simp [obs, trueMean, lin, Fintype.sum_sum_type, wObs, basic, add_assoc]
-
+omit [Fintype J] in
 /-- The observations are unbiased: `E[μⱼₜ] = μ`. -/
 theorem obs_mean (j : J) (t : T) : P[N.obs μ j t] = μ := by
-  rw [obs_eq, integral_lin]
+  have : Nonempty T := ⟨t⟩
+  exact N.toUnequal.obsVal_mean μ j (mem_univ t)
 
+omit [Fintype J] in
 /-- Eq. (16) is the actual covariance: `cov(μᵢₜ, μⱼₛ) = K̄ᵢⱼᵗˢ`. -/
 theorem cov_obs (i j : J) (t s : T) : cov[N.obs μ i t, N.obs μ j s; P] = M.obsCov i j t s := by
-  rw [obs_eq, obs_eq, cov_lin]
-  simp [Fintype.sum_sum_type, Fintype.sum_prod_type, gram, wObs, obsCov, ite_mul, mul_ite]
-  simp only [ite_and, sum_ite_eq', mem_univ, ↓reduceIte, M.sqrt_τ2_mul, eq_comm (a := s),
-    eq_comm (a := j)]
-  ring
+  have : Nonempty T := ⟨t⟩
+  exact N.toUnequal.cov_obsVal μ i j (mem_univ t) (mem_univ s)
 
-lemma memLp_obs (j : J) (t : T) : MemLp (N.obs μ j t) 2 P := by
-  rw [obs_eq]; exact N.memLp_lin _ _
-
-lemma memLp_trueMean (j : J) : MemLp (N.trueMean μ j) 2 P := by
-  rw [trueMean_eq]; exact N.memLp_lin _ _
-
-lemma cov_obs_trueMean (i j : J) (t : T) :
-    cov[N.obs μ i t, N.trueMean μ j; P] = M.τ2 * if i = j then 1 else 0 := by
-  rw [obs_eq, trueMean_eq, cov_lin]
-  simp [Fintype.sum_sum_type, gram, wObs, wTrue, ite_mul, mul_ite,
-    M.sqrt_τ2_mul, eq_comm (a := j)]
-
-lemma cov_trueMean (i j : J) :
-    cov[N.trueMean μ i, N.trueMean μ j; P] = M.τ2 * if i = j then 1 else 0 := by
-  rw [trueMean_eq, trueMean_eq, cov_lin]
-  simp [Fintype.sum_sum_type, gram, wTrue, ite_mul, mul_ite,
-    M.sqrt_τ2_mul, eq_comm (a := j)]
-
-lemma memLp_cohortLin (j : J) (c : T → ℝ) : MemLp (N.cohortLin μ j c) 2 P :=
-  memLp_finsetSum _ fun t _ => (N.memLp_obs μ j t).const_mul (c t)
-
-lemma integral_cohortLin (j : J) (c : T → ℝ) : P[N.cohortLin μ j c] = (∑ t, c t) * μ := by
-  simp only [cohortLin]
-  rw [integral_finsetSum _ fun t _ => ((N.memLp_obs μ j t).const_mul (c t)).integrable
-    (by norm_num)]
-  simp [integral_const_mul, N.obs_mean, sum_mul]
-
-lemma cov_cohortLin (i j : J) (c c' : T → ℝ) :
-    cov[N.cohortLin μ i c, N.cohortLin μ j c'; P]
-      = ∑ t, ∑ s, c t * c' s * M.obsCov i j t s := by
-  unfold cohortLin
-  rw [covariance_fun_sum_fun_sum (fun t => (N.memLp_obs μ i t).const_mul (c t))
-    (fun s => (N.memLp_obs μ j s).const_mul (c' s))]
-  refine sum_congr rfl fun t _ => sum_congr rfl fun s _ => ?_
-  rw [covariance_const_mul_left, covariance_const_mul_right, N.cov_obs]
-  ring
-
-lemma cov_cohortLin_trueMean (i j : J) (c : T → ℝ) :
-    cov[N.cohortLin μ i c, N.trueMean μ j; P] = (∑ t, c t) * M.τ2 * if i = j then 1 else 0 := by
-  unfold cohortLin
-  rw [covariance_fun_sum_left (fun t => (N.memLp_obs μ i t).const_mul (c t))
-    (N.memLp_trueMean μ j)]
-  simp only [covariance_const_mul_left, N.cov_obs_trueMean, sum_mul]
-  exact sum_congr rfl fun t _ => by ring
-
-lemma cov_cohortLin_self (j : J) (c : T → ℝ) :
-    cov[N.cohortLin μ j c, N.cohortLin μ j c; P]
-      = ∑ t, c t ^ 2 * M.σ j t ^ 2 + (∑ t, c t) ^ 2 * M.τ2 := by
-  rw [cov_cohortLin]
-  simp only [obsCov, M.ρ_self, mul_one, ↓reduceIte, mul_add, mul_ite, mul_zero, sum_add_distrib,
-    sum_ite_eq, mem_univ]
-  rw [sq, sum_mul_sum, sum_mul]
-  congr 1
-  · exact sum_congr rfl fun t _ => by ring
-  · exact sum_congr rfl fun t _ => by rw [sum_mul]
-
+omit [Fintype J] in
 /-- Eq. (21) is the actual covariance: `cov(μ̂ᵢ, μ̂ⱼ) = Kᵢⱼ`. -/
 theorem cov_cohortEst (i j : J) : cov[N.cohortEst μ i, N.cohortEst μ j; P] = M.K i j := by
-  rw [cohortEst, cohortEst, cov_cohortLin]
-  rfl
+  rcases isEmpty_or_nonempty T with hT | hT
+  · simp [cohortEst, cohortLin, K, covariance]
+  · rw [← N.toUnequal_cohortEst, ← N.toUnequal_cohortEst, Unequal.Noise.cov_cohortEst,
+      toUnequal_K]
 
-lemma memLp_cohortEst (j : J) : MemLp (N.cohortEst μ j) 2 P := N.memLp_cohortLin μ j _
-
-lemma memLp_portLin (d : J → ℝ) : MemLp (N.portLin μ d) 2 P :=
-  memLp_finsetSum _ fun j _ => (N.memLp_cohortEst μ j).const_mul (d j)
-
-lemma cov_portLin (d d' : J → ℝ) :
-    cov[N.portLin μ d, N.portLin μ d'; P] = d ⬝ᵥ (M.K *ᵥ d') := by
-  unfold portLin
-  rw [covariance_fun_sum_fun_sum (fun i => (N.memLp_cohortEst μ i).const_mul (d i))
-    (fun j => (N.memLp_cohortEst μ j).const_mul (d' j))]
-  simp only [covariance_const_mul_left, covariance_const_mul_right, N.cov_cohortEst,
-    dotProduct, mulVec, mul_sum]
-  exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
-
-lemma cov_cohortEst_portLin (i : J) (d : J → ℝ) :
-    cov[N.cohortEst μ i, N.portLin μ d; P] = (M.K *ᵥ d) i := by
-  unfold portLin
-  rw [covariance_fun_sum_right (fun j => (N.memLp_cohortEst μ j).const_mul (d j))
-    (N.memLp_cohortEst μ i)]
-  simp only [covariance_const_mul_right, N.cov_cohortEst, mulVec, dotProduct]
-  exact sum_congr rfl fun j _ => by ring
-
-lemma cov_portLin_trueMean [Nonempty T] (d : J → ℝ) (j : J) :
-    cov[N.portLin μ d, N.trueMean μ j; P] = d j * M.τ2 := by
-  have ha : ∀ i, ∑ t, M.a i t = 1 := fun i =>
-    sum_invVarWeight _ fun t => pow_pos (M.σ_pos i t) 2
-  unfold portLin
-  rw [covariance_fun_sum_left (fun i => (N.memLp_cohortEst μ i).const_mul (d i))
-    (N.memLp_trueMean μ j)]
-  simp [covariance_const_mul_left, cohortEst, N.cov_cohortLin_trueMean, ha]
-
-lemma integral_portLin [Nonempty T] (d : J → ℝ) : P[N.portLin μ d] = (∑ j, d j) * μ := by
-  have ha : ∀ i, ∑ t, M.a i t = 1 := fun i =>
-    sum_invVarWeight _ fun t => pow_pos (M.σ_pos i t) 2
-  unfold portLin
-  rw [integral_finsetSum _ fun j _ => ((N.memLp_cohortEst μ j).const_mul (d j)).integrable
-    (by norm_num)]
-  simp [integral_const_mul, cohortEst, N.integral_cohortLin, ha, sum_mul]
-
+omit [Fintype J] in
 /-- Any linear cohort estimate with weights summing to one has error variance
 `Var(Σₜ cₜ μⱼₜ - μⱼ) = Σₜ cₜ² σⱼₜ²`, the quantity minimised in eq. (23). -/
 theorem var_cohortLin_err (j : J) (c : T → ℝ) (hc : ∑ t, c t = 1) :
     Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] = ∑ t, c t ^ 2 * M.σ j t ^ 2 := by
-  have hX := N.memLp_cohortLin μ j c
-  have hY := N.memLp_trueMean μ j
-  have hXY : MemLp (fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω) 2 P := hX.sub hY
-  rw [← covariance_self hXY.aestronglyMeasurable.aemeasurable,
-    covariance_fun_sub_fun_sub hX hY hX hY, covariance_comm (N.trueMean μ j),
-    cov_cohortLin_self, cov_cohortLin_trueMean, cov_trueMean, hc]
-  simp
+  have : Nonempty T := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at hc
+  exact N.toUnequal.var_cohortLin_err μ j c hc
 
+omit [Fintype J] in
 /-- Eq. (23) in true variance: among unbiased linear cohort estimates, `μ̂ⱼ`
 has the smallest error variance. -/
 theorem cohortEst_optimal [Nonempty T] (j : J) (c : T → ℝ) (hc : ∑ t, c t = 1) :
     Var[fun ω => N.cohortEst μ j ω - N.trueMean μ j ω; P]
       ≤ Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] := by
-  have hσ : ∀ t, 0 < M.σ j t ^ 2 := fun t => pow_pos (M.σ_pos j t) 2
-  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ hσ
-  rw [cohortEst, N.var_cohortLin_err μ j _ ha, N.var_cohortLin_err μ j c hc]
-  exact invVarWeight_optimal _ hσ c hc
+  rw [← N.toUnequal_cohortEst]
+  exact N.toUnequal.cohortEst_optimal μ j c hc
 
 /-- Eq. (24) in true variance: among unbiased linear portfolio estimates built
 from the `μ̂ⱼ`, the GLS one has the smallest variance, and it equals `s²`. -/
 theorem portEst_optimal (hK : M.K.PosDef) (d : J → ℝ) (hd : ∑ j, d j = 1) :
     Var[N.portEst μ; P] = M.s2 ∧ M.s2 ≤ Var[N.portLin μ d; P] := by
-  have : Nonempty J := by
+  obtain ⟨j⟩ : Nonempty J := by
     by_contra h
     rw [not_nonempty_iff] at h
     simp at hd
-  have hvar : ∀ d, Var[N.portLin μ d; P] = d ⬝ᵥ (M.K *ᵥ d) := fun d => by
-    rw [← covariance_self (N.memLp_portLin μ d).aestronglyMeasurable.aemeasurable, cov_portLin]
-  have hs2 : M.b ⬝ᵥ (M.K *ᵥ M.b) = M.s2 := glsWeight_value hK
-  refine ⟨by rw [portEst, hvar, hs2], ?_⟩
-  rw [hvar, ← hs2]
-  exact glsWeight_optimal hK d hd
+  have := M.nonempty_of_posDef hK j
+  rw [← N.toUnequal_portEst, ← N.toUnequal_portLin, ← M.toUnequal_s2]
+  exact N.toUnequal.portEst_optimal μ (by rw [toUnequal_K]; exact hK) d hd
 
 /-- Every field of `M.moments j` is the actual moment it names (§2.4). -/
 theorem moments_eq [Nonempty T] (hK : M.K.PosDef) (j : J) :
@@ -335,71 +200,16 @@ theorem moments_eq [Nonempty T] (hK : M.K.PosDef) (j : J) :
     cov[N.cohortEst μ j, N.portEst μ; P] = (M.moments j).covEst ∧
     cov[N.cohortEst μ j, N.trueMean μ j; P] = (M.moments j).covCohortTarget ∧
     cov[N.portEst μ, N.trueMean μ j; P] = (M.moments j).covPortfolioTarget := by
-  have : Nonempty J := ⟨j⟩
-  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ fun t => pow_pos (M.σ_pos j t) 2
-  have hvar : ∀ X, MemLp X 2 P → Var[X; P] = cov[X, X; P] := fun X hX =>
-    (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
-  · rw [hvar _ (N.memLp_cohortEst μ j), cov_cohortEst, K_apply, M.ρ_self]
-    simp [moments, add_comm]
-  · rw [portEst, hvar _ (N.memLp_portLin μ _), cov_portLin]
-    exact glsWeight_value hK
-  · rw [hvar _ (N.memLp_trueMean μ j), cov_trueMean]
-    simp [moments]
-  · exact N.cov_cohortEst_portLin μ j _
-  · rw [cohortEst, cov_cohortLin_trueMean, ha]
-    simp [moments]
-  · exact N.cov_portLin_trueMean μ _ j
+  rw [← N.toUnequal_cohortEst, ← N.toUnequal_portEst, ← N.toUnequal_trueMean,
+    ← M.toUnequal_moments]
+  exact N.toUnequal.moments_eq μ (by rw [toUnequal_K]; exact hK) j
 
 /-- The blend is unbiased and its actual mean squared error is `errVar`,
 eq. (6): `E[(z μ̂ⱼ + (1 - z) μ̂ - μⱼ)²] = errVar z`. -/
 theorem mse_blend [Nonempty T] (hK : M.K.PosDef) (j : J) (z : ℝ) :
     P[fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2] = (M.moments j).errVar z := by
-  have : Nonempty J := ⟨j⟩
-  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ fun t => pow_pos (M.σ_pos j t) 2
-  obtain ⟨h1, h2, h3, h4, h5, h6⟩ := N.moments_eq μ hK j
-  -- The error is a linear combination of `μ̂ⱼ`, `μ̂` and `μⱼ`.
-  set X : Fin 3 → Ω → ℝ := ![N.cohortEst μ j, N.portEst μ, N.trueMean μ j] with hXdef
-  set w : Fin 3 → ℝ := ![z, 1 - z, -1]
-  have hD : (fun ω => N.blend μ j z ω - N.trueMean μ j ω) = fun ω => ∑ i, w i * X i ω := by
-    funext ω; simp [Fin.sum_univ_three, w, X, blend]; ring
-  have hX : ∀ i, MemLp (X i) 2 P := fun i => by
-    fin_cases i
-    · exact N.memLp_cohortEst μ j
-    · exact N.memLp_portLin μ _
-    · exact N.memLp_trueMean μ j
-  have hint : ∀ i, Integrable (fun ω => w i * X i ω) P :=
-    fun i => ((hX i).const_mul (w i)).integrable (by norm_num)
-  have hDm : MemLp (fun ω => ∑ i, w i * X i ω) 2 P :=
-    memLp_finsetSum _ fun i _ => (hX i).const_mul (w i)
-  -- It is unbiased.
-  have hmean : P[fun ω => ∑ i, w i * X i ω] = 0 := by
-    rw [integral_finsetSum _ fun i _ => hint i]
-    have hC : P[N.cohortEst μ j] = μ := by rw [cohortEst, integral_cohortLin, ha, one_mul]
-    have hP : P[N.portEst μ] = μ := by
-      rw [portEst, integral_portLin, show ∑ k, M.b k = 1 from sum_glsWeight hK, one_mul]
-    have hY : P[N.trueMean μ j] = μ := by rw [trueMean_eq, integral_lin]
-    simp only [integral_const_mul, Fin.sum_univ_three, w, X]
-    simp [hC, hP, hY]
-    ring
-  -- So the mean squared error is the variance; expand it bilinearly.
-  have hsq : (fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2)
-      = fun ω => (fun ω => ∑ i, w i * X i ω) ω ^ 2 := by
-    funext ω; exact congrArg (· ^ 2) (congrFun hD ω)
-  rw [hsq, ← variance_of_integral_eq_zero hDm.aestronglyMeasurable.aemeasurable hmean,
-    ← covariance_self hDm.aestronglyMeasurable.aemeasurable,
-    covariance_fun_sum_fun_sum (fun i => (hX i).const_mul (w i))
-      (fun i => (hX i).const_mul (w i))]
-  simp only [covariance_const_mul_left, covariance_const_mul_right, Fin.sum_univ_three]
-  have hself : ∀ i, cov[X i, X i; P] = Var[X i; P] := fun i =>
-    covariance_self (hX i).aestronglyMeasurable.aemeasurable
-  simp only [hself]
-  simp only [w, X, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
-    Matrix.head_cons, Matrix.tail_cons]
-  rw [covariance_comm (N.portEst μ), covariance_comm (N.trueMean μ j) (N.cohortEst μ j),
-    covariance_comm (N.trueMean μ j) (N.portEst μ), h1, h2, h3, h4, h5, h6]
-  simp only [BlendMoments.errVar]
-  ring
+  rw [← N.toUnequal_blend, ← N.toUnequal_trueMean, ← M.toUnequal_moments]
+  exact N.toUnequal.mse_blend μ (by rw [toUnequal_K]; exact hK) j z
 
 /-- Eqs. (7)/(26) in true MSE: the credibility factor `zⱼ` minimises the actual
 mean squared error of the blend, for every distribution with the assumed
@@ -408,29 +218,32 @@ theorem bestZ_mse_optimal [Nonempty T] (hK : M.K.PosDef) (j : J)
     (hgap : 0 < (M.moments j).gap) (z : ℝ) :
     P[fun ω => (N.blend μ j (M.moments j).bestZ ω - N.trueMean μ j ω) ^ 2]
       ≤ P[fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2] := by
-  rw [N.mse_blend μ hK j, N.mse_blend μ hK j]
-  exact (M.moments j).bestZ_optimal hgap z
+  rw [← N.toUnequal_blend, ← N.toUnequal_blend, ← N.toUnequal_trueMean, ← M.toUnequal_moments]
+  exact N.toUnequal.bestZ_mse_optimal μ (by rw [toUnequal_K]; exact hK) j
+    (by rw [toUnequal_moments]; exact hgap) z
 
 end Noise
+
+omit [Fintype J] in
+/-- With full series the witness table of `UnequalMoments` is `gram`. -/
+lemma gram_eq_unequal [Nonempty T] (M : Model J T) : M.gram = M.toUnequal.gram := by
+  funext u v
+  cases u <;> cases v <;> simp [gram, Unequal.gram, Unequal.corrAt, toUnequal]
 
 /-- The covariance table of the basic variables is positive semidefinite when `ρ` is. -/
 theorem gram_posSemidef (M : Model J T) (hρ : (Matrix.of M.ρ).PosSemidef) :
     (Matrix.of M.gram).PosSemidef := by
-  refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
-  · ext u v
-    cases u <;> cases v <;> simp [gram, M.ρ_symm, eq_comm]
-  · simp only [dotProduct, mulVec, star_trivial, of_apply, Fintype.sum_sum_type, gram,
-      zero_mul, sum_const_zero, add_zero, zero_add]
-    refine add_nonneg ?_ ?_
-    · simp only [ite_mul, one_mul, zero_mul, sum_ite_eq, mem_univ, ↓reduceIte]
-      exact sum_nonneg fun i _ => mul_self_nonneg _
-    · -- `Σₜ yₜᵀ ρ yₜ` with `(yₜ)ⱼ = x (j, t)`.
-      have h := fun t : T => hρ.dotProduct_mulVec_nonneg (fun j => x (.inr (j, t)))
-      simp only [dotProduct, mulVec, star_trivial, of_apply] at h
-      simp only [Fintype.sum_prod_type, mul_ite, mul_one, mul_zero, ite_mul, zero_mul,
-        sum_ite_eq, mem_univ, ↓reduceIte, mul_sum]
-      rw [sum_comm]
-      exact sum_nonneg fun t _ => by simpa only [mul_sum] using h t
+  rcases isEmpty_or_nonempty T with hT | hT
+  · -- No noise variables: `gram` is the identity on the `ηⱼ`.
+    convert PosSemidef.one (n := J ⊕ (J × T)) (R := ℝ)
+    ext u v
+    rcases u with i | ⟨_, t⟩
+    · rcases v with j | ⟨_, t⟩
+      · simp [gram, Matrix.one_apply]
+      · exact isEmptyElim t
+    · exact isEmptyElim t
+  · rw [gram_eq_unequal]
+    exact M.toUnequal.gram_posSemidef fun _ => hρ.submatrix _
 
 /-- The moment assumptions are consistent exactly when `ρ` is positive
 semidefinite: some probability space carries random variables with the
@@ -439,52 +252,17 @@ constrain `ρ`, hence `Nonempty T`.) -/
 theorem exists_noise_iff [Nonempty T] (M : Model J T) :
     (∃ (Ω : Type) (_ : MeasurableSpace Ω) (P : Measure Ω) (_ : IsProbabilityMeasure P),
       Nonempty (M.Noise P)) ↔ (Matrix.of M.ρ).PosSemidef := by
-  constructor
-  · -- Necessity: `xᵀρx = Var(Σⱼ xⱼ εⱼₜ) ≥ 0` for any period `t`.
-    rintro ⟨Ω, _, P, _, ⟨N⟩⟩
-    obtain ⟨t₀⟩ := ‹Nonempty T›
-    refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
-    · ext i j; simp [M.ρ_symm]
-    · have hε : ∀ j, MemLp (fun ω => x j * N.ε j t₀ ω) 2 P :=
-        fun j => (N.ε_memLp j t₀).const_mul _
-      have hS : MemLp (fun ω => ∑ j, x j * N.ε j t₀ ω) 2 P :=
-        memLp_finsetSum _ fun j _ => hε j
-      have key : star x ⬝ᵥ (Matrix.of M.ρ *ᵥ x) = Var[fun ω => ∑ j, x j * N.ε j t₀ ω; P] := by
-        rw [← covariance_self hS.aestronglyMeasurable.aemeasurable,
-          covariance_fun_sum_fun_sum hε hε]
-        simp only [covariance_const_mul_left, covariance_const_mul_right, N.cov_ε_ε,
-          ↓reduceIte, mul_one, dotProduct, mulVec, star_trivial, of_apply, mul_sum]
-        exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
-      rw [key]; exact variance_nonneg _ _
-  · -- Sufficiency: a Gaussian vector with covariance `gram` (a witness only).
-    intro hρ
-    let e := Fintype.equivFin (J ⊕ (J × T))
-    let S := (Matrix.of M.gram).submatrix e.symm e.symm
-    have hS : S.PosSemidef := (M.gram_posSemidef hρ).submatrix _
-    let P := multivariateGaussian (0 : EuclideanSpace ℝ (Fin (Fintype.card (J ⊕ (J × T))))) S
-    let Z : J ⊕ (J × T) → EuclideanSpace ℝ (Fin (Fintype.card (J ⊕ (J × T)))) → ℝ :=
-      fun u x => x (e u)
-    have hmp : ∀ u, MeasurePreserving (Z u) P (gaussianReal 0 (S (e u) (e u)).toNNReal) :=
-      fun u => measurePreserving_eval_multivariateGaussian hS
-    have hZm : ∀ u, MemLp (Z u) 2 P := fun u =>
-      (memLp_id_gaussianReal' 2 (by simp)).comp_measurePreserving (hmp u)
-    have hZi : ∀ u, P[Z u] = 0 := fun u => by
-      have := integral_map (μ := P) (f := id) (hmp u).measurable.aemeasurable
-        aestronglyMeasurable_id
-      rw [(hmp u).map_eq] at this
-      simpa [integral_id_gaussianReal] using this.symm
-    have hZc : ∀ u v, cov[Z u, Z v; P] = M.gram u v := fun u v => by
-      simp [Z, P, covariance_eval_multivariateGaussian hS, S]
-    exact ⟨_, inferInstance, P, inferInstance, ⟨{
-      η := fun j => Z (.inl j)
-      ε := fun j t => Z (.inr (j, t))
-      η_memLp := fun j => hZm _
-      ε_memLp := fun j t => hZm _
-      η_mean := fun j => hZi _
-      ε_mean := fun j t => hZi _
-      cov_η_η := fun i j => hZc _ _
-      cov_η_ε := fun i j t => hZc _ _
-      cov_ε_ε := fun i j t s => hZc _ _ }⟩⟩
+  -- Noises agree with those for `Tⱼ = T`, whose blocks are all of `ρ`.
+  have hN : ∀ {Ω : Type} [MeasurableSpace Ω] (P : Measure Ω),
+      Nonempty (M.Noise P) ↔ Nonempty (M.toUnequal.Noise P) :=
+    fun _ => ⟨fun ⟨N⟩ => ⟨N.toUnequal⟩, fun ⟨N⟩ => ⟨Noise.ofUnequal N⟩⟩
+  have hB : (∀ t, (M.toUnequal.block t).PosSemidef) ↔ (Matrix.of M.ρ).PosSemidef := by
+    refine ⟨fun h => ?_, fun hρ t => hρ.submatrix _⟩
+    obtain ⟨t⟩ := ‹Nonempty T›
+    convert (h t).submatrix (fun j => (⟨j, mem_univ t⟩ : {j // t ∈ M.toUnequal.obs j}))
+    ext i j; rfl
+  simp only [hN]
+  rw [Unequal.exists_noise_iff, hB]
 
 end Model
 

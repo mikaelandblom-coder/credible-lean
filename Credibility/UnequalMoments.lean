@@ -1,10 +1,10 @@
-import Credibility.UnequalEstimation
-import Credibility.Moments
+import Credibility.Unequal
 
 /-!
 # The moment layer for unequal lengths (extension, distribution-free)
 
-`Moments.lean` for `Unequal.lean`: cohort `j` is observed only in `Tⱼ`, and
+The moment layer for `Unequal.lean` (`Moments.lean` is its case `Tⱼ = T`):
+cohort `j` is observed only in `Tⱼ`, and
 random variables are assumed only on observed cells. For **any** probability
 space and **any** square-integrable random variables with the first two
 moments of eq. (15) on the observed cells, `K` (on `Tⱼ`) is the actual

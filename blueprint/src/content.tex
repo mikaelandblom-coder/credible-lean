@@ -1569,53 +1569,38 @@ moments matter'' a checked statement.
   $z\hmu_j + (1-z)\hmu$.
 \end{definition}
 
-\begin{lemma}[Linear combinations]\label{lem:moments_lin}
-  \lean{Credibility.Model.sqrt_τ2_mul, Credibility.Model.Noise.memLp_basic,
-        Credibility.Model.Noise.integral_basic, Credibility.Model.Noise.cov_basic,
-        Credibility.Model.Noise.memLp_term, Credibility.Model.Noise.memLp_sum,
-        Credibility.Model.Noise.memLp_lin, Credibility.Model.Noise.integral_lin,
-        Credibility.Model.Noise.cov_lin, Credibility.Model.Noise.var_lin,
-        Credibility.Model.Noise.trueMean_eq, Credibility.Model.Noise.obs_eq,
-        Credibility.Model.Noise.memLp_obs, Credibility.Model.Noise.memLp_trueMean,
-        Credibility.Model.Noise.cov_obs_trueMean, Credibility.Model.Noise.cov_trueMean,
-        Credibility.Model.Noise.memLp_cohortLin, Credibility.Model.Noise.integral_cohortLin,
-        Credibility.Model.Noise.cov_cohortLin, Credibility.Model.Noise.cov_cohortLin_trueMean,
-        Credibility.Model.Noise.cov_cohortLin_self, Credibility.Model.Noise.memLp_cohortEst,
-        Credibility.Model.Noise.memLp_portLin, Credibility.Model.Noise.cov_portLin,
-        Credibility.Model.Noise.cov_cohortEst_portLin,
-        Credibility.Model.Noise.cov_portLin_trueMean, Credibility.Model.Noise.integral_portLin}
+\begin{lemma}[Full series]\label{lem:moments_full}
+  \lean{Credibility.Model.sqrt_τ2_mul, Credibility.Model.Noise.toUnequal,
+        Credibility.Model.Noise.ofUnequal, Credibility.Model.Noise.toUnequal_trueMean,
+        Credibility.Model.Noise.toUnequal_obsVal, Credibility.Model.Noise.toUnequal_cohortLin,
+        Credibility.Model.Noise.toUnequal_cohortEst, Credibility.Model.Noise.toUnequal_portLin,
+        Credibility.Model.Noise.toUnequal_portEst, Credibility.Model.Noise.toUnequal_blend,
+        Credibility.Model.gram_eq_unequal}
   \leanok
-  \uses{def:Noise}
-  Collect the $\eta_j$ and $\varepsilon_{jt}$ into one family $Z_u$,
-  $u \in J \sqcup (J\times T)$, with covariances $G_{uv}$. A variable
-  $X = c + \sum_u w_u Z_u$ is square-integrable with $\mathbb E X = c$, and
-  $\cov(c + \sum_u w_uZ_u,\ c' + \sum_v w'_vZ_v) = \sum_{u,v} w_uw'_vG_{uv}$.
-  Every $\mu_j$ and $\mu_{jt}$ is of this form; in particular
-  $\cov(\mu_{it},\mu_j) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$, and for any
-  weights $\cov(\sum_t c_t\mu_{it}, \sum_s c'_s\mu_{js})
-  = \sum_{t,s} c_tc'_s\bar K_{ij}^{ts}$,
-  $\cov(\sum_t c_t\mu_{it}, \mu_j) = (\sum_t c_t)\tau^2\delta_{ij}$.
-  For portfolio weights, $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
-  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$,
-  $\cov(\sum_i d_i\hmu_i, \mu_j) = d_j\tau^2$ and
-  $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$ (for $T \neq \emptyset$).
+  \uses{def:Noise, def:U_Noise, lem:U_full}
+  For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
+  are exactly those of Definition~\ref{def:U_Noise} with $T_j = T$, and they
+  define the same $\mu_j$, $\mu_{jt}$, $\hmu_j$, $\hmu$ and blend. So every
+  result of this chapter is the case $T_j = T$ of the next one.
 \end{lemma}
 \begin{proof}
   \leanok
-  Bilinearity of covariance and linearity of expectation.
+  Unfold; $a$ and $b$ agree by Lemma~\ref{lem:U_full}.
 \end{proof}
 
 \begin{theorem}[The covariances are the actual ones]\label{thm:cov_obs}
   \lean{Credibility.Model.Noise.obs_mean, Credibility.Model.Noise.cov_obs,
         Credibility.Model.Noise.cov_cohortEst}
   \leanok
-  \uses{lem:moments_lin, def:obsCov, def:K}
+  \uses{def:Noise, def:obsCov, def:K}
   $\mathbb E\mu_{jt} = \mu$, $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$
   \eqth{16} and $\cov(\hmu_i,\hmu_j) = K_{ij}$ \eqth{21}.
 \end{theorem}
 \begin{proof}
   \leanok
-  Bilinearity of covariance.
+  \uses{thm:U_cov_obs, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_cov_obs} ($K = 0$ if
+  $T = \emptyset$). The idea: bilinearity of covariance.
 \end{proof}
 
 \begin{theorem}[Optimal weights in true variance]\label{thm:weights_true}
@@ -1623,7 +1608,7 @@ moments matter'' a checked statement.
         Credibility.Model.Noise.cohortEst_optimal,
         Credibility.Model.Noise.portEst_optimal}
   \leanok
-  \uses{thm:cov_obs, thm:invVarWeight_optimal, thm:glsWeight_optimal}
+  \uses{def:Noise, def:moments}
   For weights with $\sum_t c_t = 1$,
   $\Var(\sum_t c_t\mu_{jt} - \mu_j) = \sum_t c_t^2\sigma_{jt}^2$, so $\hmu_j$
   has the smallest error variance among unbiased linear cohort estimates.
@@ -1632,14 +1617,15 @@ moments matter'' a checked statement.
 \end{theorem}
 \begin{proof}
   \leanok
-  Bilinearity, then Theorems~\ref{thm:invVarWeight_optimal}
-  and~\ref{thm:glsWeight_optimal}.
+  \uses{thm:U_weights_true, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_weights_true}: bilinearity, then
+  the optimality of inverse-variance and GLS weights.
 \end{proof}
 
 \begin{theorem}[The blend moments are the actual ones]\label{thm:moments_eq}
   \lean{Credibility.Model.Noise.moments_eq, Credibility.Model.Noise.mse_blend}
   \leanok
-  \uses{thm:cov_obs, def:moments, lem:K_apply}
+  \uses{def:Noise, def:moments}
   If $K \succ 0$, each field of Definition~\ref{def:moments} is the moment it
   names, the blend is unbiased, and
   $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ is the error variance
@@ -1647,27 +1633,31 @@ moments matter'' a checked statement.
 \end{theorem}
 \begin{proof}
   \leanok
-  Bilinearity; the mean squared error is variance plus squared bias, and the
-  bias vanishes since $\sum_t a_{jt} = \sum_j b_j = 1$.
+  \uses{thm:U_bestZ_mse, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_mse}: bilinearity; the mean
+  squared error is variance plus squared bias, and the bias vanishes since
+  $\sum_t a_{jt} = \sum_j b_j = 1$.
 \end{proof}
 
 \begin{theorem}[$z_j$ minimises the true mean squared error]\label{thm:bestZ_mse}
   \lean{Credibility.Model.Noise.bestZ_mse_optimal}
   \leanok
-  \uses{thm:moments_eq, thm:bestZ_optimal}
+  \uses{def:Noise, def:moments}
   If $K \succ 0$ and $\Var(\hmu_j - \hmu) > 0$, the credibility factor
   \eqth{7} minimises $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ over $z$,
   for every distribution with the moments of \eqth{15}.
 \end{theorem}
 \begin{proof}
   \leanok
+  \uses{thm:U_bestZ_mse, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_mse}; directly,
   Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_optimal}.
 \end{proof}
 
 \begin{lemma}[The joint covariance table]\label{lem:gram_psd}
   \lean{Credibility.Model.gram_posSemidef}
   \leanok
-  \uses{lem:moments_lin}
+  \uses{def:Noise}
   If $\rho \succeq 0$, the covariance table $G$ of $(\eta_j)_j$ and
   $(\varepsilon_{jt})_{jt}$ demanded by Definition~\ref{def:Noise}
   (identity on the $\eta$ block, $\rho_{ij}\delta_{ts}$ on the $\varepsilon$
@@ -1675,7 +1665,10 @@ moments matter'' a checked statement.
 \end{lemma}
 \begin{proof}
   \leanok
-  $x^TGx = \sum_j x_j^2 + \sum_t y_t^T\rho\,y_t$ with $(y_t)_j = x_{jt}$.
+  \uses{lem:U_gram_psd, lem:moments_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_gram_psd} (for $T = \emptyset$,
+  $G$ is the identity): $x^TGx = \sum_j x_j^2 + \sum_t y_t^T\rho\,y_t$ with
+  $(y_t)_j = x_{jt}$.
 \end{proof}
 
 \begin{theorem}[The assumptions are consistent iff $\rho \succeq 0$]\label{thm:exists_noise}
@@ -1688,7 +1681,9 @@ moments matter'' a checked statement.
 \end{theorem}
 \begin{proof}
   \leanok
-  Necessity: $x^T\rho x = \Var(\sum_j x_j\varepsilon_{jt}) \ge 0$.
+  \uses{thm:U_exists_noise, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_exists_noise}: every block is
+  $\rho$. Directly: necessity, $x^T\rho x = \Var(\sum_j x_j\varepsilon_{jt}) \ge 0$.
   Sufficiency: by Lemma~\ref{lem:gram_psd} there is a Gaussian vector with
   covariance $G$ (Mathlib's \texttt{multivariateGaussian}); its coordinates
   are the $\eta_j$ and $\varepsilon_{jt}$. The Gaussian is only a witness
@@ -1739,8 +1734,15 @@ only on observed cells $(j,t)$, $t \in T_j$.
         Credibility.Unequal.Noise.integral_portLin}
   \leanok
   \uses{def:U_Noise, lem:U_sum_a}
-  The identities of Lemma~\ref{lem:moments_lin}, with sums over $T_j$ in
-  place of $T$. No $T \neq \emptyset$ is needed since $T_j \neq \emptyset$.
+  For $t \in T_i$: $\cov(\mu_{it},\mu_j) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$;
+  for any weights $\cov(\sum_{t\in T_i} c_t\mu_{it}, \sum_{s\in T_j} c'_s\mu_{js})
+  = \sum_{t\in T_i,s\in T_j} c_tc'_s\bar K_{ij}^{ts}$ and
+  $\cov(\sum_{t\in T_i} c_t\mu_{it}, \mu_j) = (\sum_t c_t)\tau^2\delta_{ij}$;
+  for portfolio weights $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
+  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$,
+  $\cov(\sum_i d_i\hmu_i, \mu_j) = d_j\tau^2$ and
+  $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$. All variables are square
+  integrable. No $T \neq \emptyset$ is needed since $T_j \neq \emptyset$.
 \end{lemma}
 \begin{proof}
   \leanok
@@ -1789,7 +1791,9 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{theorem}
 \begin{proof}
   \leanok
-  As Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_mse}.
+  Bilinearity; the mean squared error is variance plus squared bias, and the
+  bias vanishes since $\sum_{t\in T_j} a_{jt} = \sum_j b_j = 1$. Then
+  Theorem~\ref{thm:bestZ_optimal}.
 \end{proof}
 
 \begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
@@ -1797,7 +1801,7 @@ only on observed cells $(j,t)$, $t \in T_j$.
         Credibility.Unequal.sum_eq_sum_block, Credibility.Unequal.corrAt_quad_nonneg,
         Credibility.Unequal.gram_posSemidef}
   \leanok
-  \uses{lem:gram_psd}
+  \uses{def:U_Noise}
   Let $C^t_{ij} = \rho_{ij}$ if $t \in T_i \cap T_j$ and $\delta_{ij}$
   otherwise (unit noise, uncorrelated, on unobserved cells). If every block
   $R_t = (\rho_{ij})_{i,j \in J_t}$, $J_t = \{j : t \in T_j\}$, is positive
@@ -1806,8 +1810,8 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $v^TC^tv = w^TR_tw + \sum_{j\notin J_t} v_j^2$ with $w = v|_{J_t}$; then as
-  Lemma~\ref{lem:gram_psd}.
+  $v^TC^tv = w^TR_tw + \sum_{j\notin J_t} v_j^2$ with $w = v|_{J_t}$, and
+  $x^TGx = \sum_j x_j^2 + \sum_t v_t^TC^tv_t$ with $(v_t)_j = x_{jt}$.
 \end{proof}
 
 \begin{theorem}[Consistent iff every block is PSD]\label{thm:U_exists_noise}
