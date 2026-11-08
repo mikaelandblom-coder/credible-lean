@@ -40,6 +40,19 @@ Gaps, extra hypotheses and new results found while formalizing.
    this forces equal covariances. For `J ≥ 4` it does not: with equal `σⱼ`,
    any correlation matrix with equal row sums gives `b = z/z_* = u/J`
    (e.g. `J = 4`, off-diagonal covariances `0.5, -0.1, 0.2, 0.2, -0.1, 0.5`).
+6. **Equal credibility is not grouping (discussion, no Lean).** Under
+   equal covariances (item 5), `bⱼ = zⱼ/z_*`, so cohorts with the same `z`
+   get the same weight. The collective estimate `μ̂ = Σ bⱼ μ̂ⱼ` then sees them
+   only through the sum of their `μ̂ⱼ`: pooling them is lossless for `μ̂`.
+   But this is not the grouping that clustering (e.g. arXiv:2611.07110) is
+   after. (a) Equal `z` means equal reliability (`σ²ⱼⱼ`), not equal risk:
+   cohorts with `μ̂ⱼ = 0.5` and `1.5` keep different premiums
+   `zμ̂ⱼ + (1-z)μ̂`. (b) Putting `i`, `j` in one risk group means assuming
+   `μᵢ = μⱼ`, so their covariance goes from `0` to `τ²`. That changes `K`,
+   every `z` and `μ̂`. Open question: when does merging two cohorts
+   lower the total MSE? Probably it depends on the data, not on `zᵢ = zⱼ`.
+   Natural setting: two-level (hierarchical) credibility, cohorts nested in
+   groups (Bühlmann & Gisler, ch. 6). See README "Later goals".
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 

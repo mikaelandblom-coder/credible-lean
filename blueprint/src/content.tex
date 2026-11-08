@@ -707,6 +707,19 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
   are the case $c = \sigma_1\sigma_2\rho$. Not yet in Lean.
 \end{remark}
 
+\begin{remark}[Finding 6: equal credibility is not grouping]\label{rem:equalZ_grouping}
+  \uses{thm:b_eq_of_equalCov}
+  Under equal covariances, cohorts with the same $z_j$ get the same weight
+  $b_j$, so $\hmu = \sum_j b_j \hmu_j$ depends on them only through
+  $\sum \hmu_j$. Pooling them loses nothing for $\hmu$. This is not risk
+  grouping, though. Equal $z$ means equal reliability, not equal level:
+  premiums $z\hmu_j + (1-z)\hmu$ still differ. Merging $i$ and $j$ into one
+  risk group assumes $\mu_i = \mu_j$, which changes their covariance from
+  $0$ to $\tau^2$ and hence $K$, every $z$ and $\hmu$. When merging lowers
+  the total mean squared error is open; a two-level (hierarchical) model is
+  the natural setting. Discussion only, not in Lean.
+\end{remark}
+
 \begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
   \lean{Credibility.TwoCohorts.z1_rho_zero}
   \leanok
