@@ -413,6 +413,25 @@ theorem bestZ_mse_optimal [Nonempty T] (hK : M.K.PosDef) (j : J)
 
 end Noise
 
+/-- The covariance table of the basic variables is positive semidefinite when `ρ` is. -/
+theorem gram_posSemidef (M : Model J T) (hρ : (Matrix.of M.ρ).PosSemidef) :
+    (Matrix.of M.gram).PosSemidef := by
+  refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
+  · ext u v
+    cases u <;> cases v <;> simp [gram, M.ρ_symm, eq_comm]
+  · simp only [dotProduct, mulVec, star_trivial, of_apply, Fintype.sum_sum_type, gram,
+      zero_mul, sum_const_zero, add_zero, zero_add]
+    refine add_nonneg ?_ ?_
+    · simp only [ite_mul, one_mul, zero_mul, sum_ite_eq, mem_univ, ↓reduceIte]
+      exact sum_nonneg fun i _ => mul_self_nonneg _
+    · -- `Σₜ yₜᵀ ρ yₜ` with `(yₜ)ⱼ = x (j, t)`.
+      have h := fun t : T => hρ.dotProduct_mulVec_nonneg (fun j => x (.inr (j, t)))
+      simp only [dotProduct, mulVec, star_trivial, of_apply] at h
+      simp only [Fintype.sum_prod_type, mul_ite, mul_one, mul_zero, ite_mul, zero_mul,
+        sum_ite_eq, mem_univ, ↓reduceIte, mul_sum]
+      rw [sum_comm]
+      exact sum_nonneg fun t _ => by simpa only [mul_sum] using h t
+
 /-- The moment assumptions are consistent exactly when `ρ` is positive
 semidefinite: some probability space carries random variables with the
 moments of eq. (15) iff `ρ ⪰ 0`. (With no periods there is no noise to
@@ -420,7 +439,52 @@ constrain `ρ`, hence `Nonempty T`.) -/
 theorem exists_noise_iff [Nonempty T] (M : Model J T) :
     (∃ (Ω : Type) (_ : MeasurableSpace Ω) (P : Measure Ω) (_ : IsProbabilityMeasure P),
       Nonempty (M.Noise P)) ↔ (Matrix.of M.ρ).PosSemidef := by
-  sorry
+  constructor
+  · -- Necessity: `xᵀρx = Var(Σⱼ xⱼ εⱼₜ) ≥ 0` for any period `t`.
+    rintro ⟨Ω, _, P, _, ⟨N⟩⟩
+    obtain ⟨t₀⟩ := ‹Nonempty T›
+    refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
+    · ext i j; simp [M.ρ_symm]
+    · have hε : ∀ j, MemLp (fun ω => x j * N.ε j t₀ ω) 2 P :=
+        fun j => (N.ε_memLp j t₀).const_mul _
+      have hS : MemLp (fun ω => ∑ j, x j * N.ε j t₀ ω) 2 P :=
+        memLp_finsetSum _ fun j _ => hε j
+      have key : star x ⬝ᵥ (Matrix.of M.ρ *ᵥ x) = Var[fun ω => ∑ j, x j * N.ε j t₀ ω; P] := by
+        rw [← covariance_self hS.aestronglyMeasurable.aemeasurable,
+          covariance_fun_sum_fun_sum hε hε]
+        simp only [covariance_const_mul_left, covariance_const_mul_right, N.cov_ε_ε,
+          ↓reduceIte, mul_one, dotProduct, mulVec, star_trivial, of_apply, mul_sum]
+        exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
+      rw [key]; exact variance_nonneg _ _
+  · -- Sufficiency: a Gaussian vector with covariance `gram` (a witness only).
+    intro hρ
+    let e := Fintype.equivFin (J ⊕ (J × T))
+    let S := (Matrix.of M.gram).submatrix e.symm e.symm
+    have hS : S.PosSemidef := (M.gram_posSemidef hρ).submatrix _
+    let P := multivariateGaussian (0 : EuclideanSpace ℝ (Fin (Fintype.card (J ⊕ (J × T))))) S
+    let Z : J ⊕ (J × T) → EuclideanSpace ℝ (Fin (Fintype.card (J ⊕ (J × T)))) → ℝ :=
+      fun u x => x (e u)
+    have hmp : ∀ u, MeasurePreserving (Z u) P (gaussianReal 0 (S (e u) (e u)).toNNReal) :=
+      fun u => measurePreserving_eval_multivariateGaussian hS
+    have hZm : ∀ u, MemLp (Z u) 2 P := fun u =>
+      (memLp_id_gaussianReal' 2 (by simp)).comp_measurePreserving (hmp u)
+    have hZi : ∀ u, P[Z u] = 0 := fun u => by
+      have := integral_map (μ := P) (f := id) (hmp u).measurable.aemeasurable
+        aestronglyMeasurable_id
+      rw [(hmp u).map_eq] at this
+      simpa [integral_id_gaussianReal] using this.symm
+    have hZc : ∀ u v, cov[Z u, Z v; P] = M.gram u v := fun u v => by
+      simp [Z, P, covariance_eval_multivariateGaussian hS, S]
+    exact ⟨_, inferInstance, P, inferInstance, ⟨{
+      η := fun j => Z (.inl j)
+      ε := fun j t => Z (.inr (j, t))
+      η_memLp := fun j => hZm _
+      ε_memLp := fun j t => hZm _
+      η_mean := fun j => hZi _
+      ε_mean := fun j t => hZi _
+      cov_η_η := fun i j => hZc _ _
+      cov_η_ε := fun i j t => hZc _ _
+      cov_ε_ε := fun i j t s => hZc _ _ }⟩⟩
 
 end Model
 

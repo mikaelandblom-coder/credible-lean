@@ -106,6 +106,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    `c = 0` (`Unequal.balance`, `balance_total`, `equalCov_eq_zero`,
    `bestZ_of_equalCov`, *proved*).
 
+11. **The results are distribution-free, and `ρ ⪰ 0` is free too (new).**
+   For any probability space and any square-integrable `ηⱼ`, `εⱼₜ` with
+   the moments of eq. (15), eqs. (16) and (21) are the actual covariances,
+   the weights (23)–(24) are optimal in actual variance, and `zⱼ` of eq.
+   (7)/(26) minimises the actual mean squared error of the blend. Such
+   random variables exist iff `ρ` is positive semidefinite, so the
+   hypothesis Finding 1 adds for `K ≻ 0` is not an extra assumption: it
+   holds whenever the model is consistent at all (`Model.Noise.mse_blend`,
+   `bestZ_mse_optimal`, `exists_noise_iff`, *proved*).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
 (Findings 1–3 come from the statements; confirm them as proofs land.)

@@ -1649,21 +1649,38 @@ moments matter'' a checked statement.
   Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_optimal}.
 \end{proof}
 
+\begin{lemma}[The joint covariance table]\label{lem:gram_psd}
+  \lean{Credibility.Model.gram_posSemidef}
+  \leanok
+  \uses{lem:moments_lin}
+  If $\rho \succeq 0$, the covariance table $G$ of $(\eta_j)_j$ and
+  $(\varepsilon_{jt})_{jt}$ demanded by Definition~\ref{def:Noise}
+  (identity on the $\eta$ block, $\rho_{ij}\delta_{ts}$ on the $\varepsilon$
+  block, zero across) is positive semidefinite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $x^TGx = \sum_j x_j^2 + \sum_t y_t^T\rho\,y_t$ with $(y_t)_j = x_{jt}$.
+\end{proof}
+
 \begin{theorem}[The assumptions are consistent iff $\rho \succeq 0$]\label{thm:exists_noise}
   \lean{Credibility.Model.exists_noise_iff}
   \leanok
-  \uses{def:Noise}
+  \uses{def:Noise, lem:gram_psd}
   For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
   exist on some probability space if and only if $\rho$ is positive
   semidefinite.
 \end{theorem}
 \begin{proof}
+  \leanok
   Necessity: $x^T\rho x = \Var(\sum_j x_j\varepsilon_{jt}) \ge 0$.
-  Sufficiency: write $\rho = B^TB$, take independent standard variables
-  $Z$ (Gaussian, as a witness only) and set $\varepsilon_{\cdot t} = B^T Z_{\cdot t}$.
+  Sufficiency: by Lemma~\ref{lem:gram_psd} there is a Gaussian vector with
+  covariance $G$ (Mathlib's \texttt{multivariateGaussian}); its coordinates
+  are the $\eta_j$ and $\varepsilon_{jt}$. The Gaussian is only a witness
+  that the assumptions are consistent; no result above uses it.
 \end{proof}
 
-\begin{remark}[Why $\rho \succeq 0$ is no extra assumption]\label{rem:moments_psd}
+\begin{remark}[Finding 11: $\rho \succeq 0$ is no extra assumption]\label{rem:moments_psd}
   \uses{thm:exists_noise, rem:posdef}
   Finding~1 needs $\rho \succeq 0$ for $K \succ 0$. By
   Theorem~\ref{thm:exists_noise} this is not an extra assumption: it holds

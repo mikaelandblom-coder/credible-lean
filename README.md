@@ -18,11 +18,11 @@ when the correlations vanish.
 ## Status
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
-(regenerate with `python3 scripts/progress.py`). All 108 theorems are
+(regenerate with `python3 scripts/progress.py`). All 146 theorems are
 proved, with no `sorry`: §2.1–2.9 of the thesis (`Blend`, `Weights`,
-`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and two extensions,
-merging two cohorts (`Merging`) and cohort-dependent series lengths
-(`Unequal`).
+`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and three
+extensions: merging two cohorts (`Merging`), cohort-dependent series
+lengths (`Unequal`) and the distribution-free moment layer (`Moments`).
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
 found while formalizing, e.g. that two correlated cohorts can push the
@@ -55,23 +55,22 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | extension: moment layer (distribution-free) | `Credibility/Moments.lean` |
 
 Like the thesis, the formalization is **distribution-free**: only first and
-second moments are assumed. In Lean the second moments (`τ²`, `σⱼₜ`, `ρᵢⱼ`)
-enter as given numbers, and the covariance formulas such as eq. (16) are
-definitions.
+second moments are assumed. Most files take the second moments (`τ²`, `σⱼₜ`,
+`ρᵢⱼ`) as given numbers; `Moments` proves that they are the actual
+covariances of *any* random variables with those moments, and that `zⱼ`
+minimises the actual mean squared error.
 
 ## Later goals
 
 Once the thesis results are proved:
 
-- **Moment layer (still distribution-free).** Turn the covariance
-  definitions into theorems: for *any* probability space and *any*
-  square-integrable `εⱼ`, `εⱼₜ` with the assumed means, variances and
-  correlations (no distribution named), eq. (16) and `K` are the actual
-  covariances and `zⱼ` minimises the actual mean squared error. This
-  machine-checks the thesis's "only the first two moments matter" rather
-  than adding assumptions. Side result: such variables exist exactly when
-  the correlation table `ρ` is positive semidefinite, the condition `K`
-  needs anyway (FINDINGS item 1).
+- ~~**Moment layer (still distribution-free).**~~ Done
+  (`Credibility/Moments.lean`, FINDINGS item 11): for *any* probability
+  space and *any* square-integrable `ηⱼ`, `εⱼₜ` with the assumed moments,
+  eqs. (16) and (21) are the actual covariances, the weights are optimal
+  in actual variance, and `zⱼ` minimises the actual mean squared error.
+  Such variables exist exactly when `ρ` is positive semidefinite, the
+  condition `K` needs anyway (FINDINGS item 1).
 - ~~**Cohort-dependent series length.**~~ Done: cohorts observed on
   their own periods `Tⱼ ⊆ T`, correlations acting only on shared periods.
   Not in the thesis. Notes in
@@ -101,9 +100,8 @@ Once the thesis results are proved:
 
 The thesis is the foundation: notation and model for all later work. Plan:
 
-1. **The thesis formalization (§2) is done.** So is the
-   unequal-lengths extension. Next, possibly the moment layer (see
-   "Later goals"); then pick further credibility papers to formalize
+1. **The thesis formalization (§2) is done.** So are the
+   unequal-lengths extension and the moment layer. Next, pick further credibility papers to formalize
    (candidates such as Jewell's hierarchical model and Hachemeister's
    regression model), each as its own `Credibility/<Topic>.lean` and
    blueprint chapter in the thesis notation.

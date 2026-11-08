@@ -16,11 +16,10 @@ tactics.
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean`
 
-Second moments are taken as given numbers. The model is distribution-free
-(only first and second moments are assumed); a "moment layer" proving the
-formulas are actual covariances of *any* random variables with those
-moments is a later goal (see "Later goals" in `README.md`). Never add a
-distributional assumption.
+Second moments are taken as given numbers, except in `Moments.lean`, which
+proves they are the actual covariances of *any* random variables with
+those moments. The model is distribution-free (only first and second
+moments are assumed). Never add a distributional assumption.
 
 ## Rules
 - Theorem statements are the spec. Never weaken or change one to make it
