@@ -562,9 +562,9 @@ the rank-one part lies along $u$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:U_bestZ_eq, lem:U_full}
-  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_eq} ($T \ge 1$ since
-  $K \succ 0$). The idea: put $\upsilon_j = s^2$
+  \uses{thm:Core_bestZ_eq}
+  Theorem~\ref{thm:Core_bestZ_eq} with the model's $K$ and
+  $v_j = \sigma^2_{jj}$. The idea: put $\upsilon_j = s^2$
   (Lemma~\ref{lem:mulVec_glsWeight}) into Theorem~\ref{thm:bestZ_linear}: the
   numerator becomes $(1-b_j)\tau^2$ and the denominator
   $\tau^2 + \sigma_{jj}^2 - s^2$.
@@ -639,7 +639,8 @@ zero, so the formula still typechecks there.)
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:bs_K}
+  \uses{lem:bs_K, thm:Core_diag}
+  Theorem~\ref{thm:Core_diag}:
   $K^{-1} = \operatorname{diag}\bigl(1/(\tau^2 + \sigma^2/w_{j*})\bigr)
   = \operatorname{diag}(z_j^B/\tau^2)$.
 \end{proof}
@@ -665,8 +666,9 @@ zero, so the formula still typechecks there.)
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:U_diag, lem:U_full, lem:bs_σ2}
-  Theorem~\ref{thm:U_diag} with $T_j = T$ and $\rho_{ij} = \delta_{ij}$ gives
+  \uses{thm:Core_diag, lem:bs_K, lem:bs_σ2}
+  $K = \operatorname{diag}(\tau^2 + \sigma^2_{jj})$ (Lemmas~\ref{lem:bs_K}
+  and~\ref{lem:bs_σ2}), so Theorem~\ref{thm:Core_diag} gives
   $z_j = \tau^2/(\tau^2 + \sigma^2/w_{j*}) = z_j^B$ (Lemma~\ref{lem:bs_σ2}).
   Directly: $K$ is diagonal with positive entries, hence positive definite. Then
   $s^2 = \tau^2/z_*^B = (\tau^2 + \sigma_{jj}^2)\,b_j$, so
@@ -754,6 +756,11 @@ $\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
   With $A = \sigma_1^2 + \tau^2$ and $c = \sigma_1\sigma_2\rho$:
   $1 - b_1 = (A - c)/D$ and $A D - \det K = (A - c)^2$, so
   $\tau^2 + \sigma_1^2 - s^2 = (A - c)^2/D$. Cancel $(A - c)/D$.
+  For $|\rho| < 1$ this is also the case $J = 2$ of
+  Theorem~\ref{thm:Core_bestZ_of_equalCov} with $c = \sigma_1\sigma_2\rho$.
+  It is proved directly because the statement only assumes $\rho \le 1$: it is
+  an algebraic identity that holds also where $K$ is not positive definite
+  (e.g.\ $\sigma_1 = \sigma_2 = \tau^2 = 1$, $\rho = -3$).
 \end{proof}
 
 \begin{theorem}[Weights from credibility factors]\label{thm:b1_eq_z}

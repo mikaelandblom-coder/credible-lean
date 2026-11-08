@@ -76,19 +76,13 @@ include hτ hσ hw in
 theorem bs_Kinv_one [Nonempty T] (K : Matrix J J ℝ)
     (hK : K = diagonal fun j => τ2 + σsq / ∑ t, w j t) :
     K⁻¹ *ᵥ 1 = fun j => bsZ τ2 σsq w j / τ2 := by
+  -- `Core.Kinv_one_of_diag`, and `1/(τ² + σ²/wⱼ*) = zⱼᴮ/τ²`.
   have hW : ∀ j, 0 < ∑ t, w j t := fun j => sum_pos (fun t _ => hw j t) univ_nonempty
-  have hd : ∀ j, τ2 + σsq / ∑ t, w j t ≠ 0 := fun j =>
-    (add_pos hτ (div_pos hσ (hW j))).ne'
-  have hinv : K⁻¹ = diagonal fun j => (τ2 + σsq / ∑ t, w j t)⁻¹ := by
-    rw [hK]
-    refine inv_eq_left_inv ?_
-    rw [diagonal_mul_diagonal]
-    simp only [inv_mul_cancel₀ (hd _), diagonal_one]
-  rw [hinv]
+  rw [Core.Kinv_one_of_diag hK fun j => (add_pos hτ (div_pos hσ (hW j))).ne']
   ext j
   have := (hW j).ne'
   have : (∑ t, w j t) + σsq / τ2 ≠ 0 := (add_pos (hW j) (div_pos hσ hτ)).ne'
-  simp only [mulVec_diagonal, Pi.one_apply, mul_one, bsZ]
+  simp only [bsZ]
   field_simp
 
 /-- `bⱼ = zⱼᴮ / z*ᴮ`. -/
@@ -103,16 +97,19 @@ Note: with a single cohort, `bⱼ = 1` and eq. (26) is `0/0`; the thesis
 derivation silently needs at least two cohorts. -/
 theorem bs_z [Nonempty T] (hJ : 1 < Fintype.card J) (j : J) :
     ((bsModel τ2 σsq w hτ hσ hw).moments j).bestZ = bsZ τ2 σsq w j := by
-  -- `K` is diagonal: `zⱼ = τ²/(τ² + σ²ⱼⱼ)` (`Unequal.bestZ_of_diag` with `Tⱼ = T`),
+  -- `K = diag(τ² + σ²ⱼⱼ)`, so `zⱼ = τ²/(τ² + σ²ⱼⱼ)` (`Core.bestZ_of_diag`),
   -- and `σ²ⱼⱼ = σ²/wⱼ*`.
-  set M := bsModel τ2 σsq w hτ hσ hw
-  have h0 : ∀ i k, i ≠ k → M.toUnequal.σ2 i k * M.toUnequal.ρ i k = 0 := fun i k h => by
-    simp [M, Model.toUnequal, bsModel, h]
-  have hW : 0 < ∑ t, w j t := sum_pos (fun t _ => hw j t) univ_nonempty
-  rw [← M.toUnequal_moments, Unequal.bestZ_of_diag _ h0 hJ, M.toUnequal_σ2,
-    show M.σ2 j j = _ from bs_σ2 τ2 σsq w hτ hσ hw j, bsZ]
-  change τ2 / (τ2 + σsq / ∑ t, w j t) = _
-  field_simp
+  have hσ2 := bs_σ2 τ2 σsq w hτ hσ hw
+  have hW : ∀ j, 0 < ∑ t, w j t := fun j => sum_pos (fun t _ => hw j t) univ_nonempty
+  have hK : (bsModel τ2 σsq w hτ hσ hw).K
+      = diagonal fun j => τ2 + (bsModel τ2 σsq w hτ hσ hw).σ2 j j := by
+    rw [bs_K τ2 σsq w hτ hσ hw]
+    exact congrArg diagonal (funext fun i => by rw [hσ2])
+  refine (Core.bestZ_of_diag hK (fun i => ?_) hJ j).trans ?_
+  · rw [hσ2]; exact add_pos hτ (div_pos hσ (hW i))
+  · have := (hW j).ne'
+    rw [hσ2, bsZ]
+    field_simp
 
 omit [DecidableEq J] in
 /-- The balance property (§2.9) holds for Bühlmann–Straub weights for any data,
