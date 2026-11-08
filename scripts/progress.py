@@ -24,7 +24,21 @@ DECL = re.compile(
     re.M,
 )
 BOUNDARY = re.compile(r"^(?:/--|end\b|section\b|namespace\b|variable\b|open\b)", re.M)
-NS = re.compile(r"^namespace\s+(\S+)", re.M)
+NS = re.compile(r"^(namespace|section|end)\b[ \t]*(\S*)", re.M)
+
+
+def namespaces(text: str):
+    """(position, current namespace) after each namespace/section/end line."""
+    stack, out = [], []
+    for m in NS.finditer(text):
+        kind, name = m.group(1), m.group(2)
+        if kind == "end":
+            if stack:
+                stack.pop()
+        else:
+            stack.append(name if kind == "namespace" else None)
+        out.append((m.start(), ".".join(n for n in stack if n)))
+    return out
 
 
 def eq_refs(doc: str) -> str:
@@ -46,8 +60,7 @@ def short(doc: str) -> str:
 def scan(path: Path):
     text = path.read_text()
     title = re.search(r"^# (.+)$", text, re.M)
-    ns = NS.search(text)
-    prefix = ns.group(1) + "." if ns else ""
+    scopes = namespaces(text)
     rows = []
     matches = list(DECL.finditer(text))
     for m in matches:
@@ -64,6 +77,12 @@ def scan(path: Path):
             start = before.rfind("/--")
             if start != -1:
                 doc = before[start + 3 : -2]
+        ns = ""
+        for pos, cur in scopes:
+            if pos > m.start():
+                break
+            ns = cur
+        prefix = ns + "." if ns else ""
         rows.append(
             dict(
                 name=prefix + name if not name.startswith(prefix) else name,

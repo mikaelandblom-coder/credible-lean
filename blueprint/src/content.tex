@@ -1094,3 +1094,261 @@ model $\beta(2\tau^2)$ is the weight $(1 - z_1)b_2$ of \eqth{32}.
   $2\tau^2(V + \tau^2) > V\tau^2$, so merging never pays. Because $Q$ is a
   common factor, each cohort on its own prefers the same choice.
 \end{remark}
+
+% ---------------------------------------------------------------------------
+\chapter{Extension: cohort-dependent series lengths}\label{ch:unequal}
+% Not in the thesis. Notes: notes/unequal-lengths.md. Lean: Credibility/Unequal.lean
+
+Not in the thesis. Cohort $j$ is observed only in the periods
+$T_j \subseteq T$, $T_j \ne \emptyset$. Write $T_{ij} = T_i \cap T_j$ for the
+periods two cohorts share and $J_t = \{j : t \in T_j\}$ for the cohorts
+observed in period $t$. The model of Definition~\ref{def:Model} is unchanged;
+only the data shrink to $\mu_{jt}$, $t \in T_j$, so correlations act only on
+shared periods.
+
+\begin{definition}[Unequal lengths]\label{def:Unequal}
+  \lean{Credibility.Unequal, Credibility.Unequal.overlap, Credibility.Unequal.a,
+        Credibility.Unequal.σ2, Credibility.Unequal.K}
+  \leanok
+  \uses{def:Model, def:obsCov}
+  The cohort weights are inverse-variance on $T_j$ and zero elsewhere,
+  $a_{jt} = \sigma_{jt}^{-2}/\sum_{s \in T_j}\sigma_{js}^{-2}$ for $t \in T_j$;
+  $\sigma^2_{ij} = \sum_{t \in T_{ij}} a_{it}a_{jt}\sigma_{it}\sigma_{jt}$ and
+  $K_{ij} = \sum_{t \in T_i}\sum_{s \in T_j} a_{it}a_{js}\bar K^{ts}_{ij}$.
+\end{definition}
+
+\begin{lemma}\label{lem:U_sum_a}
+  \lean{Credibility.Unequal.sum_a}
+  \leanok
+  \uses{def:Unequal}
+  $\sum_{t \in T_j} a_{jt} = 1$.
+\end{lemma}
+\begin{proof}
+  As Lemma~\ref{lem:sum_invVarWeight}, on $T_j$.
+\end{proof}
+
+\begin{theorem}\label{thm:U_a_optimal}
+  \lean{Credibility.Unequal.a_optimal}
+  \leanok
+  \uses{def:Unequal}
+  The $a_{jt}$ minimise $\sum_{t \in T_j} c_t^2\sigma_{jt}^2$ among weights on
+  $T_j$ with $\sum_{t\in T_j} c_t = 1$.
+\end{theorem}
+\begin{proof}
+  As Theorem~\ref{thm:invVarWeight_optimal}, on $T_j$.
+\end{proof}
+
+\begin{lemma}[Entries of $K$]\label{lem:U_K_apply}
+  \lean{Credibility.Unequal.K_apply}
+  \leanok
+  \uses{def:Unequal, lem:U_sum_a}
+  $K_{ij} = \sigma^2_{ij}\rho_{ij} + \tau^2\delta_{ij}$.
+\end{lemma}
+\begin{proof}
+  As Lemma~\ref{lem:K_apply}: $\delta_{ts}$ leaves $t = s \in T_{ij}$, and
+  the $\tau^2$ term uses Lemma~\ref{lem:U_sum_a}.
+\end{proof}
+
+\begin{lemma}\label{lem:U_disjoint}
+  \lean{Credibility.Unequal.σ2_eq_zero_of_disjoint}
+  \leanok
+  \uses{def:Unequal}
+  If $T_i \cap T_j = \emptyset$ then $\sigma^2_{ij} = 0$.
+\end{lemma}
+\begin{proof}
+  Empty sum.
+\end{proof}
+
+\begin{lemma}\label{lem:U_K_symm}
+  \lean{Credibility.Unequal.K_symm}
+  \leanok
+  \uses{def:Unequal}
+  $K$ is symmetric.
+\end{lemma}
+\begin{proof}
+  As Lemma~\ref{lem:K_symm}.
+\end{proof}
+
+\begin{theorem}[$K$ stays positive definite]\label{thm:U_K_posDef}
+  \lean{Credibility.Unequal.K_posDef}
+  \leanok
+  \uses{lem:U_K_apply, lem:U_K_symm}
+  If for every period $t$ the block $(\rho_{ij})_{i,j \in J_t}$ is positive
+  semidefinite, then $K$ is positive definite, whatever the overlap pattern.
+\end{theorem}
+\begin{proof}
+  As in Lemma~\ref{lem:K_posDef},
+  $x^TKx = \sum_t y_t^T R\,y_t + \tau^2\lVert x\rVert^2$ with
+  $(y_t)_j = a_{jt}\sigma_{jt}x_j$. Since $a_{jt} = 0$ for $t \notin T_j$,
+  $y_t$ lives on $J_t$ and $y_t^TRy_t$ only involves the block $R[J_t, J_t]$.
+\end{proof}
+
+\begin{corollary}\label{cor:U_K_posDef}
+  \lean{Credibility.Unequal.K_posDef_of_posSemidef}
+  \leanok
+  \uses{thm:U_K_posDef}
+  If $(\rho_{ij})$ is positive semidefinite, $K$ is positive definite.
+\end{corollary}
+\begin{proof}
+  Principal blocks of a positive-semidefinite matrix are positive semidefinite.
+\end{proof}
+
+\begin{remark}[Finding 8: overlap patterns keep $K$ positive definite]\label{rem:unequal_posdef}
+  \uses{thm:U_K_posDef}
+  The block condition is weaker than $R \succeq 0$: correlations between
+  cohorts that never share a period do not enter. With $T_1 = \{1\}$,
+  $T_2 = \{1,2\}$, $T_3 = \{2\}$, $\rho_{12} = \rho_{23} = 0.9$ and
+  $\rho_{13} = -0.9$, $R$ is not positive semidefinite but $K$ is positive
+  definite. The block condition is exactly what makes the data covariance a
+  covariance matrix.
+\end{remark}
+
+\begin{lemma}[Back to the thesis]\label{lem:U_full}
+  \lean{Credibility.Unequal.a_eq_of_full, Credibility.Unequal.σ2_eq_of_full,
+        Credibility.Unequal.K_eq_of_full}
+  \leanok
+  \uses{def:Unequal, def:sigma2, def:K}
+  If $T_j = T$ for all $j$, then $a$, $\sigma^2$ and $K$ are those of
+  Chapter~\ref{ch:model}.
+\end{lemma}
+\begin{proof}
+  Unfold.
+\end{proof}
+
+\begin{theorem}[The credibility factor]\label{thm:U_bestZ_eq}
+  \lean{Credibility.Unequal.b, Credibility.Unequal.s2, Credibility.Unequal.moments,
+        Credibility.Unequal.bestZ_eq}
+  \leanok
+  \uses{def:Unequal, lem:mulVec_glsWeight}
+  With $b = K^{-1}u/u^TK^{-1}u$ and $s^2 = 1/u^TK^{-1}u$ for the new $K$,
+  if $K$ is positive definite then
+  $z_j = (1 - b_j)\tau^2/(\tau^2 + \sigma^2_{jj} - s^2)$ as in \eqth{26}.
+\end{theorem}
+\begin{proof}
+  As Theorem~\ref{thm:bestZ_eq}: only $Kb = s^2u$ is used.
+\end{proof}
+
+\section{Parameter estimation}
+
+Take $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$ as in Chapter~\ref{ch:estimation},
+with $w_{j*} = \sum_{t\in T_j} w_{jt}$, $\hmu_j = \sum_{t \in T_j}(w_{jt}/w_{j*})\mu_{jt}$
+and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
+\emph{observed} if it reads only $\mu_{jt}$ with $t \in T_j$.
+
+\begin{definition}[The per-pair count]\label{def:U_count}
+  \lean{Credibility.Unequal.wtot, Credibility.Unequal.wall, Credibility.Unequal.sqrtSum,
+        Credibility.Unequal.count, Credibility.Unequal.den, Credibility.Unequal.muHat,
+        Credibility.Unequal.Observed}
+  \leanok
+  \uses{def:Unequal}
+  $n_{ij} = |T_{ij}| - \sum_{t\in T_{ij}} w_{it}/w_{i*} - \sum_{t \in T_{ij}} w_{jt}/w_{j*}$
+  and $D_{ij} = S_{ij} + n_{ij}w_{i*}w_{j*}/S_{ij}$.
+\end{definition}
+
+\begin{definition}[Estimators]\label{def:U_estimators}
+  \lean{Credibility.Unequal.sigRhoHat, Credibility.Unequal.cHat,
+        Credibility.Unequal.tauHat, Credibility.Unequal.KHat}
+  \leanok
+  \uses{def:U_count, def:estimators}
+  \eqth{39} with the sums over $T_{ij}$ and $T - 2$ replaced by $n_{ij}$:
+  \[
+    \widehat{\sigma^2_{ij}\rho_{ij}} = \frac{1}{D_{ij}}\sum_{t \in T_{ij}}
+      \sqrt{w_{it}w_{jt}}\,(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j),
+  \]
+  and $\hat c_j$, $\widehat{\tau^2}$, $\hat K_{ij}$ as in \eqth{39}.
+\end{definition}
+
+\begin{lemma}\label{lem:U_count}
+  \lean{Credibility.Unequal.count_self, Credibility.Unequal.count_of_full}
+  \leanok
+  \uses{def:U_count}
+  $n_{jj} = |T_j| - 2$, and $n_{ij} = T - 2$ if all $T_j = T$.
+\end{lemma}
+\begin{proof}
+  The shares of one cohort add up to one over its own periods.
+\end{proof}
+
+\begin{lemma}[When $D_{ij} > 0$]\label{lem:U_den}
+  \lean{Credibility.Unequal.den_pos_of_two_le, Credibility.Unequal.den_of_overlap_singleton}
+  \leanok
+  \uses{def:U_count}
+  If $|T_{ij}| \ge 2$ then $D_{ij} > 0$. If $T_{ij} = \{t\}$ then
+  $D_{ij}S_{ij}/(w_{i*}w_{j*}) = (1 - w_{it}/w_{i*})(1 - w_{jt}/w_{j*})$.
+\end{lemma}
+\begin{proof}
+  With $|T_{ij}| \ge 2$, $n_{ij} \ge 2 - 1 - 1 = 0$ and $S_{ij} > 0$. With one
+  shared period, $S_{ij}^2/(w_{i*}w_{j*}) = \omega_i\omega_j$ and
+  $n_{ij} = 1 - \omega_i - \omega_j$, $\omega_k = w_{kt}/w_{k*}$.
+\end{proof}
+
+\begin{lemma}\label{lem:U_special}
+  \lean{Credibility.Unequal.a_special, Credibility.Unequal.σ2ρ_special}
+  \leanok
+  \uses{def:Unequal, def:U_count}
+  $a_{jt} = w_{jt}/w_{j*}$ on $T_j$, and
+  $\sigma^2_{ij}\rho_{ij} = S_{ij}/(w_{i*}w_{j*})\,\sigma_i\sigma_j\rho_{ij}$ \eqth{37}.
+\end{lemma}
+\begin{proof}
+  As Lemmas~\ref{lem:a_special} and~\ref{lem:sigma2rho_special}.
+\end{proof}
+
+\begin{lemma}\label{lem:U_unbiased_dev}
+  \lean{Credibility.Unequal.unbiased_dev}
+  \leanok
+  \uses{def:Unequal, def:unbiased}
+  For $t \in T_{ij}$,
+  $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
+   = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
+\end{lemma}
+\begin{proof}
+  As Lemma~\ref{lem:unbiased_dev}.
+\end{proof}
+
+\begin{theorem}[Unbiasedness with unequal lengths]\label{thm:U_unbiased}
+  \lean{Credibility.Unequal.sigRhoHat_unbiased, Credibility.Unequal.tauHat_unbiased,
+        Credibility.Unequal.KHat_unbiased}
+  \leanok
+  \uses{def:U_estimators, lem:U_unbiased_dev, lem:U_special, lem:U_K_apply}
+  If $D_{ij} > 0$ whenever $T_{ij} \ne \emptyset$, then
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$; if
+  moreover $J \ge 2$, then $\widehat{\tau^2}$ and $\hat K_{ij}$ are unbiased.
+\end{theorem}
+\begin{proof}
+  Weighting Lemma~\ref{lem:U_unbiased_dev} by $\sqrt{w_{it}w_{jt}}$ and
+  summing over $T_{ij}$ gives $\sigma_i\sigma_j\rho_{ij}n_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}
+  = D_{ij}\sigma^2_{ij}\rho_{ij}$ by Lemma~\ref{lem:U_special}. For
+  $\widehat{\tau^2}$ the proof of Theorem~\ref{thm:tauHat_unbiased} only uses
+  $K = \sigma^2\rho + \tau^2\delta$.
+\end{proof}
+
+\begin{lemma}\label{lem:U_observed}
+  \lean{Credibility.Unequal.KHat_observed}
+  \leanok
+  \uses{def:U_estimators}
+  $\hat K_{ij}$ is observed.
+\end{lemma}
+\begin{proof}
+  Every sum runs over $T_j$ or $T_{ij}$.
+\end{proof}
+
+\begin{theorem}[Diagonal]\label{thm:U_sigRhoHat_self}
+  \lean{Credibility.Unequal.sigRhoHat_self}
+  \leanok
+  \uses{def:U_estimators}
+  $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with
+  $\hat\sigma_j^2 = \frac{1}{|T_j|-1}\sum_{t\in T_j} w_{jt}(\mu_{jt}-\hmu_j)^2$:
+  Bühlmann--Straub with the cohort's own length.
+\end{theorem}
+\begin{proof}
+  $S_{jj} = w_{j*}$ and $n_{jj} = |T_j| - 2$, so $D_{jj} = (|T_j| - 1)w_{j*}$.
+\end{proof}
+
+\begin{remark}[Finding 9: the count is per pair and volume-weighted]\label{rem:unequal_count}
+  \uses{thm:U_unbiased, lem:U_den}
+  The $T - 2$ of \eqth{39} does not become $|T_{ij}| - 2$ but
+  $n_{ij} = |T_{ij}| - \omega_i - \omega_j$, where $\omega_i$ is the share of
+  cohort $i$'s volume inside the overlap; $|T_{ij}| - 2$ biases the estimator
+  unless $T_i = T_j$. One shared period identifies $\rho_{ij}$ as soon as both
+  cohorts are also observed outside it: then $D_{ij} > 0$. This sharpens the
+  $T \ge 2$ of Finding~7, where $\omega_i = \omega_j = 1$.
+\end{remark}

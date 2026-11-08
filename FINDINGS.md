@@ -76,6 +76,26 @@ Gaps, extra hypotheses and new results found while formalizing.
    but there are `J` of them, so it should be `σ̂² = (1/J) Σⱼ σ̂ⱼ²`. Lean
    does not touch eq. (13); `sigRhoHat_self` only uses `σ̂ⱼ²`.
 
+8. **Unequal lengths keep `K` positive definite (new, stated).** With
+   cohort `j` observed in `Tⱼ ⊆ T` (README "Later goals"; notes in
+   `notes/unequal-lengths.md`), `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ` still holds with
+   `σ²ᵢⱼ` summed over `Tᵢ ∩ Tⱼ`, and `K ≻ 0` for any overlap pattern as soon
+   as, for each period `t`, the correlations of the cohorts observed at `t`
+   form a PSD block (`Unequal.K_posDef`). That is weaker than `ρ ⪰ 0`: with
+   `T₁ = {1}`, `T₂ = {1,2}`, `T₃ = {2}`, `ρ₁₂ = ρ₂₃ = 0.9`, `ρ₁₃ = −0.9`,
+   `ρ` is not PSD but `K` is PD. *On paper; Lean statement only.*
+9. **The `T − 2` of eq. (39) becomes a volume-weighted per-pair count (new,
+   stated).** With unequal lengths the unbiased denominator of the
+   `σ²ᵢⱼρᵢⱼ` estimator is `Sᵢⱼ + nᵢⱼwᵢ*wⱼ*/Sᵢⱼ` (sums over `Tᵢⱼ = Tᵢ ∩ Tⱼ`)
+   with `nᵢⱼ = |Tᵢⱼ| − ωᵢ − ωⱼ`, `ωᵢ = Σ_{Tᵢⱼ} wᵢₜ/wᵢ*` the share of cohort
+   `i`'s volume inside the overlap. The naive `|Tᵢⱼ| − 2` is biased unless
+   `Tᵢ = Tⱼ`. Checked exactly against the data covariance for a random
+   3-cohort pattern. One shared period `t` suffices if both cohorts are also
+   observed elsewhere: the denominator is then
+   `(wᵢ*wⱼ*/Sᵢⱼ)(1 − ωᵢ)(1 − ωⱼ) > 0`, which sharpens the `T ≥ 2` of item 7
+   (`Unequal.den_of_overlap_singleton`, `sigRhoHat_unbiased`). *On paper;
+   Lean statements only.*
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
 (Findings 1–3 come from the statements; confirm them as proofs land.)

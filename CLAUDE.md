@@ -13,6 +13,7 @@ tactics.
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 - §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean`
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
+- extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`
 
 Second moments are taken as given numbers; a probabilistic layer proving
 they are actual covariances of random variables is a later goal (see

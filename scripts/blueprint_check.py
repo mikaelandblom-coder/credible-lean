@@ -25,7 +25,7 @@ PROOF = re.compile(r"\s*\\begin\{proof\}(.*?)\\end\{proof\}", re.S)
 
 
 def blueprint():
-    """Map each \\lean name's last component to (label, statement ok, proof ok)."""
+    """Map each \\lean name to (label, proof ok)."""
     text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
     out, errors = {}, []
     for m in ENV.finditer(text):
@@ -40,7 +40,7 @@ def blueprint():
         p = PROOF.match(text, m.end())
         proved = bool(p and re.search(r"\\leanok\b", p.group(1)))
         for n in names:
-            out[n.split(".")[-1]] = (label, proved)
+            out[n] = (label, proved)
     return out, errors
 
 
@@ -48,11 +48,10 @@ def main() -> int:
     bp, errors = blueprint()
     for f in sorted(SRC.glob("*.lean")):
         for r in scan(f)[1]:
-            short = r["name"].split(".")[-1]
-            if short not in bp:
+            if r["name"] not in bp:
                 errors.append(f"{r['name']}: not in the blueprint")
                 continue
-            label, proved = bp[short]
+            label, proved = bp[r["name"]]
             if proved != r["done"]:
                 want = "add" if r["done"] else "remove"
                 errors.append(f"{label}: {want} \\leanok in the proof ({r['name']})")

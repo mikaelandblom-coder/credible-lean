@@ -62,7 +62,9 @@ Once the thesis results are proved:
 - **Cohort-dependent series length.** In practice cohorts have data series
   of different lengths, so replace the common horizon `T` with a
   cohort-dependent `Tⱼ` (index sets `Tⱼ ⊆ T`). Correlations then only act
-  on the periods two cohorts share. Not in the thesis.
+  on the periods two cohorts share. Not in the thesis. Started: notes in
+  [`notes/unequal-lengths.md`](notes/unequal-lengths.md), statements in
+  `Credibility/Unequal.lean` (FINDINGS items 8–9).
 - **Choosing cohorts from the data.** Pick the partition into cohorts that
   minimises the total credibility MSE itself, rather than clustering
   credibility estimates by Euclidean distance (as in van Rijn, Weber, Merz,

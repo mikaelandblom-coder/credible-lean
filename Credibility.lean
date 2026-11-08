@@ -5,3 +5,4 @@ import Credibility.BuhlmannStraub
 import Credibility.TwoCohorts
 import Credibility.Merging
 import Credibility.Estimation
+import Credibility.Unequal
