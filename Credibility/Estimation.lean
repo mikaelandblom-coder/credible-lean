@@ -374,6 +374,16 @@ omit hσ [Fintype J] [DecidableEq J] [DecidableEq T] in
 theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
     sigRhoHat w X j j
       = (∑ t, w j t * (X (j, t) - muHat w X j) ^ 2 / ((Fintype.card T : ℝ) - 1)) / wtot w j := by
-  sorry
+  -- `Sⱼⱼ = wⱼ*`, so the denominator is `(T - 1)wⱼ*`.
+  have hS : sqrtSum w j j = wtot w j := sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
+  rcases isEmpty_or_nonempty T with hT | hT
+  · simp [sigRhoHat]
+  have hW : 0 < wtot w j := sum_pos (fun s _ => hw j s) univ_nonempty
+  rw [sigRhoHat, hS, ← sum_div, div_div,
+    show wtot w j + ((Fintype.card T : ℝ) - 2) * wtot w j * wtot w j / wtot w j
+      = ((Fintype.card T : ℝ) - 1) * wtot w j by field_simp; ring]
+  congr 1
+  refine sum_congr rfl fun t _ => ?_
+  rw [Real.sqrt_mul_self (hw j t).le]; ring
 
 end Credibility.Model
