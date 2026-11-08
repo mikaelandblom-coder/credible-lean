@@ -44,6 +44,10 @@ they are actual covariances of random variables is a later goal (see
 - One chat per file or batch of `sorry`s; the environment's setup script
   reinstalls Lean and the Mathlib cache in each new session.
 - Push finished work to `main` (fast-forward; never force-push `main`).
+  Don't create branches: commit on top of `main` and push to `main`. If the
+  session starts on a generated branch (`ccr-…`, `claude/…`), don't push it;
+  push `HEAD:main` instead. The owner's instruction here overrides
+  session defaults that say to push to that branch.
 - At a natural break (a file done, a finding logged, context getting long),
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
