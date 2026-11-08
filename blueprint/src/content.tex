@@ -1564,7 +1564,11 @@ moments matter'' a checked statement.
         Credibility.Model.Noise.memLp_obs, Credibility.Model.Noise.memLp_trueMean,
         Credibility.Model.Noise.cov_obs_trueMean, Credibility.Model.Noise.cov_trueMean,
         Credibility.Model.Noise.memLp_cohortLin, Credibility.Model.Noise.integral_cohortLin,
-        Credibility.Model.Noise.cov_cohortLin, Credibility.Model.Noise.cov_cohortLin_trueMean}
+        Credibility.Model.Noise.cov_cohortLin, Credibility.Model.Noise.cov_cohortLin_trueMean,
+        Credibility.Model.Noise.cov_cohortLin_self, Credibility.Model.Noise.memLp_cohortEst,
+        Credibility.Model.Noise.memLp_portLin, Credibility.Model.Noise.cov_portLin,
+        Credibility.Model.Noise.cov_cohortEst_portLin,
+        Credibility.Model.Noise.cov_portLin_trueMean, Credibility.Model.Noise.integral_portLin}
   \leanok
   \uses{def:Noise}
   Collect the $\eta_j$ and $\varepsilon_{jt}$ into one family $Z_u$,
@@ -1576,6 +1580,10 @@ moments matter'' a checked statement.
   weights $\cov(\sum_t c_t\mu_{it}, \sum_s c'_s\mu_{js})
   = \sum_{t,s} c_tc'_s\bar K_{ij}^{ts}$,
   $\cov(\sum_t c_t\mu_{it}, \mu_j) = (\sum_t c_t)\tau^2\delta_{ij}$.
+  For portfolio weights, $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
+  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$,
+  $\cov(\sum_i d_i\hmu_i, \mu_j) = d_j\tau^2$ and
+  $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$ (for $T \neq \emptyset$).
 \end{lemma}
 \begin{proof}
   \leanok
@@ -1608,6 +1616,7 @@ moments matter'' a checked statement.
   $\sum_j d_j = 1$.
 \end{theorem}
 \begin{proof}
+  \leanok
   Bilinearity, then Theorems~\ref{thm:invVarWeight_optimal}
   and~\ref{thm:glsWeight_optimal}.
 \end{proof}

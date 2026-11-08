@@ -235,29 +235,97 @@ lemma cov_cohortLin_trueMean (i j : J) (c : T → ℝ) :
   simp only [covariance_const_mul_left, N.cov_obs_trueMean, sum_mul]
   exact sum_congr rfl fun t _ => by ring
 
+lemma cov_cohortLin_self (j : J) (c : T → ℝ) :
+    cov[N.cohortLin μ j c, N.cohortLin μ j c; P]
+      = ∑ t, c t ^ 2 * M.σ j t ^ 2 + (∑ t, c t) ^ 2 * M.τ2 := by
+  rw [cov_cohortLin]
+  simp only [obsCov, M.ρ_self, mul_one, ↓reduceIte, mul_add, mul_ite, mul_zero, sum_add_distrib,
+    sum_ite_eq, mem_univ]
+  rw [sq, sum_mul_sum, sum_mul]
+  congr 1
+  · exact sum_congr rfl fun t _ => by ring
+  · exact sum_congr rfl fun t _ => by rw [sum_mul]
+
 /-- Eq. (21) is the actual covariance: `cov(μ̂ᵢ, μ̂ⱼ) = Kᵢⱼ`. -/
 theorem cov_cohortEst (i j : J) : cov[N.cohortEst μ i, N.cohortEst μ j; P] = M.K i j := by
   rw [cohortEst, cohortEst, cov_cohortLin]
   rfl
 
+lemma memLp_cohortEst (j : J) : MemLp (N.cohortEst μ j) 2 P := N.memLp_cohortLin μ j _
+
+lemma memLp_portLin (d : J → ℝ) : MemLp (N.portLin μ d) 2 P :=
+  memLp_finsetSum _ fun j _ => (N.memLp_cohortEst μ j).const_mul (d j)
+
+lemma cov_portLin (d d' : J → ℝ) :
+    cov[N.portLin μ d, N.portLin μ d'; P] = d ⬝ᵥ (M.K *ᵥ d') := by
+  unfold portLin
+  rw [covariance_fun_sum_fun_sum (fun i => (N.memLp_cohortEst μ i).const_mul (d i))
+    (fun j => (N.memLp_cohortEst μ j).const_mul (d' j))]
+  simp only [covariance_const_mul_left, covariance_const_mul_right, N.cov_cohortEst,
+    dotProduct, mulVec, mul_sum]
+  exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
+
+lemma cov_cohortEst_portLin (i : J) (d : J → ℝ) :
+    cov[N.cohortEst μ i, N.portLin μ d; P] = (M.K *ᵥ d) i := by
+  unfold portLin
+  rw [covariance_fun_sum_right (fun j => (N.memLp_cohortEst μ j).const_mul (d j))
+    (N.memLp_cohortEst μ i)]
+  simp only [covariance_const_mul_right, N.cov_cohortEst, mulVec, dotProduct]
+  exact sum_congr rfl fun j _ => by ring
+
+lemma cov_portLin_trueMean [Nonempty T] (d : J → ℝ) (j : J) :
+    cov[N.portLin μ d, N.trueMean μ j; P] = d j * M.τ2 := by
+  have ha : ∀ i, ∑ t, M.a i t = 1 := fun i =>
+    sum_invVarWeight _ fun t => pow_pos (M.σ_pos i t) 2
+  unfold portLin
+  rw [covariance_fun_sum_left (fun i => (N.memLp_cohortEst μ i).const_mul (d i))
+    (N.memLp_trueMean μ j)]
+  simp [covariance_const_mul_left, cohortEst, N.cov_cohortLin_trueMean, ha]
+
+lemma integral_portLin [Nonempty T] (d : J → ℝ) : P[N.portLin μ d] = (∑ j, d j) * μ := by
+  have ha : ∀ i, ∑ t, M.a i t = 1 := fun i =>
+    sum_invVarWeight _ fun t => pow_pos (M.σ_pos i t) 2
+  unfold portLin
+  rw [integral_finsetSum _ fun j _ => ((N.memLp_cohortEst μ j).const_mul (d j)).integrable
+    (by norm_num)]
+  simp [integral_const_mul, cohortEst, N.integral_cohortLin, ha, sum_mul]
+
 /-- Any linear cohort estimate with weights summing to one has error variance
 `Var(Σₜ cₜ μⱼₜ - μⱼ) = Σₜ cₜ² σⱼₜ²`, the quantity minimised in eq. (23). -/
 theorem var_cohortLin_err (j : J) (c : T → ℝ) (hc : ∑ t, c t = 1) :
     Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] = ∑ t, c t ^ 2 * M.σ j t ^ 2 := by
-  sorry
+  have hX := N.memLp_cohortLin μ j c
+  have hY := N.memLp_trueMean μ j
+  have hXY : MemLp (fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω) 2 P := hX.sub hY
+  rw [← covariance_self hXY.aestronglyMeasurable.aemeasurable,
+    covariance_fun_sub_fun_sub hX hY hX hY, covariance_comm (N.trueMean μ j),
+    cov_cohortLin_self, cov_cohortLin_trueMean, cov_trueMean, hc]
+  simp
 
 /-- Eq. (23) in true variance: among unbiased linear cohort estimates, `μ̂ⱼ`
 has the smallest error variance. -/
 theorem cohortEst_optimal [Nonempty T] (j : J) (c : T → ℝ) (hc : ∑ t, c t = 1) :
     Var[fun ω => N.cohortEst μ j ω - N.trueMean μ j ω; P]
       ≤ Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] := by
-  sorry
+  have hσ : ∀ t, 0 < M.σ j t ^ 2 := fun t => pow_pos (M.σ_pos j t) 2
+  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ hσ
+  rw [cohortEst, N.var_cohortLin_err μ j _ ha, N.var_cohortLin_err μ j c hc]
+  exact invVarWeight_optimal _ hσ c hc
 
 /-- Eq. (24) in true variance: among unbiased linear portfolio estimates built
 from the `μ̂ⱼ`, the GLS one has the smallest variance, and it equals `s²`. -/
 theorem portEst_optimal (hK : M.K.PosDef) (d : J → ℝ) (hd : ∑ j, d j = 1) :
     Var[N.portEst μ; P] = M.s2 ∧ M.s2 ≤ Var[N.portLin μ d; P] := by
-  sorry
+  have : Nonempty J := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at hd
+  have hvar : ∀ d, Var[N.portLin μ d; P] = d ⬝ᵥ (M.K *ᵥ d) := fun d => by
+    rw [← covariance_self (N.memLp_portLin μ d).aestronglyMeasurable.aemeasurable, cov_portLin]
+  have hs2 : M.b ⬝ᵥ (M.K *ᵥ M.b) = M.s2 := glsWeight_value hK
+  refine ⟨by rw [portEst, hvar, hs2], ?_⟩
+  rw [hvar, ← hs2]
+  exact glsWeight_optimal hK d hd
 
 /-- Every field of `M.moments j` is the actual moment it names (§2.4). -/
 theorem moments_eq [Nonempty T] (hK : M.K.PosDef) (j : J) :
