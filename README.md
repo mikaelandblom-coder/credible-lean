@@ -52,6 +52,7 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | §2.8 parameter estimation, eqs. (37)–(41) | `Credibility/Estimation.lean` |
 | extension: merging two cohorts ([notes](notes/merging-cohorts.md)) | `Credibility/Merging.lean` |
 | extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean` |
+| extension: moment layer (distribution-free) | `Credibility/Moments.lean` |
 
 Like the thesis, the formalization is **distribution-free**: only first and
 second moments are assumed. In Lean the second moments (`τ²`, `σⱼₜ`, `ρᵢⱼ`)

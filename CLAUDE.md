@@ -14,6 +14,7 @@ tactics.
 - §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean`
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`
+- extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean`
 
 Second moments are taken as given numbers. The model is distribution-free
 (only first and second moments are assumed); a "moment layer" proving the

@@ -1526,3 +1526,106 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   flexible than in Finding~5: as soon as two cohorts share no period, the
   common covariance must be $0$.
 \end{remark}
+
+% ---------------------------------------------------------------------------
+\chapter{Extension: the moment layer}\label{ch:moments}
+% Not in the thesis. Lean: Credibility/Moments.lean
+
+Elsewhere the second moments are given numbers and the covariances
+\eqth{16}, \eqth{21} are \emph{defined} from them. Here they become
+theorems about random variables. Nothing is assumed about the distribution:
+every result holds on any probability space, for any random variables with
+the moments of \eqth{15}. This makes the thesis's ``only the first two
+moments matter'' a checked statement.
+
+\begin{definition}[Moment assumptions]\label{def:Noise}
+  \lean{Credibility.Model.Noise, Credibility.Model.Noise.trueMean,
+        Credibility.Model.Noise.obs, Credibility.Model.Noise.cohortEst,
+        Credibility.Model.Noise.portEst, Credibility.Model.Noise.blend}
+  \leanok
+  \uses{def:Model, def:K, def:Model.b}
+  On a probability space, square-integrable random variables $\eta_j$
+  (cohort effects) and $\varepsilon_{jt}$ (sampling noise) with
+  $\mathbb E\eta_j = \mathbb E\varepsilon_{jt} = 0$,
+  $\cov(\eta_i,\eta_j) = \delta_{ij}$, $\cov(\eta_i,\varepsilon_{jt}) = 0$ and
+  $\cov(\varepsilon_{it},\varepsilon_{js}) = \rho_{ij}\delta_{ts}$. They define
+  $\mu_j = \mu + \tau\eta_j$, $\mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt}$,
+  $\hmu_j = \sum_t a_{jt}\mu_{jt}$, $\hmu = \sum_j b_j\hmu_j$ and the blend
+  $z\hmu_j + (1-z)\hmu$.
+\end{definition}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:cov_obs}
+  \lean{Credibility.Model.Noise.obs_mean, Credibility.Model.Noise.cov_obs,
+        Credibility.Model.Noise.cov_cohortEst}
+  \leanok
+  \uses{def:Noise, def:obsCov, def:K}
+  $\mathbb E\mu_{jt} = \mu$, $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$
+  \eqth{16} and $\cov(\hmu_i,\hmu_j) = K_{ij}$ \eqth{21}.
+\end{theorem}
+\begin{proof}
+  Bilinearity of covariance.
+\end{proof}
+
+\begin{theorem}[Optimal weights in true variance]\label{thm:weights_true}
+  \lean{Credibility.Model.Noise.var_cohortLin_err,
+        Credibility.Model.Noise.cohortEst_optimal,
+        Credibility.Model.Noise.portEst_optimal}
+  \leanok
+  \uses{thm:cov_obs, thm:invVarWeight_optimal, thm:glsWeight_optimal}
+  For weights with $\sum_t c_t = 1$,
+  $\Var(\sum_t c_t\mu_{jt} - \mu_j) = \sum_t c_t^2\sigma_{jt}^2$, so $\hmu_j$
+  has the smallest error variance among unbiased linear cohort estimates.
+  If $K \succ 0$, $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$ whenever
+  $\sum_j d_j = 1$.
+\end{theorem}
+\begin{proof}
+  Bilinearity, then Theorems~\ref{thm:invVarWeight_optimal}
+  and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[The blend moments are the actual ones]\label{thm:moments_eq}
+  \lean{Credibility.Model.Noise.moments_eq, Credibility.Model.Noise.mse_blend}
+  \leanok
+  \uses{thm:cov_obs, def:moments, lem:K_apply}
+  If $K \succ 0$, each field of Definition~\ref{def:moments} is the moment it
+  names, the blend is unbiased, and
+  $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ is the error variance
+  \eqth{6}.
+\end{theorem}
+\begin{proof}
+  Bilinearity; the mean squared error is variance plus squared bias, and the
+  bias vanishes since $\sum_t a_{jt} = \sum_j b_j = 1$.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true mean squared error]\label{thm:bestZ_mse}
+  \lean{Credibility.Model.Noise.bestZ_mse_optimal}
+  \leanok
+  \uses{thm:moments_eq, thm:bestZ_optimal}
+  If $K \succ 0$ and $\Var(\hmu_j - \hmu) > 0$, the credibility factor
+  \eqth{7} minimises $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ over $z$,
+  for every distribution with the moments of \eqth{15}.
+\end{theorem}
+\begin{proof}
+  Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{theorem}[The assumptions are consistent iff $\rho \succeq 0$]\label{thm:exists_noise}
+  \lean{Credibility.Model.exists_noise_iff}
+  \leanok
+  \uses{def:Noise}
+  For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
+  exist on some probability space if and only if $\rho$ is positive
+  semidefinite.
+\end{theorem}
+\begin{proof}
+  Necessity: $x^T\rho x = \Var(\sum_j x_j\varepsilon_{jt}) \ge 0$.
+  Sufficiency: write $\rho = B^TB$, take independent standard variables
+  $Z$ (Gaussian, as a witness only) and set $\varepsilon_{\cdot t} = B^T Z_{\cdot t}$.
+\end{proof}
+
+\begin{remark}[Why $\rho \succeq 0$ is no extra assumption]\label{rem:moments_psd}
+  \uses{thm:exists_noise, rem:posdef}
+  Finding~1 needs $\rho \succeq 0$ for $K \succ 0$. By
+  Theorem~\ref{thm:exists_noise} this is not an extra assumption: it holds
+  whenever the model's random variables exist at all.
+\end{remark}
