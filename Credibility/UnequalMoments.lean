@@ -1,4 +1,4 @@
-import Credibility.Unequal
+import Credibility.UnequalEstimation
 import Credibility.Moments
 
 /-!

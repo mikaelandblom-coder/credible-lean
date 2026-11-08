@@ -1,3 +1,4 @@
+import Credibility.Data
 import Credibility.Blend
 import Credibility.Weights
 import Credibility.Model
@@ -6,5 +7,6 @@ import Credibility.TwoCohorts
 import Credibility.Merging
 import Credibility.Estimation
 import Credibility.Unequal
+import Credibility.UnequalEstimation
 import Credibility.Moments
 import Credibility.UnequalMoments

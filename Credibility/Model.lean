@@ -1,41 +1,22 @@
-import Credibility.Blend
-import Credibility.Weights
+import Credibility.Unequal
 
 /-!
 # The correlated data model and the proposed credibility factor
 (thesis §2.3–2.5, eqs. (15)–(27))
 
-`μⱼ = μ + τ ηⱼ` (cohort effect), `μⱼₜ = μⱼ + σⱼₜ εⱼₜ` (sampling noise),
-`cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`. The thesis writes the cohort effect `εⱼ`; it is
-renamed `ηⱼ` here to keep it apart from the noise. Distribution-free: only
-first and second moments are assumed.
+The parameters and eq. (16) are in `Data.lean`. The thesis observes every
+cohort in every period: this is `Unequal` with `Tⱼ = T` (`toUnequal`), so the
+results below with an `Unequal` twin are proved as corollaries of it.
 -/
 
 open Finset Matrix
 
 namespace Credibility
 
-structure Model (J T : Type*) where
-  /-- Heterogeneity between cohorts. -/
-  τ2 : ℝ
-  /-- Observation noise (standard deviation) of cohort `j` in period `t`. -/
-  σ : J → T → ℝ
-  /-- Contemporaneous correlation between cohorts. -/
-  ρ : J → J → ℝ
-  τ2_pos : 0 < τ2
-  σ_pos : ∀ j t, 0 < σ j t
-  ρ_self : ∀ j, ρ j j = 1
-  ρ_symm : ∀ i j, ρ i j = ρ j i
-
 namespace Model
 
 variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
 variable (M : Model J T)
-
-/-- `cov(μᵢₜ, μⱼₛ)` (the thesis's `K̄ᵢⱼᵗˢ`), eq. (16). -/
-def obsCov (i j : J) (t s : T) : ℝ :=
-  M.σ i t * M.σ j s * M.ρ i j * (if t = s then 1 else 0)
-    + M.τ2 * (if i = j then 1 else 0)
 
 /-- Cohort weights `aⱼₜ`, eq. (23). -/
 noncomputable def a (j : J) (t : T) : ℝ := invVarWeight (fun s => M.σ j s ^ 2) t
@@ -47,62 +28,52 @@ noncomputable def σ2 (i j : J) : ℝ := ∑ t, M.a i t * M.a j t * M.σ i t * M
 noncomputable def K : Matrix J J ℝ :=
   fun i j => ∑ t, ∑ s, M.a i t * M.a j s * M.obsCov i j t s
 
-omit [Fintype J] in
-/-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27). -/
-theorem K_apply [Nonempty T] (i j : J) :
-    M.K i j = M.σ2 i j * M.ρ i j + M.τ2 * (if i = j then 1 else 0) := by
-  have hsum : ∀ k, ∑ t, M.a k t = 1 := fun k =>
-    sum_invVarWeight _ (fun t => pow_pos (M.σ_pos k t) 2)
-  simp only [K, obsCov, mul_add, sum_add_distrib, mul_ite, mul_one, mul_zero,
-    sum_ite_eq, mem_univ, ite_true]
-  rw [σ2, sum_mul]
-  congr 1
-  · exact sum_congr rfl fun t _ => by ring
-  · split_ifs with h
-    · subst h
-      calc ∑ x, ∑ y, M.a i x * M.a i y * M.τ2
-          = (∑ x, M.a i x) * (∑ y, M.a i y) * M.τ2 := by
-            rw [sum_mul_sum, sum_mul]; simp_rw [sum_mul]
-        _ = M.τ2 := by rw [hsum]; ring
-    · simp
+end Model
+
+namespace Unequal
+
+variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+variable (M : Unequal J T)
+
+omit [Fintype J] [DecidableEq J] in
+/-- With full series (`Tⱼ = T`) the weights are those of the thesis. -/
+theorem a_eq_of_full (h : ∀ j, M.obs j = univ) : M.a = M.toModel.a := by
+  funext j t
+  simp [a, Model.a, invVarWeight, h]
+
+omit [Fintype J] [DecidableEq J] in
+/-- With full series, `σ²ᵢⱼ` is that of the thesis, eq. (18). -/
+theorem σ2_eq_of_full (h : ∀ j, M.obs j = univ) : M.σ2 = M.toModel.σ2 := by
+  funext i j
+  simp [σ2, Model.σ2, overlap, h, M.a_eq_of_full h]
 
 omit [Fintype J] in
-theorem K_symm : M.Kᵀ = M.K := by
-  ext i j
-  simp only [transpose_apply, K, obsCov]
-  rw [sum_comm]
-  refine sum_congr rfl fun t _ => sum_congr rfl fun s _ => ?_
-  rw [M.ρ_symm j i]
-  simp only [eq_comm (a := s), eq_comm (a := j)]
-  ring
+/-- With full series, `K` is that of the thesis, eq. (21). -/
+theorem K_eq_of_full (h : ∀ j, M.obs j = univ) : M.K = M.toModel.K := by
+  funext i j
+  simp [K, Model.K, h, M.a_eq_of_full h]
 
-/-- The thesis takes positive-definiteness of `K` for granted. Here it needs
-the correlations to form a positive-semidefinite matrix, and `τ² > 0`. -/
-theorem K_posDef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef := by
-  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
-  · rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, M.K_symm]
-  -- `xᵀKx = Σₜ yₜᵀ R yₜ + τ²‖x‖²` with `(yₜ)ⱼ = aⱼₜ σⱼₜ xⱼ`.
-  set y : T → J → ℝ := fun t j => M.a j t * M.σ j t * x j
-  have key : star x ⬝ᵥ (M.K *ᵥ x)
-      = ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) + M.τ2 * ∑ i, x i ^ 2 := by
-    simp only [dotProduct, mulVec, M.K_apply, star_trivial, of_apply, y, σ2, add_mul,
-      mul_add, sum_add_distrib, ite_mul, mul_ite, mul_one, mul_zero, zero_mul, sum_ite_eq,
-      mem_univ, ite_true, mul_sum, sum_mul]
-    congr 1
-    · symm
-      rw [sum_comm]
-      refine sum_congr rfl fun i _ => ?_
-      rw [sum_comm]
-      exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => by ring
-    · exact sum_congr rfl fun i _ => by ring
-  rw [key]
-  have h1 : 0 ≤ ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) :=
-    sum_nonneg fun t _ => hρ.dotProduct_mulVec_nonneg (y t)
-  have h2 : 0 < ∑ i, x i ^ 2 := by
-    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
-    exact sum_pos' (fun j _ => sq_nonneg (x j))
-      ⟨i, mem_univ _, lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 hi))⟩
-  nlinarith [M.τ2_pos]
+end Unequal
+
+namespace Model
+
+variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+variable (M : Model J T)
+
+/-- The thesis model as the unequal-lengths model with full series `Tⱼ = T`. -/
+def toUnequal [Nonempty T] : Unequal J T where
+  toModel := M
+  obs := fun _ => univ
+  obs_nonempty := fun _ => univ_nonempty
+
+omit [Fintype J] [DecidableEq J] in
+lemma toUnequal_a [Nonempty T] : M.toUnequal.a = M.a := Unequal.a_eq_of_full _ fun _ => rfl
+
+omit [Fintype J] [DecidableEq J] in
+lemma toUnequal_σ2 [Nonempty T] : M.toUnequal.σ2 = M.σ2 := Unequal.σ2_eq_of_full _ fun _ => rfl
+
+omit [Fintype J] in
+lemma toUnequal_K [Nonempty T] : M.toUnequal.K = M.K := Unequal.K_eq_of_full _ fun _ => rfl
 
 /-- Portfolio weights `bⱼ`. -/
 noncomputable def b : J → ℝ := glsWeight M.K
@@ -119,6 +90,40 @@ noncomputable def moments (j : J) : BlendMoments where
   covCohortTarget := M.τ2
   covPortfolioTarget := M.b j * M.τ2
 
+lemma toUnequal_b [Nonempty T] : M.toUnequal.b = M.b := by rw [Unequal.b, toUnequal_K]; rfl
+
+lemma toUnequal_s2 [Nonempty T] : M.toUnequal.s2 = M.s2 := by rw [Unequal.s2, toUnequal_K]; rfl
+
+lemma toUnequal_moments [Nonempty T] : M.toUnequal.moments = M.moments := by
+  funext j
+  simp only [Unequal.moments, Model.moments, toUnequal_σ2, toUnequal_s2, toUnequal_K,
+    toUnequal_b]
+  rfl
+
+/-- A positive definite `K` (with some cohort) forces `T ≠ ∅`: otherwise `K = 0`. -/
+lemma nonempty_of_posDef (hK : M.K.PosDef) (j : J) : Nonempty T := by
+  by_contra h
+  rw [not_nonempty_iff] at h
+  have := hK.diag_pos (i := j)
+  simp [K] at this
+
+omit [Fintype J] in
+/-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27). -/
+theorem K_apply [Nonempty T] (i j : J) :
+    M.K i j = M.σ2 i j * M.ρ i j + M.τ2 * (if i = j then 1 else 0) := by
+  rw [← toUnequal_K, Unequal.K_apply, toUnequal_σ2]; rfl
+
+omit [Fintype J] in
+theorem K_symm : M.Kᵀ = M.K := by
+  rcases isEmpty_or_nonempty T with hT | hT
+  · ext i j; simp [K]
+  · simpa [toUnequal_K] using M.toUnequal.K_symm
+
+/-- The thesis takes positive-definiteness of `K` for granted. Here it needs
+the correlations to form a positive-semidefinite matrix, and `τ² > 0`. -/
+theorem K_posDef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef :=
+  M.toUnequal_K ▸ M.toUnequal.K_posDef_of_posSemidef hρ
+
 /-- Eq. (22): the credibility factor for any linear model (17). -/
 theorem bestZ_linear (j : J) :
     (M.moments j).bestZ
@@ -130,13 +135,9 @@ theorem bestZ_linear (j : J) :
 /-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
     (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
-  -- `v = K b = s² u` (`mulVec_glsWeight`), substituted into eq. (22).
-  have hv : (M.K *ᵥ M.b) j = M.s2 := by
-    rw [b, mulVec_glsWeight hK, s2]
-  rw [BlendMoments.bestZ, show (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 by
-    simp only [BlendMoments.gap, moments, hv]; ring]
-  simp only [moments, hv]
-  ring
+  have := M.nonempty_of_posDef hK j
+  rw [← M.toUnequal_moments, ← M.toUnequal_b, ← M.toUnequal_σ2, ← M.toUnequal_s2]
+  exact M.toUnequal.bestZ_eq (M.toUnequal_K ▸ hK) j
 
 /-- Eq. (26), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
 theorem gap_eq (hK : M.K.PosDef) (j : J) :

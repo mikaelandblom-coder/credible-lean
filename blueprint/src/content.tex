@@ -186,11 +186,12 @@ $\sigma_{jj}^2$ \eqth{19}, a special case of the following.
 \end{lemma}
 \begin{proof}
   \leanok
-  Split the double sum. The $\delta_{ts}$ term collapses to $\sigma_{ij}^2\rho_{ij}$.
-  The $\tau^2\delta_{ij}$ term is $\tau^2\delta_{ij}(\sum_t a_{it})(\sum_s a_{js})
-  = \tau^2\delta_{ij}$, since inverse-variance weights sum to one
-  (Lemma~\ref{lem:sum_invVarWeight}; this is where $T \ge 1$ is needed).
-  \uses{lem:sum_invVarWeight}
+  \uses{lem:U_K_apply, lem:U_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_K_apply} (via Lemma~\ref{lem:U_full}).
+  Directly: split the double sum. The $\delta_{ts}$ term collapses to
+  $\sigma_{ij}^2\rho_{ij}$. The $\tau^2\delta_{ij}$ term is
+  $\tau^2\delta_{ij}(\sum_t a_{it})(\sum_s a_{js}) = \tau^2\delta_{ij}$, since
+  the weights sum to one (this is where $T \ge 1$ is needed).
 \end{proof}
 
 \begin{lemma}\label{lem:K_symm}
@@ -201,6 +202,8 @@ $\sigma_{jj}^2$ \eqth{19}, a special case of the following.
 \end{lemma}
 \begin{proof}
   \leanok
+  \uses{lem:U_K_symm, lem:U_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_K_symm} ($K = 0$ if $T = \emptyset$):
   $\bar K_{ij}^{ts} = \bar K_{ji}^{st}$ by symmetry of $\rho$; swap the
   summation indices.
 \end{proof}
@@ -214,8 +217,8 @@ $\sigma_{jj}^2$ \eqth{19}, a special case of the following.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:K_apply}
-  For $x \in \mathbb R^J$,
+  \uses{cor:U_K_posDef, lem:U_full}
+  The case $T_j = T$ of Corollary~\ref{cor:U_K_posDef}. The idea: for $x \in \mathbb R^J$,
   $x^T K x = \sum_t y_t^T R\, y_t + \tau^2\lVert x\rVert^2$ where
   $R = (\rho_{ij})$ and $(y_t)_j = a_{jt}\sigma_{jt}x_j$. The first sum is
   $\ge 0$ and the second is $> 0$ for $x \ne 0$.
@@ -450,10 +453,12 @@ not apply. Minimising $s^2 = \bb^T K \bb$ subject to $\bu^T\bb = 1$
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:bestZ_linear, lem:mulVec_glsWeight}
-  Put $\upsilon_j = s^2$ (Lemma~\ref{lem:mulVec_glsWeight}) into
-  Theorem~\ref{thm:bestZ_linear}: the numerator becomes $(1-b_j)\tau^2$
-  and the denominator $\tau^2 + \sigma_{jj}^2 - s^2$.
+  \uses{thm:U_bestZ_eq, lem:U_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_eq} ($T \ge 1$ since
+  $K \succ 0$). The idea: put $\upsilon_j = s^2$
+  (Lemma~\ref{lem:mulVec_glsWeight}) into Theorem~\ref{thm:bestZ_linear}: the
+  numerator becomes $(1-b_j)\tau^2$ and the denominator
+  $\tau^2 + \sigma_{jj}^2 - s^2$.
 \end{proof}
 
 Together, \eqth{23}, (18), (21), (24), (25) and (26) are the proposed model
@@ -1300,11 +1305,17 @@ needed when $T_i \cap T_j \neq \emptyset$.
 
 \begin{lemma}[Back to the thesis]\label{lem:U_full}
   \lean{Credibility.Unequal.a_eq_of_full, Credibility.Unequal.σ2_eq_of_full,
-        Credibility.Unequal.K_eq_of_full}
+        Credibility.Unequal.K_eq_of_full, Credibility.Model.toUnequal,
+        Credibility.Model.toUnequal_a, Credibility.Model.toUnequal_σ2,
+        Credibility.Model.toUnequal_K, Credibility.Model.toUnequal_b,
+        Credibility.Model.toUnequal_s2, Credibility.Model.toUnequal_moments,
+        Credibility.Model.nonempty_of_posDef}
   \leanok
-  \uses{def:Unequal, def:sigma2, def:K}
-  If $T_j = T$ for all $j$, then $a$, $\sigma^2$ and $K$ are those of
-  Chapter~\ref{ch:model}.
+  \uses{def:Unequal, def:sigma2, def:K, def:moments}
+  If $T_j = T$ for all $j$, then $a$, $\sigma^2$, $K$, $b$, $s^2$ and the blend
+  moments are those of Chapter~\ref{ch:model}: the thesis model is the case
+  $T_j = T$, and its results are corollaries of this chapter. If
+  $K \succ 0$ then $T \ge 1$.
 \end{lemma}
 \begin{proof}
   \leanok
@@ -1322,7 +1333,8 @@ needed when $T_i \cap T_j \neq \emptyset$.
 \end{theorem}
 \begin{proof}
   \leanok
-  As Theorem~\ref{thm:bestZ_eq}: only $Kb = s^2u$ is used.
+  Put $\upsilon_j = (Kb)_j = s^2$ (Lemma~\ref{lem:mulVec_glsWeight}) into
+  \eqth{22}: only $Kb = s^2u$ is used.
 \end{proof}
 
 \section{Parameter estimation}
