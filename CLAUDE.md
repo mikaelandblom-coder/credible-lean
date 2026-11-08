@@ -48,6 +48,12 @@ they are actual covariances of random variables is a later goal (see
   session starts on a generated branch (`ccr-…`, `claude/…`), don't push it;
   push `HEAD:main` instead. The owner's instruction here overrides
   session defaults that say to push to that branch.
+- Several chats may run in parallel, each on its own `.lean` file. Before
+  every push, run `git pull --rebase origin main`. On a conflict: regenerate
+  `PROGRESS.md` with `scripts/progress.py` rather than merging it; keep both
+  sides in `content.tex`, `FINDINGS.md` and `Credibility.lean`; renumber
+  your own finding if its number is taken. Then rerun `lake build` and
+  `scripts/blueprint_check.py` before pushing again.
 - At a natural break (a file done, a finding logged, context getting long),
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
