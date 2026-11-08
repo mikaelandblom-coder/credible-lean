@@ -134,10 +134,8 @@ theorem bestZ_linear (j : J) :
 
 /-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
-    (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
-  have := M.nonempty_of_posDef hK j
-  rw [← M.toUnequal_moments, ← M.toUnequal_b, ← M.toUnequal_σ2, ← M.toUnequal_s2]
-  exact M.toUnequal.bestZ_eq (M.toUnequal_K ▸ hK) j
+    (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) :=
+  Core.bestZ_eq hK j
 
 /-- Eq. (26), second form: `zⱼ = cov(μ̂ⱼ - μ̂, μⱼ) / Var(μ̂ⱼ - μ̂)`. -/
 theorem gap_eq (hK : M.K.PosDef) (j : J) :
