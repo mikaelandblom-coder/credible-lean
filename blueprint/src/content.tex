@@ -1223,6 +1223,57 @@ shared periods.
   covariance matrix.
 \end{remark}
 
+\subsection*{A partial correlation table}
+
+Since correlations act only on shared periods, $\rho_{ij}$ should only be
+needed when $T_i \cap T_j \neq \emptyset$.
+
+\begin{lemma}[Disjoint pairs do not matter]\label{lem:U_agree}
+  \lean{Credibility.Unequal.AgreeOnOverlaps, Credibility.Unequal.AgreeOnOverlaps.σ2_eq,
+        Credibility.Unequal.AgreeOnOverlaps.K_eq, Credibility.Unequal.AgreeOnOverlaps.b_eq,
+        Credibility.Unequal.AgreeOnOverlaps.s2_eq, Credibility.Unequal.AgreeOnOverlaps.moments_eq,
+        Credibility.Unequal.AgreeOnOverlaps.bestZ_eq, Credibility.Unequal.AgreeOnOverlaps.blocks_iff}
+  \leanok
+  \uses{lem:U_K_apply, thm:U_K_posDef, thm:U_bestZ_eq}
+  If two models differ only in $\rho_{ij}$ for pairs with $T_i \cap T_j = \emptyset$,
+  they have the same $K$, $b$, $s^2$ and $z_j$, and the block hypothesis of
+  Theorem~\ref{thm:U_K_posDef} holds for one iff it holds for the other.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $K_{ij} = \sigma^2_{ij}\rho_{ij} + \tau^2\delta_{ij}$ and $\sigma^2_{ij} = 0$
+  on disjoint pairs; everything else is a function of $K$. Two cohorts in
+  $J_t$ share $t$.
+\end{proof}
+
+\begin{definition}[Partial correlation table]\label{def:PartialCorr}
+  \lean{Credibility.PartialCorr, Credibility.PartialCorr.extend,
+        Credibility.PartialCorr.toUnequal}
+  \leanok
+  \uses{def:Unequal}
+  The model with $\rho_{ij}$ given only for $T_i \cap T_j \neq \emptyset$.
+  A completion fills the other pairs with any symmetric values; the canonical
+  one uses $0$.
+\end{definition}
+
+\begin{theorem}[Partial tables suffice]\label{thm:U_partial}
+  \lean{Credibility.PartialCorr.extend_agree, Credibility.PartialCorr.K_extend,
+        Credibility.PartialCorr.b_extend, Credibility.PartialCorr.s2_extend,
+        Credibility.PartialCorr.bestZ_extend, Credibility.PartialCorr.mem_inter_of_block,
+        Credibility.PartialCorr.K_posDef, Credibility.Unequal.eq_extend}
+  \leanok
+  \uses{def:PartialCorr, lem:U_agree}
+  $K$, $b$, $s^2$ and $z_j$ do not depend on the completion. If for every $t$
+  the block $(\rho_{ij})_{i,j\in J_t}$ of the partial table is positive
+  semidefinite, every completion has $K \succ 0$. Every full model is a
+  completion of its own partial table.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Any two completions agree on overlapping pairs; apply Lemma~\ref{lem:U_agree}
+  and Theorem~\ref{thm:U_K_posDef}.
+\end{proof}
+
 \begin{lemma}[Back to the thesis]\label{lem:U_full}
   \lean{Credibility.Unequal.a_eq_of_full, Credibility.Unequal.σ2_eq_of_full,
         Credibility.Unequal.K_eq_of_full}

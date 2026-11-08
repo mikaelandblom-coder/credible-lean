@@ -788,5 +788,180 @@ theorem balance_total (hJ : 1 < Fintype.card J) (X : J × T → ℝ) :
 
 end Balance
 
+/-! ### A partial correlation table: `ρᵢⱼ` only on overlapping pairs
+
+Correlations act only on shared periods, so `ρᵢⱼ` should not be needed for
+pairs with `Tᵢ ∩ Tⱼ = ∅`. `AgreeOnOverlaps` says two models differ at most in
+those values; then `K`, `b`, `s²` and `z` agree. `PartialCorr` is the model with
+`ρ` given only on overlapping pairs; `extend` fills the rest arbitrarily. -/
+
+/-- `M` and `M'` differ at most in `ρᵢⱼ` for pairs with no shared period. -/
+structure AgreeOnOverlaps (M M' : Unequal J T) : Prop where
+  τ2_eq : M.τ2 = M'.τ2
+  σ_eq : M.σ = M'.σ
+  obs_eq : M.obs = M'.obs
+  ρ_eq : ∀ i j, (M.overlap i j).Nonempty → M.ρ i j = M'.ρ i j
+
+variable {M} {M' : Unequal J T}
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+theorem AgreeOnOverlaps.σ2_eq (h : M.AgreeOnOverlaps M') : M.σ2 = M'.σ2 := by
+  funext i j
+  simp only [σ2, overlap, a, h.σ_eq, h.obs_eq]
+
+omit [Fintype T] in
+/-- `K` does not see `ρᵢⱼ` on disjoint pairs: there `σ²ᵢⱼ = 0`. -/
+theorem AgreeOnOverlaps.K_eq (h : M.AgreeOnOverlaps M') : M.K = M'.K := by
+  ext i j
+  rw [M.K_apply, M'.K_apply, h.τ2_eq, ← h.σ2_eq]
+  rcases (M.overlap i j).eq_empty_or_nonempty with h0 | h0
+  · simp [σ2, h0]
+  · rw [h.ρ_eq i j h0]
+
+omit [Fintype T] in
+theorem AgreeOnOverlaps.b_eq (h : M.AgreeOnOverlaps M') : M.b = M'.b := by
+  simp only [b, h.K_eq]
+
+omit [Fintype T] in
+theorem AgreeOnOverlaps.s2_eq (h : M.AgreeOnOverlaps M') : M.s2 = M'.s2 := by
+  simp only [s2, h.K_eq]
+
+omit [Fintype T] in
+/-- All moments of the blend, hence `zⱼ`, agree. -/
+theorem AgreeOnOverlaps.moments_eq (h : M.AgreeOnOverlaps M') : M.moments = M'.moments := by
+  funext j
+  simp only [moments, h.τ2_eq, h.σ2_eq, h.K_eq, h.b_eq, h.s2_eq]
+
+omit [Fintype T] in
+theorem AgreeOnOverlaps.bestZ_eq (h : M.AgreeOnOverlaps M') (j : J) :
+    (M.moments j).bestZ = (M'.moments j).bestZ := by
+  rw [h.moments_eq]
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- The block hypothesis of `K_posDef` only reads `ρᵢⱼ` with `t ∈ Tᵢ ∩ Tⱼ`. -/
+theorem AgreeOnOverlaps.blocks_iff (h : M.AgreeOnOverlaps M') (t : T) :
+    ((Matrix.of M.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
+      (Subtype.val : {j // t ∈ M.obs j} → J)).PosSemidef ↔
+    ((Matrix.of M'.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
+      Subtype.val).PosSemidef := by
+  have : (Matrix.of M.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
+      (Subtype.val : {j // t ∈ M.obs j} → J)
+      = (Matrix.of M'.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
+      (Subtype.val : {j // t ∈ M.obs j} → J) := by
+    ext i j
+    exact h.ρ_eq i j ⟨t, mem_inter.mpr ⟨i.2, j.2⟩⟩
+  rw [this]
+
 end Unequal
+
+/-- The unequal-lengths model with a *partial* correlation table: `ρᵢⱼ` is
+given only for pairs that share a period, `Tᵢ ∩ Tⱼ ≠ ∅`. -/
+structure PartialCorr (J T : Type*) [DecidableEq T] where
+  τ2 : ℝ
+  σ : J → T → ℝ
+  obs : J → Finset T
+  /-- `ρᵢⱼ`, defined only when `Tᵢ ∩ Tⱼ ≠ ∅`. -/
+  ρ : (i j : J) → (obs i ∩ obs j).Nonempty → ℝ
+  τ2_pos : 0 < τ2
+  σ_pos : ∀ j t, 0 < σ j t
+  obs_nonempty : ∀ j, (obs j).Nonempty
+  ρ_self : ∀ j h, ρ j j h = 1
+  ρ_symm : ∀ i j h h', ρ i j h = ρ j i h'
+
+namespace PartialCorr
+
+variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+variable (P : PartialCorr J T)
+
+/-- Complete the table with any symmetric values `fᵢⱼ` on disjoint pairs. -/
+noncomputable def extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) : Unequal J T where
+  τ2 := P.τ2
+  σ := P.σ
+  ρ i j := if h : (P.obs i ∩ P.obs j).Nonempty then P.ρ i j h else f i j
+  τ2_pos := P.τ2_pos
+  σ_pos := P.σ_pos
+  ρ_self j := by
+    have h : (P.obs j ∩ P.obs j).Nonempty := by rw [inter_self]; exact P.obs_nonempty j
+    simp only [h, ↓reduceDIte, P.ρ_self]
+  ρ_symm i j := by
+    by_cases h : (P.obs i ∩ P.obs j).Nonempty
+    · have h' : (P.obs j ∩ P.obs i).Nonempty := by rwa [inter_comm]
+      simp only [h, h', ↓reduceDIte, P.ρ_symm i j h h']
+    · have h' : ¬(P.obs j ∩ P.obs i).Nonempty := by rwa [inter_comm]
+      simp only [h, h', ↓reduceDIte, hf i j]
+  obs := P.obs
+  obs_nonempty := P.obs_nonempty
+
+/-- The canonical completion, with `ρᵢⱼ = 0` on disjoint pairs. -/
+noncomputable def toUnequal : Unequal J T := P.extend (fun _ _ => 0) fun _ _ => rfl
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- Any two completions differ only on disjoint pairs. -/
+theorem extend_agree (f g : J → J → ℝ) (hf : ∀ i j, f i j = f j i)
+    (hg : ∀ i j, g i j = g j i) : (P.extend f hf).AgreeOnOverlaps (P.extend g hg) where
+  τ2_eq := rfl
+  σ_eq := rfl
+  obs_eq := rfl
+  ρ_eq i j h := by
+    have h' : (P.obs i ∩ P.obs j).Nonempty := h
+    change (if h : _ then _ else _) = (if h : _ then _ else _)
+    simp only [h', ↓reduceDIte]
+
+omit [Fintype T] in
+/-- `K`, `b`, `s²` and `zⱼ` do not depend on how the table is completed. -/
+theorem K_extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) :
+    (P.extend f hf).K = P.toUnequal.K :=
+  (P.extend_agree _ _ hf _).K_eq
+
+omit [Fintype T] in
+theorem b_extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) :
+    (P.extend f hf).b = P.toUnequal.b :=
+  (P.extend_agree _ _ hf _).b_eq
+
+omit [Fintype T] in
+theorem s2_extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) :
+    (P.extend f hf).s2 = P.toUnequal.s2 :=
+  (P.extend_agree _ _ hf _).s2_eq
+
+omit [Fintype T] in
+theorem bestZ_extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) (j : J) :
+    ((P.extend f hf).moments j).bestZ = (P.toUnequal.moments j).bestZ :=
+  (P.extend_agree _ _ hf _).bestZ_eq j
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- The block of the partial table at period `t`: cohorts in `Jₜ` pairwise share `t`. -/
+lemma mem_inter_of_block {t : T} (i j : {j : J // t ∈ P.obs j}) :
+    (P.obs i.1 ∩ P.obs j.1).Nonempty :=
+  ⟨t, mem_inter.mpr ⟨i.2, j.2⟩⟩
+
+/-- `K_posDef` with the block hypothesis stated on the partial table alone:
+if every block `(ρᵢⱼ)_{i,j∈Jₜ}` is positive semidefinite, every completion has
+`K ≻ 0` (and they all have the same `K`). -/
+theorem K_posDef
+    (hρ : ∀ t, (Matrix.of fun i j : {j : J // t ∈ P.obs j} =>
+      P.ρ i j (P.mem_inter_of_block i j)).PosSemidef)
+    (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) :
+    (P.extend f hf).K.PosDef := by
+  refine Unequal.K_posDef _ fun t => ?_
+  have : ((Matrix.of (P.extend f hf).ρ).submatrix
+      (Subtype.val : {j // t ∈ P.obs j} → J) (Subtype.val : {j // t ∈ P.obs j} → J))
+      = Matrix.of fun i j : {j : J // t ∈ P.obs j} => P.ρ i j (P.mem_inter_of_block i j) := by
+    ext i j
+    change (if h : _ then _ else _) = _
+    simp only [P.mem_inter_of_block i j, ↓reduceDIte, of_apply]
+  exact this ▸ hρ t
+
+end PartialCorr
+
+variable {J T : Type*} [DecidableEq T] in
+/-- Every full model is a completion of its own partial table. -/
+theorem Unequal.eq_extend (M : Unequal J T) :
+    M = (PartialCorr.mk M.τ2 M.σ M.obs (fun i j _ => M.ρ i j) M.τ2_pos M.σ_pos
+      M.obs_nonempty (fun j _ => M.ρ_self j) (fun i j _ _ => M.ρ_symm i j)).extend M.ρ
+      M.ρ_symm := by
+  obtain ⟨⟨τ2, σ, ρ, _, _, _, _⟩, obs, _⟩ := M
+  simp only [PartialCorr.extend, Unequal.mk.injEq, Model.mk.injEq, true_and, and_true]
+  funext i j
+  split_ifs <;> rfl
+
 end Credibility

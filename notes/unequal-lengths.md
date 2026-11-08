@@ -148,6 +148,17 @@ no covariance between distinct cohorts gives `zⱼ = τ²/(τ² + σ²ⱼⱼ)`
 
 ## 6. Open / next
 
-- Which pairs need `ρᵢⱼ`: only overlapping ones. A natural follow-up is a
-  model where `ρ` itself is only given on overlapping pairs (a partial
-  correlation table), which the block hypothesis of §3 already allows.
+- Which pairs need `ρᵢⱼ`: only overlapping ones. **Done** (Lean, proved): the
+  partial correlation table `PartialCorr` gives `ρᵢⱼ` only when
+  `Tᵢ ∩ Tⱼ ≠ ∅`; `extend f` completes it with any symmetric `f`.
+  - `K`, `b`, `s²`, `zⱼ` are the same for every completion (`K_extend`,
+    `b_extend`, `s2_extend`, `bestZ_extend`), because `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`
+    and `σ²ᵢⱼ = 0` on disjoint pairs. General form: `AgreeOnOverlaps`.
+  - The block hypothesis of `K_posDef` is stated on the partial table alone
+    (two cohorts in `Jₜ` share `t`), and gives `K ≻ 0` for every completion
+    (`PartialCorr.K_posDef`); `AgreeOnOverlaps.blocks_iff` says the full-model
+    hypothesis never reads disjoint values.
+  - Conversely every full model is a completion of its own table
+    (`Unequal.eq_extend`), so nothing is lost.
+  - The §2.8 estimators never use `ρ`, and their targets `σ²ᵢⱼρᵢⱼ` are `0`
+    on disjoint pairs.
