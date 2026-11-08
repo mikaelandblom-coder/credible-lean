@@ -833,15 +833,31 @@ for every $\mu$.
   and $\bar K_{pq} + \mu^2$ is symmetric.
 \end{proof}
 
+\begin{lemma}[Linearity]\label{lem:unbiased_linear}
+  \lean{Credibility.Model.Unbiased.congr, Credibility.Model.Unbiased.add,
+        Credibility.Model.Unbiased.const_mul, Credibility.Model.Unbiased.sum,
+        Credibility.Model.unbiased_mul}
+  \leanok
+  \uses{def:unbiased}
+  Unbiasedness is preserved by sums and scalar multiples. If $\sum_p \ell_p = 0$,
+  then $(\ell^\top\mu)(m^\top\mu)$ is unbiased for $\sum_{p,q}\ell_p m_q\bar K_{pq}$:
+  the mean drops out.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Add or scale the matrices; for the product take $Q_{pq} = \ell_p m_q$.
+\end{proof}
+
 \begin{lemma}[Expected cross products of residuals]\label{lem:unbiased_dev}
   \lean{Credibility.Model.unbiased_dev}
   \leanok
-  \uses{def:unbiased, def:sigma2}
+  \uses{lem:unbiased_linear, def:K}
   For any $\sigma_{jt}$,
   $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
    = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
 \end{lemma}
 \begin{proof}
+  \leanok
   The means cancel since $\sum_t a_{jt} = 1$. Expand the covariance into four
   terms; the $\tau^2\delta_{ij}$ parts cancel.
 \end{proof}

@@ -69,12 +69,84 @@ lemma E_congr (μ : ℝ) {Q Q' : J × T → J × T → ℝ} (h : ∀ X, quad Q X
 def Unbiased (f : (J × T → ℝ) → ℝ) (θ : ℝ) : Prop :=
   ∃ Q : J × T → J × T → ℝ, (∀ X, quad Q X = f X) ∧ ∀ μ, M.E μ Q = θ
 
+variable {M} in
+/-- Unbiasedness is about the function and the value, not their presentation. -/
+lemma Unbiased.congr {f g : (J × T → ℝ) → ℝ} {θ θ' : ℝ} (h : M.Unbiased f θ)
+    (hf : ∀ X, f X = g X) (hθ : θ = θ') : M.Unbiased g θ' := by
+  obtain ⟨Q, hQ, hE⟩ := h
+  exact ⟨Q, fun X => (hQ X).trans (hf X), fun μ => (hE μ).trans hθ⟩
+
+variable {M} in
+/-- Linearity: sums. -/
+lemma Unbiased.add {f g : (J × T → ℝ) → ℝ} {θ φ : ℝ} (hf : M.Unbiased f θ)
+    (hg : M.Unbiased g φ) : M.Unbiased (fun X => f X + g X) (θ + φ) := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  obtain ⟨Q', hQ', hE'⟩ := hg
+  refine ⟨fun p q => Q p q + Q' p q, fun X => ?_, fun μ => ?_⟩
+  · beta_reduce; rw [← hQ, ← hQ']; simp only [quad, add_mul, sum_add_distrib]
+  · rw [← hE μ, ← hE' μ]; simp only [E, add_mul, sum_add_distrib]
+
+variable {M} in
+/-- Linearity: scalar multiples. -/
+lemma Unbiased.const_mul {f : (J × T → ℝ) → ℝ} {θ : ℝ} (c : ℝ) (hf : M.Unbiased f θ) :
+    M.Unbiased (fun X => c * f X) (c * θ) := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  refine ⟨fun p q => c * Q p q, fun X => ?_, fun μ => ?_⟩
+  · beta_reduce; rw [← hQ]; simp only [quad, mul_sum, mul_assoc]
+  · rw [← hE μ]; simp only [E, mul_sum, mul_assoc]
+
+variable {M} in
+/-- Linearity: finite sums. -/
+lemma Unbiased.sum {ι : Type*} (s : Finset ι) {f : ι → (J × T → ℝ) → ℝ} {θ : ι → ℝ}
+    (hf : ∀ k ∈ s, M.Unbiased (f k) (θ k)) :
+    M.Unbiased (fun X => ∑ k ∈ s, f k X) (∑ k ∈ s, θ k) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => exact ⟨0, fun X => by simp [quad], fun μ => by simp [E]⟩
+  | insert k s hk ih =>
+    simp only [sum_insert hk]
+    exact (hf k (mem_insert_self k s)).add (ih fun k' hk' => hf k' (mem_insert_of_mem hk'))
+
+/-- The product of two linear forms, the first with coefficients summing to `0`
+(so the mean `μ` drops out), has expectation `cov(ℓᵀX, mᵀX)`. -/
+lemma unbiased_mul (ℓ m : J × T → ℝ) (hℓ : ∑ p, ℓ p = 0) :
+    M.Unbiased (fun X => (∑ p, ℓ p * X p) * (∑ q, m q * X q))
+      (∑ p, ∑ q, ℓ p * m q * M.obsCov p.1 q.1 p.2 q.2) := by
+  refine ⟨fun p q => ℓ p * m q, fun X => ?_, fun μ => ?_⟩
+  · simp only [quad, sum_mul_sum]
+    exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by ring
+  · have h0 : ∑ p, ∑ q, ℓ p * m q * μ ^ 2 = 0 := by
+      simp_rw [mul_assoc, ← mul_sum, ← sum_mul, hℓ, zero_mul]
+    simp only [E, mom2, mul_add, sum_add_distrib, h0, add_zero]
+
 /-- The display before (37): `E[(μᵢₜ - μ̂ᵢ)(μⱼₜ - μ̂ⱼ)] = (1 - aᵢₜ - aⱼₜ)σᵢₜσⱼₜρᵢⱼ + σ²ᵢⱼρᵢⱼ`,
 for any `σⱼₜ`. -/
 theorem unbiased_dev (i j : J) (t : T) :
     M.Unbiased (fun X => (X (i, t) - ∑ s, M.a i s * X (i, s)) * (X (j, t) - ∑ s, M.a j s * X (j, s)))
       ((1 - M.a i t - M.a j t) * M.σ i t * M.σ j t * M.ρ i j + M.σ2 i j * M.ρ i j) := by
-  sorry
+  have : Nonempty T := ⟨t⟩
+  have ha : ∀ k, ∑ s, M.a k s = 1 := fun k =>
+    sum_invVarWeight _ (fun s => pow_pos (M.σ_pos k s) 2)
+  -- Coefficients of `μₖₜ - μ̂ₖ`.
+  let ℓ : J → J × T → ℝ := fun k p => if p.1 = k then (if p.2 = t then 1 else 0) - M.a k p.2 else 0
+  have hlin : ∀ (k : J) (F : J × T → ℝ), ∑ p, ℓ k p * F p = F (k, t) - ∑ s, M.a k s * F (k, s) := by
+    intro k F
+    rw [Fintype.sum_prod_type, Finset.sum_eq_single k (fun b _ hb => by simp [ℓ, hb]) (by simp)]
+    simp [ℓ, sub_mul, sum_sub_distrib, ite_mul]
+  have hsum : ∑ p, ℓ i p = 0 := by
+    have := hlin i (fun _ => 1)
+    simp only [mul_one, ha] at this
+    rw [this]; ring
+  refine (M.unbiased_mul (ℓ i) (ℓ j) hsum).congr (fun X => by rw [hlin, hlin]) ?_
+  simp_rw [mul_assoc, ← mul_sum, hlin]
+  -- Four terms; `K̄ᵢⱼʳˢ = σᵢᵣσⱼₛρᵢⱼδᵣₛ + τ²δᵢⱼ`.
+  simp only [obsCov, mul_add, sum_add_distrib, mul_ite, mul_one, mul_zero, sum_ite_eq,
+    mem_univ, ite_true]
+  rw [σ2, sum_mul]
+  split_ifs <;>
+  simp only [mul_add, mul_sub, sum_add_distrib, sum_sub_distrib, mul_ite, mul_zero, add_zero,
+    sum_ite_eq', mem_univ, ite_true, ← sum_mul, ha, sum_const_zero] <;>
+  ring_nf <;> rw [mul_sum] <;> ring_nf
 
 /-! ### The special case `σⱼₜ = σⱼ/√wⱼₜ` -/
 
