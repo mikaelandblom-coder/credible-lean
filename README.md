@@ -131,6 +131,11 @@ equation numbering, plus one later addition from the defence slides: the
 two-cohort identity `b₁ = z₁/(z₁ + z₂)` (§2.7.1). The R code and the slides
 are there too; see [`thesis/README.md`](thesis/README.md).
 
+**Notation.** The formalization and blueprint follow the thesis notation
+with one change: the cohort effect in eq. (15) is written `ηⱼ`
+(`μⱼ = μ + τ ηⱼ`) instead of the thesis's `εⱼ`, so it is not confused with
+the sampling noise `εⱼₜ` (`μⱼₜ = μⱼ + σⱼₜ εⱼₜ`).
+
 ## Building
 
 Lean and Mathlib are pinned (`lean-toolchain`, `lakefile.toml`,

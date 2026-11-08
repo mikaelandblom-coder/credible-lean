@@ -29,9 +29,16 @@ factor
 with GLS portfolio weights $\bb = K^{-1}\bu / \bu^T K^{-1} \bu$. It reduces
 to Bühlmann--Straub when the correlations vanish.
 
-Second moments are taken as given numbers throughout: the statements are
-about the formulas the moments must satisfy, not (yet) about random
-variables.
+The model is distribution-free: as in the thesis, only first and second
+moments are assumed. Here the second moments are taken as given numbers
+throughout: the statements are about the formulas the moments must
+satisfy, not (yet) about random variables.
+
+\paragraph{Notation.} This blueprint follows the thesis notation and
+equation numbers, with one exception: the cohort effect is written
+$\eta_j$ instead of the thesis's $\varepsilon_j$, so that it is not
+confused with the sampling noise $\varepsilon_{jt}$ (see
+Remark~\ref{rem:notation}).
 
 % ---------------------------------------------------------------------------
 \chapter{The best credibility factor}\label{ch:blend}
@@ -110,15 +117,32 @@ quadratic in $z$ whose coefficients are six second moments.
   \leanok
   The model \eqth{15} is
   \[
-    \mu_j = \mu + \tau\varepsilon_j, \qquad
+    \mu_j = \mu + \tau\eta_j, \qquad
     \mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt},
   \]
-  with $\varepsilon_j$, $\varepsilon_{jt}$ centred, of unit variance,
-  $\varepsilon_j$ uncorrelated with everything else, and
+  with $\eta_j$, $\varepsilon_{jt}$ centred, of unit variance,
+  $\eta_j$ uncorrelated with everything else, and
   $\cov(\varepsilon_{it}, \varepsilon_{js}) = \rho_{ij}\delta_{ts}$.
   Its parameters are $\tau^2 > 0$, noise levels $\sigma_{jt} > 0$, and a
   symmetric correlation table $\rho$ with $\rho_{jj} = 1$.
+  No distribution is assumed.
 \end{definition}
+
+\begin{remark}[Notation: two sources of variation]\label{rem:notation}
+  The \emph{cohort effect} $\eta_j$ is the spread of the true means
+  $\mu_j$ around $\mu$, of size $\tau$. The \emph{sampling noise}
+  $\varepsilon_{jt}$ is the error of observing $\mu_j$ in period $t$, of
+  size $\sigma_{jt}$. The thesis \eqth{15} writes both with the letter
+  $\varepsilon$ (as $\varepsilon_j$ and $\varepsilon_{jt}$); here the
+  cohort effect is renamed $\eta_j$. Correlation between cohorts lives
+  only in the sampling noise: the true means $\mu_j$ are uncorrelated,
+  and cohorts $i \neq j$ are linked only through
+  $\cov(\varepsilon_{it}, \varepsilon_{jt}) = \rho_{ij}$. (The thesis's
+  phrase ``$\varepsilon_j$ and $\varepsilon_{jt}$ are mutually
+  uncorrelated'' after \eqth{15} means each cohort effect is uncorrelated
+  with all noise terms, not that noise terms of different cohorts are
+  uncorrelated.)
+\end{remark}
 
 \begin{definition}[Observation covariance]\label{def:obsCov}
   \lean{Credibility.Model.obsCov}

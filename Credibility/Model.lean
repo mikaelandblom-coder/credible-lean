@@ -5,7 +5,10 @@ import Credibility.Weights
 # The correlated data model and the proposed credibility factor
 (thesis §2.3–2.5, eqs. (15)–(27))
 
-`μⱼ = μ + τ εⱼ`, `μⱼₜ = μⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
+`μⱼ = μ + τ ηⱼ` (cohort effect), `μⱼₜ = μⱼ + σⱼₜ εⱼₜ` (sampling noise),
+`cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`. The thesis writes the cohort effect `εⱼ`; it is
+renamed `ηⱼ` here to keep it apart from the noise. Distribution-free: only
+first and second moments are assumed.
 -/
 
 open Finset Matrix
