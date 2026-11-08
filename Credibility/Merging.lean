@@ -57,7 +57,12 @@ theorem excessLoss_eq {v1 v2 c d dw : ℝ} (hd : V v1 v2 c + d ≠ 0)
     (hdw : V v1 v2 c + dw ≠ 0) :
     excessLoss v1 v2 c d dw
       = Q v1 v2 c * (V v1 v2 c + d) * (1 / (V v1 v2 c + dw) - 1 / (V v1 v2 c + d)) ^ 2 := by
-  sorry
+  -- Each cohort contributes (V+d)(β(d_w) - β*)² by `mse_eq`, and
+  -- β(d_w) - β* = (vⱼ - c)(1/(V+d_w) - 1/(V+d)).
+  rw [excessLoss, mse_eq hd (weight v1 _ _ dw), mse_eq hd (weight v2 _ _ dw), Q, weight,
+    weight, weight, weight]
+  field_simp
+  ring
 
 /-- **Result A (midpoint rule).** Merging (`d_w = 0`) beats keeping the cohorts
 separate (`d_w = 2τ²`) iff `d (V + τ²) < V τ²`, i.e. `d < Vτ²/(V + τ²)`. -/
