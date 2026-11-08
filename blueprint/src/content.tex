@@ -510,8 +510,9 @@ zero, so the formula still typechecks there.)
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:bs_σ2, lem:K_apply}
-  Lemma~\ref{lem:K_apply} with $\rho_{ij} = \delta_{ij}$.
+  \uses{lem:bs_σ2, thm:U_diag, lem:U_full}
+  Theorem~\ref{thm:U_diag} with $T_j = T$ and $\rho_{ij} = \delta_{ij}$, and
+  Lemma~\ref{lem:bs_σ2}.
 \end{proof}
 
 \begin{definition}[Classical credibility factor]\label{def:bsZ}
@@ -550,13 +551,15 @@ zero, so the formula still typechecks there.)
 \begin{theorem}[Reduction to Bühlmann--Straub]\label{thm:bs_z}
   \lean{Credibility.bs_z}
   \leanok
-  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2}
+  \uses{def:bsModel, def:bsZ, def:moments}
   If $T \ge 1$ and $J \ge 2$, the proposed factor is $z_j = z_j^B$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:bestZ_eq, lem:bs_b, lem:bs_σ2, lem:bs_Kinv_one}
-  $K$ is diagonal with positive entries, hence positive definite. Then
+  \uses{thm:U_diag, lem:U_full, lem:bs_σ2}
+  Theorem~\ref{thm:U_diag} with $T_j = T$ and $\rho_{ij} = \delta_{ij}$ gives
+  $z_j = \tau^2/(\tau^2 + \sigma^2/w_{j*}) = z_j^B$ (Lemma~\ref{lem:bs_σ2}).
+  Directly: $K$ is diagonal with positive entries, hence positive definite. Then
   $s^2 = \tau^2/z_*^B = (\tau^2 + \sigma_{jj}^2)\,b_j$, so
   \[
     z_j = \frac{(1-b_j)\tau^2}{(\tau^2+\sigma_{jj}^2)(1-b_j)}

@@ -59,12 +59,13 @@ omit [Fintype J] in
 /-- `K` is diagonal. -/
 theorem bs_K [Nonempty T] :
     (bsModel τ2 σsq w hτ hσ hw).K = diagonal fun j => τ2 + σsq / ∑ t, w j t := by
-  -- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ` with `ρᵢⱼ = δᵢⱼ`.
-  ext i j
-  rw [Model.K_apply, diagonal_apply]
-  by_cases h : i = j
-  · subst h; rw [bs_σ2]; simp [bsModel, add_comm]
-  · simp [bsModel, h]
+  -- `ρᵢⱼ = δᵢⱼ` makes `K` diagonal (`Unequal.K_eq_diagonal` with `Tⱼ = T`).
+  set M := bsModel τ2 σsq w hτ hσ hw
+  have h0 : ∀ i k, i ≠ k → M.toUnequal.σ2 i k * M.toUnequal.ρ i k = 0 := fun i k h => by
+    simp [M, Model.toUnequal, bsModel, h]
+  rw [← M.toUnequal_K, Unequal.K_eq_diagonal _ h0, M.toUnequal_σ2]
+  exact congrArg diagonal (funext fun i => by
+    rw [show M.σ2 i i = _ from bs_σ2 τ2 σsq w hτ hσ hw i]; rfl)
 
 /-- The classical credibility factor `zⱼᴮ = wⱼ* / (wⱼ* + σ²/τ²)`. -/
 noncomputable def bsZ (j : J) : ℝ := (∑ t, w j t) / (∑ t, w j t + σsq / τ2)
@@ -102,40 +103,16 @@ Note: with a single cohort, `bⱼ = 1` and eq. (26) is `0/0`; the thesis
 derivation silently needs at least two cohorts. -/
 theorem bs_z [Nonempty T] (hJ : 1 < Fintype.card J) (j : J) :
     ((bsModel τ2 σsq w hτ hσ hw).moments j).bestZ = bsZ τ2 σsq w j := by
+  -- `K` is diagonal: `zⱼ = τ²/(τ² + σ²ⱼⱼ)` (`Unequal.bestZ_of_diag` with `Tⱼ = T`),
+  -- and `σ²ⱼⱼ = σ²/wⱼ*`.
   set M := bsModel τ2 σsq w hτ hσ hw
-  have hK := bs_K τ2 σsq w hτ hσ hw
-  have hz : ∀ i, 0 < bsZ τ2 σsq w i := fun i => by
-    have hW : 0 < ∑ t, w i t := sum_pos (fun t _ => hw i t) univ_nonempty
-    exact div_pos hW (add_pos hW (div_pos hσ hτ))
-  have hpd : M.K.PosDef := by
-    rw [hK, posDef_diagonal_iff]
-    intro i
-    exact add_pos hτ (div_pos hσ (sum_pos (fun t _ => hw i t) univ_nonempty))
-  -- With `Z = Σ zᵢᴮ`: `bⱼ = zⱼᴮ/Z`, `s² = τ²/Z` and `σ²ⱼⱼ = τ²/zⱼᴮ - τ²`, so eq. (26) is
-  -- `(1 - zⱼᴮ/Z)τ² / (τ²/zⱼᴮ - τ²/Z) = zⱼᴮ`, cancelling `Z - zⱼᴮ = Σᵢ≠ⱼ zᵢᴮ > 0` (`J ≥ 2`).
-  have hb := bs_b τ2 σsq w hτ hσ hw j
-  set Z := ∑ i, bsZ τ2 σsq w i
-  have hs2 : M.s2 = τ2 / Z := by
-    rw [Model.s2, invTotal, bs_Kinv_one τ2 σsq w hτ hσ hw _ hK, one_dotProduct, ← sum_div,
-      inv_div]
-  have hσz : M.σ2 j j = τ2 / bsZ τ2 σsq w j - τ2 := by
-    have hW : 0 < ∑ t, w j t := sum_pos (fun t _ => hw j t) univ_nonempty
-    rw [bs_σ2, bsZ]
-    field_simp
-    ring
-  have hZ : bsZ τ2 σsq w j < Z := by
-    obtain ⟨i, hij⟩ := Fintype.exists_ne_of_one_lt_card hJ j
-    change _ < ∑ i, _
-    rw [← add_sum_erase _ _ (mem_univ j)]
-    exact lt_add_of_pos_right _
-      (sum_pos (fun k _ => hz k) ⟨i, mem_erase.mpr ⟨hij, mem_univ i⟩⟩)
-  rw [M.bestZ_eq hpd, hb, hs2, hσz, show M.τ2 = τ2 from rfl]
-  have := (hz j).ne'
-  have hne : Z - bsZ τ2 σsq w j ≠ 0 := (sub_pos.mpr hZ).ne'
-  have : 0 < Z := (hz j).trans hZ
+  have h0 : ∀ i k, i ≠ k → M.toUnequal.σ2 i k * M.toUnequal.ρ i k = 0 := fun i k h => by
+    simp [M, Model.toUnequal, bsModel, h]
+  have hW : 0 < ∑ t, w j t := sum_pos (fun t _ => hw j t) univ_nonempty
+  rw [← M.toUnequal_moments, Unequal.bestZ_of_diag _ h0 hJ, M.toUnequal_σ2,
+    show M.σ2 j j = _ from bs_σ2 τ2 σsq w hτ hσ hw j, bsZ]
+  change τ2 / (τ2 + σsq / ∑ t, w j t) = _
   field_simp
-  rw [show Z * (bsZ τ2 σsq w j + (1 - bsZ τ2 σsq w j)) - bsZ τ2 σsq w j
-      = Z - bsZ τ2 σsq w j by ring, div_self hne]
 
 omit [DecidableEq J] in
 /-- The balance property (§2.9) holds for Bühlmann–Straub weights for any data,
