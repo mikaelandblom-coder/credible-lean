@@ -78,6 +78,29 @@ Once the thesis results are proved:
   positive semidefinite, and positive definite if `ρ < 1` and the diagonal
   is positive.
 
+## Sharing results
+
+The thesis is the foundation: notation and model for all later work. Plan:
+
+1. **Finish the thesis formalization first** (`Model`, `BuhlmannStraub`,
+   `Estimation`). Only then pick further credibility papers to formalize
+   (candidates such as Jewell's hierarchical model and Hachemeister's
+   regression model), each as its own `Credibility/<Topic>.lean` and
+   blueprint chapter in the thesis notation.
+2. **Make the repo citable.** `CITATION.cff` (GitHub's "Cite this
+   repository"); Zenodo archiving so each tagged release gets a DOI;
+   GitHub topics `credibility-theory`, `actuarial-science`, `lean4`,
+   `formalization`.
+3. **Preprint on arXiv** (q-fin.RM, cross-list stat.AP or math.ST) once the
+   findings are proved: the new results (`FINDINGS.md`, merging cohorts),
+   stating that every result is machine-checked and linking here. arXiv is
+   indexed by Google Scholar; GitHub is not.
+4. **Two audiences.** The credibility results to an actuarial journal
+   (Scandinavian Actuarial Journal, ASTIN Bulletin, European Actuarial
+   Journal, Variance). The formalization itself to CPP/ITP or *Annals of
+   Formalized Mathematics*, and announced on the Lean Zulip.
+5. **General lemmas upstream** as Mathlib PRs (see "Small lemmas" above).
+
 ## Thesis source
 
 The original LaTeX is in [`thesis/original/`](thesis/); all equation numbers

@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: >-
+  If you use this formalization, please cite it as below, together with the
+  thesis it formalizes.
+title: "credible-lean: a Lean 4 formalization of correlated credibility theory"
+type: software
+authors:
+  - given-names: Mikael
+    family-names: Andblom
+repository-code: "https://github.com/mikaelandblom-coder/credible-lean"
+url: "https://mikaelandblom-coder.github.io/credible-lean/"
+abstract: >-
+  A Lean 4 + Mathlib formalization of generalized Bühlmann–Straub
+  credibility theory for data correlated across cohorts, with a
+  leanblueprint summary and a list of gaps and new results found while
+  formalizing.
+keywords:
+  - credibility theory
+  - Bühlmann–Straub
+  - actuarial mathematics
+  - correlated data
+  - Lean 4
+  - Mathlib
+  - formal verification
+references:
+  - type: thesis
+    thesis-type: "Master's thesis"
+    title: "Generalized Bühlmann–Straub credibility theory for correlated data"
+    authors:
+      - given-names: Mikael
+        family-names: Andblom
+    institution:
+      name: "Stockholm University, Department of Mathematics"
+    year: 2023
+    month: 2
+    collection-title: "Master Thesis in Actuarial Mathematics 2023:2"
+    url: "https://urn.kb.se/resolve?urn=urn:nbn:se:su:diva-219872"
