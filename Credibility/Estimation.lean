@@ -266,7 +266,98 @@ theorem cHat_unbiased (hT : 2 ≤ Fintype.card T) (j : J) :
 the denominator `w** - Σᵢ wᵢ*²/w**` is `0`. -/
 theorem tauHat_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) :
     M.Unbiased (tauHat w) M.τ2 := by
-  sorry
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hW : ∀ k, 0 < wtot w k := fun k => sum_pos (fun s _ => hw k s) univ_nonempty
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  have pull1 : ∀ (j : J) (g : J → T → ℝ),
+      ∑ k, ∑ s, (if k = j then g k s else 0) = ∑ s, g j s := fun j g => by
+    rw [sum_comm]; simp [sum_ite_eq']
+  have hWall : 0 < wall w := sum_pos (fun k _ => hW k) univ_nonempty
+  -- Cohort shares `xₖ = wₖ*/w**`, summing to one.
+  set x : J → ℝ := fun k => wtot w k / wall w with hx_def
+  have hx : ∑ k, x k = 1 := by rw [hx_def, ← sum_div]; exact div_self hWall.ne'
+  have hxpos : ∀ k, 0 < x k := fun k => div_pos (hW k) hWall
+  -- `J ≥ 2` gives `Σ xₖ² < 1`, so the denominator `w**(1 - Σ xₖ²)` is positive.
+  have hx1 : ∀ k, x k < 1 := fun k => by
+    obtain ⟨l, hl⟩ := Fintype.exists_ne_of_one_lt_card (by omega) k
+    rw [← hx, ← add_sum_erase _ _ (mem_univ k)]
+    have : 0 < ∑ m ∈ univ.erase k, x m :=
+      sum_pos (fun m _ => hxpos m) ⟨l, mem_erase.mpr ⟨hl, mem_univ _⟩⟩
+    linarith
+  have hQ : ∑ k, x k ^ 2 < 1 := by
+    rw [← hx]
+    exact sum_lt_sum_of_nonempty univ_nonempty fun k _ => by
+      nlinarith [hxpos k, hx1 k]
+  have hden : wall w - ∑ i, wtot w i ^ 2 / wall w = wall w * (1 - ∑ k, x k ^ 2) := by
+    simp only [hx_def, div_pow, ← sum_div, mul_sub, mul_one]
+    field_simp
+  have hden_pos : 0 < wall w * (1 - ∑ k, x k ^ 2) := mul_pos hWall (by linarith)
+  have hmu : ∀ X k, muHat w X k = ∑ s, M.a k s * X (k, s) := fun X k => by
+    simp only [muHat, M.a_special sig hw hσ]
+  -- Coefficients of `μ̂ⱼ - Σᵢ xᵢμ̂ᵢ`.
+  let ℓ : J → J × T → ℝ := fun j p => ((if p.1 = j then 1 else 0) - x p.1) * M.a p.1 p.2
+  have ha : ∀ k, ∑ s, M.a k s = 1 := fun k =>
+    sum_invVarWeight _ (fun s => pow_pos (M.σ_pos k s) 2)
+  have hlin : ∀ j (X : J × T → ℝ), ∑ p, ℓ j p * X p
+      = muHat w X j - ∑ i, wtot w i / wall w * muHat w X i := fun j X => by
+    simp only [ℓ, hmu, Fintype.sum_prod_type, sub_mul, ite_mul, one_mul, zero_mul, sum_sub_distrib,
+      mul_assoc, ← mul_sum, hx_def, pull1]
+  have hsum : ∀ j, ∑ p, ℓ j p = 0 := fun j => by
+    have h1 : ∀ k, ∑ s, ((if k = j then 1 else 0) - x k) * M.a k s
+        = (if k = j then 1 else 0) - x k := fun k => by rw [← mul_sum, ha, mul_one]
+    rw [Fintype.sum_prod_type]
+    simp only [ℓ, h1]
+    simp [sum_sub_distrib, hx]
+  have hcov : ∀ j, ∑ p, ∑ q, ℓ j p * ℓ j q * M.obsCov p.1 q.1 p.2 q.2
+      = ∑ k, ∑ l, ((if k = j then 1 else 0) - x k) * ((if l = j then 1 else 0) - x l) * M.K k l :=
+    fun j => by
+      simp only [ℓ, Fintype.sum_prod_type, K, mul_sum]
+      refine sum_congr rfl fun k _ => ?_
+      rw [sum_comm]
+      exact sum_congr rfl fun l _ => sum_congr rfl fun s _ => sum_congr rfl fun r _ => by ring
+  have hsq : ∀ j, M.Unbiased (fun X => (muHat w X j - ∑ i, wtot w i / wall w * muHat w X i) ^ 2)
+      (∑ k, ∑ l, ((if k = j then 1 else 0) - x k) * ((if l = j then 1 else 0) - x l) * M.K k l) :=
+    fun j => (M.unbiased_mul (ℓ j) (ℓ j) (hsum j)).congr (fun X => by rw [hlin, sq]) (hcov j)
+  have hc : ∀ j, M.Unbiased (fun X => cHat w X j)
+      (∑ i, ((if i = j then 1 else 0) - x i) * (M.σ2 i j * M.ρ i j)) :=
+    fun j => M.cHat_unbiased sig hw hσ hT j
+  refine (Unbiased.const_mul (wall w * (1 - ∑ k, x k ^ 2))⁻¹ (Unbiased.sum univ fun j _ =>
+    ((hsq j).const_mul (wtot w j)).add ((hc j).const_mul (-wtot w j)))).congr
+    (fun X => ?_) ?_
+  · rw [tauHat, hden, div_eq_inv_mul]
+    congr 1
+    exact sum_congr rfl fun j _ => by ring
+  · -- The algebra: `Σⱼ xⱼ (E[dⱼ²] - cⱼ) = τ²(1 - Σ xₖ²)`.
+    have key : ∑ j, x j * ((∑ k, ∑ l, ((if k = j then 1 else 0) - x k)
+          * ((if l = j then 1 else 0) - x l) * M.K k l)
+          - ∑ i, ((if i = j then 1 else 0) - x i) * (M.σ2 i j * M.ρ i j))
+        = M.τ2 * (1 - ∑ k, x k ^ 2) := by
+      have pull : ∀ (j : J) (g : J → J → ℝ),
+          ∑ k, ∑ l, (if k = j then g k l else 0) = ∑ l, g j l := fun j g => by
+        rw [sum_comm]; simp [sum_ite_eq']
+      simp only [M.K_apply]
+      simp only [mul_add, sum_add_distrib]
+      simp only [sub_mul, mul_sub, sum_sub_distrib, ite_mul, one_mul, zero_mul, mul_ite, mul_one,
+        mul_zero, sum_ite_eq', sum_ite_eq, mem_univ, ite_true, sum_add_distrib, mul_add, pull]
+      simp only [← sum_mul, hx, mul_sum]
+      have h3 : ∑ a, ∑ b, ∑ c, x a * x b * x c * M.σ2 b c * M.ρ b c
+          = ∑ b, ∑ c, x b * x c * M.σ2 b c * M.ρ b c := by
+        calc _ = ∑ a, x a * ∑ b, ∑ c, x b * x c * M.σ2 b c * M.ρ b c := by
+                simp only [mul_sum, mul_assoc]
+          _ = _ := by rw [← sum_mul, hx, one_mul]
+      ring_nf
+      rw [h3, mul_sum]
+      ring
+    have hWj : ∀ j, wtot w j = wall w * x j := fun j => by
+      simp only [hx_def]; field_simp
+    rw [inv_mul_eq_iff_eq_mul₀ hden_pos.ne']
+    calc _ = wall w * ∑ j, x j * ((∑ k, ∑ l, ((if k = j then 1 else 0) - x k)
+          * ((if l = j then 1 else 0) - x l) * M.K k l)
+          - ∑ i, ((if i = j then 1 else 0) - x i) * (M.σ2 i j * M.ρ i j)) := by
+          rw [mul_sum]
+          refine sum_congr rfl fun j _ => ?_
+          rw [hWj]; ring
+      _ = _ := by rw [key]; ring
 
 /-- Eq. (39), last line: `K̂ᵢⱼ` is unbiased for `Kᵢⱼ`. -/
 theorem KHat_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (i j : J) :
