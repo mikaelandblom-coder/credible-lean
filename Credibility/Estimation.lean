@@ -362,9 +362,13 @@ theorem tauHat_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) 
 /-- Eq. (39), last line: `K̂ᵢⱼ` is unbiased for `Kᵢⱼ`. -/
 theorem KHat_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (i j : J) :
     M.Unbiased (fun X => KHat w X i j) (M.K i j) := by
-  sorry
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  refine ((M.sigRhoHat_unbiased sig hw hσ hT i j).add
+    ((M.tauHat_unbiased sig hw hσ hT hJ).const_mul (if i = j then 1 else 0))).congr
+    (fun X => by simp only [KHat]; ring) ?_
+  rw [M.K_apply]; ring
 
-omit hσ in
+omit hσ [Fintype J] [DecidableEq J] [DecidableEq T] in
 /-- Eq. (41): on the diagonal the estimator is the Bühlmann–Straub one,
 `σ²ⱼⱼ^ = σ̂ⱼ²/wⱼ*` with `σ̂ⱼ² = Σₜ wⱼₜ(μⱼₜ - μ̂ⱼ)²/(T - 1)` from eq. (13). -/
 theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
