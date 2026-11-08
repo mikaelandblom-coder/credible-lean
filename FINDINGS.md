@@ -84,8 +84,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    form a PSD block (`Unequal.K_posDef`). That is weaker than `ρ ⪰ 0`: with
    `T₁ = {1}`, `T₂ = {1,2}`, `T₃ = {2}`, `ρ₁₂ = ρ₂₃ = 0.9`, `ρ₁₃ = −0.9`,
    `ρ` is not PSD but `K` is PD. *Proved* (`K_posDef`, `K_posDef_of_posSemidef`).
-9. **The `T − 2` of eq. (39) becomes a volume-weighted per-pair count (new,
-   stated).** With unequal lengths the unbiased denominator of the
+9. **The `T − 2` of eq. (39) becomes a volume-weighted per-pair count
+   (new).** With unequal lengths the unbiased denominator of the
    `σ²ᵢⱼρᵢⱼ` estimator is `Sᵢⱼ + nᵢⱼwᵢ*wⱼ*/Sᵢⱼ` (sums over `Tᵢⱼ = Tᵢ ∩ Tⱼ`)
    with `nᵢⱼ = |Tᵢⱼ| − ωᵢ − ωⱼ`, `ωᵢ = Σ_{Tᵢⱼ} wᵢₜ/wᵢ*` the share of cohort
    `i`'s volume inside the overlap. The naive `|Tᵢⱼ| − 2` is biased unless
@@ -93,8 +93,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    3-cohort pattern. One shared period `t` suffices if both cohorts are also
    observed elsewhere: the denominator is then
    `(wᵢ*wⱼ*/Sᵢⱼ)(1 − ωᵢ)(1 − ωⱼ) > 0`, which sharpens the `T ≥ 2` of item 7
-   (`Unequal.den_of_overlap_singleton`, `sigRhoHat_unbiased`). *On paper;
-   Lean statements only.*
+   (`Unequal.den_of_overlap_singleton`, `sigRhoHat_unbiased`,
+   `tauHat_unbiased`, `KHat_unbiased`, *proved*).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 

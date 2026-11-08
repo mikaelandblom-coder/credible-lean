@@ -1174,10 +1174,23 @@ shared periods.
   As Lemma~\ref{lem:K_symm}.
 \end{proof}
 
+\begin{lemma}[Sums over all periods]\label{lem:U_sum_full}
+  \lean{Credibility.Unequal.sum_a_mul, Credibility.Unequal.σ2_eq_sum,
+        Credibility.Unequal.K_eq_sum}
+  \leanok
+  \uses{def:Unequal}
+  Since $a_{jt} = 0$ for $t \notin T_j$, the sums over $T_j$ and $T_{ij}$ in
+  $\hmu_j$, $\sigma^2_{ij}$ and $K_{ij}$ may run over all of $T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The added terms vanish.
+\end{proof}
+
 \begin{theorem}[$K$ stays positive definite]\label{thm:U_K_posDef}
   \lean{Credibility.Unequal.K_posDef}
   \leanok
-  \uses{lem:U_K_apply, lem:U_K_symm}
+  \uses{lem:U_K_apply, lem:U_K_symm, lem:U_sum_full}
   If for every period $t$ the block $(\rho_{ij})_{i,j \in J_t}$ is positive
   semidefinite, then $K$ is positive definite, whatever the overlap pattern.
 \end{theorem}
@@ -1274,6 +1287,7 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $n_{jj} = |T_j| - 2$, and $n_{ij} = T - 2$ if all $T_j = T$.
 \end{lemma}
 \begin{proof}
+  \leanok
   The shares of one cohort add up to one over its own periods.
 \end{proof}
 
@@ -1285,6 +1299,7 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $D_{ij}S_{ij}/(w_{i*}w_{j*}) = (1 - w_{it}/w_{i*})(1 - w_{jt}/w_{j*})$.
 \end{lemma}
 \begin{proof}
+  \leanok
   With $|T_{ij}| \ge 2$, $n_{ij} \ge 2 - 1 - 1 = 0$ and $S_{ij} > 0$. With one
   shared period, $S_{ij}^2/(w_{i*}w_{j*}) = \omega_i\omega_j$ and
   $n_{ij} = 1 - \omega_i - \omega_j$, $\omega_k = w_{kt}/w_{k*}$.
@@ -1298,18 +1313,20 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $\sigma^2_{ij}\rho_{ij} = S_{ij}/(w_{i*}w_{j*})\,\sigma_i\sigma_j\rho_{ij}$ \eqth{37}.
 \end{lemma}
 \begin{proof}
+  \leanok
   As Lemmas~\ref{lem:a_special} and~\ref{lem:sigma2rho_special}.
 \end{proof}
 
 \begin{lemma}\label{lem:U_unbiased_dev}
   \lean{Credibility.Unequal.unbiased_dev}
   \leanok
-  \uses{def:Unequal, def:unbiased}
+  \uses{def:Unequal, def:unbiased, lem:U_sum_full}
   For $t \in T_{ij}$,
   $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
    = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
 \end{lemma}
 \begin{proof}
+  \leanok
   As Lemma~\ref{lem:unbiased_dev}.
 \end{proof}
 
@@ -1323,6 +1340,7 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   moreover $J \ge 2$, then $\widehat{\tau^2}$ and $\hat K_{ij}$ are unbiased.
 \end{theorem}
 \begin{proof}
+  \leanok
   Weighting Lemma~\ref{lem:U_unbiased_dev} by $\sqrt{w_{it}w_{jt}}$ and
   summing over $T_{ij}$ gives $\sigma_i\sigma_j\rho_{ij}n_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}
   = D_{ij}\sigma^2_{ij}\rho_{ij}$ by Lemma~\ref{lem:U_special}. For
@@ -1337,6 +1355,7 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $\hat K_{ij}$ is observed.
 \end{lemma}
 \begin{proof}
+  \leanok
   Every sum runs over $T_j$ or $T_{ij}$.
 \end{proof}
 
@@ -1349,6 +1368,7 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   Bühlmann--Straub with the cohort's own length.
 \end{theorem}
 \begin{proof}
+  \leanok
   $S_{jj} = w_{j*}$ and $n_{jj} = |T_j| - 2$, so $D_{jj} = (|T_j| - 1)w_{j*}$.
 \end{proof}
 

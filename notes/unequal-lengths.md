@@ -1,6 +1,6 @@
 # Cohort-dependent series lengths
 
-README "Later goals → Cohort-dependent series length". Lean statements:
+README "Later goals → Cohort-dependent series length". Lean (all proved):
 [`Credibility/Unequal.lean`](../Credibility/Unequal.lean). Not in the thesis.
 
 **Short answer.** Everything carries over with sums restricted to the periods
@@ -132,8 +132,6 @@ only involve `K̄ᵢⱼᵗˢ` with `t ∈ Tᵢ`, `s ∈ Tⱼ`.
 
 ## 5. Open / next
 
-- Prove the statements in `Unequal.lean` (order: `sum_a`, `K_apply`,
-  `K_symm`, `K_posDef`, reductions, `bestZ_eq`, then estimation).
 - Which pairs need `ρᵢⱼ`: only overlapping ones. A natural follow-up is a
   model where `ρ` itself is only given on overlapping pairs (a partial
   correlation table), which the block hypothesis of §3 already allows.
