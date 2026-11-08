@@ -165,10 +165,8 @@ omit [Fintype J] in
 `Var(Σₜ cₜ μⱼₜ - μⱼ) = Σₜ cₜ² σⱼₜ²`, the quantity minimised in eq. (23). -/
 theorem var_cohortLin_err (j : J) (c : T → ℝ) (hc : ∑ t, c t = 1) :
     Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] = ∑ t, c t ^ 2 * M.σ j t ^ 2 := by
-  have : Nonempty T := by
-    by_contra h
-    rw [not_nonempty_iff] at h
-    simp at hc
+  obtain ⟨t, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hc.trans_ne one_ne_zero)
+  have : Nonempty T := ⟨t⟩
   exact N.toUnequal.var_cohortLin_err μ j c hc
 
 omit [Fintype J] in
@@ -184,10 +182,8 @@ theorem cohortEst_optimal [Nonempty T] (j : J) (c : T → ℝ) (hc : ∑ t, c t 
 from the `μ̂ⱼ`, the GLS one has the smallest variance, and it equals `s²`. -/
 theorem portEst_optimal (hK : M.K.PosDef) (d : J → ℝ) (hd : ∑ j, d j = 1) :
     Var[N.portEst μ; P] = M.s2 ∧ M.s2 ≤ Var[N.portLin μ d; P] := by
-  obtain ⟨j⟩ : Nonempty J := by
-    by_contra h
-    rw [not_nonempty_iff] at h
-    simp at hd
+  -- `Σ dⱼ = 1` gives a cohort, and `K ≻ 0` then a period (`Tⱼ = T` needs `T ≠ ∅`).
+  obtain ⟨j, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hd.trans_ne one_ne_zero)
   have := M.nonempty_of_posDef hK j
   rw [← N.toUnequal_portEst, ← N.toUnequal_portLin, ← M.toUnequal_s2]
   exact N.toUnequal.portEst_optimal μ (by rw [toUnequal_K]; exact hK) d hd
