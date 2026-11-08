@@ -335,13 +335,71 @@ theorem moments_eq [Nonempty T] (hK : M.K.PosDef) (j : J) :
     cov[N.cohortEst μ j, N.portEst μ; P] = (M.moments j).covEst ∧
     cov[N.cohortEst μ j, N.trueMean μ j; P] = (M.moments j).covCohortTarget ∧
     cov[N.portEst μ, N.trueMean μ j; P] = (M.moments j).covPortfolioTarget := by
-  sorry
+  have : Nonempty J := ⟨j⟩
+  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ fun t => pow_pos (M.σ_pos j t) 2
+  have hvar : ∀ X, MemLp X 2 P → Var[X; P] = cov[X, X; P] := fun X hX =>
+    (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · rw [hvar _ (N.memLp_cohortEst μ j), cov_cohortEst, K_apply, M.ρ_self]
+    simp [moments, add_comm]
+  · rw [portEst, hvar _ (N.memLp_portLin μ _), cov_portLin]
+    exact glsWeight_value hK
+  · rw [hvar _ (N.memLp_trueMean μ j), cov_trueMean]
+    simp [moments]
+  · exact N.cov_cohortEst_portLin μ j _
+  · rw [cohortEst, cov_cohortLin_trueMean, ha]
+    simp [moments]
+  · exact N.cov_portLin_trueMean μ _ j
 
 /-- The blend is unbiased and its actual mean squared error is `errVar`,
 eq. (6): `E[(z μ̂ⱼ + (1 - z) μ̂ - μⱼ)²] = errVar z`. -/
 theorem mse_blend [Nonempty T] (hK : M.K.PosDef) (j : J) (z : ℝ) :
     P[fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2] = (M.moments j).errVar z := by
-  sorry
+  have : Nonempty J := ⟨j⟩
+  have ha : ∑ t, M.a j t = 1 := sum_invVarWeight _ fun t => pow_pos (M.σ_pos j t) 2
+  obtain ⟨h1, h2, h3, h4, h5, h6⟩ := N.moments_eq μ hK j
+  -- The error is a linear combination of `μ̂ⱼ`, `μ̂` and `μⱼ`.
+  set X : Fin 3 → Ω → ℝ := ![N.cohortEst μ j, N.portEst μ, N.trueMean μ j] with hXdef
+  set w : Fin 3 → ℝ := ![z, 1 - z, -1]
+  have hD : (fun ω => N.blend μ j z ω - N.trueMean μ j ω) = fun ω => ∑ i, w i * X i ω := by
+    funext ω; simp [Fin.sum_univ_three, w, X, blend]; ring
+  have hX : ∀ i, MemLp (X i) 2 P := fun i => by
+    fin_cases i
+    · exact N.memLp_cohortEst μ j
+    · exact N.memLp_portLin μ _
+    · exact N.memLp_trueMean μ j
+  have hint : ∀ i, Integrable (fun ω => w i * X i ω) P :=
+    fun i => ((hX i).const_mul (w i)).integrable (by norm_num)
+  have hDm : MemLp (fun ω => ∑ i, w i * X i ω) 2 P :=
+    memLp_finsetSum _ fun i _ => (hX i).const_mul (w i)
+  -- It is unbiased.
+  have hmean : P[fun ω => ∑ i, w i * X i ω] = 0 := by
+    rw [integral_finsetSum _ fun i _ => hint i]
+    have hC : P[N.cohortEst μ j] = μ := by rw [cohortEst, integral_cohortLin, ha, one_mul]
+    have hP : P[N.portEst μ] = μ := by
+      rw [portEst, integral_portLin, show ∑ k, M.b k = 1 from sum_glsWeight hK, one_mul]
+    have hY : P[N.trueMean μ j] = μ := by rw [trueMean_eq, integral_lin]
+    simp only [integral_const_mul, Fin.sum_univ_three, w, X]
+    simp [hC, hP, hY]
+    ring
+  -- So the mean squared error is the variance; expand it bilinearly.
+  have hsq : (fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2)
+      = fun ω => (fun ω => ∑ i, w i * X i ω) ω ^ 2 := by
+    funext ω; exact congrArg (· ^ 2) (congrFun hD ω)
+  rw [hsq, ← variance_of_integral_eq_zero hDm.aestronglyMeasurable.aemeasurable hmean,
+    ← covariance_self hDm.aestronglyMeasurable.aemeasurable,
+    covariance_fun_sum_fun_sum (fun i => (hX i).const_mul (w i))
+      (fun i => (hX i).const_mul (w i))]
+  simp only [covariance_const_mul_left, covariance_const_mul_right, Fin.sum_univ_three]
+  have hself : ∀ i, cov[X i, X i; P] = Var[X i; P] := fun i =>
+    covariance_self (hX i).aestronglyMeasurable.aemeasurable
+  simp only [hself]
+  simp only [w, X, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
+    Matrix.head_cons, Matrix.tail_cons]
+  rw [covariance_comm (N.portEst μ), covariance_comm (N.trueMean μ j) (N.cohortEst μ j),
+    covariance_comm (N.trueMean μ j) (N.portEst μ), h1, h2, h3, h4, h5, h6]
+  simp only [BlendMoments.errVar]
+  ring
 
 /-- Eqs. (7)/(26) in true MSE: the credibility factor `zⱼ` minimises the actual
 mean squared error of the blend, for every distribution with the assumed
@@ -350,7 +408,8 @@ theorem bestZ_mse_optimal [Nonempty T] (hK : M.K.PosDef) (j : J)
     (hgap : 0 < (M.moments j).gap) (z : ℝ) :
     P[fun ω => (N.blend μ j (M.moments j).bestZ ω - N.trueMean μ j ω) ^ 2]
       ≤ P[fun ω => (N.blend μ j z ω - N.trueMean μ j ω) ^ 2] := by
-  sorry
+  rw [N.mse_blend μ hK j, N.mse_blend μ hK j]
+  exact (M.moments j).bestZ_optimal hgap z
 
 end Noise
 
