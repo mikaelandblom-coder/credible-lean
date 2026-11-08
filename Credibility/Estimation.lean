@@ -259,8 +259,8 @@ theorem sigRhoHat_unbiased (hT : 2 ≤ Fintype.card T) (i j : J) :
 /-- `ĉⱼ` is unbiased for `cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ`. -/
 theorem cHat_unbiased (hT : 2 ≤ Fintype.card T) (j : J) :
     M.Unbiased (fun X => cHat w X j)
-      (∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * (M.σ2 i j * M.ρ i j)) := by
-  sorry
+      (∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * (M.σ2 i j * M.ρ i j)) :=
+  Unbiased.sum univ fun i _ => (M.sigRhoHat_unbiased sig hw hσ hT i j).const_mul _
 
 /-- Eq. (39): `τ̂²` is unbiased. Needs `T ≥ 2` and `J ≥ 2`: with one cohort
 the denominator `w** - Σᵢ wᵢ*²/w**` is `0`. -/
