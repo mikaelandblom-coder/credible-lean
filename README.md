@@ -18,10 +18,11 @@ when the correlations vanish.
 ## Status
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
-(regenerate with `python3 scripts/progress.py`). All 54 theorems are
-proved, with no `sorry`: §2.1–2.8 of the thesis (`Blend`, `Weights`,
-`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and the merging
-extension (`Merging`).
+(regenerate with `python3 scripts/progress.py`). All 108 theorems are
+proved, with no `sorry`: §2.1–2.9 of the thesis (`Blend`, `Weights`,
+`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and two extensions,
+merging two cohorts (`Merging`) and cohort-dependent series lengths
+(`Unequal`).
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
 found while formalizing, e.g. that two correlated cohorts can push the
@@ -50,21 +51,31 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | §2.7 two cohorts, eq. (32) | `Credibility/TwoCohorts.lean` |
 | §2.8 parameter estimation, eqs. (37)–(41) | `Credibility/Estimation.lean` |
 | extension: merging two cohorts ([notes](notes/merging-cohorts.md)) | `Credibility/Merging.lean` |
+| extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean` |
 
-Second moments are taken as given numbers.
+Like the thesis, the formalization is **distribution-free**: only first and
+second moments are assumed. In Lean the second moments (`τ²`, `σⱼₜ`, `ρᵢⱼ`)
+enter as given numbers, and the covariance formulas such as eq. (16) are
+definitions.
 
 ## Later goals
 
 Once the thesis results are proved:
 
-- **Probabilistic layer.** Show that the second moments are actual
-  covariances of random variables.
-- **Cohort-dependent series length.** In practice cohorts have data series
-  of different lengths, so replace the common horizon `T` with a
-  cohort-dependent `Tⱼ` (index sets `Tⱼ ⊆ T`). Correlations then only act
-  on the periods two cohorts share. Not in the thesis. Started: notes in
+- **Moment layer (still distribution-free).** Turn the covariance
+  definitions into theorems: for *any* probability space and *any*
+  square-integrable `εⱼ`, `εⱼₜ` with the assumed means, variances and
+  correlations (no distribution named), eq. (16) and `K` are the actual
+  covariances and `zⱼ` minimises the actual mean squared error. This
+  machine-checks the thesis's "only the first two moments matter" rather
+  than adding assumptions. Side result: such variables exist exactly when
+  the correlation table `ρ` is positive semidefinite, the condition `K`
+  needs anyway (FINDINGS item 1).
+- ~~**Cohort-dependent series length.**~~ Done: cohorts observed on
+  their own periods `Tⱼ ⊆ T`, correlations acting only on shared periods.
+  Not in the thesis. Notes in
   [`notes/unequal-lengths.md`](notes/unequal-lengths.md), proved in
-  `Credibility/Unequal.lean` (FINDINGS items 8–9).
+  `Credibility/Unequal.lean` (FINDINGS items 8–10).
 - **Choosing cohorts from the data.** Pick the partition into cohorts that
   minimises the total credibility MSE itself, rather than clustering
   credibility estimates by Euclidean distance (as in van Rijn, Weber, Merz,
@@ -89,8 +100,9 @@ Once the thesis results are proved:
 
 The thesis is the foundation: notation and model for all later work. Plan:
 
-1. **The thesis formalization (§2) is done.** Next, possibly the
-   probabilistic layer (see "Later goals"); then pick further credibility papers to formalize
+1. **The thesis formalization (§2) is done.** So is the
+   unequal-lengths extension. Next, possibly the moment layer (see
+   "Later goals"); then pick further credibility papers to formalize
    (candidates such as Jewell's hierarchical model and Hachemeister's
    regression model), each as its own `Credibility/<Topic>.lean` and
    blueprint chapter in the thesis notation.
