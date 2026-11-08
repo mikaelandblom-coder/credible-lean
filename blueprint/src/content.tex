@@ -418,6 +418,114 @@ not apply. Minimising $s^2 = \bb^T K \bb$ subject to $\bu^T\bb = 1$
   $c^TK\bb = (\sum_j c_j)s^2 = s^2 = \bb^TK\bb$.
 \end{proof}
 
+\section{The credibility factor at the level of $K$}\label{sec:core}
+
+The rest of this chapter needs only the covariance matrix $K$ of the cohort
+estimates, the heterogeneity $\tau^2$ and cohort variances $v_j$ with
+$\Var(\hmu_j) = K_{jj} = \tau^2 + v_j$. Every model (Chapter~\ref{ch:model},
+Chapter~\ref{ch:unequal}) builds its own $K$ with $v_j = \sigma^2_{jj}$, proves
+$K \succ 0$, and takes the results of this section as corollaries.
+
+\begin{definition}[Blend moments for a given $K$]\label{def:Core.moments}
+  \lean{Credibility.Core.moments}
+  \leanok
+  \uses{def:bestZ, def:glsWeight}
+  With $\bb$ the GLS weights of $K$ and $s^2 = 1/K^{-1}_{**}$: for cohort $j$,
+  $\Var(\hmu_j) = \tau^2 + v_j$, $\Var(\hmu) = s^2$, $\Var(\mu_j) = \tau^2$,
+  $\cov(\hmu_j, \hmu) = (K\bb)_j$, $\cov(\hmu_j, \mu_j) = \tau^2$ and
+  $\cov(\hmu, \mu_j) = b_j\tau^2$ (§2.4).
+\end{definition}
+
+\begin{lemma}[The curvature]\label{lem:Core_gap_eq}
+  \lean{Credibility.Core.gap_eq}
+  \leanok
+  \uses{def:Core.moments, lem:mulVec_glsWeight}
+  If $K$ is positive definite then $\Var(\hmu_j - \hmu) = \tau^2 + v_j - s^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight}
+  $(K\bb)_j = s^2$.
+\end{proof}
+
+\begin{theorem}[The proposed credibility factor]\label{thm:Core_bestZ_eq}
+  \lean{Credibility.Core.bestZ_eq}
+  \leanok
+  \uses{def:Core.moments, lem:mulVec_glsWeight}
+  If $K$ is positive definite then
+  $z_j = (1-b_j)\tau^2/(\tau^2 + v_j - s^2)$ \eqth{26}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_gap_eq, lem:mulVec_glsWeight}
+  Put $(K\bb)_j = s^2$ into \eqth{7}: the numerator becomes $(1-b_j)\tau^2$,
+  the denominator is Lemma~\ref{lem:Core_gap_eq}.
+\end{proof}
+
+\begin{theorem}[Diagonal $K$]\label{thm:Core_diag}
+  \lean{Credibility.Core.Kinv_one_of_diag, Credibility.Core.b_of_diag,
+        Credibility.Core.bestZ_of_diag}
+  \leanok
+  \uses{def:Core.moments, def:glsWeight}
+  If $K = \operatorname{diag}(\tau^2 + v_j)$ with nonzero entries, then
+  $K^{-1}\bu = ((\tau^2 + v_j)^{-1})_j$ and
+  $b_j \propto (\tau^2 + v_j)^{-1}$. If the entries are positive and $J \ge 2$,
+  $z_j = \tau^2/(\tau^2 + v_j)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq}
+  Invert the diagonal. With $V = \sum_i (\tau^2+v_i)^{-1}$ and
+  $d_j = \tau^2 + v_j$, \eqth{26} is
+  $(1 - d_j^{-1}/V)\tau^2/(d_j - V^{-1}) = \tau^2/d_j$, using
+  $V > d_j^{-1}$ ($J \ge 2$).
+\end{proof}
+
+If all cohort pairs share one covariance, $K_{ij} = c$ for $i \ne j$, then
+$K = \operatorname{diag}(d_j) + c\,uu^\top$ with $d_j = \tau^2 + v_j - c$, and
+the rank-one part lies along $u$.
+
+\begin{lemma}\label{lem:Core_Kinv_one_of_equalCov}
+  \lean{Credibility.Core.Kinv_one_of_equalCov}
+  \leanok
+  \uses{def:glsWeight}
+  If $K$ is positive definite, $K_{ij} = c$ for $i \ne j$,
+  $K_{jj} = \tau^2 + v_j$ and all $d_j \ne 0$, then with $w_j = 1/d_j$:
+  $1 + c\,w_* \ne 0$ and $K^{-1}u = w/(1 + c\,w_*)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Kw)_i = d_i w_i + c\,w_* = 1 + c\,w_*$, so $Kw = (1 + c\,w_*)u$. Apply
+  $K^{-1}$; if $1 + c\,w_* = 0$ then $w = 0$, impossible.
+\end{proof}
+
+\begin{theorem}\label{thm:Core_b_eq_of_equalCov}
+  \lean{Credibility.Core.b_eq_of_equalCov}
+  \leanok
+  \uses{lem:Core_Kinv_one_of_equalCov}
+  Under the same hypotheses and $\tau^2 \ne 0$, with
+  $z_j = \tau^2/(\tau^2 + v_j - c)$, $b_j = z_j/z_*$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_Kinv_one_of_equalCov}
+  $b = K^{-1}u/u^\top K^{-1}u = w/w_*$ and $z = \tau^2 w$.
+\end{proof}
+
+\begin{theorem}\label{thm:Core_bestZ_of_equalCov}
+  \lean{Credibility.Core.bestZ_of_equalCov}
+  \leanok
+  \uses{lem:Core_Kinv_one_of_equalCov, def:Core.moments}
+  If moreover $b_j \ne 1$, then $z_j = \tau^2/(\tau^2 + v_j - c)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_Kinv_one_of_equalCov, thm:Core_bestZ_eq}
+  $s^2 = (1 + c\,w_*)/w_* = c + 1/w_*$, so
+  $\tau^2 + v_j - s^2 = d_j - 1/w_* = (w_* - w_j)/(w_j w_*)$ and
+  $1 - b_j = (w_* - w_j)/w_*$. Cancel $w_* - w_j \ne 0$.
+\end{proof}
+
 \section{The proposed credibility factor}
 
 \begin{definition}[Portfolio weights of the model]\label{def:Model.b}
@@ -436,8 +544,9 @@ not apply. Minimising $s^2 = \bb^T K \bb$ subject to $\bu^T\bb = 1$
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:mulVec_glsWeight}
-  The denominator of \eqth{22} with $\upsilon_j = s^2$.
+  \uses{lem:Core_gap_eq}
+  Lemma~\ref{lem:Core_gap_eq} with the model's $K$ and $v_j = \sigma^2_{jj}$:
+  the denominator of \eqth{22} with $\upsilon_j = s^2$.
 \end{proof}
 
 \begin{theorem}[The proposed credibility factor]\label{thm:bestZ_eq}
@@ -685,17 +794,19 @@ $K = \operatorname{diag}(d_j) + c\,uu^\top$ with
 $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
 
 \begin{lemma}\label{lem:Kinv_one_of_equalCov}
-  \lean{Credibility.Model.Kinv_one_of_equalCov}
+  \lean{Credibility.Model.K_self, Credibility.Model.K_of_equalCov,
+        Credibility.Model.Kinv_one_of_equalCov}
   \leanok
   \uses{lem:K_apply, def:K}
-  If $K$ is positive definite, $K_{ij} = c$ for $i \ne j$ and all $d_j \ne 0$,
-  then with $v_j = 1/d_j$: $1 + c\,v_* \ne 0$ and
-  $K^{-1}u = v/(1 + c\,v_*)$.
+  $K_{jj} = \tau^2 + \sigma^2_{jj}$, and $K_{ij} = c$ for $i \ne j$. If $K$ is
+  positive definite and all $d_j \ne 0$, then with $v_j = 1/d_j$:
+  $1 + c\,v_* \ne 0$ and $K^{-1}u = v/(1 + c\,v_*)$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $(Kv)_i = d_i v_i + c\,v_* = 1 + c\,v_*$, so $Kv = (1 + c\,v_*)u$. Apply
-  $K^{-1}$; if $1 + c\,v_* = 0$ then $v = 0$, impossible.
+  \uses{lem:Core_Kinv_one_of_equalCov}
+  The first two by Lemma~\ref{lem:K_apply}; then
+  Lemma~\ref{lem:Core_Kinv_one_of_equalCov}.
 \end{proof}
 
 \begin{theorem}[Weights from credibility factors, any $J$]\label{thm:b_eq_of_equalCov}
@@ -707,7 +818,9 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
 \end{theorem}
 \begin{proof}
   \leanok
-  $b = K^{-1}u/u^\top K^{-1}u = v/v_*$ and $z = \tau^2 v$.
+  \uses{thm:Core_b_eq_of_equalCov}
+  Theorem~\ref{thm:Core_b_eq_of_equalCov}: $b = K^{-1}u/u^\top K^{-1}u = v/v_*$
+  and $z = \tau^2 v$.
 \end{proof}
 
 \begin{theorem}\label{thm:bestZ_of_equalCov}
@@ -720,7 +833,8 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:bestZ_eq}
+  \uses{thm:Core_bestZ_of_equalCov}
+  Theorem~\ref{thm:Core_bestZ_of_equalCov}. The idea:
   $s^2 = (1 + c\,v_*)/v_* = c + 1/v_*$, so
   $\tau^2 + \sigma_{jj}^2 - s^2 = d_j - 1/v_* = (v_* - v_j)/(v_j v_*)$ and
   $1 - b_j = (v_* - v_j)/v_*$. Cancel $v_* - v_j \ne 0$.
@@ -1327,17 +1441,19 @@ needed when $T_i \cap T_j \neq \emptyset$.
 
 \begin{theorem}[The credibility factor]\label{thm:U_bestZ_eq}
   \lean{Credibility.Unequal.b, Credibility.Unequal.s2, Credibility.Unequal.moments,
-        Credibility.Unequal.bestZ_eq}
+        Credibility.Unequal.moments_eq_core, Credibility.Unequal.bestZ_eq}
   \leanok
-  \uses{def:Unequal, lem:mulVec_glsWeight}
+  \uses{def:Unequal, def:Core.moments}
   With $b = K^{-1}u/u^TK^{-1}u$ and $s^2 = 1/u^TK^{-1}u$ for the new $K$,
   if $K$ is positive definite then
   $z_j = (1 - b_j)\tau^2/(\tau^2 + \sigma^2_{jj} - s^2)$ as in \eqth{26}.
 \end{theorem}
 \begin{proof}
   \leanok
-  Put $\upsilon_j = (Kb)_j = s^2$ (Lemma~\ref{lem:mulVec_glsWeight}) into
-  \eqth{22}: only $Kb = s^2u$ is used.
+  \uses{thm:Core_bestZ_eq}
+  The blend moments are those of Definition~\ref{def:Core.moments} with
+  $v_j = \sigma^2_{jj}$, so this is Theorem~\ref{thm:Core_bestZ_eq}: only
+  $Kb = s^2u$ is used.
 \end{proof}
 
 \section{Parameter estimation}
@@ -1475,7 +1591,8 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
 \section{Diagonal $K$, equal covariances and balance}
 
 \begin{theorem}[Diagonal $K$]\label{thm:U_diag}
-  \lean{Credibility.Unequal.σ2_self_nonneg, Credibility.Unequal.K_eq_diagonal,
+  \lean{Credibility.Unequal.σ2_self_nonneg, Credibility.Unequal.τ2_add_σ2_pos,
+        Credibility.Unequal.K_eq_diagonal,
         Credibility.Unequal.Kinv_one_of_diag, Credibility.Unequal.b_of_diag,
         Credibility.Unequal.bestZ_of_diag}
   \leanok
@@ -1487,10 +1604,9 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
 \end{theorem}
 \begin{proof}
   \leanok
-  Invert the diagonal. With $V = \sum_i (\tau^2+\sigma^2_{ii})^{-1}$ and
-  $d_j = \tau^2 + \sigma^2_{jj}$, \eqth{26} is
-  $(1 - d_j^{-1}/V)\tau^2/(d_j - V^{-1}) = \tau^2/d_j$, using
-  $V > d_j^{-1}$ ($J \ge 2$).
+  \uses{thm:Core_diag}
+  $\sigma^2_{jj} \ge 0$, so $\tau^2 + \sigma^2_{jj} > 0$; then
+  Theorem~\ref{thm:Core_diag} with $v_j = \sigma^2_{jj}$.
 \end{proof}
 
 \begin{theorem}[Equal covariances with a disjoint pair]\label{thm:U_equalCov}

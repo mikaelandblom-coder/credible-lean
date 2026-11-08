@@ -1,4 +1,5 @@
 import Credibility.Data
+import Credibility.Core
 
 /-!
 # Cohort-dependent series lengths (extension, not in the thesis)
@@ -208,16 +209,14 @@ noncomputable def moments (j : J) : BlendMoments where
   covPortfolioTarget := M.b j * M.τ2
 
 omit [Fintype T] in
+/-- The blend moments are those of `Core` for this model's `K`, `τ²` and `vⱼ = σ²ⱼⱼ`. -/
+theorem moments_eq_core : M.moments = Core.moments M.K M.τ2 (fun j => M.σ2 j j) := rfl
+
+omit [Fintype T] in
 /-- Eqs. (26)/(27) with unequal lengths: the same formula, with the new `σ²ⱼⱼ`, `b`, `s²`. -/
 theorem bestZ_eq (hK : M.K.PosDef) (j : J) :
-    (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) := by
-  -- `v = K b = s² u` (`mulVec_glsWeight`), substituted into eq. (22).
-  have hv : (M.K *ᵥ M.b) j = M.s2 := by
-    rw [b, mulVec_glsWeight hK, s2]
-  rw [BlendMoments.bestZ, show (M.moments j).gap = M.τ2 + M.σ2 j j - M.s2 by
-    simp only [BlendMoments.gap, moments, hv]; ring]
-  simp only [moments, hv]
-  ring
+    (M.moments j).bestZ = (1 - M.b j) * M.τ2 / (M.τ2 + M.σ2 j j - M.s2) :=
+  Core.bestZ_eq hK j
 
 
 /-! ### Diagonal `K`: equal covariances (Finding 5) and Bühlmann–Straub -/
@@ -239,53 +238,29 @@ theorem K_eq_diagonal (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) :
   · subst h; simp [M.ρ_self, add_comm]
   · simp [h0 i j h, h]
 
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- `τ² + σ²ⱼⱼ > 0`, the diagonal of `K`. -/
+lemma τ2_add_σ2_pos (j : J) : 0 < M.τ2 + M.σ2 j j :=
+  add_pos_of_pos_of_nonneg M.τ2_pos (M.σ2_self_nonneg j)
+
 omit [Fintype T] in
 /-- For diagonal `K`, `K⁻¹u = (τ² + σ²ⱼⱼ)⁻¹`. -/
 theorem Kinv_one_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) :
-    M.K⁻¹ *ᵥ 1 = fun j => (M.τ2 + M.σ2 j j)⁻¹ := by
-  have hd : ∀ j, M.τ2 + M.σ2 j j ≠ 0 := fun j =>
-    (add_pos_of_pos_of_nonneg M.τ2_pos (M.σ2_self_nonneg j)).ne'
-  have hinv : (diagonal fun j => M.τ2 + M.σ2 j j)⁻¹ = diagonal fun j => (M.τ2 + M.σ2 j j)⁻¹ := by
-    refine inv_eq_left_inv ?_
-    rw [diagonal_mul_diagonal]
-    simp only [inv_mul_cancel₀ (hd _), diagonal_one]
-  rw [M.K_eq_diagonal h0, hinv]
-  ext j
-  simp [mulVec_diagonal]
+    M.K⁻¹ *ᵥ 1 = fun j => (M.τ2 + M.σ2 j j)⁻¹ :=
+  Core.Kinv_one_of_diag (M.K_eq_diagonal h0) fun j => (M.τ2_add_σ2_pos j).ne'
 
 omit [Fintype T] in
 /-- For diagonal `K`, `bⱼ = (τ² + σ²ⱼⱼ)⁻¹ / Σᵢ (τ² + σ²ᵢᵢ)⁻¹`. -/
 theorem b_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0) (j : J) :
-    M.b j = (M.τ2 + M.σ2 j j)⁻¹ / ∑ i, (M.τ2 + M.σ2 i i)⁻¹ := by
-  rw [b, glsWeight, invTotal, M.Kinv_one_of_diag h0, one_dotProduct]
+    M.b j = (M.τ2 + M.σ2 j j)⁻¹ / ∑ i, (M.τ2 + M.σ2 i i)⁻¹ :=
+  Core.b_of_diag (M.K_eq_diagonal h0) (fun j => (M.τ2_add_σ2_pos j).ne') j
 
 omit [Fintype T] in
 /-- For diagonal `K` and `J ≥ 2`, `zⱼ = τ²/(τ² + σ²ⱼⱼ)`. -/
 theorem bestZ_of_diag (h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0)
     (hJ : 1 < Fintype.card J) (j : J) :
-    (M.moments j).bestZ = M.τ2 / (M.τ2 + M.σ2 j j) := by
-  have hd : ∀ j, 0 < M.τ2 + M.σ2 j j := fun j =>
-    add_pos_of_pos_of_nonneg M.τ2_pos (M.σ2_self_nonneg j)
-  have hpd : M.K.PosDef := by rw [M.K_eq_diagonal h0, posDef_diagonal_iff]; exact hd
-  set V := ∑ i, (M.τ2 + M.σ2 i i)⁻¹
-  have hs2 : M.s2 = V⁻¹ := by rw [s2, invTotal, M.Kinv_one_of_diag h0, one_dotProduct]
-  -- `J ≥ 2`: `V > (τ² + σ²ⱼⱼ)⁻¹`, so there is no `0/0`.
-  have hV : (M.τ2 + M.σ2 j j)⁻¹ < V := by
-    obtain ⟨i, hij⟩ := Fintype.exists_ne_of_one_lt_card hJ j
-    change _ < ∑ i, _
-    rw [← add_sum_erase _ _ (mem_univ j)]
-    exact lt_add_of_pos_right _
-      (sum_pos (fun k _ => inv_pos.mpr (hd k)) ⟨i, mem_erase.mpr ⟨hij, mem_univ i⟩⟩)
-  rw [M.bestZ_eq hpd, M.b_of_diag h0, hs2, show ∑ x, (M.τ2 + M.σ2 x x)⁻¹ = V from rfl]
-  have hdj := (hd j).ne'
-  have hV0 : 0 < V := (inv_pos.mpr (hd j)).trans hV
-  have hne : V - (M.τ2 + M.σ2 j j)⁻¹ ≠ 0 := (sub_pos.mpr hV).ne'
-  have hne' : M.τ2 + M.σ2 j j - V⁻¹ ≠ 0 := by
-    rw [show M.τ2 + M.σ2 j j - V⁻¹ = (M.τ2 + M.σ2 j j) * (V - (M.τ2 + M.σ2 j j)⁻¹) / V by
-      field_simp]
-    exact div_ne_zero (mul_ne_zero hdj hne) hV0.ne'
-  rw [div_eq_div_iff hne' hdj]
-  field_simp
+    (M.moments j).bestZ = M.τ2 / (M.τ2 + M.σ2 j j) :=
+  Core.bestZ_of_diag (M.K_eq_diagonal h0) M.τ2_add_σ2_pos hJ j
 
 omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- Finding 5 with unequal lengths: if all distinct pairs have the same covariance

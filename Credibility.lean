@@ -1,6 +1,7 @@
 import Credibility.Data
 import Credibility.Blend
 import Credibility.Weights
+import Credibility.Core
 import Credibility.Model
 import Credibility.BuhlmannStraub
 import Credibility.TwoCohorts

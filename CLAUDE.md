@@ -9,6 +9,7 @@ tactics.
 - §2.1.1 best credibility factor, eq. (7) → `Credibility/Blend.lean`
 - §2.5 inverse-variance and GLS weights, eqs. (23)–(25) → `Credibility/Weights.lean`
 - §2.3 parameters and eq. (16) → `Credibility/Data.lean`
+- §2.5 K-level Core: moments, eq. (26), diagonal and equal-covariance `K` → `Credibility/Core.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
