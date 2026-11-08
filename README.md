@@ -16,9 +16,10 @@ when the correlations vanish.
 ## Status
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
-(regenerate with `python3 scripts/progress.py`). `Blend` (§2.1.1) is fully
-proved, and so are `Weights` and `TwoCohorts`; `Model` and
-`BuhlmannStraub` are stated, with `sorry`s left.
+(regenerate with `python3 scripts/progress.py`). All 54 theorems are
+proved, with no `sorry`: §2.1–2.8 of the thesis (`Blend`, `Weights`,
+`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and the merging
+extension (`Merging`).
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
 found while formalizing, e.g. that two correlated cohorts can push the
@@ -45,6 +46,8 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | §2.3–2.5 data model, `K`, eqs. (16), (21), (22), (26) | `Credibility/Model.lean` |
 | §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance | `Credibility/BuhlmannStraub.lean` |
 | §2.7 two cohorts, eq. (32) | `Credibility/TwoCohorts.lean` |
+| §2.8 parameter estimation, eqs. (37)–(41) | `Credibility/Estimation.lean` |
+| extension: merging two cohorts ([notes](notes/merging-cohorts.md)) | `Credibility/Merging.lean` |
 
 Second moments are taken as given numbers.
 
@@ -82,8 +85,8 @@ Once the thesis results are proved:
 
 The thesis is the foundation: notation and model for all later work. Plan:
 
-1. **Finish the thesis formalization first** (`Model`, `BuhlmannStraub`,
-   `Estimation`). Only then pick further credibility papers to formalize
+1. **The thesis formalization (§2) is done.** Next, possibly the
+   probabilistic layer (see "Later goals"); then pick further credibility papers to formalize
    (candidates such as Jewell's hierarchical model and Hachemeister's
    regression model), each as its own `Credibility/<Topic>.lean` and
    blueprint chapter in the thesis notation.
