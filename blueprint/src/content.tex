@@ -1961,3 +1961,63 @@ matrices whose correlations are damped by a common factor $\rho$.
   and $(1-\rho)\operatorname{diag}(A_{ii})$, which is $\succeq 0$, and
   $\succ 0$ when $\rho < 1$ and the diagonal is positive.
 \end{proof}
+
+\chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
+% Not in the thesis: README "Later goals -> Small lemmas" (a).
+% Lean: Credibility/KMeans.lean
+
+Not in the thesis. Grouping cohorts by a scalar (e.g.\ their estimated
+means) with weighted k-means: optimal groups are intervals of the sorted
+values, so they can be found exactly by dynamic programming (Fisher 1958;
+Nielsen \& Nock, arXiv:1403.2485).
+
+\begin{definition}[Weighted k-means cost]\label{def:kmeansCost}
+  \lean{Credibility.kmeansCost}
+  \leanok
+  For points $x_i \in \mathbb{R}$ with weights $w_i$, labels $c_i$ and
+  centers $\mu_a$, the cost is $\sum_i w_i (x_i - \mu_{c_i})^2$.
+\end{definition}
+
+\begin{lemma}[Relabelling one point]\label{lem:kmeansCost_update}
+  \lean{Credibility.kmeansCost_update}
+  \leanok
+  \uses{def:kmeansCost}
+  Moving point $j$ to label $b$ changes the cost by
+  $w_j\bigl((x_j-\mu_b)^2 - (x_j-\mu_{c_j})^2\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only the $j$-th term changes.
+\end{proof}
+
+\begin{lemma}[Nearest center]\label{lem:kmeans_nearest}
+  \lean{Credibility.kmeans_nearest}
+  \leanok
+  \uses{def:kmeansCost}
+  If all $w_i > 0$ and $(c,\mu)$ minimises the cost, every point sits at a
+  nearest center: $(x_j-\mu_{c_j})^2 \le (x_j-\mu_b)^2$ for all $j$, $b$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:kmeansCost_update}
+  Otherwise moving $j$ to $b$ lowers the cost, by Lemma~\ref{lem:kmeansCost_update}.
+\end{proof}
+
+\begin{theorem}[Optimal groups are intervals]\label{thm:kmeans_contiguous}
+  \lean{Credibility.kmeans_contiguous}
+  \leanok
+  \uses{def:kmeansCost}
+  If all $w_i > 0$ and $(c,\mu)$ minimises the cost, then
+  $x_i < x_j < x_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:kmeans_nearest}
+  Let $a = c_i = c_l$ and suppose $b = c_j \ne a$. If $\mu_a \ne \mu_b$:
+  $f(t) = (t-\mu_a)^2 - (t-\mu_b)^2 = (\mu_b-\mu_a)(2t-\mu_a-\mu_b)$ is affine
+  and nonconstant, with $f(x_i) \le 0$, $f(x_l) \le 0$ and $f(x_j) \ge 0$ by
+  Lemma~\ref{lem:kmeans_nearest}, impossible for $x_i < x_j < x_l$. If
+  $\mu_a = \mu_b$: relabel group $b$ as $a$ (cost unchanged) and give a point
+  of $\{i,l\}$ that is not at $\mu_a$ (one exists since $x_i \ne x_l$) the
+  freed label $b$ with center at itself; the cost drops strictly.
+\end{proof}

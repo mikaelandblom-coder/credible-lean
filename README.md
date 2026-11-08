@@ -95,7 +95,8 @@ Once the thesis results are proved:
 - **Small lemmas from that paper.** (a) Optimal one-dimensional weighted
   k-means groups are contiguous intervals of the sorted values, so they
   can be found exactly by dynamic programming (Fisher 1958; Nielsen & Nock,
-  arXiv:1403.2485). Possibly worth contributing to Mathlib. (b) Multiplying the
+  arXiv:1403.2485). Done: `Credibility/KMeans.lean`; possibly worth
+  contributing to Mathlib. (b) Multiplying the
   off-diagonal entries of a covariance matrix `τ` by `ρ ∈ [0,1]` keeps it
   positive semidefinite, and positive definite if `ρ < 1` and the diagonal
   is positive. Done: `Credibility/OffDiagonal.lean`.

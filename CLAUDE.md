@@ -21,6 +21,7 @@ tactics.
 - extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
+- extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 
 Second moments are taken as given numbers, except in `Moments.lean` and `UnequalMoments.lean`, which
 proves they are the actual covariances of *any* random variables with
