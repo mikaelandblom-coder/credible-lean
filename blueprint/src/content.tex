@@ -799,6 +799,155 @@ can occur, but not when. The following answers that.
 \end{remark}
 
 % ---------------------------------------------------------------------------
+\chapter{Parameter estimation}\label{ch:estimation}
+% Thesis §2.8. Lean: Credibility/Estimation.lean
+
+Take $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$ with known volumes $w_{jt} > 0$:
+Bühlmann--Straub with a cohort-dependent $\sigma_j$ and correlations
+$\rho_{ij}$. Write $w_{j*} = \sum_t w_{jt}$, $w_{**} = \sum_j w_{j*}$ and
+$S_{ij} = \sum_t \sqrt{w_{it}w_{jt}}$. The estimators below are quadratic
+forms in the data $\mu_{jt}$. With mean $\mu$ and covariances
+$\bar K^{ts}_{ij}$ (Definition~\ref{def:obsCov}), the expectation of
+$\sum Q_{pq}\mu_p\mu_q$ is $\sum Q_{pq}(\bar K_{pq} + \mu^2)$. An estimator
+is \emph{unbiased} for $\theta$ if it is such a form with expectation $\theta$
+for every $\mu$.
+
+\begin{definition}[Expectation of quadratic estimators]\label{def:unbiased}
+  \lean{Credibility.Model.quad, Credibility.Model.mom2,
+        Credibility.Model.E, Credibility.Model.Unbiased}
+  \leanok
+  \uses{def:obsCov}
+  $\mathbb{E}_\mu\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] =
+  \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$, indices $p = (j,t)$.
+\end{definition}
+
+\begin{lemma}[The expectation is well defined]\label{lem:E_congr}
+  \lean{Credibility.Model.E_congr}
+  \leanok
+  \uses{def:unbiased}
+  If two matrices give the same quadratic form, they give the same expectation.
+\end{lemma}
+\begin{proof}
+  The difference $D$ has $D_{pq} + D_{qp} = 0$ (polarize with unit vectors),
+  and $\bar K_{pq} + \mu^2$ is symmetric.
+\end{proof}
+
+\begin{lemma}[Expected cross products of residuals]\label{lem:unbiased_dev}
+  \lean{Credibility.Model.unbiased_dev}
+  \leanok
+  \uses{def:unbiased, def:sigma2}
+  For any $\sigma_{jt}$,
+  $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
+   = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
+\end{lemma}
+\begin{proof}
+  The means cancel since $\sum_t a_{jt} = 1$. Expand the covariance into four
+  terms; the $\tau^2\delta_{ij}$ parts cancel.
+\end{proof}
+
+\begin{lemma}[Volume weights]\label{lem:a_special}
+  \lean{Credibility.Model.a_special}
+  \leanok
+  \uses{def:sigma2}
+  $a_{jt} = w_{jt}/w_{j*}$, as in \eqth{29}.
+\end{lemma}
+\begin{proof}
+  $\sigma_{jt}^{-2} = w_{jt}/\sigma_j^2$, and $\sigma_j^2$ cancels.
+\end{proof}
+
+\begin{lemma}[\eqth{37}]\label{lem:sigma2rho_special}
+  \lean{Credibility.Model.σ2ρ_special}
+  \leanok
+  \uses{lem:a_special}
+  $\sigma^2_{ij}\rho_{ij} = \dfrac{S_{ij}}{w_{i*}w_{j*}}\,\sigma_i\sigma_j\rho_{ij}$.
+\end{lemma}
+\begin{proof}
+  $a_{it}\sigma_{it} = \sigma_i\sqrt{w_{it}}/w_{i*}$.
+\end{proof}
+
+\begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
+  \lean{Credibility.Model.wtot, Credibility.Model.wall, Credibility.Model.sqrtSum,
+        Credibility.Model.muHat, Credibility.Model.sigRhoHat, Credibility.Model.cHat,
+        Credibility.Model.tauHat, Credibility.Model.KHat}
+  \leanok
+  With $\hmu_j = \sum_t (w_{jt}/w_{j*})\mu_{jt}$,
+  \begin{align*}
+    \widehat{\sigma^2_{ij}\rho_{ij}} &= \frac{\sum_t \sqrt{w_{it}w_{jt}}(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)}
+      {S_{ij} + (T-2)w_{i*}w_{j*}/S_{ij}}, \qquad
+    \hat c_j = \sum_i \Bigl(\delta_{ij} - \frac{w_{i*}}{w_{**}}\Bigr)\widehat{\sigma^2_{ij}\rho_{ij}},\\
+    \widehat{\tau^2} &= \frac{\sum_j w_{j*}\bigl\{(\hmu_j - \sum_i \frac{w_{i*}}{w_{**}}\hmu_i)^2 - \hat c_j\bigr\}}
+      {w_{**} - \sum_i w_{i*}^2/w_{**}}, \qquad
+    \hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \widehat{\tau^2}\delta_{ij}.
+  \end{align*}
+\end{definition}
+
+\begin{theorem}[Unbiased covariances]\label{thm:sigRhoHat_unbiased}
+  \lean{Credibility.Model.sigRhoHat_unbiased}
+  \leanok
+  \uses{def:estimators, lem:unbiased_dev, lem:sigma2rho_special}
+  If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$.
+\end{theorem}
+\begin{proof}
+  By Lemma~\ref{lem:unbiased_dev}, $\sqrt{w_{it}w_{jt}}\,\mathbb{E}[\dots]
+  = (1 - w_{it}/w_{i*} - w_{jt}/w_{j*})\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$.
+  Summing over $t$ gives $(T-2)\sigma_i\sigma_j\rho_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}$,
+  which is the denominator times $\sigma^2_{ij}\rho_{ij}$ by \eqth{37}.
+\end{proof}
+
+\begin{theorem}\label{thm:cHat_unbiased}
+  \lean{Credibility.Model.cHat_unbiased}
+  \leanok
+  \uses{thm:sigRhoHat_unbiased}
+  If $T \ge 2$, $\hat c_j$ is unbiased for
+  $c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$.
+\end{theorem}
+\begin{proof}
+  Linearity.
+\end{proof}
+
+\begin{theorem}[Unbiased $\tau^2$]\label{thm:tauHat_unbiased}
+  \lean{Credibility.Model.tauHat_unbiased}
+  \leanok
+  \uses{thm:cHat_unbiased, def:K}
+  If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}$ is unbiased for $\tau^2$.
+\end{theorem}
+\begin{proof}
+  $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2 = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$
+  with $v_i = w_{i*}/w_{**}$, by \eqth{38}. Weighting by $w_{j*}$, the
+  $\sigma^2\rho$ part is $\sum_j w_{j*}c_j$ and the $\tau^2$ part is
+  $(w_{**} - \sum_i w_{i*}^2/w_{**})\tau^2$. The denominator is positive iff $J \ge 2$.
+\end{proof}
+
+\begin{corollary}\label{cor:KHat_unbiased}
+  \lean{Credibility.Model.KHat_unbiased}
+  \leanok
+  \uses{thm:sigRhoHat_unbiased, thm:tauHat_unbiased, lem:K_apply}
+  If $T \ge 2$ and $J \ge 2$, $\hat K_{ij}$ is unbiased for $K_{ij}$.
+\end{corollary}
+\begin{proof}
+  Linearity and Lemma~\ref{lem:K_apply}.
+\end{proof}
+
+\begin{theorem}[Consistency with Bühlmann--Straub, \eqth{41}]\label{thm:sigRhoHat_self}
+  \lean{Credibility.Model.sigRhoHat_self}
+  \leanok
+  \uses{def:estimators}
+  $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with the Bühlmann--Straub
+  $\hat\sigma_j^2 = \frac{1}{T-1}\sum_t w_{jt}(\mu_{jt}-\hmu_j)^2$ of \eqth{13}.
+\end{theorem}
+\begin{proof}
+  $S_{jj} = w_{j*}$, so the denominator is $(T-1)w_{j*}$.
+\end{proof}
+
+\begin{remark}[Finding 7: sample sizes]\label{rem:estimation_sizes}
+  \uses{thm:sigRhoHat_unbiased, thm:tauHat_unbiased}
+  The thesis does not state the conditions $T \ge 2$ and $J \ge 2$. With
+  $T = 1$ the denominator of $\widehat{\sigma^2_{ij}\rho_{ij}}$ is
+  $S_{ij} - w_{i*}w_{j*}/S_{ij} = 0$; with $J = 1$ the denominator of
+  $\widehat{\tau^2}$ is $w_{**} - w_{**} = 0$. Bühlmann--Straub needs the same.
+\end{remark}
+
+% ---------------------------------------------------------------------------
 \chapter{The balance property}\label{ch:balance}
 % Thesis §2.9. Lean: Credibility/BuhlmannStraub.lean
 
