@@ -275,10 +275,8 @@ portfolio estimates built from the `μ̂ⱼ`, the GLS one has the smallest
 variance, and it equals `s²`. -/
 theorem portEst_optimal (hK : M.K.PosDef) (d : J → ℝ) (hd : ∑ j, d j = 1) :
     Var[N.portEst μ; P] = M.s2 ∧ M.s2 ≤ Var[N.portLin μ d; P] := by
-  have : Nonempty J := by
-    by_contra h
-    rw [not_nonempty_iff] at h
-    simp at hd
+  obtain ⟨j, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hd.trans_ne one_ne_zero)
+  have : Nonempty J := ⟨j⟩
   have hvar : ∀ d, Var[N.portLin μ d; P] = d ⬝ᵥ (M.K *ᵥ d) := fun d => by
     rw [← covariance_self (N.memLp_portLin μ d).aestronglyMeasurable.aemeasurable, cov_portLin]
   have hs2 : M.b ⬝ᵥ (M.K *ᵥ M.b) = M.s2 := glsWeight_value hK

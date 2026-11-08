@@ -1890,7 +1890,7 @@ only on observed cells $(j,t)$, $t \in T_j$.
   \lean{Credibility.Unequal.Noise.var_cohortLin_err,
         Credibility.Unequal.Noise.cohortEst_optimal, Credibility.Unequal.Noise.portEst_optimal}
   \leanok
-  \uses{thm:U_cov_obs, thm:U_a_optimal, thm:glsWeight_optimal}
+  \uses{thm:U_cov_obs, thm:U_a_optimal, thm:glsWeight_value, thm:glsWeight_optimal}
   If $\sum_{t\in T_j} c_t = 1$, then
   $\Var(\sum_{t\in T_j} c_t\mu_{jt} - \mu_j) = \sum_{t\in T_j} c_t^2\sigma_{jt}^2$,
   minimised by $a_j$. If $K \succ 0$,
@@ -1914,9 +1914,11 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{theorem}
 \begin{proof}
   \leanok
+  \uses{lem:U_moments_lin, thm:glsWeight_value, lem:sum_glsWeight, thm:bestZ_optimal}
   Bilinearity; the mean squared error is variance plus squared bias, and the
   bias vanishes since $\sum_{t\in T_j} a_{jt} = \sum_j b_j = 1$. Then
-  Theorem~\ref{thm:bestZ_optimal}.
+  Theorem~\ref{thm:bestZ_optimal}. Only $K$-level facts about the GLS weights
+  enter, so nothing here is specific to unequal lengths beyond $K$ itself.
 \end{proof}
 
 \begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
