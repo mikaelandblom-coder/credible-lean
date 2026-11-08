@@ -6,6 +6,7 @@ and whether its proof still contains `sorry`.
 
     python3 scripts/progress.py          # rewrite PROGRESS.md
     python3 scripts/progress.py --check  # exit 1 if PROGRESS.md is stale
+    python3 scripts/progress.py --proved # print the names counted as proved
 """
 import re
 import sys
@@ -121,7 +122,15 @@ def render() -> str:
     return "\n".join(head) + "\n\n" + "\n\n".join(sections) + "\n"
 
 
+def proved():
+    """Fully qualified names of the theorems counted as proved."""
+    return [r["name"] for f in sorted(SRC.glob("*.lean")) for r in scan(f)[1] if r["done"]]
+
+
 if __name__ == "__main__":
+    if "--proved" in sys.argv:
+        print("\n".join(proved()))
+        sys.exit(0)
     new = render()
     if "--check" in sys.argv:
         if not OUT.exists() or OUT.read_text() != new:

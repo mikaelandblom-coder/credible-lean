@@ -2,8 +2,12 @@ name: Blueprint
 
 # Builds Lean, the blueprint (web + pdf) and checks they agree.
 # Deploys to GitHub Pages on pushes to main.
+# Pushes to main and tags only: session branches (ccr-…, claude/…) used to
+# trigger a second, duplicate run of every commit.
 on:
   push:
+    branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -20,19 +24,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Lean project
-        uses: leanprover/lean-action@v1
+      # Every download below is retried (scripts/retry.sh): most past failures
+      # were a 503/504 from github.com or releases.lean-lang.org before the
+      # build even started. The toolchain and Mathlib are cached, so a normal
+      # run downloads neither.
+      - name: Cache Lean toolchain
+        id: elan-cache
+        uses: actions/cache@v4
         with:
-          use-github-cache: true
-          axiom-audit: true
+          path: ~/.elan
+          key: elan-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
+
+      - name: Install Lean
+        run: |
+          if [ "${{ steps.elan-cache.outputs.cache-hit }}" != "true" ]; then
+            bash scripts/retry.sh sh -c 'curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+              | sh -s -- -y --default-toolchain none --no-modify-path'
+            bash scripts/retry.sh "$HOME/.elan/bin/elan" toolchain install "$(cat lean-toolchain)"
+          fi
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Cache Mathlib
+        uses: actions/cache@v4
+        with:
+          path: .lake/packages
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+
+      - name: Get Mathlib cache
+        run: bash scripts/retry.sh lake exe cache get
+
+      - name: Build Lean project
+        run: lake build
+
+      # Open `sorry`s are fine on main while a file is in progress; what must
+      # not happen is a theorem counted as proved that depends on one, or an
+      # axiom beyond propext, Classical.choice, Quot.sound.
+      - name: Audit axioms
+        run: |
+          python3 scripts/progress.py --proved > "$RUNNER_TEMP/proved.txt"
+          lake env lean --run scripts/CheckAxioms.lean "$RUNNER_TEMP/proved.txt"
 
       - name: Install TeX, graphviz and leanblueprint
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          bash scripts/retry.sh sudo apt-get update
+          bash scripts/retry.sh sudo apt-get install -y --no-install-recommends \
             graphviz libgraphviz-dev latexmk texlive-xetex texlive-latex-extra \
             texlive-fonts-recommended texlive-science lmodern fonts-lmodern
-          pip install leanblueprint
+          bash scripts/retry.sh pip install leanblueprint==0.0.20
 
       - name: Build blueprint
         working-directory: blueprint

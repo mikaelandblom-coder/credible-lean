@@ -75,6 +75,9 @@ the thesis. CI builds it and deploys to GitHub Pages from `main`.
   new theorems need a blueprint entry. `python3 scripts/blueprint_check.py`
   must pass before committing (it compares with the same test as
   `PROGRESS.md`).
+- CI also runs `scripts/CheckAxioms.lean`: open `sorry`s are fine, but a
+  theorem counted as proved must not depend on one (even through a lemma),
+  and no axioms beyond `propext`, `Classical.choice`, `Quot.sound`.
 - A new finding gets a `remark` next to the result it concerns.
 - `\lean{}` links go to the source line via `find/` (no doc-gen4 build;
   it would document all of Mathlib).
