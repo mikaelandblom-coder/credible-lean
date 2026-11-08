@@ -47,7 +47,10 @@ noncomputable def excessLoss (v1 v2 c d dw : ℝ) : ℝ :=
 `MSE(β) = MSE(β*) + (V + d)(β - β*)²`, with `β* = (v - c)/(V + d)`. -/
 theorem mse_eq {v c V d : ℝ} (hVd : V + d ≠ 0) (β : ℝ) :
     mse v c V d β = mse v c V d (weight v c V d) + (V + d) * (β - weight v c V d) ^ 2 := by
-  sorry
+  -- Complete the square: β²(V+d) - 2β(v-c) = (V+d)(β - β*)² - (v-c)²/(V+d).
+  rw [mse, mse, weight]
+  field_simp
+  ring
 
 /-- The note's closed form: `ΔL(d_w) = Q (V + d) (1/(V + d_w) - 1/(V + d))²`. -/
 theorem excessLoss_eq {v1 v2 c d dw : ℝ} (hd : V v1 v2 c + d ≠ 0)
