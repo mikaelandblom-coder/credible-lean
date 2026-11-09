@@ -110,6 +110,13 @@ Once the thesis results are proved:
   off-diagonal entries of a covariance matrix `τ` by `ρ ∈ [0,1]` keeps it
   positive semidefinite, and positive definite if `ρ < 1` and the diagonal
   is positive. Done: `Credibility/OffDiagonal.lean`.
+- **Towards hierarchical credibility.** Begun, not in the thesis
+  (`Credibility/Hierarchical.lean`): the cohort levels share a level within
+  groups. A shared level drops out of credibility (only the non-shared part
+  `(1-φ)τ²` counts); with several groups the GLS weights are two-stage (GLS
+  within groups, inverse variance across them), and the §2.8 estimator `τ̂²`
+  is biased by the within-group pairs, which pairs within and across groups
+  correct (FINDINGS item 13). Open: the moment layer for group levels.
 
 ## Sharing results
 

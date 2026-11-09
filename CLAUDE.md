@@ -40,8 +40,6 @@ moments are assumed). Never add a distributional assumption.
   provable. If a statement is false or needs an extra hypothesis, stop,
   explain why with a counterexample, and log it in `FINDINGS.md`. Such
   gaps in the thesis are the interesting part.
-- Suggested order: `Blend`, `Weights` (inverse variance), `TwoCohorts`,
-  then `Weights` (GLS), `Model`, `BuhlmannStraub`.
 - Work on one `sorry` at a time and run `lake build` after each step.
 - Prefer existing Mathlib lemmas; search with `exact?`, `apply?`, or grep in
   `.lake/packages/mathlib`.
@@ -102,7 +100,7 @@ still reads like the thesis; special cases are corollaries.
   covariance lemma for linear combinations; each model supplies only its
   weight vectors).
 - `Model` is `Unequal` with `obs j = univ`: `Model` results with an `Unequal`
-  twin should be proved from it (refactor in progress).
+  twin are proved from it.
 - Thesis-facing theorems keep their exact statements and docstrings. Only the
   proof becomes `simpa using <general result>`. In `content.tex`, `\uses{}`
   points special cases at the general result.

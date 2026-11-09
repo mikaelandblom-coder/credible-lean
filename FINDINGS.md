@@ -145,5 +145,3 @@ Gaps, extra hypotheses and new results found while formalizing.
    `Noise.integral_quad` makes `Unbiased` the actual expectation.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
-
-(Findings 1–3 come from the statements; confirm them as proofs land.)
