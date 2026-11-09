@@ -72,10 +72,13 @@ moments are assumed). Never add a distributional assumption.
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
   get from the repo (open questions, dead ends tried).
-- If something real and general comes out of this (a lemma missing from
-  Mathlib, a fix to an upstream library), propose contributing it back
-  upstream via a PR to the public repo. Tell the owner what it is and
-  where it would go, and open the PR once they agree.
+- No upstream contributions or posts. Mathlib's policy (2026-11-09) bans
+  LLM-written comments on its Zulip and GitHub and expects code written by
+  hand, and the owner works only through AI; their account was suspended for
+  an AI-drafted Zulip post. So don't draft Zulip posts, GitHub comments, or
+  Mathlib PRs. Reading public Mathlib (source, PRs, issues) to reuse its
+  progress is fine. General lemmas stay in this repo, named and stated as
+  if they were in Mathlib.
 
 ## Architecture (avoiding proof bloat)
 Agreed 2026-11-08. Prove each fact once, at the most general level that
