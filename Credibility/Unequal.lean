@@ -56,35 +56,17 @@ omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- Eq. (23) on `Tⱼ` minimises `Σ_{t∈Tⱼ} aₜ² σⱼₜ²` among weights on `Tⱼ` summing to one. -/
 theorem a_optimal (j : J) (c : T → ℝ) (hc : ∑ t ∈ M.obs j, c t = 1) :
     ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 ≤ ∑ t ∈ M.obs j, c t ^ 2 * M.σ j t ^ 2 := by
-  set S := ∑ s ∈ M.obs j, (M.σ j s ^ 2)⁻¹
-  have hS : S ≠ 0 :=
-    (sum_pos (fun s _ => inv_pos.mpr (pow_pos (M.σ_pos j s) 2)) (M.obs_nonempty j)).ne'
-  have hσ : ∀ t, M.σ j t ^ 2 ≠ 0 := fun t => pow_ne_zero 2 (M.σ_pos j t).ne'
-  have ha : ∀ t ∈ M.obs j, M.a j t = (M.σ j t ^ 2)⁻¹ / S := fun t ht => by
-    simp only [a, ht, ↓reduceIte, S]
-  -- `Σ a²σ² = Σ c a σ² = 1/S`, and `Σ (c - a)²σ² ≥ 0`.
-  have h1 : ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 = S⁻¹ := by
-    rw [sum_congr rfl fun t ht => by rw [ha t ht]]
-    have : ∀ t, ((M.σ j t ^ 2)⁻¹ / S) ^ 2 * M.σ j t ^ 2 = (M.σ j t ^ 2)⁻¹ / S ^ 2 := fun t => by
-      field_simp [hσ t]
-    simp only [this, ← sum_div]
-    change S / S ^ 2 = S⁻¹
-    field_simp
-  have h2 : ∑ t ∈ M.obs j, c t * M.a j t * M.σ j t ^ 2 = S⁻¹ := by
-    rw [sum_congr rfl fun t ht => by rw [ha t ht]]
-    have : ∀ t, c t * ((M.σ j t ^ 2)⁻¹ / S) * M.σ j t ^ 2 = c t / S := fun t => by
-      field_simp [hσ t, (M.σ_pos j t).ne']
-    simp only [this, ← sum_div, hc, one_div]
-  have hnn : 0 ≤ ∑ t ∈ M.obs j, (c t - M.a j t) ^ 2 * M.σ j t ^ 2 :=
-    sum_nonneg fun t _ => mul_nonneg (sq_nonneg _) (sq_nonneg _)
-  have hexp : ∑ t ∈ M.obs j, (c t - M.a j t) ^ 2 * M.σ j t ^ 2
-      = ∑ t ∈ M.obs j, c t ^ 2 * M.σ j t ^ 2 - 2 * ∑ t ∈ M.obs j, c t * M.a j t * M.σ j t ^ 2
-        + ∑ t ∈ M.obs j, M.a j t ^ 2 * M.σ j t ^ 2 := by
-    rw [mul_sum, ← sum_sub_distrib, ← sum_add_distrib]
-    exact sum_congr rfl fun t _ => by ring
-  rw [hexp, h1, h2] at hnn
-  rw [h1]
-  linarith
+  -- `invVarWeight_optimal` on the periods `Tⱼ`, where `aⱼ` is eq. (23).
+  have key := invVarWeight_optimal (T := M.obs j) (fun t => M.σ j t ^ 2)
+    (fun t => pow_pos (M.σ_pos j t) 2) (fun t => c t)
+    (by rw [Finset.sum_coe_sort (M.obs j) c]; exact hc)
+  have ha : ∀ t : M.obs j, invVarWeight (fun t : M.obs j => M.σ j t ^ 2) t = M.a j t := by
+    intro t
+    simp only [invVarWeight, a, t.2, ite_true]
+    rw [Finset.sum_coe_sort (M.obs j) fun s => (M.σ j s ^ 2)⁻¹]
+  simp only [ha] at key
+  rwa [Finset.sum_coe_sort (M.obs j) fun t => M.a j t ^ 2 * M.σ j t ^ 2,
+    Finset.sum_coe_sort (M.obs j) fun t => c t ^ 2 * M.σ j t ^ 2] at key
 
 omit [Fintype J] [Fintype T] in
 /-- `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ`, as in eq. (27); no `T ≥ 1` needed since `Tⱼ ≠ ∅`. -/
@@ -325,7 +307,7 @@ theorem AgreeOnOverlaps.σ2_eq (h : M.AgreeOnOverlaps M') : M.σ2 = M'.σ2 := by
   funext i j
   simp only [σ2, overlap, a, h.σ_eq, h.obs_eq]
 
-omit [Fintype T] in
+omit [Fintype J] [Fintype T] in
 /-- `K` does not see `ρᵢⱼ` on disjoint pairs: there `σ²ᵢⱼ = 0`. -/
 theorem AgreeOnOverlaps.K_eq (h : M.AgreeOnOverlaps M') : M.K = M'.K := by
   ext i j
@@ -423,7 +405,7 @@ theorem extend_agree (f g : J → J → ℝ) (hf : ∀ i j, f i j = f j i)
     change (if h : _ then _ else _) = (if h : _ then _ else _)
     simp only [h', ↓reduceDIte]
 
-omit [Fintype T] in
+omit [Fintype J] [Fintype T] in
 /-- `K`, `b`, `s²` and `zⱼ` do not depend on how the table is completed. -/
 theorem K_extend (f : J → J → ℝ) (hf : ∀ i j, f i j = f j i) :
     (P.extend f hf).K = P.toUnequal.K :=

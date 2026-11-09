@@ -137,7 +137,7 @@ theorem singularity_reachable_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) 
 /-- Sharpens §2.7: the thesis notes `z₁ > 1` can occur and clips it in
 eq. (34), but gives no condition. Below the singularity, correlation pushes
 the credibility above one ("noise cancellation") exactly when `σ₁ < σ₂ρ`. -/
-theorem z1_gt_one_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2)
+theorem z1_gt_one_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (_hτ : 0 < τ2)
     (hρ : ρ < (τ2 + σ1 ^ 2) / (σ1 * σ2)) :
     1 < τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) ↔ σ1 < σ2 * ρ := by
   -- Below the singularity the denominator is positive, so z₁ > 1 iff

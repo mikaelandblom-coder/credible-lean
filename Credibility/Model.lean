@@ -100,6 +100,7 @@ lemma toUnequal_moments [Nonempty T] : M.toUnequal.moments = M.moments := by
     toUnequal_b]
   rfl
 
+omit [Fintype J] in
 /-- A positive definite `K` (with some cohort) forces `T ≠ ∅`: otherwise `K = 0`. -/
 lemma nonempty_of_posDef (hK : M.K.PosDef) (j : J) : Nonempty T := by
   by_contra h
