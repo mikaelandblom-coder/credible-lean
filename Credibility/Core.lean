@@ -28,17 +28,57 @@ noncomputable def moments (K : Matrix J J ℝ) (τ2 : ℝ) (v : J → ℝ) (j : 
   covCohortTarget := τ2
   covPortfolioTarget := glsWeight K j * τ2
 
+/-! ### A general level covariance
+
+The cohort levels may be correlated: `cov(μᵢ, μⱼ) = Lᵢⱼ` for a level covariance
+matrix `L`. The thesis has `L = τ²I`; a shared level within groups
+(`Hierarchical.lean`) has other `L`. Only `cov(μ̂ⱼ, μⱼ) = Lⱼⱼ` and
+`cov(μ̂, μⱼ) = (L b)ⱼ` depend on it. -/
+
+/-- The moments entering the blend for cohort `j` (§2.4) when the cohort
+estimates have covariance `K`, the levels have covariance `L` and
+`Var(μ̂ⱼ) = d` (`= Kⱼⱼ` in every model): the GLS weights `b` of `K`,
+`s² = 1/K⁻¹ₓₓ`, `Var(μⱼ) = cov(μ̂ⱼ, μⱼ) = Lⱼⱼ` and `cov(μ̂, μⱼ) = (L b)ⱼ`. -/
+noncomputable def levelMoments (K L : Matrix J J ℝ) (d : ℝ) (j : J) : BlendMoments where
+  varCohort := d
+  varPortfolio := (invTotal K)⁻¹
+  varTarget := L j j
+  covEst := (K *ᵥ glsWeight K) j
+  covCohortTarget := L j j
+  covPortfolioTarget := (L *ᵥ glsWeight K) j
+
+/-- `Var(μ̂ⱼ - μ̂) = Var(μ̂ⱼ) - s²`, using `K b = s² u`. -/
+theorem levelMoments_gap_eq (hK : K.PosDef) (L : Matrix J J ℝ) (d : ℝ) (j : J) :
+    (levelMoments K L d j).gap = d - (invTotal K)⁻¹ := by
+  simp only [BlendMoments.gap, levelMoments, mulVec_glsWeight hK]
+  ring
+
+/-- Eq. (26) for a general level covariance:
+`zⱼ = (Lⱼⱼ - (L b)ⱼ) / (Var(μ̂ⱼ) - s²)`. -/
+theorem levelMoments_bestZ_eq (hK : K.PosDef) (L : Matrix J J ℝ) (d : ℝ) (j : J) :
+    (levelMoments K L d j).bestZ = (L j j - (L *ᵥ glsWeight K) j) / (d - (invTotal K)⁻¹) := by
+  rw [BlendMoments.bestZ, levelMoments_gap_eq hK]
+  simp only [levelMoments, mulVec_glsWeight hK]
+  ring
+
+/-- The thesis moments are the case `L = τ²I`, `d = τ² + vⱼ`. -/
+theorem moments_eq_levelMoments (j : J) :
+    moments K τ2 v j = levelMoments K (τ2 • (1 : Matrix J J ℝ)) (τ2 + v j) j := by
+  simp only [moments, levelMoments, smul_mulVec, one_mulVec, Pi.smul_apply, smul_eq_mul,
+    Matrix.smul_apply, Matrix.one_apply_eq, mul_one]
+  rw [mul_comm]
+
 /-- `Var(μ̂ⱼ - μ̂) = τ² + vⱼ - s²`, using `K b = s² u`. -/
 theorem gap_eq (hK : K.PosDef) (j : J) :
     (moments K τ2 v j).gap = τ2 + v j - (invTotal K)⁻¹ := by
-  simp only [BlendMoments.gap, moments, mulVec_glsWeight hK]
-  ring
+  rw [moments_eq_levelMoments, levelMoments_gap_eq hK]
 
 /-- Eq. (26): `zⱼ = (1 - bⱼ) τ² / (τ² + vⱼ - s²)`. -/
 theorem bestZ_eq (hK : K.PosDef) (j : J) :
     (moments K τ2 v j).bestZ = (1 - glsWeight K j) * τ2 / (τ2 + v j - (invTotal K)⁻¹) := by
-  rw [BlendMoments.bestZ, gap_eq hK]
-  simp only [moments, mulVec_glsWeight hK]
+  rw [moments_eq_levelMoments, levelMoments_bestZ_eq hK]
+  simp only [smul_mulVec, one_mulVec, Pi.smul_apply, smul_eq_mul, Matrix.smul_apply,
+    Matrix.one_apply_eq, mul_one]
   ring
 
 /-! ### Diagonal `K = diag(τ² + vⱼ)` -/

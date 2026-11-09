@@ -436,6 +436,35 @@ $K \succ 0$, and takes the results of this section as corollaries.
   $\cov(\hmu, \mu_j) = b_j\tau^2$ (§2.4).
 \end{definition}
 
+\begin{definition}[Blend moments for a level covariance]\label{def:Core.levelMoments}
+  \lean{Credibility.Core.levelMoments}
+  \leanok
+  \uses{def:bestZ, def:glsWeight}
+  The cohort levels may be correlated, $\cov(\mu_i,\mu_j) = L_{ij}$. With $\bb$
+  and $s^2$ from $K$ and $\Var(\hmu_j) = d$ ($= K_{jj}$ in every model):
+  $\Var(\hmu) = s^2$, $\Var(\mu_j) = \cov(\hmu_j,\mu_j) = L_{jj}$,
+  $\cov(\hmu_j,\hmu) = (K\bb)_j$ and $\cov(\hmu,\mu_j) = (L\bb)_j$.
+  Definition~\ref{def:Core.moments} is the case $L = \tau^2 I$,
+  $d = \tau^2 + v_j$.
+\end{definition}
+
+\begin{theorem}[Eq.\ (26) for a level covariance]\label{thm:Core_levelMoments_bestZ_eq}
+  \lean{Credibility.Core.levelMoments_gap_eq, Credibility.Core.levelMoments_bestZ_eq,
+    Credibility.Core.moments_eq_levelMoments}
+  \leanok
+  \uses{def:Core.levelMoments, def:Core.moments, lem:mulVec_glsWeight}
+  If $K$ is positive definite then $\Var(\hmu_j - \hmu) = d - s^2$ and
+  \[
+    z_j = \frac{L_{jj} - (L\bb)_j}{d - s^2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight}
+  Put $(K\bb)_j = s^2$ into \eqth{7}: $\Var(\hmu) - \cov(\hmu_j,\hmu) = 0$, and
+  the curvature is $s^2 - 2s^2 + d$.
+\end{proof}
+
 \begin{lemma}[The curvature]\label{lem:Core_gap_eq}
   \lean{Credibility.Core.gap_eq}
   \leanok
@@ -444,8 +473,8 @@ $K \succ 0$, and takes the results of this section as corollaries.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:mulVec_glsWeight}
-  $(K\bb)_j = s^2$.
+  \uses{thm:Core_levelMoments_bestZ_eq}
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with $L = \tau^2 I$.
 \end{proof}
 
 \begin{theorem}[The proposed credibility factor]\label{thm:Core_bestZ_eq}
@@ -457,9 +486,9 @@ $K \succ 0$, and takes the results of this section as corollaries.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:Core_gap_eq, lem:mulVec_glsWeight}
-  Put $(K\bb)_j = s^2$ into \eqth{7}: the numerator becomes $(1-b_j)\tau^2$,
-  the denominator is Lemma~\ref{lem:Core_gap_eq}.
+  \uses{thm:Core_levelMoments_bestZ_eq}
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with $L = \tau^2 I$:
+  $L_{jj} - (L\bb)_j = (1-b_j)\tau^2$.
 \end{proof}
 
 \begin{theorem}[Diagonal $K$]\label{thm:Core_diag}
@@ -2178,6 +2207,19 @@ $M_\phi$ be the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
     = (\tau^2(\mathbf 1\mathbf 1^T)^\phi b)_j$.
 \end{definition}
 
+\begin{lemma}\label{lem:momentsPhi_level}
+  \lean{Credibility.Model.momentsφ_eq_levelMoments}
+  \leanok
+  \uses{def:momentsPhi, def:Core.levelMoments}
+  The blend moments with a shared level are those of
+  Definition~\ref{def:Core.levelMoments} for $K_\phi$,
+  $L = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ and $d = \tau^2 + \sigma^2_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $L_{jj} = \tau^2$.
+\end{proof}
+
 \begin{theorem}[The shared level drops out]\label{thm:momentsPhi}
   \lean{Credibility.Model.momentsφ_eq, Credibility.Model.errVar_momentsφ,
     Credibility.Model.bestZ_momentsφ}
@@ -2415,6 +2457,19 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
   $K_\phi$ and $\tau^2(\mathbf 1\mathbf 1^T)^\phi$.
 \end{definition}
 
+\begin{lemma}\label{lem:momentsG_level}
+  \lean{Credibility.Model.momentsG_eq_levelMoments}
+  \leanok
+  \uses{def:momentsG, def:Core.levelMoments}
+  The blend moments with group levels are those of
+  Definition~\ref{def:Core.levelMoments} for $K_G$, $L_G$ and
+  $d = \tau^2 + \sigma^2_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(L_G)_{jj} = \tau^2$.
+\end{proof}
+
 \begin{theorem}[Eq.\ (26) with group levels]\label{thm:bestZ_G_eq}
   \lean{Credibility.Model.bestZ_G_eq}
   \leanok
@@ -2427,8 +2482,8 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:KG_posDef, lem:KG_eq, lem:mulVec_glsWeight}
-  $\cov(\hmu_j,\hmu) = s^2$ as always, and
+  \uses{thm:KG_posDef, lem:momentsG_level, thm:Core_levelMoments_bestZ_eq}
+  Lemma~\ref{lem:momentsG_level} and Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with
   $\cov(\hmu,\mu_j) = (L_Gb)_j = (1-\phi)\tau^2 b_j + \phi\tau^2 B_g$.
 \end{proof}
 

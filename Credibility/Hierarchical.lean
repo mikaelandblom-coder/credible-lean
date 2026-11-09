@@ -289,6 +289,12 @@ noncomputable def momentsφ (φ : ℝ) (j : J) : BlendMoments where
   covCohortTarget := M.τ2
   covPortfolioTarget := (levelCov M.τ2 φ *ᵥ glsWeight (M.Kφ φ)) j
 
+omit [DecidableEq T] in
+/-- `momentsφ` is the Core blend for the level covariance `τ²(11ᵀ)^φ`. -/
+theorem momentsφ_eq_levelMoments (φ : ℝ) (j : J) :
+    M.momentsφ φ j = Core.levelMoments (M.Kφ φ) (levelCov M.τ2 φ) (M.τ2 + M.σ2 j j) j := by
+  simp [momentsφ, Core.levelMoments, levelCov_apply]
+
 /-- The shared level adds `φτ²` to every moment of the thesis blend with
 non-shared level variance `(1-φ)τ²`. -/
 theorem momentsφ_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
@@ -565,6 +571,12 @@ noncomputable def momentsG (grp : J → G) (φ : ℝ) (j : J) : BlendMoments whe
   covCohortTarget := M.τ2
   covPortfolioTarget := (levelCovG grp M.τ2 φ *ᵥ glsWeight (M.KG grp φ)) j
 
+omit [DecidableEq T] [Fintype G] in
+/-- `momentsG` is the Core blend for the level covariance `L_G`. -/
+theorem momentsG_eq_levelMoments (φ : ℝ) (j : J) :
+    M.momentsG grp φ j = Core.levelMoments (M.KG grp φ) (levelCovG grp M.τ2 φ) (M.τ2 + M.σ2 j j) j := by
+  simp [momentsG, Core.levelMoments, levelCovG]
+
 /-- Eq. (26) with group levels: with `b`, `s²` the GLS weights and portfolio
 variance of `K_G` and `B_g` the total weight of the group `g` of `j`,
 `zⱼ = ((1-φ)τ²(1 - bⱼ) + φτ²(1 - B_g)) / (τ² + vⱼ - s²)`. Each part of the
@@ -576,7 +588,6 @@ theorem bestZ_G_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (
       = ((1 - φ) * M.τ2 * (1 - glsWeight (M.KG grp φ) j)
           + φ * M.τ2 * (1 - groupWeight grp (glsWeight (M.KG grp φ)) (grp j)))
         / (M.τ2 + M.σ2 j j - (invTotal (M.KG grp φ))⁻¹) := by
-  have : Nonempty J := ⟨j⟩
   have hK := M.KG_posDef grp hρ h0 h1
   set b := glsWeight (M.KG grp φ)
   have hL : (levelCovG grp M.τ2 φ *ᵥ b) j
@@ -593,9 +604,9 @@ theorem bestZ_G_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (
           simp only [h, hg, hg', ite_false]; ring
     simp only [mulVec, dotProduct, hx, Finset.sum_add_distrib, ← Finset.mul_sum, groupWeight,
       Finset.sum_ite_eq, Finset.mem_univ, ite_true]
-  simp only [BlendMoments.bestZ, BlendMoments.gap, momentsG]
-  rw [show (levelCovG grp M.τ2 φ *ᵥ glsWeight (M.KG grp φ)) j = _ from hL, mulVec_glsWeight hK]
-  congr 1 <;> ring
+  rw [M.momentsG_eq_levelMoments, Core.levelMoments_bestZ_eq hK, hL]
+  simp only [levelCovG, of_apply, ite_true]
+  ring_nf
 
 /-! ### Bridge 5: the §2.8 estimators with group levels -/
 
