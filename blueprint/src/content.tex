@@ -1328,19 +1328,53 @@ shared periods.
   The added terms vanish.
 \end{proof}
 
+\begin{definition}[Blocks and the error covariance]\label{def:U_errCov}
+  \lean{Credibility.Unequal.block, Credibility.Unequal.errCov}
+  \leanok
+  \uses{def:Unequal}
+  $J_t = \{j : t \in T_j\}$ are the cohorts observed in period $t$, and
+  $R_t = (\rho_{ij})_{i,j\in J_t}$ is their correlation block. The error
+  covariance of the cohort estimates is $\Sigma_{ij} = \sigma^2_{ij}\rho_{ij}$.
+\end{definition}
+
+\begin{lemma}[$K = \Sigma + \tau^2 I$]\label{lem:U_K_eq_errCov}
+  \lean{Credibility.Unequal.K_eq_errCov, Credibility.Unequal.sum_eq_sum_block}
+  \leanok
+  \uses{def:U_errCov, lem:U_K_apply}
+  $K = \Sigma + \tau^2 I$, and a sum over $J$ of terms vanishing off $J_t$ is a
+  sum over $J_t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_K_apply}
+  Lemma~\ref{lem:U_K_apply}.
+\end{proof}
+
+\begin{lemma}[The error covariance is positive semidefinite]\label{lem:U_errCov_posSemidef}
+  \lean{Credibility.Unequal.errCov_posSemidef}
+  \leanok
+  \uses{def:U_errCov}
+  If every block $R_t$ is positive semidefinite, then $\Sigma \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_K_eq_errCov, lem:U_sum_full, lem:U_K_symm}
+  $x^T\Sigma x = \sum_t y_t^T R\,y_t$ with $(y_t)_j = a_{jt}\sigma_{jt}x_j$. Since
+  $a_{jt} = 0$ for $t \notin T_j$, $y_t$ lives on $J_t$ and $y_t^TRy_t$ only
+  involves the block $R_t$.
+\end{proof}
+
 \begin{theorem}[$K$ stays positive definite]\label{thm:U_K_posDef}
   \lean{Credibility.Unequal.K_posDef}
   \leanok
-  \uses{lem:U_K_apply, lem:U_K_symm, lem:U_sum_full}
+  \uses{def:U_errCov, lem:U_K_apply}
   If for every period $t$ the block $(\rho_{ij})_{i,j \in J_t}$ is positive
   semidefinite, then $K$ is positive definite, whatever the overlap pattern.
 \end{theorem}
 \begin{proof}
   \leanok
-  As in Lemma~\ref{lem:K_posDef},
-  $x^TKx = \sum_t y_t^T R\,y_t + \tau^2\lVert x\rVert^2$ with
-  $(y_t)_j = a_{jt}\sigma_{jt}x_j$. Since $a_{jt} = 0$ for $t \notin T_j$,
-  $y_t$ lives on $J_t$ and $y_t^TRy_t$ only involves the block $R[J_t, J_t]$.
+  \uses{lem:U_K_eq_errCov, lem:U_errCov_posSemidef}
+  $K = \Sigma + \tau^2 I$ with $\Sigma \succeq 0$ and $\tau^2 > 0$.
 \end{proof}
 
 \begin{corollary}\label{cor:U_K_posDef}
@@ -1948,11 +1982,10 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{proof}
 
 \begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
-  \lean{Credibility.Unequal.block, Credibility.Unequal.corrAt, Credibility.Unequal.gram,
-        Credibility.Unequal.sum_eq_sum_block, Credibility.Unequal.corrAt_quad_nonneg,
-        Credibility.Unequal.gram_posSemidef}
+  \lean{Credibility.Unequal.corrAt, Credibility.Unequal.gram,
+        Credibility.Unequal.corrAt_quad_nonneg, Credibility.Unequal.gram_posSemidef}
   \leanok
-  \uses{def:U_Noise}
+  \uses{def:U_Noise, def:U_errCov}
   Let $C^t_{ij} = \rho_{ij}$ if $t \in T_i \cap T_j$ and $\delta_{ij}$
   otherwise (unit noise, uncorrelated, on unobserved cells). If every block
   $R_t = (\rho_{ij})_{i,j \in J_t}$, $J_t = \{j : t \in T_j\}$, is positive
@@ -2071,18 +2104,16 @@ for $i \ne j$. The thesis is $\phi = 0$; one common level is $\phi = 1$.
 \end{proof}
 
 \begin{lemma}[The error covariance is positive semidefinite]\label{lem:errCov_posSemidef}
-  \lean{Credibility.Model.errCov_posSemidef}
+  \lean{Credibility.Model.errCov_eq_toUnequal, Credibility.Model.errCov_posSemidef}
   \leanok
   \uses{def:Kphi}
   If $T \ge 1$ and $(\rho_{ij}) \succeq 0$, then $\Sigma \succeq 0$.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:K_posDef, lem:K_apply}
-  For every $\varepsilon > 0$, $\Sigma + \varepsilon I$ is the $K$ of the model
-  with $\tau^2 = \varepsilon$, which is positive definite. So
-  $x^T\Sigma x + \varepsilon\lVert x\rVert^2 > 0$ for all $\varepsilon > 0$;
-  let $\varepsilon \to 0$.
+  \uses{lem:U_errCov_posSemidef}
+  Lemma~\ref{lem:U_errCov_posSemidef} with $T_j = T$: every block is a
+  principal submatrix of $(\rho_{ij})$.
 \end{proof}
 
 \begin{theorem}[$K_\phi$ is positive definite]\label{thm:Kphi_posDef}
@@ -2335,7 +2366,7 @@ per group. These are no longer along $\mathbf 1$, so Section~\ref{sec:hier_bridg
 does not apply to the whole portfolio, only block by block. First a Core fact.
 
 \begin{definition}[Blocks]\label{def:block}
-  \lean{Credibility.block, Credibility.IsBlockDiag}
+  \lean{Credibility.groupBlock, Credibility.IsBlockDiag}
   \leanok
   For $g \colon J \to G$, the block $K_g$ of $K$ is its restriction to the
   cohorts of group $g$. $K$ is block diagonal if $K_{ij} = 0$ whenever
@@ -2343,7 +2374,7 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{definition}
 
 \begin{lemma}\label{lem:block_posDef}
-  \lean{Credibility.block_posDef, Credibility.sum_eq_sum_block}
+  \lean{Credibility.groupBlock_posDef, Credibility.sum_eq_sum_groupBlock}
   \leanok
   \uses{def:block}
   Blocks of a positive definite matrix are positive definite. A sum over $J$

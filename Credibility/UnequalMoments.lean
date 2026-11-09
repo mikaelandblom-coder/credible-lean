@@ -373,10 +373,6 @@ end Noise
 
 /-! ### Consistency: when do such random variables exist? -/
 
-/-- The correlation block of the cohorts observed in period `t`. -/
-def block (M : Unequal J T) (t : T) : Matrix {j // t ∈ M.obs j} {j // t ∈ M.obs j} ℝ :=
-  (Matrix.of M.ρ).submatrix Subtype.val Subtype.val
-
 /-- Noise correlations at period `t` used for the witness: `ρᵢⱼ` between
 cohorts observed at `t`, independent unit noise on unobserved cells. -/
 def corrAt (M : Unequal J T) (t : T) (i j : J) : ℝ :=
@@ -388,12 +384,6 @@ def gram (M : Unequal J T) : J ⊕ (J × T) → J ⊕ (J × T) → ℝ
   | .inl _, .inr _ => 0
   | .inr _, .inl _ => 0
   | .inr p, .inr q => M.corrAt p.2 p.1 q.1 * if p.2 = q.2 then 1 else 0
-
-omit [DecidableEq J] [Fintype T] in
-lemma sum_eq_sum_block (M : Unequal J T) (t : T) (f : J → ℝ) (hf : ∀ j, t ∉ M.obs j → f j = 0) :
-    ∑ j, f j = ∑ j : {j // t ∈ M.obs j}, f j := by
-  rw [← Fintype.sum_subtype_add_sum_subtype (fun j => t ∈ M.obs j) f,
-    Fintype.sum_eq_zero (fun j : {j // ¬t ∈ M.obs j} => f j) fun j => hf j j.2, add_zero]
 
 omit [Fintype T] in
 /-- `vᵀ C_t v ≥ 0` for the witness correlations, when the block at `t` is PSD. -/

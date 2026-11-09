@@ -138,54 +138,70 @@ lemma K_eq_sum (i j : J) :
   rw [sum_subset (subset_univ (M.obs i)) fun t _ ht => by simp [a, ht]]
   exact sum_congr rfl fun t _ => sum_subset (subset_univ _) fun s _ hs => by simp [a, hs]
 
+/-! ### The error covariance and positive definiteness -/
+
+/-- The correlation block of the cohorts observed in period `t`. -/
+def block (t : T) : Matrix {j // t ∈ M.obs j} {j // t ∈ M.obs j} ℝ :=
+  (Matrix.of M.ρ).submatrix Subtype.val Subtype.val
+
+omit [DecidableEq J] [Fintype T] in
+/-- Sums over `J` of terms vanishing off `Jₜ = {j : t ∈ Tⱼ}` are sums over `Jₜ`. -/
+lemma sum_eq_sum_block (t : T) (f : J → ℝ) (hf : ∀ j, t ∉ M.obs j → f j = 0) :
+    ∑ j, f j = ∑ j : {j // t ∈ M.obs j}, f j := by
+  rw [← Fintype.sum_subtype_add_sum_subtype (fun j => t ∈ M.obs j) f,
+    Fintype.sum_eq_zero (fun j : {j // ¬t ∈ M.obs j} => f j) fun j => hf j j.2, add_zero]
+
+/-- The error covariance `Σᵢⱼ = σ²ᵢⱼρᵢⱼ` of the cohort estimates: `K` without the
+level variance. -/
+noncomputable def errCov : Matrix J J ℝ := of fun i j => M.σ2 i j * M.ρ i j
+
+omit [Fintype J] [Fintype T] in
+/-- `K = Σ + τ²I`. -/
+theorem K_eq_errCov : M.K = M.errCov + M.τ2 • (1 : Matrix J J ℝ) := by
+  ext i j
+  rw [M.K_apply]
+  by_cases h : i = j <;> simp [errCov, h]
+
+/-- The error covariance is positive semidefinite when every block is:
+`xᵀΣx = Σₜ yₜᵀ R yₜ` with `(yₜ)ⱼ = aⱼₜ σⱼₜ xⱼ`, supported on `Jₜ`. -/
+theorem errCov_posSemidef (hρ : ∀ t, (M.block t).PosSemidef) : M.errCov.PosSemidef := by
+  have ha0 : ∀ j t, t ∉ M.obs j → M.a j t = 0 := fun j t ht => by simp [a, ht]
+  refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
+  · have hK : M.K.IsHermitian := by
+      rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, M.K_symm]
+    rw [show M.errCov = M.K - M.τ2 • (1 : Matrix J J ℝ) by rw [M.K_eq_errCov, add_sub_cancel_right]]
+    have h1 : (M.τ2 • (1 : Matrix J J ℝ)).IsHermitian := by
+      simp [IsHermitian]
+    exact hK.sub h1
+  set y : T → J → ℝ := fun t j => M.a j t * M.σ j t * x j
+  have hy : ∀ t j, t ∉ M.obs j → y t j = 0 := fun t j h => by simp [y, ha0 _ _ h]
+  have key : star x ⬝ᵥ (M.errCov *ᵥ x) = ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) := by
+    simp only [dotProduct, mulVec, errCov, M.σ2_eq_sum, star_trivial, of_apply, y, mul_sum,
+      sum_mul]
+    symm
+    rw [sum_comm]
+    refine sum_congr rfl fun i _ => ?_
+    rw [sum_comm]
+    exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => by ring
+  rw [key]
+  refine sum_nonneg fun t _ => ?_
+  have := (hρ t).dotProduct_mulVec_nonneg (fun j => y t j.1)
+  convert this using 1
+  simp only [dotProduct, mulVec, star_trivial, block, submatrix_apply, of_apply]
+  rw [M.sum_eq_sum_block t _ fun j h => by simp [hy t j h]]
+  refine sum_congr rfl fun i _ => ?_
+  rw [M.sum_eq_sum_block t _ fun j h => by simp [hy t j h]]
+
 /-- `K` stays positive definite for any overlap pattern. It suffices that for
 every period `t` the correlations of the cohorts observed at `t` form a
-positive-semidefinite matrix: pairs that never overlap do not matter. -/
+positive-semidefinite matrix: pairs that never overlap do not matter.
+`K = Σ + τ²I` with `Σ ⪰ 0` (`errCov_posSemidef`). -/
 theorem K_posDef
     (hρ : ∀ t, ((Matrix.of M.ρ).submatrix (Subtype.val : {j // t ∈ M.obs j} → J)
       Subtype.val).PosSemidef) :
     M.K.PosDef := by
-  have ha0 : ∀ j t, t ∉ M.obs j → M.a j t = 0 := fun j t ht => by simp [a, ht]
-  -- `σ²ᵢⱼ` as a sum over all periods, since `aⱼₜ = 0` off `Tⱼ`.
-  have hσ2 : ∀ i j, M.σ2 i j = ∑ t, M.a i t * M.a j t * M.σ i t * M.σ j t := fun i j => by
-    refine sum_subset (subset_univ _) fun t _ ht => ?_
-    rcases not_and_or.mp (mt mem_inter.mpr ht) with h | h <;> simp [ha0 _ _ h]
-  -- Sums over `J` of terms vanishing off `Jₜ` are sums over `Jₜ`.
-  have hS : ∀ t (f : J → ℝ), (∀ j, t ∉ M.obs j → f j = 0) →
-      ∑ j, f j = ∑ j : {j // t ∈ M.obs j}, f j := fun t f hf => by
-    rw [← Fintype.sum_subtype_add_sum_subtype (fun j => t ∈ M.obs j) f,
-      Fintype.sum_eq_zero (fun j : {j // ¬t ∈ M.obs j} => f j) fun j => hf j j.2, add_zero]
-  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
-  · rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, M.K_symm]
-  -- `xᵀKx = Σₜ yₜᵀ R yₜ + τ²‖x‖²` with `(yₜ)ⱼ = aⱼₜ σⱼₜ xⱼ`, supported on `Jₜ`.
-  set y : T → J → ℝ := fun t j => M.a j t * M.σ j t * x j
-  have hy : ∀ t j, t ∉ M.obs j → y t j = 0 := fun t j h => by simp [y, ha0 _ _ h]
-  have key : star x ⬝ᵥ (M.K *ᵥ x)
-      = ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) + M.τ2 * ∑ i, x i ^ 2 := by
-    simp only [dotProduct, mulVec, M.K_apply, hσ2, star_trivial, of_apply, y, add_mul,
-      mul_add, sum_add_distrib, ite_mul, mul_ite, mul_one, mul_zero, zero_mul, sum_ite_eq,
-      mem_univ, ite_true, mul_sum, sum_mul]
-    congr 1
-    · symm
-      rw [sum_comm]
-      refine sum_congr rfl fun i _ => ?_
-      rw [sum_comm]
-      exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => by ring
-    · exact sum_congr rfl fun i _ => by ring
-  rw [key]
-  have h1 : 0 ≤ ∑ t, star (y t) ⬝ᵥ (Matrix.of M.ρ *ᵥ y t) := by
-    refine sum_nonneg fun t _ => ?_
-    have := (hρ t).dotProduct_mulVec_nonneg (fun j => y t j.1)
-    convert this using 1
-    simp only [dotProduct, mulVec, star_trivial, submatrix_apply, of_apply]
-    rw [hS t _ fun j h => by simp [hy t j h]]
-    refine sum_congr rfl fun i _ => ?_
-    rw [hS t _ fun j h => by simp [hy t j h]]
-  have h2 : 0 < ∑ i, x i ^ 2 := by
-    obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
-    exact sum_pos' (fun j _ => sq_nonneg (x j))
-      ⟨i, mem_univ _, lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 hi))⟩
-  nlinarith [M.τ2_pos]
+  rw [M.K_eq_errCov, add_comm]
+  exact (PosDef.one.smul M.τ2_pos).add_posSemidef (M.errCov_posSemidef hρ)
 
 /-- …in particular under the hypothesis of `Model.K_posDef`. -/
 theorem K_posDef_of_posSemidef (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef :=

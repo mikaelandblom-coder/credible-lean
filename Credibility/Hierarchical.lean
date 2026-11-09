@@ -191,39 +191,19 @@ theorem errCov_eq [Nonempty T] : M.errCov = M.K - M.τ2 • (1 : Matrix J J ℝ)
   rw [Matrix.sub_apply, M.K_apply]
   by_cases h : i = j <;> simp [errCov, h]
 
-/-- The error covariance is positive semidefinite when `ρ` is: for every
-`ε > 0`, `Σ + εI` is the `K` of the model with `τ² = ε`, positive definite by
-`K_posDef`. -/
+omit [Fintype J] [DecidableEq J] in
+/-- The error covariance is that of `Unequal` with `Tⱼ = T`. -/
+lemma errCov_eq_toUnequal [Nonempty T] : M.errCov = M.toUnequal.errCov := by
+  ext i j
+  simp only [errCov, Unequal.errCov, of_apply, toUnequal_σ2]
+  rfl
+
+/-- The error covariance is positive semidefinite when `ρ` is
+(`Unequal.errCov_posSemidef` with `Tⱼ = T`). -/
 theorem errCov_posSemidef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) :
     M.errCov.PosSemidef := by
-  -- The model with `τ² = ε`.
-  let Mε : (ε : ℝ) → 0 < ε → Model J T := fun ε hε => { M with τ2 := ε, τ2_pos := hε }
-  have hK : ∀ ε (hε : 0 < ε), (Mε ε hε).K = M.errCov + ε • (1 : Matrix J J ℝ) := by
-    intro ε hε
-    ext i j
-    rw [Matrix.add_apply, (Mε ε hε).K_apply]
-    by_cases h : i = j <;> simp [Mε, errCov, h, σ2, a]
-  refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
-  · have hE : M.errCov = (Mε 1 one_pos).K - 1 := by rw [hK, one_smul, add_sub_cancel_right]
-    rw [hE]
-    exact ((Mε 1 one_pos).K_posDef hρ).isHermitian.sub isHermitian_one
-  · -- `xᵀΣx + ε‖x‖² ≥ 0` for every `ε > 0`.
-    have h : ∀ ε, 0 < ε → 0 ≤ star x ⬝ᵥ (M.errCov *ᵥ x) + ε * (star x ⬝ᵥ x) := by
-      intro ε hε
-      have := ((hK ε hε) ▸ (Mε ε hε).K_posDef hρ).posSemidef.dotProduct_mulVec_nonneg x
-      simpa [add_mulVec, dotProduct_add, smul_mulVec, dotProduct_smul] using this
-    by_contra hneg
-    rw [not_le] at hneg
-    have hxx : 0 ≤ star x ⬝ᵥ x := by
-      simp only [dotProduct, star_trivial]; exact Finset.sum_nonneg fun i _ => mul_self_nonneg _
-    set q := star x ⬝ᵥ (M.errCov *ᵥ x)
-    set n := star x ⬝ᵥ x
-    have := h (-q / (2 * (n + 1))) (div_pos (by linarith) (by linarith))
-    have hn1 : 0 < n + 1 := by linarith
-    have : -q / (2 * (n + 1)) * n ≤ -q / 2 := by
-      rw [div_mul_eq_mul_div, div_le_div_iff₀ (by positivity) two_pos]
-      nlinarith
-    linarith
+  rw [errCov_eq_toUnequal]
+  exact M.toUnequal.errCov_posSemidef fun _ => hρ.submatrix _
 
 /-- For `φ ∈ [0,1)`, `K_φ` is positive definite: `τ²·(11ᵀ)^φ ≻ 0` by
 `posDef_shrinkOffDiag` (`11ᵀ ⪰ 0` with unit diagonal), and `Σ ⪰ 0`. -/
@@ -368,7 +348,7 @@ section Blocks
 variable {J G : Type*} [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] (grp : J → G)
 
 /-- The block of `K` on group `g`. -/
-def block (K : Matrix J J ℝ) (g : G) : Matrix {j // grp j = g} {j // grp j = g} ℝ :=
+def groupBlock (K : Matrix J J ℝ) (g : G) : Matrix {j // grp j = g} {j // grp j = g} ℝ :=
   K.submatrix Subtype.val Subtype.val
 
 /-- `K` is block diagonal with respect to `grp`. -/
@@ -377,12 +357,12 @@ def IsBlockDiag (K : Matrix J J ℝ) : Prop := ∀ i j, grp i ≠ grp j → K i 
 variable {grp}
 
 omit [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] in
-lemma block_posDef {K : Matrix J J ℝ} (hK : K.PosDef) (g : G) : (block grp K g).PosDef :=
+lemma groupBlock_posDef {K : Matrix J J ℝ} (hK : K.PosDef) (g : G) : (groupBlock grp K g).PosDef :=
   hK.submatrix Subtype.val_injective
 
 omit [DecidableEq J] [Fintype G] in
 /-- A sum over `J` of a function vanishing outside group `g` is a sum over the group. -/
-lemma sum_eq_sum_block (g : G) (f : J → ℝ) (hf : ∀ j, grp j ≠ g → f j = 0) :
+lemma sum_eq_sum_groupBlock (g : G) (f : J → ℝ) (hf : ∀ j, grp j ≠ g → f j = 0) :
     ∑ j, f j = ∑ j : {j // grp j = g}, f j := by
   rw [← Finset.sum_subtype (Finset.univ.filter (grp · = g)) (by simp), Finset.sum_filter]
   exact Finset.sum_congr rfl fun j _ => by split_ifs with h <;> simp [hf j, h]
@@ -391,17 +371,17 @@ omit [Fintype G] in
 /-- For block-diagonal `K`, `K⁻¹1` is assembled from the blocks: `(K⁻¹1)ⱼ = (K_g⁻¹1)ⱼ`
 with `g` the group of `j`. -/
 theorem Kinv_one_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
-    (j : J) : (K⁻¹ *ᵥ 1) j = ((block grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩ := by
-  set x : J → ℝ := fun j => ((block grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩
-  have hx : ∀ g (j : J) (h : grp j = g), x j = ((block grp K g)⁻¹ *ᵥ 1) ⟨j, h⟩ := by
+    (j : J) : (K⁻¹ *ᵥ 1) j = ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩ := by
+  set x : J → ℝ := fun j => ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩
+  have hx : ∀ g (j : J) (h : grp j = g), x j = ((groupBlock grp K g)⁻¹ *ᵥ 1) ⟨j, h⟩ := by
     intro g j h; subst h; rfl
   have hKx : K *ᵥ x = 1 := by
     ext i
     simp only [mulVec, dotProduct, Pi.one_apply]
-    rw [sum_eq_sum_block (grp := grp) (grp i) _ fun j hj => by rw [hb i j (Ne.symm hj), zero_mul]]
-    have hdet := (Matrix.isUnit_iff_isUnit_det _).mp (block_posDef (grp := grp) hK (grp i)).isUnit
+    rw [sum_eq_sum_groupBlock (grp := grp) (grp i) _ fun j hj => by rw [hb i j (Ne.symm hj), zero_mul]]
+    have hdet := (Matrix.isUnit_iff_isUnit_det _).mp (groupBlock_posDef (grp := grp) hK (grp i)).isUnit
     have := congrFun (mul_nonsing_inv _ hdet) ⟨i, rfl⟩
-    have h1 : ((block grp K (grp i)) *ᵥ ((block grp K (grp i))⁻¹ *ᵥ 1)) ⟨i, rfl⟩ = 1 := by
+    have h1 : ((groupBlock grp K (grp i)) *ᵥ ((groupBlock grp K (grp i))⁻¹ *ᵥ 1)) ⟨i, rfl⟩ = 1 := by
       rw [mulVec_mulVec, mul_nonsing_inv _ hdet, one_mulVec]; rfl
     rw [← h1]
     simp only [mulVec, dotProduct]
@@ -411,7 +391,7 @@ theorem Kinv_one_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDia
 
 /-- The precision `1ᵀK⁻¹1` of a block-diagonal `K` is the sum of the block precisions. -/
 theorem invTotal_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K) :
-    invTotal K = ∑ g, invTotal (block grp K g) := by
+    invTotal K = ∑ g, invTotal (groupBlock grp K g) := by
   rw [invTotal, one_dotProduct, ← Finset.sum_fiberwise Finset.univ grp]
   refine Finset.sum_congr rfl fun g _ => ?_
   rw [invTotal, one_dotProduct, Finset.sum_subtype _ (p := (grp · = g)) (by simp)]
@@ -424,10 +404,10 @@ theorem invTotal_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDia
 within its group `g`, times the inverse-variance weight (eq. (23)) of the group,
 whose variance is the group's `s²_g = 1/1ᵀK_g⁻¹1`. -/
 theorem glsWeight_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
-    (j : J) : glsWeight K j = glsWeight (block grp K (grp j)) ⟨j, rfl⟩
-      * invVarWeight (fun g => (invTotal (block grp K g))⁻¹) (grp j) := by
+    (j : J) : glsWeight K j = glsWeight (groupBlock grp K (grp j)) ⟨j, rfl⟩
+      * invVarWeight (fun g => (invTotal (groupBlock grp K g))⁻¹) (grp j) := by
   have : Nonempty {i // grp i = grp j} := ⟨⟨j, rfl⟩⟩
-  have hg := (invTotal_pos (block_posDef (grp := grp) hK (grp j))).ne'
+  have hg := (invTotal_pos (groupBlock_posDef (grp := grp) hK (grp j))).ne'
   simp only [glsWeight, invVarWeight, inv_inv, ← invTotal_blockDiag hK hb,
     Kinv_one_blockDiag hK hb]
   field_simp
@@ -507,12 +487,12 @@ omit [Fintype J] [Fintype G] in
 /-- …and each block is a thesis `K` plus a rank-one term: `(K_G)_g = K'_g + φτ²·11ᵀ`,
 with `K'` the thesis `K` for `(1-φ)τ²`. -/
 theorem block_KG [Nonempty T] {φ : ℝ} (h1 : φ < 1) (g : G) :
-    block grp (M.KG grp φ) g = block grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1 := by
+    groupBlock grp (M.KG grp φ) g = groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1 := by
   ext ⟨a, ha⟩ ⟨b, hb⟩
   have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
   have hσ : (M.withLevel φ h1).σ2 = M.σ2 := rfl
   have hρ : (M.withLevel φ h1).ρ = M.ρ := rfl
-  simp only [block, submatrix_apply, Matrix.add_apply, KG, levelCovG_apply', K_apply, hτ, hσ, hρ,
+  simp only [groupBlock, submatrix_apply, Matrix.add_apply, KG, levelCovG_apply', K_apply, hτ, hσ, hρ,
     errCov, of_apply]
   simp [ha, hb]
   split_ifs <;> ring
@@ -525,29 +505,29 @@ across groups, inverse-variance weights with group variance `s'²_g + φτ²`. -
 theorem glsWeight_KG [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (hgrp : Function.Surjective grp)
     (j : J) :
-    glsWeight (M.KG grp φ) j = glsWeight (block grp (M.withLevel φ h1).K (grp j)) ⟨j, rfl⟩
-      * invVarWeight (fun g => (invTotal (block grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)
+    glsWeight (M.KG grp φ) j = glsWeight (groupBlock grp (M.withLevel φ h1).K (grp j)) ⟨j, rfl⟩
+      * invVarWeight (fun g => (invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)
         (grp j) := by
   have hK := M.KG_posDef grp hρ h0 h1
   have hK' := (M.withLevel φ h1).K_posDef hρ
-  have hblk : ∀ g, (block grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1).PosDef :=
-    fun g => M.block_KG grp h1 g ▸ block_posDef hK g
-  have hs : (fun g => (invTotal (block grp (M.KG grp φ) g))⁻¹)
-      = fun g => (invTotal (block grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2 := by
+  have hblk : ∀ g, (groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1).PosDef :=
+    fun g => M.block_KG grp h1 g ▸ groupBlock_posDef hK g
+  have hs : (fun g => (invTotal (groupBlock grp (M.KG grp φ) g))⁻¹)
+      = fun g => (invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2 := by
     funext g
     obtain ⟨i, hi⟩ := hgrp g
     have : Nonempty {i // grp i = g} := ⟨⟨i, hi⟩⟩
     rw [M.block_KG grp h1]
-    exact invTotal_inv_add_rankOne (block_posDef hK' g) _ (hblk g)
+    exact invTotal_inv_add_rankOne (groupBlock_posDef hK' g) _ (hblk g)
   rw [glsWeight_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ), hs, M.block_KG grp h1,
-    glsWeight_add_rankOne (block_posDef hK' _) _ (hblk _)]
+    glsWeight_add_rankOne (groupBlock_posDef hK' _) _ (hblk _)]
 
 /-- …and the portfolio variance is the harmonic combination of the group
 variances `s'²_g + φτ²`: the between-group variance no longer just adds. -/
 theorem s2_KG [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (hgrp : Function.Surjective grp) :
     (invTotal (M.KG grp φ))⁻¹
-      = (∑ g, ((invTotal (block grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)⁻¹)⁻¹ := by
+      = (∑ g, ((invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)⁻¹)⁻¹ := by
   have hK := M.KG_posDef grp hρ h0 h1
   have hK' := (M.withLevel φ h1).K_posDef hρ
   rw [invTotal_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ)]
@@ -556,7 +536,7 @@ theorem s2_KG [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 
   obtain ⟨i, hi⟩ := hgrp g
   have : Nonempty {i // grp i = g} := ⟨⟨i, hi⟩⟩
   have hb := M.block_KG grp h1 g
-  rw [← invTotal_inv_add_rankOne (block_posDef hK' g) _ (hb ▸ block_posDef hK g), ← hb, inv_inv]
+  rw [← invTotal_inv_add_rankOne (groupBlock_posDef hK' g) _ (hb ▸ groupBlock_posDef hK g), ← hb, inv_inv]
 
 /-- The moments entering the blend for cohort `j` with group levels: as
 `momentsφ`, with the level covariance `L_G`. -/
