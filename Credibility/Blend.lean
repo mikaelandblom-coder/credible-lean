@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Basic.Real.Basic
+import Mathlib.Tactic
 
 /-!
 # The best credibility factor (thesis §2.1.1, eqs. (6)–(7))

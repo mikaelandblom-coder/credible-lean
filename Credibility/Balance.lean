@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+import Mathlib.Tactic
 
 /-!
 # The balance property of Bühlmann–Straub weights (thesis §2.9)

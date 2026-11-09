@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.Tactic
 
 /-!
 # Best unbiased linear weights (thesis §2.5)

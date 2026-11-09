@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+import Mathlib.Tactic
 
 /-!
 # Weights of groups and the share of same-group pairs (extension)

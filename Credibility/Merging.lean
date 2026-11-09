@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Basic.Real.Basic
+import Mathlib.Tactic
 
 /-!
 # Merging two cohorts: Result A of `notes/merging-cohorts.md` (Case A)
