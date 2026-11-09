@@ -2275,6 +2275,187 @@ including the singular case $\phi = 1$.
   (the hierarchical setting).
 \end{remark}
 
+\section{Several groups, each with its own shared level}\label{sec:hier_bridge4}
+
+Cohorts fall into groups $g = g(j)$. Each group has its own shared level:
+$\cov(\mu_i,\mu_j) = \tau^2$ if $i = j$, $\phi\tau^2$ if $g(i) = g(j)$, and $0$
+across groups, so the level covariance is block diagonal. With
+$\mathbf 1_g$ the indicator of group $g$, it is
+$(1-\phi)\tau^2 I + \phi\tau^2\sum_g \mathbf 1_g\mathbf 1_g^T$: one rank-one term
+per group. These are no longer along $\mathbf 1$, so Section~\ref{sec:hier_bridge2}
+does not apply to the whole portfolio, only block by block. First a Core fact.
+
+\begin{definition}[Blocks]\label{def:block}
+  \lean{Credibility.block, Credibility.IsBlockDiag}
+  \leanok
+  For $g \colon J \to G$, the block $K_g$ of $K$ is its restriction to the
+  cohorts of group $g$. $K$ is block diagonal if $K_{ij} = 0$ whenever
+  $g(i) \ne g(j)$.
+\end{definition}
+
+\begin{lemma}\label{lem:block_posDef}
+  \lean{Credibility.block_posDef, Credibility.sum_eq_sum_block}
+  \leanok
+  \uses{def:block}
+  Blocks of a positive definite matrix are positive definite. A sum over $J$
+  of terms vanishing outside group $g$ is a sum over the group.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A principal submatrix of a positive definite matrix (Mathlib).
+\end{proof}
+
+\begin{theorem}[$K^{-1}\mathbf 1$ for block-diagonal $K$]\label{thm:Kinv_one_blockDiag}
+  \lean{Credibility.Kinv_one_blockDiag, Credibility.invTotal_blockDiag}
+  \leanok
+  \uses{def:block, def:glsWeight}
+  If $K \succ 0$ is block diagonal, then $(K^{-1}\mathbf 1)_j = (K_g^{-1}\mathbf 1)_j$
+  with $g = g(j)$, and $\mathbf 1^TK^{-1}\mathbf 1 = \sum_g \mathbf 1^TK_g^{-1}\mathbf 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:block_posDef}
+  The vector assembled from the $K_g^{-1}\mathbf 1$ solves $Kx = \mathbf 1$ block by
+  block. Then sum over each group.
+\end{proof}
+
+\begin{theorem}[Two-stage GLS]\label{thm:glsWeight_blockDiag}
+  \lean{Credibility.glsWeight_blockDiag}
+  \leanok
+  \uses{thm:Kinv_one_blockDiag, def:invVarWeight}
+  If $K \succ 0$ is block diagonal, then
+  $b_j(K) = b_j(K_g)\cdot w_g$ with $g = g(j)$, where $w$ are the
+  inverse-variance weights (23) of the groups with group variances
+  $s_g^2 = 1/\mathbf 1^TK_g^{-1}\mathbf 1$: GLS within each group, then
+  inverse-variance weighting of the group estimates.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Kinv_one_blockDiag, lem:block_posDef, lem:invTotal_pos}
+  Divide $(K_g^{-1}\mathbf 1)_j$ by $\mathbf 1^TK^{-1}\mathbf 1
+  = \sum_h 1/s_h^2$, and multiply and divide by $1/s_g^2 \neq 0$.
+\end{proof}
+
+\begin{definition}[Group levels]\label{def:KG}
+  \lean{Credibility.Model.grpOne, Credibility.Model.groupWeight,
+    Credibility.Model.levelCovG, Credibility.Model.KG}
+  \leanok
+  \uses{def:Kphi}
+  The level covariance $L_G$ ($\tau^2$ on the diagonal, $\phi\tau^2$ within a
+  group, $0$ across), $K_G = L_G + \Sigma$, the indicators $\mathbf 1_g$, and
+  the total weight $B_g = \sum_{g(i) = g} b_i$ a weight vector $b$ gives to
+  group $g$.
+\end{definition}
+
+\begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
+  \lean{Credibility.Model.levelCovG_apply', Credibility.Model.levelCovG_eq,
+    Credibility.Model.levelCovG_const, Credibility.Model.KG_eq}
+  \leanok
+  \uses{def:KG, lem:Kphi_eq}
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$, so for
+  $T \ge 1$ and $\phi < 1$,
+  $K_G = K(M_\phi) + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$. With one group,
+  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ (Section~\ref{sec:hier_bridge2}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply, lem:Kphi_zero}
+  $\sum_g (\mathbf 1_g)_i(\mathbf 1_g)_j = [g(i) = g(j)]$; then as
+  Lemma~\ref{lem:Kphi_eq}.
+\end{proof}
+
+\begin{theorem}[$K_G$ is positive definite]\label{thm:KG_posDef}
+  \lean{Credibility.Model.KG_posDef}
+  \leanok
+  \uses{def:KG}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then $K_G \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:KG_eq, lem:errCov_posSemidef}
+  $(1-\phi)\tau^2 I \succ 0$, each $\mathbf 1_g\mathbf 1_g^T \succeq 0$, and
+  $\Sigma \succeq 0$.
+\end{proof}
+
+\begin{lemma}[Blocks of $K_G$]\label{lem:block_KG}
+  \lean{Credibility.Model.KG_isBlockDiag, Credibility.Model.block_KG}
+  \leanok
+  \uses{def:KG, def:block}
+  If $\rho_{ij} = 0$ whenever $g(i) \ne g(j)$ (errors uncorrelated across
+  groups), $K_G$ is block diagonal. For $T \ge 1$ and $\phi < 1$ its blocks are
+  $K(M_\phi)_g + \phi\tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:KG_eq, lem:K_apply}
+  Compare entries.
+\end{proof}
+
+\begin{theorem}[Weights and portfolio variance with group levels]\label{thm:glsWeight_KG}
+  \lean{Credibility.Model.glsWeight_KG, Credibility.Model.s2_KG}
+  \leanok
+  \uses{thm:glsWeight_blockDiag, lem:block_KG}
+  Let $T \ge 1$, $(\rho_{ij}) \succeq 0$, $0 \le \phi < 1$, errors uncorrelated
+  across groups, and every group non-empty. With $s'^2_g = s^2(K(M_\phi)_g)$,
+  \[
+    b_j(K_G) = b_j\bigl(K(M_\phi)_g\bigr)\cdot
+      \frac{(s'^2_g + \phi\tau^2)^{-1}}{\sum_h (s'^2_h + \phi\tau^2)^{-1}},
+    \qquad
+    s^2(K_G) = \Bigl(\sum_g (s'^2_g + \phi\tau^2)^{-1}\Bigr)^{-1}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:glsWeight_blockDiag, thm:Kinv_one_blockDiag, lem:block_KG, thm:KG_posDef,
+    lem:K_posDef, lem:block_posDef, thm:glsWeight_add_rankOne}
+  Theorem~\ref{thm:glsWeight_blockDiag}, with Theorem~\ref{thm:glsWeight_add_rankOne}
+  on each block.
+\end{proof}
+
+\begin{definition}[Blend moments with group levels]\label{def:momentsG}
+  \lean{Credibility.Model.momentsG}
+  \leanok
+  \uses{def:KG, def:momentsPhi}
+  As Definition~\ref{def:momentsPhi}, with $K_G$ and $L_G$ in place of
+  $K_\phi$ and $\tau^2(\mathbf 1\mathbf 1^T)^\phi$.
+\end{definition}
+
+\begin{theorem}[Eq.\ (26) with group levels]\label{thm:bestZ_G_eq}
+  \lean{Credibility.Model.bestZ_G_eq}
+  \leanok
+  \uses{def:momentsG}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then with $b$, $s^2$
+  from $K_G$ and $g = g(j)$,
+  \[
+    z_j = \frac{(1-\phi)\tau^2(1 - b_j) + \phi\tau^2(1 - B_g)}{\tau^2 + \sigma^2_{jj} - s^2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:KG_posDef, lem:KG_eq, lem:mulVec_glsWeight}
+  $\cov(\hmu_j,\hmu) = s^2$ as always, and
+  $\cov(\hmu,\mu_j) = (L_Gb)_j = (1-\phi)\tau^2 b_j + \phi\tau^2 B_g$.
+\end{proof}
+
+\begin{remark}[Reading: what the between-group variance adds]\label{rem:hier_bridge4}
+  \uses{thm:glsWeight_KG, thm:bestZ_G_eq}
+  Within a group, the shared level drops out as in
+  Section~\ref{sec:hier_bridge2}: the weights are the thesis weights for
+  $(1-\phi)\tau^2$. Across groups it does not. Each group estimate has
+  variance $s'^2_g + \phi\tau^2$, and the groups are weighted by its inverse,
+  i.e.\ in proportion to the group credibility factor
+  $\phi\tau^2/(\phi\tau^2 + s'^2_g)$ (the Bühlmann--Gisler form). A large
+  between-group variance pushes the group weights towards equal, whatever the
+  group sizes, and $s^2$ is a harmonic combination: with $G$ alike groups it
+  is $(s'^2 + \phi\tau^2)/G$, not $s'^2 + \phi\tau^2$. In $z_j$, each level
+  component counts with the weight the portfolio puts outside what it shares
+  with $j$: $1 - b_j$ for the own part, $1 - B_g$ for the group part. With one
+  group ($B_g = 1$) this is Theorem~\ref{thm:bestZ_phi_eq}. With singleton
+  groups ($B_g = b_j$) it is eq.\ (26). Shrinking towards the whole portfolio
+  is now a compromise. The natural next step is to shrink towards the group
+  estimate, which is three-level hierarchical credibility.
+\end{remark}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean
