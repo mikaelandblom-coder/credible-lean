@@ -1,15 +1,7 @@
 #!/bin/bash
-# Paste this into the cloud environment's "Setup script" field (not run from the repo).
-# It installs elan and pre-fetches Mathlib so the environment snapshot has it on disk.
-# Must finish in ~5 min to be cached; it never fails the session.
-export PATH="$HOME/.elan/bin:$PATH"
-curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
-  | sh -s -- -y --default-toolchain none || true
-
-# Locate this project by its lakefile's name, not the repo/folder name.
-REPO=$(find / -maxdepth 5 -name lakefile.toml -not -path '*/.lake/*' 2>/dev/null \
-  | xargs -r grep -l '^name = "credibility"' 2>/dev/null | head -1)
-if [ -n "$REPO" ]; then
-  cd "$(dirname "$REPO")" && timeout 270 lake exe cache get || true
-fi
-exit 0
+# Copy of the "lean" cloud environment's setup script (kept here for reference;
+# the environment runs its own stored copy, from the directory holding the checkout).
+# Installs elan/Lean, fetches the Mathlib cache and builds the project, so the
+# environment snapshot has all of it on disk. A new chat then rebuilds only the
+# files changed since the snapshot.
+if [ -d credible-lean ]; then bash credible-lean/scripts/fetch_mathlib.sh --build; fi

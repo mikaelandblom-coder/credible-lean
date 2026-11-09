@@ -6,12 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && bash \"$CLAUDE_PROJECT_DIR\"/scripts/session_branch.sh || true",
-            "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && bash \"$CLAUDE_PROJECT_DIR\"/scripts/fetch_mathlib.sh || true",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && { bash \"$CLAUDE_PROJECT_DIR\"/scripts/session_branch.sh; bash \"$CLAUDE_PROJECT_DIR\"/scripts/fetch_mathlib.sh --background; } || true",
             "timeout": 900
           }
         ]

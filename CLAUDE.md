@@ -55,8 +55,13 @@ moments are assumed). Never add a distributional assumption.
   environments yourself. If the request needs Lean, say so and suggest a
   new chat in **lean**. The SessionStart hook prints "skipping Lean setup"
   when the Lean hosts are blocked.
-- One chat per file or batch of `sorry`s; the environment's setup script
-  reinstalls Lean and the Mathlib cache in each new session.
+- One chat per file or batch of `sorry`s. Lean, Mathlib and a build of the
+  project come from the environment's saved snapshot (its setup script,
+  `scripts/fetch_mathlib.sh --build`, is not rerun for each chat). The
+  SessionStart hook starts `lake build` in the background (log:
+  `.lake/session-build.log`), so the first `lake build` in a chat waits for
+  that one and only compiles what changed since the snapshot. `lake` is in
+  `~/.elan/bin` (add it to `PATH`).
 - Push finished work to `main` (fast-forward; never force-push `main`).
   Don't create branches: commit on top of `main` and push to `main`. The
   SessionStart hook (`scripts/session_branch.sh`) moves a fresh generated
