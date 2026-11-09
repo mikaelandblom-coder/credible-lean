@@ -9,6 +9,11 @@ Only results that serve the credibility framework go in.
 Per entry: **statement** (one display), **comment** (when to use it and why it
 holds, in words), **Lean** (theorem name, linked to the source line).
 
+Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
+
+## Pending
+(Results proved since the last handbook update that may belong here.)
+
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
   Distribution-free: only first and second moments.

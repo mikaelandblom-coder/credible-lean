@@ -124,6 +124,19 @@ the thesis. CI builds it and deploys to GitHub Pages from `main`.
 - `\lean{}` links go to the source line via `find/` (no doc-gen4 build;
   it would document all of Mathlib).
 
+## Handbook
+`handbook/handbook.tex` is the short practitioner's version: key results,
+own numbering, comments in a practical voice ("use it", "watch out") with
+some intuition ("why"), no proofs, each result linked with `\lean{}`.
+Outline and status: `handbook/outline.md`. CI builds it to `handbook.pdf`
+on the site.
+- `scripts/handbook_check.py` (CI) fails if a handbook link is not a proved
+  declaration. Renaming or moving a linked theorem means updating the link.
+- When a result is proved, a finding logged, or a statement changed, ask:
+  does the handbook need it? If so, add or update its entry (and the
+  outline) in the same commit, or note it in `handbook/outline.md` under
+  "Pending". Only results useful for credibility go in.
+
 The thesis source is in `thesis/original/` (never edit it). Equation numbers
 in docstrings must match it. Collecting the original files is done
 (2026-11-06): `main.tex` is the final version: the published PDF (link in
