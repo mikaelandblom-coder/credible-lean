@@ -123,8 +123,9 @@ The thesis is the foundation: notation and model for all later work. Plan:
    (Scandinavian Actuarial Journal, ASTIN Bulletin, European Actuarial
    Journal, Variance). The formalization itself to CPP/ITP or *Annals of
    Formalized Mathematics*.
-5. **General lemmas** stay here. Mathlib does not accept AI-written PRs or
-   Zulip posts, and this project is written with AI.
+5. **General lemmas** stay here. Mathlib asks for hand-written code and
+   comments in contributors' own words; the Lean code here is written with
+   Claude Code (see "How it was made").
 
 ## Thesis source
 
@@ -154,6 +155,15 @@ field), which installs elan and fetches the Mathlib cache.
 
 `CLAUDE.md` has the working rules: statements are the spec, one `sorry` per
 commit, and findings go in `FINDINGS.md`.
+
+## How it was made
+
+The mathematics is Mikael Andblom's: the thesis, which statements to
+formalize, the extensions, and the judgement on what the findings mean.
+The Lean proofs, blueprint text and scripts were written by Claude Code
+(Anthropic) in conversation with the author. Correctness doesn't rest on trusting
+that: Lean checks every proof, and CI checks that no proof depends on
+`sorry` or extra axioms.
 
 ## License
 

@@ -15,7 +15,9 @@ abstract: >-
   A Lean 4 + Mathlib formalization of generalized Bühlmann–Straub
   credibility theory for data correlated across cohorts, with a
   leanblueprint summary and a list of gaps and new results found while
-  formalizing.
+  formalizing. The Lean proofs, blueprint text and scripts were written
+  by Claude Code (Anthropic) in conversation with the author, who chose
+  the statements and directed the work; Lean checks every proof.
 keywords:
   - credibility theory
   - Bühlmann–Straub
