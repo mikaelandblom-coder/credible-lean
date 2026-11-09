@@ -20,6 +20,16 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
   `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`. One group (a
   shared level) is the special case `π = 1`: `τ̂²` estimates `(1-φ)τ²`,
   which is all the blend needs — `cor:estimation_phi`.
+- Open (not proved yet), needed before item 15 can say "in true MSE": a
+  moment layer for group levels. Random variables whose levels have
+  covariance `L_G` (e.g. `μⱼ = μ + √((1-φ)τ²) ηⱼ + √(φτ²) γ_{g(j)}`, the group
+  effects `γ_g` centred, unit, uncorrelated with `η`, `ε` and each other),
+  showing that `cov(μ̂ᵢ, μ̂ⱼ) = (K_G)ᵢⱼ` and that the six fields of `momentsG`
+  are the actual moments, so `bestZ_G_eq` minimises the true MSE. Estimated
+  at ~200 lines on top of `UnequalMoments` (`cov_cohortEst_portLin` etc.
+  with the GLS weights of `K_G`); deferred from the refactor chat of
+  2026-11-09. Also: `Unequal.Noise.integral_quad` now covers forms that read
+  only observed cells (item 13 in true expectation).
 - Estimation section, one line under the unbiasedness entry: "unbiased" is
   the actual expectation for any random variables with the model's first
   two moments, no distribution assumed — `thm:integral_quad`
