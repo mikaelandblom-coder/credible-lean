@@ -1,6 +1,6 @@
 import Credibility.Unequal
 import Credibility.Expectation
-import Credibility.BuhlmannStraub
+import Credibility.Balance
 
 /-!
 # Unequal lengths: parameter estimation and balance (§2.8, §2.9)

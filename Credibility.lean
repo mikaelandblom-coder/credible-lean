@@ -4,6 +4,7 @@ import Credibility.Weights
 import Credibility.Core
 import Credibility.Model
 import Credibility.BuhlmannStraub
+import Credibility.Balance
 import Credibility.TwoCohorts
 import Credibility.Merging
 import Credibility.Expectation

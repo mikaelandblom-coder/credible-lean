@@ -11,7 +11,8 @@ tactics.
 - §2.3 parameters and eq. (16) → `Credibility/Data.lean`
 - §2.5 K-level Core: moments, eq. (26), diagonal and equal-covariance `K` → `Credibility/Core.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
-- §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
+- §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
+  §2.9 balance → `Credibility/Balance.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 - §2.8 expectation of quadratic estimators → `Credibility/Expectation.lean` (proved once for a
   symmetric covariance table `C`: `Ecov`, `UnbiasedCov`; the thesis `E`, `Unbiased` are `C = obsCov`)
