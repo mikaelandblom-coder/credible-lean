@@ -2456,6 +2456,164 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
   estimate, which is three-level hierarchical credibility.
 \end{remark}
 
+\section{The estimators with group levels}\label{sec:hier_bridge5}
+
+With group levels, $\cov(\mu_{it},\mu_{js}) =
+\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$. The shared part
+$\phi\tau^2$ is no longer common to all pairs, so it no longer acts like the
+mean. Instead, the change in expectation can be read off from the estimator
+itself, evaluated on noise-free data.
+
+\begin{definition}[Expectation with group levels]\label{def:EG}
+  \lean{Credibility.Model.obsCovG, Credibility.Model.EG, Credibility.Model.UnbiasedG,
+    Credibility.Model.grpData}
+  \leanok
+  \uses{def:unbiased, def:KG}
+  As Definition~\ref{def:unbiased}, with $\bar K^{ts}_{ij}$ replaced by
+  $\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$. The pattern
+  $\mathbf 1_g$ is the data that are $1$ on every cell of a cohort in group
+  $g$ and $0$ elsewhere.
+\end{definition}
+
+\begin{theorem}[Transfer of unbiasedness to group levels]\label{thm:unbiasedG_of}
+  \lean{Credibility.Model.sum_quad_grpData, Credibility.Model.EG_eq,
+    Credibility.Model.unbiasedG_of, Credibility.Model.UnbiasedG.unique,
+    Credibility.Model.UnbiasedG.add, Credibility.Model.UnbiasedG.const_mul,
+    Credibility.Model.UnbiasedG.congr}
+  \leanok
+  \uses{def:EG}
+  If $f$ is unbiased for $\theta$ in the thesis model, then with group levels
+  it is unbiased for
+  \[
+    \theta - \phi\tau^2\Big(\sum_j f(\mathbf 1_{\{j\}}) - \sum_g f(\mathbf 1_g)\Big),
+  \]
+  for every $\phi$. The value is unique: an estimator has one expectation.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:E_congr}
+  $(L_G)_{ij} = \tau^2\delta_{ij} - \phi\tau^2\delta_{ij} + \phi\tau^2[g(i) = g(j)]$,
+  and $[g(i) = g(j)] = \sum_g \mathbf 1_g(i)\mathbf 1_g(j)$, so the extra
+  terms are $\phi\tau^2$ times the quadratic form at the patterns.
+\end{proof}
+
+\begin{definition}[Share of within-group pairs]\label{def:withinShare}
+  \lean{Credibility.Model.withinShare}
+  \leanok
+  \uses{def:KG}
+  For weights $W_j > 0$, with $W_g$ the total weight of group $g$,
+  \[
+    \pi = \frac{\sum_g W_g^2 - \sum_j W_j^2}{(\sum_j W_j)^2 - \sum_j W_j^2}
+        = \frac{\sum_{i \ne j,\, g(i) = g(j)} W_iW_j}{\sum_{i \ne j} W_iW_j}.
+  \]
+\end{definition}
+
+\begin{lemma}\label{lem:withinShare}
+  \lean{Credibility.Model.groupWeight_id, Credibility.Model.sum_groupWeight,
+    Credibility.Model.sum_groupWeight_sq, Credibility.Model.sq_sum_sub_sum_groupWeight_sq,
+    Credibility.Model.withinShare_eq_pairs, Credibility.Model.sq_sum_sub_sum_sq_pos,
+    Credibility.Model.withinShare_eq_one_iff}
+  \leanok
+  \uses{def:withinShare}
+  The two forms of $\pi$ agree. With $J \ge 2$ the denominator is positive,
+  and $\pi = 1$ if and only if there is one group.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(\sum_j W_j)^2 - \sum_g W_g^2 = \sum_{g(i) \ne g(j)} W_iW_j$, a sum of
+  positive terms over the pairs across groups.
+\end{proof}
+
+\begin{theorem}[The §2.8 estimators with group levels]\label{thm:estimation_G}
+  \lean{Credibility.Model.wtot_pos', Credibility.Model.muHat_grpData, Credibility.Model.sigRhoHat_grpData,
+    Credibility.Model.tauHat_grpData, Credibility.Model.sum_tauHat_grpData,
+    Credibility.Model.sigRhoHat_unbiasedG, Credibility.Model.tauHat_unbiasedG,
+    Credibility.Model.KHat_unbiasedG}
+  \leanok
+  \uses{def:EG, def:estimators, def:withinShare}
+  In the setting of Corollary~\ref{cor:estimation}, with $\pi$ for the
+  weights $w_{j*}$: $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for
+  $\sigma^2_{ij}\rho_{ij}$, $\widehat{\tau^2}$ for $\tau^2 - \phi\tau^2\pi$,
+  and $\hat K_{ij}$ for $\sigma^2_{ij}\rho_{ij} + (\tau^2 - \phi\tau^2\pi)\delta_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedG_of, cor:estimation, lem:withinShare}
+  Theorem~\ref{thm:unbiasedG_of}. On noise-free data $\widehat{\sigma^2\rho} = 0$
+  and $\hmu_j = \mathbf 1_g(j)$, so $\widehat{\tau^2}(\mathbf 1_g) =
+  (W_g - W_g^2/w_{**})/(w_{**} - \sum_j w_{j*}^2/w_{**})$. Summed over the
+  cohorts this is $1$, over the groups $1 - \pi$.
+\end{proof}
+
+\begin{corollary}[$\hat K$ fits the blend only with one group]\label{cor:KHat_G_iff}
+  \lean{Credibility.Model.KHat_unbiasedG_iff}
+  \leanok
+  \uses{thm:estimation_G, def:KG}
+  Let $T \ge 2$, $J \ge 2$, $\phi \ne 0$. Then $\hat K_{ij}$ is unbiased for
+  $(K_G)_{ij} - \phi\tau^2[g(i) = g(j)]$ (the thesis $K$ for $(1-\phi)\tau^2$)
+  for all $i, j$ if and only if there is one group.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:estimation_G, lem:withinShare, lem:KG_eq}
+  On the diagonal the two values differ by $\phi\tau^2(1 - \pi)$.
+\end{proof}
+
+\begin{definition}[Pair estimator]\label{def:pairHat}
+  \lean{Credibility.Model.pairHat}
+  \leanok
+  \uses{def:estimators}
+  $\widehat{P}_{ij} = (\hmu_i - \hmu_j)^2 - \big(\widehat{\sigma^2_{ii}\rho_{ii}}
+  + \widehat{\sigma^2_{jj}\rho_{jj}} - 2\widehat{\sigma^2_{ij}\rho_{ij}}\big)$.
+\end{definition}
+
+\begin{theorem}[Pairs within and across groups]\label{thm:pairHat_G}
+  \lean{Credibility.Model.pairHat_unbiased, Credibility.Model.sum_pairHat_grpData,
+    Credibility.Model.pairHat_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  Let $T \ge 2$ and $i \ne j$. In the thesis model $\widehat P_{ij}$ is unbiased
+  for $2\tau^2$; with group levels, for $2\tau^2 - 2\phi\tau^2[g(i) = g(j)]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:estimation, thm:unbiasedG_of}
+  $\mathbb E(\hmu_i - \hmu_j)^2 = K_{ii} + K_{jj} - 2K_{ij}$. On the patterns,
+  $\sum_g \widehat P_{ij}(\mathbf 1_g) = 2[g(i) \ne g(j)]$.
+\end{proof}
+
+\begin{corollary}[$\phi\tau^2$ is identified]\label{cor:phiTauHat}
+  \lean{Credibility.Model.phiTauHat_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  If $i \ne j$ are in one group and $k$ in another, then
+  $(\widehat P_{ik} - \widehat P_{ij})/2$ is unbiased for $\phi\tau^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_G}
+  Linearity.
+\end{proof}
+
+\begin{remark}[Reading: plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
+  \uses{thm:estimation_G, cor:KHat_G_iff, cor:phiTauHat, rem:hier_bridge4}
+  $\widehat{\tau^2}$ averages $\tfrac12(\hmu_i - \hmu_j)^2$ over pairs of
+  cohorts, weighted by $w_{i*}w_{j*}$. A pair within a group shares $\phi\tau^2$,
+  a pair across groups does not, so $\widehat{\tau^2}$ lands between the
+  non-shared part $(1-\phi)\tau^2$ (one group, Section~\ref{sec:hier_bridge3})
+  and the full $\tau^2$ (singleton groups, the thesis), at $\tau^2 - \phi\tau^2\pi$.
+  With several groups, the thesis procedure applied unchanged therefore
+  overstates the within-group level variance, and it has no estimate of the
+  group-level variance $\phi\tau^2$ that the group weights need
+  (Remark~\ref{rem:hier_bridge4}). Splitting the pairs fixes both: pairs within
+  a group estimate $2(1-\phi)\tau^2$, pairs across groups $2\tau^2$, and their
+  difference $2\phi\tau^2$. So $\phi$ is identifiable as soon as some group
+  has two cohorts and there are two groups; as a ratio of two unbiased
+  estimators, $\hat\phi$ itself is not unbiased. Pooling the pairs efficiently
+  (weights per pair, truncation at $0$) is the estimation part of hierarchical
+  credibility and is left open.
+\end{remark}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean

@@ -13,6 +13,11 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Item 15, "watch out": with several groups `τ̂²` estimates `τ² - φτ²π`
+  (`π` = weighted share of same-group pairs), so the plug-in `K̂` is off
+  unless there is one group; pairs within vs across groups estimate
+  `(1-φ)τ²` and `τ²`, so `φτ²` is identifiable —
+  `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`.
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.

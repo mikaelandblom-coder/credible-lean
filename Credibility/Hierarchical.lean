@@ -42,6 +42,15 @@ thesis weights for `(1-φ)τ²`; across groups, inverse-variance weights with
 group variance `s'²_g + φτ²` (`glsWeight_KG`, `s2_KG`). The between-group
 variance flattens the group weights, and `zⱼ` gains `φτ²(1 - B_g)`, with
 `B_g` the weight of `j`'s group (`bestZ_G_eq`).
+
+Bridge 5: the §2.8 estimators with group levels. A thesis-unbiased estimator
+`f` gets expectation `θ - φτ²(Σⱼ f(1_{j}) - Σ_g f(1_g))`, with `1_g` the
+noise-free data equal to `1` on group `g` (`unbiasedG_of`). So `E τ̂² = τ² - φτ²π`,
+`π` the weighted share of same-group pairs (`tauHat_unbiasedG`), and `K̂`
+estimates `K_G - φτ²·[g(i) = g(j)]` only with one group (`KHat_unbiasedG_iff`).
+Pairs separate the parts: `(μ̂ᵢ - μ̂ⱼ)²` minus its noise estimates `2τ²` across
+groups and `2(1-φ)τ²` within one (`pairHat_unbiasedG`), so `φτ²` is identified
+(`phiTauHat_unbiasedG`).
 -/
 
 open Matrix
@@ -685,6 +694,423 @@ theorem bestZ_G_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (
   simp only [BlendMoments.bestZ, BlendMoments.gap, momentsG]
   rw [show (levelCovG grp M.τ2 φ *ᵥ glsWeight (M.KG grp φ)) j = _ from hL, mulVec_glsWeight hK]
   congr 1 <;> ring
+
+/-! ### Bridge 5: the §2.8 estimators with group levels -/
+
+variable (grp)
+
+/-- `cov(μᵢₜ, μⱼₛ)` with group levels: eq. (16) with `L_G` in place of `τ²δᵢⱼ`. -/
+noncomputable def obsCovG (φ : ℝ) (i j : J) (t s : T) : ℝ :=
+  M.σ i t * M.σ j s * M.ρ i j * (if t = s then 1 else 0) + levelCovG grp M.τ2 φ i j
+
+/-- Expectation of `quad Q` with group levels (as `Model.E`, with `obsCovG`). -/
+noncomputable def EG (φ μ : ℝ) (Q : J × T → J × T → ℝ) : ℝ :=
+  ∑ p, ∑ q, Q p q * (M.obsCovG grp φ p.1 q.1 p.2 q.2 + μ ^ 2)
+
+/-- `f` is unbiased for `θ` with group levels, whatever the mean `μ`. -/
+def UnbiasedG (φ : ℝ) (f : (J × T → ℝ) → ℝ) (θ : ℝ) : Prop :=
+  ∃ Q : J × T → J × T → ℝ, (∀ X, quad Q X = f X) ∧ ∀ μ, M.EG grp φ μ Q = θ
+
+/-- The noise-free data `1_g`: `1` on every cell of a cohort in group `g`, `0` elsewhere. -/
+def grpData (g : G) : J × T → ℝ := fun p => grpOne grp g p.1
+
+omit [DecidableEq J] [DecidableEq T] in
+/-- Summing a quadratic form over the group patterns picks the same-group pairs. -/
+lemma sum_quad_grpData (Q : J × T → J × T → ℝ) :
+    ∑ g, quad Q (grpData grp g) = ∑ p, ∑ q, Q p q * (if grp p.1 = grp q.1 then 1 else 0) := by
+  simp only [quad, grpData, grpOne]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun p _ => ?_
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun q _ => ?_
+  by_cases h : grp p.1 = grp q.1
+  · simp [h, eq_comm]
+  · simp only [h, ite_false, mul_zero]
+    refine Finset.sum_eq_zero fun g _ => ?_
+    by_cases hp : grp p.1 = g
+    · have : ¬grp q.1 = g := fun e => h (hp.trans e.symm)
+      simp [this]
+    · simp [hp]
+
+/-- The group level moves an expectation by `φτ²` times the estimator at the
+group patterns minus at the cohort patterns: within a group the shared part
+`φτ²` acts like a common mean. -/
+lemma EG_eq (φ μ : ℝ) (Q : J × T → J × T → ℝ) :
+    M.EG grp φ μ Q = M.E μ Q - φ * M.τ2 * ∑ j, quad Q (grpData id j)
+      + φ * M.τ2 * ∑ g, quad Q (grpData grp g) := by
+  rw [sum_quad_grpData, sum_quad_grpData]
+  simp only [EG, E, mom2, obsCovG, obsCov, levelCovG_apply', Finset.mul_sum,
+    ← Finset.sum_sub_distrib, ← Finset.sum_add_distrib, id]
+  exact Finset.sum_congr rfl fun p _ => Finset.sum_congr rfl fun q _ => by ring
+
+/-- Bridge 5: an estimator unbiased for `θ` in the thesis model has, with group
+levels, expectation `θ - φτ²(Σⱼ f(1_{j}) - Σ_g f(1_g))`: evaluate it on the
+noise-free cohort and group patterns. -/
+theorem unbiasedG_of {f : (J × T → ℝ) → ℝ} {θ : ℝ} (hf : M.Unbiased f θ) (φ : ℝ) :
+    M.UnbiasedG grp φ f
+      (θ - φ * M.τ2 * ∑ j, f (grpData id j) + φ * M.τ2 * ∑ g, f (grpData grp g)) := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  exact ⟨Q, hQ, fun μ => by simp only [EG_eq, hE, hQ]⟩
+
+variable {M grp} in
+/-- An estimator has one expectation: `UnbiasedG` fixes the value. -/
+theorem UnbiasedG.unique {φ : ℝ} {f : (J × T → ℝ) → ℝ} {θ θ' : ℝ}
+    (h : M.UnbiasedG grp φ f θ) (h' : M.UnbiasedG grp φ f θ') : θ = θ' := by
+  obtain ⟨Q, hQ, hE⟩ := h
+  obtain ⟨Q', hQ', hE'⟩ := h'
+  rw [← hE 0, ← hE' 0, EG_eq, EG_eq, M.E_congr 0 fun X => (hQ X).trans (hQ' X).symm]
+  simp only [hQ, hQ']
+
+omit [Fintype G] in
+variable {M grp} in
+/-- Linearity of `UnbiasedG`: sums. -/
+lemma UnbiasedG.add {φ : ℝ} {f g : (J × T → ℝ) → ℝ} {θ θ' : ℝ} (hf : M.UnbiasedG grp φ f θ)
+    (hg : M.UnbiasedG grp φ g θ') : M.UnbiasedG grp φ (fun X => f X + g X) (θ + θ') := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  obtain ⟨Q', hQ', hE'⟩ := hg
+  refine ⟨fun p q => Q p q + Q' p q, fun X => ?_, fun μ => ?_⟩
+  · beta_reduce; rw [← hQ, ← hQ']; simp only [quad, add_mul, Finset.sum_add_distrib]
+  · rw [← hE μ, ← hE' μ]; simp only [EG, add_mul, Finset.sum_add_distrib]
+
+omit [Fintype G] in
+variable {M grp} in
+/-- Linearity of `UnbiasedG`: scalar multiples. -/
+lemma UnbiasedG.const_mul {φ : ℝ} {f : (J × T → ℝ) → ℝ} {θ : ℝ} (c : ℝ)
+    (hf : M.UnbiasedG grp φ f θ) : M.UnbiasedG grp φ (fun X => c * f X) (c * θ) := by
+  obtain ⟨Q, hQ, hE⟩ := hf
+  refine ⟨fun p q => c * Q p q, fun X => ?_, fun μ => ?_⟩
+  · beta_reduce; rw [← hQ]; simp only [quad, Finset.mul_sum, mul_assoc]
+  · rw [← hE μ]; simp only [EG, Finset.mul_sum, mul_assoc]
+
+omit [Fintype G] in
+variable {M grp} in
+lemma UnbiasedG.congr {φ : ℝ} {f g : (J × T → ℝ) → ℝ} {θ θ' : ℝ} (h : M.UnbiasedG grp φ f θ)
+    (hf : ∀ X, f X = g X) (hθ : θ = θ') : M.UnbiasedG grp φ g θ' := by
+  obtain ⟨Q, hQ, hE⟩ := h
+  exact ⟨Q, fun X => (hQ X).trans (hf X), fun μ => (hE μ).trans hθ⟩
+
+/-! #### Weighted share of same-group pairs -/
+
+lemma groupWeight_id (b : J → ℝ) (j : J) : groupWeight id b j = b j := by
+  simp [groupWeight]
+
+omit [DecidableEq J] in
+lemma sum_groupWeight (b : J → ℝ) : ∑ g, groupWeight grp b g = ∑ i, b i := by
+  simp only [groupWeight]
+  rw [Finset.sum_comm]
+  simp
+
+omit [DecidableEq J] in
+/-- `Σ_g W_g² = Σ_{g(i) = g(j)} WᵢWⱼ`. -/
+lemma sum_groupWeight_sq (W : J → ℝ) :
+    ∑ g, groupWeight grp W g ^ 2 = ∑ i, ∑ j, if grp i = grp j then W i * W j else 0 := by
+  have h : ∀ g, groupWeight grp W g ^ 2
+      = ∑ i, ∑ j, if grp i = g ∧ grp j = g then W i * W j else 0 := fun g => by
+    simp only [groupWeight, sq, Finset.sum_mul_sum, ite_mul, mul_ite, zero_mul, mul_zero]
+    exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
+      by_cases hi : grp i = g <;> by_cases hj : grp j = g <;> simp [hi, hj]
+  simp only [h]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  by_cases hij : grp i = grp j
+  · simp [hij]
+  · simp only [hij, ite_false]
+    exact Finset.sum_eq_zero fun g _ => by
+      rw [ite_eq_right_iff]; exact fun hg => absurd (hg.1.trans hg.2.symm) hij
+
+omit [DecidableEq J] in
+/-- `(Σ Wᵢ)² - Σ_g W_g² = Σ_{g(i) ≠ g(j)} WᵢWⱼ`: the pairs across groups. -/
+lemma sq_sum_sub_sum_groupWeight_sq (W : J → ℝ) :
+    (∑ i, W i) ^ 2 - ∑ g, groupWeight grp W g ^ 2
+      = ∑ i, ∑ j, if grp i = grp j then 0 else W i * W j := by
+  rw [sum_groupWeight_sq, sq, Finset.sum_mul_sum, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  split_ifs <;> ring
+
+/-- The weighted share of same-group pairs among pairs of distinct cohorts,
+`π = Σ_{i≠j, g(i)=g(j)} WᵢWⱼ / Σ_{i≠j} WᵢWⱼ` (`withinShare_eq_pairs`). -/
+noncomputable def withinShare (W : J → ℝ) : ℝ :=
+  (∑ g, groupWeight grp W g ^ 2 - ∑ j, W j ^ 2) / ((∑ j, W j) ^ 2 - ∑ j, W j ^ 2)
+
+lemma withinShare_eq_pairs (W : J → ℝ) :
+    withinShare grp W = (∑ i, ∑ j, if i ≠ j ∧ grp i = grp j then W i * W j else 0)
+      / ∑ i, ∑ j, if i ≠ j then W i * W j else 0 := by
+  have hd := sq_sum_sub_sum_groupWeight_sq (id : J → J) W
+  have hn := sq_sum_sub_sum_groupWeight_sq grp W
+  simp only [groupWeight_id, id] at hd
+  rw [withinShare]
+  congr 1
+  · have : ∑ g, groupWeight grp W g ^ 2 - ∑ j, W j ^ 2
+        = ((∑ i, W i) ^ 2 - ∑ j, W j ^ 2) - ((∑ i, W i) ^ 2 - ∑ g, groupWeight grp W g ^ 2) := by
+      ring
+    rw [this, hd, hn, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    by_cases h : i = j
+    · subst h; simp
+    · by_cases hg : grp i = grp j <;> simp [h, hg]
+  · rw [hd]
+    exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
+      by_cases h : i = j <;> simp [h]
+
+omit [Fintype G] [DecidableEq G] in
+/-- With positive weights and two cohorts, the pairs of distinct cohorts have positive weight. -/
+lemma sq_sum_sub_sum_sq_pos {W : J → ℝ} (hW : ∀ j, 0 < W j) (hJ : 2 ≤ Fintype.card J) :
+    0 < (∑ j, W j) ^ 2 - ∑ j, W j ^ 2 := by
+  have hd := sq_sum_sub_sum_groupWeight_sq (id : J → J) W
+  simp only [groupWeight_id, id] at hd
+  rw [hd]
+  obtain ⟨a, b, hab⟩ := Fintype.exists_pair_of_one_lt_card (by omega : 1 < Fintype.card J)
+  have hnn : ∀ i j, 0 ≤ (if i = j then 0 else W i * W j) := fun i j => by
+    split_ifs
+    · exact le_rfl
+    · exact (mul_pos (hW i) (hW j)).le
+  refine Finset.sum_pos' (fun i _ => Finset.sum_nonneg fun j _ => hnn i j) ⟨a, Finset.mem_univ _, ?_⟩
+  refine Finset.sum_pos' (fun j _ => hnn a j) ⟨b, Finset.mem_univ _, ?_⟩
+  simp [hab, mul_pos (hW a) (hW b)]
+
+/-- `π = 1` (no pairs across groups) exactly when there is one group. -/
+lemma withinShare_eq_one_iff {W : J → ℝ} (hW : ∀ j, 0 < W j) (hJ : 2 ≤ Fintype.card J) :
+    withinShare grp W = 1 ↔ ∀ i j, grp i = grp j := by
+  have hD := sq_sum_sub_sum_sq_pos hW hJ
+  have hn := sq_sum_sub_sum_groupWeight_sq grp W
+  have hnn : ∀ i j, 0 ≤ (if grp i = grp j then 0 else W i * W j) := fun i j => by
+    split_ifs
+    · exact le_rfl
+    · exact (mul_pos (hW i) (hW j)).le
+  rw [withinShare, div_eq_one_iff_eq hD.ne']
+  constructor
+  · intro h i j
+    have h0 : ∑ i, ∑ j, (if grp i = grp j then 0 else W i * W j) = 0 := by
+      rw [← hn]; linarith
+    have hi := (Finset.sum_eq_zero_iff_of_nonneg fun i _ =>
+      Finset.sum_nonneg fun j _ => hnn i j).mp h0 i (Finset.mem_univ _)
+    have hij := (Finset.sum_eq_zero_iff_of_nonneg fun j _ => hnn i j).mp hi j (Finset.mem_univ _)
+    by_contra hg
+    simp only [hg, ite_false] at hij
+    exact (mul_pos (hW i) (hW j)).ne' hij
+  · intro h
+    have h0 : ∑ i, ∑ j, (if grp i = grp j then 0 else W i * W j) = 0 :=
+      Finset.sum_eq_zero fun i _ => Finset.sum_eq_zero fun j _ => by simp [h i j]
+    linarith
+
+/-! #### The estimators on the noise-free patterns -/
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] [DecidableEq G] in
+lemma wtot_pos' [Nonempty T] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (j : J) : 0 < wtot w j :=
+  Finset.sum_pos (fun t _ => hw j t) Finset.univ_nonempty
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] in
+lemma muHat_grpData [Nonempty T] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (g : G) (j : J) :
+    muHat w (grpData grp g) j = grpOne grp g j := by
+  simp only [muHat, grpData]
+  have : (∑ t, w j t) / wtot w j = 1 := div_self (wtot_pos' hw j).ne'
+  rw [← Finset.sum_mul, ← Finset.sum_div, this, one_mul]
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] in
+lemma sigRhoHat_grpData [Nonempty T] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (g : G) (i j : J) :
+    sigRhoHat w (grpData grp g) i j = 0 := by
+  simp [sigRhoHat, muHat_grpData grp hw, grpData]
+
+omit [DecidableEq T] [Fintype G] in
+lemma tauHat_grpData [Nonempty T] [Nonempty J] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (g : G) :
+    tauHat w (grpData grp g)
+      = (groupWeight grp (wtot w) g - groupWeight grp (wtot w) g ^ 2 / wall w)
+        / (wall w - ∑ i, wtot w i ^ 2 / wall w) := by
+  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos' hw j) Finset.univ_nonempty
+  have hc : ∀ j, cHat w (grpData grp g) j = 0 := fun j => by
+    simp [cHat, sigRhoHat_grpData grp hw]
+  simp only [tauHat, hc, muHat_grpData grp hw, sub_zero]
+  congr 1
+  set Wg := groupWeight grp (wtot w) g
+  have h1 : ∑ i, wtot w i / wall w * grpOne grp g i = Wg / wall w := by
+    rw [show Wg = ∑ i, if grp i = g then wtot w i else 0 from rfl, Finset.sum_div]
+    exact Finset.sum_congr rfl fun i _ => by simp only [grpOne]; split_ifs <;> ring
+  have h2 : ∀ j, wtot w j * (grpOne grp g j - Wg / wall w) ^ 2
+      = (if grp j = g then wtot w j else 0) * (1 - 2 * (Wg / wall w))
+        + wtot w j * (Wg / wall w) ^ 2 := fun j => by
+    simp only [grpOne]; split_ifs <;> ring
+  rw [h1]
+  simp only [h2, Finset.sum_add_distrib, ← Finset.sum_mul]
+  rw [show (∑ j, if grp j = g then wtot w j else 0) = Wg from rfl,
+    show (∑ j, wtot w j) = wall w from rfl]
+  field_simp
+  ring
+
+omit [DecidableEq T] in
+/-- The estimator `τ̂²` at the group patterns minus at the cohort patterns is `-π`. -/
+lemma sum_tauHat_grpData (hJ : 2 ≤ Fintype.card J) [Nonempty T] {w : J → T → ℝ}
+    (hw : ∀ j t, 0 < w j t) :
+    ∑ j, tauHat w (grpData id j) - ∑ g, tauHat w (grpData grp g) = withinShare grp (wtot w) := by
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos' hw j) Finset.univ_nonempty
+  have hD := sq_sum_sub_sum_sq_pos (wtot_pos' hw) hJ
+  rw [show (∑ j, wtot w j) = wall w from rfl] at hD
+  simp only [tauHat_grpData grp hw, tauHat_grpData (id : J → J) hw, groupWeight_id, ← Finset.sum_div,
+    Finset.sum_sub_distrib, sum_groupWeight]
+  rw [withinShare, show (∑ j, wtot w j) = wall w from rfl]
+  have hden : wall w - (∑ i, wtot w i ^ 2) / wall w = (wall w ^ 2 - ∑ i, wtot w i ^ 2) / wall w := by
+    field_simp
+  rw [hden]
+  field_simp
+  ring
+
+/-- The pair estimator `(μ̂ᵢ - μ̂ⱼ)² - (σ²ᵢᵢρᵢᵢ^ + σ²ⱼⱼρⱼⱼ^ - 2σ²ᵢⱼρᵢⱼ^)`: the
+squared difference of two cohort estimates, minus its estimated noise. -/
+noncomputable def pairHat (w : J → T → ℝ) (X : J × T → ℝ) (i j : J) : ℝ :=
+  (muHat w X i - muHat w X j) ^ 2 - (sigRhoHat w X i i + sigRhoHat w X j j - 2 * sigRhoHat w X i j)
+
+/-! #### Expectations with group levels -/
+
+variable {w : J → T → ℝ} (sig : J → ℝ) (hw : ∀ j t, 0 < w j t)
+  (hσ : ∀ j t, M.σ j t = sig j / √(w j t))
+include hw hσ
+
+/-- With group levels, `σ²ᵢⱼρᵢⱼ^` is still unbiased: it uses only deviations
+within a cohort. -/
+theorem sigRhoHat_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) (i j : J) :
+    M.UnbiasedG grp φ (fun X => sigRhoHat w X i j) (M.σ2 i j * M.ρ i j) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have h := M.unbiasedG_of grp (M.sigRhoHat_unbiased sig hw hσ hT i j) φ
+  simpa [sigRhoHat_grpData _ hw] using h
+
+/-- Bridge 5: with group levels, `E τ̂² = τ² - φτ²·π`, with `π` the weighted
+share of same-group pairs (`withinShare`, weights `wⱼ*`). `τ̂²` averages
+`½E(μ̂ᵢ - μ̂ⱼ)²` over pairs, and a pair in one group shares `φτ²`. One group:
+`π = 1`, Bridge 3; singleton groups: `π = 0`, the thesis. -/
+theorem tauHat_unbiasedG (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (φ : ℝ) :
+    M.UnbiasedG grp φ (tauHat w) (M.τ2 - φ * M.τ2 * withinShare grp (wtot w)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have h := M.unbiasedG_of grp (M.tauHat_unbiased sig hw hσ hT hJ) φ
+  convert h using 1
+  rw [← sum_tauHat_grpData grp hJ hw]
+  ring
+
+/-- With group levels, `E K̂ᵢⱼ = σ²ᵢⱼρᵢⱼ + (τ² - φτ²π)δᵢⱼ`. -/
+theorem KHat_unbiasedG (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) (φ : ℝ) (i j : J) :
+    M.UnbiasedG grp φ (fun X => KHat w X i j)
+      (M.σ2 i j * M.ρ i j
+        + (M.τ2 - φ * M.τ2 * withinShare grp (wtot w)) * (if i = j then 1 else 0)) :=
+  ((M.sigRhoHat_unbiasedG grp sig hw hσ hT φ i j).add
+    ((M.tauHat_unbiasedG grp sig hw hσ hT hJ φ).const_mul (if i = j then 1 else 0))).congr
+    (fun X => by simp only [KHat]; ring) (by ring)
+
+/-- `K̂` estimates `K_G - φτ²·[g(i) = g(j)]`, the thesis `K` for the non-shared
+part `(1-φ)τ²` (all the within-group weights need, by Bridge 4), exactly when
+there is one group, as in Bridge 3. With two or more groups `τ̂²` picks up
+`φτ²(1-π)` from the pairs across groups. -/
+theorem KHat_unbiasedG_iff (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) {φ : ℝ}
+    (hφ : φ ≠ 0) :
+    (∀ i j, M.UnbiasedG grp φ (fun X => KHat w X i j)
+        (M.KG grp φ i j - φ * M.τ2 * (if grp i = grp j then 1 else 0)))
+      ↔ ∀ i j, grp i = grp j := by
+  have hK : ∀ i j, M.KG grp φ i j - φ * M.τ2 * (if grp i = grp j then 1 else 0)
+      = M.σ2 i j * M.ρ i j + (1 - φ) * M.τ2 * (if i = j then 1 else 0) := fun i j => by
+    rw [KG, Matrix.add_apply, levelCovG_apply']; simp only [errCov, of_apply]; ring
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hπ := withinShare_eq_one_iff grp (wtot_pos' (T := T) hw) hJ
+  constructor
+  · intro h
+    rw [← hπ]
+    obtain ⟨j⟩ : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+    have e := (h j j).unique (M.KHat_unbiasedG grp sig hw hσ hT hJ φ j j)
+    rw [hK] at e
+    simp only [ite_true, mul_one] at e
+    have : φ * M.τ2 * (withinShare grp (wtot w) - 1) = 0 := by linarith
+    rcases mul_eq_zero.mp this with h0 | h0
+    · exact absurd h0 (mul_ne_zero hφ M.τ2_pos.ne')
+    · linarith
+  · intro h i j
+    rw [hK]
+    exact (M.KHat_unbiasedG grp sig hw hσ hT hJ φ i j).congr (fun _ => rfl)
+      (by rw [hπ.mpr h]; ring)
+
+/-! #### Identifying `φτ²`: pairs within and across groups -/
+
+/-- In the thesis model the pair estimator is unbiased for `2τ²` (`i ≠ j`):
+`E(μ̂ᵢ - μ̂ⱼ)² = Kᵢᵢ + Kⱼⱼ - 2Kᵢⱼ`. -/
+theorem pairHat_unbiased (hT : 2 ≤ Fintype.card T) {i j : J} (hij : i ≠ j) :
+    M.Unbiased (fun X => pairHat w X i j) (2 * M.τ2) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have ha := M.a_special sig hw hσ
+  have hW : ∀ k, (∑ t, w k t) / wtot w k = 1 := fun k => div_self (wtot_pos' hw k).ne'
+  let ℓ : J × T → ℝ := fun p =>
+    (if p.1 = i then M.a i p.2 else 0) - (if p.1 = j then M.a j p.2 else 0)
+  have pull : ∀ (k : J) (g : J → T → ℝ),
+      ∑ x, ∑ s, (if x = k then g x s else 0) = ∑ s, g k s := fun k g => by
+    rw [Finset.sum_comm]; simp [Finset.sum_ite_eq']
+  have hlin : ∀ X : J × T → ℝ, ∑ p, ℓ p * X p = muHat w X i - muHat w X j := fun X => by
+    simp only [ℓ, Fintype.sum_prod_type, sub_mul, ite_mul, zero_mul, Finset.sum_sub_distrib,
+      pull, muHat, ha]
+  have hsum : ∑ p, ℓ p = 0 := by
+    simp only [ℓ, Fintype.sum_prod_type, Finset.sum_sub_distrib, Finset.sum_ite_irrel,
+      Finset.sum_const_zero]
+    simp only [Finset.sum_ite_eq', Finset.mem_univ, ite_true, ha, ← Finset.sum_div, hW, sub_self]
+  have hcov : ∑ p, ∑ q, ℓ p * ℓ q * M.obsCov p.1 q.1 p.2 q.2
+      = M.K i i + M.K j j - M.K i j - M.K j i := by
+    simp only [ℓ, Fintype.sum_prod_type, sub_mul, mul_sub, ite_mul, mul_ite, zero_mul, mul_zero,
+      Finset.sum_sub_distrib, Finset.sum_ite_irrel, Finset.sum_const_zero, Finset.sum_ite_eq',
+      Finset.mem_univ, ite_true, K]
+    ring
+  have hsq : M.Unbiased (fun X => (muHat w X i - muHat w X j) ^ 2)
+      (M.K i i + M.K j j - M.K i j - M.K j i) :=
+    (M.unbiased_mul ℓ ℓ hsum).congr (fun X => by rw [hlin, sq]) hcov
+  have hs : ∀ k l, M.Unbiased (fun X => sigRhoHat w X k l) (M.σ2 k l * M.ρ k l) :=
+    M.sigRhoHat_unbiased sig hw hσ hT
+  refine (hsq.add ((((hs i i).add (hs j j)).add ((hs i j).const_mul (-2))).const_mul (-1))).congr
+    (fun X => by simp only [pairHat]; ring) ?_
+  have hσ2 : M.σ2 j i = M.σ2 i j := by
+    simp only [Model.σ2]; exact Finset.sum_congr rfl fun t _ => by ring
+  rw [M.K_apply, M.K_apply, M.K_apply, M.K_apply, hσ2, M.ρ_symm j i]
+  simp [hij, Ne.symm hij]
+  ring
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] hσ in
+lemma sum_pairHat_grpData [Nonempty T] (i j : J) :
+    ∑ g, pairHat w (grpData grp g) i j = if grp i = grp j then 0 else 2 := by
+  simp only [pairHat, muHat_grpData grp hw, sigRhoHat_grpData grp hw, grpOne]
+  by_cases h : grp i = grp j
+  · simp [h]
+  · simp only [h, ite_false, add_zero, mul_zero, sub_zero]
+    have : ∀ g : G, ((if grp i = g then (1 : ℝ) else 0) - if grp j = g then 1 else 0) ^ 2
+        = (if grp i = g then 1 else 0) + (if grp j = g then 1 else 0) := fun g => by
+      by_cases hi : grp i = g <;> by_cases hj : grp j = g
+      · exact absurd (hi.trans hj.symm) h
+      all_goals simp [hi, hj]
+    simp only [this, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+    norm_num
+
+/-- Bridge 5: with group levels the pair estimator is unbiased for
+`2τ² - 2φτ²·[g(i) = g(j)]`: a pair across groups sees the whole level variance,
+a pair within a group only the non-shared part. -/
+theorem pairHat_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) {i j : J} (hij : i ≠ j) :
+    M.UnbiasedG grp φ (fun X => pairHat w X i j)
+      (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp i = grp j then 1 else 0)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have h := M.unbiasedG_of grp (M.pairHat_unbiased sig hw hσ hT hij) φ
+  rw [sum_pairHat_grpData grp hw, sum_pairHat_grpData (id : J → J) hw] at h
+  convert h using 1
+  simp only [id, hij, ite_false]
+  split_ifs <;> ring
+
+/-- `φτ²` is identifiable from one pair within a group (`i`, `j`) and one pair
+across groups (`i`, `k`): half the difference of the two pair estimators is
+unbiased for `φτ²`. -/
+theorem phiTauHat_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) {i j k : J} (hij : i ≠ j)
+    (hg : grp i = grp j) (hk : grp i ≠ grp k) :
+    M.UnbiasedG grp φ (fun X => (pairHat w X i k - pairHat w X i j) / 2) (φ * M.τ2) := by
+  have hik : i ≠ k := fun e => hk (congrArg grp e)
+  refine (((M.pairHat_unbiasedG grp sig hw hσ hT φ hik).add
+    ((M.pairHat_unbiasedG grp sig hw hσ hT φ hij).const_mul (-1))).const_mul (1 / 2)).congr
+    (fun X => by ring) ?_
+  have hk' : grp j ≠ grp k := hg ▸ hk
+  simp only [hg, hk', ite_true, ite_false]
+  ring
 
 end Model
 end Credibility
