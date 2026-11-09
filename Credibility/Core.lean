@@ -81,18 +81,24 @@ theorem bestZ_eq (hK : K.PosDef) (j : J) :
     Matrix.one_apply_eq, mul_one]
   ring
 
+/-! ### Solving `K x = 1` -/
+
+/-- If `K` is invertible and `K w = c·1` with `c ≠ 0`, then `K⁻¹1 = c⁻¹ w`. Every
+closed form for the GLS weights below comes from guessing such a `w`. -/
+theorem Kinv_one_eq_of_mulVec (hK : IsUnit K.det) {w : J → ℝ} {c : ℝ} (hc : c ≠ 0)
+    (hw : K *ᵥ w = c • 1) : K⁻¹ *ᵥ 1 = c⁻¹ • w := by
+  rw [eq_inv_smul_iff₀ hc, ← mulVec_smul, ← hw, mulVec_mulVec, nonsing_inv_mul _ hK, one_mulVec]
+
 /-! ### Diagonal `K = diag(τ² + vⱼ)` -/
 
 /-- For diagonal `K`, `K⁻¹u = (τ² + vⱼ)⁻¹`. -/
 theorem Kinv_one_of_diag (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j, τ2 + v j ≠ 0) :
     K⁻¹ *ᵥ 1 = fun j => (τ2 + v j)⁻¹ := by
-  have hinv : (diagonal fun j => τ2 + v j)⁻¹ = diagonal fun j => (τ2 + v j)⁻¹ := by
-    refine inv_eq_left_inv ?_
-    rw [diagonal_mul_diagonal]
-    simp only [inv_mul_cancel₀ (hd _), diagonal_one]
-  rw [hK, hinv]
+  have hdet : IsUnit K.det := by
+    rw [hK, det_diagonal]; exact (Finset.prod_ne_zero_iff.mpr fun j _ => hd j).isUnit
+  rw [Kinv_one_eq_of_mulVec hdet one_ne_zero (w := fun j => (τ2 + v j)⁻¹), inv_one, one_smul]
   ext j
-  simp [mulVec_diagonal]
+  simp [hK, mulVec_diagonal, hd j]
 
 /-- For diagonal `K`, `bⱼ = (τ² + vⱼ)⁻¹ / Σᵢ (τ² + vᵢ)⁻¹`. -/
 theorem b_of_diag (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j, τ2 + v j ≠ 0) (j : J) :
@@ -151,19 +157,18 @@ theorem Kinv_one_of_equalCov (hK : K.PosDef) (c : ℝ) (hc : ∀ i j, i ≠ j �
     field_simp [hd' i]
     ring
   have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det _).mp hK.isUnit
-  have hw : w = (1 + c * ∑ i, w i) • (K⁻¹ *ᵥ 1) := by
-    rw [← mulVec_smul, ← hKw, mulVec_mulVec, nonsing_inv_mul _ hdet, one_mulVec]
+  -- `1 + c Σ w = 0` would give `K w = 0`, so `w = 0`, but `wⱼ ≠ 0`.
   have hne : 1 + c * ∑ i, w i ≠ 0 := by
     intro h0
     obtain ⟨j⟩ : Nonempty J := by
       by_contra hJ
       rw [not_nonempty_iff] at hJ
       simp at h0
-    have := congrFun hw j
-    rw [h0, zero_smul] at this
-    exact inv_ne_zero (hd' j) this
-  refine ⟨hne, ?_⟩
-  rw [eq_inv_smul_iff₀ hne]; exact hw.symm
+    have h := congrArg (K⁻¹ *ᵥ ·) hKw
+    simp only [h0, zero_smul, mulVec_zero, mulVec_mulVec, nonsing_inv_mul _ hdet,
+      one_mulVec] at h
+    exact inv_ne_zero (hd' j) (congrFun h j)
+  exact ⟨hne, Kinv_one_eq_of_mulVec hdet hne hKw⟩
 
 /-- Weights from credibility factors under equal covariances: `bⱼ = zⱼ/z*` with
 `zⱼ = τ²/(τ² + vⱼ - c)`, for any number of cohorts. -/

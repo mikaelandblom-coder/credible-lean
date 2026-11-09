@@ -80,8 +80,6 @@ theorem Kinv_one_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
     rw [add_mulVec, smul_mulVec, vecMulVec_mulVec, mulVec_mulVec, mul_nonsing_inv K hdet,
       one_mulVec]
     ext i; simp [S, invTotal, w]
-  have hw : w = (1 + c * S) • ((K + c • vecMulVec 1 1)⁻¹ *ᵥ 1) := by
-    rw [← mulVec_smul, ← hKw, mulVec_mulVec, nonsing_inv_mul _ hdet', one_mulVec]
   -- `wᵀ(K + c·11ᵀ)w = (1 + cS)·S > 0` with `S > 0`.
   have hpos : 0 < 1 + c * S := by
     rcases isEmpty_or_nonempty J with hJ | hJ
@@ -97,8 +95,7 @@ theorem Kinv_one_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
     have hS' : ∑ i, w i = S := by simp [S, invTotal, w, one_dotProduct]
     rw [hS'] at this
     exact pos_of_mul_pos_left this hS.le
-  refine ⟨hpos, ?_⟩
-  rw [eq_inv_smul_iff₀ hpos.ne']; exact hw.symm
+  exact ⟨hpos, Core.Kinv_one_eq_of_mulVec hdet' hpos.ne' hKw⟩
 
 /-- A rank-one term along `1` does not change the GLS weights:
 `b(K + c·11ᵀ) = b(K)`, since `(K + c·11ᵀ)⁻¹1 ∝ K⁻¹1`. -/
@@ -409,8 +406,8 @@ theorem Kinv_one_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDia
     rw [← h1]
     simp only [mulVec, dotProduct]
     exact Finset.sum_congr rfl fun j _ => by rw [hx _ _ j.2]; rfl
-  have hdet := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
-  rw [← hKx, mulVec_mulVec, nonsing_inv_mul _ hdet, one_mulVec]
+  rw [Core.Kinv_one_eq_of_mulVec ((Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit) one_ne_zero
+    (by rw [hKx, one_smul]), inv_one, one_smul]
 
 /-- The precision `1ᵀK⁻¹1` of a block-diagonal `K` is the sum of the block precisions. -/
 theorem invTotal_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K) :

@@ -491,6 +491,17 @@ $K \succ 0$, and takes the results of this section as corollaries.
   $L_{jj} - (L\bb)_j = (1-b_j)\tau^2$.
 \end{proof}
 
+\begin{lemma}[Solving $Kx = u$]\label{lem:Core_Kinv_one_eq}
+  \lean{Credibility.Core.Kinv_one_eq_of_mulVec}
+  \leanok
+  If $K$ is invertible and $Kw = c\,u$ with $c \ne 0$, then $K^{-1}u = w/c$.
+  Every closed form for the GLS weights below comes from guessing such a $w$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Apply $K^{-1}$ to $Kw = c\,u$.
+\end{proof}
+
 \begin{theorem}[Diagonal $K$]\label{thm:Core_diag}
   \lean{Credibility.Core.Kinv_one_of_diag, Credibility.Core.b_of_diag,
         Credibility.Core.bestZ_of_diag}
@@ -503,8 +514,8 @@ $K \succ 0$, and takes the results of this section as corollaries.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:Core_bestZ_eq}
-  Invert the diagonal. With $V = \sum_i (\tau^2+v_i)^{-1}$ and
+  \uses{lem:Core_Kinv_one_eq, thm:Core_bestZ_eq}
+  Lemma~\ref{lem:Core_Kinv_one_eq} with $w_j = (\tau^2+v_j)^{-1}$, $c = 1$. With $V = \sum_i (\tau^2+v_i)^{-1}$ and
   $d_j = \tau^2 + v_j$, \eqth{26} is
   $(1 - d_j^{-1}/V)\tau^2/(d_j - V^{-1}) = \tau^2/d_j$, using
   $V > d_j^{-1}$ ($J \ge 2$).
@@ -524,8 +535,9 @@ the rank-one part lies along $u$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $(Kw)_i = d_i w_i + c\,w_* = 1 + c\,w_*$, so $Kw = (1 + c\,w_*)u$. Apply
-  $K^{-1}$; if $1 + c\,w_* = 0$ then $w = 0$, impossible.
+  \uses{lem:Core_Kinv_one_eq}
+  $(Kw)_i = d_i w_i + c\,w_* = 1 + c\,w_*$, so $Kw = (1 + c\,w_*)u$. If
+  $1 + c\,w_* = 0$ then $w = 0$, impossible; then Lemma~\ref{lem:Core_Kinv_one_eq}.
 \end{proof}
 
 \begin{theorem}\label{thm:Core_b_eq_of_equalCov}
@@ -2127,9 +2139,9 @@ $M_\phi$ be the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:invTotal_pos}
+  \uses{lem:invTotal_pos, lem:Core_Kinv_one_eq}
   With $w = K^{-1}\mathbf 1$ and $S = \mathbf 1^Tw$,
-  $(K + c\mathbf 1\mathbf 1^T)w = (1 + cS)\mathbf 1$. Positivity:
+  $(K + c\mathbf 1\mathbf 1^T)w = (1 + cS)\mathbf 1$: Lemma~\ref{lem:Core_Kinv_one_eq}. Positivity:
   $w^T(K + c\mathbf 1\mathbf 1^T)w = (1+cS)S > 0$ and $S > 0$.
 \end{proof}
 
@@ -2351,9 +2363,9 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:block_posDef}
+  \uses{lem:block_posDef, lem:Core_Kinv_one_eq}
   The vector assembled from the $K_g^{-1}\mathbf 1$ solves $Kx = \mathbf 1$ block by
-  block. Then sum over each group.
+  block (Lemma~\ref{lem:Core_Kinv_one_eq}). Then sum over each group.
 \end{proof}
 
 \begin{theorem}[Two-stage GLS]\label{thm:glsWeight_blockDiag}
