@@ -777,15 +777,11 @@ lemma withinShare_eq_one_iff {W : J → ℝ} (hW : ∀ j, 0 < W j) (hJ : 2 ≤ F
 
 /-! #### The estimators on the noise-free patterns -/
 
-omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] [DecidableEq G] in
-lemma wtot_pos' [Nonempty T] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (j : J) : 0 < wtot w j :=
-  Finset.sum_pos (fun t _ => hw j t) Finset.univ_nonempty
-
 omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] in
 lemma muHat_grpData [Nonempty T] {w : J → T → ℝ} (hw : ∀ j t, 0 < w j t) (g : G) (j : J) :
     muHat w (grpData grp g) j = grpOne grp g j := by
   simp only [muHat, grpData]
-  have : (∑ t, w j t) / wtot w j = 1 := div_self (wtot_pos' hw j).ne'
+  have : (∑ t, w j t) / wtot w j = 1 := div_self (wtot_pos hw j).ne'
   rw [← Finset.sum_mul, ← Finset.sum_div, this, one_mul]
 
 omit [Fintype J] [DecidableEq J] [DecidableEq T] [Fintype G] in
@@ -798,7 +794,7 @@ lemma tauHat_grpData [Nonempty T] [Nonempty J] {w : J → T → ℝ} (hw : ∀ j
     tauHat w (grpData grp g)
       = (groupWeight grp (wtot w) g - groupWeight grp (wtot w) g ^ 2 / wall w)
         / (wall w - ∑ i, wtot w i ^ 2 / wall w) := by
-  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos' hw j) Finset.univ_nonempty
+  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos hw j) Finset.univ_nonempty
   have hc : ∀ j, cHat w (grpData grp g) j = 0 := fun j => by
     simp [cHat, sigRhoHat_grpData grp hw]
   simp only [tauHat, hc, muHat_grpData grp hw, sub_zero]
@@ -824,8 +820,8 @@ lemma sum_tauHat_grpData (hJ : 2 ≤ Fintype.card J) [Nonempty T] {w : J → T �
     (hw : ∀ j t, 0 < w j t) :
     ∑ j, tauHat w (grpData id j) - ∑ g, tauHat w (grpData grp g) = withinShare grp (wtot w) := by
   have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
-  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos' hw j) Finset.univ_nonempty
-  have hD := sq_sum_sub_sum_sq_pos (wtot_pos' hw) hJ
+  have hS : 0 < wall w := Finset.sum_pos (fun j _ => wtot_pos hw j) Finset.univ_nonempty
+  have hD := sq_sum_sub_sum_sq_pos (wtot_pos hw) hJ
   rw [show (∑ j, wtot w j) = wall w from rfl] at hD
   simp only [tauHat_grpData grp hw, tauHat_grpData (id : J → J) hw, groupWeight_id, ← Finset.sum_div,
     Finset.sum_sub_distrib, sum_groupWeight]
@@ -889,7 +885,7 @@ theorem KHat_unbiasedG_iff (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card 
       = M.σ2 i j * M.ρ i j + (1 - φ) * M.τ2 * (if i = j then 1 else 0) := fun i j => by
     rw [KG, Matrix.add_apply, levelCovG_apply']; simp only [errCov, of_apply]; ring
   have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
-  have hπ := withinShare_eq_one_iff grp (wtot_pos' (T := T) hw) hJ
+  have hπ := withinShare_eq_one_iff grp (wtot_pos (T := T) hw) hJ
   constructor
   · intro h
     rw [← hπ]
@@ -914,7 +910,7 @@ theorem pairHat_unbiased (hT : 2 ≤ Fintype.card T) {i j : J} (hij : i ≠ j) :
     M.Unbiased (fun X => pairHat w X i j) (2 * M.τ2) := by
   have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
   have ha := M.a_special sig hw hσ
-  have hW : ∀ k, (∑ t, w k t) / wtot w k = 1 := fun k => div_self (wtot_pos' hw k).ne'
+  have hW : ∀ k, (∑ t, w k t) / wtot w k = 1 := fun k => div_self (wtot_pos hw k).ne'
   let ℓ : J × T → ℝ := fun p =>
     (if p.1 = i then M.a i p.2 else 0) - (if p.1 = j then M.a j p.2 else 0)
   have pull : ∀ (k : J) (g : J → T → ℝ),
@@ -993,7 +989,7 @@ theorem phiTauHat_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) {i j k : J} (
 omit [DecidableEq T] hσ in
 lemma withinShare_const [Nonempty T] (hJ : 2 ≤ Fintype.card J) :
     withinShare (fun _ : J => ()) (wtot w) = 1 :=
-  (withinShare_eq_one_iff _ (wtot_pos' hw) hJ).mpr fun _ _ => rfl
+  (withinShare_eq_one_iff _ (wtot_pos hw) hJ).mpr fun _ _ => rfl
 
 /-- With a shared level, `σ²ᵢⱼρᵢⱼ^` is still unbiased for `σ²ᵢⱼρᵢⱼ`: it uses
 only deviations within a cohort, where the level cancels. -/

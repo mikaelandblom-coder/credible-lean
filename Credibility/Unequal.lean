@@ -107,6 +107,13 @@ lemma sum_a_mul (j : J) (F : T → ℝ) : ∑ t ∈ M.obs j, M.a j t * F t = ∑
   sum_subset (subset_univ _) fun t _ ht => by simp [a, ht]
 
 omit [Fintype J] [DecidableEq J] in
+/-- The cohort weights sum to one over all of `T`. -/
+lemma sum_a_univ (j : J) : ∑ t, M.a j t = 1 := by
+  have := M.sum_a_mul j (fun _ => 1)
+  simp only [mul_one] at this
+  rw [← this, M.sum_a]
+
+omit [Fintype J] [DecidableEq J] in
 /-- `σ²ᵢⱼ` as a sum over all periods. -/
 lemma σ2_eq_sum (i j : J) : M.σ2 i j = ∑ t, M.a i t * M.a j t * M.σ i t * M.σ j t := by
   refine sum_subset (subset_univ _) fun t _ ht => ?_

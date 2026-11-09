@@ -40,6 +40,11 @@ def wtot (j : J) : ℝ := ∑ t, w j t
 /-- `w** = Σⱼ wⱼ*`. -/
 def wall : ℝ := ∑ j, wtot w j
 
+variable {w} in
+omit [Fintype J] [DecidableEq J] [DecidableEq T] in
+lemma wtot_pos [Nonempty T] (hw : ∀ j t, 0 < w j t) (j : J) : 0 < wtot w j :=
+  sum_pos (fun t _ => hw j t) univ_nonempty
+
 /-- `Sᵢⱼ = Σₜ √(wᵢₜwⱼₜ)`. -/
 noncomputable def sqrtSum (i j : J) : ℝ := ∑ t, √(w i t * w j t)
 

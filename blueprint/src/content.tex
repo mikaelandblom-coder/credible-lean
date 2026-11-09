@@ -1273,10 +1273,10 @@ shared periods.
 \end{definition}
 
 \begin{lemma}\label{lem:U_sum_a}
-  \lean{Credibility.Unequal.sum_a}
+  \lean{Credibility.Unequal.sum_a, Credibility.Unequal.sum_a_univ}
   \leanok
   \uses{def:Unequal}
-  $\sum_{t \in T_j} a_{jt} = 1$.
+  $\sum_{t \in T_j} a_{jt} = 1$, hence also $\sum_{t \in T} a_{jt} = 1$.
 \end{lemma}
 \begin{proof}
   \leanok
@@ -1517,6 +1517,18 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   $n_{ij} = |T_{ij}| - \sum_{t\in T_{ij}} w_{it}/w_{i*} - \sum_{t \in T_{ij}} w_{jt}/w_{j*}$
   and $D_{ij} = S_{ij} + n_{ij}w_{i*}w_{j*}/S_{ij}$.
 \end{definition}
+
+\begin{lemma}[Positive volumes]\label{lem:U_wtot_pos}
+  \lean{Credibility.Unequal.wtot_pos, Credibility.Unequal.sqrtSum_self,
+        Credibility.Model.wtot_pos}
+  \leanok
+  \uses{def:U_count, def:estimators}
+  If all $w_{jt} > 0$, then $w_{j*} > 0$ and $S_{jj} = w_{j*}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $T_j \ne \emptyset$, and $\sqrt{w_{jt}w_{jt}} = w_{jt}$.
+\end{proof}
 
 \begin{definition}[Estimators]\label{def:U_estimators}
   \lean{Credibility.Unequal.sigRhoHat, Credibility.Unequal.cHat,
@@ -2648,7 +2660,7 @@ itself, evaluated on noise-free data.
 \end{proof}
 
 \begin{theorem}[The §2.8 estimators with group levels]\label{thm:estimation_G}
-  \lean{Credibility.Model.wtot_pos', Credibility.Model.muHat_grpData, Credibility.Model.sigRhoHat_grpData,
+  \lean{Credibility.Model.muHat_grpData, Credibility.Model.sigRhoHat_grpData,
     Credibility.Model.tauHat_grpData, Credibility.Model.sum_tauHat_grpData,
     Credibility.Model.sigRhoHat_unbiasedG, Credibility.Model.tauHat_unbiasedG,
     Credibility.Model.KHat_unbiasedG}

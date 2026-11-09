@@ -32,10 +32,7 @@ theorem unbiased_dev (i j : J) {t : T} (_ht : t ∈ M.overlap i j) :
       (fun X => (X (i, t) - ∑ s ∈ M.obs i, M.a i s * X (i, s))
         * (X (j, t) - ∑ s ∈ M.obs j, M.a j s * X (j, s)))
       ((1 - M.a i t - M.a j t) * M.σ i t * M.σ j t * M.ρ i j + M.σ2 i j * M.ρ i j) := by
-  have ha : ∀ k, ∑ s, M.a k s = 1 := fun k => by
-    have := M.sum_a_mul k (fun _ => 1)
-    simp only [mul_one] at this
-    rw [← this, M.sum_a]
+  have ha : ∀ k, ∑ s, M.a k s = 1 := M.sum_a_univ
   refine (?_ : M.toModel.Unbiased (fun X => (X (i, t) - ∑ s, M.a i s * X (i, s))
     * (X (j, t) - ∑ s, M.a j s * X (j, s))) _).congr
     (fun X => by rw [M.sum_a_mul i (fun s => X (i, s)), M.sum_a_mul j (fun s => X (j, s))]) rfl
@@ -71,6 +68,18 @@ def wall : ℝ := ∑ j, M.wtot w j
 
 /-- `Sᵢⱼ = Σ_{t∈Tᵢⱼ} √(wᵢₜwⱼₜ)`. -/
 noncomputable def sqrtSum (i j : J) : ℝ := ∑ t ∈ M.overlap i j, √(w i t * w j t)
+
+variable {w} in
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+lemma wtot_pos (hw : ∀ j t, 0 < w j t) (j : J) : 0 < M.wtot w j :=
+  sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+
+variable {w} in
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- `Sⱼⱼ = wⱼ*`. -/
+lemma sqrtSum_self (hw : ∀ j t, 0 < w j t) (j : J) : M.sqrtSum w j j = M.wtot w j := by
+  simp only [sqrtSum, overlap, inter_self]
+  exact sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
 
 /-- The per-pair count `nᵢⱼ = |Tᵢⱼ| - Σ_{Tᵢⱼ} wᵢₜ/wᵢ* - Σ_{Tᵢⱼ} wⱼₜ/wⱼ*`,
 replacing `T - 2` in eq. (39). -/
@@ -109,7 +118,7 @@ omit [Fintype J] [DecidableEq J] [Fintype T] in
 /-- On the diagonal the count is `|Tⱼ| - 2`. -/
 theorem count_self (hw : ∀ j t, 0 < w j t) (j : J) :
     M.count w j j = (#(M.obs j) : ℝ) - 2 := by
-  have hW : M.wtot w j ≠ 0 := (sum_pos (fun s _ => hw j s) (M.obs_nonempty j)).ne'
+  have hW : M.wtot w j ≠ 0 := (M.wtot_pos hw j).ne'
   simp only [count, overlap, inter_self]
   rw [show ∑ t ∈ M.obs j, w j t = M.wtot w j from rfl, div_self hW]
   ring
@@ -119,7 +128,7 @@ omit [Fintype J] [DecidableEq J] in
 theorem count_of_full (hw : ∀ j t, 0 < w j t) (h : ∀ j, M.obs j = univ) (i j : J) :
     M.count w i j = (Fintype.card T : ℝ) - 2 := by
   have hW : ∀ k, M.wtot w k ≠ 0 := fun k =>
-    (sum_pos (fun s _ => hw k s) (M.obs_nonempty k)).ne'
+    (M.wtot_pos hw k).ne'
   have hO : M.overlap i j = univ := by simp [overlap, h]
   have hw' : ∀ k, ∑ t ∈ M.overlap i j, w k t = M.wtot w k := fun k => by rw [hO, wtot, h]
   rw [count, hw', hw', div_self (hW i), div_self (hW j), hO, card_univ]
@@ -132,7 +141,7 @@ theorem den_pos_of_two_le (hw : ∀ j t, 0 < w j t) {i j : J} (h : 2 ≤ #(M.ove
   have hO : (M.overlap i j).Nonempty := card_pos.mp (by omega)
   have hS : 0 < M.sqrtSum w i j :=
     sum_pos (fun t _ => Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))) hO
-  have hW : ∀ k, 0 < M.wtot w k := fun k => sum_pos (fun s _ => hw k s) (M.obs_nonempty k)
+  have hW : ∀ k, 0 < M.wtot w k := M.wtot_pos hw
   -- Each cohort has at most all of its volume in the overlap, so `nᵢⱼ ≥ 2 - 1 - 1`.
   have hle : ∀ k, M.overlap i j ⊆ M.obs k →
       (∑ t ∈ M.overlap i j, w k t) / M.wtot w k ≤ 1 := fun k hk => by
@@ -153,8 +162,8 @@ theorem den_of_overlap_singleton (hw : ∀ j t, 0 < w j t) {i j : J} {t : T}
     (h : M.overlap i j = {t}) :
     M.den w i j * M.sqrtSum w i j / (M.wtot w i * M.wtot w j)
       = (1 - w i t / M.wtot w i) * (1 - w j t / M.wtot w j) := by
-  have hWi : M.wtot w i ≠ 0 := (sum_pos (fun s _ => hw i s) (M.obs_nonempty i)).ne'
-  have hWj : M.wtot w j ≠ 0 := (sum_pos (fun s _ => hw j s) (M.obs_nonempty j)).ne'
+  have hWi : M.wtot w i ≠ 0 := (M.wtot_pos hw i).ne'
+  have hWj : M.wtot w j ≠ 0 := (M.wtot_pos hw j).ne'
   have hS0 : 0 < √(w i t * w j t) := Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))
   have hsq : √(w i t * w j t) ^ 2 = w i t * w j t :=
     Real.sq_sqrt (mul_pos (hw i t) (hw j t)).le
@@ -207,7 +216,7 @@ theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.
     · simp [Model.quad, sigRhoHat, hO]
     · simp [Model.Ecov, σ2, hO]
   have hden' := hden hO
-  have hW : ∀ k, 0 < M.wtot w k := fun k => sum_pos (fun s _ => hw k s) (M.obs_nonempty k)
+  have hW : ∀ k, 0 < M.wtot w k := M.wtot_pos hw
   have hS : 0 < M.sqrtSum w i j :=
     sum_pos (fun t _ => Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))) hO
   have hmu : ∀ X k, M.muHat w X k = ∑ s ∈ M.obs k, M.a k s * X (k, s) := fun X k =>
@@ -251,7 +260,7 @@ overlapping pair (e.g. `|Tᵢⱼ| ≠ 1` for all `i, j`, `den_pos_of_two_le`). -
 theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
     (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j) :
     M.toModel.Unbiased (M.tauHat w) M.τ2 := by
-  have hW : ∀ k, 0 < M.wtot w k := fun k => sum_pos (fun s _ => hw k s) (M.obs_nonempty k)
+  have hW : ∀ k, 0 < M.wtot w k := M.wtot_pos hw
   have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
   have pull1 : ∀ (j : J) (g : J → T → ℝ),
       ∑ k, ∑ s, (if k = j then g k s else 0) = ∑ s, g j s := fun j g => by
@@ -281,10 +290,7 @@ theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
     exact sum_congr rfl fun s hs => by rw [M.a_special sig hw hσ k hs]
   -- Coefficients of `μ̂ⱼ - Σᵢ xᵢμ̂ᵢ`.
   let ℓ : J → J × T → ℝ := fun j p => ((if p.1 = j then 1 else 0) - x p.1) * M.a p.1 p.2
-  have ha : ∀ k, ∑ s, M.a k s = 1 := fun k => by
-    have := M.sum_a_mul k (fun _ => 1)
-    simp only [mul_one] at this
-    rw [← this, M.sum_a]
+  have ha : ∀ k, ∑ s, M.a k s = 1 := M.sum_a_univ
   have hlin : ∀ j (X : J × T → ℝ), ∑ p, ℓ j p * X p
       = M.muHat w X j - ∑ i, M.wtot w i / M.wall w * M.muHat w X i := fun j X => by
     simp only [ℓ, hmu, Fintype.sum_prod_type, sub_mul, ite_mul, one_mul, zero_mul, sum_sub_distrib,
@@ -375,10 +381,8 @@ theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
     M.sigRhoHat w X j j
       = (∑ t ∈ M.obs j, w j t * (X (j, t) - M.muHat w X j) ^ 2 / ((#(M.obs j) : ℝ) - 1))
         / M.wtot w j := by
-  have hW : 0 < M.wtot w j := sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
-  have hS : M.sqrtSum w j j = M.wtot w j := by
-    simp only [sqrtSum, overlap, inter_self]
-    exact sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
+  have hW : 0 < M.wtot w j := M.wtot_pos hw j
+  have hS : M.sqrtSum w j j = M.wtot w j := M.sqrtSum_self hw j
   rw [sigRhoHat, den, hS, M.count_self w hw j, ← sum_div, div_div,
     show M.wtot w j + ((#(M.obs j) : ℝ) - 2) * M.wtot w j * M.wtot w j / M.wtot w j
       = ((#(M.obs j) : ℝ) - 1) * M.wtot w j by field_simp; ring]
@@ -401,10 +405,8 @@ omit [Fintype J] [DecidableEq J] [Fintype T] hρ in
 /-- Bühlmann–Straub with unequal lengths, eq. (30): `σ²ⱼⱼ = s²/wⱼ*`, `wⱼ* = Σ_{t∈Tⱼ} wⱼₜ`. -/
 theorem σ2_bs (j : J) : M.σ2 j j = s ^ 2 / M.wtot w j := by
   have h := M.σ2ρ_special (fun _ => s) hw hσ j j
-  have hS : M.sqrtSum w j j = M.wtot w j := by
-    simp only [sqrtSum, overlap, inter_self]
-    exact sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
-  have hW : 0 < M.wtot w j := sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  have hS : M.sqrtSum w j j = M.wtot w j := M.sqrtSum_self hw j
+  have hW : 0 < M.wtot w j := M.wtot_pos hw j
   rw [M.ρ_self, mul_one, mul_one, hS] at h
   rw [h]
   field_simp
@@ -415,7 +417,7 @@ theorem bestZ_bs (hJ : 1 < Fintype.card J) (j : J) :
     (M.moments j).bestZ = M.wtot w j / (M.wtot w j + s ^ 2 / M.τ2) := by
   have h0 : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = 0 := fun i j h => by
     simp [hρ, h]
-  have hW : 0 < M.wtot w j := sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  have hW : 0 < M.wtot w j := M.wtot_pos hw j
   have := M.τ2_pos.ne'
   rw [M.bestZ_of_diag h0 hJ, M.σ2_bs s hw hσ]
   field_simp
@@ -430,7 +432,7 @@ theorem b_bs (j : J) :
   have hτ := M.τ2_pos
   have key : ∀ i, (M.τ2 + M.σ2 i i)⁻¹ = M.wtot w i / (M.wtot w i + s ^ 2 / M.τ2) / M.τ2 :=
     fun i => by
-      have hW : 0 < M.wtot w i := sum_pos (fun s _ => hw i s) (M.obs_nonempty i)
+      have hW : 0 < M.wtot w i := M.wtot_pos hw i
       have : 0 ≤ s ^ 2 / M.τ2 := div_nonneg (sq_nonneg s) hτ.le
       have : M.wtot w i + s ^ 2 / M.τ2 ≠ 0 := by positivity
       rw [M.σ2_bs s hw hσ]
@@ -446,7 +448,7 @@ theorem balance (hJ : 1 < Fintype.card J) (X : J × T → ℝ) :
     ∑ j, M.wtot w j * (1 - (M.moments j).bestZ)
       * (M.muHat w X j - ∑ i, M.b i * M.muHat w X i) = 0 := by
   have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
-  have hW : ∀ j, 0 < M.wtot w j := fun j => sum_pos (fun s _ => hw j s) (M.obs_nonempty j)
+  have hW : ∀ j, 0 < M.wtot w j := M.wtot_pos hw
   have hs : s ≠ 0 := by
     obtain ⟨j⟩ := this
     obtain ⟨t, -⟩ := M.obs_nonempty j
@@ -469,7 +471,7 @@ theorem balance_total (hJ : 1 < Fintype.card J) (X : J × T → ℝ) :
       = ∑ j, ∑ t ∈ M.obs j, w j t * ((M.moments j).bestZ * M.muHat w X j
           + (1 - (M.moments j).bestZ) * ∑ i, M.b i * M.muHat w X i) := by
   have h1 : ∀ j, ∑ t ∈ M.obs j, w j t * X (j, t) = M.wtot w j * M.muHat w X j := fun j => by
-    have hW : M.wtot w j ≠ 0 := (sum_pos (fun s _ => hw j s) (M.obs_nonempty j)).ne'
+    have hW : M.wtot w j ≠ 0 := (M.wtot_pos hw j).ne'
     simp only [muHat, mul_sum]
     refine sum_congr rfl fun t _ => ?_
     field_simp
