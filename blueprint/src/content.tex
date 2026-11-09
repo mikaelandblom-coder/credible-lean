@@ -823,6 +823,25 @@ $\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
   (e.g.\ $\sigma_1 = \sigma_2 = \tau^2 = 1$, $\rho = -3$).
 \end{proof}
 
+\begin{theorem}[Eq.\ (32) is eq.\ (26)]\label{thm:two_bestZ_eq}
+  \lean{Credibility.TwoCohorts.K_posDef, Credibility.TwoCohorts.bestZ_eq}
+  \leanok
+  \uses{def:Core.moments, thm:Core_bestZ_eq, thm:gls_two, thm:z1_eq}
+  If $|\rho| < 1$, the two-cohort $K$ is positive definite, and away from the
+  singularity the credibility factor of Definition~\ref{def:Core.moments} for
+  this $K$, with $v_i = \sigma_i^2$, is
+  $z_1 = \tau^2/(\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, thm:gls_two, thm:z1_eq}
+  $x^TKx = \tau^2\lVert x\rVert^2 + a^2 + b^2 + 2\rho ab$ with $a = \sigma_1x_1$,
+  $b = \sigma_2x_2$, and $a^2 + b^2 + 2\rho ab
+  = \tfrac{1+\rho}{2}(a+b)^2 + \tfrac{1-\rho}{2}(a-b)^2 \ge 0$. Then
+  Theorem~\ref{thm:Core_bestZ_eq}, with $b_1$ and $s^2$ from
+  Theorem~\ref{thm:gls_two}, and Theorem~\ref{thm:z1_eq}.
+\end{proof}
+
 \begin{theorem}[Weights from credibility factors]\label{thm:b1_eq_z}
   \lean{Credibility.TwoCohorts.b1_eq_z}
   \leanok
@@ -943,12 +962,13 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
 \begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
   \lean{Credibility.TwoCohorts.z1_rho_zero}
   \leanok
-  \uses{thm:z1_eq}
+  \uses{thm:two_bestZ_eq}
   At $\rho = 0$, $z_1 = \tau^2/(\tau^2 + \sigma_1^2) = 1/(1 + \kappa_1)$.
 \end{corollary}
 \begin{proof}
   \leanok
-  Immediate.
+  \uses{thm:two_bestZ_eq}
+  Theorem~\ref{thm:two_bestZ_eq} with $\rho = 0$.
 \end{proof}
 
 Unlike Bühlmann--Straub, $z_1$ now depends on $\kappa_2$ and $\rho$ too. The

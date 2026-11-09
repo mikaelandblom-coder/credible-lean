@@ -1,4 +1,4 @@
-import Credibility.Weights
+import Credibility.Core
 
 /-!
 # Two cohorts with time-constant weights (thesis §2.7, eqs. (31)–(32))
@@ -99,9 +99,37 @@ theorem b1_eq_z (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : ρ ≤ 1)
   field_simp
   ring
 
-/-- Bühlmann–Straub is recovered at `ρ = 0`. -/
-theorem z1_rho_zero : τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * 0) = τ2 / (τ2 + σ1 ^ 2) := by
-  simp
+/-- For `|ρ| < 1` the two-cohort `K` is positive definite:
+`xᵀKx = τ²‖x‖² + a² + b² + 2ρab` with `a = σ₁x₁`, `b = σ₂x₂`. -/
+theorem K_posDef (hτ : 0 < τ2) (hρ : |ρ| < 1) : (K σ1 σ2 τ2 ρ).PosDef := by
+  obtain ⟨hρ1, hρ2⟩ := abs_lt.1 hρ
+  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
+  · ext i j; fin_cases i <;> fin_cases j <;> simp [K, mul_comm]
+  have hx' : 0 < x 0 ^ 2 + x 1 ^ 2 := by
+    by_contra h
+    apply hx
+    ext i; fin_cases i <;> simp <;> nlinarith [sq_nonneg (x 0), sq_nonneg (x 1)]
+  simp only [K, star_trivial, dotProduct, mulVec, Fin.sum_univ_two, of_apply, cons_val',
+    cons_val_zero, cons_val_one, empty_val', cons_val_fin_one]
+  nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + ρ) (sq_nonneg (σ1 * x 0 + σ2 * x 1)),
+    mul_nonneg (by linarith : (0 : ℝ) ≤ 1 - ρ) (sq_nonneg (σ1 * x 0 - σ2 * x 1)),
+    mul_pos hτ hx']
+
+/-- Eq. (32) is the general credibility factor (26) of `Core` for the two-cohort
+`K`, with `vᵢ = σᵢ²`: `Core.bestZ_eq`, `gls_two` and `z1_eq`. -/
+theorem bestZ_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1)
+    (hsing : τ2 + σ1 ^ 2 - σ1 * σ2 * ρ ≠ 0) :
+    (Core.moments (K σ1 σ2 τ2 ρ) τ2 ![σ1 ^ 2, σ2 ^ 2] 0).bestZ
+      = τ2 / (τ2 + σ1 ^ 2 - σ1 * σ2 * ρ) := by
+  obtain ⟨hb, hs⟩ := gls_two h1 h2 hτ hρ
+  rw [Core.bestZ_eq (K_posDef hτ hρ), hb, hs]
+  exact z1_eq h1 h2 hτ (abs_lt.1 hρ).2.le hsing
+
+/-- Bühlmann–Straub is recovered at `ρ = 0`: `z₁ = τ²/(τ² + σ₁²)`. -/
+theorem z1_rho_zero (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
+    (Core.moments (K σ1 σ2 τ2 0) τ2 ![σ1 ^ 2, σ2 ^ 2] 0).bestZ = τ2 / (τ2 + σ1 ^ 2) := by
+  have h := bestZ_eq (ρ := 0) h1 h2 hτ (by norm_num) (by rw [mul_zero, sub_zero]; positivity)
+  rw [h, mul_zero, sub_zero]
 
 /-- The sign flip (displays after (32)) past `ρ* = (τ² + σ₁²) / (σ₁σ₂)`. -/
 theorem z1_neg_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
