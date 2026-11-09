@@ -6,10 +6,11 @@ extending it. The owner wrote the thesis and steers from a phone; you grind
 tactics.
 
 ## Layout (thesis section → file)
-- §2.1.1 best credibility factor, eq. (7) → `Credibility/Blend.lean`
+- §2.1.1 best credibility factor, eq. (7) → `Credibility/Blend.lean` (also `BlendMoments.shift`)
 - §2.5 inverse-variance and GLS weights, eqs. (23)–(25) → `Credibility/Weights.lean`
 - §2.3 parameters and eq. (16) → `Credibility/Data.lean`
-- §2.5 K-level Core: moments, eq. (26), diagonal and equal-covariance `K` → `Credibility/Core.lean`
+- §2.5 K-level Core: moments for a level covariance `L`, eq. (26), `K⁻¹1` from `Kw = c·1`, diagonal,
+  equal-covariance, rank-one and block-diagonal `K` → `Credibility/Core.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
   §2.9 balance → `Credibility/Balance.lean`
@@ -24,7 +25,8 @@ tactics.
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
 - extension: a shared level within groups, towards hierarchical credibility (Bridges 2–5: `K_φ`,
   `K_G`, the §2.8 estimators under `Unbiasedφ`/`UnbiasedG`, Bridge 3 as the one-group case of
-  Bridge 5) → `Credibility/Hierarchical.lean`
+  Bridge 5) → `Credibility/Hierarchical.lean`; group weights `B_g` and the same-group share `π`
+  → `Credibility/GroupWeights.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 

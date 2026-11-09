@@ -1,5 +1,6 @@
 import Credibility.Estimation
 import Credibility.OffDiagonal
+import Credibility.GroupWeights
 
 /-!
 # Bridge to hierarchical credibility: a shared group level
@@ -53,99 +54,15 @@ estimates `K_G - φτ²·[g(i) = g(j)]` only with one group (`KHat_unbiasedG_iff
 Pairs separate the parts: `(μ̂ᵢ - μ̂ⱼ)²` minus its noise estimates `2τ²` across
 groups and `2(1-φ)τ²` within one (`pairHat_unbiasedG`), so `φτ²` is identified
 (`phiTauHat_unbiasedG`).
+
+The Core facts used here live at the `K` level: rank-one and block-diagonal
+`K` in `Core.lean`, `BlendMoments.shift` in `Blend.lean`; the group weights
+`B_g` and the share `π` are in `GroupWeights.lean`.
 -/
 
 open Matrix
 
 namespace Credibility
-
-/-! ### A rank-one term along `1` (Core level) -/
-
-section RankOne
-
-variable {J : Type*} [Fintype J] [DecidableEq J]
-
-/-- If `K` and `K + c·11ᵀ` are positive definite, then
-`(K + c·11ᵀ)⁻¹1 = K⁻¹1 / (1 + c·1ᵀK⁻¹1)`, with `1 + c·1ᵀK⁻¹1 > 0`:
-`(K + c·11ᵀ) K⁻¹1 = (1 + c·1ᵀK⁻¹1)·1`. -/
-theorem Kinv_one_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
-    (hK' : (K + c • vecMulVec 1 1).PosDef) :
-    0 < 1 + c * invTotal K ∧
-      (K + c • vecMulVec 1 1)⁻¹ *ᵥ 1 = (1 + c * invTotal K)⁻¹ • (K⁻¹ *ᵥ 1) := by
-  set w := K⁻¹ *ᵥ 1
-  set S := invTotal K
-  have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
-  have hdet' := (Matrix.isUnit_iff_isUnit_det _).mp hK'.isUnit
-  have hKw : (K + c • vecMulVec 1 1) *ᵥ w = (1 + c * S) • (1 : J → ℝ) := by
-    rw [add_mulVec, smul_mulVec, vecMulVec_mulVec, mulVec_mulVec, mul_nonsing_inv K hdet,
-      one_mulVec]
-    ext i; simp [S, invTotal, w]
-  -- `wᵀ(K + c·11ᵀ)w = (1 + cS)·S > 0` with `S > 0`.
-  have hpos : 0 < 1 + c * S := by
-    rcases isEmpty_or_nonempty J with hJ | hJ
-    · simp [S, invTotal]
-    have hS : 0 < S := invTotal_pos hK
-    have hw0 : w ≠ 0 := by
-      intro h0
-      have : S = 0 := by
-        simp only [S, invTotal]; rw [show K⁻¹ *ᵥ 1 = w from rfl, h0, dotProduct_zero]
-      linarith
-    have := hK'.dotProduct_mulVec_pos hw0
-    rw [star_trivial, hKw, dotProduct_smul, dotProduct_one, smul_eq_mul] at this
-    have hS' : ∑ i, w i = S := by simp [S, invTotal, w, one_dotProduct]
-    rw [hS'] at this
-    exact pos_of_mul_pos_left this hS.le
-  exact ⟨hpos, Core.Kinv_one_eq_of_mulVec hdet' hpos.ne' hKw⟩
-
-/-- A rank-one term along `1` does not change the GLS weights:
-`b(K + c·11ᵀ) = b(K)`, since `(K + c·11ᵀ)⁻¹1 ∝ K⁻¹1`. -/
-theorem glsWeight_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
-    (hK' : (K + c • vecMulVec 1 1).PosDef) :
-    glsWeight (K + c • vecMulVec 1 1) = glsWeight K := by
-  obtain ⟨hpos, hinv⟩ := Kinv_one_add_rankOne hK c hK'
-  ext j
-  rw [glsWeight, glsWeight, invTotal, hinv, dotProduct_smul, Pi.smul_apply, smul_eq_mul,
-    smul_eq_mul, mul_div_mul_left _ _ (inv_ne_zero hpos.ne'), invTotal]
-
-/-- …and it adds `c` to the portfolio variance: `s²(K + c·11ᵀ) = s²(K) + c`. -/
-theorem invTotal_inv_add_rankOne [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
-    (hK' : (K + c • vecMulVec 1 1).PosDef) :
-    (invTotal (K + c • vecMulVec 1 1))⁻¹ = (invTotal K)⁻¹ + c := by
-  obtain ⟨hpos, hinv⟩ := Kinv_one_add_rankOne hK c hK'
-  have hS := (invTotal_pos hK).ne'
-  rw [invTotal, hinv, dotProduct_smul, smul_eq_mul, ← invTotal]
-  field_simp
-
-end RankOne
-
-/-! ### Shifting all moments of the blend by a constant -/
-
-namespace BlendMoments
-
-/-- Add `c` to all six second moments of the blend: what a common component of
-variance `c` in the cohort estimates, the portfolio estimate and the target does. -/
-def shift (m : BlendMoments) (c : ℝ) : BlendMoments where
-  varCohort := m.varCohort + c
-  varPortfolio := m.varPortfolio + c
-  varTarget := m.varTarget + c
-  covEst := m.covEst + c
-  covCohortTarget := m.covCohortTarget + c
-  covPortfolioTarget := m.covPortfolioTarget + c
-
-/-- A common component cancels in the error of the blend:
-`z + (1 - z) - 1 = 0`, so the error variance is unchanged. -/
-theorem errVar_shift (m : BlendMoments) (c z : ℝ) : (m.shift c).errVar z = m.errVar z := by
-  simp only [errVar, shift]; ring
-
-/-- …and so is `Var(μ̂ⱼ - μ̂)`. -/
-theorem gap_shift (m : BlendMoments) (c : ℝ) : (m.shift c).gap = m.gap := by
-  simp only [gap, shift]; ring
-
-/-- …and so is the best credibility factor. -/
-theorem bestZ_shift (m : BlendMoments) (c : ℝ) : (m.shift c).bestZ = m.bestZ := by
-  rw [bestZ, gap_shift, bestZ]; simp only [shift]; ring_nf
-
-end BlendMoments
 
 namespace Model
 
@@ -244,14 +161,14 @@ theorem glsWeight_Kφ [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ
     (h1 : φ < 1) : glsWeight (M.Kφ φ) = (M.withLevel φ h1).b := by
   have hK' := M.Kφ_posDef hρ h0 h1
   rw [M.Kφ_eq h1] at hK' ⊢
-  exact glsWeight_add_rankOne ((M.withLevel φ h1).K_posDef hρ) _ hK'
+  exact Core.glsWeight_add_rankOne ((M.withLevel φ h1).K_posDef hρ) _ hK'
 
 /-- …and the portfolio variance is that model's `s²` plus the shared `φτ²`. -/
 theorem s2_Kφ [Nonempty T] [Nonempty J] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) : (invTotal (M.Kφ φ))⁻¹ = (M.withLevel φ h1).s2 + φ * M.τ2 := by
   have hK' := M.Kφ_posDef hρ h0 h1
   rw [M.Kφ_eq h1] at hK' ⊢
-  exact invTotal_inv_add_rankOne ((M.withLevel φ h1).K_posDef hρ) _ hK'
+  exact Core.invTotal_inv_add_rankOne ((M.withLevel φ h1).K_posDef hρ) _ hK'
 
 /-! ### The blend with a shared level -/
 
@@ -343,88 +260,11 @@ end Model
 
 /-! ### Bridge 4: several groups, each with its own shared level -/
 
-section Blocks
-
-variable {J G : Type*} [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] (grp : J → G)
-
-/-- The block of `K` on group `g`. -/
-def groupBlock (K : Matrix J J ℝ) (g : G) : Matrix {j // grp j = g} {j // grp j = g} ℝ :=
-  K.submatrix Subtype.val Subtype.val
-
-/-- `K` is block diagonal with respect to `grp`. -/
-def IsBlockDiag (K : Matrix J J ℝ) : Prop := ∀ i j, grp i ≠ grp j → K i j = 0
-
-variable {grp}
-
-omit [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] in
-lemma groupBlock_posDef {K : Matrix J J ℝ} (hK : K.PosDef) (g : G) : (groupBlock grp K g).PosDef :=
-  hK.submatrix Subtype.val_injective
-
-omit [DecidableEq J] [Fintype G] in
-/-- A sum over `J` of a function vanishing outside group `g` is a sum over the group. -/
-lemma sum_eq_sum_groupBlock (g : G) (f : J → ℝ) (hf : ∀ j, grp j ≠ g → f j = 0) :
-    ∑ j, f j = ∑ j : {j // grp j = g}, f j := by
-  rw [← Finset.sum_subtype (Finset.univ.filter (grp · = g)) (by simp), Finset.sum_filter]
-  exact Finset.sum_congr rfl fun j _ => by split_ifs with h <;> simp [hf j, h]
-
-omit [Fintype G] in
-/-- For block-diagonal `K`, `K⁻¹1` is assembled from the blocks: `(K⁻¹1)ⱼ = (K_g⁻¹1)ⱼ`
-with `g` the group of `j`. -/
-theorem Kinv_one_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
-    (j : J) : (K⁻¹ *ᵥ 1) j = ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩ := by
-  set x : J → ℝ := fun j => ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩
-  have hx : ∀ g (j : J) (h : grp j = g), x j = ((groupBlock grp K g)⁻¹ *ᵥ 1) ⟨j, h⟩ := by
-    intro g j h; subst h; rfl
-  have hKx : K *ᵥ x = 1 := by
-    ext i
-    simp only [mulVec, dotProduct, Pi.one_apply]
-    rw [sum_eq_sum_groupBlock (grp := grp) (grp i) _ fun j hj => by rw [hb i j (Ne.symm hj), zero_mul]]
-    have hdet := (Matrix.isUnit_iff_isUnit_det _).mp (groupBlock_posDef (grp := grp) hK (grp i)).isUnit
-    have := congrFun (mul_nonsing_inv _ hdet) ⟨i, rfl⟩
-    have h1 : ((groupBlock grp K (grp i)) *ᵥ ((groupBlock grp K (grp i))⁻¹ *ᵥ 1)) ⟨i, rfl⟩ = 1 := by
-      rw [mulVec_mulVec, mul_nonsing_inv _ hdet, one_mulVec]; rfl
-    rw [← h1]
-    simp only [mulVec, dotProduct]
-    exact Finset.sum_congr rfl fun j _ => by rw [hx _ _ j.2]; rfl
-  rw [Core.Kinv_one_eq_of_mulVec ((Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit) one_ne_zero
-    (by rw [hKx, one_smul]), inv_one, one_smul]
-
-/-- The precision `1ᵀK⁻¹1` of a block-diagonal `K` is the sum of the block precisions. -/
-theorem invTotal_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K) :
-    invTotal K = ∑ g, invTotal (groupBlock grp K g) := by
-  rw [invTotal, one_dotProduct, ← Finset.sum_fiberwise Finset.univ grp]
-  refine Finset.sum_congr rfl fun g _ => ?_
-  rw [invTotal, one_dotProduct, Finset.sum_subtype _ (p := (grp · = g)) (by simp)]
-  refine Finset.sum_congr rfl fun a _ => ?_
-  rw [Kinv_one_blockDiag hK hb]
-  obtain ⟨j, h⟩ := a
-  subst h; rfl
-
-/-- Two-stage GLS: for block-diagonal `K`, the GLS weight of `j` is its GLS weight
-within its group `g`, times the inverse-variance weight (eq. (23)) of the group,
-whose variance is the group's `s²_g = 1/1ᵀK_g⁻¹1`. -/
-theorem glsWeight_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
-    (j : J) : glsWeight K j = glsWeight (groupBlock grp K (grp j)) ⟨j, rfl⟩
-      * invVarWeight (fun g => (invTotal (groupBlock grp K g))⁻¹) (grp j) := by
-  have : Nonempty {i // grp i = grp j} := ⟨⟨j, rfl⟩⟩
-  have hg := (invTotal_pos (groupBlock_posDef (grp := grp) hK (grp j))).ne'
-  simp only [glsWeight, invVarWeight, inv_inv, ← invTotal_blockDiag hK hb,
-    Kinv_one_blockDiag hK hb]
-  field_simp
-
-end Blocks
-
 namespace Model
 
 variable {J T G : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
   [Fintype G] [DecidableEq G]
 variable (M : Model J T) (grp : J → G)
-
-/-- Indicator `1_g` of group `g`. -/
-def grpOne (g : G) : J → ℝ := fun j => if grp j = g then 1 else 0
-
-/-- Total weight `B_g = Σ_{grp i = g} bᵢ` that `b` gives to group `g`. -/
-def groupWeight (b : J → ℝ) (g : G) : ℝ := ∑ i, if grp i = g then b i else 0
 
 /-- Level covariance with several groups, each with its own shared level:
 `τ²` on the diagonal, `φτ²` within a group, `0` across groups. -/
@@ -478,7 +318,7 @@ theorem KG_posDef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h
 omit [Fintype J] [DecidableEq T] [Fintype G] in
 /-- Errors uncorrelated across groups make `K_G` block diagonal. -/
 theorem KG_isBlockDiag (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (φ : ℝ) :
-    IsBlockDiag grp (M.KG grp φ) := by
+    Core.IsBlockDiag grp (M.KG grp φ) := by
   intro i j h
   have hij : i ≠ j := fun e => h (e ▸ rfl)
   simp [KG, levelCovG, errCov, hij, h, hρ0 i j h]
@@ -487,12 +327,12 @@ omit [Fintype J] [Fintype G] in
 /-- …and each block is a thesis `K` plus a rank-one term: `(K_G)_g = K'_g + φτ²·11ᵀ`,
 with `K'` the thesis `K` for `(1-φ)τ²`. -/
 theorem block_KG [Nonempty T] {φ : ℝ} (h1 : φ < 1) (g : G) :
-    groupBlock grp (M.KG grp φ) g = groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1 := by
+    Core.groupBlock grp (M.KG grp φ) g = Core.groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1 := by
   ext ⟨a, ha⟩ ⟨b, hb⟩
   have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
   have hσ : (M.withLevel φ h1).σ2 = M.σ2 := rfl
   have hρ : (M.withLevel φ h1).ρ = M.ρ := rfl
-  simp only [groupBlock, submatrix_apply, Matrix.add_apply, KG, levelCovG_apply', K_apply, hτ, hσ, hρ,
+  simp only [Core.groupBlock, submatrix_apply, Matrix.add_apply, KG, levelCovG_apply', K_apply, hτ, hσ, hρ,
     errCov, of_apply]
   simp [ha, hb]
   split_ifs <;> ring
@@ -505,38 +345,38 @@ across groups, inverse-variance weights with group variance `s'²_g + φτ²`. -
 theorem glsWeight_KG [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (hgrp : Function.Surjective grp)
     (j : J) :
-    glsWeight (M.KG grp φ) j = glsWeight (groupBlock grp (M.withLevel φ h1).K (grp j)) ⟨j, rfl⟩
-      * invVarWeight (fun g => (invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)
+    glsWeight (M.KG grp φ) j = glsWeight (Core.groupBlock grp (M.withLevel φ h1).K (grp j)) ⟨j, rfl⟩
+      * invVarWeight (fun g => (invTotal (Core.groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)
         (grp j) := by
   have hK := M.KG_posDef grp hρ h0 h1
   have hK' := (M.withLevel φ h1).K_posDef hρ
-  have hblk : ∀ g, (groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1).PosDef :=
-    fun g => M.block_KG grp h1 g ▸ groupBlock_posDef hK g
-  have hs : (fun g => (invTotal (groupBlock grp (M.KG grp φ) g))⁻¹)
-      = fun g => (invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2 := by
+  have hblk : ∀ g, (Core.groupBlock grp (M.withLevel φ h1).K g + (φ * M.τ2) • vecMulVec 1 1).PosDef :=
+    fun g => M.block_KG grp h1 g ▸ Core.groupBlock_posDef hK g
+  have hs : (fun g => (invTotal (Core.groupBlock grp (M.KG grp φ) g))⁻¹)
+      = fun g => (invTotal (Core.groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2 := by
     funext g
     obtain ⟨i, hi⟩ := hgrp g
     have : Nonempty {i // grp i = g} := ⟨⟨i, hi⟩⟩
     rw [M.block_KG grp h1]
-    exact invTotal_inv_add_rankOne (groupBlock_posDef hK' g) _ (hblk g)
-  rw [glsWeight_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ), hs, M.block_KG grp h1,
-    glsWeight_add_rankOne (groupBlock_posDef hK' _) _ (hblk _)]
+    exact Core.invTotal_inv_add_rankOne (Core.groupBlock_posDef hK' g) _ (hblk g)
+  rw [Core.glsWeight_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ), hs, M.block_KG grp h1,
+    Core.glsWeight_add_rankOne (Core.groupBlock_posDef hK' _) _ (hblk _)]
 
 /-- …and the portfolio variance is the harmonic combination of the group
 variances `s'²_g + φτ²`: the between-group variance no longer just adds. -/
 theorem s2_KG [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (hgrp : Function.Surjective grp) :
     (invTotal (M.KG grp φ))⁻¹
-      = (∑ g, ((invTotal (groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)⁻¹)⁻¹ := by
+      = (∑ g, ((invTotal (Core.groupBlock grp (M.withLevel φ h1).K g))⁻¹ + φ * M.τ2)⁻¹)⁻¹ := by
   have hK := M.KG_posDef grp hρ h0 h1
   have hK' := (M.withLevel φ h1).K_posDef hρ
-  rw [invTotal_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ)]
+  rw [Core.invTotal_blockDiag hK (M.KG_isBlockDiag grp hρ0 φ)]
   congr 1
   refine Finset.sum_congr rfl fun g _ => ?_
   obtain ⟨i, hi⟩ := hgrp g
   have : Nonempty {i // grp i = g} := ⟨⟨i, hi⟩⟩
   have hb := M.block_KG grp h1 g
-  rw [← invTotal_inv_add_rankOne (groupBlock_posDef hK' g) _ (hb ▸ groupBlock_posDef hK g), ← hb, inv_inv]
+  rw [← Core.invTotal_inv_add_rankOne (Core.groupBlock_posDef hK' g) _ (hb ▸ Core.groupBlock_posDef hK g), ← hb, inv_inv]
 
 /-- The moments entering the blend for cohort `j` with group levels: as
 `momentsφ`, with the level covariance `L_G`. -/
@@ -664,116 +504,6 @@ theorem unbiasedG_of {f : (J × T → ℝ) → ℝ} {θ : ℝ} (hf : M.Unbiased 
   change M.EG grp φ μ Q = _
   rw [EG_eq, show M.E μ Q = θ from hE μ]
   simp only [hQ]
-
-/-! #### Weighted share of same-group pairs -/
-
-lemma groupWeight_id (b : J → ℝ) (j : J) : groupWeight id b j = b j := by
-  simp [groupWeight]
-
-omit [DecidableEq J] in
-lemma sum_groupWeight (b : J → ℝ) : ∑ g, groupWeight grp b g = ∑ i, b i := by
-  simp only [groupWeight]
-  rw [Finset.sum_comm]
-  simp
-
-omit [DecidableEq J] in
-/-- `Σ_g W_g² = Σ_{g(i) = g(j)} WᵢWⱼ`. -/
-lemma sum_groupWeight_sq (W : J → ℝ) :
-    ∑ g, groupWeight grp W g ^ 2 = ∑ i, ∑ j, if grp i = grp j then W i * W j else 0 := by
-  have h : ∀ g, groupWeight grp W g ^ 2
-      = ∑ i, ∑ j, if grp i = g ∧ grp j = g then W i * W j else 0 := fun g => by
-    simp only [groupWeight, sq, Finset.sum_mul_sum, ite_mul, mul_ite, zero_mul, mul_zero]
-    exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
-      by_cases hi : grp i = g <;> by_cases hj : grp j = g <;> simp [hi, hj]
-  simp only [h]
-  rw [Finset.sum_comm]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Finset.sum_comm]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  by_cases hij : grp i = grp j
-  · simp [hij]
-  · simp only [hij, ite_false]
-    exact Finset.sum_eq_zero fun g _ => by
-      rw [ite_eq_right_iff]; exact fun hg => absurd (hg.1.trans hg.2.symm) hij
-
-omit [DecidableEq J] in
-/-- `(Σ Wᵢ)² - Σ_g W_g² = Σ_{g(i) ≠ g(j)} WᵢWⱼ`: the pairs across groups. -/
-lemma sq_sum_sub_sum_groupWeight_sq (W : J → ℝ) :
-    (∑ i, W i) ^ 2 - ∑ g, groupWeight grp W g ^ 2
-      = ∑ i, ∑ j, if grp i = grp j then 0 else W i * W j := by
-  rw [sum_groupWeight_sq, sq, Finset.sum_mul_sum, ← Finset.sum_sub_distrib]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [← Finset.sum_sub_distrib]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  split_ifs <;> ring
-
-/-- The weighted share of same-group pairs among pairs of distinct cohorts,
-`π = Σ_{i≠j, g(i)=g(j)} WᵢWⱼ / Σ_{i≠j} WᵢWⱼ` (`withinShare_eq_pairs`). -/
-noncomputable def withinShare (W : J → ℝ) : ℝ :=
-  (∑ g, groupWeight grp W g ^ 2 - ∑ j, W j ^ 2) / ((∑ j, W j) ^ 2 - ∑ j, W j ^ 2)
-
-lemma withinShare_eq_pairs (W : J → ℝ) :
-    withinShare grp W = (∑ i, ∑ j, if i ≠ j ∧ grp i = grp j then W i * W j else 0)
-      / ∑ i, ∑ j, if i ≠ j then W i * W j else 0 := by
-  have hd := sq_sum_sub_sum_groupWeight_sq (id : J → J) W
-  have hn := sq_sum_sub_sum_groupWeight_sq grp W
-  simp only [groupWeight_id, id] at hd
-  rw [withinShare]
-  congr 1
-  · have : ∑ g, groupWeight grp W g ^ 2 - ∑ j, W j ^ 2
-        = ((∑ i, W i) ^ 2 - ∑ j, W j ^ 2) - ((∑ i, W i) ^ 2 - ∑ g, groupWeight grp W g ^ 2) := by
-      ring
-    rw [this, hd, hn, ← Finset.sum_sub_distrib]
-    refine Finset.sum_congr rfl fun i _ => ?_
-    rw [← Finset.sum_sub_distrib]
-    refine Finset.sum_congr rfl fun j _ => ?_
-    by_cases h : i = j
-    · subst h; simp
-    · by_cases hg : grp i = grp j <;> simp [h, hg]
-  · rw [hd]
-    exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by
-      by_cases h : i = j <;> simp [h]
-
-omit [Fintype G] [DecidableEq G] in
-/-- With positive weights and two cohorts, the pairs of distinct cohorts have positive weight. -/
-lemma sq_sum_sub_sum_sq_pos {W : J → ℝ} (hW : ∀ j, 0 < W j) (hJ : 2 ≤ Fintype.card J) :
-    0 < (∑ j, W j) ^ 2 - ∑ j, W j ^ 2 := by
-  have hd := sq_sum_sub_sum_groupWeight_sq (id : J → J) W
-  simp only [groupWeight_id, id] at hd
-  rw [hd]
-  obtain ⟨a, b, hab⟩ := Fintype.exists_pair_of_one_lt_card (by omega : 1 < Fintype.card J)
-  have hnn : ∀ i j, 0 ≤ (if i = j then 0 else W i * W j) := fun i j => by
-    split_ifs
-    · exact le_rfl
-    · exact (mul_pos (hW i) (hW j)).le
-  refine Finset.sum_pos' (fun i _ => Finset.sum_nonneg fun j _ => hnn i j) ⟨a, Finset.mem_univ _, ?_⟩
-  refine Finset.sum_pos' (fun j _ => hnn a j) ⟨b, Finset.mem_univ _, ?_⟩
-  simp [hab, mul_pos (hW a) (hW b)]
-
-/-- `π = 1` (no pairs across groups) exactly when there is one group. -/
-lemma withinShare_eq_one_iff {W : J → ℝ} (hW : ∀ j, 0 < W j) (hJ : 2 ≤ Fintype.card J) :
-    withinShare grp W = 1 ↔ ∀ i j, grp i = grp j := by
-  have hD := sq_sum_sub_sum_sq_pos hW hJ
-  have hn := sq_sum_sub_sum_groupWeight_sq grp W
-  have hnn : ∀ i j, 0 ≤ (if grp i = grp j then 0 else W i * W j) := fun i j => by
-    split_ifs
-    · exact le_rfl
-    · exact (mul_pos (hW i) (hW j)).le
-  rw [withinShare, div_eq_one_iff_eq hD.ne']
-  constructor
-  · intro h i j
-    have h0 : ∑ i, ∑ j, (if grp i = grp j then 0 else W i * W j) = 0 := by
-      rw [← hn]; linarith
-    have hi := (Finset.sum_eq_zero_iff_of_nonneg fun i _ =>
-      Finset.sum_nonneg fun j _ => hnn i j).mp h0 i (Finset.mem_univ _)
-    have hij := (Finset.sum_eq_zero_iff_of_nonneg fun j _ => hnn i j).mp hi j (Finset.mem_univ _)
-    by_contra hg
-    simp only [hg, ite_false] at hij
-    exact (mul_pos (hW i) (hW j)).ne' hij
-  · intro h
-    have h0 : ∑ i, ∑ j, (if grp i = grp j then 0 else W i * W j) = 0 :=
-      Finset.sum_eq_zero fun i _ => Finset.sum_eq_zero fun j _ => by simp [h i j]
-    linarith
 
 /-! #### The estimators on the noise-free patterns -/
 

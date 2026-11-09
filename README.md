@@ -51,14 +51,21 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 |---|---|
 | §2.1.1 best credibility factor, eq. (7) | `Credibility/Blend.lean` |
 | §2.5 inverse-variance and GLS weights, eqs. (23)–(25) | `Credibility/Weights.lean` |
-| §2.3–2.5 data model, `K`, eqs. (16), (21), (22), (26) | `Credibility/Model.lean` |
-| §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance | `Credibility/BuhlmannStraub.lean` |
+| §2.3 parameters and eq. (16) | `Credibility/Data.lean` |
+| §2.5 credibility at the level of `K`: eq. (26), special shapes of `K` | `Credibility/Core.lean` |
+| §2.3–2.5 data model, `K`, eqs. (21), (22), (26) | `Credibility/Model.lean` |
+| §2.6 Bühlmann–Straub special case, eqs. (28)–(30) | `Credibility/BuhlmannStraub.lean` |
+| §2.9 balance | `Credibility/Balance.lean` |
 | §2.7 two cohorts, eq. (32) | `Credibility/TwoCohorts.lean` |
+| §2.8 expectation of quadratic estimators | `Credibility/Expectation.lean` |
 | §2.8 parameter estimation, eqs. (37)–(41) | `Credibility/Estimation.lean` |
 | extension: merging two cohorts ([notes](notes/merging-cohorts.md)) | `Credibility/Merging.lean` |
-| extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean` |
+| extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean`, `Credibility/UnequalEstimation.lean` |
 | extension: moment layer (distribution-free) | `Credibility/Moments.lean` |
 | extension: moment layer for unequal lengths | `Credibility/UnequalMoments.lean` |
+| extension: a shared level within groups, towards hierarchical credibility | `Credibility/Hierarchical.lean`, `Credibility/GroupWeights.lean` |
+| extension: damping off-diagonal entries keeps PSD/PD | `Credibility/OffDiagonal.lean` |
+| extension: optimal 1-D weighted k-means groups are intervals | `Credibility/KMeans.lean` |
 
 Like the thesis, the formalization is **distribution-free**: only first and
 second moments are assumed. Most files take the second moments (`τ²`, `σⱼₜ`,

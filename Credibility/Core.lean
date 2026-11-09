@@ -211,5 +211,135 @@ theorem bestZ_of_equalCov (hK : K.PosDef) (hτ : τ2 ≠ 0) (c : ℝ)
     intro h; apply hVv; field_simp; linarith
   field_simp
 
+/-! ### A rank-one term along `1` -/
+
+section RankOne
+
+/-- If `K` and `K + c·11ᵀ` are positive definite, then
+`(K + c·11ᵀ)⁻¹1 = K⁻¹1 / (1 + c·1ᵀK⁻¹1)`, with `1 + c·1ᵀK⁻¹1 > 0`:
+`(K + c·11ᵀ) K⁻¹1 = (1 + c·1ᵀK⁻¹1)·1`. -/
+theorem Kinv_one_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
+    (hK' : (K + c • vecMulVec 1 1).PosDef) :
+    0 < 1 + c * invTotal K ∧
+      (K + c • vecMulVec 1 1)⁻¹ *ᵥ 1 = (1 + c * invTotal K)⁻¹ • (K⁻¹ *ᵥ 1) := by
+  set w := K⁻¹ *ᵥ 1
+  set S := invTotal K
+  have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
+  have hdet' := (Matrix.isUnit_iff_isUnit_det _).mp hK'.isUnit
+  have hKw : (K + c • vecMulVec 1 1) *ᵥ w = (1 + c * S) • (1 : J → ℝ) := by
+    rw [add_mulVec, smul_mulVec, vecMulVec_mulVec, mulVec_mulVec, mul_nonsing_inv K hdet,
+      one_mulVec]
+    ext i; simp [S, invTotal, w]
+  -- `wᵀ(K + c·11ᵀ)w = (1 + cS)·S > 0` with `S > 0`.
+  have hpos : 0 < 1 + c * S := by
+    rcases isEmpty_or_nonempty J with hJ | hJ
+    · simp [S, invTotal]
+    have hS : 0 < S := invTotal_pos hK
+    have hw0 : w ≠ 0 := by
+      intro h0
+      have : S = 0 := by
+        simp only [S, invTotal]; rw [show K⁻¹ *ᵥ 1 = w from rfl, h0, dotProduct_zero]
+      linarith
+    have := hK'.dotProduct_mulVec_pos hw0
+    rw [star_trivial, hKw, dotProduct_smul, dotProduct_one, smul_eq_mul] at this
+    have hS' : ∑ i, w i = S := by simp [S, invTotal, w, one_dotProduct]
+    rw [hS'] at this
+    exact pos_of_mul_pos_left this hS.le
+  exact ⟨hpos, Kinv_one_eq_of_mulVec hdet' hpos.ne' hKw⟩
+
+/-- A rank-one term along `1` does not change the GLS weights:
+`b(K + c·11ᵀ) = b(K)`, since `(K + c·11ᵀ)⁻¹1 ∝ K⁻¹1`. -/
+theorem glsWeight_add_rankOne {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
+    (hK' : (K + c • vecMulVec 1 1).PosDef) :
+    glsWeight (K + c • vecMulVec 1 1) = glsWeight K := by
+  obtain ⟨hpos, hinv⟩ := Kinv_one_add_rankOne hK c hK'
+  ext j
+  rw [glsWeight, glsWeight, invTotal, hinv, dotProduct_smul, Pi.smul_apply, smul_eq_mul,
+    smul_eq_mul, mul_div_mul_left _ _ (inv_ne_zero hpos.ne'), invTotal]
+
+/-- …and it adds `c` to the portfolio variance: `s²(K + c·11ᵀ) = s²(K) + c`. -/
+theorem invTotal_inv_add_rankOne [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDef) (c : ℝ)
+    (hK' : (K + c • vecMulVec 1 1).PosDef) :
+    (invTotal (K + c • vecMulVec 1 1))⁻¹ = (invTotal K)⁻¹ + c := by
+  obtain ⟨hpos, hinv⟩ := Kinv_one_add_rankOne hK c hK'
+  have hS := (invTotal_pos hK).ne'
+  rw [invTotal, hinv, dotProduct_smul, smul_eq_mul, ← invTotal]
+  field_simp
+
+end RankOne
+
+/-! ### Block-diagonal `K`: two-stage GLS -/
+
+section Blocks
+
+variable {G : Type*} [Fintype G] [DecidableEq G] (grp : J → G)
+
+/-- The block of `K` on group `g`. -/
+def groupBlock (K : Matrix J J ℝ) (g : G) : Matrix {j // grp j = g} {j // grp j = g} ℝ :=
+  K.submatrix Subtype.val Subtype.val
+
+/-- `K` is block diagonal with respect to `grp`. -/
+def IsBlockDiag (K : Matrix J J ℝ) : Prop := ∀ i j, grp i ≠ grp j → K i j = 0
+
+variable {grp}
+
+omit [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] in
+lemma groupBlock_posDef {K : Matrix J J ℝ} (hK : K.PosDef) (g : G) : (groupBlock grp K g).PosDef :=
+  hK.submatrix Subtype.val_injective
+
+omit [DecidableEq J] [Fintype G] in
+/-- A sum over `J` of a function vanishing outside group `g` is a sum over the group. -/
+lemma sum_eq_sum_groupBlock (g : G) (f : J → ℝ) (hf : ∀ j, grp j ≠ g → f j = 0) :
+    ∑ j, f j = ∑ j : {j // grp j = g}, f j := by
+  rw [← Finset.sum_subtype (Finset.univ.filter (grp · = g)) (by simp), Finset.sum_filter]
+  exact Finset.sum_congr rfl fun j _ => by split_ifs with h <;> simp [hf j, h]
+
+omit [Fintype G] in
+/-- For block-diagonal `K`, `K⁻¹1` is assembled from the blocks: `(K⁻¹1)ⱼ = (K_g⁻¹1)ⱼ`
+with `g` the group of `j`. -/
+theorem Kinv_one_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
+    (j : J) : (K⁻¹ *ᵥ 1) j = ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩ := by
+  set x : J → ℝ := fun j => ((groupBlock grp K (grp j))⁻¹ *ᵥ 1) ⟨j, rfl⟩
+  have hx : ∀ g (j : J) (h : grp j = g), x j = ((groupBlock grp K g)⁻¹ *ᵥ 1) ⟨j, h⟩ := by
+    intro g j h; subst h; rfl
+  have hKx : K *ᵥ x = 1 := by
+    ext i
+    simp only [mulVec, dotProduct, Pi.one_apply]
+    rw [sum_eq_sum_groupBlock (grp := grp) (grp i) _ fun j hj => by rw [hb i j (Ne.symm hj), zero_mul]]
+    have hdet := (Matrix.isUnit_iff_isUnit_det _).mp (groupBlock_posDef (grp := grp) hK (grp i)).isUnit
+    have := congrFun (mul_nonsing_inv _ hdet) ⟨i, rfl⟩
+    have h1 : ((groupBlock grp K (grp i)) *ᵥ ((groupBlock grp K (grp i))⁻¹ *ᵥ 1)) ⟨i, rfl⟩ = 1 := by
+      rw [mulVec_mulVec, mul_nonsing_inv _ hdet, one_mulVec]; rfl
+    rw [← h1]
+    simp only [mulVec, dotProduct]
+    exact Finset.sum_congr rfl fun j _ => by rw [hx _ _ j.2]; rfl
+  rw [Kinv_one_eq_of_mulVec ((Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit) one_ne_zero
+    (by rw [hKx, one_smul]), inv_one, one_smul]
+
+/-- The precision `1ᵀK⁻¹1` of a block-diagonal `K` is the sum of the block precisions. -/
+theorem invTotal_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K) :
+    invTotal K = ∑ g, invTotal (groupBlock grp K g) := by
+  rw [invTotal, one_dotProduct, ← Finset.sum_fiberwise Finset.univ grp]
+  refine Finset.sum_congr rfl fun g _ => ?_
+  rw [invTotal, one_dotProduct, Finset.sum_subtype _ (p := (grp · = g)) (by simp)]
+  refine Finset.sum_congr rfl fun a _ => ?_
+  rw [Kinv_one_blockDiag hK hb]
+  obtain ⟨j, h⟩ := a
+  subst h; rfl
+
+/-- Two-stage GLS: for block-diagonal `K`, the GLS weight of `j` is its GLS weight
+within its group `g`, times the inverse-variance weight (eq. (23)) of the group,
+whose variance is the group's `s²_g = 1/1ᵀK_g⁻¹1`. -/
+theorem glsWeight_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDiag grp K)
+    (j : J) : glsWeight K j = glsWeight (groupBlock grp K (grp j)) ⟨j, rfl⟩
+      * invVarWeight (fun g => (invTotal (groupBlock grp K g))⁻¹) (grp j) := by
+  have : Nonempty {i // grp i = grp j} := ⟨⟨j, rfl⟩⟩
+  have hg := (invTotal_pos (groupBlock_posDef (grp := grp) hK (grp j))).ne'
+  simp only [glsWeight, invVarWeight, inv_inv, ← invTotal_blockDiag hK hb,
+    Kinv_one_blockDiag hK hb]
+  field_simp
+
+end Blocks
+
 end Core
 end Credibility

@@ -70,5 +70,30 @@ theorem bestZ_unique (h : 0 < m.gap) {z : ℝ} (hz : m.errVar z ≤ m.errVar m.b
     exact (mul_eq_zero.mp h1).resolve_left h.ne'
   exact sub_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp hsq)
 
+/-! ### Shifting all moments of the blend by a constant -/
+
+/-- Add `c` to all six second moments of the blend: what a common component of
+variance `c` in the cohort estimates, the portfolio estimate and the target does. -/
+def shift (m : BlendMoments) (c : ℝ) : BlendMoments where
+  varCohort := m.varCohort + c
+  varPortfolio := m.varPortfolio + c
+  varTarget := m.varTarget + c
+  covEst := m.covEst + c
+  covCohortTarget := m.covCohortTarget + c
+  covPortfolioTarget := m.covPortfolioTarget + c
+
+/-- A common component cancels in the error of the blend:
+`z + (1 - z) - 1 = 0`, so the error variance is unchanged. -/
+theorem errVar_shift (m : BlendMoments) (c z : ℝ) : (m.shift c).errVar z = m.errVar z := by
+  simp only [errVar, shift]; ring
+
+/-- …and so is `Var(μ̂ⱼ - μ̂)`. -/
+theorem gap_shift (m : BlendMoments) (c : ℝ) : (m.shift c).gap = m.gap := by
+  simp only [gap, shift]; ring
+
+/-- …and so is the best credibility factor. -/
+theorem bestZ_shift (m : BlendMoments) (c : ℝ) : (m.shift c).bestZ = m.bestZ := by
+  rw [bestZ, gap_shift, bestZ]; simp only [shift]; ring_nf
+
 end BlendMoments
 end Credibility
