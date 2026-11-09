@@ -964,41 +964,49 @@ Take $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$ with known volumes $w_{jt} > 0$:
 Bühlmann--Straub with a cohort-dependent $\sigma_j$ and correlations
 $\rho_{ij}$. Write $w_{j*} = \sum_t w_{jt}$, $w_{**} = \sum_j w_{j*}$ and
 $S_{ij} = \sum_t \sqrt{w_{it}w_{jt}}$. The estimators below are quadratic
-forms in the data $\mu_{jt}$. With mean $\mu$ and covariances
-$\bar K^{ts}_{ij}$ (Definition~\ref{def:obsCov}), the expectation of
-$\sum Q_{pq}\mu_p\mu_q$ is $\sum Q_{pq}(\bar K_{pq} + \mu^2)$. An estimator
-is \emph{unbiased} for $\theta$ if it is such a form with expectation $\theta$
-for every $\mu$.
+forms in the data $\mu_{jt}$. For data with mean $\mu$ and a symmetric
+covariance table $C$, the expectation of $\sum Q_{pq}\mu_p\mu_q$ is
+$\sum Q_{pq}(C_{pq} + \mu^2)$. An estimator is \emph{unbiased} for $\theta$
+if it is such a form with expectation $\theta$ for every $\mu$. The thesis
+takes $C = \bar K$ (Definition~\ref{def:obsCov}); the shared-level extension
+(Chapter~\ref{ch:hierarchical}) uses other tables, so the facts below are
+proved once for any symmetric $C$.
 
 \begin{definition}[Expectation of quadratic estimators]\label{def:unbiased}
-  \lean{Credibility.Model.quad, Credibility.Model.mom2,
+  \lean{Credibility.Model.quad, Credibility.Model.Ecov, Credibility.Model.UnbiasedCov,
+        Credibility.Model.cov, Credibility.Model.mom2,
         Credibility.Model.E, Credibility.Model.Unbiased}
   \leanok
   \uses{def:obsCov}
-  $\mathbb{E}_\mu\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] =
-  \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$, indices $p = (j,t)$.
+  $\mathbb{E}^C_\mu\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] =
+  \sum_{p,q} Q_{pq}(C_{pq} + \mu^2)$, indices $p = (j,t)$. The thesis case is
+  $C_{pq} = \bar K_{pq}$, so $C_{pq} + \mu^2$ is the second moment
+  $\mathbb E[\mu_p\mu_q]$.
 \end{definition}
 
 \begin{lemma}[The expectation is well defined]\label{lem:E_congr}
-  \lean{Credibility.Model.E_congr}
+  \lean{Credibility.Model.Ecov_congr, Credibility.Model.UnbiasedCov.unique,
+        Credibility.Model.cov_symm, Credibility.Model.E_eq_sum_mom2, Credibility.Model.E_congr}
   \leanok
   \uses{def:unbiased}
-  If two matrices give the same quadratic form, they give the same expectation.
+  For a symmetric table $C$: if two matrices give the same quadratic form,
+  they give the same expectation. So an estimator has one expectation:
+  unbiasedness fixes the value. $\bar K$ is symmetric.
 \end{lemma}
 \begin{proof}
   \leanok
   The difference $D$ has $D_{pq} + D_{qp} = 0$ (polarize with unit vectors),
-  and $\bar K_{pq} + \mu^2$ is symmetric.
+  and $C_{pq} + \mu^2$ is symmetric.
 \end{proof}
 
 \begin{lemma}[Linearity]\label{lem:unbiased_linear}
-  \lean{Credibility.Model.Unbiased.congr, Credibility.Model.Unbiased.add,
-        Credibility.Model.Unbiased.const_mul, Credibility.Model.Unbiased.sum,
-        Credibility.Model.unbiased_mul}
+  \lean{Credibility.Model.UnbiasedCov.congr, Credibility.Model.UnbiasedCov.add,
+        Credibility.Model.UnbiasedCov.const_mul, Credibility.Model.UnbiasedCov.sum,
+        Credibility.Model.unbiasedCov_mul, Credibility.Model.unbiased_mul}
   \leanok
   \uses{def:unbiased}
   Unbiasedness is preserved by sums and scalar multiples. If $\sum_p \ell_p = 0$,
-  then $(\ell^\top\mu)(m^\top\mu)$ is unbiased for $\sum_{p,q}\ell_p m_q\bar K_{pq}$:
+  then $(\ell^\top\mu)(m^\top\mu)$ is unbiased for $\sum_{p,q}\ell_p m_q C_{pq}$:
   the mean drops out.
 \end{lemma}
 \begin{proof}
@@ -1686,6 +1694,23 @@ moments matter'' a checked statement.
   $T = \emptyset$). The idea: bilinearity of covariance.
 \end{proof}
 
+\begin{theorem}[The expectation of §2.8 is the actual one]\label{thm:integral_quad}
+  \lean{Credibility.Model.Noise.integral_quad}
+  \leanok
+  \uses{def:Noise, def:unbiased}
+  For any quadratic form,
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$.
+  So ``unbiased'' in Chapter~\ref{ch:estimation} means unbiased for any random
+  variables with the moments of \eqth{15}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:cov_obs}
+  $\mathbb E[\mu_p\mu_q] = \cov(\mu_p,\mu_q) + \mathbb E\mu_p\,\mathbb E\mu_q
+  = \bar K_{pq} + \mu^2$ by Theorem~\ref{thm:cov_obs}; the products are
+  integrable since the $\mu_p$ are square-integrable.
+\end{proof}
+
 \begin{theorem}[Optimal weights in true variance]\label{thm:weights_true}
   \lean{Credibility.Model.Noise.var_cohortLin_err,
         Credibility.Model.Noise.cohortEst_optimal,
@@ -2216,37 +2241,6 @@ including the singular case $\phi = 1$.
   $\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij}$.
 \end{definition}
 
-\begin{lemma}[Splitting the expectation]\label{lem:Ephi_split}
-  \lean{Credibility.Model.errPart, Credibility.Model.E_split, Credibility.Model.Eφ_split}
-  \leanok
-  \uses{def:Ephi}
-  With $A$ the noise part, $D = \sum_{p_1 = q_1} Q_{pq}$ and $S = \sum_{p,q} Q_{pq}$:
-  $\mathbb E_\mu = A + \tau^2 D + \mu^2 S$, and with a shared level
-  $A + (1-\phi)\tau^2 D + (\phi\tau^2 + \mu^2) S$.
-\end{lemma}
-\begin{proof}
-  \leanok
-  \uses{lem:levelCov_apply}
-  Expand; $\tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij} = (1-\phi)\tau^2\delta_{ij} + \phi\tau^2$.
-\end{proof}
-
-\begin{theorem}[Unbiasedness with a shared level]\label{thm:unbiasedPhi_of}
-  \lean{Credibility.Model.unbiasedφ_of}
-  \leanok
-  \uses{def:Ephi, lem:Kphi_eq}
-  If $f$ is unbiased for $\theta$ in the thesis model and for $\theta'$ in
-  $M_\psi$ ($\psi < 1$, $\psi \ne 0$), then for every $\phi$ it is unbiased
-  for $\theta + \frac{\phi}{\psi}(\theta' - \theta)$ under the shared level.
-\end{theorem}
-\begin{proof}
-  \leanok
-  \uses{lem:Ephi_split, lem:E_congr}
-  Unbiased for every $\mu$ forces $S = 0$ and $A + \tau^2 D = \theta$; in
-  $M_\psi$, $A + (1-\psi)\tau^2 D = \theta'$ (the expectation depends only on
-  $f$). So $\tau^2 D = (\theta - \theta')/\psi$, and the expectation with a
-  shared level is $A + (1-\phi)\tau^2 D = \theta - \phi\tau^2 D$.
-\end{proof}
-
 \begin{corollary}[The §2.8 estimators with a shared level]\label{cor:estimation_phi}
   \lean{Credibility.Model.sigRhoHat_unbiasedφ, Credibility.Model.tauHat_unbiasedφ,
     Credibility.Model.KHat_unbiasedφ}
@@ -2259,9 +2253,10 @@ including the singular case $\phi = 1$.
 \end{corollary}
 \begin{proof}
   \leanok
-  \uses{thm:unbiasedPhi_of, cor:estimation, lem:K_apply, lem:levelCov_apply}
-  Theorem~\ref{thm:unbiasedPhi_of} with $\psi = \tfrac12$ and
-  Corollary~\ref{cor:estimation} for $M$ and $M_{1/2}$.
+  \uses{thm:estimation_G, lem:EG_const, lem:levelCov_apply}
+  The case of one group in Section~\ref{sec:hier_bridge5}
+  (Theorem~\ref{thm:estimation_G}): then the table is the one here
+  (Lemma~\ref{lem:EG_const}) and $\pi = 1$, so $\tau^2 - \phi\tau^2\pi = (1-\phi)\tau^2$.
 \end{proof}
 
 \begin{remark}[Reading: the plug-in is right, $\phi$ is not identified]\label{rem:hier_bridge3}
@@ -2477,21 +2472,19 @@ itself, evaluated on noise-free data.
 
 \begin{theorem}[Transfer of unbiasedness to group levels]\label{thm:unbiasedG_of}
   \lean{Credibility.Model.sum_quad_grpData, Credibility.Model.EG_eq,
-    Credibility.Model.unbiasedG_of, Credibility.Model.UnbiasedG.unique,
-    Credibility.Model.UnbiasedG.add, Credibility.Model.UnbiasedG.const_mul,
-    Credibility.Model.UnbiasedG.congr}
+    Credibility.Model.unbiasedG_of, Credibility.Model.obsCovG_symm}
   \leanok
-  \uses{def:EG}
+  \uses{def:EG, lem:E_congr}
   If $f$ is unbiased for $\theta$ in the thesis model, then with group levels
   it is unbiased for
   \[
     \theta - \phi\tau^2\Big(\sum_j f(\mathbf 1_{\{j\}}) - \sum_g f(\mathbf 1_g)\Big),
   \]
-  for every $\phi$. The value is unique: an estimator has one expectation.
+  for every $\phi$. The table is symmetric, so the value is unique
+  (Lemma~\ref{lem:E_congr}).
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:E_congr}
   $(L_G)_{ij} = \tau^2\delta_{ij} - \phi\tau^2\delta_{ij} + \phi\tau^2[g(i) = g(j)]$,
   and $[g(i) = g(j)] = \sum_g \mathbf 1_g(i)\mathbf 1_g(j)$, so the extra
   terms are $\phi\tau^2$ times the quadratic form at the patterns.
@@ -2522,6 +2515,22 @@ itself, evaluated on noise-free data.
   \leanok
   $(\sum_j W_j)^2 - \sum_g W_g^2 = \sum_{g(i) \ne g(j)} W_iW_j$, a sum of
   positive terms over the pairs across groups.
+\end{proof}
+
+\begin{lemma}[One group is a shared level]\label{lem:EG_const}
+  \lean{Credibility.Model.obsCovG_const, Credibility.Model.unbiasedG_iff_unbiasedφ,
+    Credibility.Model.withinShare_const}
+  \leanok
+  \uses{def:EG, def:Ephi, def:withinShare}
+  With one group, the table of Definition~\ref{def:EG} is that of
+  Definition~\ref{def:Ephi}, so unbiasedness with group levels is unbiasedness
+  with a shared level. And $\pi = 1$ for the weights $w_{j*}$ ($J \ge 2$, $T \ge 1$).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:KG_eq, lem:withinShare}
+  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ with one group (Lemma~\ref{lem:KG_eq});
+  $\pi = 1$ by Lemma~\ref{lem:withinShare}.
 \end{proof}
 
 \begin{theorem}[The §2.8 estimators with group levels]\label{thm:estimation_G}
@@ -2595,7 +2604,7 @@ itself, evaluated on noise-free data.
   Linearity.
 \end{proof}
 
-\begin{remark}[Reading: plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
+\begin{remark}[Finding 13: with groups the plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
   \uses{thm:estimation_G, cor:KHat_G_iff, cor:phiTauHat, rem:hier_bridge4}
   $\widehat{\tau^2}$ averages $\tfrac12(\hmu_i - \hmu_j)^2$ over pairs of
   cohorts, weighted by $w_{i*}w_{j*}$. A pair within a group shares $\phi\tau^2$,

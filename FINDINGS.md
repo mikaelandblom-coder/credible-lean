@@ -128,6 +128,22 @@ Gaps, extra hypotheses and new results found while formalizing.
    `ρ₁₃ = −0.9` is realisable) (`Unequal.Noise.mse_blend`,
    `bestZ_mse_optimal`, `Unequal.exists_noise_iff`, *proved*).
 
+13. **With group levels, `τ̂²` is biased by the within-group pairs (new).**
+   Let the cohort levels share `φτ²` within groups and nothing across them
+   (`cov(μᵢ, μⱼ) = τ²`, `φτ²` or `0`). Then the thesis estimator (39) has
+   `E τ̂² = τ² − φτ²π`, with `π` the share of same-group pairs among pairs of
+   distinct cohorts, weighted by `wᵢ*wⱼ*`. It lands between the non-shared
+   part `(1−φ)τ²` (one group, `π = 1`) and `τ²` (singleton groups, `π = 0`).
+   So the plug-in `K̂` estimates the `K` the within-group weights need
+   exactly when there is one group (`φ ≠ 0`). With two or more groups it
+   overstates the within-group level variance by `φτ²(1−π)`. Pairs fix it:
+   `(μ̂ᵢ − μ̂ⱼ)²` minus its noise estimate is unbiased for `2(1−φ)τ²` within a
+   group and `2τ²` across groups, so `φτ²` is identifiable from one pair of
+   each kind. The one-group case is the shared level of Bridge 3, where `φ`
+   is not identifiable (`tauHat_unbiasedG`, `KHat_unbiasedG_iff`,
+   `pairHat_unbiasedG`, `phiTauHat_unbiasedG`, *proved*). Distribution-free:
+   `Noise.integral_quad` makes `Unbiased` the actual expectation.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
 
 (Findings 1–3 come from the statements; confirm them as proofs land.)

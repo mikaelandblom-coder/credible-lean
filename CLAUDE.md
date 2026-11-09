@@ -13,13 +13,17 @@ tactics.
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30); §2.9 balance → `Credibility/BuhlmannStraub.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
-- §2.8 expectation of quadratic estimators, `Unbiased` → `Credibility/Expectation.lean`
+- §2.8 expectation of quadratic estimators → `Credibility/Expectation.lean` (proved once for a
+  symmetric covariance table `C`: `Ecov`, `UnbiasedCov`; the thesis `E`, `Unbiased` are `C = obsCov`)
 - §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean` (corollaries of `UnequalEstimation` via `Model.toUnequal`)
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
 - extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
+- extension: a shared level within groups, towards hierarchical credibility (Bridges 2–5: `K_φ`,
+  `K_G`, the §2.8 estimators under `Unbiasedφ`/`UnbiasedG`, Bridge 3 as the one-group case of
+  Bridge 5) → `Credibility/Hierarchical.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 

@@ -1,4 +1,4 @@
-import Credibility.Model
+import Credibility.Expectation
 import Credibility.UnequalMoments
 
 /-!
@@ -151,6 +151,30 @@ omit [Fintype J] in
 theorem cov_obs (i j : J) (t s : T) : cov[N.obs μ i t, N.obs μ j s; P] = M.obsCov i j t s := by
   have : Nonempty T := ⟨t⟩
   exact N.toUnequal.cov_obsVal μ i j (mem_univ t) (mem_univ s)
+
+/-- §2.8 in true expectation: for any quadratic form `quad Q` of the data,
+`E[Σₚ,q Qₚq μₚ μq] = M.E μ Q`. So `Unbiased f θ` means `E f(μ₁₁, …) = θ`
+for any random variables with the moments of eq. (15). -/
+theorem integral_quad (Q : J × T → J × T → ℝ) :
+    P[fun ω => quad Q (fun p => N.obs μ p.1 p.2 ω)] = M.E μ Q := by
+  have hL : ∀ p : J × T, MemLp (N.obs μ p.1 p.2) 2 P := fun p => by
+    have : Nonempty T := ⟨p.2⟩
+    exact N.toUnequal.memLp_obsVal μ p.1 (mem_univ p.2)
+  have hI : ∀ p q : J × T, Integrable (fun ω => N.obs μ p.1 p.2 ω * N.obs μ q.1 q.2 ω) P :=
+    fun p q => (hL p).integrable_mul (hL q)
+  have hm : ∀ p q : J × T,
+      P[fun ω => N.obs μ p.1 p.2 ω * N.obs μ q.1 q.2 ω] = M.cov p q + μ ^ 2 := fun p q => by
+    have h := covariance_eq_sub (hL p) (hL q)
+    rw [N.cov_obs, N.obs_mean, N.obs_mean] at h
+    rw [cov, h]
+    simp only [Pi.mul_def]
+    ring
+  simp only [quad, E, Ecov, mul_assoc]
+  rw [integral_finsetSum _ fun p _ => integrable_finsetSum _ fun q _ => (hI p q).const_mul _]
+  refine sum_congr rfl fun p _ => ?_
+  rw [integral_finsetSum _ fun q _ => (hI p q).const_mul _]
+  refine sum_congr rfl fun q _ => ?_
+  rw [integral_const_mul, hm]
 
 omit [Fintype J] in
 /-- Eq. (21) is the actual covariance: `cov(μ̂ᵢ, μ̂ⱼ) = Kᵢⱼ`. -/

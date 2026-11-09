@@ -16,8 +16,14 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
 - Item 15, "watch out": with several groups `τ̂²` estimates `τ² - φτ²π`
   (`π` = weighted share of same-group pairs), so the plug-in `K̂` is off
   unless there is one group; pairs within vs across groups estimate
-  `(1-φ)τ²` and `τ²`, so `φτ²` is identifiable —
-  `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`.
+  `(1-φ)τ²` and `τ²`, so `φτ²` is identifiable (Finding 13) —
+  `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`. One group (a
+  shared level) is the special case `π = 1`: `τ̂²` estimates `(1-φ)τ²`,
+  which is all the blend needs — `cor:estimation_phi`.
+- Estimation section, one line under the unbiasedness entry: "unbiased" is
+  the actual expectation for any random variables with the model's first
+  two moments, no distribution assumed — `thm:integral_quad`
+  (`Noise.integral_quad`).
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.

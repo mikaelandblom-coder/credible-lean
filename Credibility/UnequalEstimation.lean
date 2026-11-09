@@ -205,7 +205,7 @@ theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.
   rcases (M.overlap i j).eq_empty_or_nonempty with hO | hO
   · refine ⟨0, fun X => ?_, fun μ => ?_⟩
     · simp [Model.quad, sigRhoHat, hO]
-    · simp [Model.E, σ2, hO]
+    · simp [Model.Ecov, σ2, hO]
   have hden' := hden hO
   have hW : ∀ k, 0 < M.wtot w k := fun k => sum_pos (fun s _ => hw k s) (M.obs_nonempty k)
   have hS : 0 < M.sqrtSum w i j :=
@@ -213,7 +213,7 @@ theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.
   have hmu : ∀ X k, M.muHat w X k = ∑ s ∈ M.obs k, M.a k s * X (k, s) := fun X k =>
     sum_congr rfl fun s hs => by rw [M.a_special sig hw hσ k hs]
   -- The estimator is a combination of the residual products of `unbiased_dev`.
-  refine (Model.Unbiased.const_mul (M.den w i j)⁻¹ (Model.Unbiased.sum (M.overlap i j) fun t ht =>
+  refine (Model.UnbiasedCov.const_mul (M.den w i j)⁻¹ (Model.UnbiasedCov.sum (M.overlap i j) fun t ht =>
     (M.unbiased_dev i j ht).const_mul √(w i t * w j t))).congr (fun X => ?_) ?_
   · simp only [sigRhoHat, hmu, div_eq_mul_inv, sum_mul, mul_sum]
     exact sum_congr rfl fun t _ => by ring
@@ -244,7 +244,7 @@ denominators are positive. -/
 theorem cHat_unbiased (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j) (j : J) :
     M.toModel.Unbiased (fun X => M.cHat w X j)
       (∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * (M.σ2 i j * M.ρ i j)) :=
-  Model.Unbiased.sum univ fun i _ => (M.sigRhoHat_unbiased sig hw hσ i j (hden i j)).const_mul _
+  Model.UnbiasedCov.sum univ fun i _ => (M.sigRhoHat_unbiased sig hw hσ i j (hden i j)).const_mul _
 
 /-- Eq. (39): `τ̂²` is unbiased. Needs `J ≥ 2` and a positive denominator for every
 overlapping pair (e.g. `|Tᵢⱼ| ≠ 1` for all `i, j`, `den_pos_of_two_le`). -/
@@ -308,7 +308,7 @@ theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
   have hc : ∀ j, M.toModel.Unbiased (fun X => M.cHat w X j)
       (∑ i, ((if i = j then 1 else 0) - x i) * (M.σ2 i j * M.ρ i j)) :=
     M.cHat_unbiased sig hw hσ hden
-  refine (Model.Unbiased.const_mul (M.wall w * (1 - ∑ k, x k ^ 2))⁻¹ (Model.Unbiased.sum univ fun j _ =>
+  refine (Model.UnbiasedCov.const_mul (M.wall w * (1 - ∑ k, x k ^ 2))⁻¹ (Model.UnbiasedCov.sum univ fun j _ =>
     ((hsq j).const_mul (M.wtot w j)).add ((hc j).const_mul (-M.wtot w j)))).congr
     (fun X => ?_) ?_
   · rw [tauHat, hdenom, div_eq_inv_mul]
