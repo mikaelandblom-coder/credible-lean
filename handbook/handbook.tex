@@ -1,0 +1,246 @@
+% A practitioner's handbook of correlated credibility.
+% Statements and commentary only; every result links to its Lean proof.
+% Built by CI (xelatex) and published next to the blueprint as handbook.pdf.
+% Outline and open sections: handbook/outline.md.
+\documentclass[11pt]{article}
+
+\usepackage{amssymb, amsmath, amsthm}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}
+
+\newtheorem{result}{Result}
+\theoremstyle{remark}
+\newtheorem*{caveat}{Watch out}
+
+\newcommand{\hmu}{\hat\mu}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\cov}{\operatorname{cov}}
+\newcommand{\bu}{\mathbf 1}
+% \lean{Name}: link to the Lean proof (the site's find/ page redirects a
+% declaration name to its line in the source).
+\newcommand{\lean}[1]{\par\smallskip\noindent\textsf{\small Lean:
+  \href{https://mikaelandblom-coder.github.io/credible-lean/find/\#doc/#1}{\detokenize{#1}}}\par}
+\newcommand{\why}{\par\smallskip\noindent\textit{Why.}\ }
+\newcommand{\use}{\par\smallskip\noindent\textit{Use it.}\ }
+
+\title{Correlated credibility: a handbook\\
+  {\large Useful results, each proved in Lean}}
+\author{M.~Andblom}
+\date{Draft}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Credibility theory blends a segment's own estimate with the portfolio
+  estimate. This handbook collects the results of one framework for doing
+  that when segments are correlated, with classical Bühlmann--Straub as a
+  special case. There are no proofs here: each result links to a
+  machine-checked proof in Lean, and the
+  \href{https://mikaelandblom-coder.github.io/credible-lean/}{blueprint}
+  has the details. The comments say when to use a result, which way it
+  pushes, and what can go wrong.
+\end{abstract}
+
+% ===========================================================================
+\section{Setting}
+
+\paragraph{The question.} A portfolio is split into cohorts
+$j = 1, \dots, J$ (segments, years of underwriting, levels of a rating
+factor), observed over periods $t = 1, \dots, T$. You want each cohort's
+true key ratio $\mu_j$. You have two estimates: the cohort's own $\hmu_j$
+(right target, noisy) and the portfolio's $\hmu$ (stable, but blind to
+differences between cohorts). Credibility blends them:
+\[
+  \hmu_j^{\,b} = z_j\,\hmu_j + (1 - z_j)\,\hmu .
+\]
+
+\paragraph{The model.} Each observation is the overall level plus two
+error terms:
+\[
+  \mu_{jt} = \underbrace{\mu + \tau\,\eta_j}_{\mu_j} + \sigma_{jt}\,\varepsilon_{jt},
+  \qquad
+  \cov(\varepsilon_{it}, \varepsilon_{js}) = \rho_{ij}\,\delta_{ts}.
+\]
+The \emph{cohort effect} $\eta_j$ says how far cohort $j$ really is from the
+rest; $\tau^2$ is how much cohorts differ. The \emph{noise}
+$\varepsilon_{jt}$ is what one period of data gets wrong; $\sigma_{jt}$ is
+how much (small for a large cohort). Both are centred with unit variance,
+and the cohort effects are uncorrelated with each other and with the noise.
+Cohorts are linked only through their noise in the same period: a
+storm or an inflation shock hits them all, with correlation $\rho_{ij}$.
+
+Only first and second moments are assumed. No distribution is needed
+anywhere in this handbook.
+
+\paragraph{Why error terms?} Classical credibility gives each cohort a risk
+parameter $\Theta_j$, drawn independently. Independence is built into that
+language, so correlation between cohorts is awkward to state. Written as
+error terms, it is one line: the formula for
+$\cov(\varepsilon_{it}, \varepsilon_{js})$ above. This is the
+random-effects notation of statistics.
+
+\paragraph{Translation.} For readers used to Bühlmann--Straub
+(Bühlmann \& Gisler, \emph{A Course in Credibility Theory}):
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Here & Bühlmann--Straub & Meaning \\
+  \midrule
+  $\mu$ & $m$ (collective premium) & overall level \\
+  $\tau^2$ & $a$ & variance between cohorts \\
+  $\sigma_{jt}^2$ & $\sigma^2/w_{jt}$ & noise variance (volume $w_{jt}$) \\
+  $\rho_{ij}$ & $0$ & correlation of noise between cohorts \\
+  $\sigma_{jt}$ & & a standard deviation, not a variance \\
+  \bottomrule
+\end{tabular}
+\end{center}
+The thesis this grew out of writes the cohort effect $\varepsilon_j$; here it
+is $\eta_j$, to keep it apart from the noise.
+
+\paragraph{The recipe.} Every result below follows the same three steps.
+\begin{enumerate}
+  \item Build $K$, the covariance matrix of the cohort estimates:
+        $K_{ij} = \cov(\hmu_i, \hmu_j)$.
+  \item Check that $K$ is positive definite.
+  \item Read off the weights and the credibility factors (Section~\ref{sec:core}).
+\end{enumerate}
+Each model (correlated cohorts, unequal series lengths, a shared group level)
+only changes step~1. Steps~2--3 are proved once.
+
+% ===========================================================================
+\section{The core: everything follows from \texorpdfstring{$K$}{K}}\label{sec:core}
+
+\subsection*{The best blend}
+
+\begin{result}[The best credibility factor]\label{res:bestZ}
+  Let $g = \Var(\hmu_j - \hmu) > 0$. The error variance
+  $\Var(z\hmu_j + (1-z)\hmu - \mu_j)$ is smallest at
+  \[
+    z^* = \frac{\Var(\hmu) - \cov(\hmu_j, \hmu) + \cov(\hmu_j, \mu_j) - \cov(\hmu, \mu_j)}{g},
+  \]
+  and only there.
+  \lean{Credibility.BlendMoments.bestZ_optimal}
+  \lean{Credibility.BlendMoments.bestZ_unique}
+\end{result}
+\use This holds for \emph{any} two unbiased estimates, not only the ones
+below: plug in six second moments and you get the best $z$.
+\why The error variance is a parabola in $z$ with curvature $g$; $z^*$ is
+its vertex. If $g = 0$ the two estimates are the same and every $z$ is
+equally good.
+
+\subsection*{The best weights}
+
+\begin{result}[Within a cohort: inverse-variance weights]\label{res:invVar}
+  Among weights $c_t$ with $\sum_t c_t = 1$, the noise variance
+  $\sum_t c_t^2\sigma_{jt}^2$ is smallest for
+  \[
+    a_{jt} = \frac{\sigma_{jt}^{-2}}{\sum_s \sigma_{js}^{-2}},
+    \qquad\text{with minimum}\quad
+    \Bigl(\sum_s \sigma_{js}^{-2}\Bigr)^{-1}.
+  \]
+  \lean{Credibility.invVarWeight_optimal}
+  \lean{Credibility.invVarWeight_value}
+\end{result}
+\use $\hmu_j = \sum_t a_{jt}\mu_{jt}$. With $\sigma_{jt}^2 = \sigma^2/w_{jt}$
+this is the volume-weighted mean, as in Bühlmann--Straub. Correlation
+between cohorts does not change it: within a cohort, the noise of different
+periods is uncorrelated.
+
+\begin{result}[Across cohorts: GLS weights]\label{res:gls}
+  Let $K$ be positive definite. Among weights $c_j$ with $\sum_j c_j = 1$,
+  the portfolio variance $c^\top K c$ is smallest for
+  \[
+    b = \frac{K^{-1}\bu}{\bu^\top K^{-1}\bu},
+    \qquad\text{with minimum}\quad
+    s^2 = \frac{1}{\bu^\top K^{-1}\bu}.
+  \]
+  \lean{Credibility.glsWeight_optimal}
+  \lean{Credibility.glsWeight_value}
+\end{result}
+\use $\hmu = \sum_j b_j\hmu_j$. With uncorrelated cohorts $K$ is diagonal
+and $b_j \propto 1/K_{jj}$, the classical weights. With correlation, a
+cohort that moves with many others gets \emph{less} weight: much of what it
+says, the others already say. Weights can even turn negative.
+
+\begin{result}[Every cohort covaries equally with the portfolio]\label{res:upsilon}
+  If $K$ is positive definite, then $\cov(\hmu_j, \hmu) = s^2$ for every
+  cohort $j$.
+  \lean{Credibility.mulVec_glsWeight}
+\end{result}
+\why If some cohort covaried more with $\hmu$ than the others, shifting
+weight away from it would lower $\Var(\hmu)$, and the weights would not be
+optimal. This is what makes the next result simple.
+
+\subsection*{The credibility factor}
+
+\begin{result}[Credibility for correlated cohorts]\label{res:z}
+  Let $K$ be positive definite, with $K_{jj} = \tau^2 + v_j$, where $v_j$ is
+  the noise variance of $\hmu_j$. With $b$ and $s^2$ from
+  Result~\ref{res:gls},
+  \[
+    z_j = \frac{(1 - b_j)\,\tau^2}{\tau^2 + v_j - s^2}
+        = \frac{\cov(\hmu_j - \hmu,\; \mu_j)}{\Var(\hmu_j - \hmu)} .
+  \]
+  \lean{Credibility.Core.bestZ_eq}
+\end{result}
+\use This is the formula to implement. Compute $K$, invert it once, and
+every $z_j$ follows. In the thesis this is eq.~(26).
+\why The second form is a regression coefficient: $z_j$ answers ``how much
+of the gap between my cohort and the portfolio is real?''. The numerator is
+the real part of the gap: $\tau^2$, minus the share $b_j\tau^2$ of cohort
+$j$'s own effect that already sits in $\hmu$. The denominator is the whole
+gap, real plus noise.
+
+\begin{result}[Uncorrelated cohorts: Bühlmann--Straub]\label{res:diag}
+  If $K = \operatorname{diag}(\tau^2 + v_j)$ with positive entries and
+  $J \ge 2$, then $b_j \propto 1/(\tau^2 + v_j)$ and
+  \[
+    z_j = \frac{\tau^2}{\tau^2 + v_j}.
+  \]
+  \lean{Credibility.Core.bestZ_of_diag}
+\end{result}
+\use In classical notation, $v_j = \sigma^2/w_j$ and this is
+$z_j = w_j/(w_j + \sigma^2/a)$. So the correlated framework contains the
+classical one exactly.
+
+\subsection*{When the recipe applies}
+
+\begin{result}[\texorpdfstring{$K$}{K} is positive definite]\label{res:posdef}
+  In the model of Section~1, with $T \ge 1$ and the correlation table
+  $(\rho_{ij})$ positive semidefinite, $K$ is positive definite. Its entries
+  are $K_{ij} = \sigma_{ij}^2\rho_{ij} + \tau^2\delta_{ij}$, with
+  $\sigma_{ij}^2 = \sum_t a_{it}a_{jt}\sigma_{it}\sigma_{jt}$.
+  \lean{Credibility.Model.K_posDef}
+  \lean{Credibility.Model.K_apply}
+\end{result}
+\begin{caveat}
+  A covariance matrix is only positive \emph{semi}definite in general; here
+  $\tau^2 > 0$ is what lifts it. If you estimate $\rho$ entry by entry, the
+  table you get need not be positive semidefinite. Check it (or damp the
+  off-diagonal entries) before inverting $K$.
+\end{caveat}
+
+\begin{caveat}
+  You need at least two cohorts. With $J = 1$, $b_1 = 1$ and
+  $s^2 = \tau^2 + v_1$, so Result~\ref{res:z} reads $0/0$: there is nothing
+  to blend with.
+\end{caveat}
+
+% ===========================================================================
+\section{Special cases}
+\emph{To be written: two cohorts, credibility above one, equal covariances.}
+
+\section{Estimating the parameters}
+\emph{To be written.}
+
+\section{The moments are real}
+\emph{To be written.}
+
+\section{Beyond the thesis}
+\emph{To be written: unequal series lengths, merging cohorts, a shared group
+level.}
+
+\end{document}

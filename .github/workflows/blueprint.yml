@@ -86,6 +86,12 @@ jobs:
           leanblueprint web
           cp print/print.pdf web/blueprint.pdf
 
+      - name: Build handbook
+        working-directory: handbook
+        run: |
+          latexmk -xelatex -interaction=nonstopmode -halt-on-error handbook.tex
+          cp handbook.pdf ../blueprint/web/handbook.pdf
+
       - name: Check blueprint against Lean
         run: |
           python3 scripts/progress.py --check

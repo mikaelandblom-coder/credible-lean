@@ -29,6 +29,10 @@ lengths (`Unequal`) and the distribution-free moment layer (`Moments`).
 found while formalizing, e.g. that two correlated cohorts can push the
 credibility factor above one.
 
+The **[handbook](https://mikaelandblom-coder.github.io/credible-lean/handbook.pdf)**
+(draft, `handbook/handbook.tex`) is the short version for practitioners: the
+key results with commentary and links to their Lean proofs, no proofs.
+
 The **[blueprint](https://mikaelandblom-coder.github.io/credible-lean/)**
 ([pdf](https://mikaelandblom-coder.github.io/credible-lean/blueprint.pdf)) is
 a condensed §2 of the thesis with every result linked to its Lean statement,
