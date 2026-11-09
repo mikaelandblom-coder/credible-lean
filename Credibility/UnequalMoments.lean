@@ -1,4 +1,5 @@
 import Credibility.Unequal
+import Credibility.Expectation
 
 /-!
 # The moment layer for unequal lengths (extension, distribution-free)
@@ -152,6 +153,41 @@ theorem cov_obsVal (i j : J) {t s : T} (ht : t ∈ M.obs i) (hs : s ∈ M.obs j)
     covariance_const_mul_left, N.cov_ε_trueMean μ i j ht, covariance_const_mul_left,
     covariance_const_mul_right, N.cov_ε_ε i j t ht s hs, cov_trueMean, Model.obsCov]
   ring
+
+/-- §2.8 in true expectation with unequal lengths: for a quadratic form `quad Q`
+reading only observed cells (`Qₚq ≠ 0` only if `p` and `q` are observed),
+`E[Σₚ,q Qₚq μₚ μq] = M.E μ Q`. So `Unbiased f θ` for such a form means
+`E f = θ` for any random variables with the moments of eq. (15) on the
+observed cells, whatever the unobserved cells hold. -/
+theorem integral_quad (Q : J × T → J × T → ℝ)
+    (hQ : ∀ p q, Q p q ≠ 0 → p.2 ∈ M.obs p.1 ∧ q.2 ∈ M.obs q.1) :
+    P[fun ω => Model.quad Q (fun p => N.obsVal μ p.1 p.2 ω)] = M.toModel.E μ Q := by
+  -- Each term is `0` or a product of two square-integrable observed cells,
+  -- with `E[μₚμq] = cov(μₚ, μq) + μ²`.
+  have hI : ∀ p q : J × T,
+      Integrable (fun ω => Q p q * (N.obsVal μ p.1 p.2 ω * N.obsVal μ q.1 q.2 ω)) P := by
+    intro p q
+    by_cases h : Q p q = 0
+    · simp [h]
+    obtain ⟨hp, hq⟩ := hQ p q h
+    exact ((N.memLp_obsVal μ p.1 hp).integrable_mul (N.memLp_obsVal μ q.1 hq)).const_mul _
+  have hm : ∀ p q : J × T,
+      P[fun ω => Q p q * (N.obsVal μ p.1 p.2 ω * N.obsVal μ q.1 q.2 ω)]
+        = Q p q * (M.toModel.cov p q + μ ^ 2) := by
+    intro p q
+    by_cases h : Q p q = 0
+    · simp [h]
+    obtain ⟨hp, hq⟩ := hQ p q h
+    have hc := covariance_eq_sub (N.memLp_obsVal μ p.1 hp) (N.memLp_obsVal μ q.1 hq)
+    rw [N.cov_obsVal μ p.1 q.1 hp hq, N.obsVal_mean μ p.1 hp, N.obsVal_mean μ q.1 hq] at hc
+    rw [integral_const_mul, Model.cov, hc]
+    simp only [Pi.mul_def]
+    ring
+  simp only [Model.quad, Model.E, Model.Ecov, mul_assoc]
+  rw [integral_finsetSum _ fun p _ => integrable_finsetSum _ fun q _ => hI p q]
+  refine sum_congr rfl fun p _ => ?_
+  rw [integral_finsetSum _ fun q _ => hI p q]
+  exact sum_congr rfl fun q _ => hm p q
 
 omit [Fintype J] [Fintype T] in
 lemma memLp_cohortLin (j : J) (c : T → ℝ) : MemLp (N.cohortLin μ j c) 2 P :=

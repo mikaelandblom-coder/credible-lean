@@ -1808,10 +1808,10 @@ moments matter'' a checked statement.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:cov_obs}
-  $\mathbb E[\mu_p\mu_q] = \cov(\mu_p,\mu_q) + \mathbb E\mu_p\,\mathbb E\mu_q
-  = \bar K_{pq} + \mu^2$ by Theorem~\ref{thm:cov_obs}; the products are
-  integrable since the $\mu_p$ are square-integrable.
+  \uses{thm:U_integral_quad, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_integral_quad}: every cell is
+  observed. The idea: $\mathbb E[\mu_p\mu_q] = \cov(\mu_p,\mu_q) + \mathbb E\mu_p\,\mathbb E\mu_q
+  = \bar K_{pq} + \mu^2$.
 \end{proof}
 
 \begin{theorem}[Optimal weights in true variance]\label{thm:weights_true}
@@ -1972,6 +1972,25 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \begin{proof}
   \leanok
   Bilinearity of covariance.
+\end{proof}
+
+\begin{theorem}[The expectation of §2.8 is the actual one]\label{thm:U_integral_quad}
+  \lean{Credibility.Unequal.Noise.integral_quad}
+  \leanok
+  \uses{def:U_Noise, def:unbiased}
+  For a quadratic form reading only observed cells ($Q_{pq} \ne 0$ only if
+  $p = (i,t)$ with $t \in T_i$ and $q = (j,s)$ with $s \in T_j$),
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$,
+  whatever the unobserved cells hold. So ``unbiased'' in
+  Chapter~\ref{ch:unequal} means unbiased for any random variables with the
+  moments of \eqth{15} on the observed cells.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_cov_obs}
+  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are observed, so
+  $\mathbb E[\mu_p\mu_q] = \bar K_{pq} + \mu^2$ by Theorem~\ref{thm:U_cov_obs},
+  and the product is integrable.
 \end{proof}
 
 \begin{theorem}[Optimal weights in true variance]\label{thm:U_weights_true}
