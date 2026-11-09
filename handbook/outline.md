@@ -1,8 +1,10 @@
 # Credibility handbook: outline (draft)
 
-A short companion to the blueprint: the useful results, in thesis notation,
-each with a short comment and a link to its Lean proof. No proofs. Target:
-6–8 pages, built by CI as a PDF next to the blueprint.
+A practitioner's handbook for one unified credibility framework: the useful
+results, each with a short comment and a link to its Lean proof. No proofs.
+Independent of the thesis: its own numbering (thesis equations cited only in
+the comments). Target: 6–8 pages, built by CI as a PDF next to the blueprint.
+Only results that serve the credibility framework go in.
 
 Per entry: **statement** (one display), **comment** (when to use it and why it
 holds, in words), **Lean** (theorem name, linked to the source line).
@@ -51,10 +53,10 @@ holds, in words), **Lean** (theorem name, linked to the source line).
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
 15. A shared group level drops out of credibility; two-stage GLS —
     `thm:bestZ_phi_eq`, `thm:glsWeight_blockDiag`.
-16. Small tools: damping off-diagonals keeps PD; optimal 1-D k-means groups are
-    intervals — `thm:shrinkOffDiag_posDef`, `thm:kmeans_contiguous`.
+
+Waiting list (in once they prove useful for credibility): damping
+off-diagonals keeps PD (`thm:shrinkOffDiag_posDef`); optimal 1-D k-means
+groups are intervals (`thm:kmeans_contiguous`).
 
 ## Open choices for the owner
-- Keep or drop item 16 (useful, but not credibility results)?
-- Number the handbook's results on their own, or cite thesis equation numbers?
 - Commentary voice: the thesis's, or a looser handbook tone?
