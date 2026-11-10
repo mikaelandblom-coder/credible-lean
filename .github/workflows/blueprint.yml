@@ -1,6 +1,7 @@
 name: Blueprint
 
-# Builds Lean, the blueprint (web + pdf) and checks they agree.
+# Builds Lean, the blueprint (web + pdf) and checks they agree, in two parallel
+# jobs (`lean`, `docs`).
 # Deploys to GitHub Pages on pushes to main.
 # Pushes to main and tags only: session branches (ccr-…, claude/…) used to
 # trigger a second, duplicate run of every commit.
@@ -19,7 +20,9 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  # Two jobs in parallel: `lean` needs no TeX and `docs` needs no Lean, so the
+  # run takes as long as the slower one, not their sum.
+  lean:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,13 +48,27 @@ jobs:
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Cache Mathlib
+        id: mathlib-cache
         uses: actions/cache@v4
         with:
           path: .lake/packages
           key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
 
+      # The cached .lake/packages already holds Mathlib's compiled files.
       - name: Get Mathlib cache
+        if: steps.mathlib-cache.outputs.cache-hit != 'true'
         run: bash scripts/retry.sh lake exe cache get
+
+      # The project's own compiled files from the latest earlier run. Lake
+      # compares content hashes, so only files that changed (and the files
+      # importing them) are rebuilt.
+      - name: Cache project build
+        uses: actions/cache@v4
+        with:
+          path: .lake/build
+          key: build-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.toml') }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.toml') }}-
 
       - name: Build Lean project
         run: lake build
@@ -70,6 +87,21 @@ jobs:
         run: |
           python3 scripts/blueprint_check.py --uses > "$RUNNER_TEMP/uses.txt"
           lake env lean --run scripts/CheckUses.lean "$RUNNER_TEMP/uses.txt"
+
+      # The \lean names are read from content.tex (the `docs` job checks that
+      # this list is the one leanblueprint writes), so no TeX is needed here.
+      - name: Check blueprint and handbook against Lean
+        run: |
+          python3 scripts/progress.py --check
+          python3 scripts/blueprint_check.py
+          python3 scripts/blueprint_check.py --decls > "$RUNNER_TEMP/decls.txt"
+          lake env lean --run scripts/CheckDecls.lean "$RUNNER_TEMP/decls.txt"
+          python3 scripts/handbook_check.py
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Install TeX, graphviz and leanblueprint
         run: |
@@ -92,13 +124,12 @@ jobs:
           latexmk -xelatex -interaction=nonstopmode -halt-on-error handbook.tex
           cp handbook.pdf ../blueprint/web/handbook.pdf
 
-      - name: Check blueprint against Lean
+      # The `lean` job checks the names from `blueprint_check.py --decls`;
+      # make sure that is the list leanblueprint itself extracted.
+      - name: Check the declaration list and write the source links
         run: |
-          python3 scripts/progress.py --check
-          python3 scripts/blueprint_check.py
-          lake env lean --run scripts/CheckDecls.lean blueprint/lean_decls
+          diff <(sort -u blueprint/lean_decls) <(python3 scripts/blueprint_check.py --decls | sort -u)
           python3 scripts/blueprint_find.py
-          python3 scripts/handbook_check.py
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -106,7 +137,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [lean, docs]
     runs-on: ubuntu-latest
     permissions:
       pages: write

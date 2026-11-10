@@ -1,6 +1,9 @@
 name = "credibility"
 version = "0.1.0"
 defaultTargets = ["Credibility"]
+# Mathlib is written for the module system; this project is not. Without this,
+# Lake warns on every file that imports Mathlib, on every build.
+allowNonModules = true
 
 [leanOptions]
 pp.unicode.fun = true

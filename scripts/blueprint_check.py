@@ -10,12 +10,17 @@ Whether the \\lean names really exist is checked by scripts/CheckDecls.lean.
 
     python3 scripts/blueprint_check.py
     python3 scripts/blueprint_check.py --uses  # input for scripts/CheckUses.lean
+    python3 scripts/blueprint_check.py --decls # input for scripts/CheckDecls.lean
 
 `--uses` prints one line per proved blueprint statement whose proof \\uses
 other results: `thm₁|thm₂ label=name₁|name₂ …` (its \\lean names, then each
 used label with that label's \\lean names). scripts/CheckUses.lean checks
 that the Lean proof really refers to each used result, so a special case
 marked as a corollary of a general result is one in Lean too.
+
+`--decls` prints every \\lean name in the blueprint, one per line: the list
+`leanblueprint web` writes to blueprint/lean_decls, without needing TeX (CI
+checks in the docs job that the two lists agree).
 """
 import re
 import sys
@@ -73,7 +78,17 @@ def uses_edges():
     return out
 
 
+def decls():
+    """Every \\lean name in the blueprint, in order, without repeats."""
+    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    names = [n.strip() for g in re.findall(r"\\lean\{([^}]*)\}", text) for n in g.split(",")]
+    return list(dict.fromkeys(n for n in names if n))
+
+
 def main() -> int:
+    if "--decls" in sys.argv:
+        print("\n".join(decls()))
+        return 0
     if "--uses" in sys.argv:
         for thms, reqs in uses_edges():
             print("|".join(thms), " ".join(f"{u}={'|'.join(ns)}" for u, ns in reqs))

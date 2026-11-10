@@ -77,7 +77,9 @@ moments are assumed). Never add a distributional assumption.
   `scripts/blueprint_check.py` before pushing again.
 - TeX is not installed in the sessions, so LaTeX errors only show in CI. After
   pushing a `content.tex` change, check that the Blueprint run on `main`
-  passes (GitHub MCP `actions_list`, about 4 minutes), and fix it if not.
+  passes (GitHub MCP `actions_list`), and fix it if not. Its jobs `lean` and
+  `docs` run in parallel (about 2 minutes); the `deploy` job after them only
+  publishes the site and need not be waited for.
 - At a natural break (a file done, a finding logged, context getting long),
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
