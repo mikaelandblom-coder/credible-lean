@@ -15,7 +15,8 @@ matrix chosen for it (`Ecov_congr`), so an estimator has one expectation
 The thesis is `C = obsCov`, eq. (16) (`Model.E`, `Model.Unbiased`); the
 hierarchical bridges (`Hierarchical.lean`) use other tables. `Moments.lean`
 shows that `Model.E` is the actual expectation for any random variables with
-the moments of eq. (15) (`Noise.integral_quad`).
+the moments of eq. (15) (`Noise.integral_quad`), a case of
+`integral_quad_of_cov` below.
 
 Data are indexed by `p = (j, t) : J × T`. Used by `Estimation.lean`,
 `UnequalEstimation.lean` and `Hierarchical.lean`.
@@ -77,6 +78,44 @@ lemma UnbiasedCov.unique (hC : ∀ p q, C q p = C p q) {f : (J × T → ℝ) →
   obtain ⟨Q, hQ, hE⟩ := h
   obtain ⟨Q', hQ', hE'⟩ := h'
   rw [← hE 0, ← hE' 0, Ecov_congr hC 0 fun X => (hQ X).trans (hQ' X).symm]
+
+omit [DecidableEq J] [DecidableEq T] in
+/-- `Ecov` is the actual expectation: for random variables `Zₚ` and a quadratic
+form reading only cells in `S` (`Qₚq ≠ 0` only if `p, q ∈ S`), if on `S` the
+`Zₚ` are square integrable with mean `μ` and `cov(Zₚ, Z_q) = C p q`, then
+`E[Σₚ,q Qₚq Zₚ Z_q] = Ecov C μ Q`. No distribution is assumed, and nothing
+about cells outside `S`. -/
+theorem integral_quad_of_cov {Ω : Type*} [MeasurableSpace Ω] {P : MeasureTheory.Measure Ω}
+    [MeasureTheory.IsProbabilityMeasure P] (Z : J × T → Ω → ℝ) (C : J × T → J × T → ℝ) (μ : ℝ)
+    (Q : J × T → J × T → ℝ) (S : J × T → Prop) (hQ : ∀ p q, Q p q ≠ 0 → S p ∧ S q)
+    (hZ : ∀ p, S p → MeasureTheory.MemLp (Z p) 2 P) (hm : ∀ p, S p → ∫ ω, Z p ω ∂P = μ)
+    (hc : ∀ p q, S p → S q → ProbabilityTheory.covariance (Z p) (Z q) P = C p q) :
+    ∫ ω, quad Q (fun p => Z p ω) ∂P = Ecov C μ Q := by
+  -- Each term is `0` or a product of two square-integrable cells,
+  -- with `E[ZₚZ_q] = cov(Zₚ, Z_q) + μ²`.
+  have hI : ∀ p q : J × T, MeasureTheory.Integrable (fun ω => Q p q * (Z p ω * Z q ω)) P := by
+    intro p q
+    by_cases h : Q p q = 0
+    · simp [h]
+    obtain ⟨hp, hq⟩ := hQ p q h
+    exact ((hZ p hp).integrable_mul (hZ q hq)).const_mul _
+  have hE : ∀ p q : J × T,
+      ∫ ω, Q p q * (Z p ω * Z q ω) ∂P = Q p q * (C p q + μ ^ 2) := by
+    intro p q
+    by_cases h : Q p q = 0
+    · simp [h]
+    obtain ⟨hp, hq⟩ := hQ p q h
+    have hcov := ProbabilityTheory.covariance_eq_sub (hZ p hp) (hZ q hq)
+    rw [hc p q hp hq, hm p hp, hm q hq] at hcov
+    rw [MeasureTheory.integral_const_mul, hcov]
+    simp only [Pi.mul_def]
+    ring
+  simp only [quad, Ecov, mul_assoc]
+  rw [MeasureTheory.integral_finsetSum _ fun p _ =>
+    MeasureTheory.integrable_finsetSum _ fun q _ => hI p q]
+  refine sum_congr rfl fun p _ => ?_
+  rw [MeasureTheory.integral_finsetSum _ fun q _ => hI p q]
+  exact sum_congr rfl fun q _ => hE p q
 
 omit [DecidableEq J] [DecidableEq T] in
 /-- Unbiasedness is about the function and the value, not their presentation. -/

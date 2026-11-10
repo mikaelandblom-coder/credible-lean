@@ -152,33 +152,10 @@ reading only observed cells (`Qₚq ≠ 0` only if `p` and `q` are observed),
 observed cells, whatever the unobserved cells hold. -/
 theorem integral_quad (Q : J × T → J × T → ℝ)
     (hQ : ∀ p q, Q p q ≠ 0 → p.2 ∈ M.obs p.1 ∧ q.2 ∈ M.obs q.1) :
-    P[fun ω => Model.quad Q (fun p => N.obsVal μ p.1 p.2 ω)] = M.toModel.E μ Q := by
-  -- Each term is `0` or a product of two square-integrable observed cells,
-  -- with `E[μₚμq] = cov(μₚ, μq) + μ²`.
-  have hI : ∀ p q : J × T,
-      Integrable (fun ω => Q p q * (N.obsVal μ p.1 p.2 ω * N.obsVal μ q.1 q.2 ω)) P := by
-    intro p q
-    by_cases h : Q p q = 0
-    · simp [h]
-    obtain ⟨hp, hq⟩ := hQ p q h
-    exact ((N.memLp_obsVal μ p.1 hp).integrable_mul (N.memLp_obsVal μ q.1 hq)).const_mul _
-  have hm : ∀ p q : J × T,
-      P[fun ω => Q p q * (N.obsVal μ p.1 p.2 ω * N.obsVal μ q.1 q.2 ω)]
-        = Q p q * (M.toModel.cov p q + μ ^ 2) := by
-    intro p q
-    by_cases h : Q p q = 0
-    · simp [h]
-    obtain ⟨hp, hq⟩ := hQ p q h
-    have hc := covariance_eq_sub (N.memLp_obsVal μ p.1 hp) (N.memLp_obsVal μ q.1 hq)
-    rw [N.cov_obsVal μ p.1 q.1 hp hq, N.obsVal_mean μ p.1 hp, N.obsVal_mean μ q.1 hq] at hc
-    rw [integral_const_mul, Model.cov, hc]
-    simp only [Pi.mul_def]
-    ring
-  simp only [Model.quad, Model.E, Model.Ecov, mul_assoc]
-  rw [integral_finsetSum _ fun p _ => integrable_finsetSum _ fun q _ => hI p q]
-  refine sum_congr rfl fun p _ => ?_
-  rw [integral_finsetSum _ fun q _ => hI p q]
-  exact sum_congr rfl fun q _ => hm p q
+    P[fun ω => Model.quad Q (fun p => N.obsVal μ p.1 p.2 ω)] = M.toModel.E μ Q :=
+  Model.integral_quad_of_cov (fun p => N.obsVal μ p.1 p.2) _ μ Q (fun p => p.2 ∈ M.obs p.1) hQ
+    (fun p hp => N.memLp_obsVal μ p.1 hp) (fun p hp => N.obsVal_mean μ p.1 hp)
+    (fun p q hp hq => N.cov_obsVal μ p.1 q.1 hp hq)
 
 omit [Fintype J] [Fintype T] in
 lemma memLp_cohortLin (j : J) (c : T → ℝ) : MemLp (N.cohortLin μ j c) 2 P :=

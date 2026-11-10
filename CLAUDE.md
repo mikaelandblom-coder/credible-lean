@@ -16,7 +16,8 @@ tactics.
   §2.9 balance → `Credibility/Balance.lean`
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 - §2.8 expectation of quadratic estimators → `Credibility/Expectation.lean` (proved once for a
-  symmetric covariance table `C`: `Ecov`, `UnbiasedCov`; the thesis `E`, `Unbiased` are `C = obsCov`)
+  symmetric covariance table `C`: `Ecov`, `UnbiasedCov`; the thesis `E`, `Unbiased` are `C = obsCov`;
+  `integral_quad_of_cov`: `Ecov` is the true expectation for any random variables with table `C`)
 - §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean` (corollaries of `UnequalEstimation` via `Model.toUnequal`)
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
@@ -29,11 +30,14 @@ tactics.
 - extension: a shared level within groups, towards hierarchical credibility (Bridges 2–5: `K_φ`,
   `K_G`, the §2.8 estimators under `Unbiasedφ`/`UnbiasedG`, Bridge 3 as the one-group case of
   Bridge 5) → `Credibility/Hierarchical.lean`; group weights `B_g` and the same-group share `π`
-  → `Credibility/GroupWeights.lean`
+  → `Credibility/GroupWeights.lean`; its moment layer (group effects `γ_g`, `K_G` and `L_G` as actual
+  covariances, true MSE; a common component on top of `Moments` via `Core.Estimates.addCommon`)
+  → `Credibility/HierarchicalMoments.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 
-Second moments are taken as given numbers, except in `Moments.lean` and `UnequalMoments.lean`, which
+Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
+`Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The model is distribution-free (only first and second
 moments are assumed). Never add a distributional assumption.

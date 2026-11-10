@@ -140,6 +140,14 @@ end Full
 
 variable [IsProbabilityMeasure P]
 
+omit [Fintype J] [Fintype T] in
+lemma memLp_trueMean (j : J) : MemLp (N.trueMean μ j) 2 P :=
+  (memLp_const μ).add ((N.η_memLp j).const_mul _)
+
+omit [Fintype J] [Fintype T] in
+lemma memLp_obs (j : J) (t : T) : MemLp (N.obs μ j t) 2 P :=
+  (N.memLp_trueMean μ j).add ((N.ε_memLp j t).const_mul _)
+
 omit [Fintype J] in
 /-- The observations are unbiased: `E[μⱼₜ] = μ`. -/
 theorem obs_mean (j : J) (t : T) : P[N.obs μ j t] = μ := by
@@ -187,6 +195,21 @@ theorem cohortEst_optimal [Nonempty T] (j : J) (c : T → ℝ) (hc : ∑ t, c t 
       ≤ Var[fun ω => N.cohortLin μ j c ω - N.trueMean μ j ω; P] := by
   rw [← N.toUnequal_cohortEst]
   exact N.toUnequal.cohortEst_optimal μ j c hc
+
+omit [DecidableEq T] in
+/-- The cohort estimates and levels as an instance of the Core moment layer
+(`Unequal.Noise.toEstimates` with `Tⱼ = T`): `cov(μ̂ᵢ, μ̂ⱼ) = Kᵢⱼ`, `L = τ²I`. -/
+noncomputable def toEstimates [Nonempty T] : Core.Estimates M.K (M.τ2 • (1 : Matrix J J ℝ)) μ P where
+  est := N.cohortEst μ
+  level := N.trueMean μ
+  est_memLp j := by rw [← N.toUnequal_cohortEst]; exact N.toUnequal.memLp_cohortEst μ j
+  level_memLp := N.toUnequal.memLp_trueMean μ
+  est_mean j := by rw [← N.toUnequal_cohortEst]; exact N.toUnequal.integral_cohortEst μ j
+  level_mean := N.toUnequal.integral_trueMean μ
+  cov_est := N.cov_cohortEst μ
+  cov_level_est i j := by
+    rw [← N.toUnequal_cohortEst]; exact (N.toUnequal.toEstimates μ).cov_level_est i j
+  cov_level := (N.toUnequal.toEstimates μ).cov_level
 
 /-- Eq. (24) in true variance: among unbiased linear portfolio estimates built
 from the `μ̂ⱼ`, the GLS one has the smallest variance, and it equals `s²`. -/

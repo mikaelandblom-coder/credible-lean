@@ -63,7 +63,8 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | extension: cohort-dependent lengths `Tⱼ` ([notes](notes/unequal-lengths.md)) | `Credibility/Unequal.lean`, `Credibility/UnequalEstimation.lean` |
 | extension: moment layer (distribution-free) | `Credibility/Moments.lean` |
 | extension: moment layer for unequal lengths | `Credibility/UnequalMoments.lean` |
-| extension: a shared level within groups, towards hierarchical credibility | `Credibility/Hierarchical.lean`, `Credibility/GroupWeights.lean` |
+| extension: moment layer at the level of `K` and a level covariance `L` | `Credibility/CoreMoments.lean` |
+| extension: a shared level within groups, towards hierarchical credibility | `Credibility/Hierarchical.lean`, `Credibility/GroupWeights.lean`, `Credibility/HierarchicalMoments.lean` (its moment layer) |
 | extension: damping off-diagonal entries keeps PSD/PD | `Credibility/OffDiagonal.lean` |
 | extension: optimal 1-D weighted k-means groups are intervals | `Credibility/KMeans.lean` |
 
@@ -116,7 +117,10 @@ Once the thesis results are proved:
   `(1-φ)τ²` counts); with several groups the GLS weights are two-stage (GLS
   within groups, inverse variance across them), and the §2.8 estimator `τ̂²`
   is biased by the within-group pairs, which pairs within and across groups
-  correct (FINDINGS item 13). Open: the moment layer for group levels.
+  correct (FINDINGS item 13). Its moment layer is done
+  (`Credibility/HierarchicalMoments.lean`): with group effects as actual random
+  variables, `K_G` is the true covariance and `zⱼ` minimises the true MSE.
+  Open: consistency of those assumptions, and efficient estimation of `φ`.
 
 ## Sharing results
 

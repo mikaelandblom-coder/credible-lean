@@ -1789,13 +1789,16 @@ moments matter'' a checked statement.
         Credibility.Model.Noise.toUnequal_obsVal, Credibility.Model.Noise.toUnequal_cohortLin,
         Credibility.Model.Noise.toUnequal_cohortEst, Credibility.Model.Noise.toUnequal_portLin,
         Credibility.Model.Noise.toUnequal_portEst, Credibility.Model.Noise.toUnequal_blend,
-        Credibility.Model.gram_eq_unequal}
+        Credibility.Model.gram_eq_unequal, Credibility.Model.Noise.memLp_trueMean,
+        Credibility.Model.Noise.memLp_obs, Credibility.Model.Noise.toEstimates}
   \leanok
-  \uses{def:Noise, def:U_Noise, lem:U_full}
+  \uses{def:Noise, def:U_Noise, lem:U_full, def:Core_Estimates, lem:U_moments_lin}
   For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
   are exactly those of Definition~\ref{def:U_Noise} with $T_j = T$, and they
   define the same $\mu_j$, $\mu_{jt}$, $\hmu_j$, $\hmu$ and blend. So every
-  result of this chapter is the case $T_j = T$ of the next one.
+  result of this chapter is the case $T_j = T$ of the next one. In
+  particular $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
+  Definition~\ref{def:Core_Estimates} with $K$ and $L = \tau^2 I$.
 \end{lemma}
 \begin{proof}
   \leanok
@@ -2015,10 +2018,9 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:U_cov_obs}
-  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are observed, so
-  $\mathbb E[\mu_p\mu_q] = \bar K_{pq} + \mu^2$ by Theorem~\ref{thm:U_cov_obs},
-  and the product is integrable.
+  \uses{thm:U_cov_obs, thm:integral_quad_cov}
+  Theorem~\ref{thm:integral_quad_cov} with $S$ the observed cells, whose
+  moments are Theorem~\ref{thm:U_cov_obs}.
 \end{proof}
 
 \begin{theorem}[Optimal weights in true variance]\label{thm:U_weights_true}
@@ -2185,6 +2187,24 @@ these two covariances.
   Lemma~\ref{lem:Core_moments_lin} with $d = \bb$ gives the six moments, and
   $\mathbb E\hmu = \mu$ since $\sum_j b_j = 1$. Then
   Theorems~\ref{thm:blend_mse} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}
+  \lean{Credibility.Model.integral_quad_of_cov}
+  \leanok
+  \uses{def:unbiased}
+  Let $Z_p$, $p \in J \times T$, be random variables, $S$ a set of cells and
+  $Q$ a quadratic form reading only $S$ ($Q_{pq} \ne 0$ only if $p, q \in S$).
+  If on $S$ the $Z_p$ are square integrable with mean $\mu$ and
+  $\cov(Z_p,Z_q) = C_{pq}$, then
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}Z_pZ_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + \mu^2)$,
+  whatever the cells outside $S$ hold. So ``unbiased for the table $C$''
+  (Definition~\ref{def:unbiased}) is about the true expectation.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are in $S$, so
+  $\mathbb E[Z_pZ_q] = C_{pq} + \mu^2$ and the product is integrable.
 \end{proof}
 
 \begin{lemma}[A common component]\label{lem:Core_addCommon}
@@ -2901,6 +2921,120 @@ itself, evaluated on noise-free data.
   (weights per pair, truncation at $0$) is the estimation part of hierarchical
   credibility and is left open.
 \end{remark}
+
+\section{The moments with group levels are real}\label{sec:hier_moments}
+% Lean: Credibility/HierarchicalMoments.lean
+
+Sections~\ref{sec:hier_bridge4} and~\ref{sec:hier_bridge5} take the level
+covariance $L_G$ as given numbers. Here it is the covariance of actual random
+levels, and the blend is the moment layer of Section~\ref{sec:core_moments}
+for $K_G$ and $L_G$.
+
+\begin{definition}[Moment assumptions with group levels]\label{def:NoiseG}
+  \lean{Credibility.Model.NoiseG, Credibility.Model.sameGroupCov,
+        Credibility.Model.NoiseG.common, Credibility.Model.NoiseG.trueMean,
+        Credibility.Model.NoiseG.obs, Credibility.Model.NoiseG.cohortEst,
+        Credibility.Model.NoiseG.portEst, Credibility.Model.NoiseG.blend}
+  \leanok
+  \uses{def:Noise, def:KG}
+  Let $\phi < 1$. On a probability space: $\eta_j$, $\varepsilon_{jt}$ as in
+  Definition~\ref{def:Noise}, and group effects $\gamma_g$, square integrable,
+  centred, of unit variance, uncorrelated with each other and with all
+  $\eta_j$, $\varepsilon_{jt}$. No distribution is assumed. With $g = g(j)$,
+  \[
+    \mu_j = \mu + \sqrt{(1-\phi)\tau^2}\,\eta_j + \sqrt{\phi\tau^2}\,\gamma_g,
+    \qquad \mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt},
+  \]
+  $\hmu_j = \sum_t a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$ with the GLS
+  weights of $K_G$. Write $R_{ij} = \phi\tau^2[g(i) = g(j)]$ for the
+  covariance of the group components $\sqrt{\phi\tau^2}\gamma_{g(j)}$.
+\end{definition}
+
+\begin{lemma}[The group effect is a common component]\label{lem:G_moments_lin}
+  \lean{Credibility.Model.KG_eq_add_sameGroupCov,
+        Credibility.Model.levelCovG_eq_add_sameGroupCov,
+        Credibility.Model.NoiseG.cohortEst_eq, Credibility.Model.NoiseG.memLp_common,
+        Credibility.Model.NoiseG.integral_common, Credibility.Model.NoiseG.cov_common,
+        Credibility.Model.NoiseG.cov_γ_trueMean, Credibility.Model.NoiseG.cov_γ_obs,
+        Credibility.Model.NoiseG.cov_γ_cohortEst,
+        Credibility.Model.NoiseG.cov_common_trueMean,
+        Credibility.Model.NoiseG.cov_common_obs,
+        Credibility.Model.NoiseG.cov_common_cohortEst, Credibility.Model.NoiseG.memLp_obs,
+        Credibility.Model.NoiseG.addCommon, Credibility.Model.NoiseG.toEstimates,
+        Credibility.Model.NoiseG.momentsG_eq_levelMoments'}
+  \leanok
+  \uses{def:NoiseG, def:Core_Estimates, def:momentsG, lem:Core_addCommon}
+  Let $0 \le \phi < 1$ and $T \ne \emptyset$. Then $K_G = K' + R$ and
+  $L_G = (1-\phi)\tau^2 I + R$, with $K'$ the thesis $K$ for $(1-\phi)\tau^2$.
+  Since $\sum_t a_{jt} = 1$, $\hmu_j$ is the thesis cohort estimate for
+  $(1-\phi)\tau^2$ plus $\sqrt{\phi\tau^2}\gamma_{g(j)}$, and so is $\mu_j$;
+  the group components are uncorrelated with the thesis estimates and levels.
+  So $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
+  Definition~\ref{def:Core_Estimates} for $K_G$ and $L_G$, and the blend
+  moments of Definition~\ref{def:momentsG} are those of
+  Definition~\ref{def:Core.levelMoments} with $d = (K_G)_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:moments_full}
+  Lemma~\ref{lem:Core_addCommon} applied to the thesis model with level
+  variance $(1-\phi)\tau^2$ (Lemma~\ref{lem:moments_full}) and
+  $C_j = \sqrt{\phi\tau^2}\gamma_{g(j)}$; $\phi \ge 0$ gives
+  $\cov(C_i,C_j) = R_{ij}$.
+\end{proof}
+
+\begin{theorem}[The covariances with group levels are the actual ones]\label{thm:G_cov_obs}
+  \lean{Credibility.Model.NoiseG.obs_mean, Credibility.Model.NoiseG.cov_obs,
+        Credibility.Model.NoiseG.cov_cohortEst, Credibility.Model.NoiseG.cov_trueMean}
+  \leanok
+  \uses{def:NoiseG, def:EG, def:KG}
+  $\mathbb E\mu_{jt} = \mu$, and for $0 \le \phi < 1$:
+  $\cov(\mu_{it},\mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$
+  (the table of Definition~\ref{def:EG}), $\cov(\mu_i,\mu_j) = (L_G)_{ij}$ and,
+  if $T \ne \emptyset$, $\cov(\hmu_i,\hmu_j) = (K_G)_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:G_moments_lin, thm:cov_obs, lem:Core_moments_lin}
+  Bilinearity on top of Theorem~\ref{thm:cov_obs} for $(1-\phi)\tau^2$; the
+  last two are part of Lemma~\ref{lem:G_moments_lin}.
+\end{proof}
+
+\begin{theorem}[The expectation with group levels is the actual one]\label{thm:G_integral_quad}
+  \lean{Credibility.Model.NoiseG.integral_quad}
+  \leanok
+  \uses{def:NoiseG, def:EG}
+  For $0 \le \phi < 1$ and any quadratic form of the data,
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr]$ is the expectation of
+  Definition~\ref{def:EG}. So ``unbiased with group levels''
+  (Theorem~\ref{thm:estimation_G}, Corollary~\ref{cor:phiTauHat}) means
+  unbiased for any random variables with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_quad_cov, thm:G_cov_obs}
+  Theorem~\ref{thm:integral_quad_cov} with every cell in $S$ and the moments
+  of Theorem~\ref{thm:G_cov_obs}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with group levels]\label{thm:G_bestZ_mse}
+  \lean{Credibility.Model.NoiseG.moments_eq, Credibility.Model.NoiseG.mse_blend,
+        Credibility.Model.NoiseG.bestZ_mse_optimal}
+  \leanok
+  \uses{def:NoiseG, def:momentsG, thm:bestZ_G_eq, thm:bestZ_optimal}
+  Let $0 \le \phi < 1$, $T \ne \emptyset$ and $K_G \succ 0$
+  (Theorem~\ref{thm:KG_posDef}). Each field of
+  Definition~\ref{def:momentsG} is the moment it names, the blend is unbiased,
+  its mean squared error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the
+  factor $z_j$ of Theorem~\ref{thm:bestZ_G_eq} minimises it over $z$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:G_moments_lin, thm:Core_bestZ_mse, thm:bestZ_optimal}
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
+  Lemma~\ref{lem:G_moments_lin}.
+\end{proof}
 
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).

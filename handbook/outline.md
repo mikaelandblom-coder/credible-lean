@@ -20,16 +20,23 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
   `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`. One group (a
   shared level) is the special case `π = 1`: `τ̂²` estimates `(1-φ)τ²`,
   which is all the blend needs — `cor:estimation_phi`.
-- Open (not proved yet), needed before item 15 can say "in true MSE": a
-  moment layer for group levels. Random variables whose levels have
-  covariance `L_G` (e.g. `μⱼ = μ + √((1-φ)τ²) ηⱼ + √(φτ²) γ_{g(j)}`, the group
-  effects `γ_g` centred, unit, uncorrelated with `η`, `ε` and each other),
-  showing that `cov(μ̂ᵢ, μ̂ⱼ) = (K_G)ᵢⱼ` and that the six fields of `momentsG`
-  are the actual moments, so `bestZ_G_eq` minimises the true MSE. Estimated
-  at ~200 lines on top of `UnequalMoments` (`cov_cohortEst_portLin` etc.
-  with the GLS weights of `K_G`); deferred from the refactor chat of
-  2026-11-09. Also: `Unequal.Noise.integral_quad` now covers forms that read
-  only observed cells (item 13 in true expectation).
+- Item 15 can now say "in true MSE" (proved 2026-11-10): for any random
+  variables `μⱼ = μ + √((1-φ)τ²) ηⱼ + √(φτ²) γ_{g(j)}` (group effects `γ_g`
+  centred, unit, uncorrelated with `η`, `ε` and each other; `0 ≤ φ < 1`),
+  `cov(μ̂ᵢ, μ̂ⱼ) = (K_G)ᵢⱼ`, the six fields of `momentsG` are the actual
+  moments and the factor of `bestZ_G_eq` minimises the true MSE —
+  `thm:G_cov_obs`, `thm:G_bestZ_mse`. "Unbiased with group levels" (the
+  "watch out" above) is the true expectation — `thm:G_integral_quad`.
+- Item 11 could lead with the general form: any random `μ̂ⱼ`, `μⱼ` with
+  covariances `K` and `L` (nothing about how `μ̂ⱼ` is built), the blend's MSE
+  is eq. (6) and `z = (Lⱼⱼ - (Lb)ⱼ)/(Kⱼⱼ - s²)` minimises it —
+  `thm:Core_bestZ_mse`. The thesis, unequal lengths and group levels are
+  three instances.
+- Open: consistency of the group-level assumptions (existence of such
+  `η`, `ε`, `γ`; expected: iff `ρ ⪰ 0`, as item 12), and the same layer for
+  unequal lengths with groups (`Hierarchical.lean` is on `Model` only).
+  `Unequal.Noise.integral_quad` covers forms that read only observed cells
+  (item 13 in true expectation).
 - Estimation section, one line under the unbiasedness entry: "unbiased" is
   the actual expectation for any random variables with the model's first
   two moments, no distribution assumed — `thm:integral_quad`
