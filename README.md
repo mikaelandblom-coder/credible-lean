@@ -121,6 +121,12 @@ Once the thesis results are proved:
   (`Credibility/HierarchicalMoments.lean`): with group effects as actual random
   variables, `K_G` is the true covariance and `zⱼ` minimises the true MSE.
   Open: consistency of those assumptions, and efficient estimation of `φ`.
+- **Crossed levels.** Not started in Lean: cohorts in a table (country ×
+  car type) sharing a level along both rows and columns, so that sport cars
+  in Norway inform sport cars in Sweden. The balanced 2×2 case is worked out
+  in [`notes/crossed-2x2.md`](notes/crossed-2x2.md): the best linear
+  predictor has one credibility factor per layer (country, type, cell), and
+  the thesis blend is the same formula with one common factor.
 
 ## Sharing results
 
