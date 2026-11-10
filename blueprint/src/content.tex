@@ -1950,7 +1950,7 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{definition}
 
 \begin{lemma}[Bilinear expansions]\label{lem:U_moments_lin}
-  \lean{Credibility.Unequal.cov_add_add, Credibility.Unequal.Noise.trueMean_def,
+  \lean{Credibility.Unequal.Noise.trueMean_def,
         Credibility.Unequal.Noise.obsVal_def, Credibility.Unequal.Noise.memLp_trueMean,
         Credibility.Unequal.Noise.memLp_obsVal, Credibility.Unequal.Noise.integral_trueMean,
         Credibility.Unequal.Noise.cov_η_trueMean, Credibility.Unequal.Noise.cov_ε_trueMean,
@@ -1962,9 +1962,11 @@ only on observed cells $(j,t)$, $t \in T_j$.
         Credibility.Unequal.Noise.memLp_cohortEst, Credibility.Unequal.Noise.memLp_portLin,
         Credibility.Unequal.Noise.cov_portLin, Credibility.Unequal.Noise.cov_cohortEst_portLin,
         Credibility.Unequal.Noise.cov_portLin_trueMean,
-        Credibility.Unequal.Noise.integral_portLin}
+        Credibility.Unequal.Noise.integral_portLin,
+        Credibility.Unequal.Noise.integral_cohortEst, Credibility.Unequal.Noise.toEstimates,
+        Credibility.Unequal.Noise.moments_eq_levelMoments}
   \leanok
-  \uses{def:U_Noise, lem:U_sum_a}
+  \uses{def:U_Noise, lem:U_sum_a, def:Core_Estimates}
   For $t \in T_i$: $\cov(\mu_{it},\mu_j) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$;
   for any weights $\cov(\sum_{t\in T_i} c_t\mu_{it}, \sum_{s\in T_j} c'_s\mu_{js})
   = \sum_{t\in T_i,s\in T_j} c_tc'_s\bar K_{ij}^{ts}$ and
@@ -1974,10 +1976,16 @@ only on observed cells $(j,t)$, $t \in T_j$.
   $\cov(\sum_i d_i\hmu_i, \mu_j) = d_j\tau^2$ and
   $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$. All variables are square
   integrable. No $T \neq \emptyset$ is needed since $T_j \neq \emptyset$.
+  So $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
+  Definition~\ref{def:Core_Estimates} with this $K$ and $L = \tau^2 I$, and
+  the blend moments of Theorem~\ref{thm:U_bestZ_eq} are those of
+  Definition~\ref{def:Core.levelMoments} with $d = K_{jj}$.
 \end{lemma}
 \begin{proof}
   \leanok
-  Bilinearity of covariance and linearity of expectation.
+  \uses{lem:Core_moments_lin}
+  Bilinearity of covariance and linearity of expectation within a cohort;
+  the portfolio statements are Lemma~\ref{lem:Core_moments_lin}.
 \end{proof}
 
 \begin{theorem}[The covariances are the actual ones]\label{thm:U_cov_obs}
@@ -2025,7 +2033,9 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{theorem}
 \begin{proof}
   \leanok
-  Bilinearity, then Theorems~\ref{thm:U_a_optimal} and~\ref{thm:glsWeight_optimal}.
+  \uses{thm:Core_weights_true}
+  Bilinearity and Theorem~\ref{thm:U_a_optimal} within a cohort; the
+  portfolio part is Theorem~\ref{thm:Core_weights_true}.
 \end{proof}
 
 \begin{theorem}[$z_j$ minimises the true MSE with unequal lengths]\label{thm:U_bestZ_mse}
@@ -2041,11 +2051,10 @@ only on observed cells $(j,t)$, $t \in T_j$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:U_moments_lin, thm:glsWeight_value, lem:sum_glsWeight, thm:bestZ_optimal}
-  Bilinearity; the mean squared error is variance plus squared bias, and the
-  bias vanishes since $\sum_{t\in T_j} a_{jt} = \sum_j b_j = 1$. Then
-  Theorem~\ref{thm:bestZ_optimal}. Only $K$-level facts about the GLS weights
-  enter, so nothing here is specific to unequal lengths beyond $K$ itself.
+  \uses{lem:U_moments_lin, thm:Core_bestZ_mse, thm:bestZ_optimal}
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
+  Lemma~\ref{lem:U_moments_lin} ($L = \tau^2 I$): nothing here is specific to
+  unequal lengths beyond $K$ itself.
 \end{proof}
 
 \begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
@@ -2088,6 +2097,110 @@ only on observed cells $(j,t)$, $t \in T_j$.
   are not even constrained by consistency: the example of
   Remark~\ref{rem:unequal_posdef} with $\rho_{13} = -0.9$ is realisable.
 \end{remark}
+
+\section{At the level of $K$ and $L$}\label{sec:core_moments}
+% Lean: Credibility/CoreMoments.lean
+
+The blend only sees the cohort estimates $\hmu_j$ and the levels $\mu_j$, so
+its moment layer is proved once, for any covariance $K$ of the estimates and
+any level covariance $L$ (Section~\ref{sec:core}). Each model supplies only
+these two covariances.
+
+\begin{definition}[Estimates and levels]\label{def:Core_Estimates}
+  \lean{Credibility.Core.Estimates, Credibility.Core.Estimates.portLin,
+        Credibility.Core.Estimates.portEst, Credibility.Core.Estimates.blend}
+  \leanok
+  \uses{def:Core.levelMoments}
+  On a probability space: square-integrable $\hmu_j$ and $\mu_j$, $j \in J$,
+  with $\mathbb E\hmu_j = \mathbb E\mu_j = \mu$,
+  $\cov(\hmu_i,\hmu_j) = K_{ij}$ and
+  $\cov(\mu_i,\hmu_j) = \cov(\mu_i,\mu_j) = L_{ij}$. Nothing is assumed about
+  the distribution, or about how $\hmu_j$ is built from data. The portfolio
+  estimate is $\hmu = \sum_j b_j\hmu_j$ with the GLS weights of $K$, and the
+  blend is $z\hmu_j + (1-z)\hmu$.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions]\label{lem:Core_moments_lin}
+  \lean{Credibility.cov_add_add, Credibility.Core.Estimates.memLp_portLin,
+        Credibility.Core.Estimates.integral_portLin,
+        Credibility.Core.Estimates.cov_portLin,
+        Credibility.Core.Estimates.variance_portLin,
+        Credibility.Core.Estimates.cov_est_portLin,
+        Credibility.Core.Estimates.cov_level_portLin}
+  \leanok
+  \uses{def:Core_Estimates}
+  For portfolio weights $d$, $d'$: $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$,
+  $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
+  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$ and
+  $\cov(\mu_i, \sum_j d_j\hmu_j) = (Ld)_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[Eq.\ (6) is the true mean squared error]\label{thm:blend_mse}
+  \lean{Credibility.BlendMoments.integral_sq_blend_sub}
+  \leanok
+  \uses{def:errVar}
+  Let $X$, $Y$, $Z$ be square integrable with a common mean and the six
+  second moments of Definition~\ref{def:errVar} (cohort estimate, portfolio
+  estimate, target). Then
+  $\mathbb E\bigl[(zX + (1-z)Y - Z)^2\bigr]$ is the error variance \eqth{6}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The weights $z$, $1-z$, $-1$ sum to zero, so the error has mean zero and
+  its mean square is its variance; expand it bilinearly.
+\end{proof}
+
+\begin{theorem}[GLS weights in true variance]\label{thm:Core_weights_true}
+  \lean{Credibility.Core.Estimates.portEst_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:glsWeight_value, thm:glsWeight_optimal}
+  If $K \succ 0$ and $\sum_j d_j = 1$, then
+  $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin, thm:glsWeight_value, thm:glsWeight_optimal}
+  $\Var(\sum_j d_j\hmu_j) = d^TKd$, then
+  Theorems~\ref{thm:glsWeight_value} and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE for any $K$ and $L$]\label{thm:Core_bestZ_mse}
+  \lean{Credibility.Core.Estimates.levelMoments_eq, Credibility.Core.Estimates.mse_blend,
+        Credibility.Core.Estimates.bestZ_mse_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_levelMoments_bestZ_eq, thm:bestZ_optimal}
+  If $K \succ 0$, each field of Definition~\ref{def:Core.levelMoments} with
+  $d = K_{jj}$ is the moment it names, the blend is unbiased, its mean squared
+  error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the factor $z_j$ of
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} minimises it over $z$, for
+  every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin, thm:glsWeight_value, lem:sum_glsWeight, thm:blend_mse, thm:bestZ_optimal}
+  Lemma~\ref{lem:Core_moments_lin} with $d = \bb$ gives the six moments, and
+  $\mathbb E\hmu = \mu$ since $\sum_j b_j = 1$. Then
+  Theorems~\ref{thm:blend_mse} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{lemma}[A common component]\label{lem:Core_addCommon}
+  \lean{Credibility.Core.Estimates.addCommon}
+  \leanok
+  \uses{def:Core_Estimates}
+  Add to every $\hmu_j$ and its $\mu_j$ the same centred, square-integrable
+  $C_j$, uncorrelated with all estimates and levels, with
+  $\cov(C_i,C_j) = R_{ij}$. The result is estimates and levels for $K + R$
+  and $L + R$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin}
+  Bilinearity: the cross terms vanish.
+\end{proof}
 
 \chapter{Extension: damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b).

@@ -21,7 +21,10 @@ tactics.
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
-- extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean`
+- extension: moment layer at Core level (any random `μ̂ⱼ`, `μⱼ` with covariances `K`, `L`:
+  `Core.Estimates`, true MSE of the blend) → `Credibility/CoreMoments.lean`
+- extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean` (cell level;
+  portfolio and blend results are corollaries of `CoreMoments` via `Noise.toEstimates`)
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)
 - extension: a shared level within groups, towards hierarchical credibility (Bridges 2–5: `K_φ`,
   `K_G`, the §2.8 estimators under `Unbiasedφ`/`UnbiasedG`, Bridge 3 as the one-group case of

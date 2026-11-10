@@ -2,6 +2,7 @@ import Credibility.Data
 import Credibility.Blend
 import Credibility.Weights
 import Credibility.Core
+import Credibility.CoreMoments
 import Credibility.Model
 import Credibility.BuhlmannStraub
 import Credibility.Balance
