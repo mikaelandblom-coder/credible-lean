@@ -1,4 +1,4 @@
-import Mathlib.Basic.Real.Basic
+import Credibility.Blend
 import Mathlib.Tactic
 
 /-!
@@ -14,10 +14,13 @@ own (the §2.7 setting, `μ` estimated from the pair). Notation of the note:
 
 An unbiased linear predictor of `μ₁` is `μ̃₁ = X₁ - β(X₁ - X₂)`, with MSE
 `v₁ - 2β(v₁ - c) + β²(V + d)` (likewise for cohort 2 with `v₂`). As elsewhere,
-second moments are given numbers: this MSE formula is the definition `mse`.
+second moments are given numbers.
 
-A working model with gap variance `x` uses the weight `β(x) = (vⱼ - c)/(V + x)`;
-the separate (thesis) rule has `x = 2τ²`, the merged rule `x = 0`.
+The predictor is the blend `z X₁ + (1 - z) X₂` with `z = 1 - β`, so its MSE is
+eq. (6) (`BlendMoments.errVar`) for the second moments `moments` of the errors
+`X₁ - μ₁` and `X₂ - μ₁`, and the best weight is `1 - bestZ`, eq. (7). A working
+model with gap variance `x` uses the weight `β(x) = (vⱼ - c)/(V + x)`
+(`weight_eq`); the separate (thesis) rule has `x = 2τ²`, the merged rule `x = 0`.
 -/
 
 namespace Credibility.Merging
@@ -25,13 +28,40 @@ namespace Credibility.Merging
 /-- `V = v₁ + v₂ - 2c`, the variance of the observed difference `μ̂₁ - μ̂₂`. -/
 def V (v1 v2 c : ℝ) : ℝ := v1 + v2 - 2 * c
 
-/-- MSE of `μ̃ = X - β(X - X')` for a cohort with error variance `v`, when the
-true level gap is `d` (with `V` the variance of the observed gap). -/
-def mse (v c V d β : ℝ) : ℝ := v - 2 * β * (v - c) + β ^ 2 * (V + d)
+/-- Second moments of the errors `X - μ` and `X' - μ` of a cohort's own estimate
+`X` (error variance `v`) and the other cohort's `X'`, as predictors of the
+cohort's level `μ`: `E(X - μ)² = v`, `E(X' - μ)² = v' + d` with
+`v' = V - v + 2c`, and `E(X - μ)(X' - μ) = c`. The target is centred. -/
+def moments (v c V d : ℝ) : BlendMoments where
+  varCohort := v
+  varPortfolio := V + d - v + 2 * c
+  varTarget := 0
+  covEst := c
+  covCohortTarget := 0
+  covPortfolioTarget := 0
 
-/-- The weight on the other cohort under a working gap variance `x`:
-`β(x) = (v - c)/(V + x)`. With `x = d` it is the best weight `β*`. -/
-noncomputable def weight (v c V x : ℝ) : ℝ := (v - c) / (V + x)
+/-- MSE of `μ̃ = X - β(X - X') = (1 - β) X + β X'` for a cohort with error
+variance `v`, when the true level gap is `d` (with `V` the variance of the
+observed gap): eq. (6) at `z = 1 - β`. -/
+def mse (v c V d β : ℝ) : ℝ := (moments v c V d).errVar (1 - β)
+
+/-- The weight on the other cohort under a working gap variance `x`: one minus
+the best factor eq. (7) when the gap is `x`. With `x = d` it is the best weight
+`β*`. -/
+noncomputable def weight (v c V x : ℝ) : ℝ := 1 - (moments v c V x).bestZ
+
+/-- `MSE(β) = v - 2β(v - c) + β²(V + d)`. -/
+theorem mse_apply (v c V d β : ℝ) : mse v c V d β = v - 2 * β * (v - c) + β ^ 2 * (V + d) := by
+  simp only [mse, moments, BlendMoments.errVar]
+  ring
+
+/-- `β(x) = (v - c)/(V + x)`. -/
+theorem weight_eq {v c V x : ℝ} (h : V + x ≠ 0) : weight v c V x = (v - c) / (V + x) := by
+  have hg : (moments v c V x).gap = V + x := by simp only [BlendMoments.gap, moments]; ring
+  rw [weight, BlendMoments.bestZ, hg]
+  simp only [moments]
+  field_simp
+  ring
 
 /-- `Q = (v₁ - c)² + (v₂ - c)²`. -/
 def Q (v1 v2 c : ℝ) : ℝ := (v1 - c) ^ 2 + (v2 - c) ^ 2
@@ -48,9 +78,9 @@ noncomputable def excessLoss (v1 v2 c d dw : ℝ) : ℝ :=
 `MSE(β) = MSE(β*) + (V + d)(β - β*)²`, with `β* = (v - c)/(V + d)`. -/
 theorem mse_eq {v c V d : ℝ} (hVd : V + d ≠ 0) (β : ℝ) :
     mse v c V d β = mse v c V d (weight v c V d) + (V + d) * (β - weight v c V d) ^ 2 := by
-  -- Complete the square: β²(V+d) - 2β(v-c) = (V+d)(β - β*)² - (v-c)²/(V+d).
-  rw [mse, mse, weight]
-  field_simp
+  -- Eq. (6) is a parabola with vertex at eq. (7) and curvature `V + d`.
+  have hg : (moments v c V d).gap = V + d := by simp only [BlendMoments.gap, moments]; ring
+  rw [mse, mse, weight, sub_sub_cancel, (moments v c V d).errVar_eq (hg ▸ hVd) (1 - β), hg]
   ring
 
 /-- The note's closed form: `ΔL(d_w) = Q (V + d) (1/(V + d_w) - 1/(V + d))²`. -/
@@ -60,8 +90,8 @@ theorem excessLoss_eq {v1 v2 c d dw : ℝ} (hd : V v1 v2 c + d ≠ 0)
       = Q v1 v2 c * (V v1 v2 c + d) * (1 / (V v1 v2 c + dw) - 1 / (V v1 v2 c + d)) ^ 2 := by
   -- Each cohort contributes (V+d)(β(d_w) - β*)² by `mse_eq`, and
   -- β(d_w) - β* = (vⱼ - c)(1/(V+d_w) - 1/(V+d)).
-  rw [excessLoss, mse_eq hd (weight v1 _ _ dw), mse_eq hd (weight v2 _ _ dw), Q, weight,
-    weight, weight, weight]
+  rw [excessLoss, mse_eq hd (weight v1 _ _ dw), mse_eq hd (weight v2 _ _ dw), Q]
+  simp only [weight_eq hd, weight_eq hdw]
   field_simp
   ring
 

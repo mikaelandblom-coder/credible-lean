@@ -1197,19 +1197,36 @@ is $x = 2\tau^2$, merging them ($\mu_1 = \mu_2$) is $x = 0$. Under the thesis
 model $\beta(2\tau^2)$ is the weight $(1 - z_1)b_2$ of \eqth{32}.
 
 \begin{definition}[Merging quantities]\label{def:merging}
-  \lean{Credibility.Merging.V, Credibility.Merging.mse,
+  \lean{Credibility.Merging.V, Credibility.Merging.moments, Credibility.Merging.mse,
         Credibility.Merging.weight, Credibility.Merging.Q,
         Credibility.Merging.excessLoss}
   \leanok
-  $V = v_1 + v_2 - 2c$, $Q = (v_1 - c)^2 + (v_2 - c)^2$, and the mean squared
-  error of the weight $\beta$ for cohort $j$,
-  \[
-    \operatorname{mse}_j(\beta) = v_j - 2\beta(v_j - c) + \beta^2(V + d).
-  \]
-  The excess loss of the working value $d_w$ is
+  \uses{def:bestZ}
+  $V = v_1 + v_2 - 2c$ and $Q = (v_1 - c)^2 + (v_2 - c)^2$. The predictor
+  $\hmu_1 - \beta(\hmu_1 - \hmu_2)$ is the blend $z\hmu_1 + (1-z)\hmu_2$ with
+  $z = 1 - \beta$, so its mean squared error $\operatorname{mse}_1(\beta)$ is
+  \eqth{6} at $z = 1 - \beta$, for the second moments
+  $\mathbb E(\hmu_1 - \mu_1)^2 = v_1$,
+  $\mathbb E(\hmu_2 - \mu_1)^2 = v_2 + d$ and
+  $\mathbb E(\hmu_1 - \mu_1)(\hmu_2 - \mu_1) = c$; likewise for cohort 2. The
+  weight under a working gap variance $x$ is $\beta_j(x) = 1 - z^*$, with
+  $z^*$ the factor \eqth{7} when the gap is $x$. The excess loss of the
+  working value $d_w$ is
   $\Delta L(d_w) = \sum_{j=1}^2 \bigl(\operatorname{mse}_j(\beta_j(d_w)) -
-  \operatorname{mse}_j(\beta_j(d))\bigr)$ with $\beta_j(x) = (v_j - c)/(V + x)$.
+  \operatorname{mse}_j(\beta_j(d))\bigr)$.
 \end{definition}
+
+\begin{lemma}[Closed forms]\label{lem:merging_apply}
+  \lean{Credibility.Merging.mse_apply, Credibility.Merging.weight_eq}
+  \leanok
+  \uses{def:merging}
+  $\operatorname{mse}_j(\beta) = v_j - 2\beta(v_j - c) + \beta^2(V + d)$, and
+  $\beta_j(x) = (v_j - c)/(V + x)$ if $V + x \ne 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand \eqth{6} and \eqth{7}; the curvature is $V + x$.
+\end{proof}
 
 \begin{lemma}[Excess-loss identity]\label{lem:mse_eq}
   \lean{Credibility.Merging.mse_eq}
@@ -1221,7 +1238,9 @@ model $\beta(2\tau^2)$ is the weight $(1 - z_1)b_2$ of \eqth{32}.
 \end{lemma}
 \begin{proof}
   \leanok
-  Complete the square.
+  \uses{lem:errVar_eq}
+  Lemma~\ref{lem:errVar_eq}: \eqth{6} is a parabola with vertex at \eqth{7}
+  and curvature $V + d$.
 \end{proof}
 
 \begin{lemma}[Closed form of the excess loss]\label{lem:excessLoss_eq}
@@ -1235,7 +1254,7 @@ model $\beta(2\tau^2)$ is the weight $(1 - z_1)b_2$ of \eqth{32}.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:mse_eq}
+  \uses{lem:mse_eq, lem:merging_apply}
   By Lemma~\ref{lem:mse_eq} cohort $j$ contributes $(V + d)(\beta_j(d_w) - \beta_j(d))^2$,
   and $\beta_j(d_w) - \beta_j(d) = (v_j - c)\bigl(1/(V + d_w) - 1/(V + d)\bigr)$.
 \end{proof}
