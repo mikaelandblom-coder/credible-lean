@@ -61,15 +61,15 @@ noncomputable def cohortLin (j : J) (c : T → ℝ) : Ω → ℝ :=
 /-- The cohort estimate `μ̂ⱼ = Σ_{t∈Tⱼ} aⱼₜ μⱼₜ`, eq. (23) on `Tⱼ`. -/
 noncomputable def cohortEst (j : J) : Ω → ℝ := N.cohortLin μ j (M.a j)
 
-/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` with arbitrary weights `d`. -/
-noncomputable def portLin (d : J → ℝ) : Ω → ℝ := fun ω => ∑ j, d j * N.cohortEst μ j ω
+/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` with arbitrary weights `d` (`Core.portLin`). -/
+noncomputable abbrev portLin (d : J → ℝ) : Ω → ℝ := Core.portLin (N.cohortEst μ) d
 
-/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of the new `K`. -/
-noncomputable def portEst : Ω → ℝ := N.portLin μ M.b
+/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights `b` of the new `K`
+(`Core.portEst`). -/
+noncomputable abbrev portEst : Ω → ℝ := Core.portEst M.K (N.cohortEst μ)
 
-/-- The blend `z μ̂ⱼ + (1 - z) μ̂`. -/
-noncomputable def blend (j : J) (z : ℝ) : Ω → ℝ :=
-  fun ω => z * N.cohortEst μ j ω + (1 - z) * N.portEst μ ω
+/-- The blend `z μ̂ⱼ + (1 - z) μ̂` (`Core.blend`). -/
+noncomputable abbrev blend (j : J) (z : ℝ) : Ω → ℝ := Core.blend M.K (N.cohortEst μ) j z
 
 omit [Fintype J] [Fintype T] in
 lemma trueMean_def (j : J) :

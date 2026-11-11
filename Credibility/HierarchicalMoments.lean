@@ -65,13 +65,11 @@ noncomputable def obs (j : J) (t : T) : Ω → ℝ :=
 /-- The cohort estimate `μ̂ⱼ = Σₜ aⱼₜ μⱼₜ`, eq. (23). -/
 noncomputable def cohortEst (j : J) : Ω → ℝ := fun ω => ∑ t, M.a j t * N.obs μ j t ω
 
-/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of `K_G`. -/
-noncomputable def portEst : Ω → ℝ :=
-  fun ω => ∑ j, glsWeight (M.KG grp φ) j * N.cohortEst μ j ω
+/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of `K_G` (`Core.portEst`). -/
+noncomputable abbrev portEst : Ω → ℝ := Core.portEst (M.KG grp φ) (N.cohortEst μ)
 
-/-- The blend `z μ̂ⱼ + (1 - z) μ̂`. -/
-noncomputable def blend (j : J) (z : ℝ) : Ω → ℝ :=
-  fun ω => z * N.cohortEst μ j ω + (1 - z) * N.portEst μ ω
+/-- The blend `z μ̂ⱼ + (1 - z) μ̂` (`Core.blend`). -/
+noncomputable abbrev blend (j : J) (z : ℝ) : Ω → ℝ := Core.blend (M.KG grp φ) (N.cohortEst μ) j z
 
 omit [Fintype J] in
 /-- The group effect passes through the cohort weights (`Σₜ aⱼₜ = 1`): `μ̂ⱼ` is the

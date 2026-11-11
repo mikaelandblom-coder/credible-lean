@@ -87,6 +87,21 @@ namespace Core
 
 variable {J : Type*}
 
+/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` of cohort estimates `est`, with
+arbitrary weights `d`. -/
+noncomputable def portLin [Fintype J] (est : J → Ω → ℝ) (d : J → ℝ) : Ω → ℝ :=
+  fun ω => ∑ j, d j * est j ω
+
+/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of `K`. -/
+noncomputable def portEst [Fintype J] [DecidableEq J] (K : Matrix J J ℝ) (est : J → Ω → ℝ) :
+    Ω → ℝ :=
+  portLin est (glsWeight K)
+
+/-- The blend `z μ̂ⱼ + (1 - z) μ̂` with the GLS portfolio estimate of `K`. -/
+noncomputable def blend [Fintype J] [DecidableEq J] (K : Matrix J J ℝ) (est : J → Ω → ℝ)
+    (j : J) (z : ℝ) : Ω → ℝ :=
+  fun ω => z * est j ω + (1 - z) * portEst K est ω
+
 /-- Cohort estimates `μ̂ⱼ` (`est`) and cohort levels `μⱼ` (`level`) under `P`:
 square integrable, with common mean `μ`, `cov(μ̂ᵢ, μ̂ⱼ) = Kᵢⱼ` and
 `cov(μᵢ, μ̂ⱼ) = cov(μᵢ, μⱼ) = Lᵢⱼ` (an estimate differs from its level by noise
@@ -109,14 +124,13 @@ namespace Estimates
 variable [Fintype J] {K L : Matrix J J ℝ} {μ : ℝ} {P : Measure Ω} (E : Estimates K L μ P)
 
 /-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` with arbitrary weights `d`. -/
-noncomputable def portLin (d : J → ℝ) : Ω → ℝ := fun ω => ∑ j, d j * E.est j ω
+noncomputable abbrev portLin (d : J → ℝ) : Ω → ℝ := Core.portLin E.est d
 
 /-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of `K`. -/
-noncomputable def portEst [DecidableEq J] : Ω → ℝ := E.portLin (glsWeight K)
+noncomputable abbrev portEst [DecidableEq J] : Ω → ℝ := Core.portEst K E.est
 
 /-- The blend `z μ̂ⱼ + (1 - z) μ̂`. -/
-noncomputable def blend [DecidableEq J] (j : J) (z : ℝ) : Ω → ℝ :=
-  fun ω => z * E.est j ω + (1 - z) * E.portEst ω
+noncomputable abbrev blend [DecidableEq J] (j : J) (z : ℝ) : Ω → ℝ := Core.blend K E.est j z
 
 lemma memLp_portLin (d : J → ℝ) : MemLp (E.portLin d) 2 P :=
   memLp_finsetSum _ fun j _ => (E.est_memLp j).const_mul (d j)
@@ -125,7 +139,7 @@ variable [IsProbabilityMeasure P]
 
 /-- `E Σⱼ dⱼ μ̂ⱼ = (Σⱼ dⱼ) μ`. -/
 lemma integral_portLin (d : J → ℝ) : P[E.portLin d] = (∑ j, d j) * μ := by
-  unfold portLin
+  unfold portLin Core.portLin
   rw [integral_finsetSum _ fun j _ => ((E.est_memLp j).const_mul (d j)).integrable
     (by norm_num)]
   simp [integral_const_mul, E.est_mean, sum_mul]
@@ -133,7 +147,7 @@ lemma integral_portLin (d : J → ℝ) : P[E.portLin d] = (∑ j, d j) * μ := b
 /-- `cov(Σᵢ dᵢ μ̂ᵢ, Σⱼ d'ⱼ μ̂ⱼ) = dᵀK d'`. -/
 lemma cov_portLin (d d' : J → ℝ) :
     cov[E.portLin d, E.portLin d'; P] = d ⬝ᵥ (K *ᵥ d') := by
-  unfold portLin
+  unfold portLin Core.portLin
   rw [covariance_fun_sum_fun_sum (fun i => (E.est_memLp i).const_mul (d i))
     (fun j => (E.est_memLp j).const_mul (d' j))]
   simp only [covariance_const_mul_left, covariance_const_mul_right, E.cov_est,
@@ -147,7 +161,7 @@ lemma variance_portLin (d : J → ℝ) : Var[E.portLin d; P] = d ⬝ᵥ (K *ᵥ 
 /-- `cov(μ̂ᵢ, Σⱼ dⱼ μ̂ⱼ) = (K d)ᵢ`. -/
 lemma cov_est_portLin (i : J) (d : J → ℝ) :
     cov[E.est i, E.portLin d; P] = (K *ᵥ d) i := by
-  unfold portLin
+  unfold portLin Core.portLin
   rw [covariance_fun_sum_right (fun j => (E.est_memLp j).const_mul (d j)) (E.est_memLp i)]
   simp only [covariance_const_mul_right, E.cov_est, mulVec, dotProduct]
   exact sum_congr rfl fun j _ => by ring
@@ -155,7 +169,7 @@ lemma cov_est_portLin (i : J) (d : J → ℝ) :
 /-- `cov(μᵢ, Σⱼ dⱼ μ̂ⱼ) = (L d)ᵢ`. -/
 lemma cov_level_portLin (i : J) (d : J → ℝ) :
     cov[E.level i, E.portLin d; P] = (L *ᵥ d) i := by
-  unfold portLin
+  unfold portLin Core.portLin
   rw [covariance_fun_sum_right (fun j => (E.est_memLp j).const_mul (d j)) (E.level_memLp i)]
   simp only [covariance_const_mul_right, E.cov_level_est, mulVec, dotProduct]
   exact sum_congr rfl fun j _ => by ring
@@ -169,7 +183,7 @@ theorem portEst_optimal (hK : K.PosDef) (d : J → ℝ) (hd : ∑ j, d j = 1) :
   obtain ⟨j, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hd.trans_ne one_ne_zero)
   have : Nonempty J := ⟨j⟩
   have hs2 : glsWeight K ⬝ᵥ (K *ᵥ glsWeight K) = (invTotal K)⁻¹ := glsWeight_value hK
-  refine ⟨by rw [portEst, variance_portLin, hs2], ?_⟩
+  refine ⟨by rw [portEst, Core.portEst, variance_portLin, hs2], ?_⟩
   rw [variance_portLin, ← hs2]
   exact glsWeight_optimal hK d hd
 
@@ -186,7 +200,7 @@ theorem levelMoments_eq (hK : K.PosDef) (j : J) :
     (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
   · rw [hvar _ (E.est_memLp j), E.cov_est]; rfl
-  · rw [portEst, variance_portLin]; exact glsWeight_value hK
+  · rw [portEst, Core.portEst, variance_portLin]; exact glsWeight_value hK
   · rw [hvar _ (E.level_memLp j), E.cov_level]; rfl
   · exact E.cov_est_portLin j _
   · rw [covariance_comm, E.cov_level_est]; rfl
@@ -199,7 +213,7 @@ theorem mse_blend (hK : K.PosDef) (j : J) (z : ℝ) :
   have : Nonempty J := ⟨j⟩
   obtain ⟨h1, h2, h3, h4, h5, h6⟩ := E.levelMoments_eq hK j
   have hP : P[E.portEst] = μ := by
-    rw [portEst, integral_portLin, sum_glsWeight hK, one_mul]
+    rw [portEst, Core.portEst, integral_portLin, sum_glsWeight hK, one_mul]
   exact BlendMoments.integral_sq_blend_sub _ (E.est_memLp j) (E.memLp_portLin _)
     (E.level_memLp j) (E.est_mean j) hP (E.level_mean j) h1 h2 h3 h4 h5 h6 z
 

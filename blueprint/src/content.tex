@@ -2128,7 +2128,8 @@ any level covariance $L$ (Section~\ref{sec:core}). Each model supplies only
 these two covariances.
 
 \begin{definition}[Estimates and levels]\label{def:Core_Estimates}
-  \lean{Credibility.Core.Estimates, Credibility.Core.Estimates.portLin,
+  \lean{Credibility.Core.Estimates, Credibility.Core.portLin, Credibility.Core.portEst,
+        Credibility.Core.blend, Credibility.Core.Estimates.portLin,
         Credibility.Core.Estimates.portEst, Credibility.Core.Estimates.blend}
   \leanok
   \uses{def:Core.levelMoments}
@@ -2138,7 +2139,10 @@ these two covariances.
   $\cov(\mu_i,\hmu_j) = \cov(\mu_i,\mu_j) = L_{ij}$. Nothing is assumed about
   the distribution, or about how $\hmu_j$ is built from data. The portfolio
   estimate is $\hmu = \sum_j b_j\hmu_j$ with the GLS weights of $K$, and the
-  blend is $z\hmu_j + (1-z)\hmu$.
+  blend is $z\hmu_j + (1-z)\hmu$. These two are defined for any vector of
+  estimates, so every model's portfolio estimate and blend
+  (Definitions~\ref{def:Noise}, \ref{def:U_Noise} and~\ref{def:NoiseG}) is
+  this one, applied to its own $\hmu_j$ and $K$.
 \end{definition}
 
 \begin{lemma}[Bilinear expansions]\label{lem:Core_moments_lin}

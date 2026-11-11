@@ -73,15 +73,14 @@ noncomputable def cohortLin (j : J) (c : T → ℝ) : Ω → ℝ := fun ω => �
 /-- The cohort estimate `μ̂ⱼ = Σₜ aⱼₜ μⱼₜ`, eq. (23). -/
 noncomputable def cohortEst (j : J) : Ω → ℝ := N.cohortLin μ j (M.a j)
 
-/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` with arbitrary weights `d`. -/
-noncomputable def portLin (d : J → ℝ) : Ω → ℝ := fun ω => ∑ j, d j * N.cohortEst μ j ω
+/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` with arbitrary weights `d` (`Core.portLin`). -/
+noncomputable abbrev portLin (d : J → ℝ) : Ω → ℝ := Core.portLin (N.cohortEst μ) d
 
-/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights. -/
-noncomputable def portEst : Ω → ℝ := N.portLin μ M.b
+/-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights `b` (`Core.portEst`). -/
+noncomputable abbrev portEst : Ω → ℝ := Core.portEst M.K (N.cohortEst μ)
 
-/-- The blend `z μ̂ⱼ + (1 - z) μ̂`. -/
-noncomputable def blend (j : J) (z : ℝ) : Ω → ℝ :=
-  fun ω => z * N.cohortEst μ j ω + (1 - z) * N.portEst μ ω
+/-- The blend `z μ̂ⱼ + (1 - z) μ̂` (`Core.blend`). -/
+noncomputable abbrev blend (j : J) (z : ℝ) : Ω → ℝ := Core.blend M.K (N.cohortEst μ) j z
 
 /-- A noise for the thesis model is one for `Tⱼ = T`. -/
 def toUnequal [Nonempty T] : M.toUnequal.Noise P where
@@ -126,15 +125,13 @@ lemma toUnequal_cohortEst (j : J) : N.toUnequal.cohortEst μ j = N.cohortEst μ 
   rw [Unequal.Noise.cohortEst, toUnequal_a, toUnequal_cohortLin]; rfl
 
 lemma toUnequal_portLin (d : J → ℝ) : N.toUnequal.portLin μ d = N.portLin μ d := by
-  show (fun ω => ∑ j, d j * N.toUnequal.cohortEst μ j ω) = _
-  simp only [toUnequal_cohortEst]; rfl
+  rw [Unequal.Noise.portLin, funext (N.toUnequal_cohortEst μ)]
 
 lemma toUnequal_portEst : N.toUnequal.portEst μ = N.portEst μ := by
-  rw [Unequal.Noise.portEst, toUnequal_b, toUnequal_portLin]; rfl
+  rw [Unequal.Noise.portEst, toUnequal_K, funext (N.toUnequal_cohortEst μ)]
 
 lemma toUnequal_blend (j : J) (z : ℝ) : N.toUnequal.blend μ j z = N.blend μ j z := by
-  show (fun ω => z * N.toUnequal.cohortEst μ j ω + (1 - z) * N.toUnequal.portEst μ ω) = _
-  simp only [toUnequal_cohortEst, toUnequal_portEst]; rfl
+  rw [Unequal.Noise.blend, toUnequal_K, funext (N.toUnequal_cohortEst μ)]
 
 end Full
 
