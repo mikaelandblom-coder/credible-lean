@@ -76,6 +76,8 @@ minimises the actual mean squared error.
 
 ## Later goals
 
+Planned next steps, in order: [`notes/roadmap.md`](notes/roadmap.md).
+
 Once the thesis results are proved:
 
 - ~~**Moment layer (still distribution-free).**~~ Done
