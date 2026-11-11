@@ -241,11 +241,12 @@ them for the linear estimators.
 \begin{definition}[Blend moments of the model]\label{def:moments}
   \lean{Credibility.Model.moments}
   \leanok
-  \uses{def:K, def:bestZ, def:Model.b}
+  \uses{def:K, def:bestZ, def:Model.b, def:Core.moments}
   For cohort $j$: $\Var(\hmu_j) = \tau^2 + \sigma_{jj}^2$,
   $\Var(\hmu) = s^2$, $\Var(\mu_j) = \tau^2$,
   $\cov(\hmu_j, \hmu) = \upsilon_j$, $\cov(\hmu_j, \mu_j) = \tau^2$ and
-  $\cov(\hmu, \mu_j) = b_j\tau^2$ (§2.4).
+  $\cov(\hmu, \mu_j) = b_j\tau^2$ (§2.4). In Lean this is defined as
+  Definition~\ref{def:Core.moments} for this $K$ with $v_j = \sigma^2_{jj}$.
 \end{definition}
 
 \begin{theorem}[Credibility for linear estimators]\label{thm:bestZ_linear}
@@ -1510,6 +1511,7 @@ needed when $T_i \cap T_j \neq \emptyset$.
         Credibility.Model.toUnequal_a, Credibility.Model.toUnequal_σ2,
         Credibility.Model.toUnequal_K, Credibility.Model.toUnequal_b,
         Credibility.Model.toUnequal_s2, Credibility.Model.toUnequal_moments,
+        Credibility.Model.moments_eq_mk,
         Credibility.Model.nonempty_of_posDef}
   \leanok
   \uses{def:Unequal, def:sigma2, def:K, def:moments}

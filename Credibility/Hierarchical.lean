@@ -211,7 +211,7 @@ theorem momentsφ_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ}
     erw [hsum]; simp; ring
   have hτ : M'.τ2 = (1 - φ) * M.τ2 := rfl
   have hσ : M'.σ2 = M.σ2 := rfl
-  simp only [momentsφ, Model.moments, BlendMoments.shift, hcov, hcov', hlev, hs, hτ, hσ,
+  simp only [momentsφ, Model.moments_eq_mk, BlendMoments.shift, hcov, hcov', hlev, hs, hτ, hσ,
     BlendMoments.mk.injEq]
   exact ⟨by ring, rfl, by ring, rfl, by ring, by ring⟩
 

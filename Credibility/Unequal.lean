@@ -247,14 +247,10 @@ noncomputable def b : J → ℝ := glsWeight M.K
 /-- Portfolio error variance `s²`, eq. (24) with the new `K`. -/
 noncomputable def s2 : ℝ := (invTotal M.K)⁻¹
 
-/-- The moments entering the blend for cohort `j` (§2.4). -/
-noncomputable def moments (j : J) : BlendMoments where
-  varCohort := M.τ2 + M.σ2 j j
-  varPortfolio := M.s2
-  varTarget := M.τ2
-  covEst := (M.K *ᵥ M.b) j
-  covCohortTarget := M.τ2
-  covPortfolioTarget := M.b j * M.τ2
+/-- The moments entering the blend for cohort `j` (§2.4): those of `Core` for this
+model's `K`, `τ²` and `vⱼ = σ²ⱼⱼ` (`Var(μ̂ⱼ) = τ² + σ²ⱼⱼ`, `s²`, `cov(μ̂ⱼ, μ̂) = (K b)ⱼ`,
+`cov(μ̂, μⱼ) = bⱼτ²`). -/
+noncomputable def moments (j : J) : BlendMoments := Core.moments M.K M.τ2 (fun j => M.σ2 j j) j
 
 omit [Fintype T] in
 /-- The blend moments are those of `Core` for this model's `K`, `τ²` and `vⱼ = σ²ⱼⱼ`. -/
@@ -378,7 +374,7 @@ omit [Fintype T] in
 /-- All moments of the blend, hence `zⱼ`, agree. -/
 theorem AgreeOnOverlaps.moments_eq (h : M.AgreeOnOverlaps M') : M.moments = M'.moments := by
   funext j
-  simp only [moments, h.τ2_eq, h.σ2_eq, h.K_eq, h.b_eq, h.s2_eq]
+  simp only [moments, h.τ2_eq, h.σ2_eq, h.K_eq]
 
 omit [Fintype T] in
 theorem AgreeOnOverlaps.bestZ_eq (h : M.AgreeOnOverlaps M') (j : J) :

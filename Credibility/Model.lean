@@ -81,24 +81,23 @@ noncomputable def b : J → ℝ := glsWeight M.K
 /-- Portfolio error variance `s²`. -/
 noncomputable def s2 : ℝ := (invTotal M.K)⁻¹
 
-/-- The moments entering the blend for cohort `j` (§2.4). -/
-noncomputable def moments (j : J) : BlendMoments where
-  varCohort := M.τ2 + M.σ2 j j
-  varPortfolio := M.s2
-  varTarget := M.τ2
-  covEst := (M.K *ᵥ M.b) j
-  covCohortTarget := M.τ2
-  covPortfolioTarget := M.b j * M.τ2
+/-- The moments entering the blend for cohort `j` (§2.4): those of `Core` for this
+model's `K`, `τ²` and `vⱼ = σ²ⱼⱼ` (`Var(μ̂ⱼ) = τ² + σ²ⱼⱼ`, `s²`, `cov(μ̂ⱼ, μ̂) = (K b)ⱼ`,
+`cov(μ̂, μⱼ) = bⱼτ²`). -/
+noncomputable def moments (j : J) : BlendMoments := Core.moments M.K M.τ2 (fun j => M.σ2 j j) j
+
+/-- The six fields of `moments` in the model's own notation. -/
+lemma moments_eq_mk (j : J) : M.moments j =
+    { varCohort := M.τ2 + M.σ2 j j, varPortfolio := M.s2, varTarget := M.τ2,
+      covEst := (M.K *ᵥ M.b) j, covCohortTarget := M.τ2,
+      covPortfolioTarget := M.b j * M.τ2 } := rfl
 
 lemma toUnequal_b [Nonempty T] : M.toUnequal.b = M.b := by rw [Unequal.b, toUnequal_K]; rfl
 
 lemma toUnequal_s2 [Nonempty T] : M.toUnequal.s2 = M.s2 := by rw [Unequal.s2, toUnequal_K]; rfl
 
 lemma toUnequal_moments [Nonempty T] : M.toUnequal.moments = M.moments := by
-  funext j
-  simp only [Unequal.moments, Model.moments, toUnequal_σ2, toUnequal_s2, toUnequal_K,
-    toUnequal_b]
-  rfl
+  funext j; rw [Unequal.moments, Model.moments, toUnequal_σ2, toUnequal_K]; rfl
 
 omit [Fintype J] in
 /-- A positive definite `K` (with some cohort) forces `T ≠ ∅`: otherwise `K = 0`. -/
@@ -130,7 +129,7 @@ theorem bestZ_linear (j : J) :
     (M.moments j).bestZ
       = (M.s2 - (M.K *ᵥ M.b) j + M.τ2 - M.b j * M.τ2)
         / (M.s2 - 2 * (M.K *ᵥ M.b) j + M.τ2 + M.σ2 j j) := by
-  simp only [BlendMoments.bestZ, BlendMoments.gap, moments]
+  simp only [BlendMoments.bestZ, BlendMoments.gap, moments_eq_mk]
   ring
 
 /-- Eqs. (26)/(27): the proposed credibility factor at the optimal weights. -/
