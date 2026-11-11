@@ -107,6 +107,18 @@ def refers_to_namesake(row) -> bool:
     return bool(re.search(r"\." + re.escape(leaf) + r"(?![\w'!?₀-₉])", row["body"]))
 
 
+# Groups that share a name but are not duplicates to merge: neither copy can be
+# a corollary of the other without changing a statement. Reviewed 2026-11-11.
+EXEMPT = {
+    "wtot_pos": "`Model.wtot_pos` has no model in its statement, so it cannot call "
+    "the `Unequal` one (that needs a whole `Unequal` model); both are one-line `Finset.sum_pos`",
+    "memLp_trueMean": "deleting `Model.Noise.memLp_trueMean` for the `Unequal` one "
+    "(via `toUnequal`) would add `[Fintype T]` to `memLp_obs` and `cov_γ_obs`",
+    "cov_trueMean": "different statements (τ²I vs `L_G`); the `NoiseG` one is one line "
+    "from the Core layer, which gets it from the `Unequal` one",
+}
+
+
 def duplicates(files):
     """Groups of theorems sharing a short name, as (leaf, rows, open)."""
     groups = {}
@@ -117,7 +129,8 @@ def duplicates(files):
     for leaf in sorted(groups):
         rows = groups[leaf]
         if len(rows) > 1:
-            out.append((leaf, rows, not any(refers_to_namesake(r) for r in rows)))
+            is_open = leaf not in EXEMPT and not any(refers_to_namesake(r) for r in rows)
+            out.append((leaf, rows, is_open))
     return out
 
 
@@ -141,7 +154,12 @@ def backlog(files) -> str:
         copies = ", ".join(
             f"{'↳ ' if refers_to_namesake(r) else ''}`{r['name']}` ({r['file']})" for r in rows
         )
-        lines.append(f"| {'⬜' if is_open else '✅'} | `{leaf}` | {copies} |")
+        mark = "➖" if leaf in EXEMPT else "⬜" if is_open else "✅"
+        lines.append(f"| {mark} | `{leaf}` | {copies} |")
+    exempt = [leaf for leaf, *_ in dups if leaf in EXEMPT]
+    if exempt:
+        lines += ["", "➖ accepted, not a duplicate to merge (`EXEMPT` in `scripts/progress.py`):", ""]
+        lines += [f"- `{leaf}`: {EXEMPT[leaf]}." for leaf in exempt]
     return "\n".join(lines)
 
 

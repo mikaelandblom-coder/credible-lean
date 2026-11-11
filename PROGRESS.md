@@ -500,7 +500,7 @@ Theorem names that occur in several namespaces (CLAUDE.md, Architecture).
 done); a group with no ↳ is open. `scripts/CheckUses.lean` checks the
 blueprint `\uses` edges exactly; this list is a textual hint.
 
-**3 open / 40 groups.**
+**0 open / 40 groups.**
 
 | | Name | Copies |
 |---|---|---|
@@ -522,7 +522,7 @@ blueprint `\uses` edges exactly; this list is a textual hint.
 | ✅ | `cov_cohortEst` | `Credibility.Model.NoiseG.cov_cohortEst` (HierarchicalMoments), ↳ `Credibility.Model.Noise.cov_cohortEst` (Moments), `Credibility.Unequal.Noise.cov_cohortEst` (UnequalMoments) |
 | ✅ | `cov_obs` | ↳ `Credibility.Model.NoiseG.cov_obs` (HierarchicalMoments), `Credibility.Model.Noise.cov_obs` (Moments) |
 | ✅ | `cov_portLin` | `Credibility.Core.Estimates.cov_portLin` (CoreMoments), ↳ `Credibility.Unequal.Noise.cov_portLin` (UnequalMoments) |
-| ⬜ | `cov_trueMean` | `Credibility.Model.NoiseG.cov_trueMean` (HierarchicalMoments), `Credibility.Unequal.Noise.cov_trueMean` (UnequalMoments) |
+| ➖ | `cov_trueMean` | `Credibility.Model.NoiseG.cov_trueMean` (HierarchicalMoments), `Credibility.Unequal.Noise.cov_trueMean` (UnequalMoments) |
 | ✅ | `errCov_posSemidef` | ↳ `Credibility.Model.errCov_posSemidef` (Hierarchical), `Credibility.Unequal.errCov_posSemidef` (Unequal) |
 | ✅ | `exists_noise_iff` | ↳ `Credibility.Model.exists_noise_iff` (Moments), `Credibility.Unequal.exists_noise_iff` (UnequalMoments) |
 | ✅ | `gap_eq` | ↳ `Credibility.Model.gap_eq` (Model), `Credibility.Core.gap_eq` (Core) |
@@ -531,7 +531,7 @@ blueprint `\uses` edges exactly; this list is a textual hint.
 | ✅ | `integral_quad` | `Credibility.Model.NoiseG.integral_quad` (HierarchicalMoments), ↳ `Credibility.Model.Noise.integral_quad` (Moments), `Credibility.Unequal.Noise.integral_quad` (UnequalMoments) |
 | ✅ | `memLp_obs` | ↳ `Credibility.Model.NoiseG.memLp_obs` (HierarchicalMoments), `Credibility.Model.Noise.memLp_obs` (Moments) |
 | ✅ | `memLp_portLin` | `Credibility.Core.Estimates.memLp_portLin` (CoreMoments), ↳ `Credibility.Unequal.Noise.memLp_portLin` (UnequalMoments) |
-| ⬜ | `memLp_trueMean` | `Credibility.Model.Noise.memLp_trueMean` (Moments), `Credibility.Unequal.Noise.memLp_trueMean` (UnequalMoments) |
+| ➖ | `memLp_trueMean` | `Credibility.Model.Noise.memLp_trueMean` (Moments), `Credibility.Unequal.Noise.memLp_trueMean` (UnequalMoments) |
 | ✅ | `moments_eq` | `Credibility.Model.NoiseG.moments_eq` (HierarchicalMoments), ↳ `Credibility.Model.Noise.moments_eq` (Moments), `Credibility.Unequal.AgreeOnOverlaps.moments_eq` (Unequal), `Credibility.Unequal.Noise.moments_eq` (UnequalMoments) |
 | ✅ | `moments_eq_levelMoments` | `Credibility.Core.moments_eq_levelMoments` (Core), ↳ `Credibility.Unequal.Noise.moments_eq_levelMoments` (UnequalMoments) |
 | ✅ | `mse_blend` | `Credibility.Core.Estimates.mse_blend` (CoreMoments), ↳ `Credibility.Model.NoiseG.mse_blend` (HierarchicalMoments), ↳ `Credibility.Model.Noise.mse_blend` (Moments), ↳ `Credibility.Unequal.Noise.mse_blend` (UnequalMoments) |
@@ -542,5 +542,11 @@ blueprint `\uses` edges exactly; this list is a textual hint.
 | ✅ | `tauHat_unbiased` | ↳ `Credibility.Model.tauHat_unbiased` (Estimation), `Credibility.Unequal.tauHat_unbiased` (UnequalEstimation) |
 | ✅ | `unbiased_dev` | ↳ `Credibility.Model.unbiased_dev` (Estimation), `Credibility.Unequal.unbiased_dev` (UnequalEstimation) |
 | ✅ | `var_cohortLin_err` | ↳ `Credibility.Model.Noise.var_cohortLin_err` (Moments), `Credibility.Unequal.Noise.var_cohortLin_err` (UnequalMoments) |
-| ⬜ | `wtot_pos` | `Credibility.Model.wtot_pos` (Estimation), `Credibility.Unequal.wtot_pos` (UnequalEstimation) |
+| ➖ | `wtot_pos` | `Credibility.Model.wtot_pos` (Estimation), `Credibility.Unequal.wtot_pos` (UnequalEstimation) |
 | ✅ | `σ2ρ_special` | ↳ `Credibility.Model.σ2ρ_special` (Estimation), `Credibility.Unequal.σ2ρ_special` (UnequalEstimation) |
+
+➖ accepted, not a duplicate to merge (`EXEMPT` in `scripts/progress.py`):
+
+- `cov_trueMean`: different statements (τ²I vs `L_G`); the `NoiseG` one is one line from the Core layer, which gets it from the `Unequal` one.
+- `memLp_trueMean`: deleting `Model.Noise.memLp_trueMean` for the `Unequal` one (via `toUnequal`) would add `[Fintype T]` to `memLp_obs` and `cov_γ_obs`.
+- `wtot_pos`: `Model.wtot_pos` has no model in its statement, so it cannot call the `Unequal` one (that needs a whole `Unequal` model); both are one-line `Finset.sum_pos`.

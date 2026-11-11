@@ -123,7 +123,8 @@ still reads like the thesis; special cases are corollaries.
   Prove only what is genuinely new: its `K`, its positive definiteness, and
   its moments.
 - Tooling: `PROGRESS.md` ends with the refactoring backlog (theorem names in
-  several namespaces; `progress.py --dupes` prints the open ones), and
+  several namespaces; `progress.py --dupes` prints the open ones; accepted non-duplicates go in its
+  `EXEMPT` with a reason), and
   `scripts/CheckUses.lean` (CI) checks that every blueprint proof `\uses`
   edge is a direct reference in the Lean proof. So when a proof changes,
   update its `\uses{}` too.
