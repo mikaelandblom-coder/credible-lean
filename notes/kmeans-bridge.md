@@ -46,7 +46,7 @@ kmeansCost(c*, x̄*)`, since `L(c') ≥ L(c*)` and `m(c') ≤ m`. So `(c*, x̄*)
 is jointly k-means optimal, and `kmeans_contiguous` applies. ∎
 
 So the optimal cohorts can be found exactly by dynamic programming over the
-sorted levels. **Common `V`** is the special case `wᵢ = 1/V`: there the
+sorted levels (see "Finding the cuts" below). **Common `V`** is the special case `wᵢ = 1/V`: there the
 unweighted total MSE is `kmeansCost(1, x, c, x̄) + mV`, the roadmap's
 "constant plus a k-means cost". The exposure weighting makes the result hold
 for unequal `vᵢ` too.
@@ -125,6 +125,31 @@ The same argument covers pooling with a common `V` (`f = 1/n`, cohort term
 14). What made it work: for fixed sizes the loss is minus a strictly convex
 function of the cohort sums, and convex maxima over the "swap moves" sit at
 sorted assignments.
+
+## Finding the cuts: dynamic programming
+
+For a fixed number `k` of cohorts, both theorems reduce the search to cutting
+the sorted list `x₍₁₎ ≤ … ≤ x₍ₙ₎` into `k` consecutive pieces. The total loss
+is a sum of one cost per cohort, and a piece `(p, q]` has a cost that depends
+only on its prefix sums: for pooling `Σw x² - (Σw x)²/Σw + 1` (weights,
+weighted levels, weighted squares); for the blend with common `V`,
+`Σy² - (f_n S² - z_n² V)` with `n = q - p`, `S = Σ yᵢ`. So with
+`L(m, q)` = best loss of the first `q` units in `m` cohorts,
+
+```
+L(1, q) = cost(0, q),    L(m, q) = min_{m-1 ≤ p < q} L(m-1, p) + cost(p, q),
+```
+
+and `L(k, n)` is the optimum, in `O(k n²)` time after `O(n)` prefix sums
+("at most `k`": take `min_{m ≤ k} L(m, n)`). Ties: the theorems say only
+that a unit *strictly* between two of a cohort joins it, so an optimal
+labelling is a cut of the sorted order for *some* order of tied units. For
+the blend with common `V` tied units are interchangeable, so any order works;
+for pooling with unequal exposures a fixed tie order might miss the optimum
+(not checked; break ties by trying both, or perturb). For pooling the cost is a
+k-means cost plus a constant per cohort, which also allows the faster
+`O(k n log n)` 1-D k-means algorithms; plain `O(k n²)` is enough for tariff
+sizes. Not formalised (an algorithm, not a credibility result).
 
 ## For Lean (done 2026-11-11: `Credibility/KMeansBridge.lean`)
 

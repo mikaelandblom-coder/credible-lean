@@ -9,7 +9,7 @@ Only results that serve the credibility framework go in.
 Per entry: **statement** (one display), **comment** (when to use it and why it
 holds, in words), **Lean** (theorem name, linked to the source line).
 
-Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
+Status: sections 0–1 drafted in `handbook.tex`, and item 16 of section 5; the rest of 2–5 to write.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
@@ -42,15 +42,6 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
   two moments, no distribution assumed — `thm:integral_quad`
   (`Noise.integral_quad`).
 
-- Section 5, "watch out" (Finding 14, on paper): choosing cohorts by
-  sorting levels and cutting into intervals is exact only for
-  exposure-weighted pooling; with unequal variances and a credibility blend
-  the best cohorts need not be intervals. Now proved: "use it" entry
-  `cor:pool_optimal_contiguous` (pooling = k-means plus #cohorts,
-  `thm:pool_mse_eq_kmeansCost`), "watch out" stays a remark (Finding 14).
-  Also proved: with a common variance the credibility blend's optimal cohorts
-  are intervals (`thm:blend_optimal_contiguous`), so sorting and cutting
-  works for the blend too when cohorts have equal noise.
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
@@ -98,9 +89,14 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
 15. A shared group level drops out of credibility; two-stage GLS —
     `thm:bestZ_phi_eq`, `thm:glsWeight_blockDiag`.
+16. Choosing cohorts (drafted): optimal cohorts are intervals of the sorted
+    levels for exposure-weighted pooling (= weighted k-means + #cohorts) and
+    for the blend with a common variance; find them by dynamic programming —
+    `thm:pool_mse_eq_kmeansCost`, `cor:pool_optimal_contiguous`,
+    `thm:blend_optimal_contiguous`. "Watch out": not for the blend with
+    unequal variances (Finding 14).
 
-Waiting list (in once they prove useful for credibility): optimal 1-D
-k-means groups are intervals (`thm:kmeans_contiguous`). (Damping is in, as 5a.)
+(Damping is in, as 5a; 1-D k-means intervals are in via item 16.)
 
 ## Open choices for the owner
 - Commentary voice: the thesis's, or a looser handbook tone?

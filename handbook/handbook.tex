@@ -262,4 +262,65 @@ rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 \emph{To be written: unequal series lengths, merging cohorts, a shared group
 level.}
 
+\subsection*{Choosing the cohorts}
+
+Units $i$ (rating classes, say) have true levels $x_i$ and unbiased,
+uncorrelated estimates $X_i$ with variance $v_i = 1/w_i$ ($w_i$ is the
+exposure). You group them into at most $k$ cohorts; cohort $a$ pools its
+units by inverse variance, $\bar X_a = \sum_{i \in a} w_i X_i / W_a$ with
+$W_a = \sum_{i \in a} w_i$. Which grouping has the smallest total MSE?
+
+\begin{result}[Pooling: optimal cohorts are intervals]\label{res:pool_intervals}
+  Let every unit be predicted by its cohort's pooled estimate, and measure
+  the error by the exposure-weighted total MSE
+  $\sum_i w_i\,E(\bar X_{c(i)} - x_i)^2$. It equals the weighted $k$-means
+  cost of the levels plus the number of cohorts:
+  \[
+    \sum_i w_i\,E(\bar X_{c(i)} - x_i)^2
+    = \sum_i w_i\,(x_i - \bar x_{c(i)})^2 + \#\{\text{cohorts}\},
+  \]
+  $\bar x_a$ the exposure-weighted mean level. Hence in every optimal
+  grouping, a unit whose level lies strictly between two units of the same
+  cohort belongs to that cohort.
+  \lean{Credibility.pool_mse_eq_kmeansCost}
+  \lean{Credibility.pool_optimal_contiguous}
+\end{result}
+
+\begin{result}[Blend with a common variance: optimal cohorts are intervals]\label{res:blend_intervals}
+  Let every unit have the same variance $V \ge 0$, let $\tau^2 > 0$ and $\mu$
+  be known, and predict unit $i$ in cohort $a$ (of $n_a$ units) by the
+  credibility blend $\mu + z_a(\bar X_a - \mu)$ with
+  $z_a = n_a\tau^2/(n_a\tau^2 + V)$. Then in every grouping that minimises
+  the total MSE, a unit whose level lies strictly between two units of the
+  same cohort belongs to that cohort.
+  \lean{Credibility.blend_optimal_contiguous}
+\end{result}
+\use Sort the units by level and cut the sorted list into at most $k$
+consecutive pieces: the best grouping is one of these cuts, so you never
+need to search all groupings. Because the total MSE is a sum of one term
+per cohort, and each term needs only prefix sums of the sorted list,
+dynamic programming finds the best cut exactly in about $k n^2$ steps for
+$n$ units.
+This holds for pooling with any exposures (Result~\ref{res:pool_intervals}),
+and for the credibility blend when all units are equally noisy
+(Result~\ref{res:blend_intervals}). In practice the levels $x_i$ are
+unknown; sorting by their estimates is the usual plug-in.
+\why For pooling, the noise part of the MSE is one unit per cohort whatever
+its members, so only the spread of levels around the cohort means is left:
+that is $k$-means, and on a line the best $k$-means clusters are intervals.
+For the blend with a common $V$, a cohort's MSE depends only on its size and
+the sum of its levels. Swapping two units between cohorts keeps the sizes,
+and if a cohort straddled another unit, one of the two swaps that would
+``untangle'' them lowers the MSE.
+
+\begin{caveat}
+  Sorting and cutting is not exact for the blend when the units have
+  different variances. Then a noisy unit near $\mu$ can be better served
+  alone than with its neighbours, and noisy units on both sides can do
+  better together. With the exposure-weighted MSE, the best two cohorts of $x = (-\tfrac12, 0, \tfrac12)$
+  with $v = (16, 4, 16)$, $\tau^2 = 1$, $\mu = 0$, are $\{1,3\}$ and
+  $\{2\}$, not intervals. Here ``close'' is not a distance on the line: it
+  depends on the noise of the pair.
+\end{caveat}
+
 \end{document}
