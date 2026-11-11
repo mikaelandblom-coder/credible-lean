@@ -1,4 +1,6 @@
 import Credibility.KMeans
+import Credibility.Weights
+import Credibility.Blend
 
 /-!
 # The k-means bridge: exposure-weighted pooling is weighted k-means
@@ -157,6 +159,23 @@ theorem pool_optimal_contiguous [DecidableEq ι] {w x : ι → ℝ} {c : ι → 
   have := kmeans_contiguous hw hopt' (c := cS) hij hjl (Subtype.ext hil)
   exact congrArg Subtype.val this
 
+/-- **Pooling by exposure is the best unbiased pooling** (eq. (23)): within a
+cohort, any weights `u` summing to one give the pooled estimate a variance
+`∑ uᵢ²/wᵢ` at least `1/Wₐ`, the variance of `x̄ₐ`'s weights `wᵢ/Wₐ`. -/
+theorem cohortWeight_inv_le {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (a : κ)
+    (u : {i // c i = a} → ℝ) (hu : ∑ i, u i = 1) :
+    (cohortWeight w c a)⁻¹ ≤ ∑ i, u i ^ 2 * (w i.1)⁻¹ := by
+  have : Nonempty {i // c i = a} := by
+    by_contra h
+    rw [not_nonempty_iff] at h
+    simp at hu
+  have hσ : ∀ i : {i // c i = a}, 0 < (w i.1)⁻¹ := fun i => inv_pos.mpr (hw i.1)
+  have hW : cohortWeight w c a = ∑ i : {i // c i = a}, ((w i.1)⁻¹)⁻¹ := by
+    simp only [inv_inv, cohortWeight]
+    exact sum_subtype _ (fun i => by simp) w
+  rw [hW, ← invVarWeight_value _ hσ]
+  exact invVarWeight_optimal _ hσ u hu
+
 /-! ## Common variance: the credibility blend
 
 With a common variance `V`, cohort `a` of `nₐ` units has pooled estimate with
@@ -167,6 +186,36 @@ blend `μ + zₐ(X̄ₐ - μ)` are intervals (`notes/kmeans-bridge.md`). -/
 /-- Credibility factor of a cohort of `n` units with common variance `V`:
 `z = nτ²/(nτ² + V)`. -/
 noncomputable def sizeZ (V τ2 n : ℝ) : ℝ := n * τ2 / (n * τ2 + V)
+
+/-- The moments of the blend `z X̄ₐ + (1 - z) μ` for a cohort of `n` units with
+common variance `V` and known `μ`: `Var X̄ₐ = τ² + V/n` and
+`cov(X̄ₐ, μₐ) = Var μₐ = τ²`; the collective `μ` is a constant. -/
+noncomputable def sizeMoments (V τ2 n : ℝ) : BlendMoments where
+  varCohort := τ2 + V / n
+  varPortfolio := 0
+  varTarget := τ2
+  covEst := 0
+  covCohortTarget := τ2
+  covPortfolioTarget := 0
+
+/-- **`sizeZ` is the best credibility factor** (eq. (7)) of a cohort of `n`
+units with common variance `V` and known `μ`. -/
+theorem sizeZ_eq_bestZ {V τ2 n : ℝ} (hn : 0 < n) (hpos : 0 < n * τ2 + V) :
+    sizeZ V τ2 n = (sizeMoments V τ2 n).bestZ := by
+  have h2 : τ2 + V / n ≠ 0 := by
+    rw [show τ2 + V / n = (n * τ2 + V) / n by field_simp]
+    exact div_ne_zero hpos.ne' hn.ne'
+  simp only [sizeZ, BlendMoments.bestZ, BlendMoments.gap, sizeMoments]
+  rw [div_eq_div_iff hpos.ne' (by simpa using h2)]
+  field_simp
+  ring
+
+/-- Hence `sizeZ` minimises the blend's error variance eq. (6) over all `z`. -/
+theorem sizeZ_optimal {V τ2 n : ℝ} (hn : 0 < n) (hV : 0 ≤ V) (hτ : 0 < τ2) (z : ℝ) :
+    (sizeMoments V τ2 n).errVar (sizeZ V τ2 n) ≤ (sizeMoments V τ2 n).errVar z := by
+  have hpos : 0 < n * τ2 + V := by positivity
+  rw [sizeZ_eq_bestZ hn hpos]
+  exact BlendMoments.bestZ_optimal _ (by simp [BlendMoments.gap, sizeMoments]; positivity) z
 
 /-- Total MSE of the credibility blend with common variance `V`, known `μ`
 and `τ²`. Unit `i` of cohort `a` is predicted by `μ + zₐ(X̄ₐ - μ)` with

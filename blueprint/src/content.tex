@@ -3235,6 +3235,23 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
   $\sum_i w_i (\bar x_{c(i)} - \mu_{c(i)})^2 \ge 0$.
 \end{proof}
 
+\begin{lemma}[Pooling by exposure is the best unbiased pooling]\label{lem:cohortWeight_inv_le}
+  \lean{Credibility.cohortWeight_inv_le}
+  \leanok
+  \uses{def:poolLoss, def:invVarWeight}
+  If all $w_i > 0$ and weights $u_i$ on the units of cohort $a$ sum to one,
+  then $1/W_a \le \sum_{c(i)=a} u_i^2 / w_i$. So the weights $w_i/W_a$ of
+  $\bar X_a$, the inverse-variance weights \eqth{23}, give the smallest
+  variance, $1/W_a$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invVarWeight_value, thm:invVarWeight_optimal}
+  With $\sigma_i^2 = 1/w_i$, $1/W_a$ is the minimal value of
+  Lemma~\ref{lem:invVarWeight_value}, and Theorem~\ref{thm:invVarWeight_optimal}
+  says it is the minimum.
+\end{proof}
+
 \begin{theorem}[Pooling is weighted k-means]\label{thm:pool_mse_eq_kmeansCost}
   \lean{Credibility.pool_mse_eq_kmeansCost}
   \leanok
@@ -3304,6 +3321,24 @@ not apply, but a swap argument does.
   $B(c) = \sum_i \bigl((\mu + z_{n_a}(\bar x_a - \mu) - x_i)^2 + z_{n_a}^2 V/n_a\bigr)$,
   $a = c(i)$.
 \end{definition}
+
+\begin{theorem}[$z_n$ is the best credibility factor]\label{thm:sizeZ_optimal}
+  \lean{Credibility.sizeMoments, Credibility.sizeZ_eq_bestZ, Credibility.sizeZ_optimal}
+  \leanok
+  \uses{def:blendLoss, def:bestZ}
+  For a cohort of $n > 0$ units, take the moments of the blend
+  $z\bar X_a + (1-z)\mu$ with $\mu$ known: $\Var(\bar X_a) = \tau^2 + V/n$,
+  $\cov(\bar X_a, \mu_a) = \Var(\mu_a) = \tau^2$, and the collective $\mu$
+  constant. If $V \ge 0$ and $\tau^2 > 0$, then $z_n$ is the factor
+  \eqth{7} of these moments and minimises the error variance \eqth{6}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bestZ_optimal}
+  \eqth{7} reads $\tau^2/(\tau^2 + V/n) = n\tau^2/(n\tau^2 + V)$, and the
+  curvature $\tau^2 + V/n$ is positive, so Theorem~\ref{thm:bestZ_optimal}
+  applies.
+\end{proof}
 
 \begin{lemma}[Only size and sum matter]\label{lem:blendLoss_eq}
   \lean{Credibility.blendLoss_eq}

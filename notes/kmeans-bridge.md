@@ -160,3 +160,7 @@ sizes. Not formalised (an algorithm, not a credibility result).
 2. `pool_optimal_contiguous`: the Corollary, from item 1 and
    `kmeans_contiguous` with labels restricted to the used ones.
 3. Finding 14 (below) as a blueprint remark in the k-means chapter.
+4. Links to the credibility core (2026-11-11): `cohortWeight_inv_le` (the
+   pooled mean uses the inverse-variance weights eq. (23), the best unbiased
+   pooling, variance `1/Wₐ`) and `sizeZ_eq_bestZ`, `sizeZ_optimal` (`zₙ` is
+   eq. (7) for a cohort of `n` units with known `μ`).
