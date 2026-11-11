@@ -1,4 +1,5 @@
 import Credibility.KMeans
+import Credibility.GroupWeights
 import Credibility.Weights
 import Credibility.Blend
 
@@ -9,7 +10,7 @@ Units `i` have fixed true levels `x i` and unbiased, uncorrelated estimates
 with variances `1 / w i` (`w i` is the exposure). Labels `c : ι → κ` put them
 into at most `|κ|` cohorts, and cohort `a` pools its units by inverse
 variance: the pooled estimate has mean `x̄ₐ`, the `w`-weighted mean level
-(`cohortMean`), and variance `1 / Wₐ` (`Wₐ = cohortWeight`). So a unit `i`
+(`cohortMean`), and variance `1 / Wₐ` (`Wₐ = groupWeight c w a`, the total weight of `GroupWeights.lean`). So a unit `i`
 of cohort `a` predicted by the pooled estimate has MSE `(x̄ₐ - xᵢ)² + 1/Wₐ`.
 
 * `pool_mse_eq_kmeansCost`: the exposure-weighted total MSE `poolLoss` is the
@@ -31,10 +32,6 @@ open Finset
 namespace Credibility
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq κ]
-
-/-- Total weight (exposure) `Wₐ = ∑_{c i = a} wᵢ` of cohort `a`. -/
-def cohortWeight (w : ι → ℝ) (c : ι → κ) (a : κ) : ℝ :=
-  ∑ i with c i = a, w i
 
 /-- The mean level `x̄ₐ = E X̄ₐ` of cohort `a`, pooled with the inverse-variance
 weights eq. (23) for the variances `1/wᵢ` of its units. -/
@@ -63,13 +60,13 @@ noncomputable def poolLoss (w x : ι → ℝ) (c : ι → κ) : ℝ :=
 
 /-- The weights eq. (23) for the variances `1/wᵢ` are `wᵢ/Wₐ`. -/
 theorem invVarWeight_cohort (w : ι → ℝ) (c : ι → κ) (a : κ) (i : {i // c i = a}) :
-    invVarWeight (fun i : {i // c i = a} => (w i.1)⁻¹) i = w i / cohortWeight w c a := by
-  simp only [invVarWeight, inv_inv, cohortWeight]
+    invVarWeight (fun i : {i // c i = a} => (w i.1)⁻¹) i = w i / groupWeight c w a := by
+  simp only [invVarWeight, inv_inv, groupWeight_eq_filter]
   rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp) w]
 
 /-- So `x̄ₐ = ∑_{c i = a} wᵢ xᵢ / Wₐ`, the `w`-weighted mean level. -/
 theorem cohortMean_eq (w x : ι → ℝ) (c : ι → κ) (a : κ) :
-    cohortMean w x c a = (∑ i with c i = a, w i * x i) / cohortWeight w c a := by
+    cohortMean w x c a = (∑ i with c i = a, w i * x i) / groupWeight c w a := by
   simp only [cohortMean, invVarWeight_cohort]
   rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp) (fun i => w i * x i),
     sum_div]
@@ -77,36 +74,37 @@ theorem cohortMean_eq (w x : ι → ℝ) (c : ι → κ) (a : κ) :
 
 /-- … and `Var X̄ₐ = ∑_{c i = a} (wᵢ/Wₐ)²/wᵢ`. -/
 theorem poolVar_eq_sum (w : ι → ℝ) (c : ι → κ) (a : κ) :
-    poolVar w c a = ∑ i with c i = a, (w i / cohortWeight w c a) ^ 2 * (w i)⁻¹ := by
+    poolVar w c a = ∑ i with c i = a, (w i / groupWeight c w a) ^ 2 * (w i)⁻¹ := by
   simp only [poolVar, invVarWeight_cohort]
   rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp)
-    (fun i => (w i / cohortWeight w c a) ^ 2 * (w i)⁻¹)]
+    (fun i => (w i / groupWeight c w a) ^ 2 * (w i)⁻¹)]
 
 /-- **The pooled variance is `1/Wₐ`**, the minimal value of eq. (23). -/
 theorem poolVar_eq {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (i : ι) :
-    poolVar w c (c i) = (cohortWeight w c (c i))⁻¹ := by
+    poolVar w c (c i) = (groupWeight c w (c i))⁻¹ := by
   have : Nonempty {j // c j = c i} := ⟨⟨i, rfl⟩⟩
   rw [poolVar, invVarWeight_value (fun j : {j // c j = c i} => (w j.1)⁻¹)
     (fun j => inv_pos.mpr (hw j.1))]
-  simp only [inv_inv, cohortWeight]
+  simp only [inv_inv, groupWeight_eq_filter]
   rw [sum_subtype (p := fun j => c j = c i) (univ.filter fun j => c j = c i) (fun j => by simp) w]
 
 /-- A used cohort has positive weight. -/
-theorem cohortWeight_pos {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (i : ι) :
-    0 < cohortWeight w c (c i) :=
-  sum_pos (fun j _ => hw j) ⟨i, by simp⟩
+theorem groupWeight_pos {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (i : ι) :
+    0 < groupWeight c w (c i) := by
+  rw [groupWeight_eq_filter]
+  exact sum_pos (fun j _ => hw j) ⟨i, by simp⟩
 
 /-- Each nonempty cohort contributes `∑_{i ∈ a} wᵢ / Wₐ = 1`. -/
-theorem sum_div_cohortWeight {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) :
-    ∑ i, w i / cohortWeight w c (c i) = (univ.image c).card := by
+theorem sum_div_groupWeight {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) :
+    ∑ i, w i / groupWeight c w (c i) = (univ.image c).card := by
   rw [← sum_fiberwise_of_maps_to (s := univ) (t := univ.image c) (g := c)
     (fun i _ => mem_image_of_mem c (mem_univ i)), card_eq_sum_ones, Nat.cast_sum]
   refine sum_congr rfl fun a ha => ?_
   obtain ⟨i, -, rfl⟩ := mem_image.mp ha
-  have hW := (cohortWeight_pos hw c i).ne'
-  rw [sum_congr rfl (g := fun j => w j / cohortWeight w c (c i))
+  have hW := (groupWeight_pos hw c i).ne'
+  rw [sum_congr rfl (g := fun j => w j / groupWeight c w (c i))
     (fun j hj => by rw [(mem_filter.mp hj).2]), ← sum_div]
-  simpa [cohortWeight] using div_self hW
+  simpa [groupWeight_eq_filter] using div_self hW
 
 /-- Deviations from the cohort means are `w`-orthogonal to anything constant
 on cohorts. -/
@@ -117,13 +115,13 @@ theorem sum_mul_sub_cohortMean {w : ι → ℝ} (hw : ∀ i, 0 < w i) (x : ι �
     (fun i _ => mem_image_of_mem c (mem_univ i))]
   refine sum_eq_zero fun a ha => ?_
   obtain ⟨i, -, rfl⟩ := mem_image.mp ha
-  have hW := (cohortWeight_pos hw c i).ne'
+  have hW := (groupWeight_pos hw c i).ne'
   rw [sum_congr rfl (g := fun j => (w j * x j - w j * cohortMean w x c (c i)) * g (c i))
     (fun j hj => by rw [(mem_filter.mp hj).2]; ring), ← sum_mul, sum_sub_distrib,
     ← sum_mul]
   have : (∑ j with c j = c i, w j) * cohortMean w x c (c i)
       = ∑ j with c j = c i, w j * x j := by
-    rw [cohortMean_eq, ← cohortWeight]
+    rw [cohortMean_eq, ← groupWeight_eq_filter]
     field_simp
   rw [this, sub_self, zero_mul]
 
@@ -152,20 +150,20 @@ the number of nonempty cohorts:
 theorem pool_mse_eq_kmeansCost {w : ι → ℝ} (hw : ∀ i, 0 < w i) (x : ι → ℝ)
     (c : ι → κ) :
     poolLoss w x c = kmeansCost w x c (cohortMean w x c) + (univ.image c).card := by
-  rw [← sum_div_cohortWeight hw c, poolLoss, kmeansCost, ← sum_add_distrib]
+  rw [← sum_div_groupWeight hw c, poolLoss, kmeansCost, ← sum_add_distrib]
   exact sum_congr rfl fun i _ => by rw [poolVar_eq hw]; ring
 
 /-- Relabelling cohorts injectively changes neither weights … -/
-theorem cohortWeight_comp {κ' : Type*} [DecidableEq κ'] (w : ι → ℝ) (c : ι → κ)
+theorem groupWeight_comp {κ' : Type*} [DecidableEq κ'] (w : ι → ℝ) (c : ι → κ)
     {f : κ → κ'} (hf : Function.Injective f) (a : κ) :
-    cohortWeight w (f ∘ c) (f a) = cohortWeight w c a := by
-  simp [cohortWeight, hf.eq_iff]
+    groupWeight (f ∘ c) w (f a) = groupWeight c w a := by
+  simp [groupWeight_eq_filter, hf.eq_iff]
 
 /-- … nor means … -/
 theorem cohortMean_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι → κ)
     {f : κ → κ'} (hf : Function.Injective f) (a : κ) :
     cohortMean w x (f ∘ c) (f a) = cohortMean w x c a := by
-  simp [cohortMean_eq, cohortWeight, hf.eq_iff]
+  simp [cohortMean_eq, groupWeight_eq_filter, hf.eq_iff]
 
 /-- … nor the pooling loss. -/
 theorem poolLoss_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι → κ)
@@ -174,7 +172,7 @@ theorem poolLoss_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι
   unfold poolLoss
   refine sum_congr rfl fun i _ => ?_
   rw [Function.comp_apply, cohortMean_comp w x c hf]
-  simp [poolVar_eq_sum, cohortWeight_comp w c hf, hf.eq_iff]
+  simp [poolVar_eq_sum, groupWeight_comp w c hf, hf.eq_iff]
 
 /-- **Optimal pooled cohorts are intervals** (`notes/kmeans-bridge.md`).
 For positive exposures, if the labelling `c` minimises the exposure-weighted
@@ -250,10 +248,10 @@ theorem sizeZ_optimal {V τ2 n : ℝ} (hn : 0 < n) (hV : 0 ≤ V) (hτ : 0 < τ2
 /-- Total MSE of the credibility blend with common variance `V`, known `μ`
 and `τ²`. Unit `i` of cohort `a` is predicted by `μ + zₐ(X̄ₐ - μ)` with
 `E X̄ₐ = x̄ₐ`, `Var X̄ₐ = V/nₐ`, so its MSE is
-`(μ + zₐ(x̄ₐ - μ) - xᵢ)² + zₐ² V/nₐ` (`nₐ = cohortWeight 1 c a`). -/
+`(μ + zₐ(x̄ₐ - μ) - xᵢ)² + zₐ² V/nₐ` (`nₐ = groupWeight c 1 a`). -/
 noncomputable def blendLoss (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) : ℝ :=
-  ∑ i, ((μ + sizeZ V τ2 (cohortWeight 1 c (c i)) * (cohortMean 1 x c (c i) - μ) - x i) ^ 2
-    + sizeZ V τ2 (cohortWeight 1 c (c i)) ^ 2 * (V / cohortWeight 1 c (c i)))
+  ∑ i, ((μ + sizeZ V τ2 (groupWeight c 1 (c i)) * (cohortMean 1 x c (c i) - μ) - x i) ^ 2
+    + sizeZ V τ2 (groupWeight c 1 (c i)) ^ 2 * (V / groupWeight c 1 (c i)))
 
 /-- The part of the blend loss that depends on the cohorts: a cohort of size
 `n` and summed deviation `S = Σ (xᵢ - μ)` contributes `z(2 - z)/n · S² - z²V`. -/
@@ -264,26 +262,26 @@ noncomputable def blendGain (V τ2 n S : ℝ) : ℝ :=
 `blendLoss = Σᵢ (xᵢ - μ)² - Σₐ (fₐ Sₐ² - zₐ²V)`, `fₐ = zₐ(2 - zₐ)/nₐ`. -/
 theorem blendLoss_eq (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) :
     blendLoss V τ2 μ x c = ∑ i, (x i - μ) ^ 2 - ∑ a ∈ univ.image c,
-      blendGain V τ2 (cohortWeight 1 c a) (cohortWeight (fun i => x i - μ) c a) := by
+      blendGain V τ2 (groupWeight c 1 a) (groupWeight c (fun i => x i - μ) a) := by
   have hmaps : ∀ i ∈ (univ : Finset ι), c i ∈ univ.image c :=
     fun i _ => mem_image_of_mem c (mem_univ i)
   rw [blendLoss, ← sum_fiberwise_of_maps_to hmaps,
     ← sum_fiberwise_of_maps_to (f := fun i => (x i - μ) ^ 2) hmaps, ← sum_sub_distrib]
   refine sum_congr rfl fun a ha => ?_
   obtain ⟨i, -, rfl⟩ := mem_image.mp ha
-  have hN : 0 < cohortWeight 1 c (c i) := cohortWeight_pos (fun _ => one_pos) c i
-  set N := cohortWeight 1 c (c i) with hNdef
-  set S := cohortWeight (fun i => x i - μ) c (c i) with hSdef
+  have hN : 0 < groupWeight c 1 (c i) := groupWeight_pos (fun _ => one_pos) c i
+  set N := groupWeight c 1 (c i) with hNdef
+  set S := groupWeight c (fun i => x i - μ) (c i) with hSdef
   set z := sizeZ V τ2 N with hz
   have hmean : cohortMean 1 x c (c i) - μ = S / N := by
-    rw [cohortMean_eq, ← hNdef, hSdef, cohortWeight, sum_sub_distrib, sum_const, nsmul_eq_mul]
+    rw [cohortMean_eq, ← hNdef, hSdef, groupWeight_eq_filter, sum_sub_distrib, sum_const, nsmul_eq_mul]
     have : ((univ.filter fun j => c j = c i).card : ℝ) = N := by
-      rw [hNdef, cohortWeight]; simp
+      rw [hNdef, groupWeight_eq_filter]; simp
     simp only [Pi.one_apply, one_mul]
     rw [this]; field_simp
   have hterm : ∀ j ∈ univ.filter (fun j => c j = c i),
-      (μ + sizeZ V τ2 (cohortWeight 1 c (c j)) * (cohortMean 1 x c (c j) - μ) - x j) ^ 2
-        + sizeZ V τ2 (cohortWeight 1 c (c j)) ^ 2 * (V / cohortWeight 1 c (c j))
+      (μ + sizeZ V τ2 (groupWeight c 1 (c j)) * (cohortMean 1 x c (c j) - μ) - x j) ^ 2
+        + sizeZ V τ2 (groupWeight c 1 (c j)) ^ 2 * (V / groupWeight c 1 (c j))
       = (x j - μ) ^ 2 + (z ^ 2 * S ^ 2 / N ^ 2 + z ^ 2 * V / N) * 1
         + (-2 * z * S / N) * (x j - μ) := by
     intro j hj
@@ -291,26 +289,26 @@ theorem blendLoss_eq (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) :
     field_simp
     ring
   rw [sum_congr rfl hterm, sum_add_distrib, sum_add_distrib, ← mul_sum, ← mul_sum]
-  have h1 : ∑ j with c j = c i, (1 : ℝ) = N := by rw [hNdef, cohortWeight]; rfl
-  have h2 : ∑ j with c j = c i, (x j - μ) = S := by rw [hSdef, cohortWeight]
+  have h1 : ∑ j with c j = c i, (1 : ℝ) = N := by rw [hNdef, groupWeight_eq_filter]; rfl
+  have h2 : ∑ j with c j = c i, (x j - μ) = S := by rw [hSdef, groupWeight_eq_filter]
   rw [h1, h2, blendGain]
   field_simp
   ring
 
 /-- Swapping two units of different cohorts moves their values between the
 two cohort sums and leaves every other cohort sum unchanged. -/
-theorem cohortWeight_swap [DecidableEq ι] (y : ι → ℝ) (c : ι → κ) {i j : ι} (h : c i ≠ c j)
+theorem groupWeight_swap [DecidableEq ι] (y : ι → ℝ) (c : ι → κ) {i j : ι} (h : c i ≠ c j)
     (a : κ) :
-    cohortWeight y (c ∘ Equiv.swap i j) a = cohortWeight y c a
+    groupWeight (c ∘ Equiv.swap i j) y a = groupWeight c y a
       + (if c i = a then y j - y i else 0) + (if c j = a then y i - y j else 0) := by
   have hij : i ≠ j := fun e => h (congrArg c e)
-  have hre : cohortWeight y (c ∘ Equiv.swap i j) a
+  have hre : groupWeight (c ∘ Equiv.swap i j) y a
       = ∑ k, if c k = a then y (Equiv.swap i j k) else 0 := by
-    rw [cohortWeight, sum_filter, ← Equiv.sum_comp (Equiv.swap i j)]
+    rw [groupWeight_eq_filter, sum_filter, ← Equiv.sum_comp (Equiv.swap i j)]
     simp
-  have hd : (∑ k, if c k = a then y (Equiv.swap i j k) else 0) - cohortWeight y c a
+  have hd : (∑ k, if c k = a then y (Equiv.swap i j k) else 0) - groupWeight c y a
       = (if c i = a then y j - y i else 0) + (if c j = a then y i - y j else 0) := by
-    rw [cohortWeight, sum_filter, ← sum_sub_distrib,
+    rw [groupWeight_eq_filter, sum_filter, ← sum_sub_distrib,
       sum_eq_add i j hij (fun k _ hk => by
         simp [Equiv.swap_apply_of_ne_of_ne hk.1 hk.2])]
     · simp [Equiv.swap_apply_left, Equiv.swap_apply_right]
@@ -338,17 +336,17 @@ sizes, hence `f` and `z`, are unchanged, and `d` moves from `S_B` to `S_A`. -/
 theorem blendLoss_swap [DecidableEq ι] (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) {i j : ι}
     (h : c i ≠ c j) :
     blendLoss V τ2 μ x (c ∘ Equiv.swap i j) - blendLoss V τ2 μ x c
-      = -(2 * (x j - x i) * (blendF V τ2 (cohortWeight 1 c (c i))
-            * cohortWeight (fun k => x k - μ) c (c i)
-          - blendF V τ2 (cohortWeight 1 c (c j)) * cohortWeight (fun k => x k - μ) c (c j))
-        + (blendF V τ2 (cohortWeight 1 c (c i)) + blendF V τ2 (cohortWeight 1 c (c j)))
+      = -(2 * (x j - x i) * (blendF V τ2 (groupWeight c 1 (c i))
+            * groupWeight c (fun k => x k - μ) (c i)
+          - blendF V τ2 (groupWeight c 1 (c j)) * groupWeight c (fun k => x k - μ) (c j))
+        + (blendF V τ2 (groupWeight c 1 (c i)) + blendF V τ2 (groupWeight c 1 (c j)))
           * (x j - x i) ^ 2) := by
   have himg : univ.image (c ∘ Equiv.swap i j) = univ.image c := by
     rw [← image_image, image_univ_equiv]
-  have hN : ∀ a, cohortWeight 1 (c ∘ Equiv.swap i j) a = cohortWeight 1 c a := by
-    intro a; rw [cohortWeight_swap _ c h]; simp
+  have hN : ∀ a, groupWeight (c ∘ Equiv.swap i j) 1 a = groupWeight c 1 a := by
+    intro a; rw [groupWeight_swap _ c h]; simp
   rw [blendLoss_eq, blendLoss_eq, himg]
-  simp only [hN, cohortWeight_swap _ c h]
+  simp only [hN, groupWeight_swap _ c h]
   rw [sub_sub_sub_cancel_left, ← sum_sub_distrib,
     sum_eq_add_of_mem (c i) (c j) (mem_image_of_mem c (mem_univ i))
       (mem_image_of_mem c (mem_univ j)) h (fun a _ ha => by
@@ -372,11 +370,11 @@ theorem blend_optimal_contiguous [DecidableEq ι] {V τ2 μ : ℝ} {x : ι → �
   rw [← hil] at h2
   have o1 := hopt (c ∘ Equiv.swap i j)
   have o2 := hopt (c ∘ Equiv.swap l j)
-  have fA := blendF_pos hV hτ (cohortWeight_pos (fun _ => one_pos) c i)
-  have fB := blendF_pos hV hτ (cohortWeight_pos (fun _ => one_pos) c j)
-  set D := blendF V τ2 (cohortWeight 1 c (c i)) * cohortWeight (fun k => x k - μ) c (c i)
-    - blendF V τ2 (cohortWeight 1 c (c j)) * cohortWeight (fun k => x k - μ) c (c j)
-  set F := blendF V τ2 (cohortWeight 1 c (c i)) + blendF V τ2 (cohortWeight 1 c (c j))
+  have fA := blendF_pos hV hτ (groupWeight_pos (fun _ => one_pos) c i)
+  have fB := blendF_pos hV hτ (groupWeight_pos (fun _ => one_pos) c j)
+  set D := blendF V τ2 (groupWeight c 1 (c i)) * groupWeight c (fun k => x k - μ) (c i)
+    - blendF V τ2 (groupWeight c 1 (c j)) * groupWeight c (fun k => x k - μ) (c j)
+  set F := blendF V τ2 (groupWeight c 1 (c i)) + blendF V τ2 (groupWeight c 1 (c j))
   have hF : 0 < F := add_pos fA fB
   have d1 : 0 < x j - x i := by linarith
   have d2 : x j - x l < 0 := by linarith

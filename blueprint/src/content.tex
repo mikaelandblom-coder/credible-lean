@@ -2674,15 +2674,32 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
   = \sum_h 1/s_h^2$, and multiply and divide by $1/s_g^2 \neq 0$.
 \end{proof}
 
-\begin{definition}[Group levels]\label{def:KG}
-  \lean{Credibility.grpOne, Credibility.groupWeight,
-    Credibility.Model.levelCovG, Credibility.Model.KG}
+\begin{definition}[Group indicators and group weights]\label{def:groupWeight}
+  \lean{Credibility.grpOne, Credibility.groupWeight}
   \leanok
-  \uses{def:Kphi}
+  For a grouping $g(\cdot)$, the indicators $\mathbf 1_g$ and the total
+  weight $B_g = \sum_{g(i) = g} b_i$ a weight vector $b$ gives to group $g$.
+  The same sum is the exposure $W_a$ of a cohort of units in
+  Section~\ref{sec:kmeans_bridge}.
+\end{definition}
+
+\begin{lemma}[A group weight sums over the group]\label{lem:groupWeight_eq_filter}
+  \lean{Credibility.groupWeight_eq_filter}
+  \leanok
+  \uses{def:groupWeight}
+  $B_g = \sum_{i \,:\, g(i) = g} b_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Drop the zero terms.
+\end{proof}
+
+\begin{definition}[Group levels]\label{def:KG}
+  \lean{Credibility.Model.levelCovG, Credibility.Model.KG}
+  \leanok
+  \uses{def:Kphi, def:groupWeight}
   The level covariance $L_G$ ($\tau^2$ on the diagonal, $\phi\tau^2$ within a
-  group, $0$ across), $K_G = L_G + \Sigma$, the indicators $\mathbf 1_g$, and
-  the total weight $B_g = \sum_{g(i) = g} b_i$ a weight vector $b$ gives to
-  group $g$.
+  group, $0$ across) and $K_G = L_G + \Sigma$.
 \end{definition}
 
 \begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
@@ -3163,10 +3180,10 @@ $\bar X_a = \sum_{c(i)=a} w_i X_i / W_a$, so $\mathbb E \bar X_a = \bar x_a$
 and $\operatorname{Var} \bar X_a = 1/W_a$.
 
 \begin{definition}[Cohort weight, mean and pooling loss]\label{def:poolLoss}
-  \lean{Credibility.cohortWeight, Credibility.cohortMean, Credibility.poolVar, Credibility.poolLoss}
+  \lean{Credibility.cohortMean, Credibility.poolVar, Credibility.poolLoss}
   \leanok
-  \uses{def:kmeansCost, def:invVarWeight}
-  $W_a = \sum_{c(i)=a} w_i$. Cohort $a$ pools with the inverse-variance
+  \uses{def:kmeansCost, def:invVarWeight, def:groupWeight}
+  $W_a = \sum_{c(i)=a} w_i$ (the group weight of Definition~\ref{def:groupWeight}). Cohort $a$ pools with the inverse-variance
   weights $a_i$ of \eqth{23} for the variances $\sigma_i^2 = 1/w_i$ of its
   units: $\bar x_a = \mathbb E\bar X_a = \sum_{c(i)=a} a_i x_i$ and
   $\Var \bar X_a = \sum_{c(i)=a} a_i^2 \sigma_i^2$. The exposure-weighted
@@ -3215,26 +3232,27 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
   Theorem~\ref{thm:invVarWeight_optimal} with $\sigma_i^2 = 1/w_i$.
 \end{proof}
 
-\begin{lemma}[Used cohorts have positive weight]\label{lem:cohortWeight_pos}
-  \lean{Credibility.cohortWeight_pos}
+\begin{lemma}[Used cohorts have positive weight]\label{lem:groupWeight_pos}
+  \lean{Credibility.groupWeight_pos}
   \leanok
   \uses{def:poolLoss}
   If all $w_i > 0$, then $W_{c(i)} > 0$.
 \end{lemma}
 \begin{proof}
   \leanok
+  \uses{lem:groupWeight_eq_filter}
   A sum of positive terms, one of them $w_i$.
 \end{proof}
 
-\begin{lemma}[One per cohort]\label{lem:sum_div_cohortWeight}
-  \lean{Credibility.sum_div_cohortWeight}
+\begin{lemma}[One per cohort]\label{lem:sum_div_groupWeight}
+  \lean{Credibility.sum_div_groupWeight}
   \leanok
   \uses{def:poolLoss}
   If all $w_i > 0$, then $\sum_i w_i / W_{c(i)} = \#\{\text{nonempty cohorts}\}$.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:cohortWeight_pos}
+  \uses{lem:groupWeight_pos}
   Sum cohort by cohort: each gives $W_a / W_a = 1$.
 \end{proof}
 
@@ -3247,12 +3265,12 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:cohortWeight_pos, lem:cohortMean_eq}
+  \uses{lem:groupWeight_pos, lem:cohortMean_eq}
   Within cohort $a$ the sum is $g_a\bigl(\sum_{c(i)=a} w_i x_i - W_a \bar x_a\bigr) = 0$.
 \end{proof}
 
 \begin{lemma}[Relabelling cohorts]\label{lem:poolLoss_comp}
-  \lean{Credibility.cohortWeight_comp, Credibility.cohortMean_comp, Credibility.poolLoss_comp}
+  \lean{Credibility.groupWeight_comp, Credibility.cohortMean_comp, Credibility.poolLoss_comp}
   \leanok
   \uses{def:poolLoss}
   Renaming the labels by an injective map $f$ changes no cohort weight or
@@ -3288,10 +3306,10 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:sum_div_cohortWeight, lem:poolVar_eq}
+  \uses{lem:sum_div_groupWeight, lem:poolVar_eq}
   $\Var \bar X_{c(i)} = 1/W_{c(i)}$ (Lemma~\ref{lem:poolVar_eq}), and each
   nonempty cohort contributes $\sum_{c(i)=a} w_i / W_a = 1$
-  (Lemma~\ref{lem:sum_div_cohortWeight}).
+  (Lemma~\ref{lem:sum_div_groupWeight}).
 \end{proof}
 
 \begin{corollary}[Optimal pooled cohorts are intervals]\label{cor:pool_optimal_contiguous}
@@ -3396,14 +3414,14 @@ not apply, but a swap argument does.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:cohortWeight_pos, lem:cohortMean_eq}
+  \uses{lem:groupWeight_pos, lem:cohortMean_eq}
   With $y_i = x_i - \mu$ and $\bar x_a - \mu = S_a/n_a$, unit $i$ has MSE
   $(z S_a/n_a - y_i)^2 + z^2V/n_a$; summing over the cohort gives
   $\sum y_i^2 - (2z - z^2) S_a^2/n_a + z^2 V$.
 \end{proof}
 
-\begin{lemma}[Swapping two units]\label{lem:cohortWeight_swap}
-  \lean{Credibility.cohortWeight_swap}
+\begin{lemma}[Swapping two units]\label{lem:groupWeight_swap}
+  \lean{Credibility.groupWeight_swap}
   \leanok
   Swapping units $i$, $j$ of different cohorts adds $y_j - y_i$ to the sum
   $\sum_{c(k)=c(i)} y_k$, subtracts it from the sum of $c(j)$, and leaves
@@ -3411,6 +3429,7 @@ not apply, but a swap argument does.
 \end{lemma}
 \begin{proof}
   \leanok
+  \uses{lem:groupWeight_eq_filter}
   Reindex the sum by the swap; only the terms of $i$ and $j$ change.
 \end{proof}
 
@@ -3436,9 +3455,9 @@ not apply, but a swap argument does.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:blendLoss_eq, lem:cohortWeight_swap}
+  \uses{lem:blendLoss_eq, lem:groupWeight_swap}
   The swap keeps all sizes, hence all $f$ and $z$, and moves $d$ from $S_B$
-  to $S_A$ (Lemma~\ref{lem:cohortWeight_swap}); expand in
+  to $S_A$ (Lemma~\ref{lem:groupWeight_swap}); expand in
   Lemma~\ref{lem:blendLoss_eq}.
 \end{proof}
 
@@ -3451,7 +3470,7 @@ not apply, but a swap argument does.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:blendLoss_swap, lem:blendF_pos, lem:cohortWeight_pos}
+  \uses{lem:blendLoss_swap, lem:blendF_pos, lem:groupWeight_pos}
   Suppose $c_j = B \ne A = c_i$ and let $D = f_A S_A - f_B S_B$, with
   $f_A, f_B > 0$ (Lemma~\ref{lem:blendF_pos}). Swapping $i$, $j$
   ($d = x_j - x_i > 0$) cannot lower $B$, so by Lemma~\ref{lem:blendLoss_swap}

@@ -17,8 +17,15 @@ variable {J G : Type*} [Fintype J] [DecidableEq J] [Fintype G] [DecidableEq G] (
 /-- Indicator `1_g` of group `g`. -/
 def grpOne (g : G) : J → ℝ := fun j => if grp j = g then 1 else 0
 
-/-- Total weight `B_g = Σ_{grp i = g} bᵢ` that `b` gives to group `g`. -/
+omit [DecidableEq J] [Fintype G] in
+/-- Total weight `B_g = Σ_{grp i = g} bᵢ` that `b` gives to group `g` (also the
+exposure `Wₐ` of a cohort of units in `KMeansBridge.lean`). -/
 def groupWeight (b : J → ℝ) (g : G) : ℝ := ∑ i, if grp i = g then b i else 0
+
+omit [DecidableEq J] [Fintype G] in
+lemma groupWeight_eq_filter (b : J → ℝ) (g : G) :
+    groupWeight grp b g = ∑ i with grp i = g, b i := by
+  rw [groupWeight, Finset.sum_filter]
 
 /-! #### Weighted share of same-group pairs -/
 
