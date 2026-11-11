@@ -13,8 +13,10 @@ done; details of finished work live in `README.md` and `FINDINGS.md`.
   cohorts are intervals of the sorted means (exact by dynamic programming).
   With unequal `V` the merge rule `1/d > 1/V + 1/τ²`
   (`notes/merging-cohorts.md`) has a pair-dependent scale, so contiguity may
-  fail: a counterexample would be a finding. Unverified: state it on paper
-  first.
+  fail: a counterexample would be a finding. *On paper 2026-11-11*
+  (`notes/kmeans-bridge.md`, Finding 14): exact for exposure-weighted
+  pooling, any `V`; counterexamples with unequal `V` for the blend and the
+  unweighted loss. Next: the two Lean statements listed in the note.
 - [x] **Damping bridge** (done 2026-11-11: `Unequal.dampedK_posDef`, holds for
   any `τ̂² ≥ 0`, so truncating `τ̂²` at zero is safe; handbook result
   `res:damped`).

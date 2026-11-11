@@ -3152,3 +3152,20 @@ Nielsen \& Nock, arXiv:1403.2485).
   of $\{i,l\}$ that is not at $\mu_a$ (one exists since $x_i \ne x_l$) the
   freed label $b$ with center at itself; the cost drops strictly.
 \end{proof}
+
+\begin{remark}[Finding 14: when optimal cohorts are intervals]\label{rem:kmeans_bridge}
+  \uses{thm:kmeans_contiguous}
+  Units with fixed levels $x_i$ and uncorrelated estimates of variance $v_i$
+  are grouped into at most $k$ cohorts, each pooled by inverse variance
+  ($w_i = 1/v_i$). Then
+  $\sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
+  = \sum_i w_i (x_i - \bar x_{c(i)})^2 + \#\text{cohorts}$, a weighted
+  k-means cost, so by Theorem~\ref{thm:kmeans_contiguous} the optimal cohorts
+  are intervals of the sorted levels, for any $v_i$ (on paper; Lean next).
+  With unequal $v_i$ this fails for the unweighted MSE and for a credibility
+  blend towards a known $\mu$: with $x = (-\tfrac12, 0, \tfrac12)$, $\mu = 0$,
+  $\tau^2 = \tfrac12$, $v = (16, \tfrac12, 16)$ and at most two cohorts,
+  $\{1,3\}\{2\}$ has total MSE $0.680$ and the best intervals $0.742$. The
+  noisy middle cohort sits at $\mu$ and is better served by the collective
+  than by a neighbour. With a common variance no counterexample is known.
+\end{remark}

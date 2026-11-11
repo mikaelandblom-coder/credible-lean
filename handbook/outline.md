@@ -42,6 +42,12 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
   two moments, no distribution assumed — `thm:integral_quad`
   (`Noise.integral_quad`).
 
+- Section 5, "watch out" (Finding 14, on paper): choosing cohorts by
+  sorting levels and cutting into intervals is exact only for
+  exposure-weighted pooling; with unequal variances and a credibility blend
+  the best cohorts need not be intervals. Wait for the Lean proof
+  (`notes/kmeans-bridge.md`).
+
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
   Distribution-free: only first and second moments.

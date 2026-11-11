@@ -144,4 +144,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    `pairHat_unbiasedG`, `phiTauHat_unbiasedG`, *proved*). Distribution-free:
    `Noise.integral_quad` makes `Unbiased` the actual expectation.
 
+14. **Optimal cohorts are intervals only for exposure-weighted pooling (new,
+   on paper).** Units with fixed levels `xᵢ` and uncorrelated estimates of
+   variance `vᵢ` are grouped into at most `k` cohorts, each pooled by inverse
+   variance. The exposure-weighted total MSE `Σ wᵢ MSEᵢ` (`wᵢ = 1/vᵢ`) is
+   exactly the weighted k-means cost of the levels plus the number of
+   cohorts, so by `kmeans_contiguous` the optimal cohorts are intervals of
+   the sorted levels, for any `vᵢ`. Common variance is the special case. With
+   unequal `vᵢ` this fails for the unweighted MSE (`x = (-1, 0, 0.2, 0.25,
+   1.5)`, `v = (16, 1/16, ½, 4, 2)`: optimum `{1,2,4}{3,5}`, with or without
+   a cap on `k`) and for a credibility blend towards a known `μ`, weighted or
+   not (`x = (-½, 0, ½)`, `μ = 0`, `τ² = ½`, `v = (16, ½, 16)`, at most two
+   cohorts: `{1,3}{2}` has MSE 0.680, the best intervals 0.742). The noisy
+   middle cohort sits at `μ` and is better served by the collective than by
+   a neighbour. Open: the blend with a common variance (no counterexample in
+   26 000 random cases). Details: `notes/kmeans-bridge.md`.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
