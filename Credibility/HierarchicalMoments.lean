@@ -253,5 +253,97 @@ theorem bestZ_mse_optimal [Nonempty T] (h0 : 0 ≤ φ) (hK : (M.KG grp φ).PosDe
 
 end NoiseG
 
+/-! ### Consistency: when do such random variables exist? -/
+
+namespace Noise
+
+variable {Ω' : Type*} [MeasurableSpace Ω'] {M : Model J T} {P : Measure Ω} {P' : Measure Ω'}
+
+/-- The thesis noise read through a map `Z : Ω' → Ω` with law `P` under `P'`
+(e.g. the first coordinate of a product space): the same moments. -/
+noncomputable def comp (N : M.Noise P) {Z : Ω' → Ω} (hZ : HasLaw Z P P') : M.Noise P' where
+  η j ω := N.η j (Z ω)
+  ε j t ω := N.ε j t (Z ω)
+  η_memLp j := hZ.memLp_comp (N.η_memLp j)
+  ε_memLp j t := hZ.memLp_comp (N.ε_memLp j t)
+  η_mean j := (hZ.integral_comp (f := N.η j) (N.η_memLp j).aestronglyMeasurable).trans
+    (N.η_mean j)
+  ε_mean j t := (hZ.integral_comp (f := N.ε j t) (N.ε_memLp j t).aestronglyMeasurable).trans
+    (N.ε_mean j t)
+  cov_η_η i j := by
+    rw [hZ.covariance_fun_comp (N.η_memLp i).aemeasurable (N.η_memLp j).aemeasurable]
+    exact N.cov_η_η i j
+  cov_η_ε i j t := by
+    rw [hZ.covariance_fun_comp (N.η_memLp i).aemeasurable (N.ε_memLp j t).aemeasurable]
+    exact N.cov_η_ε i j t
+  cov_ε_ε i j t s := by
+    rw [hZ.covariance_fun_comp (N.ε_memLp i t).aemeasurable (N.ε_memLp j s).aemeasurable]
+    exact N.cov_ε_ε i j t s
+
+end Noise
+
+/-- The group-level assumptions are consistent exactly when `ρ` is positive
+semidefinite, as for the thesis model (`exists_noise_iff`): group effects add
+no constraint. Witness: the thesis noise with level variance `(1-φ)τ²` on one
+factor, independent standard normal `γ_g` on the other (a witness only; the
+model stays distribution-free). Groups are labels in `Type`, like `Ω`. -/
+theorem exists_noiseG_iff {G : Type} [DecidableEq G] [Nonempty T] (M : Model J T)
+    (grp : J → G) (φ : ℝ) (h1 : φ < 1) :
+    (∃ (Ω : Type) (_ : MeasurableSpace Ω) (P : Measure Ω) (_ : IsProbabilityMeasure P),
+      Nonempty (M.NoiseG grp φ h1 P)) ↔ (Matrix.of M.ρ).PosSemidef := by
+  constructor
+  · -- Necessity: forget `γ`; the noise is that of the thesis model with the same `ρ`.
+    rintro ⟨Ω, _, P, _, ⟨N⟩⟩
+    exact (M.withLevel φ h1).exists_noise_iff.mp ⟨Ω, _, P, inferInstance, ⟨N.toNoise⟩⟩
+  · -- Sufficiency: thesis noise on `Ω₀`, independent `γ_g ~ N(0,1)` on `G → ℝ`.
+    intro hρ
+    obtain ⟨Ω₀, _, P₀, _, ⟨N₀⟩⟩ := (M.withLevel φ h1).exists_noise_iff.mpr hρ
+    set Q : Measure (G → ℝ) := Measure.infinitePi fun _ => gaussianReal 0 1 with hQdef
+    have hγ : ∀ g, HasLaw (fun x : G → ℝ => x g) (gaussianReal 0 1) Q :=
+      fun g => (measurePreserving_eval_infinitePi (fun _ : G => gaussianReal 0 1) g).hasLaw
+    have hQ : IsProbabilityMeasure Q := by dsimp only [Q]; infer_instance
+    have hind : iIndepFun (fun g (x : G → ℝ) => x g) Q := by
+      rw [hQdef]; exact iIndepFun_infinitePi (X := fun _ => id) fun _ => measurable_id
+    clear_value Q
+    have hsnd : HasLaw Prod.snd Q (P₀.prod Q) := measurePreserving_snd.hasLaw
+    have hfst : HasLaw Prod.fst P₀ (P₀.prod Q) := measurePreserving_fst.hasLaw
+    have hm : ∀ g, MemLp (fun x : G → ℝ => x g) 2 Q :=
+      fun g => (hγ g).memLp_comp (memLp_id_gaussianReal' 2 (by simp))
+    have hm' : ∀ g, MemLp (fun p : Ω₀ × (G → ℝ) => p.2 g) 2 (P₀.prod Q) :=
+      fun g => hsnd.memLp_comp (hm g)
+    have hmean : ∀ g, ∫ p, p.2 g ∂(P₀.prod Q) = 0 := fun g =>
+      (hsnd.integral_comp (f := fun x : G → ℝ => x g) (hm g).aestronglyMeasurable).trans
+        ((hγ g).integral_eq.trans integral_id_gaussianReal)
+    have hcov : ∀ g g', cov[fun p : Ω₀ × (G → ℝ) => p.2 g, fun p => p.2 g'; P₀.prod Q]
+        = if g = g' then 1 else 0 := fun g g' => by
+      rw [hsnd.covariance_fun_comp (f := fun x : G → ℝ => x g) (g := fun x => x g')
+        (hm g).aemeasurable (hm g').aemeasurable]
+      by_cases h : g = g'
+      · subst h
+        rw [covariance_self (hm g).aemeasurable, (hγ g).variance_eq, variance_id_gaussianReal]
+        simp
+      · simp only [h, ↓reduceIte]
+        exact (hind.indepFun h).covariance_eq_zero (hm g) (hm g')
+    have hη : ∀ g j, cov[fun p : Ω₀ × (G → ℝ) => p.2 g, fun p => N₀.η j p.1; P₀.prod Q] = 0 :=
+      fun g j => by
+        rw [covariance_comm]
+        exact covariance_fst_snd_prod (μ := P₀) (ν := Q) (X := N₀.η j)
+          (Y := fun x : G → ℝ => x g) (N₀.η_memLp j) (hm g)
+    have hε : ∀ g j t,
+        cov[fun p : Ω₀ × (G → ℝ) => p.2 g, fun p => N₀.ε j t p.1; P₀.prod Q] = 0 :=
+      fun g j t => by
+        rw [covariance_comm]
+        exact covariance_fst_snd_prod (μ := P₀) (ν := Q) (X := N₀.ε j t)
+          (Y := fun x : G → ℝ => x g) (N₀.ε_memLp j t) (hm g)
+    let N := N₀.comp hfst
+    exact ⟨Ω₀ × (G → ℝ), inferInstance, P₀.prod Q, inferInstance,
+      ⟨{ toNoise := N
+         γ := fun g p => p.2 g
+         γ_memLp := hm'
+         γ_mean := hmean
+         cov_γ_γ := hcov
+         cov_γ_η := hη
+         cov_γ_ε := hε }⟩⟩
+
 end Model
 end Credibility

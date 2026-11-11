@@ -3154,6 +3154,30 @@ for $K_G$ and $L_G$.
   Lemma~\ref{lem:G_moments_lin}.
 \end{proof}
 
+\begin{theorem}[The group-level assumptions are consistent iff $\rho \succeq 0$]\label{thm:G_exists_noise}
+  \lean{Credibility.Model.exists_noiseG_iff, Credibility.Model.Noise.comp}
+  \leanok
+  \uses{def:NoiseG, thm:exists_noise}
+  Let $\phi < 1$ and $T \ne \emptyset$. Random variables $\eta$, $\varepsilon$,
+  $\gamma$ as in Definition~\ref{def:NoiseG} exist on some probability space if
+  and only if $\rho$ is positive semidefinite: the group effects add no
+  constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:exists_noise}
+  Necessity: forgetting $\gamma$ leaves random variables as in
+  Definition~\ref{def:Noise} for level variance $(1-\phi)\tau^2$, with the same
+  $\rho$; apply Theorem~\ref{thm:exists_noise}. Sufficiency: take such
+  $\eta$, $\varepsilon$ on $\Omega_0$ (Theorem~\ref{thm:exists_noise}) and
+  independent standard normal $\gamma_g$, one per group, on $\mathbb{R}^G$
+  (an infinite product measure if there are infinitely many groups). On
+  $\Omega_0 \times \mathbb{R}^G$ with the product measure, $\gamma$ is
+  uncorrelated with $\eta$ and $\varepsilon$ by independence of the factors,
+  and the $\gamma_g$ with each other. As before, the Gaussians are only a
+  witness.
+\end{proof}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean

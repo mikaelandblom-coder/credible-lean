@@ -32,9 +32,11 @@ Status: sections 0–1 drafted in `handbook.tex`, and item 16 of section 5; the 
   is eq. (6) and `z = (Lⱼⱼ - (Lb)ⱼ)/(Kⱼⱼ - s²)` minimises it —
   `thm:Core_bestZ_mse`. The thesis, unequal lengths and group levels are
   three instances.
-- Open: consistency of the group-level assumptions (existence of such
-  `η`, `ε`, `γ`; expected: iff `ρ ⪰ 0`, as item 12), and the same layer for
-  unequal lengths with groups (`Hierarchical.lean` is on `Model` only).
+- Item 12 can add: with group levels the assumptions are still consistent
+  iff `ρ ⪰ 0`; the group effects add no constraint —
+  `thm:G_exists_noise` (`Model.exists_noiseG_iff`).
+- Open: the same layer for unequal lengths with groups
+  (`Hierarchical.lean` is on `Model` only).
   `Unequal.Noise.integral_quad` covers forms that read only observed cells
   (item 13 in true expectation).
 - Estimation section, one line under the unbiasedness entry: "unbiased" is
