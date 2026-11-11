@@ -160,7 +160,10 @@ sizes. Not formalised (an algorithm, not a credibility result).
 2. `pool_optimal_contiguous`: the Corollary, from item 1 and
    `kmeans_contiguous` with labels restricted to the used ones.
 3. Finding 14 (below) as a blueprint remark in the k-means chapter.
-4. Links to the credibility core (2026-11-11): `cohortWeight_inv_le` (the
-   pooled mean uses the inverse-variance weights eq. (23), the best unbiased
-   pooling, variance `1/Wₐ`) and `sizeZ_eq_bestZ`, `sizeZ_optimal` (`zₙ` is
-   eq. (7) for a cohort of `n` units with known `μ`).
+4. Built on the credibility core (2026-11-11): the pooled mean `cohortMean`
+   and variance `poolVar` are defined with the inverse-variance weights
+   eq. (23) (`poolVar_eq`: `Var X̄ₐ = 1/Wₐ` is their minimal value;
+   `poolVar_le`: no unbiased pooling does better), and `sizeZ` is defined as
+   eq. (7) `bestZ` of the cohort's moments `sizeMoments` (`sizeZ_eq`:
+   `= nτ²/(nτ² + V)`; `sizeZ_optimal`). So both interval theorems run
+   through `invVarWeight` and `bestZ`.

@@ -3163,14 +3163,57 @@ $\bar X_a = \sum_{c(i)=a} w_i X_i / W_a$, so $\mathbb E \bar X_a = \bar x_a$
 and $\operatorname{Var} \bar X_a = 1/W_a$.
 
 \begin{definition}[Cohort weight, mean and pooling loss]\label{def:poolLoss}
-  \lean{Credibility.cohortWeight, Credibility.cohortMean, Credibility.poolLoss}
+  \lean{Credibility.cohortWeight, Credibility.cohortMean, Credibility.poolVar, Credibility.poolLoss}
   \leanok
-  \uses{def:kmeansCost}
-  $W_a = \sum_{c(i)=a} w_i$, $\bar x_a = \sum_{c(i)=a} w_i x_i / W_a$, and
-  the exposure-weighted total MSE of pooling is
+  \uses{def:kmeansCost, def:invVarWeight}
+  $W_a = \sum_{c(i)=a} w_i$. Cohort $a$ pools with the inverse-variance
+  weights $a_i$ of \eqth{23} for the variances $\sigma_i^2 = 1/w_i$ of its
+  units: $\bar x_a = \mathbb E\bar X_a = \sum_{c(i)=a} a_i x_i$ and
+  $\Var \bar X_a = \sum_{c(i)=a} a_i^2 \sigma_i^2$. The exposure-weighted
+  total MSE of pooling is
   $L(c) = \sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
-  = \sum_i w_i\bigl((\bar x_{c(i)} - x_i)^2 + 1/W_{c(i)}\bigr)$.
+  = \sum_i w_i\bigl((\bar x_{c(i)} - x_i)^2 + \Var \bar X_{c(i)}\bigr)$.
 \end{definition}
+
+\begin{lemma}[The pooled mean and variance]\label{lem:cohortMean_eq}
+  \lean{Credibility.invVarWeight_cohort, Credibility.cohortMean_eq, Credibility.poolVar_eq_sum}
+  \leanok
+  \uses{def:poolLoss}
+  The weights \eqth{23} are $a_i = w_i / W_a$, so
+  $\bar x_a = \sum_{c(i)=a} w_i x_i / W_a$ and
+  $\Var \bar X_a = \sum_{c(i)=a} (w_i/W_a)^2 / w_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(1/w_i)^{-1} = w_i$.
+\end{proof}
+
+\begin{lemma}[The pooled variance is $1/W_a$]\label{lem:poolVar_eq}
+  \lean{Credibility.poolVar_eq}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\Var \bar X_{c(i)} = 1/W_{c(i)}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invVarWeight_value}
+  The minimal value $(\sum \sigma_i^{-2})^{-1}$ of
+  Lemma~\ref{lem:invVarWeight_value}, with $\sigma_i^{-2} = w_i$.
+\end{proof}
+
+\begin{lemma}[Pooling by exposure is the best unbiased pooling]\label{lem:poolVar_le}
+  \lean{Credibility.poolVar_le}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$ and weights $u_i$ on the units of cohort $a$ sum to one,
+  then $\Var \bar X_a \le \sum_{c(i)=a} u_i^2 / w_i$: no other unbiased
+  pooling of the cohort has a smaller variance.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:invVarWeight_optimal}
+  Theorem~\ref{thm:invVarWeight_optimal} with $\sigma_i^2 = 1/w_i$.
+\end{proof}
 
 \begin{lemma}[Used cohorts have positive weight]\label{lem:cohortWeight_pos}
   \lean{Credibility.cohortWeight_pos}
@@ -3204,7 +3247,7 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:cohortWeight_pos}
+  \uses{lem:cohortWeight_pos, lem:cohortMean_eq}
   Within cohort $a$ the sum is $g_a\bigl(\sum_{c(i)=a} w_i x_i - W_a \bar x_a\bigr) = 0$.
 \end{proof}
 
@@ -3217,6 +3260,7 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{lemma}
 \begin{proof}
   \leanok
+  \uses{lem:cohortMean_eq}
   $f(c(i)) = f(a)$ iff $c(i) = a$.
 \end{proof}
 
@@ -3235,23 +3279,6 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
   $\sum_i w_i (\bar x_{c(i)} - \mu_{c(i)})^2 \ge 0$.
 \end{proof}
 
-\begin{lemma}[Pooling by exposure is the best unbiased pooling]\label{lem:cohortWeight_inv_le}
-  \lean{Credibility.cohortWeight_inv_le}
-  \leanok
-  \uses{def:poolLoss, def:invVarWeight}
-  If all $w_i > 0$ and weights $u_i$ on the units of cohort $a$ sum to one,
-  then $1/W_a \le \sum_{c(i)=a} u_i^2 / w_i$. So the weights $w_i/W_a$ of
-  $\bar X_a$, the inverse-variance weights \eqth{23}, give the smallest
-  variance, $1/W_a$.
-\end{lemma}
-\begin{proof}
-  \leanok
-  \uses{lem:invVarWeight_value, thm:invVarWeight_optimal}
-  With $\sigma_i^2 = 1/w_i$, $1/W_a$ is the minimal value of
-  Lemma~\ref{lem:invVarWeight_value}, and Theorem~\ref{thm:invVarWeight_optimal}
-  says it is the minimum.
-\end{proof}
-
 \begin{theorem}[Pooling is weighted k-means]\label{thm:pool_mse_eq_kmeansCost}
   \lean{Credibility.pool_mse_eq_kmeansCost}
   \leanok
@@ -3261,8 +3288,9 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:sum_div_cohortWeight}
-  Each nonempty cohort contributes $\sum_{c(i)=a} w_i / W_a = 1$
+  \uses{lem:sum_div_cohortWeight, lem:poolVar_eq}
+  $\Var \bar X_{c(i)} = 1/W_{c(i)}$ (Lemma~\ref{lem:poolVar_eq}), and each
+  nonempty cohort contributes $\sum_{c(i)=a} w_i / W_a = 1$
   (Lemma~\ref{lem:sum_div_cohortWeight}).
 \end{proof}
 
@@ -3313,32 +3341,50 @@ $\operatorname{Var} \bar X_a = V/n_a$), and each unit is predicted by the
 blend $\mu + z_a(\bar X_a - \mu)$ with $\mu$, $\tau^2$ known. K-means does
 not apply, but a swap argument does.
 
-\begin{definition}[Blend loss]\label{def:blendLoss}
-  \lean{Credibility.sizeZ, Credibility.blendLoss, Credibility.blendGain, Credibility.blendF}
+\begin{definition}[The credibility factor of a cohort]\label{def:sizeZ}
+  \lean{Credibility.sizeMoments, Credibility.sizeZ}
   \leanok
-  \uses{def:poolLoss}
-  $z_n = n\tau^2/(n\tau^2 + V)$, $f_n = z_n(2 - z_n)/n$, and the total MSE is
-  $B(c) = \sum_i \bigl((\mu + z_{n_a}(\bar x_a - \mu) - x_i)^2 + z_{n_a}^2 V/n_a\bigr)$,
-  $a = c(i)$.
-\end{definition}
-
-\begin{theorem}[$z_n$ is the best credibility factor]\label{thm:sizeZ_optimal}
-  \lean{Credibility.sizeMoments, Credibility.sizeZ_eq_bestZ, Credibility.sizeZ_optimal}
-  \leanok
-  \uses{def:blendLoss, def:bestZ}
-  For a cohort of $n > 0$ units, take the moments of the blend
+  \uses{def:bestZ}
+  For a cohort of $n$ units, take the moments of the blend
   $z\bar X_a + (1-z)\mu$ with $\mu$ known: $\Var(\bar X_a) = \tau^2 + V/n$,
   $\cov(\bar X_a, \mu_a) = \Var(\mu_a) = \tau^2$, and the collective $\mu$
-  constant. If $V \ge 0$ and $\tau^2 > 0$, then $z_n$ is the factor
-  \eqth{7} of these moments and minimises the error variance \eqth{6}.
+  constant. Its credibility factor $z_n$ is the best factor \eqth{7} of
+  these moments.
+\end{definition}
+
+\begin{lemma}[$z_n = n\tau^2/(n\tau^2 + V)$]\label{lem:sizeZ_eq}
+  \lean{Credibility.sizeZ_eq}
+  \leanok
+  \uses{def:sizeZ}
+  If $n > 0$ and $n\tau^2 + V > 0$, then $z_n = n\tau^2/(n\tau^2 + V)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \eqth{7} reads $\tau^2/(\tau^2 + V/n)$.
+\end{proof}
+
+\begin{theorem}[$z_n$ is the best credibility factor]\label{thm:sizeZ_optimal}
+  \lean{Credibility.sizeZ_optimal}
+  \leanok
+  \uses{def:sizeZ}
+  If $n > 0$, $V \ge 0$ and $\tau^2 > 0$, then $z_n$ minimises the error
+  variance \eqth{6} of these moments.
 \end{theorem}
 \begin{proof}
   \leanok
   \uses{thm:bestZ_optimal}
-  \eqth{7} reads $\tau^2/(\tau^2 + V/n) = n\tau^2/(n\tau^2 + V)$, and the
-  curvature $\tau^2 + V/n$ is positive, so Theorem~\ref{thm:bestZ_optimal}
-  applies.
+  The curvature $\tau^2 + V/n$ is positive, so
+  Theorem~\ref{thm:bestZ_optimal} applies.
 \end{proof}
+
+\begin{definition}[Blend loss]\label{def:blendLoss}
+  \lean{Credibility.blendLoss, Credibility.blendGain, Credibility.blendF}
+  \leanok
+  \uses{def:poolLoss, def:sizeZ}
+  $f_n = z_n(2 - z_n)/n$, and the total MSE is
+  $B(c) = \sum_i \bigl((\mu + z_{n_a}(\bar x_a - \mu) - x_i)^2 + z_{n_a}^2 V/n_a\bigr)$,
+  $a = c(i)$.
+\end{definition}
 
 \begin{lemma}[Only size and sum matter]\label{lem:blendLoss_eq}
   \lean{Credibility.blendLoss_eq}
@@ -3350,7 +3396,7 @@ not apply, but a swap argument does.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:cohortWeight_pos}
+  \uses{lem:cohortWeight_pos, lem:cohortMean_eq}
   With $y_i = x_i - \mu$ and $\bar x_a - \mu = S_a/n_a$, unit $i$ has MSE
   $(z S_a/n_a - y_i)^2 + z^2V/n_a$; summing over the cohort gives
   $\sum y_i^2 - (2z - z^2) S_a^2/n_a + z^2 V$.
@@ -3376,7 +3422,8 @@ not apply, but a swap argument does.
 \end{lemma}
 \begin{proof}
   \leanok
-  $0 < z_n \le 1$, so $z_n(2 - z_n) > 0$.
+  \uses{lem:sizeZ_eq}
+  $0 < z_n \le 1$ by Lemma~\ref{lem:sizeZ_eq}, so $z_n(2 - z_n) > 0$.
 \end{proof}
 
 \begin{lemma}[Swap formula]\label{lem:blendLoss_swap}

@@ -18,6 +18,9 @@ of cohort `a` predicted by the pooled estimate has MSE `(x̄ₐ - xᵢ)² + 1/W�
 * `pool_optimal_contiguous`: hence an MSE-optimal labelling has interval
   cohorts, by `kmeans_contiguous` on the labels actually used.
 
+The pooled mean and variance use the inverse-variance weights eq. (23)
+(`invVarWeight`), and the blend's credibility factor is eq. (7) (`bestZ`).
+
 Not in the thesis; `notes/kmeans-bridge.md`, Finding 14. Purely algebraic:
 the levels are fixed numbers and the two moments of the pooled estimate are
 taken as given.
@@ -33,14 +36,60 @@ variable {ι κ : Type*} [Fintype ι] [DecidableEq κ]
 def cohortWeight (w : ι → ℝ) (c : ι → κ) (a : κ) : ℝ :=
   ∑ i with c i = a, w i
 
-/-- The `w`-weighted mean level `x̄ₐ = ∑_{c i = a} wᵢ xᵢ / Wₐ` of cohort `a`. -/
+/-- The mean level `x̄ₐ = E X̄ₐ` of cohort `a`, pooled with the inverse-variance
+weights eq. (23) for the variances `1/wᵢ` of its units. -/
 noncomputable def cohortMean (w x : ι → ℝ) (c : ι → κ) (a : κ) : ℝ :=
-  (∑ i with c i = a, w i * x i) / cohortWeight w c a
+  ∑ i : {i // c i = a}, invVarWeight (fun i : {i // c i = a} => (w i.1)⁻¹) i * x i
+
+/-- The variance `Var X̄ₐ = ∑ aᵢ² σᵢ²` of cohort `a`'s pooled estimate, with the
+weights eq. (23) and `σᵢ² = 1/wᵢ`. -/
+noncomputable def poolVar (w : ι → ℝ) (c : ι → κ) (a : κ) : ℝ :=
+  ∑ i : {i // c i = a}, invVarWeight (fun i : {i // c i = a} => (w i.1)⁻¹) i ^ 2 * (w i.1)⁻¹
+
+/-- **Pooling by exposure is the best unbiased pooling** (eq. (23)): within a
+cohort, any weights `u` summing to one give the pooled estimate a variance
+`∑ uᵢ²/wᵢ` at least `Var X̄ₐ`. -/
+theorem poolVar_le {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (a : κ)
+    (u : {i // c i = a} → ℝ) (hu : ∑ i, u i = 1) :
+    poolVar w c a ≤ ∑ i, u i ^ 2 * (w i.1)⁻¹ := by
+  rw [poolVar]
+  exact invVarWeight_optimal (fun i : {i // c i = a} => (w i.1)⁻¹)
+    (fun i => inv_pos.mpr (hw i.1)) u hu
 
 /-- Exposure-weighted total MSE of pooling: `∑ᵢ wᵢ E(X̄_{c i} - xᵢ)²`, with
-`E X̄ₐ = x̄ₐ` and `Var X̄ₐ = 1/Wₐ`, i.e. `∑ᵢ wᵢ ((x̄_{c i} - xᵢ)² + 1/W_{c i})`. -/
+`E X̄ₐ = x̄ₐ` and `Var X̄ₐ` as above, i.e. `∑ᵢ wᵢ ((x̄_{c i} - xᵢ)² + Var X̄_{c i})`. -/
 noncomputable def poolLoss (w x : ι → ℝ) (c : ι → κ) : ℝ :=
-  ∑ i, w i * ((cohortMean w x c (c i) - x i) ^ 2 + 1 / cohortWeight w c (c i))
+  ∑ i, w i * ((cohortMean w x c (c i) - x i) ^ 2 + poolVar w c (c i))
+
+/-- The weights eq. (23) for the variances `1/wᵢ` are `wᵢ/Wₐ`. -/
+theorem invVarWeight_cohort (w : ι → ℝ) (c : ι → κ) (a : κ) (i : {i // c i = a}) :
+    invVarWeight (fun i : {i // c i = a} => (w i.1)⁻¹) i = w i / cohortWeight w c a := by
+  simp only [invVarWeight, inv_inv, cohortWeight]
+  rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp) w]
+
+/-- So `x̄ₐ = ∑_{c i = a} wᵢ xᵢ / Wₐ`, the `w`-weighted mean level. -/
+theorem cohortMean_eq (w x : ι → ℝ) (c : ι → κ) (a : κ) :
+    cohortMean w x c a = (∑ i with c i = a, w i * x i) / cohortWeight w c a := by
+  simp only [cohortMean, invVarWeight_cohort]
+  rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp) (fun i => w i * x i),
+    sum_div]
+  exact sum_congr rfl fun i _ => by ring
+
+/-- … and `Var X̄ₐ = ∑_{c i = a} (wᵢ/Wₐ)²/wᵢ`. -/
+theorem poolVar_eq_sum (w : ι → ℝ) (c : ι → κ) (a : κ) :
+    poolVar w c a = ∑ i with c i = a, (w i / cohortWeight w c a) ^ 2 * (w i)⁻¹ := by
+  simp only [poolVar, invVarWeight_cohort]
+  rw [sum_subtype (p := fun i => c i = a) (univ.filter fun i => c i = a) (fun i => by simp)
+    (fun i => (w i / cohortWeight w c a) ^ 2 * (w i)⁻¹)]
+
+/-- **The pooled variance is `1/Wₐ`**, the minimal value of eq. (23). -/
+theorem poolVar_eq {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (i : ι) :
+    poolVar w c (c i) = (cohortWeight w c (c i))⁻¹ := by
+  have : Nonempty {j // c j = c i} := ⟨⟨i, rfl⟩⟩
+  rw [poolVar, invVarWeight_value (fun j : {j // c j = c i} => (w j.1)⁻¹)
+    (fun j => inv_pos.mpr (hw j.1))]
+  simp only [inv_inv, cohortWeight]
+  rw [sum_subtype (p := fun j => c j = c i) (univ.filter fun j => c j = c i) (fun j => by simp) w]
 
 /-- A used cohort has positive weight. -/
 theorem cohortWeight_pos {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (i : ι) :
@@ -74,8 +123,7 @@ theorem sum_mul_sub_cohortMean {w : ι → ℝ} (hw : ∀ i, 0 < w i) (x : ι �
     ← sum_mul]
   have : (∑ j with c j = c i, w j) * cohortMean w x c (c i)
       = ∑ j with c j = c i, w j * x j := by
-    unfold cohortMean
-    rw [← cohortWeight]
+    rw [cohortMean_eq, ← cohortWeight]
     field_simp
   rw [this, sub_self, zero_mul]
 
@@ -105,7 +153,7 @@ theorem pool_mse_eq_kmeansCost {w : ι → ℝ} (hw : ∀ i, 0 < w i) (x : ι �
     (c : ι → κ) :
     poolLoss w x c = kmeansCost w x c (cohortMean w x c) + (univ.image c).card := by
   rw [← sum_div_cohortWeight hw c, poolLoss, kmeansCost, ← sum_add_distrib]
-  exact sum_congr rfl fun i _ => by ring
+  exact sum_congr rfl fun i _ => by rw [poolVar_eq hw]; ring
 
 /-- Relabelling cohorts injectively changes neither weights … -/
 theorem cohortWeight_comp {κ' : Type*} [DecidableEq κ'] (w : ι → ℝ) (c : ι → κ)
@@ -117,7 +165,7 @@ theorem cohortWeight_comp {κ' : Type*} [DecidableEq κ'] (w : ι → ℝ) (c : 
 theorem cohortMean_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι → κ)
     {f : κ → κ'} (hf : Function.Injective f) (a : κ) :
     cohortMean w x (f ∘ c) (f a) = cohortMean w x c a := by
-  simp [cohortMean, cohortWeight, hf.eq_iff]
+  simp [cohortMean_eq, cohortWeight, hf.eq_iff]
 
 /-- … nor the pooling loss. -/
 theorem poolLoss_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι → κ)
@@ -125,7 +173,8 @@ theorem poolLoss_comp {κ' : Type*} [DecidableEq κ'] (w x : ι → ℝ) (c : ι
     poolLoss w x (f ∘ c) = poolLoss w x c := by
   unfold poolLoss
   refine sum_congr rfl fun i _ => ?_
-  rw [Function.comp_apply, cohortMean_comp w x c hf, cohortWeight_comp w c hf]
+  rw [Function.comp_apply, cohortMean_comp w x c hf]
+  simp [poolVar_eq_sum, cohortWeight_comp w c hf, hf.eq_iff]
 
 /-- **Optimal pooled cohorts are intervals** (`notes/kmeans-bridge.md`).
 For positive exposures, if the labelling `c` minimises the exposure-weighted
@@ -159,33 +208,12 @@ theorem pool_optimal_contiguous [DecidableEq ι] {w x : ι → ℝ} {c : ι → 
   have := kmeans_contiguous hw hopt' (c := cS) hij hjl (Subtype.ext hil)
   exact congrArg Subtype.val this
 
-/-- **Pooling by exposure is the best unbiased pooling** (eq. (23)): within a
-cohort, any weights `u` summing to one give the pooled estimate a variance
-`∑ uᵢ²/wᵢ` at least `1/Wₐ`, the variance of `x̄ₐ`'s weights `wᵢ/Wₐ`. -/
-theorem cohortWeight_inv_le {w : ι → ℝ} (hw : ∀ i, 0 < w i) (c : ι → κ) (a : κ)
-    (u : {i // c i = a} → ℝ) (hu : ∑ i, u i = 1) :
-    (cohortWeight w c a)⁻¹ ≤ ∑ i, u i ^ 2 * (w i.1)⁻¹ := by
-  have : Nonempty {i // c i = a} := by
-    by_contra h
-    rw [not_nonempty_iff] at h
-    simp at hu
-  have hσ : ∀ i : {i // c i = a}, 0 < (w i.1)⁻¹ := fun i => inv_pos.mpr (hw i.1)
-  have hW : cohortWeight w c a = ∑ i : {i // c i = a}, ((w i.1)⁻¹)⁻¹ := by
-    simp only [inv_inv, cohortWeight]
-    exact sum_subtype _ (fun i => by simp) w
-  rw [hW, ← invVarWeight_value _ hσ]
-  exact invVarWeight_optimal _ hσ u hu
-
 /-! ## Common variance: the credibility blend
 
 With a common variance `V`, cohort `a` of `nₐ` units has pooled estimate with
 mean `x̄ₐ` (plain mean) and variance `V/nₐ`, and credibility factor
 `zₐ = nₐτ²/(nₐτ² + V)`. A swap argument shows that MSE-optimal cohorts for the
 blend `μ + zₐ(X̄ₐ - μ)` are intervals (`notes/kmeans-bridge.md`). -/
-
-/-- Credibility factor of a cohort of `n` units with common variance `V`:
-`z = nτ²/(nτ² + V)`. -/
-noncomputable def sizeZ (V τ2 n : ℝ) : ℝ := n * τ2 / (n * τ2 + V)
 
 /-- The moments of the blend `z X̄ₐ + (1 - z) μ` for a cohort of `n` units with
 common variance `V` and known `μ`: `Var X̄ₐ = τ² + V/n` and
@@ -198,23 +226,25 @@ noncomputable def sizeMoments (V τ2 n : ℝ) : BlendMoments where
   covCohortTarget := τ2
   covPortfolioTarget := 0
 
-/-- **`sizeZ` is the best credibility factor** (eq. (7)) of a cohort of `n`
-units with common variance `V` and known `μ`. -/
-theorem sizeZ_eq_bestZ {V τ2 n : ℝ} (hn : 0 < n) (hpos : 0 < n * τ2 + V) :
-    sizeZ V τ2 n = (sizeMoments V τ2 n).bestZ := by
+/-- Credibility factor of a cohort of `n` units with common variance `V`:
+the best factor eq. (7) for the moments `sizeMoments`. -/
+noncomputable def sizeZ (V τ2 n : ℝ) : ℝ := (sizeMoments V τ2 n).bestZ
+
+/-- **`sizeZ` is `nτ²/(nτ² + V)`**: eq. (7) for a cohort of `n` units with common
+variance `V` and known `μ`. -/
+theorem sizeZ_eq {V τ2 n : ℝ} (hn : 0 < n) (hpos : 0 < n * τ2 + V) :
+    sizeZ V τ2 n = n * τ2 / (n * τ2 + V) := by
   have h2 : τ2 + V / n ≠ 0 := by
     rw [show τ2 + V / n = (n * τ2 + V) / n by field_simp]
     exact div_ne_zero hpos.ne' hn.ne'
   simp only [sizeZ, BlendMoments.bestZ, BlendMoments.gap, sizeMoments]
-  rw [div_eq_div_iff hpos.ne' (by simpa using h2)]
+  rw [div_eq_div_iff (by simpa using h2) hpos.ne']
   field_simp
   ring
 
 /-- Hence `sizeZ` minimises the blend's error variance eq. (6) over all `z`. -/
 theorem sizeZ_optimal {V τ2 n : ℝ} (hn : 0 < n) (hV : 0 ≤ V) (hτ : 0 < τ2) (z : ℝ) :
     (sizeMoments V τ2 n).errVar (sizeZ V τ2 n) ≤ (sizeMoments V τ2 n).errVar z := by
-  have hpos : 0 < n * τ2 + V := by positivity
-  rw [sizeZ_eq_bestZ hn hpos]
   exact BlendMoments.bestZ_optimal _ (by simp [BlendMoments.gap, sizeMoments]; positivity) z
 
 /-- Total MSE of the credibility blend with common variance `V`, known `μ`
@@ -246,7 +276,7 @@ theorem blendLoss_eq (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) :
   set S := cohortWeight (fun i => x i - μ) c (c i) with hSdef
   set z := sizeZ V τ2 N with hz
   have hmean : cohortMean 1 x c (c i) - μ = S / N := by
-    rw [cohortMean, ← hNdef, hSdef, cohortWeight, sum_sub_distrib, sum_const, nsmul_eq_mul]
+    rw [cohortMean_eq, ← hNdef, hSdef, cohortWeight, sum_sub_distrib, sum_const, nsmul_eq_mul]
     have : ((univ.filter fun j => c j = c i).card : ℝ) = N := by
       rw [hNdef, cohortWeight]; simp
     simp only [Pi.one_apply, one_mul]
@@ -296,10 +326,10 @@ noncomputable def blendF (V τ2 n : ℝ) : ℝ := sizeZ V τ2 n * (2 - sizeZ V �
 theorem blendF_pos {V τ2 n : ℝ} (hV : 0 ≤ V) (hτ : 0 < τ2) (hn : 0 < n) :
     0 < blendF V τ2 n := by
   have hd : 0 < n * τ2 + V := by positivity
-  have hz : 0 < sizeZ V τ2 n := div_pos (mul_pos hn hτ) hd
-  have hz1 : sizeZ V τ2 n ≤ 1 := (div_le_one hd).mpr (by linarith)
-  unfold blendF
-  have : 0 < sizeZ V τ2 n * (2 - sizeZ V τ2 n) := mul_pos hz (by linarith)
+  rw [blendF, sizeZ_eq hn hd]
+  have hz : 0 < n * τ2 / (n * τ2 + V) := div_pos (mul_pos hn hτ) hd
+  have hz1 : n * τ2 / (n * τ2 + V) ≤ 1 := (div_le_one hd).mpr (by linarith)
+  have : 0 < n * τ2 / (n * τ2 + V) * (2 - n * τ2 / (n * τ2 + V)) := mul_pos hz (by linarith)
   positivity
 
 /-- **Swapping two units** `i ∈ A`, `j ∈ B` of different cohorts changes the
