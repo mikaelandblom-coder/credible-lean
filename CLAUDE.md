@@ -36,7 +36,8 @@ tactics.
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
-  intervals (`notes/kmeans-bridge.md`, Finding 14) → `Credibility/KMeansBridge.lean`
+  intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,
+  Finding 14) → `Credibility/KMeansBridge.lean`
 
 Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which

@@ -144,9 +144,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `pairHat_unbiasedG`, `phiTauHat_unbiasedG`, *proved*). Distribution-free:
    `Noise.integral_quad` makes `Unbiased` the actual expectation.
 
-14. **Optimal cohorts are intervals only for exposure-weighted pooling (new;
-   the positive half proved: `pool_mse_eq_kmeansCost`,
-   `pool_optimal_contiguous`).** Units with fixed levels `xᵢ` and uncorrelated estimates of
+14. **Optimal cohorts are intervals for pooling, and for the blend with a
+   common variance, but not in general (new; positive halves proved:
+   `pool_optimal_contiguous`, `blend_optimal_contiguous`).** Units with fixed levels `xᵢ` and uncorrelated estimates of
    variance `vᵢ` are grouped into at most `k` cohorts, each pooled by inverse
    variance. The exposure-weighted total MSE `Σ wᵢ MSEᵢ` (`wᵢ = 1/vᵢ`) is
    exactly the weighted k-means cost of the levels plus the number of
@@ -158,7 +158,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    not (`x = (-½, 0, ½)`, `μ = 0`, `τ² = ½`, `v = (16, ½, 16)`, at most two
    cohorts: `{1,3}{2}` has MSE 0.680, the best intervals 0.742). The noisy
    middle cohort sits at `μ` and is better served by the collective than by
-   a neighbour. Open: the blend with a common variance (no counterexample in
-   26 000 random cases). Details: `notes/kmeans-bridge.md`.
+   a neighbour. With a common variance the blend's optimal cohorts are
+   intervals again (`blend_optimal_contiguous`, a swap argument: the loss
+   depends on a cohort only through its size `n` and sum `S`, as
+   `-f_n S² + z_n²V` with `f_n > 0`). Details: `notes/kmeans-bridge.md`.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

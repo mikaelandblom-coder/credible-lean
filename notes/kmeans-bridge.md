@@ -9,7 +9,8 @@ k-means plus the number of cohorts. So optimal cohorts are intervals of the
 sorted levels for any variances, and this is provable now. With a
 credibility blend, or with an unweighted MSE, unequal variances break
 contiguity: there are counterexamples. With a common variance `V`, no
-counterexample turned up for the blend either (conjecture).
+counterexample exists for the blend either: optimal cohorts are intervals,
+by a swap argument (Theorem below).
 
 ## Setting
 
@@ -79,14 +80,51 @@ singletons, which are intervals. The pooled example fails with no cap at all:
 for every `k ≤ 5` the optimum is `{1,2,4}{3,5}`. The cap is the practical
 question anyway ("the best tariff with at most `k` cohorts").
 
-## Common variance, blend: conjecture
+## Common variance, blend: theorem (proved 2026-11-11)
 
 With `vᵢ = V` the blend's total MSE is the k-means cost plus a cohort term
 `nₐ(1-zₐ)²(x̄ₐ-μ)² + zₐ²V` that depends on the cohort's size and mean, so the
-Proposition does not apply. Yet no random search found a non-interval
-optimum: 20 000 cases with exactly `k` cohorts (`n ≤ 7`, `k ≤ 4`, random `V`,
-`τ²`, `μ`) and 6000 with at most `k` (`n ≤ 6`, `k ≤ 3`; `kmeans_bridge.py`
-reruns 2000 of them). Open: prove it.
+Proposition does not apply. Random search found no non-interval optimum
+(20 000 cases with exactly `k` cohorts, 6000 with at most `k`). It is true,
+by a swap argument instead of k-means.
+
+**Theorem.** With a common variance `V ≥ 0`, `τ² > 0` and known `μ`, every
+labelling that minimises the blend's total MSE (over all labellings into the
+labels `κ`) has interval cohorts.
+
+*Step 1: the loss depends on a cohort only through `(nₐ, Sₐ)`.* Put
+`yᵢ = xᵢ - μ` and `Sₐ = Σ_{i∈a} yᵢ`, so `x̄ₐ - μ = Sₐ/nₐ`; here
+`zₐ = nₐτ²/(nₐτ² + V)` and `Var X̄ₐ = V/nₐ`. Unit `i ∈ a` has MSE
+`(zₐSₐ/nₐ - yᵢ)² + zₐ²V/nₐ`; summing over the cohort,
+
+```
+cohort loss = Σ_{i∈a} yᵢ²  -  fₐ Sₐ²  +  zₐ² V,     fₐ = zₐ(2 - zₐ)/nₐ > 0,
+```
+
+and `fₐ`, `zₐ` depend only on the size `nₐ`. So the total loss is
+`Σᵢ yᵢ² - Σₐ (fₐSₐ² - zₐ²V)`.
+
+*Step 2: swap.* Swapping two units `i ∈ A`, `j ∈ B` (`A ≠ B`) keeps all sizes,
+hence all `f` and `z`, and changes only `S_A → S_A + d`, `S_B → S_B - d` with
+`d = yⱼ - yᵢ = xⱼ - xᵢ`. The loss changes by
+
+```
+Δ = -(2d·D + (f_A + f_B) d²),     D = f_A S_A - f_B S_B.
+```
+
+*Step 3.* Let `c` be optimal and suppose `xᵢ < xⱼ < xₗ`, `c i = c l = A`,
+`c j = B ≠ A`. Swapping `i, j` (`d = xⱼ - xᵢ > 0`) gives `Δ ≥ 0`, i.e.
+`2dD ≤ -(f_A+f_B)d² < 0`, so `D < 0`. Swapping `l, j` (`d = xⱼ - xₗ < 0`)
+gives `D > 0` the same way. Contradiction. ∎
+
+*Remarks.* No cap is needed and none hurts: swaps keep the set of used labels,
+so the result holds for "exactly `k`", "at most `k`" or any size constraint.
+The same argument covers pooling with a common `V` (`f = 1/n`, cohort term
+`V`). It fails for unequal variances because then `Var X̄ₐ`, hence `z` and
+`f`, depend on *which* units share the cohort, not just how many (Finding
+14). What made it work: for fixed sizes the loss is minus a strictly convex
+function of the cohort sums, and convex maxima over the "swap moves" sit at
+sorted assignments.
 
 ## For Lean (done 2026-11-11: `Credibility/KMeansBridge.lean`)
 

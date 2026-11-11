@@ -3270,7 +3270,7 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{proof}
 
 \begin{remark}[Finding 14: when optimal cohorts are intervals]\label{rem:kmeans_bridge}
-  \uses{cor:pool_optimal_contiguous}
+  \uses{cor:pool_optimal_contiguous, thm:blend_optimal_contiguous}
   Units with fixed levels $x_i$ and uncorrelated estimates of variance $v_i$
   are grouped into at most $k$ cohorts, each pooled by inverse variance
   ($w_i = 1/v_i$). Then
@@ -3284,5 +3284,102 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
   $\tau^2 = \tfrac12$, $v = (16, \tfrac12, 16)$ and at most two cohorts,
   $\{1,3\}\{2\}$ has total MSE $0.680$ and the best intervals $0.742$. The
   noisy middle cohort sits at $\mu$ and is better served by the collective
-  than by a neighbour. With a common variance no counterexample is known.
+  than by a neighbour. With a common variance the blend's optimal cohorts are
+  intervals again (Theorem~\ref{thm:blend_optimal_contiguous}).
+\end{remark}
+
+\subsection{Common variance: the credibility blend}
+
+Now $\operatorname{Var} X_i = V$ for all units. Cohort $a$ has $n_a$ units,
+$\bar X_a$ is their plain mean ($\mathbb E \bar X_a = \bar x_a$,
+$\operatorname{Var} \bar X_a = V/n_a$), and each unit is predicted by the
+blend $\mu + z_a(\bar X_a - \mu)$ with $\mu$, $\tau^2$ known. K-means does
+not apply, but a swap argument does.
+
+\begin{definition}[Blend loss]\label{def:blendLoss}
+  \lean{Credibility.sizeZ, Credibility.blendLoss, Credibility.blendGain, Credibility.blendF}
+  \leanok
+  \uses{def:poolLoss}
+  $z_n = n\tau^2/(n\tau^2 + V)$, $f_n = z_n(2 - z_n)/n$, and the total MSE is
+  $B(c) = \sum_i \bigl((\mu + z_{n_a}(\bar x_a - \mu) - x_i)^2 + z_{n_a}^2 V/n_a\bigr)$,
+  $a = c(i)$.
+\end{definition}
+
+\begin{lemma}[Only size and sum matter]\label{lem:blendLoss_eq}
+  \lean{Credibility.blendLoss_eq}
+  \leanok
+  \uses{def:blendLoss}
+  With $S_a = \sum_{c(i)=a}(x_i - \mu)$,
+  $B(c) = \sum_i (x_i - \mu)^2 - \sum_a \bigl(f_{n_a} S_a^2 - z_{n_a}^2 V\bigr)$,
+  the sum over nonempty cohorts.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortWeight_pos}
+  With $y_i = x_i - \mu$ and $\bar x_a - \mu = S_a/n_a$, unit $i$ has MSE
+  $(z S_a/n_a - y_i)^2 + z^2V/n_a$; summing over the cohort gives
+  $\sum y_i^2 - (2z - z^2) S_a^2/n_a + z^2 V$.
+\end{proof}
+
+\begin{lemma}[Swapping two units]\label{lem:cohortWeight_swap}
+  \lean{Credibility.cohortWeight_swap}
+  \leanok
+  Swapping units $i$, $j$ of different cohorts adds $y_j - y_i$ to the sum
+  $\sum_{c(k)=c(i)} y_k$, subtracts it from the sum of $c(j)$, and leaves
+  the other cohorts' sums unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Reindex the sum by the swap; only the terms of $i$ and $j$ change.
+\end{proof}
+
+\begin{lemma}[Positive weights]\label{lem:blendF_pos}
+  \lean{Credibility.blendF_pos}
+  \leanok
+  \uses{def:blendLoss}
+  If $V \ge 0$, $\tau^2 > 0$ and $n > 0$, then $f_n > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $0 < z_n \le 1$, so $z_n(2 - z_n) > 0$.
+\end{proof}
+
+\begin{lemma}[Swap formula]\label{lem:blendLoss_swap}
+  \lean{Credibility.blendLoss_swap}
+  \leanok
+  \uses{def:blendLoss}
+  Swapping $i \in A$ and $j \in B \ne A$ changes $B(c)$ by
+  $-\bigl(2d(f_A S_A - f_B S_B) + (f_A + f_B)d^2\bigr)$, $d = x_j - x_i$,
+  where $f_A = f_{n_A}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:blendLoss_eq, lem:cohortWeight_swap}
+  The swap keeps all sizes, hence all $f$ and $z$, and moves $d$ from $S_B$
+  to $S_A$ (Lemma~\ref{lem:cohortWeight_swap}); expand in
+  Lemma~\ref{lem:blendLoss_eq}.
+\end{proof}
+
+\begin{theorem}[Optimal blend cohorts are intervals]\label{thm:blend_optimal_contiguous}
+  \lean{Credibility.blend_optimal_contiguous}
+  \leanok
+  \uses{def:blendLoss}
+  If $V \ge 0$, $\tau^2 > 0$ and $c$ minimises $B$ among labellings into
+  $\kappa$, then $x_i < x_j < x_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:blendLoss_swap, lem:blendF_pos, lem:cohortWeight_pos}
+  Suppose $c_j = B \ne A = c_i$ and let $D = f_A S_A - f_B S_B$, with
+  $f_A, f_B > 0$ (Lemma~\ref{lem:blendF_pos}). Swapping $i$, $j$
+  ($d = x_j - x_i > 0$) cannot lower $B$, so by Lemma~\ref{lem:blendLoss_swap}
+  $2dD \le -(f_A + f_B)d^2 < 0$ and $D < 0$. Swapping $l$, $j$
+  ($d = x_j - x_l < 0$) gives $D > 0$ in the same way.
+\end{proof}
+
+\begin{remark}[No cap needed]
+  Swaps keep the set of used labels and all cohort sizes, so the theorem
+  holds for exactly $k$, at most $k$, or any constraint on the sizes. It
+  breaks for unequal variances because then $z_a$ depends on which units
+  share a cohort, not only on how many (Remark~\ref{rem:kmeans_bridge}).
 \end{remark}

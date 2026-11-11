@@ -48,6 +48,9 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
   the best cohorts need not be intervals. Now proved: "use it" entry
   `cor:pool_optimal_contiguous` (pooling = k-means plus #cohorts,
   `thm:pool_mse_eq_kmeansCost`), "watch out" stays a remark (Finding 14).
+  Also proved: with a common variance the credibility blend's optimal cohorts
+  are intervals (`thm:blend_optimal_contiguous`), so sorting and cutting
+  works for the blend too when cohorts have equal noise.
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
