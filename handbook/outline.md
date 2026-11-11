@@ -9,40 +9,15 @@ Only results that serve the credibility framework go in.
 Per entry: **statement** (one display), **comment** (when to use it and why it
 holds, in words), **Lean** (theorem name, linked to the source line).
 
-Status: sections 0–1 drafted in `handbook.tex`, and item 16 of section 5; the rest of 2–5 to write.
+Status (2026-11-11): all sections 0–5 drafted in `handbook.tex`, including
+the moment layer (true MSE for any `K`, `L`), unequal-length estimation,
+group levels (Finding 13) and choosing cohorts. Next: owner review of the
+voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Item 15, "watch out": with several groups `τ̂²` estimates `τ² - φτ²π`
-  (`π` = weighted share of same-group pairs), so the plug-in `K̂` is off
-  unless there is one group; pairs within vs across groups estimate
-  `(1-φ)τ²` and `τ²`, so `φτ²` is identifiable (Finding 13) —
-  `thm:estimation_G`, `cor:KHat_G_iff`, `cor:phiTauHat`. One group (a
-  shared level) is the special case `π = 1`: `τ̂²` estimates `(1-φ)τ²`,
-  which is all the blend needs — `cor:estimation_phi`.
-- Item 15 can now say "in true MSE" (proved 2026-11-10): for any random
-  variables `μⱼ = μ + √((1-φ)τ²) ηⱼ + √(φτ²) γ_{g(j)}` (group effects `γ_g`
-  centred, unit, uncorrelated with `η`, `ε` and each other; `0 ≤ φ < 1`),
-  `cov(μ̂ᵢ, μ̂ⱼ) = (K_G)ᵢⱼ`, the six fields of `momentsG` are the actual
-  moments and the factor of `bestZ_G_eq` minimises the true MSE —
-  `thm:G_cov_obs`, `thm:G_bestZ_mse`. "Unbiased with group levels" (the
-  "watch out" above) is the true expectation — `thm:G_integral_quad`.
-- Item 11 could lead with the general form: any random `μ̂ⱼ`, `μⱼ` with
-  covariances `K` and `L` (nothing about how `μ̂ⱼ` is built), the blend's MSE
-  is eq. (6) and `z = (Lⱼⱼ - (Lb)ⱼ)/(Kⱼⱼ - s²)` minimises it —
-  `thm:Core_bestZ_mse`. The thesis, unequal lengths and group levels are
-  three instances.
-- Item 12 can add: with group levels the assumptions are still consistent
-  iff `ρ ⪰ 0`; the group effects add no constraint —
-  `thm:G_exists_noise` (`Model.exists_noiseG_iff`).
-- Open: the same layer for unequal lengths with groups
+- Open: the moment layer for unequal lengths with groups
   (`Hierarchical.lean` is on `Model` only).
-  `Unequal.Noise.integral_quad` covers forms that read only observed cells
-  (item 13 in true expectation).
-- Estimation section, one line under the unbiasedness entry: "unbiased" is
-  the actual expectation for any random variables with the model's first
-  two moments, no distribution assumed — `thm:integral_quad`
-  (`Noise.integral_quad`).
 
 
 ## 0. Setting and notation (1 page)
@@ -79,18 +54,26 @@ Status: sections 0–1 drafted in `handbook.tex`, and item 16 of section 5; the 
 ## 3. Estimating the parameters (1 page)
 10. Unbiased estimators, eqs. (37)–(41), and what they need (`T ≥ 2`, `J ≥ 2`;
     Finding 7) — `cor:estimation`.
+10a. Balance of Bühlmann–Straub (in section 2) — `thm:bs_balance`.
 
 ## 4. The moments are real (1 page)
-11. Any random variables with these moments: the covariances, optimal weights
-    and the MSE of the blend are the true ones — `thm:moments_eq`, `thm:bestZ_mse`.
+11. Any random `μ̂ⱼ`, `μⱼ` with covariances `K`, `L`: GLS optimal and `z`
+    minimises the true MSE — `thm:Core_bestZ_mse`, `thm:bestZ_mse`; "unbiased"
+    is the true expectation — `thm:integral_quad`.
 12. The assumptions are consistent iff `ρ ⪰ 0` — `thm:exists_noise` (Finding 11).
 
 ## 5. Extensions beyond the thesis (1.5 pages)
 13. Cohort-dependent lengths `Tⱼ`: `K` stays PD, same formula, balance survives —
-    `thm:U_K_posDef`, `thm:U_bestZ_eq`, `thm:U_balance` (Findings 8–10, 12).
+    `thm:U_K_posDef`, `thm:U_bestZ_eq`, `thm:U_balance`, `thm:U_exists_noise`;
+    estimation with the per-pair count `nᵢⱼ` — `thm:U_unbiased`, `lem:U_den`
+    (Findings 8–10, 12).
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
-15. A shared group level drops out of credibility; two-stage GLS —
-    `thm:bestZ_phi_eq`, `thm:glsWeight_blockDiag`.
+15. A shared level drops out (one group); several groups: `z` with `B_g`,
+    true MSE, consistency; two-stage GLS; estimation biased with several
+    groups, `φτ²` from pairs (Finding 13) — `thm:bestZ_phi_eq`,
+    `thm:bestZ_G_eq`, `thm:G_bestZ_mse`, `thm:G_exists_noise`,
+    `thm:glsWeight_blockDiag`, `thm:estimation_G`, `cor:KHat_G_iff`,
+    `cor:phiTauHat`, `thm:G_integral_quad`.
 16. Choosing cohorts (drafted): optimal cohorts are intervals of the sorted
     levels for exposure-weighted pooling (= weighted k-means + #cohorts) and
     for the blend with a common variance; find them by dynamic programming —

@@ -249,18 +249,356 @@ rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 \end{caveat}
 
 % ===========================================================================
-\section{Special cases}
-\emph{To be written: two cohorts, credibility above one, equal covariances.}
+\section{Special cases}\label{sec:special}
 
-\section{Estimating the parameters}
-\emph{To be written.}
+\subsection*{Uncorrelated cohorts}
 
-\section{The moments are real}
-\emph{To be written.}
+\begin{result}[Bühlmann--Straub is a special case, and it is balanced]\label{res:bs}
+  Let $\sigma_{jt}^2 = \sigma^2/w_{jt}$, $\rho_{ij} = \delta_{ij}$ and $J \ge 2$.
+  With $w_{j*} = \sum_t w_{jt}$ and $\kappa = \sigma^2/\tau^2$, the factor of
+  Result~\ref{res:z} is the classical
+  $z_j = w_{j*}/(w_{j*} + \kappa)$, the weights are $b_j = z_j/z_*$, and for
+  \emph{any} data
+  \[
+    \sum_j\sum_t w_{jt}\,\mu_{jt} = \sum_j\sum_t w_{jt}\,\hmu_j^{\,b}.
+  \]
+  \lean{Credibility.bs_z}
+  \lean{Credibility.bs_balance}
+  \lean{Credibility.Unequal.balance_total}
+\end{result}
+\use Balance means: had you charged the blended rates in the past, total
+premium would have matched total claims. It is an identity, so it holds
+whether or not the model is right. It also holds when cohorts are observed
+over different periods (Section~\ref{sec:beyond}).
+\begin{caveat}
+  With correlated cohorts the blend is in general \emph{not} balanced. The
+  credibility factors are still optimal; if you need balance, rescale
+  afterwards and accept a slightly larger error.
+\end{caveat}
 
-\section{Beyond the thesis}
-\emph{To be written: unequal series lengths, merging cohorts, a shared group
-level.}
+\subsection*{Two cohorts}
+
+Take $J = 2$ with time-constant volumes, so each cohort has one noise
+standard deviation $\sigma_j$ (of its mean $\hmu_j$), and write
+$\rho = \rho_{12}$.
+
+\begin{result}[Two-cohort credibility]\label{res:two}
+  Away from the singularity $\tau^2 + \sigma_1^2 = \sigma_1\sigma_2\rho$,
+  \[
+    z_1 = \frac{\tau^2}{\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho},
+    \qquad
+    b_1 = \frac{z_1}{z_1 + z_2},
+  \]
+  with $z_2$ likewise.
+  \lean{Credibility.TwoCohorts.z1_eq}
+  \lean{Credibility.TwoCohorts.b1_eq_z}
+\end{result}
+\use Bühlmann--Straub with the noise variance $\sigma_1^2$ replaced by
+$\sigma_1^2 - \sigma_1\sigma_2\rho$: the part of cohort~1's noise it shares
+with cohort~2 does not count against it, because it also sits in $\hmu$ and
+cancels in the gap $\hmu_1 - \hmu$. Any split of a portfolio in two (two
+segments of a rating factor) keeps the classical weights $b_j = z_j/z_*$.
+\why With two cohorts there is only one covariance, so both cohorts are
+``equally correlated with the rest''. That is the condition of
+Result~\ref{res:equalcov}.
+
+\begin{result}[Credibility above one, and below zero]\label{res:z1_range}
+  Let $\sigma_1, \sigma_2, \tau^2 > 0$ and
+  $\rho^* = (\tau^2 + \sigma_1^2)/(\sigma_1\sigma_2)$. Then
+  \begin{itemize}
+    \item for $\rho < \rho^*$: $z_1 > 1$ if and only if $\sigma_1 < \sigma_2\rho$;
+    \item $z_1 < 0$ if and only if $\rho > \rho^*$;
+    \item the singularity can occur at all ($\rho^* \le 1$) if and only if
+          $\sigma_2^2/\tau^2 \ge (1 + \kappa_1)^2/\kappa_1$, $\kappa_1 = \sigma_1^2/\tau^2$.
+  \end{itemize}
+  \lean{Credibility.TwoCohorts.z1_gt_one_iff}
+  \lean{Credibility.TwoCohorts.z1_neg_iff}
+  \lean{Credibility.TwoCohorts.singularity_reachable_iff}
+\end{result}
+\use $z_1 > 1$ happens when cohort~1 is the precise one and the noise is
+strongly positively correlated: the blend then \emph{overshoots} $\hmu_1$,
+pushing away from $\hmu$. This is not an error. The gap $\hmu_1 - \hmu$
+is mostly cohort~2's noise with the sign flipped, and the best estimate
+corrects for it. The condition does not involve $\tau^2$.
+\begin{caveat}
+  Clipping $z$ to $[0,1]$ (as the thesis proposes) gives up some accuracy
+  when $z_1 > 1$ is genuine. A negative $z$ only happens past the
+  singularity, which needs one cohort much noisier than the other and $\rho$
+  close to one: treat it as a sign that $\hat\rho$ or $\hat\tau^2$ is off.
+\end{caveat}
+
+\subsection*{Equal covariances, any number of cohorts}
+
+\begin{result}[Equal covariances]\label{res:equalcov}
+  Let $K$ be positive definite with $K_{jj} = \tau^2 + v_j$ and
+  $K_{ij} = c$ for all $i \ne j$. If $\tau^2 + v_j \ne c$ for all $j$, then with
+  \[
+    z_j = \frac{\tau^2}{\tau^2 + v_j - c}
+  \]
+  the GLS weights are $b_j = z_j/z_*$, and if $b_j \ne 1$ this $z_j$ is the
+  factor of Result~\ref{res:z}.
+  \lean{Credibility.Core.b_eq_of_equalCov}
+  \lean{Credibility.Core.bestZ_of_equalCov}
+  \lean{Credibility.Model.bestZ_of_equalCov}
+\end{result}
+\use Bühlmann--Straub is $c = 0$; two cohorts are $c = \sigma_1\sigma_2\rho$.
+A common shock that hits every cohort equally (inflation, say) gives equal
+covariances: subtract it from each noise variance and use the classical
+formulas.
+\why $K = \operatorname{diag}(\tau^2 + v_j - c) + c\,\bu\bu^\top$, and the
+rank-one part along $\bu$ does not change the direction of $K^{-1}\bu$.
+\begin{caveat}
+  Equal \emph{correlations} are not enough when the $\sigma_j$ differ: then
+  $b_j = z_j/z_*$ fails already for three cohorts. It is the covariances
+  $\sigma_{ij}^2\rho_{ij}$ that must agree.
+\end{caveat}
+
+% ===========================================================================
+\section{Estimating the parameters}\label{sec:estimation}
+
+With volumes $w_{jt}$ and $\sigma_{jt}^2 = \sigma_j^2/w_{jt}$, write
+$w_{j*} = \sum_t w_{jt}$, $w_{**} = \sum_j w_{j*}$,
+$S_{ij} = \sum_t\sqrt{w_{it}w_{jt}}$ and $\hmu_j = \sum_t w_{jt}\mu_{jt}/w_{j*}$.
+The estimators are
+\begin{align*}
+  \widehat{\sigma^2_{ij}\rho_{ij}} &=
+    \frac{\sum_t \sqrt{w_{it}w_{jt}}\,(\mu_{it} - \hmu_i)(\mu_{jt} - \hmu_j)}
+         {S_{ij} + (T - 2)\,w_{i*}w_{j*}/S_{ij}}, \\
+  \widehat{\tau^2} &=
+    \frac{\sum_j w_{j*}\bigl\{(\hmu_j - \bar\mu)^2 - \hat c_j\bigr\}}
+         {w_{**} - \sum_j w_{j*}^2/w_{**}},
+  \qquad \bar\mu = \sum_j \frac{w_{j*}}{w_{**}}\hmu_j,
+\end{align*}
+with $\hat c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\,\widehat{\sigma^2_{ij}\rho_{ij}}$
+the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \widehat{\tau^2}\delta_{ij}$.
+
+\begin{result}[Unbiased estimators]\label{res:estimation}
+  If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for
+  $\sigma^2_{ij}\rho_{ij}$. If moreover $J \ge 2$, $\widehat{\tau^2}$ is
+  unbiased for $\tau^2$ and $\hat K_{ij}$ for $K_{ij}$. On the diagonal,
+  $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with the
+  Bühlmann--Straub $\hat\sigma_j^2 = \frac{1}{T-1}\sum_t w_{jt}(\mu_{jt} - \hmu_j)^2$.
+  \lean{Credibility.Model.sigRhoHat_unbiased}
+  \lean{Credibility.Model.tauHat_unbiased}
+  \lean{Credibility.Model.KHat_unbiased}
+  \lean{Credibility.Model.sigRhoHat_self}
+\end{result}
+\use Estimate $\hat K$, repair it if needed (Result~\ref{res:damped}), and
+plug it into Results~\ref{res:gls} and~\ref{res:z}. ``Unbiased'' is meant
+for the actual expectation, for any random variables with the model's
+first two moments; no distribution is assumed
+(Result~\ref{res:integral_quad}).
+\why The cross-products of deviations from the cohort means have
+expectation $\sigma^2_{ij}\rho_{ij}$ times a known factor; dividing by it
+removes the bias, as $T - 1$ does for an ordinary variance. The spread of
+the $\hmu_j$ around $\bar\mu$ is level variance plus noise; $\hat c_j$
+subtracts the noise.
+\begin{caveat}
+  You need $T \ge 2$ periods and $J \ge 2$ cohorts: with $T = 1$ or $J = 1$
+  a denominator is zero. Unbiased does not mean positive: $\widehat{\tau^2}$
+  can come out negative, and $(\widehat{\sigma^2_{ij}\rho_{ij}})$ need not be
+  positive semidefinite. Truncate and damp (Result~\ref{res:damped}).
+\end{caveat}
+
+% ===========================================================================
+\section{The moments are real}\label{sec:moments}
+
+Sections~\ref{sec:core}--\ref{sec:estimation} work with second moments as
+given numbers. This section says they are the actual covariances, means
+and mean squared errors, for any random variables with those moments.
+
+\begin{result}[The blend is optimal in true mean squared error]\label{res:mse}
+  Let $\hmu_j$ and $\mu_j$ be any square-integrable random variables with
+  $E\hmu_j = E\mu_j = \mu$, $\cov(\hmu_i, \hmu_j) = K_{ij}$ and
+  $\cov(\mu_i, \mu_j) = L_{ij}$, $\cov(\hmu_i, \mu_j) = L_{ij}$, with
+  $K$ positive definite. Then $\hmu = \sum_j b_j\hmu_j$ is unbiased with
+  variance $s^2$, the smallest among unbiased linear combinations, and
+  \[
+    z_j = \frac{L_{jj} - (Lb)_j}{K_{jj} - s^2}
+  \]
+  minimises the true mean squared error $E(z\hmu_j + (1-z)\hmu - \mu_j)^2$
+  over $z$ (when $K_{jj} > s^2$).
+  \lean{Credibility.Core.Estimates.portEst_optimal}
+  \lean{Credibility.Core.Estimates.mse_blend}
+  \lean{Credibility.Core.Estimates.bestZ_mse_optimal}
+\end{result}
+\use Nothing here says how $\hmu_j$ was built: any unbiased estimates whose
+covariances you can write down will do. The correlated cohorts of
+Section~1 are $L = \tau^2 I$, and then this is Result~\ref{res:z}. Unequal
+series lengths and group levels (Section~\ref{sec:beyond}) are two more
+instances.
+\lean{Credibility.Model.Noise.bestZ_mse_optimal}
+
+\begin{result}[``Unbiased'' is the true expectation]\label{res:integral_quad}
+  For random variables $\mu_{jt}$ with the moments of Section~1, the
+  expectation of any quadratic form of the data is computed from those
+  moments alone. So the estimators of Result~\ref{res:estimation} are
+  unbiased whatever the distribution.
+  \lean{Credibility.Model.Noise.integral_quad}
+\end{result}
+
+\begin{result}[The assumptions are consistent if and only if \texorpdfstring{$\rho \succeq 0$}{rho is PSD}]\label{res:exists}
+  Random variables $\eta_j$, $\varepsilon_{jt}$ with the moments of Section~1
+  exist if and only if the table $(\rho_{ij})$ is positive semidefinite.
+  \lean{Credibility.Model.exists_noise_iff}
+\end{result}
+\use So the hypothesis $\rho \succeq 0$ in Result~\ref{res:posdef} costs
+nothing: whenever the model makes sense, $K$ is positive definite. If an
+estimated $\hat\rho$ is not positive semidefinite, no data-generating model
+has those correlations; that is a sample artefact, not a feature of the
+portfolio.
+
+% ===========================================================================
+\section{Beyond the thesis}\label{sec:beyond}
+
+\subsection*{Cohorts observed over different periods}
+
+Cohort $j$ is observed only in the periods $T_j$ (a new segment, a
+discontinued product). Correlations act only on periods two cohorts share.
+Then $K_{ij} = \sigma_{ij}^2\rho_{ij} + \tau^2\delta_{ij}$ as before, with
+$\sigma^2_{ij}$ summed over the shared periods $T_i \cap T_j$.
+
+\begin{result}[Unequal lengths: the recipe still works]\label{res:unequal}
+  If, in every period $t$, the correlations of the cohorts observed at $t$
+  form a positive semidefinite table, then $K$ is positive definite and
+  Results~\ref{res:gls}--\ref{res:z} apply unchanged. These random
+  variables exist if and only if that condition holds. In the
+  Bühlmann--Straub case, the blend is balanced.
+  \lean{Credibility.Unequal.K_posDef}
+  \lean{Credibility.Unequal.bestZ_eq}
+  \lean{Credibility.Unequal.exists_noise_iff}
+  \lean{Credibility.Unequal.balance}
+  \lean{Credibility.Unequal.Noise.bestZ_mse_optimal}
+\end{result}
+\use This is weaker than $\rho \succeq 0$: cohorts that never share a
+period can have any correlation, since it never acts.
+
+\begin{result}[Unequal lengths: estimation]\label{res:unequal_est}
+  The estimators of Section~\ref{sec:estimation} stay unbiased if the
+  $T - 2$ in the denominator of $\widehat{\sigma^2_{ij}\rho_{ij}}$ becomes
+  the per-pair count
+  \[
+    n_{ij} = |T_i \cap T_j| - \omega_i - \omega_j,
+    \qquad
+    \omega_i = \frac{\sum_{t \in T_i\cap T_j} w_{it}}{w_{i*}},
+  \]
+  (all sums over the shared periods, except $w_{i*}$), provided each
+  denominator is positive. It is when the pair shares at least two periods,
+  and also with one shared period if both cohorts are observed elsewhere too.
+  \lean{Credibility.Unequal.sigRhoHat_unbiased}
+  \lean{Credibility.Unequal.tauHat_unbiased}
+  \lean{Credibility.Unequal.KHat_unbiased}
+  \lean{Credibility.Unequal.den_pos_of_two_le}
+  \lean{Credibility.Unequal.den_of_overlap_singleton}
+\end{result}
+\begin{caveat}
+  The naive $|T_i\cap T_j| - 2$ is biased unless the two cohorts have the same
+  periods. $\omega_i$ is the share of cohort $i$'s volume in the overlap.
+\end{caveat}
+
+\subsection*{When to merge two cohorts}
+
+Two cohorts on their own, with error variances $v_1, v_2$, error covariance
+$c$, $V = \Var(\hmu_1 - \hmu_2) = v_1 + v_2 - 2c$ and true gap
+$d = E(\mu_1 - \mu_2)^2$. Keeping them separate uses the credibility weights
+of Result~\ref{res:two}; merging treats them as one level.
+
+\begin{result}[The merging rule]\label{res:merge}
+  Let $\tau^2 > 0$, $V > 0$ and $d \ge 0$. Merging gives the smaller total
+  mean squared error if and only if
+  \[
+    d < \frac{V\tau^2}{V + \tau^2},
+    \qquad\text{i.e.}\qquad
+    \frac1d > \frac1V + \frac1{\tau^2}.
+  \]
+  \lean{Credibility.Merging.merge_iff}
+\end{result}
+\use Merge when the true gap is small compared with both the noise in the
+observed gap and the level variance. Equal credibility factors play no
+role. Correlation enters only through $V$: positively correlated noise
+measures the gap more precisely, so merging pays \emph{less}.
+\begin{caveat}
+  Under the model of Section~1 the gap is $d = 2\tau^2$ and merging never
+  pays. The rule is for when you have reason to think two cohorts are closer
+  than a random pair. Deciding from the same data you then fit adds a
+  winner's-curse bias not covered here.
+\end{caveat}
+
+\subsection*{A shared level within groups}
+
+Cohorts fall into groups $g(j)$ (regions, say), and cohorts in one group
+share part of their level:
+\[
+  \mu_j = \mu + \sqrt{(1-\phi)\tau^2}\,\eta_j + \sqrt{\phi\tau^2}\,\gamma_{g(j)},
+  \qquad 0 \le \phi < 1,
+\]
+with group effects $\gamma_g$ centred, of unit variance, and uncorrelated
+with each other and everything else. So $\cov(\mu_i,\mu_j)$ is $\tau^2$,
+$\phi\tau^2$ within a group, and $0$ across groups. Call the resulting
+covariance of the cohort estimates $K_G$.
+
+\begin{result}[One shared level drops out]\label{res:phi}
+  With one group (the whole portfolio shares $\phi\tau^2$), $T \ge 1$ and
+  $\rho \succeq 0$, the error variance of every blend and the best factor are
+  those of Section~1 with $\tau^2$ replaced by $(1-\phi)\tau^2$. The
+  estimators of Section~\ref{sec:estimation} estimate exactly that
+  $(1-\phi)\tau^2$.
+  \lean{Credibility.Model.Kφ_posDef}
+  \lean{Credibility.Model.bestZ_φ_eq}
+  \lean{Credibility.Model.tauHat_unbiasedφ}
+\end{result}
+\use Apply the thesis procedure unchanged; it is already right.
+\why A level shared by all cohorts enters $\hmu_j$, $\hmu$ and $\mu_j$ alike,
+and cancels in every blend's error. It is as invisible to the data as $\mu$
+itself, so $\phi$ cannot be estimated from one portfolio.
+
+\begin{result}[Several groups]\label{res:groups}
+  If $T \ge 1$, $\rho \succeq 0$ and $0 \le \phi < 1$, then $K_G$ is positive
+  definite, and with $b$, $s^2$ from $K_G$ and $B_g = \sum_{g(i) = g} b_i$ the
+  weight on cohort $j$'s group,
+  \[
+    z_j = \frac{(1-\phi)\tau^2(1 - b_j) + \phi\tau^2(1 - B_{g(j)})}{\tau^2 + v_j - s^2}.
+  \]
+  This minimises the true mean squared error, and the assumptions are
+  consistent if and only if $\rho \succeq 0$: the group effects add no
+  constraint.
+  \lean{Credibility.Model.KG_posDef}
+  \lean{Credibility.Model.bestZ_G_eq}
+  \lean{Credibility.Model.NoiseG.bestZ_mse_optimal}
+  \lean{Credibility.Model.exists_noiseG_iff}
+\end{result}
+\use Compared with Result~\ref{res:z}, the shared part $\phi\tau^2$ is
+discounted by the weight $B_g$ of the whole group, not of the cohort alone:
+the group shares that part of the level, and $\hmu$ already contains it to
+the extent $B_g$. With one group $B_g = 1$, and Result~\ref{res:phi}
+follows.
+
+\begin{result}[Two-stage weights]\label{res:twostage}
+  If $K$ is positive definite and block diagonal by group (no covariance
+  across groups), the GLS weights are GLS within each group, times
+  inverse-variance weights of the group estimates.
+  \lean{Credibility.Core.glsWeight_blockDiag}
+\end{result}
+
+\begin{result}[Estimating with groups]\label{res:est_groups}
+  Let $T \ge 2$, $J \ge 2$, $\phi \ne 0$. With several groups,
+  $\widehat{\tau^2}$ estimates $\tau^2 - \phi\tau^2\pi$, where $\pi$ is the
+  share of same-group pairs among pairs of cohorts, weighted by
+  $w_{i*}w_{j*}$. So $\hat K$ fits $K_G$'s within-group part if and only if
+  there is one group. Pairs fix it: if $i \ne j$ share a group and $k$ is in
+  another, let $\widehat P_{ab} = (\hmu_a - \hmu_b)^2$ minus its noise estimate
+  $\widehat{\sigma^2_{aa}\rho_{aa}} + \widehat{\sigma^2_{bb}\rho_{bb}} - 2\widehat{\sigma^2_{ab}\rho_{ab}}$.
+  Then $(\widehat P_{ik} - \widehat P_{ij})/2$ is unbiased for $\phi\tau^2$.
+  \lean{Credibility.Model.tauHat_unbiasedG}
+  \lean{Credibility.Model.KHat_unbiasedG_iff}
+  \lean{Credibility.Model.phiTauHat_unbiasedG}
+  \lean{Credibility.Model.NoiseG.integral_quad}
+\end{result}
+\begin{caveat}
+  Do not plug the thesis $\widehat{\tau^2}$ into $K_G$ when there are
+  several groups: it lands between $(1-\phi)\tau^2$ and $\tau^2$. Estimate
+  $\phi\tau^2$ from within- and across-group pairs, and the rest from there.
+\end{caveat}
 
 \subsection*{Choosing the cohorts}
 
