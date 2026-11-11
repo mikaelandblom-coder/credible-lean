@@ -19,3 +19,4 @@ import Credibility.GroupWeights
 import Credibility.Hierarchical
 import Credibility.HierarchicalMoments
 import Credibility.KMeans
+import Credibility.KMeansBridge

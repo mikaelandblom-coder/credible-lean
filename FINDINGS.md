@@ -144,8 +144,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `pairHat_unbiasedG`, `phiTauHat_unbiasedG`, *proved*). Distribution-free:
    `Noise.integral_quad` makes `Unbiased` the actual expectation.
 
-14. **Optimal cohorts are intervals only for exposure-weighted pooling (new,
-   on paper).** Units with fixed levels `xᵢ` and uncorrelated estimates of
+14. **Optimal cohorts are intervals only for exposure-weighted pooling (new;
+   the positive half proved: `pool_mse_eq_kmeansCost`,
+   `pool_optimal_contiguous`).** Units with fixed levels `xᵢ` and uncorrelated estimates of
    variance `vᵢ` are grouped into at most `k` cohorts, each pooled by inverse
    variance. The exposure-weighted total MSE `Σ wᵢ MSEᵢ` (`wᵢ = 1/vᵢ`) is
    exactly the weighted k-means cost of the levels plus the number of

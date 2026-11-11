@@ -88,7 +88,7 @@ optimum: 20 000 cases with exactly `k` cohorts (`n ≤ 7`, `k ≤ 4`, random `V`
 `τ²`, `μ`) and 6000 with at most `k` (`n ≤ 6`, `k ≤ 3`; `kmeans_bridge.py`
 reruns 2000 of them). Open: prove it.
 
-## For Lean (next)
+## For Lean (done 2026-11-11: `Credibility/KMeansBridge.lean`)
 
 1. `pool_mse_eq_kmeansCost`: the Proposition, for `Fintype ι`, labels `κ`,
    `w > 0`, the pooled mean `x̄`. Purely algebraic (the levels are fixed; the

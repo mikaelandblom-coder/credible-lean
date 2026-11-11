@@ -3153,15 +3153,132 @@ Nielsen \& Nock, arXiv:1403.2485).
   freed label $b$ with center at itself; the cost drops strictly.
 \end{proof}
 
+\section{Choosing cohorts: pooling is weighted k-means}\label{sec:kmeans_bridge}
+% Lean: Credibility/KMeansBridge.lean; notes/kmeans-bridge.md
+
+Units $i$ have fixed levels $x_i$ and unbiased, uncorrelated estimates
+$X_i$ with $\operatorname{Var} X_i = 1/w_i$ (exposure $w_i > 0$). Labels
+$c$ put them into cohorts; cohort $a$ pools by inverse variance,
+$\bar X_a = \sum_{c(i)=a} w_i X_i / W_a$, so $\mathbb E \bar X_a = \bar x_a$
+and $\operatorname{Var} \bar X_a = 1/W_a$.
+
+\begin{definition}[Cohort weight, mean and pooling loss]\label{def:poolLoss}
+  \lean{Credibility.cohortWeight, Credibility.cohortMean, Credibility.poolLoss}
+  \leanok
+  \uses{def:kmeansCost}
+  $W_a = \sum_{c(i)=a} w_i$, $\bar x_a = \sum_{c(i)=a} w_i x_i / W_a$, and
+  the exposure-weighted total MSE of pooling is
+  $L(c) = \sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
+  = \sum_i w_i\bigl((\bar x_{c(i)} - x_i)^2 + 1/W_{c(i)}\bigr)$.
+\end{definition}
+
+\begin{lemma}[Used cohorts have positive weight]\label{lem:cohortWeight_pos}
+  \lean{Credibility.cohortWeight_pos}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $W_{c(i)} > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A sum of positive terms, one of them $w_i$.
+\end{proof}
+
+\begin{lemma}[One per cohort]\label{lem:sum_div_cohortWeight}
+  \lean{Credibility.sum_div_cohortWeight}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\sum_i w_i / W_{c(i)} = \#\{\text{nonempty cohorts}\}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortWeight_pos}
+  Sum cohort by cohort: each gives $W_a / W_a = 1$.
+\end{proof}
+
+\begin{lemma}[Deviations are orthogonal to cohort constants]\label{lem:sum_mul_sub_cohortMean}
+  \lean{Credibility.sum_mul_sub_cohortMean}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\sum_i w_i (x_i - \bar x_{c(i)})\, g_{c(i)} = 0$
+  for any $g$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortWeight_pos}
+  Within cohort $a$ the sum is $g_a\bigl(\sum_{c(i)=a} w_i x_i - W_a \bar x_a\bigr) = 0$.
+\end{proof}
+
+\begin{lemma}[Relabelling cohorts]\label{lem:poolLoss_comp}
+  \lean{Credibility.cohortWeight_comp, Credibility.cohortMean_comp, Credibility.poolLoss_comp}
+  \leanok
+  \uses{def:poolLoss}
+  Renaming the labels by an injective map $f$ changes no cohort weight or
+  mean, and leaves $L(f \circ c) = L(c)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $f(c(i)) = f(a)$ iff $c(i) = a$.
+\end{proof}
+
+\begin{lemma}[Cohort means are the best centers]\label{lem:kmeansCost_cohortMean_le}
+  \lean{Credibility.kmeansCost_cohortMean_le}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then for fixed labels $c$ and any centers $\mu$, the
+  k-means cost at $\bar x$ is at most the cost at $\mu$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_mul_sub_cohortMean}
+  Expand $(x_i - \mu_a)^2$ around $\bar x_a$: the cross term vanishes since
+  $\sum_{c(i)=a} w_i (x_i - \bar x_a) = 0$, and the rest is
+  $\sum_i w_i (\bar x_{c(i)} - \mu_{c(i)})^2 \ge 0$.
+\end{proof}
+
+\begin{theorem}[Pooling is weighted k-means]\label{thm:pool_mse_eq_kmeansCost}
+  \lean{Credibility.pool_mse_eq_kmeansCost}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then
+  $L(c) = \sum_i w_i (x_i - \bar x_{c(i)})^2 + \#\{\text{nonempty cohorts}\}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_div_cohortWeight}
+  Each nonempty cohort contributes $\sum_{c(i)=a} w_i / W_a = 1$
+  (Lemma~\ref{lem:sum_div_cohortWeight}).
+\end{proof}
+
+\begin{corollary}[Optimal pooled cohorts are intervals]\label{cor:pool_optimal_contiguous}
+  \lean{Credibility.pool_optimal_contiguous}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$ and $c$ minimises $L$ among labellings into the labels
+  $\kappa$ (at most $|\kappa|$ cohorts), then $x_i < x_j < x_l$ and
+  $c_i = c_l$ imply $c_j = c_i$, for any variances $1/w_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pool_mse_eq_kmeansCost, lem:kmeansCost_cohortMean_le, lem:poolLoss_comp, thm:kmeans_contiguous}
+  Restrict the labels to the $m$ used by $c$. For $c'$ with these labels and
+  any centers $\mu'$, by Lemma~\ref{lem:kmeansCost_cohortMean_le} and
+  Theorem~\ref{thm:pool_mse_eq_kmeansCost},
+  $\mathrm{cost}(c',\mu') \ge \mathrm{cost}(c',\bar x') = L(c') - m(c')
+  \ge L(c) - m = \mathrm{cost}(c, \bar x)$, since $m(c') \le m$. So
+  $(c, \bar x)$ is jointly k-means optimal, and
+  Theorem~\ref{thm:kmeans_contiguous} applies.
+\end{proof}
+
 \begin{remark}[Finding 14: when optimal cohorts are intervals]\label{rem:kmeans_bridge}
-  \uses{thm:kmeans_contiguous}
+  \uses{cor:pool_optimal_contiguous}
   Units with fixed levels $x_i$ and uncorrelated estimates of variance $v_i$
   are grouped into at most $k$ cohorts, each pooled by inverse variance
   ($w_i = 1/v_i$). Then
   $\sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
   = \sum_i w_i (x_i - \bar x_{c(i)})^2 + \#\text{cohorts}$, a weighted
-  k-means cost, so by Theorem~\ref{thm:kmeans_contiguous} the optimal cohorts
-  are intervals of the sorted levels, for any $v_i$ (on paper; Lean next).
+  k-means cost (Theorem~\ref{thm:pool_mse_eq_kmeansCost}), so the optimal cohorts
+  are intervals of the sorted levels, for any $v_i$
+  (Corollary~\ref{cor:pool_optimal_contiguous}).
   With unequal $v_i$ this fails for the unweighted MSE and for a credibility
   blend towards a known $\mu$: with $x = (-\tfrac12, 0, \tfrac12)$, $\mu = 0$,
   $\tau^2 = \tfrac12$, $v = (16, \tfrac12, 16)$ and at most two cohorts,

@@ -45,8 +45,9 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
 - Section 5, "watch out" (Finding 14, on paper): choosing cohorts by
   sorting levels and cutting into intervals is exact only for
   exposure-weighted pooling; with unequal variances and a credibility blend
-  the best cohorts need not be intervals. Wait for the Lean proof
-  (`notes/kmeans-bridge.md`).
+  the best cohorts need not be intervals. Now proved: "use it" entry
+  `cor:pool_optimal_contiguous` (pooling = k-means plus #cohorts,
+  `thm:pool_mse_eq_kmeansCost`), "watch out" stays a remark (Finding 14).
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
