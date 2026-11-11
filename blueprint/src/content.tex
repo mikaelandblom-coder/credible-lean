@@ -2714,27 +2714,47 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{proof}
 
 \begin{definition}[Group levels]\label{def:KG}
-  \lean{Credibility.Model.levelCovG, Credibility.Model.KG}
+  \lean{Credibility.Model.sameGroup, Credibility.Model.levelCovG, Credibility.Model.KG}
   \leanok
-  \uses{def:Kphi, def:groupWeight}
-  The level covariance $L_G$ ($\tau^2$ on the diagonal, $\phi\tau^2$ within a
-  group, $0$ across) and $K_G = L_G + \Sigma$.
+  \uses{def:Kphi, def:groupWeight, def:shrinkOffDiag}
+  The same-group matrix $S_{ij} = [g(i) = g(j)]$, the level covariance
+  $L_G = \tau^2 S^\phi$ (damped as in Definition~\ref{def:shrinkOffDiag}:
+  $\tau^2$ on the diagonal, $\phi\tau^2$ within a group, $0$ across) and
+  $K_G = L_G + \Sigma$. With one group $S = \mathbf 1\mathbf 1^T$, and $L_G$
+  is the $L_\phi$ of Section~\ref{sec:hier_bridge2}.
 \end{definition}
 
+\begin{lemma}[The same-group matrix]\label{lem:sameGroup}
+  \lean{Credibility.Model.sameGroup_const, Credibility.Model.sameGroup_eq_sum,
+    Credibility.Model.sameGroup_posSemidef, Credibility.Model.levelCovG_apply}
+  \leanok
+  \uses{def:KG}
+  $S = \sum_g \mathbf 1_g\mathbf 1_g^T \succeq 0$, and $S = \mathbf 1\mathbf 1^T$
+  with one group. Entrywise, $(L_G)_{ij}$ is $\tau^2$ if $i = j$, $\phi\tau^2$
+  if $i \ne j$ are in the same group, and $0$ otherwise.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\sum_g (\mathbf 1_g)_i(\mathbf 1_g)_j = [g(i) = g(j)]$; a sum of
+  $vv^T \succeq 0$.
+\end{proof}
+
 \begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
-  \lean{Credibility.Model.levelCovG_apply', Credibility.Model.levelCovG_eq,
-    Credibility.Model.levelCovG_const, Credibility.Model.KG_eq}
+  \lean{Credibility.Model.levelCovG_apply', Credibility.Model.levelCovG_eq_add_sameGroup,
+    Credibility.Model.levelCovG_eq, Credibility.Model.levelCovG_const,
+    Credibility.Model.KG_eq_add_sameGroup, Credibility.Model.KG_eq}
   \leanok
   \uses{def:KG, lem:Kphi_eq}
-  $L_G = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$, so for
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S
+  = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$, so for
   $T \ge 1$ and $\phi < 1$,
-  $K_G = K(M_\phi) + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$. With one group,
+  $K_G = K(M_\phi) + \phi\tau^2 S$. With one group,
   $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ (Section~\ref{sec:hier_bridge2}).
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:levelCov_apply, lem:Kphi_zero}
-  $\sum_g (\mathbf 1_g)_i(\mathbf 1_g)_j = [g(i) = g(j)]$; then as
+  \uses{lem:sameGroup, lem:Kphi_zero}
+  Compare entries with Lemma~\ref{lem:sameGroup}; then as
   Lemma~\ref{lem:Kphi_eq}.
 \end{proof}
 
@@ -2746,8 +2766,9 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:KG_eq, lem:errCov_posSemidef}
-  $(1-\phi)\tau^2 I \succ 0$, each $\mathbf 1_g\mathbf 1_g^T \succeq 0$, and
+  \uses{thm:shrinkOffDiag_posDef, lem:sameGroup, lem:errCov_posSemidef}
+  As Theorem~\ref{thm:Kphi_posDef}: $S \succeq 0$ has unit diagonal, so
+  $S^\phi \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef}, and
   $\Sigma \succeq 0$.
 \end{proof}
 
@@ -3024,7 +3045,7 @@ levels, and the blend is the moment layer of Section~\ref{sec:core_moments}
 for $K_G$ and $L_G$.
 
 \begin{definition}[Moment assumptions with group levels]\label{def:NoiseG}
-  \lean{Credibility.Model.NoiseG, Credibility.Model.sameGroupCov,
+  \lean{Credibility.Model.NoiseG,
         Credibility.Model.NoiseG.common, Credibility.Model.NoiseG.trueMean,
         Credibility.Model.NoiseG.obs, Credibility.Model.NoiseG.cohortEst,
         Credibility.Model.NoiseG.portEst, Credibility.Model.NoiseG.blend}
@@ -3039,14 +3060,12 @@ for $K_G$ and $L_G$.
     \qquad \mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt},
   \]
   $\hmu_j = \sum_t a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$ with the GLS
-  weights of $K_G$. Write $R_{ij} = \phi\tau^2[g(i) = g(j)]$ for the
+  weights of $K_G$. Write $R = \phi\tau^2 S$ (Definition~\ref{def:KG}) for the
   covariance of the group components $\sqrt{\phi\tau^2}\gamma_{g(j)}$.
 \end{definition}
 
 \begin{lemma}[The group effect is a common component]\label{lem:G_moments_lin}
-  \lean{Credibility.Model.KG_eq_add_sameGroupCov,
-        Credibility.Model.levelCovG_eq_add_sameGroupCov,
-        Credibility.Model.NoiseG.cohortEst_eq, Credibility.Model.NoiseG.memLp_common,
+  \lean{Credibility.Model.NoiseG.cohortEst_eq, Credibility.Model.NoiseG.memLp_common,
         Credibility.Model.NoiseG.integral_common, Credibility.Model.NoiseG.cov_common,
         Credibility.Model.NoiseG.cov_γ_trueMean, Credibility.Model.NoiseG.cov_γ_obs,
         Credibility.Model.NoiseG.cov_γ_cohortEst,

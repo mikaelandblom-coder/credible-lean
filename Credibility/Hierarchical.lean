@@ -266,10 +266,38 @@ variable {J T G : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
   [Fintype G] [DecidableEq G]
 variable (M : Model J T) (grp : J → G)
 
+/-- The same-group indicator matrix: `1` if `i` and `j` are in the same group,
+`0` otherwise. -/
+def sameGroup : Matrix J J ℝ := of fun i j => if grp i = grp j then 1 else 0
+
+omit [Fintype J] [DecidableEq J] [Fintype G] in
+/-- One group: the all-ones matrix `11ᵀ`. -/
+lemma sameGroup_const (h : ∀ i j, grp i = grp j) : sameGroup grp = of fun _ _ => (1 : ℝ) := by
+  ext i j; simp [sameGroup, h i j]
+
+omit [Fintype J] [DecidableEq J] in
+/-- `Σ_g 1_g1_gᵀ`: one rank-one term per group. -/
+lemma sameGroup_eq_sum : sameGroup grp = ∑ g, vecMulVec (grpOne grp g) (grpOne grp g) := by
+  ext i j
+  simp [sameGroup, Matrix.sum_apply, vecMulVec, grpOne, eq_comm]
+
+omit [DecidableEq J] in
+/-- …hence positive semidefinite. -/
+lemma sameGroup_posSemidef : (sameGroup grp).PosSemidef := by
+  rw [sameGroup_eq_sum]
+  exact posSemidef_sum _ fun g _ => by simpa using posSemidef_vecMulVec_self_star (grpOne grp g)
+
 /-- Level covariance with several groups, each with its own shared level:
-`τ²` on the diagonal, `φτ²` within a group, `0` across groups. -/
-def levelCovG (τ2 φ : ℝ) : Matrix J J ℝ :=
-  of fun i j => if i = j then τ2 else if grp i = grp j then φ * τ2 else 0
+`τ²` on the diagonal, `φτ²` within a group, `0` across groups. It is the
+damping of `OffDiagonal.lean` applied to `τ²` times the same-group matrix. -/
+noncomputable def levelCovG (τ2 φ : ℝ) : Matrix J J ℝ := τ2 • shrinkOffDiag φ (sameGroup grp)
+
+omit [Fintype J] [Fintype G] in
+lemma levelCovG_apply (τ2 φ : ℝ) (i j : J) :
+    levelCovG grp τ2 φ i j = if i = j then τ2 else if grp i = grp j then φ * τ2 else 0 := by
+  by_cases h : i = j
+  · subst h; simp [levelCovG, shrinkOffDiag, sameGroup]
+  · by_cases hg : grp i = grp j <;> simp [levelCovG, shrinkOffDiag, sameGroup, h, hg, mul_comm]
 
 /-- The covariance of the cohort estimates with group levels: `K_G = L_G + Σ`. -/
 noncomputable def KG (φ : ℝ) : Matrix J J ℝ := levelCovG grp M.τ2 φ + M.errCov
@@ -278,42 +306,56 @@ omit [Fintype J] [Fintype G] in
 lemma levelCovG_apply' (τ2 φ : ℝ) (i j : J) :
     levelCovG grp τ2 φ i j
       = (1 - φ) * τ2 * (if i = j then 1 else 0) + φ * τ2 * (if grp i = grp j then 1 else 0) := by
+  rw [levelCovG_apply]
   by_cases h : i = j
-  · subst h; simp [levelCovG]; ring
-  · by_cases hg : grp i = grp j <;> simp [levelCovG, h, hg]
+  · subst h; simp; ring
+  · by_cases hg : grp i = grp j <;> simp [h, hg]
+
+omit [Fintype J] [Fintype G] in
+/-- `L_G = (1-φ)τ²·I + φτ²·[g(i) = g(j)]`. -/
+lemma levelCovG_eq_add_sameGroup (τ2 φ : ℝ) :
+    levelCovG grp τ2 φ = ((1 - φ) * τ2) • (1 : Matrix J J ℝ) + (φ * τ2) • sameGroup grp := by
+  ext i j
+  rw [levelCovG_apply']
+  simp [sameGroup, Matrix.one_apply]
 
 omit [Fintype J] in
 /-- `L_G = (1-φ)τ²·I + φτ²·Σ_g 1_g1_gᵀ`: one rank-one term per group. -/
 lemma levelCovG_eq (τ2 φ : ℝ) :
     levelCovG grp τ2 φ = ((1 - φ) * τ2) • (1 : Matrix J J ℝ)
       + (φ * τ2) • ∑ g, vecMulVec (grpOne grp g) (grpOne grp g) := by
-  ext i j
-  rw [levelCovG_apply']
-  simp [Matrix.sum_apply, vecMulVec, grpOne, Matrix.one_apply, eq_comm]
+  rw [levelCovG_eq_add_sameGroup, sameGroup_eq_sum]
 
 omit [Fintype J] [Fintype G] in
 /-- One group is Bridge 2: `L_G = τ²(11ᵀ)^φ`. -/
 lemma levelCovG_const (h : ∀ i j, grp i = grp j) (τ2 φ : ℝ) :
     levelCovG grp τ2 φ = levelCov τ2 φ := by
-  ext i j; rw [levelCov_apply]; simp [levelCovG, h i j]
+  rw [levelCovG, levelCov, sameGroup_const grp h]
+
+omit [Fintype J] [Fintype G] in
+/-- `K_G` is the thesis `K` for `(1-φ)τ²` plus the covariance `φτ²·[g(i) = g(j)]`
+of the group effects. -/
+lemma KG_eq_add_sameGroup [Nonempty T] {φ : ℝ} (h1 : φ < 1) :
+    M.KG grp φ = (M.withLevel φ h1).K + (φ * M.τ2) • sameGroup grp := by
+  have he : M.errCov = (M.withLevel φ h1).errCov := rfl
+  have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
+  rw [KG, levelCovG_eq_add_sameGroup, he, errCov_eq, hτ]
+  abel
 
 omit [Fintype J] in
 /-- `K_G` is the thesis `K` with `τ²` replaced by `(1-φ)τ²`, plus `φτ²·1_g1_gᵀ` per group. -/
 theorem KG_eq [Nonempty T] {φ : ℝ} (h1 : φ < 1) :
     M.KG grp φ = (M.withLevel φ h1).K + (φ * M.τ2) • ∑ g, vecMulVec (grpOne grp g) (grpOne grp g) := by
-  have he : M.errCov = (M.withLevel φ h1).errCov := rfl
-  have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
-  rw [KG, levelCovG_eq, he, errCov_eq, hτ]
-  abel
+  rw [KG_eq_add_sameGroup, sameGroup_eq_sum]
 
 /-- For `φ ∈ [0,1)`, `K_G` is positive definite. -/
 theorem KG_posDef [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
     (h1 : φ < 1) : (M.KG grp φ).PosDef := by
-  have hR : (∑ g, vecMulVec (grpOne grp g) (grpOne grp g)).PosSemidef :=
-    posSemidef_sum _ fun g _ => by simpa using posSemidef_vecMulVec_self_star (grpOne grp g)
-  rw [KG, levelCovG_eq]
-  exact (PosDef.add_posSemidef (PosDef.one.smul (mul_pos (sub_pos.mpr h1) M.τ2_pos))
-    (hR.smul (mul_nonneg h0 M.τ2_pos.le))).add_posSemidef (M.errCov_posSemidef hρ)
+  -- as for `Kφ_posDef`: damping the same-group matrix (`⪰ 0`, unit diagonal)
+  exact PosDef.add_posSemidef
+    ((posDef_shrinkOffDiag (sameGroup_posSemidef grp) h0 h1 fun _ => by simp [sameGroup]).smul
+      M.τ2_pos)
+    (M.errCov_posSemidef hρ)
 
 omit [Fintype J] [DecidableEq T] [Fintype G] in
 /-- Errors uncorrelated across groups make `K_G` block diagonal. -/
@@ -321,7 +363,7 @@ theorem KG_isBlockDiag (hρ0 : ∀ i j, grp i ≠ grp j → M.ρ i j = 0) (φ : 
     Core.IsBlockDiag grp (M.KG grp φ) := by
   intro i j h
   have hij : i ≠ j := fun e => h (e ▸ rfl)
-  simp [KG, levelCovG, errCov, hij, h, hρ0 i j h]
+  simp [KG, levelCovG_apply, errCov, hij, h, hρ0 i j h]
 
 omit [Fintype J] [Fintype G] in
 /-- …and each block is a thesis `K` plus a rank-one term: `(K_G)_g = K'_g + φτ²·11ᵀ`,
@@ -392,7 +434,7 @@ omit [DecidableEq T] [Fintype G] in
 /-- `momentsG` is the Core blend for the level covariance `L_G`. -/
 theorem momentsG_eq_levelMoments (φ : ℝ) (j : J) :
     M.momentsG grp φ j = Core.levelMoments (M.KG grp φ) (levelCovG grp M.τ2 φ) (M.τ2 + M.σ2 j j) j := by
-  simp [momentsG, Core.levelMoments, levelCovG]
+  simp [momentsG, Core.levelMoments, levelCovG_apply]
 
 /-- Eq. (26) with group levels: with `b`, `s²` the GLS weights and portfolio
 variance of `K_G` and `B_g` the total weight of the group `g` of `j`,
@@ -422,7 +464,7 @@ theorem bestZ_G_eq [Nonempty T] (hρ : (Matrix.of M.ρ).PosSemidef) {φ : ℝ} (
     simp only [mulVec, dotProduct, hx, Finset.sum_add_distrib, ← Finset.mul_sum, groupWeight,
       Finset.sum_ite_eq, Finset.mem_univ, ite_true]
   rw [M.momentsG_eq_levelMoments, Core.levelMoments_bestZ_eq hK, hL]
-  simp only [levelCovG, of_apply, ite_true]
+  simp only [levelCovG_apply, ite_true]
   ring_nf
 
 /-! ### Bridge 5: the §2.8 estimators with group levels -/
@@ -445,7 +487,7 @@ omit [Fintype J] [Fintype T] [Fintype G] in
 /-- The table `obsCovG` is symmetric, so `UnbiasedG` fixes the value (`UnbiasedCov.unique`). -/
 lemma obsCovG_symm (φ : ℝ) (p q : J × T) :
     M.obsCovG grp φ q.1 p.1 q.2 p.2 = M.obsCovG grp φ p.1 q.1 p.2 q.2 := by
-  simp only [obsCovG, levelCovG, of_apply, M.ρ_symm q.1 p.1, eq_comm (a := q.2),
+  simp only [obsCovG, levelCovG_apply, of_apply, M.ρ_symm q.1 p.1, eq_comm (a := q.2),
     eq_comm (a := q.1), eq_comm (a := grp q.1)]
   ring
 

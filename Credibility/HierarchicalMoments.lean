@@ -46,30 +46,6 @@ structure NoiseG (M : Model J T) (grp : J → G) (φ : ℝ) (h1 : φ < 1) (P : M
   cov_γ_η : ∀ g j, cov[γ g, η j; P] = 0
   cov_γ_ε : ∀ g j t, cov[γ g, ε j t; P] = 0
 
-/-- The covariance `φτ²·[g(i) = g(j)]` of the group effects of two cohorts. -/
-def sameGroupCov (grp : J → G) (c : ℝ) : Matrix J J ℝ :=
-  of fun i j => c * if grp i = grp j then 1 else 0
-
-omit [Fintype J] in
-/-- `K_G` is the thesis `K` for `(1-φ)τ²` plus the covariance of the group effects. -/
-lemma KG_eq_add_sameGroupCov [Nonempty T] (M : Model J T) (grp : J → G) {φ : ℝ} (h1 : φ < 1) :
-    M.KG grp φ = (M.withLevel φ h1).K + sameGroupCov grp (φ * M.τ2) := by
-  ext i j
-  have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
-  have hσ : (M.withLevel φ h1).σ2 = M.σ2 := rfl
-  have hρ : (M.withLevel φ h1).ρ = M.ρ := rfl
-  simp only [KG, Matrix.add_apply, levelCovG_apply', K_apply, hτ, hσ, hρ, errCov, of_apply,
-    sameGroupCov]
-  ring
-
-omit [Fintype J] [Fintype T] [DecidableEq T] in
-/-- `L_G = (1-φ)τ²·I` plus the covariance of the group effects. -/
-lemma levelCovG_eq_add_sameGroupCov (grp : J → G) (τ2 φ : ℝ) :
-    levelCovG grp τ2 φ = ((1 - φ) * τ2) • (1 : Matrix J J ℝ) + sameGroupCov grp (φ * τ2) := by
-  ext i j
-  rw [levelCovG_apply']
-  simp [sameGroupCov, Matrix.one_apply]
-
 namespace NoiseG
 
 variable {M : Model J T} {grp : J → G} {φ : ℝ} {h1 : φ < 1} {P : Measure Ω}
@@ -117,7 +93,7 @@ lemma integral_common (j : J) : P[N.common j] = 0 := by
 omit [Fintype J] [Fintype T] in
 /-- `cov(√(φτ²)γ_{g(i)}, √(φτ²)γ_{g(j)}) = φτ²·[g(i) = g(j)]`. -/
 lemma cov_common (h0 : 0 ≤ φ) (i j : J) :
-    cov[N.common i, N.common j; P] = sameGroupCov grp (φ * M.τ2) i j := by
+    cov[N.common i, N.common j; P] = (φ * M.τ2) • sameGroup grp i j := by
   unfold common
   rw [covariance_const_mul_left, covariance_const_mul_right, N.cov_γ_γ, ← mul_assoc,
     Real.mul_self_sqrt (mul_nonneg h0 M.τ2_pos.le)]
@@ -185,7 +161,7 @@ theorem cov_obs (h0 : 0 ≤ φ) (i j : J) (t s : T) :
       (N.toNoise.memLp_obs μ j s) (N.memLp_common j),
     N.toNoise.cov_obs, covariance_comm (N.toNoise.obs μ i t), cov_common_obs, cov_common_obs,
     N.cov_common h0, obsCovG, levelCovG_apply']
-  simp only [obsCov, sameGroupCov, of_apply]
+  simp only [obsCov, sameGroup, of_apply, smul_eq_mul]
   have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
   have hσ : (M.withLevel φ h1).σ = M.σ := rfl
   have hρ : (M.withLevel φ h1).ρ = M.ρ := rfl
@@ -204,8 +180,8 @@ theorem integral_quad (h0 : 0 ≤ φ) (Q : J × T → J × T → ℝ) :
 /-- The thesis estimates and levels for `(1-φ)τ²`, plus the group component:
 estimates and levels for `K' + R` and `(1-φ)τ²·I + R`, `R = φτ²·[g(i) = g(j)]`. -/
 noncomputable def addCommon [Nonempty T] (h0 : 0 ≤ φ) :
-    Core.Estimates ((M.withLevel φ h1).K + sameGroupCov grp (φ * M.τ2))
-      ((M.withLevel φ h1).τ2 • (1 : Matrix J J ℝ) + sameGroupCov grp (φ * M.τ2)) μ P :=
+    Core.Estimates ((M.withLevel φ h1).K + (φ * M.τ2) • sameGroup grp)
+      ((M.withLevel φ h1).τ2 • (1 : Matrix J J ℝ) + (φ * M.τ2) • sameGroup grp) μ P :=
   (N.toNoise.toEstimates μ).addCommon N.common _ N.memLp_common N.integral_common
     (N.cov_common h0) (N.cov_common_cohortEst μ) (N.cov_common_trueMean μ)
 
@@ -220,13 +196,13 @@ noncomputable def toEstimates [Nonempty T] (h0 : 0 ≤ φ) :
   est_mean j := by rw [N.cohortEst_eq]; exact (N.addCommon μ h0).est_mean j
   level_mean j := (N.addCommon μ h0).level_mean j
   cov_est i j := by
-    rw [N.cohortEst_eq, N.cohortEst_eq, M.KG_eq_add_sameGroupCov grp h1]
+    rw [N.cohortEst_eq, N.cohortEst_eq, M.KG_eq_add_sameGroup grp h1]
     exact (N.addCommon μ h0).cov_est i j
   cov_level_est i j := by
-    rw [N.cohortEst_eq, levelCovG_eq_add_sameGroupCov]
+    rw [N.cohortEst_eq, levelCovG_eq_add_sameGroup]
     exact (N.addCommon μ h0).cov_level_est i j
   cov_level i j := by
-    rw [levelCovG_eq_add_sameGroupCov]
+    rw [levelCovG_eq_add_sameGroup]
     exact (N.addCommon μ h0).cov_level i j
 
 omit [Fintype J] in
@@ -247,7 +223,7 @@ lemma momentsG_eq_levelMoments' (M : Model J T) (grp : J → G) (φ : ℝ) (j : 
     M.momentsG grp φ j
       = Core.levelMoments (M.KG grp φ) (levelCovG grp M.τ2 φ) (M.KG grp φ j j) j := by
   rw [momentsG_eq_levelMoments]
-  simp [KG, levelCovG, errCov, M.ρ_self]
+  simp [KG, levelCovG_apply, errCov, M.ρ_self]
 
 /-- Every field of `M.momentsG grp φ j` is the actual moment it names. -/
 theorem moments_eq [Nonempty T] (h0 : 0 ≤ φ) (hK : (M.KG grp φ).PosDef) (j : J) :
