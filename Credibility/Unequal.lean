@@ -1,5 +1,6 @@
 import Credibility.Data
 import Credibility.Core
+import Credibility.OffDiagonal
 
 /-!
 # Cohort-dependent series lengths (extension, not in the thesis)
@@ -195,6 +196,48 @@ theorem K_posDef
 /-- …in particular under the hypothesis of `Model.K_posDef`. -/
 theorem K_posDef_of_posSemidef (hρ : (Matrix.of M.ρ).PosSemidef) : M.K.PosDef :=
   M.K_posDef fun _ => hρ.submatrix _
+
+/-! ### A damped plug-in `K̂` (with `OffDiagonal.lean`)
+
+Read `M` as the plug-in model: estimates `σ̂ⱼₜ` and `ρ̂ᵢⱼ` in place of `σⱼₜ`, `ρᵢⱼ`.
+The estimate `τ̂²` may be `≤ 0`; truncated at zero, `K̂ = Σ̂ + τ̂²I` need not be
+positive definite. Damping the correlations repairs this. -/
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+/-- `σ²ⱼⱼ > 0`: every cohort is observed at least once. -/
+lemma σ2_self_pos (j : J) : 0 < M.σ2 j j := by
+  obtain ⟨t, ht⟩ := M.obs_nonempty j
+  have hS : 0 < ∑ s ∈ M.obs j, (M.σ j s ^ 2)⁻¹ :=
+    sum_pos (fun s _ => inv_pos.mpr (pow_pos (M.σ_pos j s) 2)) ⟨t, ht⟩
+  have term : ∀ s, M.a j s * M.a j s * M.σ j s * M.σ j s = (M.a j s * M.σ j s) ^ 2 :=
+    fun s => by ring
+  refine sum_pos' (fun s _ => by rw [term]; exact sq_nonneg _) ⟨t, by simp [overlap, ht], ?_⟩
+  rw [term]
+  have ha : 0 < M.a j t := by
+    simp only [a, ht, ite_true]
+    exact div_pos (inv_pos.mpr (pow_pos (M.σ_pos j t) 2)) hS
+  exact pow_pos (mul_pos ha (M.σ_pos j t)) 2
+
+omit [Fintype J] [Fintype T] in
+/-- Damping the correlations damps `Σ`: off the diagonal `σ²ᵢⱼ(θρᵢⱼ) = θ(σ²ᵢⱼρᵢⱼ)`, and the
+diagonal `σ²ⱼⱼρⱼⱼ` is kept. -/
+theorem shrinkOffDiag_errCov (θ : ℝ) :
+    shrinkOffDiag θ M.errCov = of fun i j => M.σ2 i j * shrinkOffDiag θ (of M.ρ) i j := by
+  ext i j
+  by_cases h : i = j <;> simp [shrinkOffDiag, errCov, h]
+  ring
+
+/-- **Damped plug-in `K̂`.** If the estimated correlations `ρ̂` form a positive
+semidefinite matrix, damping them by `θ ∈ [0,1)` gives `K̂ = Σ̂^θ + τ̂²I ≻ 0` for every
+`τ̂² ≥ 0`, including `τ̂²` truncated at zero: the weights `b` and the credibility
+factors `z` are always defined. -/
+theorem dampedK_posDef (hρ : (of M.ρ).PosSemidef) {θ : ℝ} (h0 : 0 ≤ θ) (h1 : θ < 1)
+    {τ2' : ℝ} (hτ : 0 ≤ τ2') :
+    (shrinkOffDiag θ M.errCov + τ2' • (1 : Matrix J J ℝ)).PosDef := by
+  have hE : M.errCov.PosSemidef := M.errCov_posSemidef fun _ => hρ.submatrix _
+  have hd : ∀ j, 0 < M.errCov j j := fun j => by
+    simpa [errCov, M.ρ_self] using M.σ2_self_pos j
+  exact (posDef_shrinkOffDiag hE h0 h1 hd).add_posSemidef (PosSemidef.one.smul hτ)
 
 /-! ### Weights and the credibility factor (eqs. (24)–(26)): only `K` changes -/
 

@@ -61,6 +61,8 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
    `thm:Core_bestZ_eq`.
 5. `K` is positive definite (Finding 1: semidefinite is not enough) and
    `J ≥ 2` is needed (Finding 2).
+5a. Damped plug-in `K̂`: `ρ̂ ⪰ 0`, `θ ∈ [0,1)`, `τ̂² ≥ 0` (truncated) give
+   `K̂ ≻ 0` — `thm:U_dampedK_posDef` (drafted).
 
 ## 2. Special cases (1.5 pages)
 6. Bühlmann–Straub at `ρ = 0`, and it is balanced — `thm:bs_z`, `thm:bs_balance`.
@@ -87,9 +89,8 @@ Status: sections 0–1 drafted in `handbook.tex`; 2–5 to write.
 15. A shared group level drops out of credibility; two-stage GLS —
     `thm:bestZ_phi_eq`, `thm:glsWeight_blockDiag`.
 
-Waiting list (in once they prove useful for credibility): damping
-off-diagonals keeps PD (`thm:shrinkOffDiag_posDef`); optimal 1-D k-means
-groups are intervals (`thm:kmeans_contiguous`).
+Waiting list (in once they prove useful for credibility): optimal 1-D
+k-means groups are intervals (`thm:kmeans_contiguous`). (Damping is in, as 5a.)
 
 ## Open choices for the owner
 - Commentary voice: the thesis's, or a looser handbook tone?

@@ -2261,6 +2261,63 @@ matrices whose correlations are damped by a common factor $\rho$.
   $\succ 0$ when $\rho < 1$ and the diagonal is positive.
 \end{proof}
 
+\section{Application: a damped plug-in $\hat K$}
+
+In practice $K$ is estimated: plug $\hat\sigma_{jt}$ and $\hat\rho_{ij}$ into the
+model (with unequal lengths, Chapter~\ref{ch:unequal}, the thesis being $T_j = T$).
+The estimate $\hat\tau^2$ can be $\le 0$, and truncated at zero
+$\hat K = \hat\Sigma + \hat\tau^2 I$ is only positive \emph{semi}definite
+(Remark~\ref{rem:posdef}). Damping the correlations repairs this.
+
+\begin{lemma}[Every cohort has positive variance]\label{lem:U_sigma2_self_pos}
+  \lean{Credibility.Unequal.σ2_self_pos}
+  \leanok
+  \uses{def:U_errCov}
+  $\sigma^2_{jj} > 0$ for every $j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\sigma^2_{jj} = \sum_{t \in T_j} (a_{jt}\sigma_{jt})^2$, and $T_j$ is not empty.
+\end{proof}
+
+\begin{lemma}[Damping $\rho$ is damping $\Sigma$]\label{lem:U_shrinkOffDiag_errCov}
+  \lean{Credibility.Unequal.shrinkOffDiag_errCov}
+  \leanok
+  \uses{def:U_errCov, def:shrinkOffDiag}
+  $\Sigma^\theta_{ij} = \sigma^2_{ij}\,\rho^\theta_{ij}$: damping the
+  correlations by $\theta$ damps the off-diagonal of $\Sigma$ by $\theta$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; $\rho_{jj} = 1$.
+\end{proof}
+
+\begin{theorem}[A damped plug-in $\hat K$ is positive definite]\label{thm:U_dampedK_posDef}
+  \lean{Credibility.Unequal.dampedK_posDef}
+  \leanok
+  \uses{lem:U_shrinkOffDiag_errCov}
+  If $(\hat\rho_{ij}) \succeq 0$, $0 \le \theta < 1$ and $\hat\tau^2 \ge 0$, then
+  $\hat K = \hat\Sigma^\theta + \hat\tau^2 I \succ 0$. So $b$, $s^2$ and $z_j$
+  are defined even when $\hat\tau^2$ is truncated at zero.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_errCov_posSemidef, lem:U_sigma2_self_pos, thm:shrinkOffDiag_posDef}
+  $\hat\Sigma \succeq 0$ (Lemma~\ref{lem:U_errCov_posSemidef}) with positive
+  diagonal (Lemma~\ref{lem:U_sigma2_self_pos}), so
+  $\hat\Sigma^\theta \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef};
+  adding $\hat\tau^2 I \succeq 0$ keeps it.
+\end{proof}
+
+\begin{remark}[Finding 1 in practice]\label{rem:damped_plugin}
+  \uses{thm:U_dampedK_posDef, rem:posdef}
+  Without damping, $\hat\tau^2 = 0$ and a singular $\hat\rho$ (e.g.\ two
+  cohorts with $\hat\rho_{12} = 1$ and proportional $\hat\sigma$) give a
+  singular $\hat K$. Any $\theta < 1$ fixes this, and $\theta$ close to $1$
+  changes $\hat K$ little. Damping does not make an indefinite $\hat\rho$
+  positive semidefinite: that hypothesis stays.
+\end{remark}
+
 \chapter{Extension: a shared group level}\label{ch:hierarchical}
 % Not in the thesis: first bridge to two-level credibility (Finding 6).
 % Lean: Credibility/Hierarchical.lean; rank-one and block-diagonal K in Core.lean,

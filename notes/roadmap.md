@@ -15,9 +15,9 @@ done; details of finished work live in `README.md` and `FINDINGS.md`.
   (`notes/merging-cohorts.md`) has a pair-dependent scale, so contiguity may
   fail: a counterexample would be a finding. Unverified: state it on paper
   first.
-- [ ] **Damping bridge.** `shrinkOffDiag_posDef` is used by nothing. Target:
-  a damped plug-in `K̂` is positive definite whenever `ρ̂` is PSD, so `z` is
-  always defined. Answers Finding 1 in practice; a handbook "use it" entry.
+- [x] **Damping bridge** (done 2026-11-11: `Unequal.dampedK_posDef`, holds for
+  any `τ̂² ≥ 0`, so truncating `τ̂²` at zero is safe; handbook result
+  `res:damped`).
 - [x] **Moment layer once, for a level covariance `L`** (done 2026-11-10:
   `Core.Estimates`, `HierarchicalMoments.lean`).
 - [ ] **Housekeeping.** Handbook sections 2–5; README status paragraph

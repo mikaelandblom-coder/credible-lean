@@ -219,9 +219,28 @@ classical one exactly.
 \begin{caveat}
   A covariance matrix is only positive \emph{semi}definite in general; here
   $\tau^2 > 0$ is what lifts it. If you estimate $\rho$ entry by entry, the
-  table you get need not be positive semidefinite. Check it (or damp the
-  off-diagonal entries) before inverting $K$.
+  table you get need not be positive semidefinite. Check it before inverting
+  $K$; if it fails, repair it first (e.g.\ clip negative eigenvalues).
 \end{caveat}
+
+\begin{result}[A damped plug-in $\hat K$ is positive definite]\label{res:damped}
+  Plug estimates $\hat\sigma_{jt}$, $\hat\rho_{ij}$ into $K$, multiply the
+  off-diagonal correlations by a factor $\theta$ with $0 \le \theta < 1$, and
+  use any $\hat\tau^2 \ge 0$. If the table $(\hat\rho_{ij})$ is positive
+  semidefinite, then
+  \[
+    \hat K_{ij} = \hat\sigma^2_{ij}\,\theta^{[i\ne j]}\hat\rho_{ij} + \hat\tau^2\delta_{ij}
+  \]
+  is positive definite. This also holds with unequal series lengths.
+  \lean{Credibility.Unequal.dampedK_posDef}
+\end{result}
+\use The estimate $\hat\tau^2$ is often negative; truncate it at zero and
+damp the correlations a little (say $\theta = 0.95$). Then $b$, $s^2$ and every
+$z_j$ are defined, whatever the data. Without damping, $\hat\tau^2 = 0$ and two
+cohorts with $\hat\rho_{12} = 1$ can make $\hat K$ singular.
+\why Damping moves $\hat K$ towards its diagonal, the Bühlmann--Straub $K$ of
+uncorrelated cohorts, which is positive definite on its own. Damping does not
+rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 
 \begin{caveat}
   You need at least two cohorts. With $J = 1$, $b_1 = 1$ and
