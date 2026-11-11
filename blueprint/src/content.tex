@@ -3442,6 +3442,22 @@ not apply, but a swap argument does.
   $a = c(i)$.
 \end{definition}
 
+\begin{lemma}[The blend pools by \eqth{23}]\label{lem:blend_pool_eq}
+  \lean{Credibility.blend_pool_eq}
+  \leanok
+  \uses{def:blendLoss}
+  If $V > 0$, give every unit the exposure $w_i = 1/V$. Then the pooled mean
+  and variance of Definition~\ref{def:poolLoss} are the plain mean
+  $\bar x_a$ and $V/n_a$ used in $B$: the blend shrinks the \eqth{23} pool
+  of each cohort.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortMean_eq, lem:poolVar_eq}
+  With equal weights $1/V$ cancels in the mean, and
+  $1/W_a = 1/(n_a/V) = V/n_a$ (Lemma~\ref{lem:poolVar_eq}).
+\end{proof}
+
 \begin{lemma}[Only size and sum matter]\label{lem:blendLoss_eq}
   \lean{Credibility.blendLoss_eq}
   \leanok

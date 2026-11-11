@@ -253,6 +253,23 @@ noncomputable def blendLoss (V τ2 μ : ℝ) (x : ι → ℝ) (c : ι → κ) : 
   ∑ i, ((μ + sizeZ V τ2 (groupWeight c 1 (c i)) * (cohortMean 1 x c (c i) - μ) - x i) ^ 2
     + sizeZ V τ2 (groupWeight c 1 (c i)) ^ 2 * (V / groupWeight c 1 (c i)))
 
+/-- **The blend pools by eq. (23)**: with a common variance `V > 0` (exposures
+`1/V`), the pooled mean and variance of `cohortMean` and `poolVar` are the
+plain mean `cohortMean 1` and `V/nₐ` used in `blendLoss`. -/
+theorem blend_pool_eq {V : ℝ} (hV : 0 < V) (x : ι → ℝ) (c : ι → κ) (i : ι) :
+    cohortMean (fun _ => V⁻¹) x c (c i) = cohortMean 1 x c (c i)
+      ∧ poolVar (fun _ => V⁻¹) c (c i) = V / groupWeight c 1 (c i) := by
+  have hW : groupWeight c (fun _ => V⁻¹) (c i) = V⁻¹ * groupWeight c 1 (c i) := by
+    simp only [groupWeight_eq_filter, mul_sum, Pi.one_apply, mul_one]
+  have hN := (groupWeight_pos (fun _ => one_pos) c i).ne'
+  have hV' := hV.ne'
+  refine ⟨?_, ?_⟩
+  · rw [cohortMean_eq, cohortMean_eq, hW, ← mul_sum]
+    simp only [Pi.one_apply, one_mul]
+    field_simp
+  · rw [poolVar_eq (fun _ => inv_pos.mpr hV), hW]
+    field_simp
+
 /-- The part of the blend loss that depends on the cohorts: a cohort of size
 `n` and summed deviation `S = Σ (xᵢ - μ)` contributes `z(2 - z)/n · S² - z²V`. -/
 noncomputable def blendGain (V τ2 n S : ℝ) : ℝ :=
