@@ -566,6 +566,13 @@ itself, so $\phi$ cannot be estimated from one portfolio.
   \lean{Credibility.Model.bestZ_G_eq}
   \lean{Credibility.Model.NoiseG.bestZ_mse_optimal}
   \lean{Credibility.Model.exists_noiseG_iff}
+  All of this holds with cohort-dependent lengths $T_j$ too, with
+  $\rho \succeq 0$ replaced by the block condition of
+  Result~\ref{res:unequal}.
+  \lean{Credibility.Unequal.KG_posDef}
+  \lean{Credibility.Unequal.bestZ_G_eq}
+  \lean{Credibility.Unequal.NoiseG.bestZ_mse_optimal}
+  \lean{Credibility.Unequal.exists_noiseG_iff}
 \end{result}
 \use Compared with Result~\ref{res:z}, the shared part $\phi\tau^2$ is
 discounted by the weight $B_g$ of the whole group, not of the cohort alone:

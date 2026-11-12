@@ -16,8 +16,7 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Open: the moment layer for unequal lengths with groups
-  (`Hierarchical.lean` is on `Model` only).
+- (none)
 
 
 ## 0. Setting and notation (1 page)
@@ -71,7 +70,8 @@ voice, then trim towards 8 pages.
 15. A shared level drops out (one group); several groups: `z` with `B_g`,
     true MSE, consistency; two-stage GLS; estimation biased with several
     groups, `φτ²` from pairs (Finding 13) — `thm:bestZ_phi_eq`,
-    `thm:bestZ_G_eq`, `thm:G_bestZ_mse`, `thm:G_exists_noise`,
+    `thm:bestZ_G_eq`, `thm:G_bestZ_mse`, `thm:G_exists_noise`, with unequal lengths
+    `thm:U_bestZ_G_eq`, `thm:U_G_bestZ_mse`, `thm:U_G_exists_noise`,
     `thm:glsWeight_blockDiag`, `thm:estimation_G`, `cor:KHat_G_iff`,
     `cor:phiTauHat`, `thm:G_integral_quad`.
 16. Choosing cohorts (drafted): optimal cohorts are intervals of the sorted

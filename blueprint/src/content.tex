@@ -3178,6 +3178,157 @@ for $K_G$ and $L_G$.
   witness.
 \end{proof}
 
+\subsection*{Group levels with unequal lengths}
+% Lean: Credibility/Hierarchical.lean (end), Credibility/HierarchicalMoments.lean (end)
+
+Group levels combine with cohort-dependent lengths (Chapter~\ref{ch:unequal}):
+only the error covariance $\Sigma$ changes (shared periods only), so $K_G$
+stays positive definite under the block condition, and the moment layer is
+that of Definition~\ref{def:U_Noise} plus the group component.
+
+\begin{definition}[Group levels with unequal lengths]\label{def:U_KG}
+  \lean{Credibility.Unequal.withLevel, Credibility.Unequal.KG, Credibility.Unequal.momentsG}
+  \leanok
+  \uses{def:KG, def:U_errCov, def:Core.levelMoments}
+  For the model of Definition~\ref{def:Unequal}: $M_\phi$ with level variance
+  $(1-\phi)\tau^2$, $K_G = L_G + \Sigma$ with $\Sigma$ of
+  Definition~\ref{def:U_errCov}, and the blend moments of
+  Definition~\ref{def:Core.levelMoments} for $K_G$, $L_G$ and
+  $d = \tau^2 + \sigma^2_{jj}$.
+\end{definition}
+
+\begin{lemma}\label{lem:U_KG_eq}
+  \lean{Credibility.Unequal.KG_eq_add_sameGroup, Credibility.Unequal.momentsG_eq_levelMoments'}
+  \leanok
+  \uses{def:U_KG}
+  For $\phi < 1$, $K_G = K(M_\phi) + \phi\tau^2 S$, and $d = (K_G)_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:KG_eq, lem:U_K_eq_errCov}
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S$ (Lemma~\ref{lem:KG_eq}) and
+  $K(M_\phi) = \Sigma + (1-\phi)\tau^2 I$ (Lemma~\ref{lem:U_K_eq_errCov}).
+\end{proof}
+
+\begin{theorem}[$K_G$ is positive definite with unequal lengths]\label{thm:U_KG_posDef}
+  \lean{Credibility.Unequal.KG_posDef}
+  \leanok
+  \uses{def:U_KG}
+  If every block $R_t$ is positive semidefinite and $0 \le \phi < 1$, then
+  $K_G \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:shrinkOffDiag_posDef, lem:sameGroup, lem:U_errCov_posSemidef}
+  As Theorem~\ref{thm:KG_posDef}, with Lemma~\ref{lem:U_errCov_posSemidef}
+  for $\Sigma \succeq 0$.
+\end{proof}
+
+\begin{theorem}[Eq.\ (26) with group levels and unequal lengths]\label{thm:U_bestZ_G_eq}
+  \lean{Credibility.Unequal.bestZ_G_eq}
+  \leanok
+  \uses{def:U_KG}
+  Under the hypotheses of Theorem~\ref{thm:U_KG_posDef}, the formula of
+  Theorem~\ref{thm:bestZ_G_eq} holds with $b$, $s^2$ from this $K_G$ and
+  $\sigma^2_{jj}$ over $T_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_KG_posDef, lem:KG_eq, thm:Core_levelMoments_bestZ_eq}
+  As Theorem~\ref{thm:bestZ_G_eq}.
+\end{proof}
+
+\begin{definition}[Moment assumptions with group levels on observed cells]\label{def:U_NoiseG}
+  \lean{Credibility.Unequal.NoiseG,
+        Credibility.Unequal.NoiseG.common, Credibility.Unequal.NoiseG.trueMean,
+        Credibility.Unequal.NoiseG.obsVal, Credibility.Unequal.NoiseG.cohortEst,
+        Credibility.Unequal.NoiseG.portEst, Credibility.Unequal.NoiseG.blend}
+  \leanok
+  \uses{def:U_Noise, def:NoiseG, def:U_KG}
+  As Definition~\ref{def:NoiseG}, with $\eta$, $\varepsilon$ as in
+  Definition~\ref{def:U_Noise} for level variance $(1-\phi)\tau^2$ (noise only
+  on observed cells), $\gamma_g$ uncorrelated with the observed
+  $\varepsilon_{jt}$, $\hmu_j = \sum_{t\in T_j} a_{jt}\mu_{jt}$, and GLS weights
+  of $K_G$ (Definition~\ref{def:U_KG}).
+\end{definition}
+
+\begin{lemma}[The group effect is a common component]\label{lem:U_G_moments_lin}
+  \lean{Credibility.Unequal.NoiseG.cohortEst_eq, Credibility.Unequal.NoiseG.memLp_common,
+        Credibility.Unequal.NoiseG.integral_common, Credibility.Unequal.NoiseG.cov_common,
+        Credibility.Unequal.NoiseG.cov_γ_trueMean, Credibility.Unequal.NoiseG.cov_γ_obsVal,
+        Credibility.Unequal.NoiseG.cov_γ_cohortEst,
+        Credibility.Unequal.NoiseG.cov_common_trueMean,
+        Credibility.Unequal.NoiseG.cov_common_obsVal,
+        Credibility.Unequal.NoiseG.cov_common_cohortEst,
+        Credibility.Unequal.NoiseG.memLp_obsVal,
+        Credibility.Unequal.NoiseG.addCommon, Credibility.Unequal.NoiseG.toEstimates}
+  \leanok
+  \uses{def:U_NoiseG, def:Core_Estimates, lem:Core_addCommon}
+  Let $0 \le \phi < 1$. Since $\sum_{t\in T_j} a_{jt} = 1$, $\hmu_j$ and $\mu_j$
+  are those of Definition~\ref{def:U_Noise} for $(1-\phi)\tau^2$ plus
+  $\sqrt{\phi\tau^2}\gamma_{g(j)}$, so they are estimates and levels in the
+  sense of Definition~\ref{def:Core_Estimates} for $K_G$ and $L_G$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_moments_lin}
+  Lemma~\ref{lem:Core_addCommon} on top of Lemma~\ref{lem:U_moments_lin}, as
+  Lemma~\ref{lem:G_moments_lin}.
+\end{proof}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:U_G_cov_obs}
+  \lean{Credibility.Unequal.NoiseG.obsVal_mean, Credibility.Unequal.NoiseG.cov_obsVal,
+        Credibility.Unequal.NoiseG.cov_cohortEst, Credibility.Unequal.NoiseG.cov_trueMean,
+        Credibility.Unequal.NoiseG.integral_quad}
+  \leanok
+  \uses{def:U_NoiseG, def:EG, def:U_KG}
+  For $0 \le \phi < 1$ and observed cells $t\in T_i$, $s\in T_j$:
+  $\mathbb E\mu_{jt} = \mu$,
+  $\cov(\mu_{it},\mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$,
+  $\cov(\mu_i,\mu_j) = (L_G)_{ij}$ and $\cov(\hmu_i,\hmu_j) = (K_G)_{ij}$. A
+  quadratic form reading only observed cells has the expectation of
+  Definition~\ref{def:EG}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin, thm:U_cov_obs, thm:integral_quad_cov}
+  As Theorems~\ref{thm:G_cov_obs} and~\ref{thm:G_integral_quad}, on top of
+  Theorem~\ref{thm:U_cov_obs}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with group levels and unequal lengths]\label{thm:U_G_bestZ_mse}
+  \lean{Credibility.Unequal.NoiseG.moments_eq, Credibility.Unequal.NoiseG.mse_blend,
+        Credibility.Unequal.NoiseG.bestZ_mse_optimal}
+  \leanok
+  \uses{def:U_NoiseG, def:U_KG, thm:U_bestZ_G_eq}
+  If $0 \le \phi < 1$ and $K_G \succ 0$ (Theorem~\ref{thm:U_KG_posDef}), each
+  blend moment is the moment it names, the mean squared error is \eqth{6}, and
+  if $\Var(\hmu_j - \hmu) > 0$ the factor of Theorem~\ref{thm:U_bestZ_G_eq}
+  minimises it, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin, lem:U_KG_eq, thm:Core_bestZ_mse, thm:bestZ_optimal}
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
+  Lemma~\ref{lem:U_G_moments_lin}.
+\end{proof}
+
+\begin{theorem}[Consistent iff every block is PSD, with group levels]\label{thm:U_G_exists_noise}
+  \lean{Credibility.Unequal.exists_noiseG_iff, Credibility.Unequal.Noise.comp}
+  \leanok
+  \uses{def:U_NoiseG, thm:U_exists_noise}
+  Let $\phi < 1$. Random variables as in Definition~\ref{def:U_NoiseG} exist on
+  some probability space iff every block $R_t$ is positive semidefinite: as
+  without unequal lengths, group effects add no constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_exists_noise}
+  As Theorem~\ref{thm:G_exists_noise}, with Theorem~\ref{thm:U_exists_noise}
+  in place of Theorem~\ref{thm:exists_noise}: the blocks of $M_\phi$ are those
+  of $M$.
+\end{proof}
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean

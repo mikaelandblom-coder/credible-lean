@@ -791,4 +791,91 @@ theorem KHat_unbiasedφ (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) 
   by_cases hij : i = j <;> simp [hij, errCov]; ring
 
 end Model
+
+/-! ### Group levels with unequal lengths
+
+The `K`-level objects of Bridge 4 for `Unequal`: only the error covariance
+changes (`Unequal.errCov`, on the shared periods), so `K_G = L_G + Σ` is
+positive definite as soon as every block `ρ_t` is (`Unequal.KG_posDef`). The
+level covariance `L_G` and the observation covariance `obsCovG` are those of
+the underlying `Model` (`M.toModel`). -/
+
+namespace Unequal
+
+variable {J T G : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+  [DecidableEq G]
+variable (M : Unequal J T) (grp : J → G)
+
+/-- The unequal-lengths model with the non-shared level variance `(1-φ)τ²`. -/
+def withLevel (φ : ℝ) (h1 : φ < 1) : Unequal J T :=
+  { M with toModel := M.toModel.withLevel φ h1 }
+
+/-- `K_G = L_G + Σ` with unequal lengths: `Σᵢⱼ = σ²ᵢⱼρᵢⱼ` over the shared periods. -/
+noncomputable def KG (φ : ℝ) : Matrix J J ℝ := Model.levelCovG grp M.τ2 φ + M.errCov
+
+omit [Fintype J] [Fintype T] in
+/-- `K_G` is `K` for `(1-φ)τ²` plus the covariance `φτ²·[g(i) = g(j)]` of the
+group effects. -/
+lemma KG_eq_add_sameGroup {φ : ℝ} (h1 : φ < 1) :
+    M.KG grp φ = (M.withLevel φ h1).K + (φ * M.τ2) • Model.sameGroup grp := by
+  have he : M.errCov = (M.withLevel φ h1).errCov := rfl
+  have hτ : (M.withLevel φ h1).τ2 = (1 - φ) * M.τ2 := rfl
+  rw [KG, Model.levelCovG_eq_add_sameGroup, he, Unequal.K_eq_errCov, hτ]
+  abel
+
+/-- For `φ ∈ [0,1)`, `K_G` is positive definite when every block `ρ_t` is
+positive semidefinite (the hypothesis of `Unequal.K_posDef`). -/
+theorem KG_posDef [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ) (h1 : φ < 1) :
+    (M.KG grp φ).PosDef :=
+  PosDef.add_posSemidef
+    ((posDef_shrinkOffDiag (Model.sameGroup_posSemidef grp) h0 h1
+      fun _ => by simp [Model.sameGroup]).smul M.τ2_pos)
+    (M.errCov_posSemidef hρ)
+
+/-- The moments entering the blend for cohort `j` with group levels and unequal
+lengths: the Core blend for `K_G`, the level covariance `L_G` and
+`Var(μ̂ⱼ) = τ² + σ²ⱼⱼ`. -/
+noncomputable def momentsG (φ : ℝ) (j : J) : BlendMoments :=
+  Core.levelMoments (M.KG grp φ) (Model.levelCovG grp M.τ2 φ) (M.τ2 + M.σ2 j j) j
+
+omit [Fintype T] in
+/-- `momentsG` is the Core blend with `Var(μ̂ⱼ) = (K_G)ⱼⱼ`. -/
+lemma momentsG_eq_levelMoments' (φ : ℝ) (j : J) :
+    M.momentsG grp φ j
+      = Core.levelMoments (M.KG grp φ) (Model.levelCovG grp M.τ2 φ) (M.KG grp φ j j) j := by
+  simp [momentsG, KG, Model.levelCovG_apply, errCov, M.ρ_self]
+
+variable {grp}
+
+/-- Eq. (26) with group levels and unequal lengths: as `Model.bestZ_G_eq`,
+`zⱼ = ((1-φ)τ²(1 - bⱼ) + φτ²(1 - B_g)) / (τ² + σ²ⱼⱼ - s²)` with `b`, `s²` the
+GLS weights and portfolio variance of `K_G`. -/
+theorem bestZ_G_eq [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (h0 : 0 ≤ φ)
+    (h1 : φ < 1) (j : J) :
+    (M.momentsG grp φ j).bestZ
+      = ((1 - φ) * M.τ2 * (1 - glsWeight (M.KG grp φ) j)
+          + φ * M.τ2 * (1 - groupWeight grp (glsWeight (M.KG grp φ)) (grp j)))
+        / (M.τ2 + M.σ2 j j - (invTotal (M.KG grp φ))⁻¹) := by
+  have hK := M.KG_posDef grp hρ h0 h1
+  set b := glsWeight (M.KG grp φ)
+  have hL : (Model.levelCovG grp M.τ2 φ *ᵥ b) j
+      = (1 - φ) * M.τ2 * b j + φ * M.τ2 * groupWeight grp b (grp j) := by
+    have hx : ∀ x, Model.levelCovG grp M.τ2 φ j x * b x
+        = (1 - φ) * M.τ2 * (if j = x then b x else 0)
+          + φ * M.τ2 * (if grp x = grp j then b x else 0) := by
+      intro x
+      rw [Model.levelCovG_apply']
+      by_cases h : j = x
+      · subst h; simp; ring
+      · by_cases hg : grp x = grp j
+        · simp only [h, hg, ite_true, ite_false]; ring
+        · have hg' : ¬grp j = grp x := fun e => hg e.symm
+          simp only [h, hg, hg', ite_false]; ring
+    simp only [mulVec, dotProduct, hx, Finset.sum_add_distrib, ← Finset.mul_sum, groupWeight,
+      Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  rw [momentsG, Core.levelMoments_bestZ_eq hK, hL]
+  simp only [Model.levelCovG_apply, ite_true]
+  ring_nf
+
+end Unequal
 end Credibility

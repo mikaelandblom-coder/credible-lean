@@ -31,8 +31,9 @@ tactics.
   `K_G`, the §2.8 estimators under `Unbiasedφ`/`UnbiasedG`, Bridge 3 as the one-group case of
   Bridge 5) → `Credibility/Hierarchical.lean`; group weights `B_g` and the same-group share `π`
   → `Credibility/GroupWeights.lean`; its moment layer (group effects `γ_g`, `K_G` and `L_G` as actual
-  covariances, true MSE; a common component on top of `Moments` via `Core.Estimates.addCommon`)
-  → `Credibility/HierarchicalMoments.lean`
+  covariances, true MSE; a common component on top of `Moments` via `Core.Estimates.addCommon`;
+  with unequal lengths: `Unequal.KG`/`momentsG` at the end of `Hierarchical.lean`, `Unequal.NoiseG`
+  on top of `UnequalMoments`) → `Credibility/HierarchicalMoments.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
