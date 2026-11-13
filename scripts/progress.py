@@ -114,8 +114,14 @@ EXEMPT = {
     "the `Unequal` one (that needs a whole `Unequal` model); both are one-line `Finset.sum_pos`",
     "memLp_trueMean": "deleting `Model.Noise.memLp_trueMean` for the `Unequal` one "
     "(via `toUnequal`) would add `[Fintype T]` to `memLp_obs` and `cov_γ_obs`",
-    "cov_trueMean": "different statements (τ²I vs `L_G`); the `NoiseG` one is one line "
-    "from the Core layer, which gets it from the `Unequal` one",
+    "cov_obs": "`Model.Noise.cov_obs` and `Model.NoiseG.cov_obs` are about different random variables (without and with group effects); each is the case `Tⱼ = T` of its own `Unequal` twin (`cov_obsVal`)",
+    "memLp_obs": "`Model.Noise.memLp_obs` and `Model.NoiseG.memLp_obs` are about different random variables (without and with group effects); each is the case `Tⱼ = T` of its own `Unequal` twin (`memLp_obsVal`)",
+    "obs_mean": "`Model.Noise.obs_mean` and `Model.NoiseG.obs_mean` are about different random variables (without and with group effects); each is the case `Tⱼ = T` of its own `Unequal` twin (`obsVal_mean`)",
+    "toUnequal_blend": "the bridges `Model.Noise.toUnequal_blend` and `Model.NoiseG.toUnequal_blend` to `Tⱼ = T` are for different random variables (without and with group effects)",
+    "toUnequal_cohortEst": "the bridges `Model.Noise.toUnequal_cohortEst` and `Model.NoiseG.toUnequal_cohortEst` to `Tⱼ = T` are for different random variables (without and with group effects)",
+    "toUnequal_obsVal": "the bridges `Model.Noise.toUnequal_obsVal` and `Model.NoiseG.toUnequal_obsVal` to `Tⱼ = T` are for different random variables (without and with group effects)",
+    "toUnequal_portEst": "the bridges `Model.Noise.toUnequal_portEst` and `Model.NoiseG.toUnequal_portEst` to `Tⱼ = T` are for different random variables (without and with group effects)",
+    "toUnequal_trueMean": "the bridges `Model.Noise.toUnequal_trueMean` and `Model.NoiseG.toUnequal_trueMean` to `Tⱼ = T` are for different random variables (without and with group effects)",
 }
 
 

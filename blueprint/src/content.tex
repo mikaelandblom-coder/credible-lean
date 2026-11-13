@@ -3082,40 +3082,29 @@ for $K_G$ and $L_G$.
   covariance of the group components $\sqrt{\phi\tau^2}\gamma_{g(j)}$.
 \end{definition}
 
-\begin{lemma}[The group effect is a common component]\label{lem:G_moments_lin}
-  \lean{Credibility.Model.NoiseG.cohortEst_eq, Credibility.Model.NoiseG.memLp_common,
-        Credibility.Model.NoiseG.integral_common, Credibility.Model.NoiseG.cov_common,
-        Credibility.Model.NoiseG.cov_γ_trueMean, Credibility.Model.NoiseG.cov_γ_obs,
-        Credibility.Model.NoiseG.cov_γ_cohortEst,
-        Credibility.Model.NoiseG.cov_common_trueMean,
-        Credibility.Model.NoiseG.cov_common_obs,
-        Credibility.Model.NoiseG.cov_common_cohortEst, Credibility.Model.NoiseG.memLp_obs,
-        Credibility.Model.NoiseG.addCommon, Credibility.Model.NoiseG.toEstimates,
-        Credibility.Model.NoiseG.momentsG_eq_levelMoments'}
+\begin{lemma}[Back to unequal lengths]\label{lem:G_toUnequal}
+  \lean{Credibility.Model.NoiseG.toUnequal, Credibility.Model.NoiseG.ofUnequal,
+        Credibility.Model.NoiseG.toUnequal_trueMean, Credibility.Model.NoiseG.toUnequal_obsVal,
+        Credibility.Model.NoiseG.toUnequal_cohortEst, Credibility.Model.NoiseG.toUnequal_portEst,
+        Credibility.Model.NoiseG.toUnequal_blend}
   \leanok
-  \uses{def:NoiseG, def:Core_Estimates, def:momentsG, lem:Core_addCommon}
-  Let $0 \le \phi < 1$ and $T \ne \emptyset$. Then $K_G = K' + R$ and
-  $L_G = (1-\phi)\tau^2 I + R$, with $K'$ the thesis $K$ for $(1-\phi)\tau^2$.
-  Since $\sum_t a_{jt} = 1$, $\hmu_j$ is the thesis cohort estimate for
-  $(1-\phi)\tau^2$ plus $\sqrt{\phi\tau^2}\gamma_{g(j)}$, and so is $\mu_j$;
-  the group components are uncorrelated with the thesis estimates and levels.
-  So $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
-  Definition~\ref{def:Core_Estimates} for $K_G$ and $L_G$, and the blend
-  moments of Definition~\ref{def:momentsG} are those of
-  Definition~\ref{def:Core.levelMoments} with $d = (K_G)_{jj}$.
+  \uses{def:NoiseG, def:U_NoiseG, lem:moments_full}
+  If $T \ne \emptyset$, random variables as in Definition~\ref{def:NoiseG} are
+  those of Definition~\ref{def:U_NoiseG} with $T_j = T$, and conversely; the
+  levels, observations, cohort and portfolio estimates and the blend are the
+  same.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:moments_full}
-  Lemma~\ref{lem:Core_addCommon} applied to the thesis model with level
-  variance $(1-\phi)\tau^2$ (Lemma~\ref{lem:moments_full}) and
-  $C_j = \sqrt{\phi\tau^2}\gamma_{g(j)}$; $\phi \ge 0$ gives
-  $\cov(C_i,C_j) = R_{ij}$.
+  \uses{lem:U_full, lem:KG_eq}
+  Lemma~\ref{lem:moments_full} for $\eta$, $\varepsilon$; the weights $a_{jt}$
+  (Lemma~\ref{lem:U_full}) and $K_G$ (Lemma~\ref{lem:KG_eq}) agree.
 \end{proof}
 
 \begin{theorem}[The covariances with group levels are the actual ones]\label{thm:G_cov_obs}
-  \lean{Credibility.Model.NoiseG.obs_mean, Credibility.Model.NoiseG.cov_obs,
-        Credibility.Model.NoiseG.cov_cohortEst, Credibility.Model.NoiseG.cov_trueMean}
+  \lean{Credibility.Model.NoiseG.memLp_obs, Credibility.Model.NoiseG.obs_mean,
+        Credibility.Model.NoiseG.cov_obs, Credibility.Model.NoiseG.cov_cohortEst,
+        Credibility.Model.NoiseG.cov_trueMean}
   \leanok
   \uses{def:NoiseG, def:EG, def:KG}
   $\mathbb E\mu_{jt} = \mu$, and for $0 \le \phi < 1$:
@@ -3125,9 +3114,9 @@ for $K_G$ and $L_G$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:G_moments_lin, thm:cov_obs, lem:Core_moments_lin}
-  Bilinearity on top of Theorem~\ref{thm:cov_obs} for $(1-\phi)\tau^2$; the
-  last two are part of Lemma~\ref{lem:G_moments_lin}.
+  \uses{thm:U_G_cov_obs, lem:G_toUnequal, lem:KG_eq}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_cov_obs}
+  (Lemma~\ref{lem:G_toUnequal}).
 \end{proof}
 
 \begin{theorem}[The expectation with group levels is the actual one]\label{thm:G_integral_quad}
@@ -3142,9 +3131,8 @@ for $K_G$ and $L_G$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:integral_quad_cov, thm:G_cov_obs}
-  Theorem~\ref{thm:integral_quad_cov} with every cell in $S$ and the moments
-  of Theorem~\ref{thm:G_cov_obs}.
+  \uses{thm:U_G_cov_obs, lem:G_toUnequal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_cov_obs}: every cell is observed.
 \end{proof}
 
 \begin{theorem}[$z_j$ minimises the true MSE with group levels]\label{thm:G_bestZ_mse}
@@ -3161,13 +3149,13 @@ for $K_G$ and $L_G$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:G_moments_lin, thm:Core_bestZ_mse, thm:bestZ_optimal}
-  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
-  Lemma~\ref{lem:G_moments_lin}.
+  \uses{thm:U_G_bestZ_mse, lem:G_toUnequal, lem:KG_eq, lem:momentsG_level, thm:bestZ_optimal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_bestZ_mse} (Lemmas~\ref{lem:G_toUnequal},
+  \ref{lem:KG_eq} and~\ref{lem:momentsG_level}).
 \end{proof}
 
 \begin{theorem}[The group-level assumptions are consistent iff $\rho \succeq 0$]\label{thm:G_exists_noise}
-  \lean{Credibility.Model.exists_noiseG_iff, Credibility.Model.Noise.comp}
+  \lean{Credibility.Model.exists_noiseG_iff}
   \leanok
   \uses{def:NoiseG, thm:exists_noise}
   Let $\phi < 1$ and $T \ne \emptyset$. Random variables $\eta$, $\varepsilon$,
@@ -3177,21 +3165,13 @@ for $K_G$ and $L_G$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:exists_noise}
-  Necessity: forgetting $\gamma$ leaves random variables as in
-  Definition~\ref{def:Noise} for level variance $(1-\phi)\tau^2$, with the same
-  $\rho$; apply Theorem~\ref{thm:exists_noise}. Sufficiency: take such
-  $\eta$, $\varepsilon$ on $\Omega_0$ (Theorem~\ref{thm:exists_noise}) and
-  independent standard normal $\gamma_g$, one per group, on $\mathbb{R}^G$
-  (an infinite product measure if there are infinitely many groups). On
-  $\Omega_0 \times \mathbb{R}^G$ with the product measure, $\gamma$ is
-  uncorrelated with $\eta$ and $\varepsilon$ by independence of the factors,
-  and the $\gamma_g$ with each other. As before, the Gaussians are only a
-  witness.
+  \uses{thm:U_G_exists_noise, lem:G_toUnequal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_exists_noise}
+  (Lemma~\ref{lem:G_toUnequal}): every block $R_t$ is all of $\rho$.
 \end{proof}
 
 \subsection*{Group levels with unequal lengths}
-% Lean: Credibility/Hierarchical.lean (end), Credibility/HierarchicalMoments.lean (end)
+% Lean: Credibility/Hierarchical.lean (namespace Unequal), Credibility/HierarchicalMoments.lean (start)
 
 Group levels combine with cohort-dependent lengths (Chapter~\ref{ch:unequal}):
 only the error covariance $\Sigma$ changes (shared periods only), so $K_G$
@@ -3278,7 +3258,7 @@ that of Definition~\ref{def:U_Noise} plus the group component.
         Credibility.Unequal.NoiseG.memLp_obsVal,
         Credibility.Unequal.NoiseG.addCommon, Credibility.Unequal.NoiseG.toEstimates}
   \leanok
-  \uses{def:U_NoiseG, def:Core_Estimates, lem:Core_addCommon}
+  \uses{def:U_NoiseG, def:Core_Estimates, lem:Core_addCommon, lem:levelCovG_eq, lem:U_KG_eq}
   Let $0 \le \phi < 1$. Since $\sum_{t\in T_j} a_{jt} = 1$, $\hmu_j$ and $\mu_j$
   are those of Definition~\ref{def:U_Noise} for $(1-\phi)\tau^2$ plus
   $\sqrt{\phi\tau^2}\gamma_{g(j)}$, so they are estimates and levels in the
@@ -3287,8 +3267,11 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \begin{proof}
   \leanok
   \uses{lem:U_moments_lin}
-  Lemma~\ref{lem:Core_addCommon} on top of Lemma~\ref{lem:U_moments_lin}, as
-  Lemma~\ref{lem:G_moments_lin}.
+  Lemma~\ref{lem:Core_addCommon} applied to Lemma~\ref{lem:U_moments_lin} for
+  level variance $(1-\phi)\tau^2$ and $C_j = \sqrt{\phi\tau^2}\gamma_{g(j)}$;
+  $\phi \ge 0$ gives $\cov(C_i,C_j) = R_{ij}$, and $K_G = K(M_\phi) + R$,
+  $L_G = (1-\phi)\tau^2 I + R$ (Lemmas~\ref{lem:U_KG_eq}
+  and~\ref{lem:levelCovG_eq}).
 \end{proof}
 
 \begin{theorem}[The covariances are the actual ones]\label{thm:U_G_cov_obs}
@@ -3307,8 +3290,10 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \begin{proof}
   \leanok
   \uses{lem:U_G_moments_lin, thm:U_cov_obs, thm:integral_quad_cov}
-  As Theorems~\ref{thm:G_cov_obs} and~\ref{thm:G_integral_quad}, on top of
-  Theorem~\ref{thm:U_cov_obs}.
+  Bilinearity on top of Theorem~\ref{thm:U_cov_obs} for $(1-\phi)\tau^2$; the
+  covariances of $\hmu$ and $\mu$ are part of Lemma~\ref{lem:U_G_moments_lin};
+  the quadratic form by Theorem~\ref{thm:integral_quad_cov} with $S$ the
+  observed cells.
 \end{proof}
 
 \begin{theorem}[$z_j$ minimises the true MSE with group levels and unequal lengths]\label{thm:U_G_bestZ_mse}
@@ -3339,9 +3324,16 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \begin{proof}
   \leanok
   \uses{thm:U_exists_noise}
-  As Theorem~\ref{thm:G_exists_noise}, with Theorem~\ref{thm:U_exists_noise}
-  in place of Theorem~\ref{thm:exists_noise}: the blocks of $M_\phi$ are those
-  of $M$.
+  Necessity: forgetting $\gamma$ leaves random variables as in
+  Definition~\ref{def:U_Noise} for level variance $(1-\phi)\tau^2$, whose
+  blocks are those of $M$; apply Theorem~\ref{thm:U_exists_noise}. Sufficiency: take such
+  $\eta$, $\varepsilon$ on $\Omega_0$ (Theorem~\ref{thm:U_exists_noise}) and
+  independent standard normal $\gamma_g$, one per group, on $\mathbb{R}^G$
+  (an infinite product measure if there are infinitely many groups). On
+  $\Omega_0 \times \mathbb{R}^G$ with the product measure, $\gamma$ is
+  uncorrelated with $\eta$ and $\varepsilon$ by independence of the factors,
+  and the $\gamma_g$ with each other. As before, the Gaussians are only a
+  witness.
 \end{proof}
 
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
