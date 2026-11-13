@@ -41,8 +41,10 @@ tactics.
   intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,
   Finding 14) → `Credibility/KMeansBridge.lean`
 
-Plan for turning the results into practice (simulation studies against
-Bühlmann–Straub, reference implementation, gap theorems): `studies/PLAN.md`.
+Plan for turning the results into practice: `studies/PLAN.md` (an interactive
+app for practitioners, world model against fitted model; the fit never sees
+the true parameters). When a result is proved or an extension added, ask:
+does the app need a switch or a step for it? Note it in the plan if so.
 
 Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which

@@ -49,7 +49,7 @@ done; details of finished work live in `README.md` and `FINDINGS.md`.
 
 ## 4. Being of use
 
-Detailed plan (simulation studies on one portfolio, gap theorems):
+Detailed plan (an interactive app, world against fitted model; gap theorems):
 [`studies/PLAN.md`](../studies/PLAN.md).
 
 - [ ] **Reference implementation** in R (the thesis code is R): data →

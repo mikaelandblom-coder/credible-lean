@@ -1,206 +1,166 @@
-# From theorems to practice: implementation plan
+# From theorems to practice: the credibility app
 
-Written 2026-11-13. Status: proposal, nothing built yet. Tick items off as
-they are done.
+Written 2026-11-13, revised the same day (an interactive app instead of
+written simulation studies). Status: proposal, nothing built yet. Tick items
+off as they are done.
 
-**Aim.** Show, on one simulated portfolio, what each proved result buys a
-pricing actuary compared with standard Bühlmann–Straub (BS). Short studies,
-one message each. Where a result turns out not to give anything usable, that
-is logged as a gap and becomes the next thing to prove.
+**Aim.** Give a practitioner clear examples of what each result buys. One
+page, usable on a phone: choose how complex the *world* is, choose how
+complex the *fitted model* is, and see what happens when they differ.
 
-## 1. Design in one page
+## 1. Principles
 
-**One world, one showcase dataset, many replications.** A single dataset is
-the right anchor: every study talks about the same portfolio, and the reader
-learns it once. But a mean squared error is an average, and one draw cannot
-show it. So:
+1. **The fit never sees the truth.** A fitted model gets the data and
+   nothing else: every parameter it uses is estimated. In the code the
+   fitting functions take only the data table, so this cannot be broken by
+   accident.
+2. **A theorem is practical only when it ends in a recipe from data.**
+   Results that assume known parameters are building blocks, not results
+   for the app (section 5).
+3. **One world, two models, side by side.** The fitted model is always
+   shown against a reference model the user picks.
+4. **Short and visual.** No study to read: a few switches, one chart, one
+   number.
+5. **Every new extension of the framework gets a switch.** The app is
+   built so that adding one is a small, local change (section 6).
 
-- the **world** (the true parameters) is fixed once and used by all studies;
-- the **showcase dataset** is one draw from it (fixed seed, saved as CSV),
-  printed in tables so every number can be followed by hand;
-- the **replications** are `N` further draws from the same world. All MSE
-  numbers come from these.
+## 2. What the user sees
 
-**Two regimes, always side by side.**
+**World** (the truth; a switch or slider per feature):
 
-- *Oracle*: true parameters known. Here the theorems apply exactly, so the
-  simulated MSE must match the proved formula. This is a test of the code
-  and an illustration of the theorem.
-- *Plug-in*: parameters estimated from the data. This is what a
-  practitioner gets. The theorems are silent here. The share of the oracle
-  gain that survives estimation is the practical value of the result.
-
-**The headline: one table, a ladder of methods.** Every method is run on
-the same data, each adding one idea:
-
-| | Method | What it adds | Lean |
-|---|---|---|---|
-| M0 | own mean (`z = 1`), collective (`z = 0`) | the two extremes | |
-| M1 | Bühlmann–Straub | the standard | `bs_z` |
-| M2 | thesis model on the common window | correlation (data outside the window is thrown away) | `Model.bestZ_eq` |
-| M3 | unequal lengths | correlation, all data | `Unequal.bestZ_eq` |
-| M4 | group levels | a shared level within groups | `bestZ_G_eq` |
-| M5 | chosen cohorts | cohorts picked by dynamic programming | `pool_optimal_contiguous` |
-
-Columns: total MSE in theory (oracle), simulated (oracle), simulated
-(plug-in), and the same as a percentage of BS. Each study below zooms in on
-one step of the ladder and turns one dial.
-
-**Measures** (the same everywhere): exposure-weighted total MSE of the
-blended rates `Σⱼ wⱼ* (μ̂ⱼᵇ − μⱼ)²`; error of the collective `μ̂`; off-balance
-`Σⱼ wⱼ*(μ̂ⱼᵇ − μ̂ⱼ) / Σⱼ wⱼ* μ̂ⱼ`.
-
-## 2. The world
-
-Small enough to print, rich enough that every extension has something to
-do. Suggested (to be tuned so that the effects are visible but realistic):
-
-- **12 cohorts in 3 groups of 4** (say 3 lines of business × 4 regions),
-  **10 years**.
-- **Levels**: `μ = 1`; cohort levels share a part `φτ²` within a group
-  (`φ = 0.5`). Skewed (gamma), not normal.
-- **Noise**: `σⱼₜ = σⱼ/√wⱼₜ` with different `σⱼ`, and volumes differing by
-  a factor of about 10 between cohorts (the thesis study has nearly equal
-  volumes, which is BS's best case).
-- **Correlation within a year**: from a common yearly shock plus a group
-  shock, e.g. `ρ = 0.6` within a group and `0.2` across. Skewed noise, to
-  underline that the results are distribution-free.
-- **Unequal lengths**: four cohorts launched late (3 to 5 years of data),
-  one discontinued.
-
-Each feature has a switch (`ρ = 0`, full lengths, `φ = 0`), so a study can
-turn its own dial and leave the rest fixed.
-
-## 3. The studies
-
-Each study is one script and one page: the question, the methods compared,
-one table, one figure, a one-sentence takeaway, the theorems it rests on.
-Nothing else.
-
-**S0. The portfolio and the yardstick.** The showcase dataset, BS applied to
-it, and the ladder table. *Check:* simulated oracle MSE equals the proved
-MSE (`mse_blend`) for every method within Monte Carlo error.
-
-**S1. Correlation** (thesis §2.5–2.7; Findings 1, 3, 5, 11).
-Dial: `ρ` from 0 to 0.9. BS against the proposed `z` with GLS weights.
-- Oracle: gain over BS as a function of `ρ`; zero at `ρ = 0`.
-- Plug-in, three ways of estimating the correlations: full `K̂` (eq. (39));
-  `K̂` damped (`dampedK_posDef`); one common covariance `c` (Finding 5,
-  closed form `zⱼ = τ²/(τ² + σ²ⱼⱼ − c)`).
-- Side panel: how often `ẑⱼ > 1` or `b̂ⱼ < 0`, and what clipping
-  (thesis eq. (34)) costs.
-
-  Expected message: correlation matters from some `ρ` on; the full `K̂`
-  has too many parameters for 10 years, and a structured one keeps most of
-  the gain. This answers the open question in `thesis/README.md`.
-
-**S2. Unequal lengths** (Findings 8–10, 12).
-Dial: how late the late cohorts start. Thesis model on the common window
-(M2) against all data (M3), and BS on all data.
-- Bias of the naive `|Tᵢⱼ| − 2` against the proved count `nᵢⱼ` (Finding 9).
-- Balance in the BS case holds to machine precision (`Unequal.balance_total`).
-
-**S3. Groups** (Finding 13).
-Dial: `φ` from 0 to 0.9.
-- `E τ̂² = τ² − φτ²π`: simulated against proved (`tauHat_unbiasedG`), and
-  the pair estimators that repair it (`phiTauHat_unbiasedG`).
-- M3 against M4, and against Jewell's hierarchical model as the standard
-  method for this situation.
-
-**S4. Choosing cohorts** (Findings 6, 14).
-Start from finer units (say 40) with similar levels in clusters.
-- Every unit alone, all pooled, k-means on the estimates, and intervals by
-  dynamic programming (`pool_optimal_contiguous`,
-  `blend_optimal_contiguous`).
-- The merge rule `1/d > 1/V + 1/τ²` (`merge_iff`) with `d` known and with
-  `d` estimated.
-- Measure the winner's curse: MSE promised by the chosen partition against
-  MSE delivered on fresh data. This is an open question in the README.
-
-**S5. Balance.** How far off balance the correlated blend is in the world,
-and what rescaling to restore it costs in MSE. One small table; may end up
-as a panel in S1.
-
-## 4. From theorem to practice: where we stand
-
-The triage that decides what to prove next. To be revised after each study.
-
-| Result | Usable today? | Missing |
+| Feature | Off | On |
 |---|---|---|
-| BS special case, balance | yes | |
-| `z` and GLS weights from `K` (eq. (26)) | with known `K` | plug-in behaviour (S1) |
-| Unbiased estimators (39), `nᵢⱼ` | yes, but noisy: `J(J+1)/2` covariances | a structured estimator (G1) |
-| Damped `K̂ ≻ 0` | yes | how to choose the damping `θ` (S1, G2) |
-| `z > 1`, negative `b` | diagnosis only | what to do then (G3) |
-| Equal covariances: closed form | yes once `c` is estimated | G1 |
-| Unequal lengths | yes | |
-| Group levels, `τ̂²` bias, pairs | identifies `φτ²` from one pair of each kind | how to combine all pairs (G4) |
-| Merge rule | needs the unknown `d` | a rule from data (G5) |
-| Optimal cohorts are intervals | of the *true* levels | sorting by estimates (G5) |
-| Consistency iff `ρ ⪰ 0` | as an input check in the code | |
-| True MSE of the blend | for the level `μⱼ` | next year's outcome (G6) |
-| Balance under correlation | no | G7 |
+| Correlation between cohorts within a year | `ρ = 0` | slider `ρ` |
+| Unequal lengths | all cohorts 10 years | some start late |
+| Group levels | cohorts unrelated | a shared level within groups, slider `φ` |
+| Size | sliders for the number of cohorts and years, and how unequal the volumes are | |
 
-**Gaps: candidate theorems.** Small ones first. A study may show that a gap
-does not matter in practice, in which case it is dropped.
+**Fitted model** and **reference model**: the same list of features, each
+on or off. Presets for the reference: Bühlmann–Straub (default), and the
+thesis model with correlation.
+
+**The mismatch is the point.** For each feature there are four cases:
+
+| | not in the fit | in the fit |
+|---|---|---|
+| **not in the world** | baseline | cost of estimating something that is not there |
+| **in the world** | cost of ignoring it | gain from modelling it |
+
+**Output**, top to bottom:
+
+1. *One draw.* Per cohort: the true level, the cohort's own mean, the rate
+   from the fitted model and from the reference. "New draw" button.
+2. *Many draws.* Total error (exposure-weighted MSE of the rates) of fit
+   and reference over a few thousand draws of the same world, computed
+   live, with a third line as the floor: the best possible if the
+   parameters were known. The floor is a benchmark, never a fit. The gap
+   between fit and floor is the price of estimation.
+3. *The fitting steps*, on the current draw: data → cohort means → `σ̂²` →
+   correlations → `τ̂²` → damped `K̂` → weights `b` → `z` → rates. Each
+   step shows its formula, its numbers and a badge:
+   **proved** (link to the handbook result and the Lean theorem) or
+   **not proved yet** (a heuristic step; these are the gaps of section 5).
+4. *Warnings* when they occur: `τ̂² < 0` (truncated), `z > 1`, negative
+   `b`, off-balance.
+
+## 3. The world's story
+
+Generic and textbook: **motor insurance, claim cost per vehicle-year by
+region, regions grouped in countries, 10 years.** (The classical
+credibility datasets look like this, e.g. Hachemeister's states by
+quarter.)
+
+- A cohort is a region; its volume is vehicle-years; its level `μⱼ` is how
+  expensive the region really is relative to the tariff (`μ = 1`).
+- Correlation: a hard winter raises claims in all regions that year, most
+  within the same country.
+- Unequal lengths: regions the company entered recently.
+- Groups: regions of one country resemble each other.
+
+Purely simulated, so the truth is known. Skewed distributions, since the
+theory is distribution-free.
+
+## 4. Technology
+
+- **One self-contained page** `app/index.html`, no external libraries or
+  network requests after loading. Published by the existing CI next to the
+  blueprint: `https://mikaelandblom-coder.github.io/credible-lean/app/`.
+- **Offline**: a small service worker and manifest, so the page can be
+  added to the phone's home screen and opened without a connection.
+- **The engine is JavaScript, not Python.** Reason: the app must compute
+  on the phone, and Python in a browser means a download of about 10 MB
+  and a slow start. The math is small (12 × 12 matrices), so plain
+  JavaScript does thousands of draws in a blink. To keep a single source of
+  truth, the same engine file `app/engine.js` is run by CI under Node for
+  the tests. (Owner: say so if you prefer Python despite this; the
+  alternative is Pyodide.)
+- **Tests are the proved identities**, to machine precision: BS at
+  `ρ = 0`; balance; `b₁ = z₁/(z₁+z₂)`; the equal-covariance closed form;
+  eq. (26) minimises the MSE; `K̂ ≻ 0` after damping; estimators unbiased
+  on average. Plus one structural test: no fitting function receives the
+  world's parameters.
+
+## 5. What is practical today
+
+Revised with principle 2. A step is in the app as **proved** only if it is
+a recipe from data.
+
+| Fit feature | Recipe from data | Proved | Missing |
+|---|---|---|---|
+| Bühlmann–Straub | yes | `bs_z`, `bs_balance`, estimators | |
+| Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
+| Correlation, one common covariance | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
+| Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
+| Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind) | pooling all pairs (G4) |
+| `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only | G3 |
+| Choosing cohorts | not yet: the rules need the true levels or the true `d` | `merge_iff`, `pool_optimal_contiguous` | G5; not in the first version |
+
+Known-parameter results (optimal `z`, GLS weights, true MSE) appear only as
+the floor line and in the tests.
+
+**Gaps: candidate theorems**, in the order the app needs them:
 
 - **G1. One common covariance.** The average of the pairwise estimators
-  (39) is unbiased for a common `c` (immediate from `KHat_unbiased`); which
-  weights minimise its variance is a real question. Likely the most useful
-  single addition: one extra parameter on top of BS.
-- **G2. Damping as shrinkage.** MSE of the blend when `K̂` is damped
-  towards its diagonal: is there a best `θ`, or at least a safe one?
-- **G3. Clipping.** Does clipping `z` to `[0, 1]` ever raise the MSE
-  when the true `z` is in `[0, 1]`? (No if `ẑ` is treated as a fixed
-  number, since the MSE is a parabola in `z`; open when `ẑ` depends on the
-  same data.)
-- **G4. Pooled pair estimator of `φτ²`.** Unbiased for any weights on the
-  pairs; state it, then choose weights.
-- **G5. Decisions from data.** The merge rule with `d` replaced by its
-  unbiased estimate: probability of a wrong merge, or expected MSE cost.
-  Hardest; S4 decides whether it is worth it.
-- **G6. Forecasting.** Noise is independent between years, so the MSE of
-  predicting next year's `μⱼ,T+1` is the MSE for `μⱼ` plus `σ²ⱼ,T+1`, and
-  the same `z` is optimal. Short, and it is what a premium actually is.
-- **G7. Balance.** The best balanced blend under correlation (minimise MSE
-  subject to the balance constraint), and its cost.
+  (39) is unbiased for a common `c`. One extra parameter on top of BS;
+  probably the most practical form of the thesis model.
+- **G4. Pooled pair estimator of `φτ²`**, unbiased for any weights.
+- **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
+- **G2. Damping as shrinkage.** Is there a safe `θ`?
+- **G6. Forecasting.** The same `z` is optimal for next year's outcome
+  (MSE grows by next year's noise). Then the app can show a premium, not
+  only a level.
+- **G7. Balance** under correlation: the best balanced blend.
+- **G5. Decisions from data** (merging, choosing cohorts). Hardest, last.
 
-## 5. Code
+The app itself decides the priority: a gap that makes no visible
+difference on the screen is dropped.
 
-- `studies/credibility.py`: the reference implementation (data → estimators
-  → damped `K̂` → `b`, `z` → rates), numpy only, readable next to the
-  handbook: one function per handbook result, named after it.
-- `studies/world.py`: the generator. `studies/data/portfolio.csv`: the
-  showcase dataset. `studies/sN_*.py`: one script per study, writing
-  `studies/results/sN.md` with its table and figure.
-- **Tests are the proved identities**, checked to machine precision: BS at
-  `ρ = 0`; balance; `b₁ = z₁/(z₁+z₂)`; the equal-covariance closed form;
-  eq. (26) equals the minimiser of the MSE; `K̂ ≻ 0` after damping. Run in
-  CI, so the code cannot drift from the Lean statements.
-- Python, because the cloud sessions and CI can run it today (R is not
-  installed there). An R port for actuaries can follow once the results
-  are stable.
+## 6. Built for expansion
 
-## 6. Order of work
+A feature is one entry in a list in `engine.js`:
 
-One chat per step. These need no Lean, except the gap theorems.
+- its name and controls;
+- how it changes the world (generator);
+- how it changes the fit (which estimation steps it adds);
+- per step: formula, handbook result, Lean theorem, proved or not.
 
-- [ ] 1. `credibility.py` with the identity tests (oracle formulas only).
-- [ ] 2. `world.py`, the showcase dataset, S0 with the oracle columns of
-  the ladder.
-- [ ] 3. Estimators and plug-in; S1. Decide G1–G3 from what it shows.
-- [ ] 4. S2 and S3.
-- [ ] 5. S4 (and S5 if not folded into S1).
-- [ ] 6. Prove the gaps the studies point at (Lean chats).
-- [ ] 7. Write-up: the ladder table and one figure per study as the worked
-  example in the handbook; a "Studies" page on the site; later the preprint.
+The page is drawn from that list. So a new extension (serial correlation,
+trends, crossed levels) means: prove it, add one entry, add its test.
+`CLAUDE.md` asks the question for every new result, as it does for the
+handbook.
 
-## 7. Open choices for the owner
+## 7. Order of work
 
-1. Python first (default above), or R from the start?
-2. The story of the world: lines of business × regions, or something
-   closer to the thesis's travel-insurance example?
-3. Is Jewell's hierarchical model the right standard to compare with in
-   S3, or is plain BS per group enough?
-4. Should the showcase dataset stay purely simulated, or should a public
-   dataset be added later as a second illustration?
+One chat per step; none needs Lean except step 5.
+
+- [ ] 1. `engine.js`: world generator, BS fit, floor; identity tests under
+  Node in CI.
+- [ ] 2. `app/index.html`: world and fit switches, the one-draw chart, the
+  many-draws bars. Published on the site. First usable version.
+- [ ] 3. Correlation fit (full `K̂` damped, and common covariance), the
+  fitting-steps panel with badges, warnings.
+- [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
+- [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
+  to "proved".
+- [ ] 6. Link the app from the README and handbook; screenshots of a few
+  telling settings as the handbook's worked examples.
