@@ -2745,23 +2745,35 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
   $vv^T \succeq 0$.
 \end{proof}
 
-\begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
+\begin{lemma}[The level covariance with groups]\label{lem:levelCovG_eq}
   \lean{Credibility.Model.levelCovG_apply', Credibility.Model.levelCovG_eq_add_sameGroup,
-    Credibility.Model.levelCovG_eq, Credibility.Model.levelCovG_const,
-    Credibility.Model.KG_eq_add_sameGroup, Credibility.Model.KG_eq}
+    Credibility.Model.levelCovG_eq, Credibility.Model.levelCovG_const}
   \leanok
-  \uses{def:KG, lem:Kphi_eq}
+  \uses{def:KG}
   $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S
-  = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$, so for
-  $T \ge 1$ and $\phi < 1$,
-  $K_G = K(M_\phi) + \phi\tau^2 S$. With one group,
+  = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$. With one group,
   $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ (Section~\ref{sec:hier_bridge2}).
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:sameGroup, lem:Kphi_zero}
-  Compare entries with Lemma~\ref{lem:sameGroup}; then as
-  Lemma~\ref{lem:Kphi_eq}.
+  \uses{lem:sameGroup}
+  Compare entries with Lemma~\ref{lem:sameGroup}.
+\end{proof}
+
+\begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
+  \lean{Credibility.Model.KG_eq_toUnequal, Credibility.Model.KG_eq_add_sameGroup,
+    Credibility.Model.KG_eq}
+  \leanok
+  \uses{def:KG, def:U_KG, lem:levelCovG_eq}
+  $K_G$ is that of Definition~\ref{def:U_KG} with $T_j = T$, and for
+  $T \ge 1$ and $\phi < 1$, $K_G = K(M_\phi) + \phi\tau^2 S
+  = K(M_\phi) + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:errCov_posSemidef, lem:U_KG_eq, lem:U_full, lem:sameGroup}
+  The error covariances agree (Lemma~\ref{lem:errCov_posSemidef}); then
+  Lemma~\ref{lem:U_KG_eq} with $T_j = T$ (Lemma~\ref{lem:U_full}).
 \end{proof}
 
 \begin{theorem}[$K_G$ is positive definite]\label{thm:KG_posDef}
@@ -2772,10 +2784,9 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:shrinkOffDiag_posDef, lem:sameGroup, lem:errCov_posSemidef}
-  As Theorem~\ref{thm:Kphi_posDef}: $S \succeq 0$ has unit diagonal, so
-  $S^\phi \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef}, and
-  $\Sigma \succeq 0$.
+  \uses{thm:U_KG_posDef, lem:KG_eq}
+  The case $T_j = T$ of Theorem~\ref{thm:U_KG_posDef} (Lemma~\ref{lem:KG_eq}): every
+  block $R_t$ is all of $(\rho_{ij}) \succeq 0$.
 \end{proof}
 
 \begin{lemma}[Blocks of $K_G$]\label{lem:block_KG}
@@ -2788,7 +2799,7 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:KG_eq, lem:K_apply}
+  \uses{lem:levelCovG_eq, lem:K_apply}
   Compare entries.
 \end{proof}
 
@@ -2822,16 +2833,17 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{definition}
 
 \begin{lemma}\label{lem:momentsG_level}
-  \lean{Credibility.Model.momentsG_eq_levelMoments}
+  \lean{Credibility.Model.momentsG_eq_levelMoments, Credibility.Model.momentsG_eq_toUnequal}
   \leanok
-  \uses{def:momentsG, def:Core.levelMoments}
+  \uses{def:momentsG, def:Core.levelMoments, def:U_KG}
   The blend moments with group levels are those of
   Definition~\ref{def:Core.levelMoments} for $K_G$, $L_G$ and
-  $d = \tau^2 + \sigma^2_{jj}$.
+  $d = \tau^2 + \sigma^2_{jj}$, i.e.\ those of Definition~\ref{def:U_KG} with $T_j = T$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $(L_G)_{jj} = \tau^2$.
+  \uses{lem:KG_eq, lem:U_full}
+  $(L_G)_{jj} = \tau^2$; then Lemma~\ref{lem:KG_eq} and Lemma~\ref{lem:U_full}.
 \end{proof}
 
 \begin{theorem}[Eq.\ (26) with group levels]\label{thm:bestZ_G_eq}
@@ -2846,9 +2858,9 @@ does not apply to the whole portfolio, only block by block. First a Core fact.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:KG_posDef, lem:momentsG_level, thm:Core_levelMoments_bestZ_eq}
-  Lemma~\ref{lem:momentsG_level} and Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with
-  $\cov(\hmu,\mu_j) = (L_Gb)_j = (1-\phi)\tau^2 b_j + \phi\tau^2 B_g$.
+  \uses{thm:U_bestZ_G_eq, lem:momentsG_level, lem:KG_eq, lem:U_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_G_eq} (Lemmas~\ref{lem:momentsG_level},
+  \ref{lem:KG_eq} and~\ref{lem:U_full}).
 \end{proof}
 
 \begin{remark}[Reading: what the between-group variance adds]\label{rem:hier_bridge4}
@@ -2947,8 +2959,8 @@ itself, evaluated on noise-free data.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:KG_eq, lem:withinShare}
-  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ with one group (Lemma~\ref{lem:KG_eq});
+  \uses{lem:levelCovG_eq, lem:withinShare}
+  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ with one group (Lemma~\ref{lem:levelCovG_eq});
   $\pi = 1$ by Lemma~\ref{lem:withinShare}.
 \end{proof}
 
@@ -2983,7 +2995,7 @@ itself, evaluated on noise-free data.
 \end{corollary}
 \begin{proof}
   \leanok
-  \uses{thm:estimation_G, lem:withinShare, lem:KG_eq}
+  \uses{thm:estimation_G, lem:withinShare, lem:levelCovG_eq}
   On the diagonal the two values differ by $\phi\tau^2(1 - \pi)$.
 \end{proof}
 
@@ -3205,8 +3217,8 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:KG_eq, lem:U_K_eq_errCov}
-  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S$ (Lemma~\ref{lem:KG_eq}) and
+  \uses{lem:levelCovG_eq, lem:U_K_eq_errCov}
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S$ (Lemma~\ref{lem:levelCovG_eq}) and
   $K(M_\phi) = \Sigma + (1-\phi)\tau^2 I$ (Lemma~\ref{lem:U_K_eq_errCov}).
 \end{proof}
 
@@ -3220,8 +3232,9 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \begin{proof}
   \leanok
   \uses{thm:shrinkOffDiag_posDef, lem:sameGroup, lem:U_errCov_posSemidef}
-  As Theorem~\ref{thm:KG_posDef}, with Lemma~\ref{lem:U_errCov_posSemidef}
-  for $\Sigma \succeq 0$.
+  $S \succeq 0$ has unit diagonal, so $S^\phi \succ 0$ by
+  Theorem~\ref{thm:shrinkOffDiag_posDef}, and $\Sigma \succeq 0$ by
+  Lemma~\ref{lem:U_errCov_posSemidef}.
 \end{proof}
 
 \begin{theorem}[Eq.\ (26) with group levels and unequal lengths]\label{thm:U_bestZ_G_eq}
@@ -3234,8 +3247,10 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:U_KG_posDef, lem:KG_eq, thm:Core_levelMoments_bestZ_eq}
-  As Theorem~\ref{thm:bestZ_G_eq}.
+  \uses{thm:U_KG_posDef, lem:levelCovG_eq, thm:Core_levelMoments_bestZ_eq}
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with
+  $\cov(\hmu,\mu_j) = (L_Gb)_j = (1-\phi)\tau^2 b_j + \phi\tau^2 B_g$
+  (Lemma~\ref{lem:levelCovG_eq}).
 \end{proof}
 
 \begin{definition}[Moment assumptions with group levels on observed cells]\label{def:U_NoiseG}
