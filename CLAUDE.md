@@ -40,6 +40,9 @@ tactics.
   intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,
   Finding 14) → `Credibility/KMeansBridge.lean`
 
+Plan for turning the results into practice (simulation studies against
+Bühlmann–Straub, reference implementation, gap theorems): `studies/PLAN.md`.
+
 Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with

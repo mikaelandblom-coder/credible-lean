@@ -49,6 +49,9 @@ done; details of finished work live in `README.md` and `FINDINGS.md`.
 
 ## 4. Being of use
 
+Detailed plan (simulation studies on one portfolio, gap theorems):
+[`studies/PLAN.md`](../studies/PLAN.md).
+
 - [ ] **Reference implementation** in R (the thesis code is R): data →
   estimators → damped `K̂` → `b`, `z` → premiums. Tests are the proved
   identities (balance, Bühlmann–Straub at `ρ = 0`), run on a public dataset.

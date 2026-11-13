@@ -76,7 +76,10 @@ minimises the actual mean squared error.
 
 ## Later goals
 
-Planned next steps, in order: [`notes/roadmap.md`](notes/roadmap.md).
+Planned next steps, in order: [`notes/roadmap.md`](notes/roadmap.md). How the
+results become something a practitioner can use (simulation studies against
+Bühlmann–Straub, and the theorems still missing):
+[`studies/PLAN.md`](studies/PLAN.md).
 
 Once the thesis results are proved:
 
