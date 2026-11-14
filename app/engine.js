@@ -1,5 +1,5 @@
 /*
- * Credibility app engine (studies/PLAN.md, steps 1–2).
+ * Credibility app engine (studies/PLAN.md, steps 1–3).
  *
  * One file, run by the page (app/index.html) and by the tests under Node
  * (app/engine.test.js). No dependencies.
@@ -255,11 +255,11 @@
     const b = zs > 0 ? z.map((x) => x / zs) : wt.map((x) => x / wall);
     const res = blend(m, z, b);
     return {
-      means: m, z, b, mu: res.mu, rates: res.rates, warnings,
+      means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags: { tauNeg: tauRaw <= 0 },
       steps: [
         { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.bs_a' },
         { name: 'σ̂²', formula: 'σ̂² = (1/J) Σⱼ Σₜ wⱼₜ (Xⱼₜ − μ̂ⱼ)² / (T−1)', values: [sigma2], badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
-        { name: 'τ̂²', formula: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)', values: [tauRaw], badge: 'not proved yet', note: 'classical eq. (13); the Lean τ̂² is the thesis estimator (39)–(41)' },
+        { name: 'τ̂²', formula: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)', values: [tauRaw], badge: 'not proved yet', gap: 'G0', note: 'classical eq. (13); the Lean τ̂² is the thesis estimator (39)–(41)' },
         { name: 'z', formula: 'zⱼ = wⱼ* / (wⱼ* + σ̂²/τ̂²)', values: z, badge: 'proved', lean: 'Credibility.bs_z' },
         { name: 'b', formula: 'bⱼ = zⱼ / z*', values: b, badge: 'proved', lean: 'Credibility.bs_b' },
         { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂', values: res.rates, badge: 'proved', lean: 'Credibility.bs_balance' },
@@ -270,14 +270,143 @@
   /** Each region on its own: z = 1. */
   function fitOwn(data) {
     const { m } = cohortMeans(data);
-    return { means: m, z: m.map(() => 1), b: null, mu: null, rates: m.slice(), warnings: [], steps: [] };
+    return { means: m, z: m.map(() => 1), b: null, mu: null, rates: m.slice(), warnings: [], flags: {}, steps: [] };
   }
 
   /** One tariff for all: z = 0, the volume-weighted portfolio mean. */
   function fitPool(data) {
     const { wt, m } = cohortMeans(data);
     const wall = sum(wt), mu = sum(m.map((x, j) => wt[j] * x)) / wall;
-    return { means: m, z: m.map(() => 0), b: wt.map((x) => x / wall), mu, rates: m.map(() => mu), warnings: [], steps: [] };
+    return { means: m, z: m.map(() => 0), b: wt.map((x) => x / wall), mu, rates: m.map(() => mu), warnings: [], flags: {}, steps: [] };
+  }
+
+  /**
+   * The thesis estimators from data, eq. (39) (the display summarising §2.8):
+   * Σ̂ᵢⱼ = σ²ᵢⱼρᵢⱼ^ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ) / (Sᵢⱼ + (T−2)wᵢ* wⱼ* / Sᵢⱼ),
+   * Sᵢⱼ = Σₜ √(wᵢₜwⱼₜ). On the diagonal this is σ̂ⱼ²/wⱼ* (eq. (41)).
+   */
+  function sigmaHat(data) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data);
+    const S = [], Sig = [];
+    for (let i = 0; i < J; i++) {
+      S.push([]); Sig.push([]);
+      for (let j = 0; j < J; j++) {
+        let s = 0, q = 0;
+        for (let t = 0; t < T; t++) {
+          const r = Math.sqrt(data.w[i][t] * data.w[j][t]);
+          s += r; q += r * (data.X[i][t] - m[i]) * (data.X[j][t] - m[j]);
+        }
+        S[i].push(s); Sig[i].push(q / (s + (T - 2) * wt[i] * wt[j] / s));
+      }
+    }
+    return { wt, m, S, Sig };
+  }
+
+  /**
+   * ĉⱼ = Σᵢ (δᵢⱼ − wᵢ* / w**) Σ̂ᵢⱼ and τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*² / w**),
+   * eq. (39), for any table Σ̂ (the full one, or the common-covariance one).
+   */
+  function thesisTau(m, wt, Sig) {
+    const J = m.length, wall = sum(wt), mw = sum(m.map((x, i) => wt[i] * x)) / wall;
+    const c = [];
+    for (let j = 0; j < J; j++) {
+      let s = 0;
+      for (let i = 0; i < J; i++) s += ((i === j ? 1 : 0) - wt[i] / wall) * Sig[i][j];
+      c.push(s);
+    }
+    const num = sum(m.map((x, j) => wt[j] * ((x - mw) * (x - mw) - c[j])));
+    return { c, tau2: num / (wall - sum(wt.map((x) => x * x)) / wall) };
+  }
+
+  /** A with its off-diagonal entries multiplied by θ (Lean: shrinkOffDiag). */
+  function shrinkOffDiag(theta, A) {
+    return A.map((row, i) => row.map((x, j) => (i === j ? x : theta * x)));
+  }
+  const addDiag = (A, d) => A.map((row, i) => row.map((x, j) => (i === j ? x + d : x)));
+  /** Positive semidefinite, numerically: Cholesky of A + ε·tr(A)/n·I. */
+  function isPSD(A) {
+    const n = A.length, tr = A.reduce((s, row, i) => s + row[i], 0);
+    return cholesky(addDiag(A, 1e-12 * Math.abs(tr) / n + 1e-300)) !== null;
+  }
+
+  /** The damping factors tried, largest first: θ = 0.95 by default (handbook), lowered if needed. */
+  const THETAS = [0.95, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
+
+  /**
+   * The thesis model with correlation, fitted from data (eqs. (37)–(41), §2.8).
+   * opts.common: replace the off-diagonal Σ̂ᵢⱼ by their average c̄ (one common
+   *   covariance; then zⱼ = τ²/(τ² + vⱼ − c), Core.bestZ_of_equalCov).
+   * opts.theta: force a damping factor (tests); otherwise the largest of THETAS
+   *   with K̂ ≻ 0.
+   */
+  function fitCorr(data, opts) {
+    const o = opts || {};
+    const J = data.X.length;
+    const est = sigmaHat(data), { wt, m } = est;
+    let Sig = est.Sig, cbar = null;
+    if (o.common) {
+      let s = 0, n = 0;
+      for (let i = 0; i < J; i++) for (let j = 0; j < J; j++) if (i !== j) { s += Sig[i][j]; n++; }
+      cbar = s / n;
+      Sig = Sig.map((row, i) => row.map((x, j) => (i === j ? x : cbar)));
+    }
+    const { c, tau2: tauRaw } = thesisTau(m, wt, Sig);
+    const tau2 = Math.max(tauRaw, 0);
+    const psd = isPSD(Sig);
+    let theta = null, K = null;
+    for (const th of (o.theta != null ? [o.theta] : THETAS)) {
+      const Kt = addDiag(shrinkOffDiag(th, Sig), tau2);
+      if (cholesky(Kt)) { theta = th; K = Kt; break; }
+    }
+    if (!K) throw new Error('K̂ not positive definite even at θ = 0');
+    const v = Sig.map((row, j) => row[j]);
+    let { b, z, s2 } = bestBlendWeights(K, tau2);
+    const cDamped = o.common ? theta * cbar : null;
+    if (o.common && tau2 > 0) {   // the proved closed form (equals the GLS route above)
+      z = v.map((vj) => tau2 / (tau2 + vj - cDamped));
+      const zs = sum(z);
+      b = z.map((x) => x / zs);
+    }
+    const res = blend(m, z, b);
+    const offBal = sum(wt.map((x, j) => x * (m[j] - res.rates[j]))) / sum(wt.map((x, j) => x * m[j]));
+    const flags = {
+      tauNeg: tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0),
+      thetaLow: theta < THETAS[0], offBalance: Math.abs(offBal) > 0.01,
+    };
+    const warnings = [];
+    if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
+    if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂ (thesis eq. (34) would clip it)`);
+    if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
+    if (flags.thetaLow) warnings.push(`K̂ was not positive definite at θ = ${THETAS[0]}; damping lowered to θ = ${theta}`);
+    if (flags.offBalance) warnings.push(`off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume`);
+    const offs = [];
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) offs.push(Sig[i][j]);
+    const steps = [
+      { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
+      { name: 'Σ̂ diagonal', formula: 'σ²ⱼⱼ^ = σ̂ⱼ²/wⱼ*,  σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1)  (eq. (41))', values: v, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+      { name: 'Σ̂ off-diagonal', formula: 'σ²ᵢⱼρᵢⱼ^ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ) / (Sᵢⱼ + (T−2)wᵢ*wⱼ*/Sᵢⱼ)  (eq. (39))', values: offs, summary: true, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; J(J−1)/2 pairs' },
+    ];
+    if (o.common) {
+      steps.push({ name: 'common covariance', formula: 'ĉ = average of σ²ᵢⱼρᵢⱼ^ over the pairs i ≠ j', values: [cbar], badge: 'not proved yet', gap: 'G1', note: 'unbiased for a common c: not proved yet (G1)' });
+    }
+    steps.push(
+      { name: 'ĉⱼ', formula: 'ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ', values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
+      { name: 'τ̂²', formula: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**)  (eq. (39))', values: [tauRaw], badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.tauHat_unbiased', gap: o.common ? 'G1' : null, note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
+      { name: 'damped K̂', formula: `K̂ = Σ̂ with off-diagonal × θ, + τ̂²⁺ I;  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1; the choice θ = ${theta} is a heuristic (G2)` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem (G2)` },
+    );
+    if (o.common && tau2 > 0) {
+      steps.push(
+        { name: 'z', formula: 'zⱼ = τ̂² / (τ̂² + v̂ⱼ − θĉ)', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_of_equalCov' },
+        { name: 'b', formula: 'bⱼ = zⱼ / z*', values: b, badge: 'proved', lean: 'Credibility.Core.b_eq_of_equalCov' },
+      );
+    } else {
+      steps.push(
+        { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+        { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+      );
+    }
+    steps.push({ name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: res.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` });
+    return { means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags, K, theta, tauRaw, tau2, cbar, steps };
   }
 
   /**
@@ -286,9 +415,10 @@
    */
   const MODELS = {
     bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
+    corr: { name: 'Thesis model with correlation (full K̂)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
+    corrC: { name: 'Thesis model, one common covariance', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true },
-    corr: { name: 'Thesis model with correlation', short: 'corr', fit: null, ready: false, note: 'step 3' },
   };
 
   /**
@@ -296,7 +426,7 @@
    * side is built yet; the page greys out the rest.
    */
   const FEATURES = [
-    { id: 'rho', name: 'Correlation between regions within a year', world: true, fit: false, fitNote: 'step 3' },
+    { id: 'rho', name: 'Correlation between regions within a year', world: true, fit: true },
     { id: 'unequal', name: 'Unequal lengths (regions entered recently)', world: false, fit: false, fitNote: 'step 4' },
     { id: 'groups', name: 'Group levels (regions of one country)', world: false, fit: false, fitNote: 'step 4' },
   ];
@@ -325,12 +455,13 @@
   function simulate(world, ids, n, seed) {
     const r = rng(seed), fl = floorBlend(world);
     const acc = {};
-    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, warn: 0 };
+    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, warn: 0, flags: {} };
     for (let k = 0; k < n; k++) {
       const { levels, data } = draw(world, r);
       for (const id of ids) {
         const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels);
         acc[id].s += e; acc[id].ss += e * e; if (f.warnings.length) acc[id].warn++;
+        for (const k in f.flags) if (f.flags[k]) acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
       }
       const e = weightedSE(data, fl.apply(data).rates, levels);
       acc.floor.s += e; acc.floor.ss += e * e;
@@ -338,7 +469,9 @@
     const out = {};
     for (const id in acc) {
       const mean = acc[id].s / n, v = Math.max(acc[id].ss / n - mean * mean, 0);
-      out[id] = { mse: mean, se: Math.sqrt(v / n), warnShare: acc[id].warn / n };
+      const flags = {};
+      for (const k in acc[id].flags) flags[k] = acc[id].flags[k] / n;
+      out[id] = { mse: mean, se: Math.sqrt(v / n), warnShare: acc[id].warn / n, flags };
     }
     return out;
   }
@@ -347,6 +480,7 @@
     DEFAULTS, MODELS, FEATURES,
     rng, solve, cholesky, makeWorld, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
-    fitBS, fitOwn, fitPool, floorBlend, weightedSE, simulate,
+    fitBS, fitOwn, fitPool, fitCorr, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    floorBlend, weightedSE, simulate,
   };
 });

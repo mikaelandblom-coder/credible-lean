@@ -128,3 +128,114 @@ test('No fit sees the world: fits read only data.w and data.X', () => {
     assert.ok(!/truth|levels|world|params/.test(m.fit.toString()), `${id} source mentions the world`);
   }
 });
+
+// ---------------------------------------------------------------- step 3: the correlation fit
+
+test('Damping: K̂ ≻ 0 for every fitted draw, and for any θ < 1 when Σ̂ ⪰ 0 (posDef_shrinkOffDiag, Unequal.dampedK_posDef)', () => {
+  const r = E.rng(8);
+  for (const params of [{}, { rho: 0.5 }, { rho: 0.9, J: 12, T: 3 }, { J: 3, T: 2, tau: 0.01 }]) {
+    const world = E.makeWorld(params);
+    for (let k = 0; k < 300; k++) {
+      const { data } = E.draw(world, r);
+      for (const common of [false, true]) {
+        const f = E.fitCorr(data, { common });
+        assert.ok(E.cholesky(f.K), 'K̂ ≻ 0');
+        assert.ok(f.theta >= 0 && f.theta < 1, 'θ ∈ [0, 1)');
+      }
+    }
+  }
+  // The theorem itself: any PSD A with positive diagonal, θ ∈ [0, 1), τ ≥ 0.
+  for (let k = 0; k < 200; k++) {
+    const n = 2 + Math.floor(r() * 8), m = 1 + Math.floor(r() * n); // rank m ≤ n: often singular
+    const B = Array.from({ length: n }, () => Array.from({ length: m }, () => r.normal()));
+    const A = B.map((bi) => B.map((bj) => sum(bi.map((x, l) => x * bj[l]))));
+    const th = r() * 0.999, tau = r() < 0.3 ? 0 : r();
+    const K = E.shrinkOffDiag(th, A).map((row, i) => row.map((x, j) => (i === j ? x + tau : x)));
+    assert.ok(E.cholesky(K), `n=${n}, rank ${m}, θ=${th}`);
+  }
+});
+
+test('Thesis τ̂², σ²ᵢⱼρᵢⱼ^ and K̂ are unbiased on average (Model.tauHat_unbiased, sigRhoHat_unbiased, KHat_unbiased)', () => {
+  for (const params of [{ J: 6, T: 5, rho: 0.5 }, { J: 4, T: 3, rho: 0 }]) {
+    const world = E.makeWorld(params), K = E.trueK(world), r = E.rng(9), n = 20000;
+    const acc = { tau: [0, 0], s01: [0, 0], s00: [0, 0] };
+    const add = (a, x) => { a[0] += x; a[1] += x * x; };
+    for (let k = 0; k < n; k++) {
+      const { data } = E.draw(world, r), est = E.sigmaHat(data);
+      add(acc.tau, E.thesisTau(est.m, est.wt, est.Sig).tau2);
+      add(acc.s01, est.Sig[0][1]); add(acc.s00, est.Sig[0][0]);
+    }
+    const tau2 = world.truth.tau2;
+    for (const [key, truth] of [['tau', tau2], ['s01', K[0][1]], ['s00', K[0][0] - tau2]]) {
+      const m = acc[key][0] / n, se = Math.sqrt((acc[key][1] / n - m * m) / n);
+      assert.ok(Math.abs(m - truth) < 4 * se, `${key}: ${m} ± ${se} vs ${truth}`);
+    }
+  }
+});
+
+// Not balanced: with a σ̂ⱼ per cohort, wⱼ*(1 − zⱼ) = (σ̂ⱼ²/τ̂²)zⱼ is not proportional to zⱼ.
+test('Correlation fit at θ = 0 is BS-like: zⱼ = wⱼ*/(wⱼ* + σ̂ⱼ²/τ̂²), bⱼ = zⱼ/z* (Core.bestZ_of_diag)', () => {
+  const world = E.makeWorld({ rho: 0 }), r = E.rng(10);
+  let checked = 0;
+  for (let k = 0; k < 200; k++) {
+    const { data } = E.draw(world, r), f = E.fitCorr(data, { theta: 0 });
+    if (f.tau2 <= 0) continue;
+    const wt = data.w.map(sum), T = data.X[0].length;
+    const sj2 = f.means.map((mj, j) => sum(data.X[j].map((x, t) => data.w[j][t] * (x - mj) ** 2)) / (T - 1));
+    const z = wt.map((x, j) => x / (x + sj2[j] / f.tau2)), zs = sum(z);
+    for (let j = 0; j < wt.length; j++) { close(f.z[j], z[j], 1e-9, 'z'); close(f.b[j], z[j] / zs, 1e-9, 'b'); }
+    checked++;
+  }
+  assert.ok(checked > 100);
+});
+
+test('Correlation fit at ρ = 0 performs like BS (statistical)', () => {
+  const world = E.makeWorld({ rho: 0 }), res = E.simulate(world, ['bs', 'corr', 'corrC'], 3000, 11);
+  for (const id of ['corr', 'corrC']) {
+    const ratio = res[id].mse / res.bs.mse;
+    assert.ok(ratio > 0.9 && ratio < 1.15, `${id}/bs MSE ratio ${ratio}`);
+  }
+});
+
+test('Common covariance: the closed form equals the GLS route (Core.bestZ_of_equalCov, b_eq_of_equalCov)', () => {
+  const r = E.rng(12);
+  for (const rho of [0, 0.4]) {
+    const world = E.makeWorld({ rho });
+    for (let k = 0; k < 200; k++) {
+      const f = E.fitCorr(E.draw(world, r).data, { common: true });
+      if (f.tau2 <= 0) continue;
+      const g = E.bestBlendWeights(f.K, f.tau2);
+      f.z.forEach((z, j) => { close(z, g.z[j], 1e-8, 'z'); close(f.b[j], g.b[j], 1e-8, 'b'); });
+    }
+  }
+});
+
+test('Warnings: z > 1 and negative b are flagged when they occur', () => {
+  const world = E.makeWorld({ rho: 0.8, spread: 2 }), res = E.simulate(world, ['corr', 'corrC'], 500, 13);
+  assert.ok(res.corr.flags.bNeg > 0, 'negative b seen');
+  assert.ok(res.corrC.flags.zOver1 > 0, 'z > 1 seen');
+  const r = E.rng(14);
+  for (let k = 0; k < 100; k++) {
+    const f = E.fitCorr(E.draw(world, r).data);
+    assert.equal(f.flags.zOver1, f.z.some((z) => z > 1));
+    assert.equal(f.flags.bNeg, f.b.some((b) => b < 0));
+    assert.equal(f.warnings.length, Object.values(f.flags).filter(Boolean).length);
+  }
+});
+
+test('Every step marked proved names a proved Lean declaration; every other step names its gap', () => {
+  const world = E.makeWorld({ rho: 0.3 }), { data } = E.draw(world, E.rng(15));
+  const path = require('node:path'), { execFileSync } = require('node:child_process');
+  // The same list as PROGRESS.md and the handbook check (no sorry; CI's CheckAxioms
+  // makes sure nothing counted as proved depends on one).
+  const proved = new Set(execFileSync('python3', [path.join(__dirname, '..', 'scripts', 'progress.py'), '--proved'],
+    { encoding: 'utf8' }).split(/\s+/).filter(Boolean));
+  for (const [id, m] of Object.entries(E.MODELS)) {
+    for (const s of m.fit(data).steps) {
+      assert.ok(s.badge === 'proved' || s.badge === 'not proved yet', `${id}/${s.name} badge`);
+      if (s.badge === 'proved') {
+        assert.ok(proved.has(s.lean), `${id}/${s.name}: ${s.lean} is not a proved declaration`);
+      } else assert.ok(s.gap || s.note, `${id}/${s.name}: no gap named`);
+    }
+  }
+});

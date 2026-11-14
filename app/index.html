@@ -23,6 +23,8 @@
   --warn-bg: #fff4dc;
   --warn: #7a5200;
   --accent: #2a78d6;
+  --ok-bg: #dcf3e9;
+  --ok: #0c5d40;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -42,6 +44,8 @@
     --warn-bg: #3a2c0c;
     --warn: #f3cd7a;
     --accent: #3987e5;
+    --ok-bg: #12352a;
+    --ok: #8fe0bf;
   }
 }
 :root[data-theme="dark"] {
@@ -49,6 +53,7 @@
   --bg: #111110; --surface: #1a1a19; --border: #2f2e2c; --text: #f0efec; --text-2: #c3c2b7;
   --muted: #8d8c86; --grid: #282826; --fit: #3987e5; --ref: #d95926; --floor: #199e70;
   --own: #6f6e69; --truth: #f0efec; --warn-bg: #3a2c0c; --warn: #f3cd7a; --accent: #3987e5;
+  --ok-bg: #12352a; --ok: #8fe0bf;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -109,7 +114,21 @@ details summary { cursor: pointer; color: var(--text-2); font-size: 13px; margin
 .tablewrap { overflow-x: auto; }
 footer { color: var(--muted); font-size: 13px; }
 footer a { color: var(--accent); }
-.flexhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.flexhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seed { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+.seed input { font: inherit; width: 7.5em; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 40px; }
+.tabs { display: flex; gap: 6px; margin: 0 0 10px; }
+.tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: transparent; }
+.step { border-top: 1px solid var(--grid); padding: 10px 0; }
+.step:first-of-type { border-top: 0; }
+.step-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.step-name { font-weight: 600; }
+.formula { font-size: 13px; color: var(--text-2); margin: 4px 0; overflow-wrap: anywhere; }
+.vals { font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.badge { font-size: 12px; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.badge.proved { background: var(--ok-bg); color: var(--ok); }
+.badge.open { background: var(--warn-bg); color: var(--warn); }
+.step a { color: var(--accent); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -136,11 +155,12 @@ footer a { color: var(--accent); }
       <div><label for="m-fit">Fitted model</label><select id="m-fit"></select></div>
       <div><label for="m-ref">Reference</label><select id="m-ref"></select></div>
     </div>
-    <p class="sub" style="margin:10px 0 0">Fit features: the correlation fit (thesis model, damped <i>K̂</i>) comes next; unequal lengths and group levels after it.</p>
+    <p class="sub" style="margin:10px 0 0">The correlation fits use the thesis estimators (37)–(41) and a damped <i>K̂</i>; “common” replaces every covariance between regions by their average. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
-    <div class="flexhead"><h2 id="h-draw" style="margin:0">One draw</h2><button id="b-draw" class="primary">New draw</button></div>
+    <div class="flexhead"><h2 id="h-draw" style="margin:0">One draw</h2>
+      <span style="display:inline-flex;gap:8px;align-items:center"><label class="seed" for="i-seed">Seed <input type="number" id="i-seed" inputmode="numeric" min="0" step="1" value="12345"></label><button id="b-draw" class="primary">New draw</button></span></div>
     <div class="legend" id="legend-draw"></div>
     <svg class="chart" id="c-draw" role="img" aria-label="Rates per region for one draw"></svg>
     <div id="w-draw"></div>
@@ -155,6 +175,13 @@ footer a { color: var(--accent); }
     <svg class="chart" id="c-many" role="img" aria-label="Error of fit, reference and floor"></svg>
     <div id="w-many"></div>
     <details><summary>Table</summary><div class="tablewrap" id="t-many"></div></details>
+  </section>
+
+  <section class="card" aria-labelledby="h-steps">
+    <h2 id="h-steps">Fitting steps <span class="sub">(this draw)</span></h2>
+    <div class="tabs" id="steps-tabs"></div>
+    <div id="steps"></div>
+    <p class="sub" style="margin:8px 0 0"><span class="badge proved">proved</span> the formula is a theorem in Lean (link). <span class="badge open">not proved yet</span> a heuristic step: one of the gaps G0–G7 of the plan.</p>
   </section>
 
   <footer>
@@ -183,7 +210,7 @@ footer a { color: var(--accent); }
     { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
     { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
   ];
-  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'own', drawSeed: 1 });
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'corr', seed: 12345, stepsOf: 'fit' });
 
   const ws = $('world-sliders');
   for (const s of SLIDERS) {
@@ -211,7 +238,13 @@ footer a { color: var(--accent); }
     }
     sel.addEventListener('change', () => { state[key] = sel.value; update(); });
   }
-  $('b-draw').addEventListener('click', () => { state.drawSeed++; renderDraw(); });
+  const seedIn = $('i-seed');
+  seedIn.value = state.seed;
+  $('b-draw').addEventListener('click', () => { state.seed++; seedIn.value = state.seed; update(); });
+  seedIn.addEventListener('change', () => {
+    const v = Math.floor(+seedIn.value);
+    state.seed = Number.isFinite(v) && v >= 0 ? v : 12345; seedIn.value = state.seed; update();
+  });
 
   // ---------- tooltip
   const tip = $('tip');
@@ -261,7 +294,7 @@ footer a { color: var(--accent); }
 
   // ---------- one draw
   function renderDraw() {
-    const r = E.rng(1000 + state.drawSeed);
+    const r = E.rng(state.seed);
     const { levels, data } = E.draw(world, r);
     const fit = E.MODELS[state.fit].fit(data), ref = E.MODELS[state.ref].fit(data);
     const wt = data.w.map(sum), J = world.J;
@@ -305,13 +338,42 @@ footer a { color: var(--accent); }
       ['True level', C.truth, 'ring'], ['Own mean', C.own], [`Fit: ${E.MODELS[state.fit].short}`, C.fit], [`Reference: ${E.MODELS[state.ref].short}`, C.ref],
     ]);
     const errFit = E.weightedSE(data, fit.rates, levels), errRef = E.weightedSE(data, ref.rates, levels);
-    const msgs = fit.warnings.slice();
-    if (fit.z && fit.z.some((z) => z > 1)) msgs.push('z > 1 for some region');
-    warnBlock($('w-draw'), msgs.concat([]).map((m) => 'Fit: ' + m));
+    const msgs = fit.warnings.map((m) => 'Fit: ' + m);
+    if (state.ref !== state.fit) for (const m of ref.warnings) msgs.push('Reference: ' + m);
+    warnBlock($('w-draw'), msgs);
+    renderSteps({ fit, ref });
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>`);
     $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th><th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th></tr></thead><tbody>` +
       order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td><td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td></tr>`).join('') +
       '</tbody></table>';
+  }
+
+  // ---------- fitting steps
+  const fmt = (x) => Math.abs(x) >= 100 ? x.toFixed(0) : Math.abs(x) >= 0.1 ? x.toFixed(3) : x.toPrecision(3);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let lastFits = null;
+  function renderSteps(fits) {
+    lastFits = fits;
+    const tabs = $('steps-tabs');
+    const ids = [['fit', `Fit: ${E.MODELS[state.fit].short}`], ['ref', `Reference: ${E.MODELS[state.ref].short}`]];
+    tabs.innerHTML = ids.map(([k, lab]) => `<button type="button" data-k="${k}" aria-pressed="${state.stepsOf === k}">${esc(lab)}</button>`).join('');
+    tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { state.stepsOf = b.dataset.k; renderSteps(lastFits); }));
+    const steps = fits[state.stepsOf].steps;
+    if (!steps.length) { $('steps').innerHTML = '<p class="sub">No estimation: this model uses no parameters.</p>'; return; }
+    $('steps').innerHTML = steps.map((s) => {
+      let vals;
+      if (s.summary) {
+        const v = s.values, mean = sum(v) / v.length;
+        vals = `${v.length} values, from ${fmt(Math.min(...v))} to ${fmt(Math.max(...v))}, mean ${fmt(mean)}`;
+      } else vals = s.values.length > 1 ? s.values.map((x, j) => `R${j + 1} ${fmt(x)}`).join(' · ') : fmt(s.values[0]);
+      const badge = s.badge === 'proved'
+        ? `<span class="badge proved">proved</span>`
+        : `<span class="badge open">not proved yet${s.gap ? ' · ' + s.gap : ''}</span>`;
+      const link = s.lean ? `<a href="../find/#doc/${esc(s.lean)}" target="_blank" rel="noopener">${esc(s.lean.replace(/^Credibility\./, ''))}</a>` : '';
+      return `<div class="step"><div class="step-head"><span class="step-name">${esc(s.name)}</span>${badge}</div>
+        <div class="formula">${esc(s.formula)}</div><div class="vals">${vals}</div>
+        ${s.note || link ? `<div class="sub">${s.note ? esc(s.note) : ''}${s.note && link ? ' · ' : ''}${link}</div>` : ''}</div>`;
+    }).join('');
   }
 
   // ---------- many draws (computed in chunks so the sliders stay responsive)
@@ -323,7 +385,7 @@ footer a { color: var(--accent); }
     $('headline').style.opacity = 0.5;
     const step = () => {
       if (my !== job) return;
-      parts.push(E.simulate(world, ids, CHUNK, 7919 + done));
+      parts.push(E.simulate(world, ids, CHUNK, (state.seed * 7919 + done + 1) >>> 0));
       done += CHUNK;
       if (done < N) { setTimeout(step, 0); return; }
       const merged = {};
@@ -331,7 +393,9 @@ footer a { color: var(--accent); }
         const ms = parts.map((p) => p[id]);
         const mse = sum(ms.map((m) => m.mse)) / ms.length;
         const se = Math.sqrt(sum(ms.map((m) => m.se * m.se))) / ms.length;
-        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length };
+        const flags = {};
+        for (const m of ms) for (const k in m.flags) flags[k] = (flags[k] || 0) + m.flags[k] / ms.length;
+        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags };
       }
       drawMany(merged);
     };
@@ -377,12 +441,17 @@ footer a { color: var(--accent); }
       hit.addEventListener('pointerdown', (e) => showTip(html, e));
       hit.addEventListener('pointerleave', hideTip);
     });
-    const msgs = [];
-    for (const [id, who] of [[state.fit, 'Fit'], [state.ref, 'Reference']]) {
-      const s = res[id].warnShare;
-      if (s > 0) msgs.push(`${who}: τ̂² ≤ 0 (set to 0) in ${pct(s, 0)} of draws`);
+    const msgs = [], WHAT = {
+      tauNeg: 'τ̂² ≤ 0 (set to 0)', zOver1: 'z > 1 for some region', bNeg: 'a negative weight b',
+      thetaLow: 'damping lowered below θ = 0.95', offBalance: 'off-balance above 1%',
+    };
+    const pairs = state.fit === state.ref ? [[state.fit, 'Fit and reference']] : [[state.fit, 'Fit'], [state.ref, 'Reference']];
+    for (const [id, who] of pairs) {
+      const parts = Object.keys(WHAT).filter((k) => res[id].flags[k] > 0)
+        .map((k) => `${WHAT[k]} in ${res[id].flags[k] < 0.01 ? '<1%' : pct(res[id].flags[k], 0)}`);
+      if (parts.length) msgs.push(`${who}: ${parts.join('; ')} of draws`);
     }
-    warnBlock($('w-many'), [...new Set(msgs)]);
+    warnBlock($('w-many'), msgs);
     $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +
       rows.map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
     $('n-draws').textContent = N.toLocaleString();

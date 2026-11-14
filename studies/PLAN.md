@@ -1,7 +1,7 @@
 # From theorems to practice: the credibility app
 
 Written 2026-11-13, revised the same day (an interactive app instead of
-written simulation studies). Status: steps 1–2 built 2026-11-14 (`app/`,
+written simulation studies). Status: steps 1–3 built 2026-11-14 (`app/`,
 live at `/app/`). Tick items off as they are done.
 
 **Aim.** Give a practitioner clear examples of what each result buys. One
@@ -168,8 +168,21 @@ One chat per step; none needs Lean except step 5.
   country structure comes with group levels); the fitting-steps panel data
   is already in `fitBS(...).steps`, the panel itself is step 3. Not yet
   tested from the Node side: damping (`K̂ ≻ 0`), which arrives with `K̂`.
-- [ ] 3. Correlation fit (full `K̂` damped, and common covariance), the
-  fitting-steps panel with badges, warnings.
+- [x] 3. Correlation fit (full `K̂` damped, and common covariance), the
+  fitting-steps panel with badges, warnings. Notes: `fitCorr` in
+  `engine.js`; reference preset is now the correlation fit. Damping: `θ =
+  0.95`, lowered in steps until `K̂ ≻ 0` (badge "proved" only when `Σ̂ ⪰ 0`,
+  by `posDef_shrinkOffDiag`; otherwise a numerical check, G2). The common
+  variant takes `ĉ` = mean of the pairwise `σ²ᵢⱼρᵢⱼ^`, uses it in `ĉⱼ` and
+  `τ̂²` too (G1), and the closed form `zⱼ = τ̂²/(τ̂² + v̂ⱼ − θĉ)`. Seen on
+  screen: with unequal volumes and `ρ > 0` the common variant gives `z > 1`
+  in most draws (true covariances shrink with volume, so `ĉ` exceeds the
+  large regions' `vⱼ`), and an error many times the floor: a common
+  *correlation* may be the better one-parameter model (candidate for G1).
+  The full fit is not balanced (off-balance warning above 1%); at `θ = 0` it
+  is BS with one `σ̂ⱼ²` per region (tested). A seed field (default 12345)
+  fixes the one draw and the many draws. A Node test checks that every step
+  marked proved names a declaration in `progress.py --proved`.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
 - [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
   to "proved".
