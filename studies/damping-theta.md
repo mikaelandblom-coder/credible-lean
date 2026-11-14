@@ -76,3 +76,26 @@ Same study, J = 8, T ∈ {5, 10}, noise laws with mean 0, variance 1 and excess 
   the common-correlation `K` needs only `ρσ²` and `σ²`, both with unbiased *linear* estimators,
   so `K̂` is entrywise unbiased with no ratio. With region-specific σⱼ the ratio is unavoidable;
   then only asymptotic results (T → ∞, needs a law of large numbers and independent years) exist.
+
+## A distribution-free θ̂ from the data (`damping-vhat.js`, `damping-oracle.js`)
+
+Rule: `θ̂ = 1 − ΣV̂ᵢⱼ / Σŝᵢⱼ²` (Ledoit–Wolf form), with `V̂ᵢⱼ = T·s²(p)/Dᵢⱼ²` from the yearly
+products `pₜ` (independent years, no normal-theory formula); raw and correlation scale agree.
+
+11. **It is worse than the normal-theory rule**, by up to 10 points, at high ρ and with heavy
+    tails: it damps too much (θ̂ ≈ 0.5 where the best θ is 0.95–1).
+12. **The fault is the target, not V̂.** The oracle optimum of the stand-in loss
+    `E Σ (θŝᵢⱼ − sᵢⱼ)²`, from the true variances: normal, ρ = 0.9: 0.80 (V̂ rule: 0.81, so V̂ is
+    accurate there); κ = 24, ρ = 0.9: 0.29 (V̂ rule: 0.52; V̂ underestimates heavy tails from 10
+    years). But the best θ *for the rates* is 0.99 there. Heavy tails make Σ̂ a worse estimate of
+    the population K, yet the rates want *less* damping.
+13. **Why (hypothesis H4):** Σ̂ is computed from the same years as the region means. A hard
+    winter in this data set inflates Σ̂ in the same draw, and GLS then cancels that very shock.
+    So Σ̂ is useful as a measurement of *this* history's common noise, not only as an estimate of
+    K. Damping towards the population K throws that away. The same effect lets the fit beat the
+    fixed-weight floor (finding 9).
+
+**Consequence for G2.** The shrinkage lemma (θ* = S/(S + V)) is true and distribution-free but
+optimises the wrong loss: it is not the θ the rates need. Use damping for safety (`K̂ ≻ 0`) with θ
+near 1 once a correlation is clearly present, and θ → 0 only when ρ̄ ≈ 0. The normal-theory rule
+does exactly that, which is why it works; its variance formula is not the reason.
