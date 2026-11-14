@@ -128,10 +128,15 @@ the floor line and in the tests.
 
 - **G1. One common covariance.** The average of the pairwise estimators
   (39) is unbiased for a common `c`. One extra parameter on top of BS;
-  probably the most practical form of the thesis model.
+  probably the most practical form of the thesis model. *Numerical study
+  2026-11-14 (`studies/damping-theta.md`): with unequal volumes a common
+  covariance is misspecified and its z explode; a common **correlation**
+  `Σᵢⱼ = ρ̄√(ΣᵢᵢΣⱼⱼ)` is the better one-parameter model (H1 there).*
 - **G4. Pooled pair estimator of `φτ²`**, unbiased for any weights.
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
-- **G2. Damping as shrinkage.** Is there a safe `θ`?
+- **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
+  rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed
+  `θ` in 23 of 24 worlds (H2 in `studies/damping-theta.md`).*
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.
