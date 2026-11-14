@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credibility lab</title>
+<meta name="description" content="Choose a world, fit a credibility model from data only, and see what each feature buys.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --surface: #fcfcfb;
+  --border: #e3e1dc;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #8a8984;
+  --grid: #ecebe7;
+  --fit: #2a78d6;
+  --ref: #eb6834;
+  --floor: #1baf7a;
+  --own: #a3a29c;
+  --truth: #0b0b0b;
+  --warn-bg: #fff4dc;
+  --warn: #7a5200;
+  --accent: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface: #1a1a19;
+    --border: #2f2e2c;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --muted: #8d8c86;
+    --grid: #282826;
+    --fit: #3987e5;
+    --ref: #d95926;
+    --floor: #199e70;
+    --own: #6f6e69;
+    --truth: #f0efec;
+    --warn-bg: #3a2c0c;
+    --warn: #f3cd7a;
+    --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111110; --surface: #1a1a19; --border: #2f2e2c; --text: #f0efec; --text-2: #c3c2b7;
+  --muted: #8d8c86; --grid: #282826; --fit: #3987e5; --ref: #d95926; --floor: #199e70;
+  --own: #6f6e69; --truth: #f0efec; --warn-bg: #3a2c0c; --warn: #f3cd7a; --accent: #3987e5;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+h1 { font-size: 22px; margin: 4px 0 2px; letter-spacing: -0.01em; }
+h2 { font-size: 16px; margin: 0 0 8px; }
+.lede { color: var(--text-2); margin: 0 0 16px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; margin: 0 0 14px;
+}
+[hidden] { display: none !important; }
+.row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 10px; margin: 10px 0; }
+.row output { grid-column: 2; grid-row: 1; font-variant-numeric: tabular-nums; color: var(--text-2); text-align: right; }
+.row input[type=range] { grid-column: 1 / -1; width: 100%; margin: 4px 0 0; accent-color: var(--accent); }
+@media (min-width: 600px) {
+  .row { grid-template-columns: 1fr 44% 4.5em; }
+  .row input[type=range] { grid-column: 2; grid-row: 1; margin: 0; }
+  .row output { grid-column: 3; grid-row: 1; }
+}
+.sub { color: var(--muted); font-size: 13px; }
+.feature { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.feature input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.feature.off { color: var(--muted); }
+.tag { font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; color: var(--muted); white-space: nowrap; }
+select, button {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; min-height: 40px;
+}
+select { width: 100%; }
+button { cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+.grid2 { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 600px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+.grid2 label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--text-2); margin: 4px 0 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart { width: 100%; display: block; overflow: visible; }
+.chart text { fill: var(--text-2); font-size: 11px; }
+.chart .axis { stroke: var(--border); }
+.chart .gridline { stroke: var(--grid); }
+.headline { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
+.warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
+.warn::before { content: "⚠ "; }
+.tip {
+  position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); max-width: 240px; display: none; font-variant-numeric: tabular-nums;
+}
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child { text-align: left; }
+details summary { cursor: pointer; color: var(--text-2); font-size: 13px; margin-top: 8px; }
+.tablewrap { overflow-x: auto; }
+footer { color: var(--muted); font-size: 13px; }
+footer a { color: var(--accent); }
+.flexhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Credibility lab</h1>
+  <p class="lede">Motor insurance: claim cost per vehicle-year by region, relative to the tariff (1.00). Choose the world, fit a model from the data alone, and compare it with a reference and with the best possible.</p>
+
+  <section class="card" aria-labelledby="h-world">
+    <h2 id="h-world">World <span class="sub">(the truth)</span></h2>
+    <div id="world-sliders"></div>
+    <div class="feature" id="f-rho-row">
+      <input type="checkbox" id="f-rho"><label for="f-rho">Correlation within a year <span class="sub">(hard winters hit all regions)</span></label>
+    </div>
+    <div class="row" id="rho-row" hidden>
+      <label for="s-rho">ρ between regions</label><input type="range" id="s-rho" min="0" max="0.9" step="0.05" value="0.5"><output id="o-rho"></output>
+    </div>
+    <div class="feature off"><input type="checkbox" disabled><label>Unequal lengths <span class="sub">(regions entered recently)</span></label><span class="tag">soon</span></div>
+    <div class="feature off"><input type="checkbox" disabled><label>Group levels <span class="sub">(regions of one country)</span></label><span class="tag">soon</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-models">
+    <h2 id="h-models">Models <span class="sub">(see only the data)</span></h2>
+    <div class="grid2">
+      <div><label for="m-fit">Fitted model</label><select id="m-fit"></select></div>
+      <div><label for="m-ref">Reference</label><select id="m-ref"></select></div>
+    </div>
+    <p class="sub" style="margin:10px 0 0">Fit features: the correlation fit (thesis model, damped <i>K̂</i>) comes next; unequal lengths and group levels after it.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-draw">
+    <div class="flexhead"><h2 id="h-draw" style="margin:0">One draw</h2><button id="b-draw" class="primary">New draw</button></div>
+    <div class="legend" id="legend-draw"></div>
+    <svg class="chart" id="c-draw" role="img" aria-label="Rates per region for one draw"></svg>
+    <div id="w-draw"></div>
+    <details><summary>Table</summary><div class="tablewrap" id="t-draw"></div></details>
+  </section>
+
+  <section class="card" aria-labelledby="h-many">
+    <h2 id="h-many">Many draws</h2>
+    <p class="sub" style="margin:0">Typical error of the rates (root of the exposure-weighted mean squared error), in % of the tariff, over <span id="n-draws">2000</span> draws of this world. Bars show ±2 standard errors.</p>
+    <div class="headline" id="headline">…</div>
+    <div class="sub" id="headline-sub"></div>
+    <svg class="chart" id="c-many" role="img" aria-label="Error of fit, reference and floor"></svg>
+    <div id="w-many"></div>
+    <details><summary>Table</summary><div class="tablewrap" id="t-many"></div></details>
+  </section>
+
+  <footer>
+    <p>The floor is the best credibility blend if the true parameters were known (thesis eq. (26) on the true <i>K</i>): a benchmark, never a fit. The gap between fit and floor is the price of estimating the parameters.</p>
+    <p>Every fitted number comes from the simulated data alone. Levels and noise are skewed (gamma): the theory assumes only two moments. <a href="../">Blueprint</a> · <a href="../handbook.pdf">Handbook</a></p>
+  </footer>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script src="engine.js"></script>
+<script>
+'use strict';
+(function () {
+  const E = window.Engine;
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const sum = (a) => a.reduce((s, x) => s + x, 0);
+  const pct = (x, d = 1) => (100 * x).toFixed(d) + '%';
+
+  // ---------- controls
+  const SLIDERS = [
+    { key: 'J', label: 'Regions', min: 3, max: 20, step: 1, fmt: (v) => v },
+    { key: 'T', label: 'Years', min: 2, max: 20, step: 1, fmt: (v) => v },
+    { key: 'tau', label: 'Spread of region levels τ', min: 0, max: 0.3, step: 0.01, fmt: (v) => pct(v, 0) },
+    { key: 'sigma', label: 'Noise per vehicle-year σ', min: 1, max: 20, step: 0.5, fmt: (v) => v.toFixed(1) },
+    { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
+    { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
+  ];
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'own', drawSeed: 1 });
+
+  const ws = $('world-sliders');
+  for (const s of SLIDERS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const id = 's-' + s.key;
+    row.innerHTML = `<label for="${id}">${s.label}</label><input type="range" id="${id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${state[s.key]}"><output id="o-${s.key}"></output>`;
+    ws.appendChild(row);
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const show = () => { out.textContent = s.fmt(+inp.value); };
+    show();
+    inp.addEventListener('input', () => { state[s.key] = +inp.value; show(); update(); });
+  }
+  const rhoBox = $('f-rho'), rhoRow = $('rho-row'), rhoIn = $('s-rho'), rhoOut = $('o-rho');
+  const showRho = () => { rhoOut.textContent = (+rhoIn.value).toFixed(2); rhoRow.hidden = !rhoBox.checked; };
+  showRho();
+  rhoBox.addEventListener('change', () => { state.rhoOn = rhoBox.checked; showRho(); update(); });
+  rhoIn.addEventListener('input', () => { state.rhoVal = +rhoIn.value; showRho(); update(); });
+
+  for (const [sel, key] of [[$('m-fit'), 'fit'], [$('m-ref'), 'ref']]) {
+    for (const [id, m] of Object.entries(E.MODELS)) {
+      const o = document.createElement('option');
+      o.value = id; o.textContent = m.ready ? m.name : `${m.name} (${m.note})`; o.disabled = !m.ready;
+      if (id === state[key]) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.addEventListener('change', () => { state[key] = sel.value; update(); });
+  }
+  $('b-draw').addEventListener('click', () => { state.drawSeed++; renderDraw(); });
+
+  // ---------- tooltip
+  const tip = $('tip');
+  function showTip(html, ev) {
+    tip.innerHTML = html; tip.style.display = 'block';
+    const x = Math.min(ev.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    const y = Math.max(8, ev.clientY - tip.offsetHeight - 12);
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  const hideTip = () => { tip.style.display = 'none'; };
+  document.addEventListener('scroll', hideTip, { passive: true });
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest('svg')) hideTip(); });
+
+  // ---------- helpers
+  function el(tag, attrs, parent) {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function niceTicks(lo, hi, n) {
+    const span = hi - lo, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => span / s <= n) || 10 * mag;
+    const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-12; v += step) out.push(+v.toFixed(10));
+    return out;
+  }
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function legend(node, items) {
+    node.innerHTML = items.map(([name, color, shape]) => {
+      const sw = shape === 'ring'
+        ? `<svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="none" stroke="${color}" stroke-width="2"/></svg>`
+        : shape === 'bar'
+          ? `<svg width="12" height="12"><rect x="0" y="2" width="12" height="8" rx="2" fill="${color}"/></svg>`
+          : `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${color}"/></svg>`;
+      return `<span>${sw}${name}</span>`;
+    }).join('');
+  }
+  function warnBlock(node, msgs) { node.innerHTML = msgs.map((m) => `<div class="warn">${m}</div>`).join(''); }
+
+  // ---------- model
+  let world = null;
+  function worldParams() {
+    const p = {}; for (const k in E.DEFAULTS) p[k] = state[k];
+    p.rho = state.rhoOn ? state.rhoVal : 0;
+    return p;
+  }
+
+  // ---------- one draw
+  function renderDraw() {
+    const r = E.rng(1000 + state.drawSeed);
+    const { levels, data } = E.draw(world, r);
+    const fit = E.MODELS[state.fit].fit(data), ref = E.MODELS[state.ref].fit(data);
+    const wt = data.w.map(sum), J = world.J;
+    const order = wt.map((_, j) => j); // regions are already sorted by volume
+    const vals = [].concat(levels, fit.means, fit.rates, ref.rates);
+    let lo = Math.min(...vals), hi = Math.max(...vals); const pad = 0.06 * (hi - lo || 0.1); lo -= pad; hi += pad;
+
+    const svg = $('c-draw'); svg.innerHTML = '';
+    const W = svg.clientWidth || 360, rowH = J > 12 ? 22 : 28, left = 64, right = 12, top = 18, H = top + J * rowH + 8;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
+    const x = (v) => left + (v - lo) / (hi - lo) * (W - left - right);
+    for (const t of niceTicks(lo, hi, Math.max(3, Math.floor((W - left) / 70)))) {
+      el('line', { x1: x(t), x2: x(t), y1: top - 4, y2: H - 6, class: 'gridline' }, svg);
+      const tx = el('text', { x: x(t), y: 11, 'text-anchor': 'middle' }, svg); tx.textContent = t.toFixed(2);
+    }
+    if (fit.mu != null) {
+      el('line', { x1: x(fit.mu), x2: x(fit.mu), y1: top - 4, y2: H - 6, stroke: cssVar('--fit'), 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.7 }, svg);
+    }
+    const C = { truth: cssVar('--truth'), own: cssVar('--own'), fit: cssVar('--fit'), ref: cssVar('--ref'), surface: cssVar('--surface') };
+    order.forEach((j, k) => {
+      const y = top + k * rowH + rowH / 2;
+      const lab = el('text', { x: 0, y: y + 4 }, svg);
+      lab.textContent = `R${j + 1} · ${wt[j] >= 1000 ? (wt[j] / 1000).toFixed(1) + 'k' : Math.round(wt[j])}`;
+      const xs = [levels[j], fit.means[j], fit.rates[j], ref.rates[j]].map(x);
+      el('line', { x1: Math.min(...xs), x2: Math.max(...xs), y1: y, y2: y, stroke: cssVar('--grid'), 'stroke-width': 2 }, svg);
+      el('circle', { cx: x(fit.means[j]), cy: y, r: 4, fill: C.own, stroke: C.surface, 'stroke-width': 2 }, svg);
+      el('circle', { cx: x(ref.rates[j]), cy: y, r: 5, fill: C.ref, stroke: C.surface, 'stroke-width': 2 }, svg);
+      el('circle', { cx: x(fit.rates[j]), cy: y, r: 5, fill: C.fit, stroke: C.surface, 'stroke-width': 2 }, svg);
+      el('circle', { cx: x(levels[j]), cy: y, r: 5.5, fill: 'none', stroke: C.truth, 'stroke-width': 2 }, svg);
+      const hit = el('rect', { x: 0, y: y - rowH / 2, width: W, height: rowH, fill: 'transparent' }, svg);
+      const html = `<b>Region ${j + 1}</b> · ${Math.round(wt[j]).toLocaleString()} vehicle-years<br>
+        True level ${levels[j].toFixed(3)}<br>Own mean ${fit.means[j].toFixed(3)}<br>
+        ${E.MODELS[state.fit].short} rate ${fit.rates[j].toFixed(3)}${fit.z ? ` (z = ${fit.z[j].toFixed(2)})` : ''}<br>
+        ${E.MODELS[state.ref].short} rate ${ref.rates[j].toFixed(3)}`;
+      hit.addEventListener('pointerenter', (e) => showTip(html, e));
+      hit.addEventListener('pointermove', (e) => showTip(html, e));
+      hit.addEventListener('pointerdown', (e) => showTip(html, e));
+      hit.addEventListener('pointerleave', hideTip);
+    });
+    legend($('legend-draw'), [
+      ['True level', C.truth, 'ring'], ['Own mean', C.own], [`Fit: ${E.MODELS[state.fit].short}`, C.fit], [`Reference: ${E.MODELS[state.ref].short}`, C.ref],
+    ]);
+    const errFit = E.weightedSE(data, fit.rates, levels), errRef = E.weightedSE(data, ref.rates, levels);
+    const msgs = fit.warnings.slice();
+    if (fit.z && fit.z.some((z) => z > 1)) msgs.push('z > 1 for some region');
+    warnBlock($('w-draw'), msgs.concat([]).map((m) => 'Fit: ' + m));
+    $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>`);
+    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th><th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th></tr></thead><tbody>` +
+      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td><td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td></tr>`).join('') +
+      '</tbody></table>';
+  }
+
+  // ---------- many draws (computed in chunks so the sliders stay responsive)
+  const N = 2000, CHUNK = 250;
+  let job = 0;
+  function renderMany() {
+    const my = ++job, ids = state.fit === state.ref ? [state.fit] : [state.fit, state.ref];
+    const parts = []; let done = 0;
+    $('headline').style.opacity = 0.5;
+    const step = () => {
+      if (my !== job) return;
+      parts.push(E.simulate(world, ids, CHUNK, 7919 + done));
+      done += CHUNK;
+      if (done < N) { setTimeout(step, 0); return; }
+      const merged = {};
+      for (const id of ids.concat(['floor'])) {
+        const ms = parts.map((p) => p[id]);
+        const mse = sum(ms.map((m) => m.mse)) / ms.length;
+        const se = Math.sqrt(sum(ms.map((m) => m.se * m.se))) / ms.length;
+        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length };
+      }
+      drawMany(merged);
+    };
+    setTimeout(step, 0);
+  }
+
+  function drawMany(res) {
+    const toR = (m) => ({ r: Math.sqrt(m.mse), e: m.se / (2 * Math.sqrt(m.mse)) }); // delta method for the root
+    const C = { fit: cssVar('--fit'), ref: cssVar('--ref'), floor: cssVar('--floor'), text: cssVar('--text') };
+    const rows = [
+      { label: `Fit: ${E.MODELS[state.fit].short}`, color: C.fit, ...toR(res[state.fit]) },
+      { label: `Ref: ${E.MODELS[state.ref].short}`, color: C.ref, ...toR(res[state.ref]) },
+      { label: 'Floor', color: C.floor, ...toR(res.floor) },
+    ];
+    const fl = rows[2], gap = rows[0].r - fl.r;
+    $('headline').style.opacity = 1;
+    $('headline').textContent = pct(rows[0].r, 2);
+    $('headline-sub').textContent = `typical error of the fit; ${pct(Math.max(gap, 0), 2)} above the floor (the price of estimation), reference ${pct(rows[1].r, 2)}`;
+    const svg = $('c-many'); svg.innerHTML = '';
+    const W = svg.clientWidth || 360, left = 78, right = 56, rowH = 34, top = 10, H = top + rows.length * rowH + 22;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
+    const hi = Math.max(...rows.map((r) => r.r + 2 * r.e)) * 1.08;
+    const x = (v) => left + v / hi * (W - left - right);
+    for (const t of niceTicks(0, hi, Math.max(3, Math.floor((W - left) / 70)))) {
+      el('line', { x1: x(t), x2: x(t), y1: top, y2: H - 18, class: 'gridline' }, svg);
+      const tx = el('text', { x: x(t), y: H - 4, 'text-anchor': 'middle' }, svg); tx.textContent = (100 * t).toFixed(t * 100 < 10 && hi < 0.1 ? 1 : 0) + '%';
+    }
+    el('line', { x1: left, x2: left, y1: top, y2: H - 18, class: 'axis' }, svg);
+    rows.forEach((row, k) => {
+      const y = top + k * rowH + 6, h = rowH - 14;
+      const lab = el('text', { x: 0, y: y + h / 2 + 4 }, svg); lab.textContent = row.label;
+      const bw = Math.max(x(row.r) - left, 1);
+      el('path', { d: `M${left},${y} h${bw - 4} a4,4 0 0 1 4,4 v${h - 8} a4,4 0 0 1 -4,4 h${-(bw - 4)} z`, fill: row.color }, svg);
+      const ex1 = x(row.r - 2 * row.e), ex2 = x(row.r + 2 * row.e), cy = y + h / 2;
+      el('line', { x1: ex1, x2: ex2, y1: cy, y2: cy, stroke: C.text, 'stroke-width': 1.5 }, svg);
+      el('line', { x1: ex1, x2: ex1, y1: cy - 5, y2: cy + 5, stroke: C.text, 'stroke-width': 1.5 }, svg);
+      el('line', { x1: ex2, x2: ex2, y1: cy - 5, y2: cy + 5, stroke: C.text, 'stroke-width': 1.5 }, svg);
+      const v = el('text', { x: ex2 + 6, y: cy + 4 }, svg); v.textContent = pct(row.r, 2);
+      const hit = el('rect', { x: 0, y: y - 6, width: W, height: rowH, fill: 'transparent' }, svg);
+      const html = `<b>${row.label}</b><br>${pct(row.r, 2)} ± ${pct(2 * row.e, 2)} (2 SE)`;
+      hit.addEventListener('pointerenter', (e) => showTip(html, e));
+      hit.addEventListener('pointermove', (e) => showTip(html, e));
+      hit.addEventListener('pointerdown', (e) => showTip(html, e));
+      hit.addEventListener('pointerleave', hideTip);
+    });
+    const msgs = [];
+    for (const [id, who] of [[state.fit, 'Fit'], [state.ref, 'Reference']]) {
+      const s = res[id].warnShare;
+      if (s > 0) msgs.push(`${who}: τ̂² ≤ 0 (set to 0) in ${pct(s, 0)} of draws`);
+    }
+    warnBlock($('w-many'), [...new Set(msgs)]);
+    $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +
+      rows.map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
+    $('n-draws').textContent = N.toLocaleString();
+  }
+
+  // ---------- update loop
+  let pending = null;
+  function update() {
+    world = E.makeWorld(worldParams());
+    renderDraw();
+    clearTimeout(pending); pending = setTimeout(renderMany, 120);
+  }
+  window.addEventListener('resize', () => { clearTimeout(pending); pending = setTimeout(() => { renderDraw(); renderMany(); }, 150); });
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', () => { renderDraw(); renderMany(); });
+  update();
+})();
+</script>
+</body>
+</html>

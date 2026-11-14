@@ -1,7 +1,7 @@
 name: Blueprint
 
 # Builds Lean, the blueprint (web + pdf) and checks they agree, in two parallel
-# jobs (`lean`, `docs`).
+# jobs (`lean`, `docs`); `docs` also tests the app (app/) and publishes it at /app/.
 # Deploys to GitHub Pages on pushes to main.
 # Pushes to main and tags only: session branches (ccr-…, claude/…) used to
 # trigger a second, duplicate run of every commit.
@@ -130,6 +130,14 @@ jobs:
         run: |
           diff <(sort -u blueprint/lean_decls) <(python3 scripts/blueprint_check.py --decls | sort -u)
           python3 scripts/blueprint_find.py
+
+      # The practitioner app (studies/PLAN.md): its engine's identity tests run
+      # under Node, then the page is published at /app/ next to the blueprint.
+      - name: Test and add the app
+        run: |
+          node --test app/engine.test.js
+          mkdir -p blueprint/web/app
+          cp app/index.html app/engine.js blueprint/web/app/
 
       - uses: actions/upload-pages-artifact@v3
         with:

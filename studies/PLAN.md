@@ -1,8 +1,8 @@
 # From theorems to practice: the credibility app
 
 Written 2026-11-13, revised the same day (an interactive app instead of
-written simulation studies). Status: proposal, nothing built yet. Tick items
-off as they are done.
+written simulation studies). Status: steps 1–2 built 2026-11-14 (`app/`,
+live at `/app/`). Tick items off as they are done.
 
 **Aim.** Give a practitioner clear examples of what each result buys. One
 page, usable on a phone: choose how complex the *world* is, choose how
@@ -93,7 +93,8 @@ theory is distribution-free.
   JavaScript does thousands of draws in a blink. To keep a single source of
   truth, the same engine file `app/engine.js` is run by CI under Node for
   the tests. (Owner: say so if you prefer Python despite this; the
-  alternative is Pyodide.)
+  alternative is Pyodide.) *Decided 2026-11-14: JavaScript; the floor line
+  stays.*
 - **Tests are the proved identities**, to machine precision: BS at
   `ρ = 0`; balance; `b₁ = z₁/(z₁+z₂)`; the equal-covariance closed form;
   eq. (26) minimises the MSE; `K̂ ≻ 0` after damping; estimators unbiased
@@ -107,7 +108,7 @@ a recipe from data.
 
 | Fit feature | Recipe from data | Proved | Missing |
 |---|---|---|---|
-| Bühlmann–Straub | yes | `bs_z`, `bs_balance`, estimators | |
+| Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`) | the classical `τ̂²` of eq. (13) (G0) |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
 | Correlation, one common covariance | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
@@ -119,6 +120,11 @@ Known-parameter results (optimal `z`, GLS weights, true MSE) appear only as
 the floor line and in the tests.
 
 **Gaps: candidate theorems**, in the order the app needs them:
+
+- **G0. The classical BS `τ̂²`** of eq. (13) is unbiased when `ρ = 0`.
+  The Lean `tauHat_unbiased` is the thesis estimator (39)–(41), which uses
+  all pairs `ĉⱼ`; the app's BS fit uses eq. (13) and shows it as "not
+  proved yet". The Node test checks it by simulation only. Probably easy.
 
 - **G1. One common covariance.** The average of the pairwise estimators
   (39) is unbiased for a common `c`. One extra parameter on top of BS;
@@ -153,10 +159,15 @@ handbook.
 
 One chat per step; none needs Lean except step 5.
 
-- [ ] 1. `engine.js`: world generator, BS fit, floor; identity tests under
-  Node in CI.
-- [ ] 2. `app/index.html`: world and fit switches, the one-draw chart, the
-  many-draws bars. Published on the site. First usable version.
+- [x] 1. `engine.js`: world generator, BS fit, floor; identity tests under
+  Node in CI (`app/engine.test.js`, run by the `docs` job).
+- [x] 2. `app/index.html`: world and fit switches, the one-draw chart, the
+  many-draws bars. Published on the site. First usable version. Notes:
+  references are "own mean" (z = 1) and "one tariff" (z = 0) until step 3
+  adds a second real fit; correlation is one common `ρ` for now (the
+  country structure comes with group levels); the fitting-steps panel data
+  is already in `fitBS(...).steps`, the panel itself is step 3. Not yet
+  tested from the Node side: damping (`K̂ ≻ 0`), which arrives with `K̂`.
 - [ ] 3. Correlation fit (full `K̂` damped, and common covariance), the
   fitting-steps panel with badges, warnings.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.

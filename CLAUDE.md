@@ -41,8 +41,9 @@ tactics.
   intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,
   Finding 14) → `Credibility/KMeansBridge.lean`
 
-Plan for turning the results into practice: `studies/PLAN.md` (an interactive
-app for practitioners, world model against fitted model; the fit never sees
+Plan for turning the results into practice: `studies/PLAN.md` (the app in
+`app/`: `engine.js` with Node tests `engine.test.js`, page `index.html`,
+published at `/app/`; an interactive app for practitioners, world model against fitted model; the fit never sees
 the true parameters). When a result is proved or an extension added, ask:
 does the app need a switch or a step for it? Note it in the plan if so.
 
@@ -68,11 +69,14 @@ moments are assumed). Never add a distributional assumption.
 ## Workflow
 - Check the cloud environment first (`get_environment`). Do Lean work only
   in **lean**, where everything is prepared. In any other environment
-  (usually **Default**) the owner wants only docs, data or discussion: don't
-  run `lake` or `lean`, fetch Mathlib, edit `.lean` files, or switch
-  environments yourself. If the request needs Lean, say so and suggest a
-  new chat in **lean**. The SessionStart hook prints "skipping Lean setup"
-  when the Lean hosts are blocked.
+  (usually **Default**) the owner wants only docs, data, discussion or app
+  work: don't run `lake` or `lean`, fetch Mathlib, edit `.lean` files, or
+  switch environments yourself. App work (`app/`, its Node tests, the CI
+  step that publishes it) is fine in Default; only Lean work needs
+  **lean**. An app chat in Default never touches `.lean` files, so a
+  rebase conflict there needs no `lake build`. If the request needs Lean,
+  say so and suggest a new chat in **lean**. The SessionStart hook prints
+  "skipping Lean setup" when the Lean hosts are blocked.
 - One chat per file or batch of `sorry`s. Lean, Mathlib and a build of the
   project come from the environment's saved snapshot (its setup script,
   `scripts/fetch_mathlib.sh --build`, is not rerun for each chat). The
