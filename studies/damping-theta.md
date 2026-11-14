@@ -99,3 +99,44 @@ products `pₜ` (independent years, no normal-theory formula); raw and correlati
 optimises the wrong loss: it is not the θ the rates need. Use damping for safety (`K̂ ≻ 0`) with θ
 near 1 once a correlation is clearly present, and θ → 0 only when ρ̄ ≈ 0. The normal-theory rule
 does exactly that, which is why it works; its variance formula is not the reason.
+
+## Towards a fit with no tuning (2026-11-14, owner: "the fit is determined by its own data only")
+
+Scripts: `damping-cv.js`, `common-rho.js`, `common-rho-mom.js`, `common-rho-misspec.js`,
+`variance-credibility.js` (outputs in the matching `.out.txt`).
+
+14. **Cross-validation (leave one year out) is no help.** Data-only and in theory unbiased for
+    ranking methods, but noisy, and too cautious: a held-out year's common shock cannot be
+    cancelled, so it undervalues correlation modelling (finding 13). At ρ = 0.9 it scores
+    120–129 where the fixed rules score 110.
+15. **A common correlation needs no damping.** With one ρ ∈ [0, 1) the estimated table is
+    `Σ = Λ((1 − ρ)D + ρG)Λ` (G the Gram matrix `Sᵢⱼ/(wᵢ*wⱼ*)`, D its diagonal, Λ = diag σⱼ), positive
+    definite by `K_posDef` for a PSD ρ-table. θ̂ and its normal-theory formula disappear.
+16. **Correlated BS** (one σ², one ρ, `ρσ²` by one moment equation over all pairs, unbiased, no
+    ratio): best or within 1 point of best in all 64 worlds where its assumptions hold, and equal
+    to BS at ρ = 0. Robust to a country structure in ρ. **But it fails with region-specific σⱼ**
+    (139–146 against 121 for the full fit): the pooled σ̂² is its weak point.
+17. **Credibility for the variances fixes that.** `σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̂²` with
+    `ζⱼ = β²/(β² + Wⱼ)`: `Wⱼ` the variance of σ̂ⱼ² estimated from the yearly terms (independent
+    years), `β²` the between-region variance of the σⱼ² by a moment equation. This is
+    Bühlmann–Straub one level up. Then ρ by one moment equation on the standardised pairs. Over 45
+    worlds (equal or spread σⱼ, ρ = 0 / 0.6 / countries, three noise laws, T = 5 / 10, J = 8 / 20)
+    it is the most robust fit: best or near best almost everywhere, typically 5–30 points better
+    than the full fit when σⱼ differ and ρ > 0. Weak spot: two-point noise with T = 5 at ρ = 0
+    (182 against BS 116), the lattice case where a region's σ̂ⱼ² is often ≈ 0.
+
+## Ansatz
+
+**Correlated Bühlmann–Straub with credibility-weighted variances.** Parameters τ², σⱼ² (shrunk
+towards the pooled σ², the shrinkage itself estimated), one ρ; every step a moment equation;
+nothing to tune; `K̂ ≻ 0` by construction. Provable pieces, distribution-free:
+1. `K ≻ 0` for a common ρ ∈ [0, 1) (corollary of `K_posDef`).
+2. Equal σ: the pooled moment estimator of `ρσ²` is unbiased (linear in the data products).
+3. The variance credibility factor ζⱼ is the best linear blend of σ̂ⱼ² and the pooled σ̂²: an
+   instance of `bs_z` / `Core.bestZ_of_diag`, with the fourth moments as given numbers. Its
+   unbiased estimators (`Wⱼ`, `β²`) need independent years.
+4. Not unbiased end to end (estimates are plugged into z, as in classical BS). The quality of the
+   whole stays numerical, like Prasad–Rao (1990) treat the EBLUP.
+Literature to read for it: Ebrahimzadeh et al. (2012) (common-effects estimators), the
+small-area work on shrinking means and variances (arXiv 1507.05179), Bühlmann–Gisler on
+heterogeneous variances.

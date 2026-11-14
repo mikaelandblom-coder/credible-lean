@@ -47,6 +47,11 @@ published at `/app/`; an interactive app for practitioners, world model against 
 the true parameters). When a result is proved or an extension added, ask:
 does the app need a switch or a step for it? Note it in the plan if so.
 
+Before deriving or proposing something new, search the literature (credibility, small-area
+estimation / EBLUP, portfolio and covariance shrinkage) for work to build on, and note what is
+used in `studies/literature.md`: combine the best existing pieces in this framework rather than
+reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
+
 Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with

@@ -21,7 +21,10 @@ complex the *fitted model* is, and see what happens when they differ.
    shown against a reference model the user picks.
 4. **Short and visual.** No study to read: a few switches, one chart, one
    number.
-5. **Every new extension of the framework gets a switch.** The app is
+5. **No tuning.** A fit is determined by its data alone: no hyperparameters
+   (owner, 2026-11-14). A choice such as a damping θ must itself be
+   estimated from the data, or the model changed so it is not needed.
+6. **Every new extension of the framework gets a switch.** The app is
    built so that adding one is a small, local change (section 6).
 
 ## 2. What the user sees

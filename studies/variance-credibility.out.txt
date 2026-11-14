@@ -1,0 +1,47 @@
+draws 600; error relative to the floor (100 = floor). corrBS variants: pooled σ̂² / own σ̂ⱼ² / credibility σ̃ⱼ²
+world                                    law       |   BS full | pool  own cred
+J=8 T=5 equal σ, ρ = 0                   two-point |  116  207 |  117  201  182
+J=8 T=5 equal σ, ρ = 0.6                 two-point |  145  140 |  120  128  119
+J=8 T=5 σⱼ ×0.5–2, ρ = 0                 two-point |  156  263 |  158  264  253
+J=8 T=5 σⱼ ×0.5–2, ρ = 0.6               two-point |  167  152 |  163  143  134
+J=8 T=5 σⱼ spread, countries .8/.2       two-point |  173  174 |  166  162  156
+J=8 T=5 equal σ, ρ = 0                   gamma2    |  111  134 |  112  128  120
+J=8 T=5 equal σ, ρ = 0.6                 gamma2    |  141  126 |  111  122  114
+J=8 T=5 σⱼ ×0.5–2, ρ = 0                 gamma2    |  145  154 |  148  146  141
+J=8 T=5 σⱼ ×0.5–2, ρ = 0.6               gamma2    |  160  133 |  153  132  128
+J=8 T=5 σⱼ spread, countries .8/.2       gamma2    |  166  147 |  165  139  138
+J=8 T=5 equal σ, ρ = 0                   gamma¼    |  104  123 |  105  119  101
+J=8 T=5 equal σ, ρ = 0.6                 gamma¼    |  138  104 |   91  100   95
+J=8 T=5 σⱼ ×0.5–2, ρ = 0                 gamma¼    |  130  149 |  132  141  117
+J=8 T=5 σⱼ ×0.5–2, ρ = 0.6               gamma¼    |  162  113 |  135  107  109
+J=8 T=5 σⱼ spread, countries .8/.2       gamma¼    |  154  123 |  148  119  118
+J=8 T=10 equal σ, ρ = 0                  two-point |  113  127 |  113  123  115
+J=8 T=10 equal σ, ρ = 0.6                two-point |  131  116 |  109  113  110
+J=8 T=10 σⱼ ×0.5–2, ρ = 0                two-point |  143  150 |  144  141  144
+J=8 T=10 σⱼ ×0.5–2, ρ = 0.6              two-point |  153  129 |  144  126  122
+J=8 T=10 σⱼ spread, countries .8/.2      two-point |  153  135 |  146  129  126
+J=8 T=10 equal σ, ρ = 0                  gamma2    |  112  118 |  112  115  113
+J=8 T=10 equal σ, ρ = 0.6                gamma2    |  130  111 |  105  108  106
+J=8 T=10 σⱼ ×0.5–2, ρ = 0                gamma2    |  144  137 |  144  132  126
+J=8 T=10 σⱼ ×0.5–2, ρ = 0.6              gamma2    |  151  120 |  139  117  114
+J=8 T=10 σⱼ spread, countries .8/.2      gamma2    |  147  125 |  139  119  114
+J=8 T=10 equal σ, ρ = 0                  gamma¼    |  107  103 |  107  103  103
+J=8 T=10 equal σ, ρ = 0.6                gamma¼    |  131  101 |   98   97   98
+J=8 T=10 σⱼ ×0.5–2, ρ = 0                gamma¼    |  127  127 |  127  120  117
+J=8 T=10 σⱼ ×0.5–2, ρ = 0.6              gamma¼    |  150  112 |  128  105  107
+J=8 T=10 σⱼ spread, countries .8/.2      gamma¼    |  147  116 |  143  111  115
+J=20 T=10 equal σ, ρ = 0                 two-point |  106  118 |  106  117  109
+J=20 T=10 equal σ, ρ = 0.6               two-point |  141  117 |  109  113  110
+J=20 T=10 σⱼ ×0.5–2, ρ = 0               two-point |  132  129 |  132  127  128
+J=20 T=10 σⱼ ×0.5–2, ρ = 0.6             two-point |  182  123 |  147  120  119
+J=20 T=10 σⱼ spread, countries .8/.2     two-point |  182  128 |  152  127  124
+J=20 T=10 equal σ, ρ = 0                 gamma2    |  105  109 |  105  107  107
+J=20 T=10 equal σ, ρ = 0.6               gamma2    |  143  112 |  106  110  107
+J=20 T=10 σⱼ ×0.5–2, ρ = 0               gamma2    |  129  115 |  130  114  114
+J=20 T=10 σⱼ ×0.5–2, ρ = 0.6             gamma2    |  183  121 |  146  119  117
+J=20 T=10 σⱼ spread, countries .8/.2     gamma2    |  178  121 |  147  119  115
+J=20 T=10 equal σ, ρ = 0                 gamma¼    |  103   97 |  103   96  103
+J=20 T=10 equal σ, ρ = 0.6               gamma¼    |  141  102 |   98   99  100
+J=20 T=10 σⱼ ×0.5–2, ρ = 0               gamma¼    |  127  115 |  127  115  118
+J=20 T=10 σⱼ ×0.5–2, ρ = 0.6             gamma¼    |  173  111 |  133  109  112
+J=20 T=10 σⱼ spread, countries .8/.2     gamma¼    |  176  117 |  140  117  118
