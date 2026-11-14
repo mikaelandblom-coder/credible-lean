@@ -42,3 +42,37 @@ relative to the floor (100 = best blend with known parameters).
   covariance, not from the thesis fit (G3 drops in priority).
 
 Not tested yet: unequal lengths, group levels, negative ρ, a country structure in ρ.
+
+## Does it depend on the noise distribution? (`damping-dist.js`, output `damping-dist.out.txt`)
+
+Same study, J = 8, T ∈ {5, 10}, noise laws with mean 0, variance 1 and excess kurtosis
+κ = −2 (two-point), 0 (normal), 3 (gamma k = 2), 6 (exponential), 24 (gamma k = 0.25).
+
+7. **The best fixed θ depends on the distribution**, not only on two moments. At T = 5, ρ = 0.3
+   it is 0 for normal or two-point noise and 0.75 for κ = 24. So no theorem with only first and
+   second moments can give the optimal θ: fourth moments must enter, as given numbers.
+8. **The θ̂ rule tracks the best θ under every law** (within 0–3 points in all 40 cases), although
+   its variance term `(1 − ρ̄²)²/(T − 1)` is the normal-theory one. It adapts per draw, and the
+   error curve is flat near its minimum.
+9. **The fit can beat the floor under heavy tails** (93–99 at κ ≥ 6, ρ ≥ 0.6). The floor is the
+   best blend with *fixed* weights `z, b`; the fitted weights depend on the data, so the fit is a
+   non-linear estimator and is not bound by it. The app should call the floor "the best fixed
+   blend", not "the best possible".
+10. **Per-region variances are fragile with short histories.** Two-point noise, T = 5, ρ = 0: the
+    full fit scores 184 even at θ = 0, BS 118. With T = 5 a region's σ̂ⱼ² is often near 0
+    (all years on one side), so its vⱼ ≈ 0 and it grabs the weight. BS pools σ̂² over regions.
+
+## What a distribution-free theorem can say
+
+- The thesis model assumes only that years are *uncorrelated*. The variance of the pairwise
+  estimators involves fourth moments `E[εᵢₜεⱼₜεₖₛεₗᵤ]` across years, which "uncorrelated" leaves
+  free. A theorem about Var of the estimators needs either those numbers as parameters or a
+  stronger assumption on years (e.g. independent years with given fourth moments). That is a
+  modelling choice, not a distribution.
+- **Exact and distribution-free:** for estimates `ŝᵢⱼ` with mean `sᵢⱼ` and variance `Vᵢⱼ` (given
+  numbers), `E Σ (θŝᵢⱼ − sᵢⱼ)²` is minimised at `θ* = Σs²/(Σs² + ΣV)`. θ̂ is a plug-in of this.
+  The link from this proxy loss to the rates' MSE stays numerical.
+- **The ratio ρ̄** has no exact moment-based expectation. Avoid it: with a common σ (BS noise)
+  the common-correlation `K` needs only `ρσ²` and `σ²`, both with unbiased *linear* estimators,
+  so `K̂` is entrywise unbiased with no ratio. With region-specific σⱼ the ratio is unavoidable;
+  then only asymptotic results (T → ∞, needs a law of large numbers and independent years) exist.
