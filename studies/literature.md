@@ -45,3 +45,16 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   CommonCorrelation plan (unbiased `ρσ²`); likely the closest prior art.
 - Yang & Wang (2024), Comm. Stat. 53(8): REML and linear-Bayes estimators of structural
   parameters in the Bühlmann model with correlated risks.
+
+## 4. Error of the plug-in fit (MSEP with estimated parameters)
+- Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
+  translation-invariant variance estimators, **under normality**. Without normality the cross term
+  `2E[(BLUP − target)(EBLUP − BLUP)]` need not vanish; it can be negative, which explains why our
+  fit beats the fixed-weight floor under heavy tails (damping-theta.md, finding 9).
+- Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
+  the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
+- Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
+  estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
+  approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:
+  conditional MSEP of a credibility estimator (formula 4.10). Happ, Maier & Merz (2011),
+  multivariate Bühlmann–Straub for correlated triangles: conditional MSEP estimator.
