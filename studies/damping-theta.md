@@ -140,3 +140,24 @@ nothing to tune; `K̂ ≻ 0` by construction. Provable pieces, distribution-free
 Literature to read for it: Ebrahimzadeh et al. (2012) (common-effects estimators), the
 small-area work on shrinking means and variances (arXiv 1507.05179), Bühlmann–Gisler on
 heterogeneous variances.
+
+## Can the fit estimate its own error? (`msep.js`, output `msep.out.txt`)
+
+Jackknife MSEP of Jiang, Lahiri & Wan (2002, Ann. Stat. 30), deleting one year at a time
+(independent years): `MSEPⱼ = g₁₂ⱼ(θ̂) − (T−1)/T Σₜ (g₁₂ⱼ(θ̂₋ₜ) − g₁₂ⱼ(θ̂)) + (T−1)/T Σₜ (rateⱼ(θ̂₋ₜ) − rateⱼ(θ̂))²`,
+with g₁₂ the known-parameter MSE (`blendMSE`) and θ̂₋ₜ the parameters re-estimated without year t
+(region means kept). Data only, distribution-free, no tuning. 27 worlds, 1000 draws each.
+
+18. **Plugging the estimates into the known-parameter MSE understates the error** by 13–50%
+    (ratio 0.50–0.87): it misses the price of estimation.
+19. **The jackknife MSEP is right on average within about ±15%.** With equal σ and T = 10 it is
+    0.97–1.02 for normal and gamma noise; heavy tails (κ = 24) overstate by 11–17% (cautious);
+    region-specific σⱼ understate by 10–15% (0.85–0.90), probably because the variance credibility
+    shrinks the noisiest regions' σ̃ⱼ² towards the pool, a bias the jackknife does not see. T = 5
+    is rougher (0.87–1.21). Per region the ratio spreads more (0.66–1.98 in the worst world).
+20. The estimation part g₃ is 6–50% of the MSEP: large with few years or heavy tails, small with
+    many regions. That is the "price of estimation" the app shows as fit − floor, now estimated
+    from one data set.
+
+Not measured yet: how noisy one data set's MSEP estimate is (its spread across draws), and
+whether an interval `rate ± 2√MSEP` covers the true level as often as it should.
