@@ -1,5 +1,5 @@
 /*
- * Credibility app engine (studies/PLAN.md, steps 1–3).
+ * Credibility app engine (studies/PLAN.md, steps 1–3, and the premium step of G6).
  *
  * One file, run by the page (app/index.html) and by the tests under Node
  * (app/engine.test.js). No dependencies.
@@ -239,6 +239,46 @@
     return z * z * A + (1 - z) * (1 - z) * B + 2 * z * (1 - z) * C;
   }
 
+  // ---------------------------------------------------------------- next year (G6)
+
+  /** Next year's volumes: this year's mean wⱼ* / T, times a factor (default 1). */
+  function nextVolumes(data, factor) {
+    const T = data.w[0].length, f = factor == null ? 1 : factor;
+    return data.w.map((row) => f * sum(row) / T);
+  }
+
+  /**
+   * Next year's outcome from the world: Yⱼ = μⱼ + σⱼ/√wⱼ,next · εⱼ, the same levels μⱼ and
+   * fresh noise of one new year (corr ρ between regions, as in draw), so uncorrelated with
+   * this data set and with the levels (the assumptions of Core.Estimates.mse_forecast).
+   */
+  function drawNext(world, levels, wNext, r) {
+    const { params, truth } = world, a = Math.sqrt(Math.max(params.rho, 0)), b = Math.sqrt(1 - Math.max(params.rho, 0));
+    const eta = r.skewed(params.noiseShape);
+    return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * r.skewed(params.noiseShape)));
+  }
+
+  /**
+   * The premium step (PLAN G6, Core.Estimates.mse_forecast): premium = μ̂ⱼᵇ (z unchanged),
+   * forecast error = level MSE + σ̂ⱼ²/wⱼ,next. The level MSE is the plug-in g₁₂ⱼ on the fit's
+   * K̂, τ̂² (or `levelMSE`, e.g. the jackknife MSEP); σ̂ⱼ² = (K̂ⱼⱼ − τ̂²)·wⱼ*. Null for a fit
+   * without parameters (own, pool).
+   */
+  function premium(fit, data, wNext, levelMSE) {
+    if (!fit.K) return null;
+    const wt = data.w.map(sum), J = wt.length, tau2 = fit.tau2;
+    const { b, s2 } = bestBlendWeights(fit.K, tau2);
+    const level = levelMSE || Array.from({ length: J }, (_, j) => blendMSE(fit.K, tau2, b, s2, j, fit.z[j]));
+    const noise = wt.map((x, j) => (fit.K[j][j] - tau2) * x / wNext[j]);
+    const mse = level.map((g, j) => g + noise[j]);
+    const step = {
+      name: 'premium', formula: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next', values: mse.map(Math.sqrt),
+      badge: 'proved', lean: 'Credibility.Core.Estimates.mse_forecast',
+      note: `values: forecast error (root) for next year; the same z is optimal for next year (bestZ_forecast_optimal); MSEⱼ ${levelMSE ? 'by the jackknife' : 'plug-in, on K̂ and τ̂²'}`,
+    };
+    return { premium: fit.rates.slice(), level, noise, mse, typical: mse.map(Math.sqrt), step };
+  }
+
   // ---------------------------------------------------------------- fitted models (data only)
 
   /**
@@ -262,6 +302,7 @@
     const res = blend(m, z, b);
     return {
       means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags: { tauNeg: tauRaw <= 0 },
+      sigma2, tau2, K: wt.map((x, i) => wt.map((_, j) => (i === j ? sigma2 / x + tau2 : 0))),
       steps: [
         { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.bs_a' },
         { name: 'σ̂²', formula: 'σ̂² = (1/J) Σⱼ Σₜ wⱼₜ (Xⱼₜ − μ̂ⱼ)² / (T−1)', values: [sigma2], badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
@@ -557,6 +598,13 @@
     return { K, b, z, s2, apply: (data) => blend(cohortMeans(data).m, z, b) };
   }
 
+  /** The floor's true forecast MSE (Core.Estimates.mse_forecast): level MSE + σⱼ²/wⱼ,next. Reads the truth. */
+  function floorForecast(world, wNext) {
+    const fl = floorBlend(world), { tau2, sigmaj2 } = world.truth;
+    const level = fl.z.map((z, j) => blendMSE(fl.K, tau2, fl.b, fl.s2, j, z));
+    return { level, mse: level.map((g, j) => g + sigmaj2[j] / wNext[j]) };
+  }
+
   // ---------------------------------------------------------------- scoring
 
   /** Exposure-weighted squared error of the rates: Σⱼ wⱼ*(rateⱼ − μⱼ)² / w**. */
@@ -570,32 +618,42 @@
    * error for each model id, and for the floor. Returns root-scale numbers too.
    * `flags[k]`: share of draws with flag k; `expected[k]`: share where it was raised and expected
    * (the fit's `notes`, e.g. negative b under correlation), so not a warning.
+   * `fmse`, `fse`: the same for the premium against the world's next-year outcome Yⱼ (G6), with
+   * next year's volumes wⱼ* / T × `nextFactor` (default 1); `floor.ftheory`: the floor's true
+   * forecast MSE, weighted alike. Next year is drawn from its own stream, so the rest is
+   * unchanged draw for draw.
    */
-  function simulate(world, ids, n, seed) {
-    const r = rng(seed), fl = floorBlend(world);
+  function simulate(world, ids, n, seed, nextFactor) {
+    const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
+    const wt = world.w.map(sum), wall = sum(wt);
+    const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
+    const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
     const acc = {};
-    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, warn: 0, flags: {}, expected: {} };
+    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, warn: 0, flags: {}, expected: {} };
+    const fe = (rates, Y) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) * (x - Y[j]))) / wall;
     for (let k = 0; k < n; k++) {
-      const { levels, data } = draw(world, r);
+      const { levels, data } = draw(world, r), Y = drawNext(world, levels, wNext, rn);
       for (const id of ids) {
-        const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels);
-        acc[id].s += e; acc[id].ss += e * e; if (f.warnings.length) acc[id].warn++;
+        const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y);
+        acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
         for (const k in f.flags) if (f.flags[k]) {
           acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
           if (f.expected && f.expected[k]) acc[id].expected[k] = (acc[id].expected[k] || 0) + 1;
         }
       }
-      const e = weightedSE(data, fl.apply(data).rates, levels);
-      acc.floor.s += e; acc.floor.ss += e * e;
+      const fr = fl.apply(data).rates, e = weightedSE(data, fr, levels), g = fe(fr, Y);
+      acc.floor.s += e; acc.floor.ss += e * e; acc.floor.f += g; acc.floor.ff += g * g;
     }
     const out = {};
     for (const id in acc) {
       const mean = acc[id].s / n, v = Math.max(acc[id].ss / n - mean * mean, 0);
+      const fm = acc[id].f / n, fv = Math.max(acc[id].ff / n - fm * fm, 0);
       const flags = {}, expected = {};
       for (const k in acc[id].flags) flags[k] = acc[id].flags[k] / n;
       for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
-      out[id] = { mse: mean, se: Math.sqrt(v / n), warnShare: acc[id].warn / n, flags, expected };
+      out[id] = { mse: mean, se: Math.sqrt(v / n), fmse: fm, fse: Math.sqrt(fv / n), warnShare: acc[id].warn / n, flags, expected };
     }
+    out.floor.ftheory = ftheory;
     return out;
   }
 
@@ -605,5 +663,6 @@
     cohortMeans, blend, bestBlendWeights, blendMSE,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
+    nextVolumes, drawNext, premium, floorForecast,
   };
 });

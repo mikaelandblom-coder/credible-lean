@@ -237,6 +237,9 @@ test('Every step marked proved names a proved Lean declaration; every other step
         assert.ok(proved.has(s.lean), `${id}/${s.name}: ${s.lean} is not a proved declaration`);
       } else assert.ok(s.gap || s.note, `${id}/${s.name}: no gap named`);
     }
+    const pr = E.premium(m.fit(data), data, E.nextVolumes(data));
+    if (pr) assert.ok(proved.has(pr.step.lean), `${id}/premium: ${pr.step.lean} is not a proved declaration`);
+    else assert.ok(id === 'own' || id === 'pool', `${id}: no premium step`);
   }
 });
 
@@ -380,4 +383,48 @@ test('corrBS: forcing exposure balance is not cheap (studies/vc-balance.js)', ()
     e += E.weightedSE(data, f.rates, levels); eb += E.weightedSE(data, bal, levels); es += E.weightedSE(data, f.rates.map((x) => x * fac), levels);
   }
   assert.ok(eb > 1.05 * e && es > 1.05 * e, `unbalanced ${e / n}, BS-style ${eb / n}, rescaled ${es / n}`);
+});
+
+// ---------------------------------------------------------------- the premium step (PLAN G6)
+
+test('Premium: the world’s next-year draw matches the forecast MSE on average (Core.Estimates.mse_forecast)', () => {
+  for (const [params, factor, seed] of [[{}, 1, 41], [{ rho: 0.6, noiseSpread: 1 }, 1, 42], [{ rho: 0.3, J: 5, T: 4 }, 0.4, 43]]) {
+    const world = E.makeWorld(params), fl = E.floorBlend(world), n = 6000;
+    const wNext = world.w.map((row) => factor * sum(row) / world.T);
+    const theory = E.floorForecast(world, wNext), r = E.rng(seed), rn = E.rng(seed + 1000);
+    const se = new Array(world.J).fill(0);
+    let tot = 0;
+    const wt = world.w.map(sum), wall = sum(wt);
+    for (let k = 0; k < n; k++) {
+      const { levels, data } = E.draw(world, r), Y = E.drawNext(world, levels, wNext, rn), rates = fl.apply(data).rates;
+      rates.forEach((x, j) => { se[j] += (x - Y[j]) ** 2; tot += wt[j] * (x - Y[j]) ** 2 / wall; });
+    }
+    // Level part is the true level MSE; the rest is next year's noise σⱼ²/wⱼ,next.
+    theory.mse.forEach((m, j) => {
+      close(m - theory.level[j], world.truth.sigmaj2[j] / wNext[j], 1e-12, `noise part ${j}`);
+      close(se[j] / n, m, 0.1, `region ${j}, ${JSON.stringify(params)}`);
+    });
+    const agg = sum(theory.mse.map((m, j) => wt[j] * m)) / wall;
+    close(tot / n, agg, 0.04, `weighted, ${JSON.stringify(params)}`);
+    // simulate() reports the same comparison, and its level results are unchanged by it.
+    const res = E.simulate(world, ['vc'], 1500, seed, factor);
+    close(res.floor.ftheory, agg, 1e-12, 'ftheory');
+    close(res.floor.fmse, agg, 0.08, 'simulate fmse');
+    assert.ok(res.vc.fmse >= res.floor.fmse * 0.97, `fit ${res.vc.fmse} vs floor ${res.floor.fmse}`);
+  }
+});
+
+test('Premium step: premium = rates, forecast = plug-in level MSE + σ̂ⱼ²/wⱼ,next', () => {
+  const world = E.makeWorld({ rho: 0.4 }), { data } = E.draw(world, E.rng(44)), wt = data.w.map(sum);
+  const wn = E.nextVolumes(data, 2);
+  wn.forEach((x, j) => close(x, 2 * wt[j] / world.T, 1e-12, 'next volume'));
+  const bs = E.fitBS(data), p = E.premium(bs, data, wn);
+  assert.deepEqual(p.premium, bs.rates);
+  p.noise.forEach((x, j) => close(x, bs.sigma2 / wn[j], 1e-12, 'BS noise σ̂²/w'));
+  // BS level MSE in the classical closed form: (1 − zⱼ)τ²(1 + (1 − zⱼ)/z*).
+  const zs = sum(bs.z);
+  p.level.forEach((g, j) => close(g, (1 - bs.z[j]) * bs.tau2 * (1 + (1 - bs.z[j]) / zs), 1e-9, 'BS level MSE'));
+  const vc = E.fitVC(data), jk = E.jackknifeMSEP(data), pv = E.premium(vc, data, wn, jk.msep);
+  pv.mse.forEach((m, j) => close(m, jk.msep[j] + vc.sigma2[j] / wn[j], 1e-12, 'vc forecast'));
+  assert.equal(E.premium(E.fitOwn(data), data, wn), null);
 });

@@ -153,7 +153,12 @@ the floor line and in the tests.
   **premium step** after the blend: premium `= μ̂ⱼᵇ` (no change to `z`), its
   forecast error `= MSE + σ̂ⱼ²/wⱼ,next` with next year's volume `wⱼ,next` (a
   new input, default this year's mean `wⱼ*/T`), badge "proved"; the floor line
-  compares with the world's actual next-year draw.*
+  compares with the world's actual next-year draw.* *App step added 2026-11-15: `Engine.premium`
+  (plug-in level MSE, or the jackknife MSEP for corrBS, plus `σ̂ⱼ²/wⱼ,next`), a slider
+  for next year's volume (× `wⱼ*/T`), next-year columns in the draw table, and a
+  line under Many draws comparing fit, reference and floor with the world's
+  next-year outcome and the floor's theory; Node test: the simulated next-year
+  error matches `floorForecast` per region.*
 - **G7. Balance** under correlation: the best balanced blend. *Proved
   2026-11-15 (`Core.bestBalanced_optimal`, true MSE
   `Estimates.bestBalanced_mse_optimal`, Finding 15): keeping `b`, the

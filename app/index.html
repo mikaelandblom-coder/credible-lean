@@ -158,6 +158,9 @@ footer a { color: var(--accent); }
       <div><label for="m-fit">Fitted model</label><select id="m-fit"></select></div>
       <div><label for="m-ref">Reference</label><select id="m-ref"></select></div>
     </div>
+    <div class="row">
+      <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
+    </div>
     <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
@@ -176,6 +179,7 @@ footer a { color: var(--accent); }
     <div class="headline" id="headline">…</div>
     <div class="sub" id="headline-sub"></div>
     <svg class="chart" id="c-many" role="img" aria-label="Error of fit, reference and floor"></svg>
+    <p class="sub" id="forecast-many" style="margin:8px 0 0"></p>
     <div id="w-many"></div>
     <details><summary>Table</summary><div class="tablewrap" id="t-many"></div></details>
   </section>
@@ -214,7 +218,7 @@ footer a { color: var(--accent); }
     { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
     { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
   ];
-  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'vc', seed: 12345, stepsOf: 'fit' });
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'vc', seed: 12345, stepsOf: 'fit', next: 1 });
 
   const ws = $('world-sliders');
   for (const s of SLIDERS) {
@@ -243,6 +247,10 @@ footer a { color: var(--accent); }
     }
     sel.addEventListener('change', () => { state[key] = sel.value; update(); });
   }
+  const nextIn = $('s-next'), nextOut = $('o-next');
+  const showNext = () => { nextOut.textContent = '×' + (+nextIn.value).toFixed(2); };
+  showNext();
+  nextIn.addEventListener('input', () => { state.next = +nextIn.value; showNext(); update(); });
   const seedIn = $('i-seed');
   seedIn.value = state.seed;
   $('b-draw').addEventListener('click', () => { state.seed++; seedIn.value = state.seed; update(); });
@@ -308,6 +316,15 @@ footer a { color: var(--accent); }
     const tId = E.MODELS[state.fit].msep ? state.fit : E.MODELS[state.ref].msep ? state.ref : null;
     const typ = tId ? E.MODELS[tId].msep(data).typical : null;
     const tShort = tId ? E.MODELS[tId].short : '';
+    // Premium step (G6): premium = rate, forecast error² = level MSE + σ̂ⱼ²/wⱼ,next; the world draws next year.
+    const wNext = E.nextVolumes(data, state.next);
+    const msepOf = {};
+    const prem = (id, f) => {
+      if (E.MODELS[id].msep && !msepOf[id]) msepOf[id] = E.MODELS[id].msep(data).msep;
+      return E.premium(f, data, wNext, msepOf[id]);
+    };
+    const pFit = prem(state.fit, fit), pRef = prem(state.ref, ref);
+    const Y = E.drawNext(world, levels, wNext, E.rng((state.seed ^ 0x5bd1e995) >>> 0));
     const wt = data.w.map(sum), J = world.J;
     const order = wt.map((_, j) => j); // regions are already sorted by volume
     const vals = [].concat(levels, fit.means, fit.rates, ref.rates);
@@ -357,12 +374,15 @@ footer a { color: var(--accent); }
     const notes = (fit.notes || []).map((m) => 'Fit: ' + m);
     if (state.ref !== state.fit) for (const m of ref.notes || []) notes.push('Reference: ' + m);
     warnBlock($('w-draw'), msgs, notes);
-    renderSteps({ fit, ref });
+    const withPremium = (f, p) => (p ? Object.assign({}, f, { steps: f.steps.concat([p.step]) }) : f);
+    renderSteps({ fit: withPremium(fit, pFit), ref: withPremium(ref, pRef) });
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
-    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th>${spreadOn ? '<th>σⱼ</th>' : ''}<th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th>${typ ? `<th>Typ. err.*</th>` : ''}</tr></thead><tbody>` +
-      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td>${spreadOn ? `<td>${Math.sqrt(world.truth.sigmaj2[j]).toFixed(1)}</td>` : ''}<td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}</tr>`).join('') +
-      '</tbody></table>' + (typ ? `<p class="sub" style="margin:6px 0 0">* Typical error of the ${tShort} rate (jackknife MSEP): an average-case error over data sets like this one, not an interval.</p>` : '');
+    const fe = (rates) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) ** 2)) / sum(wt);
+    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th>${spreadOn ? '<th>σⱼ</th>' : ''}<th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th>${typ ? `<th>Typ. err.*</th>` : ''}${pFit ? '<th>Fit forecast err.†</th>' : ''}<th>Next year‡</th></tr></thead><tbody>` +
+      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td>${spreadOn ? `<td>${Math.sqrt(world.truth.sigmaj2[j]).toFixed(1)}</td>` : ''}<td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}${pFit ? `<td>${pct(pFit.typical[j], 2)}</td>` : ''}<td>${Y[j].toFixed(3)}</td></tr>`).join('') +
+      '</tbody></table>' + (typ ? `<p class="sub" style="margin:6px 0 0">* Typical error of the ${tShort} rate (jackknife MSEP): an average-case error over data sets like this one, not an interval.</p>` : '') +
+      `<p class="sub" style="margin:6px 0 0">${pFit ? `† Premium = the fit's rate (z unchanged). Its typical error for next year's outcome: √(MSEⱼ + σ̂ⱼ²/wⱼ,next), the level error plus next year's noise (<a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener">mse_forecast</a>, proved). ` : ''}‡ The world's actual next-year outcome, with next year's volume ×${state.next.toFixed(2)} this year's mean. This draw, error against it: fit ${pct(Math.sqrt(fe(fit.rates)), 2)}, reference ${pct(Math.sqrt(fe(ref.rates)), 2)}.</p>`;
   }
 
   // ---------- fitting steps
@@ -402,7 +422,7 @@ footer a { color: var(--accent); }
     $('headline').style.opacity = 0.5;
     const step = () => {
       if (my !== job) return;
-      parts.push(E.simulate(world, ids, CHUNK, (state.seed * 7919 + done + 1) >>> 0));
+      parts.push(E.simulate(world, ids, CHUNK, (state.seed * 7919 + done + 1) >>> 0, state.next));
       done += CHUNK;
       if (done < N) { setTimeout(step, 0); return; }
       const merged = {};
@@ -413,7 +433,8 @@ footer a { color: var(--accent); }
         const flags = {}, expected = {};
         for (const m of ms) for (const k in m.flags) flags[k] = (flags[k] || 0) + m.flags[k] / ms.length;
         for (const m of ms) for (const k in m.expected || {}) expected[k] = (expected[k] || 0) + m.expected[k] / ms.length;
-        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags, expected };
+        const fmse = sum(ms.map((m) => m.fmse)) / ms.length, fse = Math.sqrt(sum(ms.map((m) => m.fse * m.fse))) / ms.length;
+        merged[id] = { mse, se, fmse, fse, ftheory: ms[0].ftheory, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags, expected };
       }
       drawMany(merged);
     };
@@ -476,6 +497,8 @@ footer a { color: var(--accent); }
     warnBlock($('w-many'), msgs, notes);
     $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +
       rows.map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
+    const fr = (id) => pct(Math.sqrt(res[id].fmse), 2);
+    $('forecast-many').innerHTML = `<b>Premium for next year</b> (volume ×${state.next.toFixed(2)} this year's mean): typical error against the world's next-year outcome, fit ${fr(state.fit)}, reference ${fr(state.ref)}, floor ${fr('floor')}; the floor's theory √(level MSE + σⱼ²/wⱼ,next) is ${pct(Math.sqrt(res.floor.ftheory), 2)} <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener" style="color:var(--accent)">mse_forecast</a>. Most of it is next year's noise, which no premium can remove.`;
     $('n-draws').textContent = N.toLocaleString();
   }
 
