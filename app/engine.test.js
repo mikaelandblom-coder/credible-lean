@@ -295,3 +295,51 @@ test('Jackknife MSEP is right on average within 25% (one fixed-seed world, findi
   const ratio = tot(pred) / tot(act);
   assert.ok(ratio > 0.75 && ratio < 1.25, `predicted / actual MSE ${ratio}`);
 });
+
+// ---------------------------------------------------------------- region-specific σⱼ (spread worlds of the studies)
+
+test('Noise spread: σⱼ factors are the studies’ ×0.5–2 at s = 1; s = 0 is the old world, draw for draw', () => {
+  const study = Array.from({ length: 8 }, (_, j) => Math.pow(4, (j % 4) / 3 - 0.5)); // variance-credibility.js, msep.js
+  const world = E.makeWorld({ noiseSpread: 1 }), s = Math.sqrt(world.truth.sigma2);
+  world.truth.sigmaj2.forEach((x, j) => close(Math.sqrt(x), s * study[j], 1e-12, `σ_${j}`));
+  assert.deepEqual([0, 3].map((j) => E.noiseFactor(j, 1)), [0.5, 2]);
+  const w0 = E.makeWorld({ rho: 0.4 }), w1 = E.makeWorld({ rho: 0.4, noiseSpread: 0 });
+  assert.ok(w0.truth.sigmaj2.every((x) => x === w0.truth.sigma2), 'σⱼ = σ by default');
+  const a = E.draw(w0, E.rng(5)), b = E.draw(w1, E.rng(5));
+  assert.deepEqual(a.data.X, b.data.X);
+});
+
+test('Noise spread: true K is the studies’ K, and the draws have Var = σⱼ²/w, corr = ρ', () => {
+  const world = E.makeWorld({ J: 6, T: 4, rho: 0.5, noiseSpread: 1 }), { J, T, w } = world, K = E.trueK(world);
+  const s = Math.sqrt(world.truth.sigma2), wt = w.map(sum), sig = Array.from({ length: J }, (_, j) => s * Math.pow(4, (j % 4) / 3 - 0.5));
+  for (let i = 0; i < J; i++) for (let j = 0; j < J; j++) {
+    let S = 0; for (let t = 0; t < T; t++) S += Math.sqrt(w[i][t] * w[j][t]);
+    close(K[i][j], sig[i] * sig[j] * (i === j ? 1 : 0.5) * S / (wt[i] * wt[j]) + (i === j ? world.truth.tau2 : 0), 1e-12, `K[${i}][${j}]`);
+  }
+  // Standardised noise uⱼ = (Xⱼ₀ − μⱼ)√wⱼ₀/σⱼ: variance 1, correlation ρ between regions 0 and 3 (σ ×0.5 and ×2).
+  const r = E.rng(21), n = 40000; let s00 = 0, s33 = 0, s03 = 0;
+  for (let k = 0; k < n; k++) {
+    const { levels, data } = E.draw(world, r);
+    const u = [0, 3].map((j) => (data.X[j][0] - levels[j]) * Math.sqrt(w[j][0]) / sig[j]);
+    s00 += u[0] * u[0]; s33 += u[1] * u[1]; s03 += u[0] * u[1];
+  }
+  close(s00 / n, 1, 0.05, 'Var u₀'); close(s33 / n, 1, 0.05, 'Var u₃'); close(s03 / Math.sqrt(s00 * s33), 0.5, 0.05, 'corr');
+});
+
+test('Spread world (σⱼ ×0.5–2, ρ = 0.6): corrBS beats BS and the damped full fit (finding 19 world)', () => {
+  const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), res = E.simulate(world, ['bs', 'vc', 'corr'], 800, 22);
+  const gap = (a, b) => (res[a].mse - res[b].mse) / Math.hypot(res[a].se, res[b].se);
+  assert.ok(gap('bs', 'vc') > 3, `BS ${res.bs.mse} vs corrBS ${res.vc.mse}`);
+  assert.ok(res.corr.mse > res.vc.mse, `corr ${res.corr.mse} vs corrBS ${res.vc.mse}`);
+});
+
+test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding 19)', () => {
+  const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), r = E.rng(23), n = 600, J = world.J;
+  const act = new Array(J).fill(0), pred = new Array(J).fill(0);
+  for (let k = 0; k < n; k++) {
+    const { levels, data } = E.draw(world, r), o = E.jackknifeMSEP(data);
+    for (let j = 0; j < J; j++) { act[j] += (o.rates[j] - levels[j]) ** 2; pred[j] += o.msep[j]; }
+  }
+  const wt = world.w.map(sum), tot = (a) => sum(a.map((x, j) => x * wt[j])), ratio = tot(pred) / tot(act);
+  assert.ok(ratio > 0.75 && ratio < 0.95, `predicted / actual MSE ${ratio}`);
+});

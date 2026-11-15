@@ -201,6 +201,13 @@ One chat per step; none needs Lean except step 5.
   (finding 26). Tests: `K̂ ≻ 0` on every draw; equal to BS when `ρ̂ = 0` and `β² = 0`;
   identical to the study scripts; jackknife MSEP within 25% of the actual MSE on average in
   one fixed-seed world (ratio 1.00).
+  World switch "spread of noise across regions" (`noiseSpread`, 2026-11-15): σⱼ = σ·4^(s((j mod 4)/3 − ½)),
+  s = 1 is the ×0.5–2 spread world of `variance-credibility.js` and `msep.js` (σⱼ column in the
+  one-draw table). Checked in the app's own world (gamma noise, 1000 draws, % of floor): at ρ = 0.6
+  BS / corrBS / corr = 151 / 113 / 118 (J=8 T=10), 167 / 135 / 144 (T=5), 183 / 114 / 118 (J=20);
+  jackknife predicted/actual 0.81, 0.89, 0.86 (finding 19: 0.85–0.90). At ρ = 0 and T = 5 the three
+  tie (≈150). Tests: σⱼ and true `K` equal the studies'; draws have Var σⱼ²/w and corr ρ; corrBS
+  beats BS and corr, and the jackknife ratio is in (0.75, 0.95), in one fixed-seed spread world.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
 - [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
   to "proved".

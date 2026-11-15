@@ -115,7 +115,11 @@
     growth: 0.03,    // yearly growth of every region's volume
     levelShape: 4,   // gamma shape of the level draws (skewness 2/√k)
     noiseShape: 2,   // gamma shape of the noise draws
+    noiseSpread: 0,  // region-specific σⱼ = σ·4^(s((j mod 4)/3 − ½)): 0 equal, 1 = ×0.5–2 (studies' spread worlds)
   };
+
+  /** Factor of region j's noise: σⱼ = σ·noiseFactor(j, s); cycles over 4 regions, so not tied to volume. */
+  const noiseFactor = (j, s) => Math.pow(4, s * ((j % 4) / 3 - 0.5));
 
   /** Inverse normal CDF (Acklam), for evenly spread volumes. */
   function qnorm(p) {
@@ -153,11 +157,13 @@
     // ρᵢⱼ: one common coefficient for now (a country structure comes with group levels).
     const rho = [];
     for (let i = 0; i < J; i++) { rho.push([]); for (let j = 0; j < J; j++) rho[i].push(i === j ? 1 : p.rho); }
-    const truth = { mu: 1, tau2: p.tau * p.tau, sigma2: p.sigma * p.sigma, rho };
+    // σⱼ²: region-specific noise; σ² stays the base (σⱼ = σ when noiseSpread = 0).
+    const sigmaj2 = Array.from({ length: J }, (_, j) => (p.sigma * noiseFactor(j, p.noiseSpread)) ** 2);
+    const truth = { mu: 1, tau2: p.tau * p.tau, sigma2: p.sigma * p.sigma, sigmaj2, rho };
     return { params: p, J, T, w, truth };
   }
 
-  /** The level covariance K of the cohort means (thesis eq. (21), σⱼₜ² = σ²/wⱼₜ). */
+  /** The level covariance K of the cohort means (thesis eq. (21), σⱼₜ² = σⱼ²/wⱼₜ). */
   function trueK(world) {
     const { J, T, w, truth } = world;
     const wt = w.map(sum), K = [];
@@ -166,7 +172,7 @@
       for (let j = 0; j < J; j++) {
         let r = 0;
         for (let t = 0; t < T; t++) r += Math.sqrt(w[i][t] * w[j][t]);
-        K[i].push(truth.sigma2 * truth.rho[i][j] * r / (wt[i] * wt[j]) + (i === j ? truth.tau2 : 0));
+        K[i].push(Math.sqrt(truth.sigmaj2[i] * truth.sigmaj2[j]) * truth.rho[i][j] * r / (wt[i] * wt[j]) + (i === j ? truth.tau2 : 0));
       }
     }
     return K;
@@ -174,12 +180,12 @@
 
   /**
    * One data set from the world: the levels μⱼ (truth) and the table { w, X }.
-   * Noise εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; all draws skewed.
+   * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; all draws skewed.
    */
   function draw(world, r) {
     const { J, T, w, truth, params } = world;
     const rho = params.rho, a = Math.sqrt(Math.max(rho, 0)), b = Math.sqrt(1 - Math.max(rho, 0));
-    const tau = Math.sqrt(truth.tau2), sig = Math.sqrt(truth.sigma2);
+    const tau = Math.sqrt(truth.tau2), sig = truth.sigmaj2.map(Math.sqrt);
     const levels = [], X = [];
     for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.skewed(params.levelShape));
     const eta = [];
@@ -188,7 +194,7 @@
       const row = [];
       for (let t = 0; t < T; t++) {
         const eps = a * eta[t] + b * r.skewed(params.noiseShape);
-        row.push(levels[j] + sig / Math.sqrt(w[j][t]) * eps);
+        row.push(levels[j] + sig[j] / Math.sqrt(w[j][t]) * eps);
       }
       X.push(row);
     }
@@ -576,7 +582,7 @@
 
   return {
     DEFAULTS, MODELS, FEATURES,
-    rng, solve, cholesky, makeWorld, trueK, draw,
+    rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
