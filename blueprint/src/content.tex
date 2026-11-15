@@ -1149,6 +1149,34 @@ proved once for any symmetric $C$.
   with $1/T$; it should be $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$.
 \end{remark}
 
+\begin{corollary}[The classical Bühlmann--Straub $\widehat{\tau^2}$, \eqth{13}]\label{cor:bs_tauHat}
+  \lean{Credibility.Model.sigHatBS, Credibility.Model.tauHatBS,
+        Credibility.Model.tauHatBS_unbiased}
+  \leanok
+  \uses{def:estimators, def:unbiased}
+  Let $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$ (with the corrected $1/J$,
+  Remark~\ref{rem:estimation_sizes}) and
+  \[
+    \widehat{\tau^2}_{\mathrm{BS}} =
+    \frac{\sum_j w_{j*}(\hmu_j - \bar\mu)^2 - (J-1)\hat\sigma^2}{w_{**} - \sum_j w_{j*}^2/w_{**}},
+    \qquad \bar\mu = \sum_j \frac{w_{j*}}{w_{**}}\hmu_j .
+  \]
+  If $T \ge 2$, $J \ge 2$, the cohorts are uncorrelated ($\rho_{ij} = 0$ for $i \ne j$)
+  and $\sigma_j = \sigma$ for all $j$ (the Bühlmann--Straub model), then
+  $\widehat{\tau^2}_{\mathrm{BS}}$ is unbiased for $\tau^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:estimation}
+  It differs from the estimator $\widehat{\tau^2}$ of \eqth{39} by
+  $\bigl(\sum_j w_{j*}\hat c_j - (J-1)\hat\sigma^2\bigr)/(w_{**} - \sum_j w_{j*}^2/w_{**})$.
+  Under the assumptions $\sigma^2_{ij}\rho_{ij} = \delta_{ij}\sigma^2/w_{j*}$ by \eqth{37},
+  so $\mathbb{E}\sum_j w_{j*}\hat c_j = \sum_j (1 - w_{j*}/w_{**})\sigma^2 = (J-1)\sigma^2$,
+  and $\hat\sigma_j^2 = w_{j*}\widehat{\sigma^2_{jj}\rho_{jj}}$ \eqth{41} gives
+  $\mathbb{E}\hat\sigma^2 = \sigma^2$. The difference has expectation $0$, and
+  $\widehat{\tau^2}$ is unbiased.
+\end{proof}
+
 % ---------------------------------------------------------------------------
 \chapter{The balance property}\label{ch:balance}
 % Thesis §2.9. Lean: Credibility/Balance.lean

@@ -265,7 +265,7 @@
       steps: [
         { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.bs_a' },
         { name: 'σ̂²', formula: 'σ̂² = (1/J) Σⱼ Σₜ wⱼₜ (Xⱼₜ − μ̂ⱼ)² / (T−1)', values: [sigma2], badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
-        { name: 'τ̂²', formula: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)', values: [tauRaw], badge: 'not proved yet', gap: 'G0', note: 'classical eq. (13); the Lean τ̂² is the thesis estimator (39)–(41)' },
+        { name: 'τ̂²', formula: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)', values: [tauRaw], badge: 'proved', lean: 'Credibility.Model.tauHatBS_unbiased', note: 'classical eq. (13): unbiased when the regions are uncorrelated with a common σ (G0)' },
         { name: 'z', formula: 'zⱼ = wⱼ* / (wⱼ* + σ̂²/τ̂²)', values: z, badge: 'proved', lean: 'Credibility.bs_z' },
         { name: 'b', formula: 'bⱼ = zⱼ / z*', values: b, badge: 'proved', lean: 'Credibility.bs_b' },
         { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂', values: res.rates, badge: 'proved', lean: 'Credibility.bs_balance' },

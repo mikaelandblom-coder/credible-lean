@@ -460,6 +460,23 @@ subtracts the noise.
   positive semidefinite. Truncate and damp (Result~\ref{res:damped}).
 \end{caveat}
 
+\begin{result}[The classical Bühlmann--Straub $\widehat{\tau^2}$]\label{res:bs_tau}
+  With uncorrelated cohorts and a common $\sigma_j = \sigma$, the textbook estimator
+  \[
+    \widehat{\tau^2}_{\mathrm{BS}} =
+    \frac{\sum_j w_{j*}(\hmu_j - \bar\mu)^2 - (J-1)\hat\sigma^2}{w_{**} - \sum_j w_{j*}^2/w_{**}},
+    \qquad \hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2,
+  \]
+  is unbiased for $\tau^2$ ($T \ge 2$, $J \ge 2$).
+  \lean{Credibility.Model.tauHatBS_unbiased}
+\end{result}
+\use This is the uncorrelated special case: the full estimator above reduces to it
+on average, so the Bühlmann--Straub fit is a proper baseline.
+\begin{caveat}
+  Average the $\hat\sigma_j^2$ with $1/J$; the thesis prints $1/T$, a typo
+  that biases $\widehat{\tau^2}$ unless $J = T$.
+\end{caveat}
+
 % ===========================================================================
 \section{The moments are real}\label{sec:moments}
 

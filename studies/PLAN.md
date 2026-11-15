@@ -111,7 +111,7 @@ a recipe from data.
 
 | Fit feature | Recipe from data | Proved | Missing |
 |---|---|---|---|
-| Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`) | the classical `τ̂²` of eq. (13) (G0) |
+| Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`), `τ̂²` of eq. (13) (`tauHatBS_unbiased`) | |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
 | Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z` | unbiasedness of `ρ̂σ²`, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
 | Correlation, one common covariance (not recommended, finding 4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
@@ -129,6 +129,9 @@ the floor line and in the tests.
   The Lean `tauHat_unbiased` is the thesis estimator (39)–(41), which uses
   all pairs `ĉⱼ`; the app's BS fit uses eq. (13) and shows it as "not
   proved yet". The Node test checks it by simulation only. Probably easy.
+  *Proved 2026-11-15 (`Model.tauHatBS_unbiased`, with the `1/J` of Finding 7):
+  for uncorrelated cohorts with a common `σ`, it differs from (39) by a term
+  with expectation 0. The app's BS `τ̂²` step now shows "proved".*
 
 - **G1. One common covariance.** The average of the pairwise estimators
   (39) is unbiased for a common `c`. One extra parameter on top of BS;

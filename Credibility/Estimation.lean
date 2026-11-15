@@ -69,6 +69,20 @@ noncomputable def tauHat (X : J × T → ℝ) : ℝ :=
 noncomputable def KHat (X : J × T → ℝ) (i j : J) : ℝ :=
   sigRhoHat w X i j + tauHat w X * (if i = j then 1 else 0)
 
+/-- The classical Bühlmann–Straub variance estimate, eq. (13):
+`σ̂² = (1/J) Σⱼ σ̂ⱼ²` with `σ̂ⱼ² = Σₜ wⱼₜ(μⱼₜ - μ̂ⱼ)²/(T - 1)`. The thesis writes `1/T`, a typo
+(Finding 7): there are `J` terms. -/
+noncomputable def sigHatBS (X : J × T → ℝ) : ℝ :=
+  (∑ j, ∑ t, w j t * (X (j, t) - muHat w X j) ^ 2 / ((Fintype.card T : ℝ) - 1))
+    / (Fintype.card J : ℝ)
+
+/-- The classical Bühlmann–Straub estimator of `τ²`, eq. (13):
+`τ̂² = (Σⱼ wⱼ*(μ̂ⱼ - Σᵢ (wᵢ*/w**) μ̂ᵢ)² - (J - 1)σ̂²)/(w** - Σⱼ wⱼ*²/w**)`. -/
+noncomputable def tauHatBS (X : J × T → ℝ) : ℝ :=
+  (∑ j, wtot w j * (muHat w X j - ∑ i, wtot w i / wall w * muHat w X i) ^ 2
+      - ((Fintype.card J : ℝ) - 1) * sigHatBS w X)
+    / (wall w - ∑ i, wtot w i ^ 2 / wall w)
+
 /-! ### Back to the thesis: the estimators of `Unequal` with `Tⱼ = T` -/
 
 omit [Fintype J] [DecidableEq J] [DecidableEq T] in
@@ -181,5 +195,59 @@ theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
   rw [← M₀.toUnequal_sigRhoHat hw, M₀.toUnequal.sigRhoHat_self hw X j]
   simp [toUnequal]
   rfl
+
+/-- PLAN G0, eq. (13): with uncorrelated cohorts (`ρᵢⱼ = 0` for `i ≠ j`) and a common
+base variance `σⱼ = s` (the Bühlmann–Straub model), the classical `τ̂²` is unbiased.
+Proof: it differs from the thesis estimator (39) by `(Σⱼ wⱼ*ĉⱼ - (J - 1)σ̂²)/D`, and
+both `Σⱼ wⱼ*ĉⱼ` and `(J - 1)σ̂²` estimate `(J - 1)s²` without bias. -/
+theorem tauHatBS_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
+    (hρ : ∀ i j, i ≠ j → M.ρ i j = 0) (s : ℝ) (hs : ∀ j, sig j = s) :
+    M.Unbiased (tauHatBS w) M.τ2 := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  have hW : ∀ k, 0 < wtot w k := wtot_pos hw
+  have hWall : 0 < wall w := sum_pos (fun k _ => hW k) univ_nonempty
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by positivity
+  set D := wall w - ∑ i, wtot w i ^ 2 / wall w
+  -- `wⱼ* σ²ⱼⱼ^` is the cohort's `σ̂ⱼ²`, eq. (41).
+  have hself : ∀ X j, wtot w j * sigRhoHat w X j j
+      = ∑ t, w j t * (X (j, t) - muHat w X j) ^ 2 / ((Fintype.card T : ℝ) - 1) := fun X j => by
+    rw [sigRhoHat_self hw X j]; field_simp [(hW j).ne']
+  have key : ∀ X, tauHat w X + 1 / D * ((∑ j, wtot w j * cHat w X j)
+      + -(((Fintype.card J : ℝ) - 1) / Fintype.card J) * ∑ j, wtot w j * sigRhoHat w X j j)
+        = tauHatBS w X := fun X => by
+    simp only [tauHatBS, tauHat, sigHatBS, hself, mul_sub, sum_sub_distrib]
+    field_simp
+    ring
+  -- Under the Bühlmann–Straub model `σ²ᵢⱼρᵢⱼ = δᵢⱼ s²/wⱼ*`.
+  have hS : ∀ j, sqrtSum w j j = wtot w j := fun j =>
+    sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
+  have hσρ : ∀ i j, M.σ2 i j * M.ρ i j = if i = j then s ^ 2 / wtot w j else 0 := fun i j => by
+    split_ifs with h
+    · subst h
+      rw [M.σ2ρ_special sig hw hσ, hS, hs, M.ρ_self]
+      field_simp [(hW i).ne']
+    · rw [hρ i j h, mul_zero]
+  have hx : ∑ j, wtot w j / wall w = 1 := by rw [← sum_div]; exact div_self hWall.ne'
+  have hc : ∑ j, wtot w j * ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w)
+      * (M.σ2 i j * M.ρ i j) = ((Fintype.card J : ℝ) - 1) * s ^ 2 := by
+    simp only [hσρ, mul_ite, mul_zero, sum_ite_eq', mem_univ, ite_true]
+    rw [← sub_eq_zero]
+    have : ∀ j, wtot w j * ((1 - wtot w j / wall w) * (s ^ 2 / wtot w j))
+        = s ^ 2 - s ^ 2 * (wtot w j / wall w) := fun j => by field_simp [(hW j).ne']
+    simp only [this, sum_sub_distrib, ← mul_sum, hx, sum_const, card_univ, nsmul_eq_mul]
+    ring
+  have hd : ∑ j, wtot w j * (M.σ2 j j * M.ρ j j) = (Fintype.card J : ℝ) * s ^ 2 := by
+    simp only [hσρ, ite_true]
+    rw [sum_congr rfl fun j _ => by rw [mul_div_cancel₀ _ (hW j).ne']]
+    simp
+  refine ((M.tauHat_unbiased sig hw hσ hT hJ).add
+    (((UnbiasedCov.sum univ fun j _ => (M.cHat_unbiased sig hw hσ hT j).const_mul (wtot w j)).add
+      ((UnbiasedCov.sum univ fun j _ =>
+        (M.sigRhoHat_unbiased sig hw hσ hT j j).const_mul (wtot w j)).const_mul
+          (-(((Fintype.card J : ℝ) - 1) / Fintype.card J)))).const_mul (1 / D))).congr key ?_
+  rw [hc, hd]
+  field_simp
+  ring
 
 end Credibility.Model
