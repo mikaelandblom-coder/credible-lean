@@ -343,3 +343,41 @@ test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding 19)
   const wt = world.w.map(sum), tot = (a) => sum(a.map((x, j) => x * wt[j])), ratio = tot(pred) / tot(act);
   assert.ok(ratio > 0.75 && ratio < 0.95, `predicted / actual MSE ${ratio}`);
 });
+
+test('corrBS: flags the true-K optimum shows too are notes, not warnings (studies/vc-balance.js, findings 27–29)', () => {
+  const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), fl = E.floorBlend(world);
+  // The floor itself: negative b, z below but close to 1, balanced for vⱼ ∝ bⱼ/(1 − zⱼ) and not for the exposures.
+  assert.ok(fl.b.some((b) => b < 0), 'floor has a negative b');
+  assert.ok(fl.z.every((z) => z < 1) && Math.max(...fl.z) > 0.9, 'floor z < 1, largest close to 1');
+  const { data } = E.draw(world, E.rng(31)), m = E.cohortMeans(data).m, rates = fl.apply(data).rates;
+  const v = fl.b.map((b, j) => b / (1 - fl.z[j]));
+  assert.ok(Math.abs(sum(v.map((x, j) => x * (m[j] - rates[j])))) < 1e-9 * sum(v.map(Math.abs)), 'floor balanced in bⱼ/(1 − zⱼ)');
+  // The fit: with ρ̂ > 0, bNeg, zOver1 and offBalance go to notes; τ̂² ≤ 0 stays a warning.
+  const r = E.rng(32);
+  let noted = 0;
+  for (let k = 0; k < 200; k++) {
+    const f = E.fitVC(E.draw(world, r).data), on = Object.keys(f.flags).filter((x) => f.flags[x]);
+    assert.equal(f.warnings.length + f.notes.length, on.length);
+    assert.equal(f.notes.length, on.filter((x) => f.expected[x]).length);
+    if (f.rho > 0) for (const x of ['bNeg', 'zOver1', 'offBalance']) assert.ok(f.expected[x]);
+    assert.ok(!f.expected.tauNeg);
+    noted += f.notes.length;
+  }
+  assert.ok(noted > 0, 'some notes seen');
+  const res = E.simulate(world, ['vc'], 300, 33).vc;
+  assert.ok(res.expected.bNeg > 0.5 && res.expected.bNeg <= res.flags.bNeg, `expected negative b ${res.expected.bNeg}`);
+});
+
+test('corrBS: forcing exposure balance is not cheap (studies/vc-balance.js)', () => {
+  const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), r = E.rng(34), n = 600;
+  const wt = world.w.map(sum);
+  let e = 0, eb = 0, es = 0;
+  for (let k = 0; k < n; k++) {
+    const { levels, data } = E.draw(world, r), f = E.fitVC(data), m = f.means;
+    const c = wt.map((x, j) => x * (1 - f.z[j])), mu = sum(c.map((x, j) => x * m[j])) / sum(c);
+    const bal = m.map((x, j) => f.z[j] * x + (1 - f.z[j]) * mu);
+    const fac = sum(wt.map((x, j) => x * m[j])) / sum(wt.map((x, j) => x * f.rates[j]));
+    e += E.weightedSE(data, f.rates, levels); eb += E.weightedSE(data, bal, levels); es += E.weightedSE(data, f.rates.map((x) => x * fac), levels);
+  }
+  assert.ok(eb > 1.05 * e && es > 1.05 * e, `unbalanced ${e / n}, BS-style ${eb / n}, rescaled ${es / n}`);
+});

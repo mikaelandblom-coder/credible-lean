@@ -209,3 +209,36 @@ strengths. A normal-noise refinement that accounts for Σ̂ (its Wishart distrib
 the means under normality) could remove SURE's downward bias; that is the one place where a
 distribution clearly helps. Not tried: Hudson's identity for a gamma family (needs a model where the
 variance follows the mean, unlike our additive noise).
+
+## corrBS flags and the cost of balance (`vc-balance.js`, output `vc-balance.out.txt`)
+
+corrBS shows negative b in ≈70%, off-balance > 1% in ≈45%, z > 1 in ≈40% of draws at ρ = 0.6,
+σⱼ spread (app world, gamma noise). Are these the fit's fault? Compared with the floor (true K, τ²)
+and with three ways to force exposure balance Σⱼ wⱼ*μ̂ⱼᵇ = Σⱼ wⱼ*μ̂ⱼ, z kept: BS-style collective
+μ̂ = Σ wⱼ*(1 − zⱼ)μ̂ⱼ / Σ wⱼ*(1 − zⱼ); every rate scaled; every rate shifted by the same amount
+(benchmarking, Wang–Fuller–Qu 2008, the smallest change in our exposure-weighted loss). 19 worlds,
+1000 draws each, errors in % of the floor.
+
+27. **Negative b and off-balance are properties of the optimum, not of the fit.** The floor has a
+    negative bⱼ in every world with ρ > 0 (min b −0.02 to −0.09), and is off-balance by more than
+    1% in 54–80% of draws when σⱼ differ (5–57% with equal σ and ρ > 0). The blend is balanced, for
+    all data, exactly for weights vⱼ ∝ bⱼ/(1 − zⱼ) (since Σ vⱼ(μ̂ⱼ − μ̂ⱼᵇ) = Σ vⱼ(1 − zⱼ)(μ̂ⱼ − μ̂));
+    in BS that is vⱼ ∝ wⱼ*, with a diagonal K it is the precision wⱼ*/σⱼ² (checked to 10⁻⁶), and
+    with ρ > 0 some vⱼ are negative, so no positive volume measure is balanced. Exposure balance
+    is the right target only for BS.
+28. **Forcing exposure balance is not cheap.** Best of the three (shift ≈ scale < BS-style): with σⱼ
+    spread, +6 to +15 points of the floor at ρ = 0.3 and +14 to +32 at ρ = 0.6 (corrBS 112 → 126 at
+    J = 8, T = 10; 116 → 148 at J = 20), i.e. up to about 30% more error, eating half or more of
+    corrBS's gain over BS. Balancing the floor itself costs as much (100 → 122–152 at ρ = 0.6).
+    Why: the exposure-weighted mean carries the common year shock; GLS removes it with the hedge
+    weights, balance puts it back into every rate. At ρ = 0, equal σ, it costs 0–1 point. The
+    BS-style collective is the worst and unstable when Σ wⱼ*(1 − zⱼ) is small (vc 109 → 208 with
+    volume spread 2). So no balance switch in the app.
+29. **z > 1 is harmless.** The floor never has z > 1 in these worlds, but its largest z is 0.94–0.99
+    at ρ > 0 (the biggest region, partly hedged by the others); ẑ lands above 1 by estimation noise.
+    Capping ẑ at 1 (thesis eq. (34)) changes the error by less than 0.5 point in every world.
+
+App: corrBS moves these three flags from warnings to notes ("expected under correlation", or
+"with region-specific σⱼ" when ρ̂ = 0 but β² > 0); τ̂² ≤ 0 stays a warning. Lean candidate (Core,
+one line from `blend`): Σ vⱼ(μ̂ⱼ − μ̂ⱼᵇ) = 0 for all μ̂ iff vⱼ(1 − zⱼ) ∝ bⱼ; with diagonal K the
+balanced weights are 1/(Kⱼⱼ − τ²). `bs_balance` is the BS case.

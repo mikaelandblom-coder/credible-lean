@@ -16,7 +16,7 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- (none)
+- Watch-out for the balance entry: with correlation (or unequal σⱼ) the best blend is balanced for the weights bⱼ/(1 − zⱼ), not the exposures; forcing exposure balance costs up to ≈30% more error (studies/damping-theta.md, findings 27–28). Needs a Lean lemma before it can link (Core balance iff vⱼ(1 − zⱼ) ∝ bⱼ).
 
 
 ## 0. Setting and notation (1 page)

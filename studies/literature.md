@@ -58,6 +58,10 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:
   conditional MSEP of a credibility estimator (formula 4.10). Happ, Maier & Merz (2011),
   multivariate Bühlmann–Straub for correlated triangles: conditional MSEP estimator.
+- Benchmarking in small-area estimation (forcing the estimates to add up to a direct total, our
+  exposure balance): Pfeffermann & Barnard (1991), Wang, Fuller & Qu (2008, Survey Methodology 34):
+  the best linear benchmarked predictor adds a share of the discrepancy to each estimate (a common
+  shift for our loss weights); benchmarking costs efficiency. Used in `studies/vc-balance.js`.
 - Jiang, Lahiri & Wan (2002), *A unified jackknife theory for empirical best prediction with
   M-estimation*, Ann. Stat. 30: jackknife MSEP of an EBLUP, no normality needed, deletes
   independent units (we delete years). Used in `studies/msep.js`.

@@ -103,6 +103,8 @@ button.primary { background: var(--accent); color: #fff; border-color: transpare
 .headline { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
 .warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
 .warn::before { content: "⚠ "; }
+.expect { background: transparent; color: var(--text-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 10px; }
+.expect::before { content: "ℹ "; }
 .tip {
   position: fixed; pointer-events: none; z-index: 10; background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
@@ -285,7 +287,9 @@ footer a { color: var(--accent); }
       return `<span>${sw}${name}</span>`;
     }).join('');
   }
-  function warnBlock(node, msgs) { node.innerHTML = msgs.map((m) => `<div class="warn">${m}</div>`).join(''); }
+  function warnBlock(node, msgs, notes) {
+    node.innerHTML = msgs.map((m) => `<div class="warn">${m}</div>`).join('') + (notes || []).map((m) => `<div class="expect">${m}</div>`).join('');
+  }
 
   // ---------- model
   let world = null;
@@ -350,7 +354,9 @@ footer a { color: var(--accent); }
     const msgs = fit.warnings.map((m) => 'Fit: ' + m);
     if (state.ref !== state.fit) for (const m of ref.warnings) msgs.push('Reference: ' + m);
     for (const id of new Set([state.fit, state.ref])) if (E.MODELS[id].notRecommended) msgs.unshift(`${E.MODELS[id].short} is not recommended (${E.MODELS[id].notRecommended}).`);
-    warnBlock($('w-draw'), msgs);
+    const notes = (fit.notes || []).map((m) => 'Fit: ' + m);
+    if (state.ref !== state.fit) for (const m of ref.notes || []) notes.push('Reference: ' + m);
+    warnBlock($('w-draw'), msgs, notes);
     renderSteps({ fit, ref });
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
@@ -404,9 +410,10 @@ footer a { color: var(--accent); }
         const ms = parts.map((p) => p[id]);
         const mse = sum(ms.map((m) => m.mse)) / ms.length;
         const se = Math.sqrt(sum(ms.map((m) => m.se * m.se))) / ms.length;
-        const flags = {};
+        const flags = {}, expected = {};
         for (const m of ms) for (const k in m.flags) flags[k] = (flags[k] || 0) + m.flags[k] / ms.length;
-        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags };
+        for (const m of ms) for (const k in m.expected || {}) expected[k] = (expected[k] || 0) + m.expected[k] / ms.length;
+        merged[id] = { mse, se, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags, expected };
       }
       drawMany(merged);
     };
@@ -457,12 +464,16 @@ footer a { color: var(--accent); }
       thetaLow: 'damping lowered below θ = 0.95', offBalance: 'off-balance above 1%',
     };
     const pairs = state.fit === state.ref ? [[state.fit, 'Fit and reference']] : [[state.fit, 'Fit'], [state.ref, 'Reference']];
+    const share = (x) => (x < 0.01 ? '<1%' : pct(x, 0)), notes = [];
     for (const [id, who] of pairs) {
-      const parts = Object.keys(WHAT).filter((k) => res[id].flags[k] > 0)
-        .map((k) => `${WHAT[k]} in ${res[id].flags[k] < 0.01 ? '<1%' : pct(res[id].flags[k], 0)}`);
+      const ex = res[id].expected || {};
+      const parts = Object.keys(WHAT).filter((k) => (res[id].flags[k] || 0) - (ex[k] || 0) > 0)
+        .map((k) => `${WHAT[k]} in ${share(res[id].flags[k] - (ex[k] || 0))}`);
       if (parts.length) msgs.push(`${who}: ${parts.join('; ')} of draws`);
+      const eparts = Object.keys(WHAT).filter((k) => ex[k] > 0).map((k) => `${WHAT[k]} in ${share(ex[k])}`);
+      if (eparts.length) notes.push(`${who}: ${eparts.join('; ')} of draws, expected under correlation or region-specific σⱼ: the best blend for the true K shows them too (negative b, z close to 1, balance in the weights bⱼ/(1 − zⱼ) instead of the exposures). Forcing exposure balance costs up to about 30% more error (studies/vc-balance.js, finding 28).`);
     }
-    warnBlock($('w-many'), msgs);
+    warnBlock($('w-many'), msgs, notes);
     $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +
       rows.map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
     $('n-draws').textContent = N.toLocaleString();

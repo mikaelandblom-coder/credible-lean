@@ -471,11 +471,24 @@
     const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
     const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
-    const warnings = [];
-    if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
-    if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂`);
-    if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
-    if (flags.offBalance) warnings.push(`off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume`);
+    // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings 27–29): with ρ̂ > 0
+    // the true-K blend has negative b and z near 1 (so ẑ > 1 by noise); with ρ̂ > 0 or unequal σ̃ⱼ it is
+    // balanced for the weights bⱼ/(1 − zⱼ), not for the exposures. These go to `notes`, not `warnings`.
+    const expected = { zOver1: p.rho > 0, bNeg: p.rho > 0, offBalance: p.rho > 0 || p.between > 0 };
+    const why = p.rho > 0 ? 'expected under correlation' : 'expected with region-specific σⱼ';
+    const msg = {
+      tauNeg: 'τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂',
+      zOver1: `z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂` +
+        (expected.zOver1 ? '; the best z of a large region is close to 1 here, so the estimate can land above 1 (capping it at 1 changes nothing measurable)' : ''),
+      bNeg: `negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise` +
+        (expected.bNeg ? '; the best weights for the true K have negative entries too' : ''),
+      offBalance: `off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume` +
+        (expected.offBalance ? '; the best blend balances the weights bⱼ/(1 − zⱼ), not the exposures, and forcing exposure balance costs up to about 30% more error' : ''),
+    };
+    const warnings = [], notes = [];
+    for (const k in flags) if (flags[k]) {
+      if (expected[k]) notes.push(`${why[0].toUpperCase()}${why.slice(1)}: ${msg[k]}`); else warnings.push(msg[k]);
+    }
     const steps = [
       { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
       { name: 'σ̂ⱼ²', formula: 'σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1),  σ̂² = (1/J) Σⱼ σ̂ⱼ²', values: p.own, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self', note: `pooled σ̂² = ${p.pooled.toPrecision(4)}` },
@@ -488,7 +501,7 @@
       { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
       { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` },
     ];
-    return { means: m, z, b, mu, rates, warnings, flags, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, steps };
+    return { means: m, z, b, mu, rates, warnings, notes, flags, expected, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, steps };
   }
 
   /**
@@ -555,17 +568,22 @@
   /**
    * Many draws of one world: mean and standard error of the weighted squared
    * error for each model id, and for the floor. Returns root-scale numbers too.
+   * `flags[k]`: share of draws with flag k; `expected[k]`: share where it was raised and expected
+   * (the fit's `notes`, e.g. negative b under correlation), so not a warning.
    */
   function simulate(world, ids, n, seed) {
     const r = rng(seed), fl = floorBlend(world);
     const acc = {};
-    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, warn: 0, flags: {} };
+    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, warn: 0, flags: {}, expected: {} };
     for (let k = 0; k < n; k++) {
       const { levels, data } = draw(world, r);
       for (const id of ids) {
         const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels);
         acc[id].s += e; acc[id].ss += e * e; if (f.warnings.length) acc[id].warn++;
-        for (const k in f.flags) if (f.flags[k]) acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
+        for (const k in f.flags) if (f.flags[k]) {
+          acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
+          if (f.expected && f.expected[k]) acc[id].expected[k] = (acc[id].expected[k] || 0) + 1;
+        }
       }
       const e = weightedSE(data, fl.apply(data).rates, levels);
       acc.floor.s += e; acc.floor.ss += e * e;
@@ -573,9 +591,10 @@
     const out = {};
     for (const id in acc) {
       const mean = acc[id].s / n, v = Math.max(acc[id].ss / n - mean * mean, 0);
-      const flags = {};
+      const flags = {}, expected = {};
       for (const k in acc[id].flags) flags[k] = acc[id].flags[k] / n;
-      out[id] = { mse: mean, se: Math.sqrt(v / n), warnShare: acc[id].warn / n, flags };
+      for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
+      out[id] = { mse: mean, se: Math.sqrt(v / n), warnShare: acc[id].warn / n, flags, expected };
     }
     return out;
   }
