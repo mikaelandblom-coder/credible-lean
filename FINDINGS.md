@@ -162,5 +162,24 @@ Gaps, extra hypotheses and new results found while formalizing.
    intervals again (`blend_optimal_contiguous`, a swap argument: the loss
    depends on a cohort only through its size `n` and sum `S`, as
    `-f_n S² + z_n²V` with `f_n > 0`). Details: `notes/kmeans-bridge.md`.
+15. **The best balanced blend: closed form, but a poor way to balance (new;
+   `Core.bestBalanced_optimal`, `bestBalanced_cost`,
+   `Estimates.bestBalanced_mse_optimal`).** Keep the GLS weights `b` and ask
+   for the factors `z` that minimise `Σⱼ φⱼ MSEⱼ` subject to exposure balance
+   `Σⱼ uⱼ(μ̂ⱼ − μ̂ⱼᵇ) = 0` (PLAN G7). By `balanced_iff` the balanced blends are
+   the line `zⱼ = 1 − c·bⱼ/uⱼ`, and each `MSEⱼ` is the parabola
+   `MSEⱼ(zⱼ*) + gⱼ(zⱼ − zⱼ*)²` (`gⱼ = Var(μ̂ⱼ − μ̂)`), so the optimum is a
+   one-number weighted least squares: `c* = Σφg(1 − z*)a / Σφga²` with
+   `aⱼ = bⱼ/uⱼ`, at a cost `S₀ − S₁²/S₂` over the unconstrained blend (zero iff
+   that blend is already balanced). It needs no sign on `b`, so it covers
+   correlation, and holds in true MSE for any distribution. But the line
+   fixes the *shape* `1 − zⱼ ∝ bⱼ/uⱼ`: big cohorts are forced to `z ≈ 1`, small
+   ones far from `zⱼ*` (even `z < 0`). In the app's worlds
+   (`studies/vc-balance.js`, column `opt`, formula checked against the
+   simulation) it costs up to about 100% more error than the floor, where
+   shifting all rates by the same amount (Wang–Fuller–Qu 2008) costs at most
+   46%; both cost nothing at `ρ = 0` with equal `σⱼ`. Balance should be
+   restored by a common shift, not by bending `z`: the shift is outside the
+   blend class.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

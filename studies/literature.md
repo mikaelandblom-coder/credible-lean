@@ -62,6 +62,10 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   exposure balance): Pfeffermann & Barnard (1991), Wang, Fuller & Qu (2008, Survey Methodology 34):
   the best linear benchmarked predictor adds a share of the discrepancy to each estimate (a common
   shift for our loss weights); benchmarking costs efficiency. Used in `studies/vc-balance.js`.
+  Their optimum ranges over *all* linear predictors; within the credibility class (`b` fixed,
+  only `z` free) the best balanced blend is `Core.bestBalanced_optimal` (G7), much worse in our
+  worlds (Finding 15), so the WFQ shift is the one to use. Bell, Datta & Ghosh (2013) extend
+  WFQ to several benchmark constraints.
 - Jiang, Lahiri & Wan (2002), *A unified jackknife theory for empirical best prediction with
   M-estimation*, Ann. Stat. 30: jackknife MSEP of an EBLUP, no normality needed, deletes
   independent units (we delete years). Used in `studies/msep.js`.

@@ -1228,6 +1228,72 @@ which is Bühlmann--Straub.
   with equal $\sigma$ it costs nothing.
 \end{remark}
 
+\begin{definition}[Balanced factors]\label{def:Core_balancedZ}
+  \lean{Credibility.Core.balancedZ, Credibility.Core.bestBalancedC}
+  \leanok
+  For weights $u_j \ne 0$, $b_j$ and a number $c$, let
+  $z_j(c) = 1 - c\,b_j/u_j$. For loss weights $\varphi_j$, per-cohort moments
+  with $g_j = \Var(\hmu_j - \hmu)$ and optimal factors $z_j^*$, and
+  $a_j = b_j/u_j$, let
+  $c^* = \sum_j\varphi_j g_j(1 - z_j^*)a_j \big/ \sum_j\varphi_j g_j a_j^2$.
+\end{definition}
+
+\begin{lemma}[The balanced blends form a line]\label{lem:Core_balanced_line}
+  \lean{Credibility.Core.balanced_iff_balancedZ}
+  \leanok
+  \uses{thm:Core_balance, def:Core_balancedZ}
+  Let $\sum_j b_j = 1$ and $u_j \ne 0$. The blend is balanced for $u$ if and
+  only if $z = z(c)$ for some $c$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_balance}
+  Divide $u_j(1 - z_j) = c\,b_j$ by $u_j$.
+\end{proof}
+
+\begin{theorem}[The best balanced blend]\label{thm:Core_bestBalanced}
+  \lean{Credibility.Core.sum_errVar_balancedZ, Credibility.Core.mul_bestBalancedC,
+        Credibility.Core.bestBalanced_optimal}
+  \leanok
+  \uses{lem:Core_balanced_line, lem:errVar_eq}
+  Let $\sum_j b_j = 1$, $u_j \ne 0$, $\varphi_j \ge 0$ and $g_j > 0$. Then
+  $z(c^*)$ is balanced for $u$, and among all blends balanced for $u$ it
+  minimises $\sum_j\varphi_j\,\mathrm{MSE}_j(z_j)$, for any (correlated)
+  second moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_balanced_line, lem:errVar_eq}
+  By Lemma~\ref{lem:errVar_eq},
+  $\sum_j\varphi_j\mathrm{MSE}_j(z_j(c)) = \sum_j\varphi_j\mathrm{MSE}_j(z_j^*) + S_0 - 2cS_1 + c^2S_2$
+  with $S_0 = \sum\varphi g(1 - z^*)^2$, $S_1 = \sum\varphi g(1 - z^*)a$,
+  $S_2 = \sum\varphi g a^2 \ge 0$. Always $S_2c^* = S_1$ (if $S_2 = 0$ every
+  term of $S_1$ vanishes), so the excess over $c^*$ is $S_2(c - c^*)^2 \ge 0$.
+\end{proof}
+
+\begin{corollary}[The cost of balance]\label{cor:Core_bestBalanced_cost}
+  \lean{Credibility.Core.bestBalanced_cost}
+  \leanok
+  \uses{thm:Core_bestBalanced}
+  If $g_j \ne 0$ and $S_2 \ne 0$, the best balanced blend loses
+  $S_0 - S_1^2/S_2 \ge 0$ against the optimal blend.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestBalanced}
+  Put $c = S_1/S_2$ in the expansion above.
+\end{proof}
+
+\begin{remark}[Finding 15: balance by a shift, not by bending $z$]\label{rem:bestBalanced}
+  \uses{thm:Core_bestBalanced}
+  The line $z(c)$ fixes the shape $1 - z_j \propto b_j/u_j$: large cohorts
+  are pushed to $z_j \approx 1$, small ones far from $z_j^*$. In the app's
+  worlds (\texttt{studies/vc-balance.js}) the best balanced blend has up to
+  about twice the error of the optimal blend, while adding one common
+  shift to all rates (the benchmarking of Wang, Fuller and Qu, 2008, which
+  leaves the blend class) costs at most 46\%.
+\end{remark}
+
 \begin{theorem}[Bühlmann--Straub is balanced]\label{thm:bs_balance}
   \lean{Credibility.bs_balance}
   \leanok
@@ -2280,6 +2346,23 @@ these two covariances.
   Lemma~\ref{lem:Core_moments_lin} with $d = \bb$ gives the six moments, and
   $\mathbb E\hmu = \mu$ since $\sum_j b_j = 1$. Then
   Theorems~\ref{thm:blend_mse} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{corollary}[The best balanced blend in true MSE]\label{cor:Core_bestBalanced_mse}
+  \lean{Credibility.Core.Estimates.bestBalanced_mse_optimal}
+  \leanok
+  \uses{thm:Core_bestZ_mse, thm:Core_bestBalanced}
+  If $K \succ 0$, $u_j \ne 0$, $\varphi_j \ge 0$ and $\Var(\hmu_j - \hmu) > 0$,
+  the factors $z(c^*)$ of Theorem~\ref{thm:Core_bestBalanced} with the GLS
+  weights minimise the weighted actual mean squared error
+  $\sum_j\varphi_j\,\mathbb E[(\hmu_j^b - \mu_j)^2]$ among all blends balanced
+  for $u$, for every distribution with these moments.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_mse, thm:Core_bestBalanced, lem:sum_glsWeight}
+  The true MSE is \eqth{6} (Theorem~\ref{thm:Core_bestZ_mse}); then
+  Theorem~\ref{thm:Core_bestBalanced}.
 \end{proof}
 
 \begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}

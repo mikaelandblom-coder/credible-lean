@@ -144,7 +144,16 @@ the floor line and in the tests.
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.
-- **G7. Balance** under correlation: the best balanced blend.
+- **G7. Balance** under correlation: the best balanced blend. *Proved
+  2026-11-15 (`Core.bestBalanced_optimal`, true MSE
+  `Estimates.bestBalanced_mse_optimal`, Finding 15): keeping `b`, the
+  balanced blends are `zⱼ = 1 − c·bⱼ/uⱼ` and the best `c` is a weighted least
+  squares fit. But it is a poor way to balance (up to 2× the floor's error in
+  `studies/vc-balance.js`, column `opt`), so the app gets no switch for it:
+  its balance step stays the common shift. Next candidate (G7b): the
+  shift `μ̂ⱼᵇ + Σuᵢ(μ̂ᵢ − μ̂ᵢᵇ)/u*` is the best balanced correction of the
+  form "blend plus a common linear term" (Wang–Fuller–Qu with loss weights
+  `φ = u`), likely by the same parabola argument.*
 - **G5. Decisions from data** (merging, choosing cohorts). Hardest, last.
 
 The app itself decides the priority: a gap that makes no visible

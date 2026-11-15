@@ -16,6 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Best balanced blend (`Core.bestBalanced_optimal`, `bestBalanced_cost`, Finding 15): a
+  "watch out" in the balance section: restoring exposure balance by bending `z` (keeping `b`)
+  can double the error; shift all rates instead.
 
 
 ## 0. Setting and notation (1 page)

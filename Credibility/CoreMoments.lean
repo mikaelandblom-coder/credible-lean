@@ -227,6 +227,22 @@ theorem bestZ_mse_optimal (hK : K.PosDef) (j : J)
   rw [E.mse_blend hK j, E.mse_blend hK j]
   exact (levelMoments K L (K j j) j).bestZ_optimal hgap z
 
+/-- **The best balanced blend in true MSE** (PLAN G7): among the blends with the GLS
+portfolio estimate that are balanced for the weights `uⱼ ≠ 0`, the factors
+`zⱼ = 1 - c*·bⱼ/uⱼ` (`Core.bestBalanced_optimal`) minimise the weighted actual mean
+squared error `Σⱼ φⱼ E[(μ̂ⱼᵇ - μⱼ)²]`, for every distribution with these moments. -/
+theorem bestBalanced_mse_optimal (hK : K.PosDef) (φ u : J → ℝ) (hu : ∀ j, u j ≠ 0)
+    (hφ : ∀ j, 0 ≤ φ j) (hgap : ∀ j, 0 < (levelMoments K L (K j j) j).gap)
+    (z : J → ℝ) (hz : Balanced u z (glsWeight K)) :
+    ∑ j, φ j * P[fun ω => (E.blend j (balancedZ u (glsWeight K)
+        (bestBalancedC φ u (glsWeight K) fun j => levelMoments K L (K j j) j) j) ω
+          - E.level j ω) ^ 2]
+      ≤ ∑ j, φ j * P[fun ω => (E.blend j (z j) ω - E.level j ω) ^ 2] := by
+  rcases isEmpty_or_nonempty J with hJ | hJ
+  · simp
+  simp only [E.mse_blend hK]
+  exact (bestBalanced_optimal φ u _ _ (sum_glsWeight hK) hu hφ hgap).2 z hz
+
 omit [Fintype J] [DecidableEq J] in
 /-- A common component: add to every estimate and its level the same centred
 `Cⱼ`, uncorrelated with all estimates and levels, with `cov(Cᵢ, Cⱼ) = Rᵢⱼ`.

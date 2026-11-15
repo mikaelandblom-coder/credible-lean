@@ -343,6 +343,104 @@ theorem balanced_iff_of_diag (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j,
   · rintro ⟨c, hc⟩
     exact ⟨c * V, fun j => (h j _).mpr (by rw [hc j, mul_div_cancel_right₀ _ hV.ne'])⟩
 
+/-! ### The best balanced blend (PLAN G7)
+
+With `uⱼ ≠ 0`, `balanced_iff` says the balanced blends form a line: `zⱼ = 1 - c·bⱼ/uⱼ`.
+Each cohort's error variance is a parabola `gapⱼ(zⱼ - zⱼ*)²` above its optimum
+(`errVar_eq`), so the best balanced blend for the loss `Σⱼ φⱼ MSEⱼ` is a weighted least
+squares fit in the one number `c`. -/
+
+/-- The balanced credibility factors `zⱼ = 1 - c·bⱼ/uⱼ`. -/
+noncomputable def balancedZ (u b : J → ℝ) (c : ℝ) (j : J) : ℝ := 1 - c * b j / u j
+
+omit [DecidableEq J] in
+/-- With `Σbⱼ = 1` and `uⱼ ≠ 0`, the balanced blends are exactly `zⱼ = 1 - c·bⱼ/uⱼ`. -/
+theorem balanced_iff_balancedZ (u z b : J → ℝ) (hb : ∑ j, b j = 1) (hu : ∀ j, u j ≠ 0) :
+    Balanced u z b ↔ ∃ c, z = balancedZ u b c := by
+  rw [balanced_iff u z b hb]
+  refine exists_congr fun c => ⟨fun h => funext fun j => ?_, fun h j => ?_⟩
+  · rw [balancedZ, ← h j]; field_simp [hu j]; ring
+  · rw [h, balancedZ]; field_simp [hu j]; ring
+
+/-- The best `c` for the loss weights `φ`: with `aⱼ = bⱼ/uⱼ` and `gⱼ = Var(μ̂ⱼ - μ̂)`,
+`c* = Σφⱼgⱼ(1 - zⱼ*)aⱼ / Σφⱼgⱼaⱼ²`. -/
+noncomputable def bestBalancedC (φ u b : J → ℝ) (m : J → BlendMoments) : ℝ :=
+  (∑ j, φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j)) /
+    ∑ j, φ j * (m j).gap * (b j / u j) ^ 2
+
+omit [DecidableEq J] in
+/-- The total loss along the balanced line: `Σφⱼ MSEⱼ(z*) + S₀ - 2cS₁ + c²S₂`. -/
+theorem sum_errVar_balancedZ (φ u b : J → ℝ) (m : J → BlendMoments)
+    (hg : ∀ j, (m j).gap ≠ 0) (c : ℝ) :
+    ∑ j, φ j * (m j).errVar (balancedZ u b c j)
+      = ∑ j, φ j * (m j).errVar (m j).bestZ
+        + ∑ j, φ j * (m j).gap * (1 - (m j).bestZ) ^ 2
+        - 2 * c * ∑ j, φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j)
+        + c ^ 2 * ∑ j, φ j * (m j).gap * (b j / u j) ^ 2 := by
+  calc ∑ j, φ j * (m j).errVar (balancedZ u b c j)
+      = ∑ j, (φ j * (m j).errVar (m j).bestZ + φ j * (m j).gap * (1 - (m j).bestZ) ^ 2
+          - 2 * c * (φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j))
+          + c ^ 2 * (φ j * (m j).gap * (b j / u j) ^ 2)) :=
+        sum_congr rfl fun j _ => by rw [(m j).errVar_eq (hg j), balancedZ]; ring
+    _ = _ := by simp only [sum_add_distrib, sum_sub_distrib, mul_sum]
+
+omit [DecidableEq J] in
+/-- `S₂c* = S₁`, also when `S₂ = 0` (then every term of `S₁` vanishes). -/
+theorem mul_bestBalancedC (φ u b : J → ℝ) (m : J → BlendMoments) (hφ : ∀ j, 0 ≤ φ j)
+    (hg : ∀ j, 0 < (m j).gap) :
+    (∑ j, φ j * (m j).gap * (b j / u j) ^ 2) * bestBalancedC φ u b m
+      = ∑ j, φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j) := by
+  by_cases h : ∑ j, φ j * (m j).gap * (b j / u j) ^ 2 = 0
+  · have hj := (sum_eq_zero_iff_of_nonneg fun j _ =>
+      mul_nonneg (mul_nonneg (hφ j) (hg j).le) (sq_nonneg (b j / u j))).mp h
+    rw [h, zero_mul]
+    refine (sum_eq_zero fun j _ => ?_).symm
+    rcases mul_eq_zero.mp (hj j (mem_univ j)) with h0 | h0
+    · rw [show φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j)
+          = φ j * (m j).gap * ((1 - (m j).bestZ) * (b j / u j)) by ring, h0, zero_mul]
+    · rw [pow_eq_zero_iff two_ne_zero |>.mp h0, mul_zero]
+  · rw [bestBalancedC, mul_div_cancel₀ _ h]
+
+omit [DecidableEq J] in
+/-- **The best balanced blend** (PLAN G7). Among all blends `zⱼμ̂ⱼ + (1 - zⱼ)Σᵢbᵢμ̂ᵢ`
+with `Σbⱼ = 1` that are balanced for the weights `uⱼ ≠ 0`, the factors
+`zⱼ = 1 - c*·bⱼ/uⱼ` with `c* = bestBalancedC` are balanced and minimise the weighted
+loss `Σⱼ φⱼ MSEⱼ(zⱼ)` (`φⱼ ≥ 0`, each `Var(μ̂ⱼ - μ̂) > 0`). The moments `m j` are
+arbitrary, so correlated cohorts are covered. -/
+theorem bestBalanced_optimal (φ u b : J → ℝ) (m : J → BlendMoments) (hb : ∑ j, b j = 1)
+    (hu : ∀ j, u j ≠ 0) (hφ : ∀ j, 0 ≤ φ j) (hg : ∀ j, 0 < (m j).gap) :
+    Balanced u (balancedZ u b (bestBalancedC φ u b m)) b ∧
+      ∀ z, Balanced u z b →
+        ∑ j, φ j * (m j).errVar (balancedZ u b (bestBalancedC φ u b m) j)
+          ≤ ∑ j, φ j * (m j).errVar (z j) := by
+  refine ⟨(balanced_iff_balancedZ _ _ _ hb hu).mpr ⟨_, rfl⟩, fun z hz => ?_⟩
+  obtain ⟨c, rfl⟩ := (balanced_iff_balancedZ _ _ _ hb hu).mp hz
+  have hg0 : ∀ j, (m j).gap ≠ 0 := fun j => (hg j).ne'
+  rw [sum_errVar_balancedZ φ u b m hg0, sum_errVar_balancedZ φ u b m hg0]
+  have hS := mul_bestBalancedC φ u b m hφ hg
+  have hS2 : 0 ≤ ∑ j, φ j * (m j).gap * (b j / u j) ^ 2 := sum_nonneg fun j _ =>
+    mul_nonneg (mul_nonneg (hφ j) (hg j).le) (sq_nonneg _)
+  -- The difference is `S₂(c - c*)² ≥ 0`.
+  rw [← hS]
+  nlinarith [mul_nonneg hS2 (sq_nonneg (c - bestBalancedC φ u b m))]
+
+omit [DecidableEq J] in
+/-- **The cost of balance**: when `S₂ = Σφⱼgⱼ(bⱼ/uⱼ)² ≠ 0`, the best balanced blend loses
+`S₀ - S₁²/S₂` against the unconstrained optimum, with `S₀ = Σφⱼgⱼ(1 - zⱼ*)²` and
+`S₁ = Σφⱼgⱼ(1 - zⱼ*)bⱼ/uⱼ`. By Cauchy–Schwarz this is `≥ 0`, and it is `0` exactly
+when the optimal blend is itself balanced. -/
+theorem bestBalanced_cost (φ u b : J → ℝ) (m : J → BlendMoments) (hg : ∀ j, (m j).gap ≠ 0)
+    (hS2 : ∑ j, φ j * (m j).gap * (b j / u j) ^ 2 ≠ 0) :
+    ∑ j, φ j * (m j).errVar (balancedZ u b (bestBalancedC φ u b m) j)
+      = ∑ j, φ j * (m j).errVar (m j).bestZ
+        + (∑ j, φ j * (m j).gap * (1 - (m j).bestZ) ^ 2
+          - (∑ j, φ j * (m j).gap * (1 - (m j).bestZ) * (b j / u j)) ^ 2
+            / ∑ j, φ j * (m j).gap * (b j / u j) ^ 2) := by
+  rw [sum_errVar_balancedZ φ u b m hg, bestBalancedC]
+  have := hS2
+  field_simp
+  ring
+
 end Balance
 
 /-! ### Block-diagonal `K`: two-stage GLS -/
