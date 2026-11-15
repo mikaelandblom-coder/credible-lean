@@ -183,3 +183,29 @@ MSE(fit) = MSE(floor) + C + g₃ with C = 2E[e*d], g₃ = E[d²]. In % of the fl
     error is orthogonal to every function of the data; a linear credibility blend's error is only
     orthogonal to linear functions, so C ≠ 0 without normality. The earlier 11–17% overstatement
     under heavy tails is this missing negative C.
+
+## SURE: choosing the shrinkage, and estimating the error (`sure.js`, output `sure.out.txt`)
+
+SURE (Stein 1981) with Σ̂ from the moment fit plugged in for Σ; 27 worlds, 1000 draws each.
+
+24. **SURE-chosen τ² (Xie–Kou–Brown style) is worse than the moment fit everywhere**: +3 to +25
+    points (e.g. 108 → 118 at J = 8, T = 10, normal, ρ = 0.6), also under normal noise. Its τ² is
+    too large on average (1.1–4.7× the truth, moment fit 1.0–1.5×) and noisy. Minimising one noisy
+    risk estimate over τ² overfits it; Xie–Kou–Brown's gains are for hundreds of units, we have
+    8–20. The moment estimator of τ² is the better choice here.
+25. **SURE as an error estimate for the moment fit is right on average within −30% / +15%**
+    (0.70–1.15), the jackknife within −15% / +28% (0.85–1.28). SURE is better under heavy tails
+    (κ = 24: 0.81–1.15 against 1.12–1.28), the jackknife under normal and gamma(2) noise. SURE is
+    only exact with Σ *known*; plugging in Σ̂ (from T − 1 degrees of freedom) makes it too small,
+    most with T = 5 and with region-specific σⱼ (0.70).
+26. **Neither predicts the error of one particular data set**: the per-draw correlation of SURE
+    with the actual loss is −0.13 to 0.28. The loss of one data set depends on where the unknown
+    levels happen to lie; an MSEP estimate is about the average over such data sets. For the app:
+    show the MSEP as "typical error", not as an interval that covers the truth in this data set.
+
+**Verdict on the distribution layer (so far).** For choosing the fit it does not pay: the
+moment fit wins. For the error estimate, SURE and the jackknife are comparable, with opposite
+strengths. A normal-noise refinement that accounts for Σ̂ (its Wishart distribution, independent of
+the means under normality) could remove SURE's downward bias; that is the one place where a
+distribution clearly helps. Not tried: Hudson's identity for a gamma family (needs a model where the
+variance follows the mean, unlike our additive noise).
