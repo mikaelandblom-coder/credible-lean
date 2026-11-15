@@ -182,4 +182,25 @@ Gaps, extra hypotheses and new results found while formalizing.
    restored by a common shift, not by bending `z`: the shift is outside the
    blend class.
 
+16. **The common shift is the best balanced correction only without
+   correlation (new; `Core.bestCorrection_optimal`, `commonShift_optimal`,
+   `imbalanceCov_of_diag`, `Estimates.commonShift_mse_optimal`).** PLAN G7b
+   asked whether shifting every blend by `D/Σuᵢ`, with imbalance
+   `D = Σuᵢ(μ̂ᵢ − μ̂ᵢᵇ)`, is the best balanced correction of the form
+   `θ̂ⱼ = μ̂ⱼᵇ + cⱼD` (balanced iff `Σuⱼcⱼ = 1`) for the loss `Σⱼ uⱼ MSE(θ̂ⱼ)`, as in
+   Wang–Fuller–Qu. As stated it is false. `MSE(θ̂ⱼ) = MSEⱼ + 2cⱼκⱼ + cⱼ²V` with
+   `κⱼ = cov(μ̂ⱼᵇ − μⱼ, D)` and `V = Var D`. The best `c` is
+   `cⱼ* = (λuⱼ/φⱼ − κⱼ)/V`, and for `φ = u` it is the shift exactly when `κⱼ`
+   is the same for all `j`. WFQ get this from `κ = 0`, which holds when the
+   base predictor is the BLUP. Our blend is the BLUP only for independent
+   cohorts (`K` diagonal, `L = τ²I`), and then `κ = 0` (`imbalanceCov_of_diag`).
+   Counterexample under correlation: three cohorts, `τ² = 1`,
+   `v = (0.5, 1, 3)`, `ρ = 0.5`, `u = (3, 2, 1)`, optimal `z`. Then
+   `κ = (0.099, 0.183, 0.026)`, `c* = (0.177, 0.121, 0.227)` against `1/6`,
+   loss `5.237` against `5.249` for the shift (checked by simulation). So the
+   theorem is proved with the hypothesis "`κⱼ` constant". In 2000 random
+   worlds (3–7 cohorts, `ρ ≤ 0.95`) the shift was never more than 2.2% worse
+   than `c*`, and `c*` needs `κ`, i.e. fitted `K` and `L`. The shift stays the
+   app's balance step.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

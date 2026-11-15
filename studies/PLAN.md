@@ -153,7 +153,14 @@ the floor line and in the tests.
   its balance step stays the common shift. Next candidate (G7b): the
   shift `μ̂ⱼᵇ + Σuᵢ(μ̂ᵢ − μ̂ᵢᵇ)/u*` is the best balanced correction of the
   form "blend plus a common linear term" (Wang–Fuller–Qu with loss weights
-  `φ = u`), likely by the same parabola argument.*
+  `φ = u`), likely by the same parabola argument.* *G7b proved 2026-11-15
+  (`Core.bestCorrection_optimal`, `commonShift_optimal`, true MSE
+  `Estimates.bestCorrection_mse_optimal`, `commonShift_mse_optimal(_of_diag)`,
+  Finding 16): the best correction `μ̂ⱼᵇ + cⱼD` has a closed form (WFQ). It is
+  the common shift exactly when `cov(μ̂ⱼᵇ − μⱼ, D)` is the same for all `j`.
+  That always holds for independent cohorts, but not under correlation,
+  where the shift loses at most about 2% in random worlds. The app keeps the
+  shift; no switch.*
 - **G5. Decisions from data** (merging, choosing cohorts). Hardest, last.
 
 The app itself decides the priority: a gap that makes no visible

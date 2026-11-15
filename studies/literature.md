@@ -65,7 +65,10 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   Their optimum ranges over *all* linear predictors; within the credibility class (`b` fixed,
   only `z` free) the best balanced blend is `Core.bestBalanced_optimal` (G7), much worse in our
   worlds (Finding 15), so the WFQ shift is the one to use. Bell, Datta & Ghosh (2013) extend
-  WFQ to several benchmark constraints.
+  WFQ to several benchmark constraints. Their "add a share of the discrepancy" optimum
+  needs the base predictor's error uncorrelated with the discrepancy (true for a BLUP).
+  Within "blend + `cⱼD`" this is `Core.bestCorrection_optimal` (G7b). The shift is optimal
+  for independent cohorts, and under correlation only within about 2% (Finding 16).
 - Jiang, Lahiri & Wan (2002), *A unified jackknife theory for empirical best prediction with
   M-estimation*, Ann. Stat. 30: jackknife MSEP of an EBLUP, no normality needed, deletes
   independent units (we delete years). Used in `studies/msep.js`.

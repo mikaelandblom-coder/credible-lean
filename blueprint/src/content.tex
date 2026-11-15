@@ -1294,6 +1294,87 @@ which is Bühlmann--Straub.
   leaves the blend class) costs at most 46\%.
 \end{remark}
 
+\begin{definition}[Imbalance and corrections]\label{def:Core_imbalance}
+  \lean{Credibility.Core.imbalanceWeight, Credibility.Core.imbalanceCov,
+        Credibility.Core.correctionLoss, Credibility.Core.bestCorrectionC}
+  \leanok
+  For a blend with factors $z$ and weights $b$, the imbalance
+  $D = \sum_j u_j(\hmu_j - \hmu_j^b) = \sum_i w_i\hmu_i$ has weights
+  $w_i = u_i(1 - z_i) - \bigl(\sum_j u_j(1 - z_j)\bigr)b_i$. A correction is
+  $\theta_j = \hmu_j^b + c_jD$. Let $\kappa_j = z_j(Kw)_j - (Lw)_j$ (it will be
+  $\cov(\hmu_j^b - \mu_j, D)$) and $V = w^\top K w = \Var D$. For loss weights
+  $\varphi_j$ the loss is
+  $\sum_j\varphi_j(\mathrm{MSE}_j + 2c_j\kappa_j + c_j^2V)$, and
+  $c_j^* = (\lambda u_j/\varphi_j - \kappa_j)/V$ with
+  $\lambda = (V + \sum_i u_i\kappa_i)/\sum_i(u_i^2/\varphi_i)$.
+\end{definition}
+
+\begin{lemma}[The imbalance is linear]\label{lem:Core_imbalance}
+  \lean{Credibility.Core.sum_mul_sub_blend_eq, Credibility.Core.sum_imbalanceWeight}
+  \leanok
+  \uses{def:Core_imbalance, thm:Core_balance}
+  $\sum_j u_j(\hmu_j - \hmu_j^b) = \sum_i w_i\hmu_i$ for all data, and if
+  $\sum_j b_j = 1$ then $\sum_i w_i = 0$, so $\mathbb E D = 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_balance}
+  Expand $\hmu_j - \hmu_j^b = (1 - z_j)(\hmu_j - \hmu)$.
+\end{proof}
+
+\begin{theorem}[The best balanced correction (Wang--Fuller--Qu)]\label{thm:Core_bestCorrection}
+  \lean{Credibility.Core.sum_mul_bestCorrectionC, Credibility.Core.bestCorrection_optimal}
+  \leanok
+  \uses{def:Core_imbalance}
+  Let $\varphi_j > 0$, $V > 0$ and some $u_j \ne 0$. Then
+  $\sum_j u_jc_j^* = 1$ (so $\theta^*$ is balanced), and among all balanced
+  corrections ($\sum_j u_jc_j = 1$) $c^*$ minimises the loss.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Each term is a parabola in $c_j$ and $\varphi_j(\kappa_j + Vc_j^*) = \lambda u_j$. So
+  the loss of $c$ is the loss of $c^*$ plus $V\sum_j\varphi_j(c_j - c_j^*)^2$ plus
+  $2\lambda\sum_j u_j(c_j - c_j^*) = 0$.
+\end{proof}
+
+\begin{corollary}[The common shift]\label{cor:Core_commonShift}
+  \lean{Credibility.Core.commonShift_optimal}
+  \leanok
+  \uses{thm:Core_bestCorrection}
+  If $\varphi = u$, $u_j > 0$, $V > 0$ and $\kappa_j = k$ for all $j$, the
+  common shift $c_j = 1/\sum_i u_i$, i.e.\ $\theta_j = \hmu_j^b + D/\sum_iu_i$, is
+  the best balanced correction.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestCorrection}
+  Then $\lambda = (V + k\sum u)/\sum u$ and $c_j^* = (\lambda - k)/V = 1/\sum_i u_i$.
+\end{proof}
+
+\begin{lemma}[Independent cohorts: $\kappa = 0$]\label{lem:Core_imbalanceCov_diag}
+  \lean{Credibility.Core.imbalanceCov_of_diag}
+  \leanok
+  \uses{def:Core_imbalance, thm:Core_diag}
+  For $K = \mathrm{diag}(\tau^2 + v_j) \succ 0$, $L = \tau^2I$, $|J| \ge 2$ and the
+  optimal factors $z_j^*$, $\kappa_j = 0$ for every $w$: the blend's error is
+  uncorrelated with every imbalance.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_diag}
+  $z_j^* = \tau^2/(\tau^2 + v_j)$, so $z_j^*(\tau^2 + v_j)w_j - \tau^2w_j = 0$.
+\end{proof}
+
+\begin{remark}[Finding 16: the shift is optimal only without correlation]\label{rem:commonShift}
+  \uses{cor:Core_commonShift}
+  Under correlation $\kappa_j$ varies with $j$ and the shift is not the best
+  correction: with three cohorts, $\tau^2 = 1$, $v = (0.5, 1, 3)$,
+  $\rho = 0.5$, $L = \tau^2I$, $u = (3, 2, 1)$, $c^* = (0.177, 0.121, 0.227)$
+  against $1/6$ and the loss is $5.237$ against $5.249$. Over random worlds
+  ($\rho$ up to $0.95$) the shift is never more than about $2\%$ worse, and
+  $c^*$ needs $\kappa$, so the shift stays the practical choice.
+\end{remark}
+
 \begin{theorem}[Bühlmann--Straub is balanced]\label{thm:bs_balance}
   \lean{Credibility.bs_balance}
   \leanok
@@ -2363,6 +2444,59 @@ these two covariances.
   \uses{thm:Core_bestZ_mse, thm:Core_bestBalanced, lem:sum_glsWeight}
   The true MSE is \eqth{6} (Theorem~\ref{thm:Core_bestZ_mse}); then
   Theorem~\ref{thm:Core_bestBalanced}.
+\end{proof}
+
+\begin{theorem}[The correction in true MSE]\label{thm:Core_mse_correct}
+  \lean{Credibility.Core.Estimates.imbalance_eq, Credibility.Core.Estimates.balanced_correct,
+        Credibility.Core.Estimates.mse_correct}
+  \leanok
+  \uses{def:Core_Estimates, lem:Core_imbalance, def:Core_imbalance}
+  Let $K \succ 0$ and $D = \sum_i w_i\hmu_i$ the imbalance of the blends with
+  GLS weights. Then $D = \sum_j u_j(\hmu_j - \hmu_j^b)$, the corrections
+  $\theta_j = \hmu_j^b + c_jD$ with $\sum_j u_jc_j = 1$ are balanced for every
+  outcome, and $\mathbb E[(\theta_j - \mu_j)^2] = \mathrm{MSE}_j(z_j) + 2c_j\kappa_j + c_j^2V$,
+  for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_imbalance, thm:Core_bestZ_mse, lem:Core_moments_lin, lem:mulVec_glsWeight, lem:sum_glsWeight}
+  Both $X = \hmu_j^b - \mu_j$ and $D$ have mean zero, so
+  $\mathbb E[(X + cD)^2] = \Var X + 2c\cov(X, D) + c^2\Var D$. Here
+  $\Var X = \mathrm{MSE}_j$ (Theorem~\ref{thm:Core_bestZ_mse}),
+  $\Var D = w^\top Kw$, and
+  $\cov(X, D) = z_j(Kw)_j + (1 - z_j)\cov(\hmu, D) - (Lw)_j$ with
+  $\cov(\hmu, D) = w^\top K\bb = s^2\sum_iw_i = 0$.
+\end{proof}
+
+\begin{corollary}[The best balanced correction in true MSE]\label{cor:Core_bestCorrection_mse}
+  \lean{Credibility.Core.Estimates.bestCorrection_mse_optimal,
+        Credibility.Core.Estimates.commonShift_mse_optimal}
+  \leanok
+  \uses{thm:Core_mse_correct, thm:Core_bestCorrection, cor:Core_commonShift}
+  If $K \succ 0$, $\varphi_j > 0$ and $\Var D > 0$, the factors $c^*$ minimise
+  $\sum_j\varphi_j\,\mathbb E[(\theta_j - \mu_j)^2]$ among the balanced
+  corrections; if $\varphi = u > 0$ and $\kappa_j$ is the same for all $j$, so
+  does the common shift $D/\sum_iu_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_mse_correct, thm:Core_bestCorrection, cor:Core_commonShift}
+  Theorem~\ref{thm:Core_mse_correct}, then Theorem~\ref{thm:Core_bestCorrection}
+  and Corollary~\ref{cor:Core_commonShift}.
+\end{proof}
+
+\begin{corollary}[Independent cohorts: shift all rates]\label{cor:Core_commonShift_diag}
+  \lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag}
+  \leanok
+  \uses{cor:Core_bestCorrection_mse, lem:Core_imbalanceCov_diag}
+  For $K = \mathrm{diag}(\tau^2 + v_j)$, $L = \tau^2I$, $|J| \ge 2$, the optimal
+  factors $z^*$ and any exposures $u > 0$ (with $\Var D > 0$), the common shift
+  is the best balanced correction in true MSE for the loss weights $u$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_bestCorrection_mse, lem:Core_imbalanceCov_diag}
+  $\kappa = 0$ by Lemma~\ref{lem:Core_imbalanceCov_diag}.
 \end{proof}
 
 \begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}

@@ -441,6 +441,131 @@ theorem bestBalanced_cost (φ u b : J → ℝ) (m : J → BlendMoments) (hg : �
   field_simp
   ring
 
+/-! ### The best balanced correction (PLAN G7b, Wang–Fuller–Qu)
+
+Keep any blend `μ̂ⱼᵇ` and correct it by a multiple of its imbalance
+`D = Σᵢ uᵢ(μ̂ᵢ - μ̂ᵢᵇ)`: `θ̂ⱼ = μ̂ⱼᵇ + cⱼD`. Then `Σⱼ uⱼ(μ̂ⱼ - θ̂ⱼ) = (1 - Σⱼ uⱼcⱼ)D`, so the
+corrections are balanced exactly when `Σⱼ uⱼcⱼ = 1`. With `κⱼ = cov(μ̂ⱼᵇ - μⱼ, D)` and
+`V = Var D`, the error of `θ̂ⱼ` is the parabola `MSEⱼ + 2cⱼκⱼ + cⱼ²V` in `cⱼ`
+(`Estimates.mse_correct`), so the best `c` for the loss `Σⱼ φⱼ MSE(θ̂ⱼ)` is a least squares
+problem under one linear constraint (Wang, Fuller and Qu 2008). The common shift
+`cⱼ = 1/Σᵢuᵢ` is its solution for `φ = u` exactly when `κⱼ` is the same for all `j`; this
+holds for independent cohorts (`imbalanceCov_of_diag`) but not under correlation
+(Finding 16). -/
+
+/-- The imbalance `D = Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ)` as a linear combination `Σᵢ wᵢμ̂ᵢ`:
+`wᵢ = uᵢ(1 - zᵢ) - (Σⱼ uⱼ(1 - zⱼ)) bᵢ`. -/
+def imbalanceWeight (u z b : J → ℝ) (i : J) : ℝ :=
+  u i * (1 - z i) - (∑ j, u j * (1 - z j)) * b i
+
+omit [DecidableEq J] in
+/-- `Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = Σᵢ wᵢμ̂ᵢ` for every data vector `μ̂`. -/
+theorem sum_mul_sub_blend_eq (u z b m : J → ℝ) :
+    ∑ j, u j * (m j - (z j * m j + (1 - z j) * ∑ i, b i * m i))
+      = ∑ i, imbalanceWeight u z b i * m i := by
+  rw [sum_mul_sub_blend]
+  calc _ = ∑ j, (u j * (1 - z j) * m j - u j * (1 - z j) * ∑ i, b i * m i) :=
+        sum_congr rfl fun j _ => by ring
+    _ = _ := by
+      rw [sum_sub_distrib, ← sum_mul]
+      simp only [imbalanceWeight, sub_mul, sum_sub_distrib, mul_assoc, ← mul_sum]
+
+omit [DecidableEq J] in
+/-- With `Σbⱼ = 1` the imbalance weights sum to zero, so `E D = 0`. -/
+theorem sum_imbalanceWeight (u z b : J → ℝ) (hb : ∑ j, b j = 1) :
+    ∑ i, imbalanceWeight u z b i = 0 := by
+  simp only [imbalanceWeight, sum_sub_distrib, ← mul_sum, hb, mul_one, sub_self]
+
+/-- `κⱼ = cov(μ̂ⱼᵇ - μⱼ, D)` for `D = Σᵢ wᵢμ̂ᵢ`: `zⱼ(Kw)ⱼ - (Lw)ⱼ`. The portfolio estimate
+does not appear: with GLS weights `cov(μ̂, D) = s²Σᵢwᵢ = 0`. -/
+def imbalanceCov (K L : Matrix J J ℝ) (z w : J → ℝ) (j : J) : ℝ :=
+  z j * (K *ᵥ w) j - (L *ᵥ w) j
+
+/-- Independent cohorts (`K = diag(τ² + vⱼ)`, `L = τ²I`, `J ≥ 2`): with the optimal
+factors the blend error is uncorrelated with every imbalance, `κⱼ = 0`. -/
+theorem imbalanceCov_of_diag (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j, 0 < τ2 + v j)
+    (hJ : 1 < Fintype.card J) (w : J → ℝ) (j : J) :
+    imbalanceCov K (τ2 • (1 : Matrix J J ℝ)) (fun j => (moments K τ2 v j).bestZ) w j = 0 := by
+  have h := (hd j).ne'
+  simp only [imbalanceCov]
+  rw [bestZ_of_diag hK hd hJ]
+  simp only [hK, mulVec_diagonal, smul_mulVec,
+    one_mulVec, Pi.smul_apply, smul_eq_mul]
+  field_simp
+  ring
+
+/-- The loss `Σⱼ φⱼ(MSEⱼ + 2cⱼκⱼ + cⱼ²V)` of the corrections `μ̂ⱼᵇ + cⱼD`. -/
+def correctionLoss (φ mse κ : J → ℝ) (V : ℝ) (c : J → ℝ) : ℝ :=
+  ∑ j, φ j * (mse j + 2 * c j * κ j + c j ^ 2 * V)
+
+/-- The best correction factors (Wang–Fuller–Qu): `cⱼ* = (λuⱼ/φⱼ - κⱼ)/V` with
+`λ = (V + Σᵢuᵢκᵢ)/Σᵢ(uᵢ²/φᵢ)`. -/
+noncomputable def bestCorrectionC (φ u κ : J → ℝ) (V : ℝ) (j : J) : ℝ :=
+  ((V + ∑ i, u i * κ i) / (∑ i, u i ^ 2 / φ i) * (u j / φ j) - κ j) / V
+
+omit [DecidableEq J] in
+/-- The best correction factors satisfy the balance constraint `Σⱼ uⱼcⱼ = 1`. -/
+theorem sum_mul_bestCorrectionC (φ u κ : J → ℝ) {V : ℝ} (hV : V ≠ 0)
+    (hS : ∑ i, u i ^ 2 / φ i ≠ 0) : ∑ j, u j * bestCorrectionC φ u κ V j = 1 := by
+  have h : ∀ j, u j * bestCorrectionC φ u κ V j
+      = ((V + ∑ i, u i * κ i) / (∑ i, u i ^ 2 / φ i) * (u j ^ 2 / φ j) - u j * κ j) / V :=
+    fun j => by rw [bestCorrectionC]; ring
+  simp only [h, ← sum_div, sum_sub_distrib, ← mul_sum]
+  rw [div_mul_cancel₀ _ hS, add_sub_cancel_right, div_self hV]
+
+omit [DecidableEq J] in
+/-- **The best balanced correction** (PLAN G7b, Wang–Fuller–Qu). Among the corrections
+`μ̂ⱼᵇ + cⱼD` of a blend by a multiple of its imbalance that are balanced (`Σⱼ uⱼcⱼ = 1`,
+some `uⱼ ≠ 0`), `c* = bestCorrectionC` minimises the loss `Σⱼ φⱼ(MSEⱼ + 2cⱼκⱼ + cⱼ²V)`
+(`φⱼ > 0`, `V > 0`). The excess loss of any other balanced `c` is `VΣⱼφⱼ(cⱼ - cⱼ*)²`. -/
+theorem bestCorrection_optimal (φ u mse κ : J → ℝ) (V : ℝ) (hφ : ∀ j, 0 < φ j) (hV : 0 < V)
+    (hu : ∃ j, u j ≠ 0) :
+    ∑ j, u j * bestCorrectionC φ u κ V j = 1 ∧
+      ∀ c, ∑ j, u j * c j = 1 →
+        correctionLoss φ mse κ V (bestCorrectionC φ u κ V) ≤ correctionLoss φ mse κ V c := by
+  have hS : 0 < ∑ i, u i ^ 2 / φ i := by
+    obtain ⟨j, hj⟩ := hu
+    exact sum_pos' (fun i _ => div_nonneg (sq_nonneg _) (hφ i).le)
+      ⟨j, mem_univ j, div_pos (by positivity) (hφ j)⟩
+  have h1 := sum_mul_bestCorrectionC φ u κ hV.ne' hS.ne'
+  refine ⟨h1, fun c hc => ?_⟩
+  set cs := bestCorrectionC φ u κ V
+  obtain ⟨lam, hlam⟩ : ∃ lam, lam = (V + ∑ i, u i * κ i) / (∑ i, u i ^ 2 / φ i) := ⟨_, rfl⟩
+  -- First-order condition: `φⱼ(κⱼ + Vcⱼ*) = λuⱼ`.
+  have hfoc : ∀ j, φ j * (κ j + V * cs j) = lam * u j := fun j => by
+    have := (hφ j).ne'
+    simp only [cs, bestCorrectionC, ← hlam]
+    field_simp
+    ring
+  have hsplit : correctionLoss φ mse κ V c = correctionLoss φ mse κ V cs
+      + V * ∑ j, φ j * (c j - cs j) ^ 2
+      + 2 * lam * (∑ j, u j * c j - ∑ j, u j * cs j) := by
+    simp only [correctionLoss, mul_sum, ← sum_sub_distrib, ← sum_add_distrib]
+    exact sum_congr rfl fun j _ => by linear_combination (2 * (c j - cs j)) * hfoc j
+  rw [hsplit, hc, h1, sub_self, mul_zero, add_zero]
+  have : 0 ≤ ∑ j, φ j * (c j - cs j) ^ 2 :=
+    sum_nonneg fun j _ => mul_nonneg (hφ j).le (sq_nonneg _)
+  nlinarith
+
+omit [DecidableEq J] in
+/-- **The common shift is the best balanced correction** when the loss weights are the
+balance weights (`φ = u > 0`) and `κⱼ = cov(μ̂ⱼᵇ - μⱼ, D)` is the same for every cohort:
+`θ̂ⱼ = μ̂ⱼᵇ + D/Σᵢuᵢ`, i.e. every rate is shifted by the same amount. -/
+theorem commonShift_optimal (u mse κ : J → ℝ) (V k : ℝ) (hu : ∀ j, 0 < u j) (hV : 0 < V)
+    (hκ : ∀ j, κ j = k) (c : J → ℝ) (hc : ∑ j, u j * c j = 1) :
+    correctionLoss u mse κ V (fun _ => (∑ i, u i)⁻¹) ≤ correctionLoss u mse κ V c := by
+  obtain ⟨j, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hc.trans_ne one_ne_zero)
+  have hU : 0 < ∑ i, u i := sum_pos (fun i _ => hu i) ⟨j, mem_univ j⟩
+  have hshift : bestCorrectionC u u κ V = fun _ => (∑ i, u i)⁻¹ := by
+    have hsq : ∑ i, u i ^ 2 / u i = ∑ i, u i :=
+      sum_congr rfl fun i _ => by rw [sq, mul_div_assoc, div_self (hu i).ne', mul_one]
+    funext l
+    simp only [bestCorrectionC, hκ, hsq, div_self (hu l).ne', ← sum_mul]
+    field_simp
+    ring
+  rw [← hshift]
+  exact (bestCorrection_optimal u u mse κ V hu hV ⟨j, (hu j).ne'⟩).2 c hc
+
 end Balance
 
 /-! ### Block-diagonal `K`: two-stage GLS -/

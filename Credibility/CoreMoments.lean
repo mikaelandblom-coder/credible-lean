@@ -243,6 +243,143 @@ theorem bestBalanced_mse_optimal (hK : K.PosDef) (φ u : J → ℝ) (hu : ∀ j,
   simp only [E.mse_blend hK]
   exact (bestBalanced_optimal φ u _ _ (sum_glsWeight hK) hu hφ hgap).2 z hz
 
+/-! ### The best balanced correction in true MSE (PLAN G7b) -/
+
+/-- The imbalance `D = Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ)` of the blends with factors `z`, as the linear
+combination `Σᵢ wᵢμ̂ᵢ` (`imbalance_eq`). -/
+noncomputable abbrev imbalance (u z : J → ℝ) : Ω → ℝ :=
+  E.portLin (imbalanceWeight u z (glsWeight K))
+
+/-- The corrected estimate `θ̂ⱼ = μ̂ⱼᵇ + cD`. -/
+noncomputable abbrev correct (u z : J → ℝ) (j : J) (c : ℝ) : Ω → ℝ :=
+  fun ω => E.blend j (z j) ω + c * E.imbalance u z ω
+
+omit [IsProbabilityMeasure P] in
+/-- `D = Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ)`. -/
+theorem imbalance_eq (u z : J → ℝ) (ω : Ω) :
+    E.imbalance u z ω = ∑ j, u j * (E.est j ω - E.blend j (z j) ω) := by
+  simp only [imbalance, portLin, Core.portLin, blend, Core.blend]
+  exact (sum_mul_sub_blend_eq u z _ fun j => E.est j ω).symm
+
+omit [IsProbabilityMeasure P] in
+/-- The corrections with `Σⱼ uⱼcⱼ = 1` are balanced: `Σⱼ uⱼ(μ̂ⱼ - θ̂ⱼ) = 0` for every outcome. -/
+theorem balanced_correct (u z c : J → ℝ) (hc : ∑ j, u j * c j = 1) (ω : Ω) :
+    ∑ j, u j * (E.est j ω - E.correct u z j (c j) ω) = 0 := by
+  have h := E.imbalance_eq u z ω
+  calc ∑ j, u j * (E.est j ω - E.correct u z j (c j) ω)
+      = ∑ j, u j * (E.est j ω - E.blend j (z j) ω) - (∑ j, u j * c j) * E.imbalance u z ω := by
+        rw [sum_mul, ← sum_sub_distrib]
+        exact sum_congr rfl fun j _ => by simp only [correct]; ring
+    _ = 0 := by rw [hc, ← h]; ring
+
+/-- The actual mean squared error of `θ̂ⱼ = μ̂ⱼᵇ + cD` is the parabola
+`MSEⱼ(zⱼ) + 2cκⱼ + c²V` with `κⱼ = imbalanceCov` and `V = Var D = wᵀKw`. -/
+theorem mse_correct (hK : K.PosDef) (u z : J → ℝ) (j : J) (c : ℝ) :
+    P[fun ω => (E.correct u z j c ω - E.level j ω) ^ 2]
+      = (levelMoments K L (K j j) j).errVar (z j)
+        + 2 * c * imbalanceCov K L z (imbalanceWeight u z (glsWeight K)) j
+        + c ^ 2 * (imbalanceWeight u z (glsWeight K) ⬝ᵥ
+            (K *ᵥ imbalanceWeight u z (glsWeight K))) := by
+  have : Nonempty J := ⟨j⟩
+  set w := imbalanceWeight u z (glsWeight K)
+  set X : Ω → ℝ := fun ω => E.blend j (z j) ω - E.level j ω
+  set D := E.imbalance u z
+  have hb : MemLp (Core.portEst K E.est) 2 P := E.memLp_portLin (glsWeight K)
+  have hD : MemLp D 2 P := E.memLp_portLin w
+  have h1 : MemLp (fun ω => z j * E.est j ω) 2 P := (E.est_memLp j).const_mul (z j)
+  have h2 : MemLp (fun ω => (1 - z j) * Core.portEst K E.est ω) 2 P := hb.const_mul (1 - z j)
+  have hBl : MemLp (fun ω => z j * E.est j ω + (1 - z j) * Core.portEst K E.est ω) 2 P :=
+    h1.add h2
+  have hX : MemLp X 2 P := hBl.sub (E.level_memLp j)
+  have hP : P[Core.portEst K E.est] = μ := by
+    rw [Core.portEst, show Core.portLin E.est (glsWeight K) = E.portLin (glsWeight K) from rfl,
+      integral_portLin, sum_glsWeight hK, one_mul]
+  have hXm : P[X] = 0 := by
+    simp only [X, blend, Core.blend]
+    rw [integral_sub (hBl.integrable (by norm_num)) ((E.level_memLp j).integrable (by norm_num)),
+      integral_add (h1.integrable (by norm_num)) (h2.integrable (by norm_num)),
+      integral_const_mul, integral_const_mul, E.est_mean, E.level_mean, hP]
+    ring
+  have hDm : P[D] = 0 := by
+    rw [integral_portLin, sum_imbalanceWeight _ _ _ (sum_glsWeight hK), zero_mul]
+  have hcD : MemLp (fun ω => c * D ω) 2 P := hD.const_mul c
+  have hsum : MemLp (fun ω => X ω + c * D ω) 2 P := hX.add hcD
+  have hsumm : P[fun ω => X ω + c * D ω] = 0 := by
+    rw [integral_add (hX.integrable (by norm_num)) (hcD.integrable (by norm_num)),
+      integral_const_mul, hXm, hDm]
+    ring
+  -- `E[(X + cD)²] = Var X + 2c cov(X, D) + c² Var D`.
+  have hsq : (fun ω => (E.correct u z j c ω - E.level j ω) ^ 2)
+      = fun ω => (fun ω => X ω + c * D ω) ω ^ 2 := by
+    funext ω; simp only [correct, X, D]; ring
+  rw [hsq, ← variance_of_integral_eq_zero hsum.aestronglyMeasurable.aemeasurable hsumm,
+    variance_fun_add hX hcD, covariance_const_mul_right, variance_const_mul]
+  -- `Var X` is the blend's MSE.
+  have hVX : Var[X; P] = (levelMoments K L (K j j) j).errVar (z j) := by
+    rw [variance_of_integral_eq_zero hX.aestronglyMeasurable.aemeasurable hXm]
+    exact E.mse_blend hK j (z j)
+  -- `cov(X, D) = zⱼ(Kw)ⱼ + (1 - zⱼ)cov(μ̂, D) - (Lw)ⱼ`, and `cov(μ̂, D) = s²Σw = 0`.
+  have hbD : cov[Core.portEst K E.est, D; P] = 0 := by
+    rw [Core.portEst, show Core.portLin E.est (glsWeight K) = E.portLin (glsWeight K)
+      from rfl, covariance_comm, cov_portLin, mulVec_glsWeight hK]
+    simp only [dotProduct, ← sum_mul, sum_imbalanceWeight _ _ _ (sum_glsWeight hK), zero_mul]
+  have hXD : cov[X, D; P] = imbalanceCov K L z w j := by
+    simp only [X, blend, Core.blend]
+    rw [covariance_fun_sub_left hBl (E.level_memLp j) hD, ← Pi.add_def, covariance_add_left h1 h2 hD,
+      covariance_const_mul_left, covariance_const_mul_left, hbD,
+      E.cov_est_portLin, E.cov_level_portLin, imbalanceCov]
+    ring
+  rw [hVX, hXD, variance_portLin]
+  ring
+
+/-- **The best balanced correction in true MSE** (PLAN G7b, Wang–Fuller–Qu): among the
+balanced corrections `μ̂ⱼᵇ + cⱼD` (`Σⱼ uⱼcⱼ = 1`), the factors `c* = bestCorrectionC`
+minimise the weighted actual mean squared error `Σⱼ φⱼ E[(θ̂ⱼ - μⱼ)²]` (`φⱼ > 0`,
+`Var D > 0`), for every distribution with these moments. -/
+theorem bestCorrection_mse_optimal (hK : K.PosDef) (φ u z : J → ℝ) (hφ : ∀ j, 0 < φ j)
+    (hV : 0 < imbalanceWeight u z (glsWeight K) ⬝ᵥ (K *ᵥ imbalanceWeight u z (glsWeight K)))
+    (c : J → ℝ) (hc : ∑ j, u j * c j = 1) :
+    ∑ j, φ j * P[fun ω => (E.correct u z j (bestCorrectionC φ u
+        (imbalanceCov K L z (imbalanceWeight u z (glsWeight K)))
+        (imbalanceWeight u z (glsWeight K) ⬝ᵥ (K *ᵥ imbalanceWeight u z (glsWeight K))) j) ω
+          - E.level j ω) ^ 2]
+      ≤ ∑ j, φ j * P[fun ω => (E.correct u z j (c j) ω - E.level j ω) ^ 2] := by
+  obtain ⟨j, -, hj⟩ := exists_ne_zero_of_sum_ne_zero (hc.trans_ne one_ne_zero)
+  simp only [E.mse_correct hK]
+  exact (bestCorrection_optimal φ u _ _ _ hφ hV ⟨j, left_ne_zero_of_mul hj⟩).2 c hc
+
+/-- **The common shift is the best balanced correction in true MSE** (PLAN G7b): for loss
+weights equal to the balance weights (`φ = u > 0`), if `κⱼ = cov(μ̂ⱼᵇ - μⱼ, D)` is the same
+for every cohort, then shifting every blend by `D/Σᵢuᵢ` minimises `Σⱼ uⱼ E[(θ̂ⱼ - μⱼ)²]`
+among all balanced corrections `μ̂ⱼᵇ + cⱼD`, for every distribution with these moments. -/
+theorem commonShift_mse_optimal (hK : K.PosDef) (u z : J → ℝ) (hu : ∀ j, 0 < u j)
+    (hV : 0 < imbalanceWeight u z (glsWeight K) ⬝ᵥ (K *ᵥ imbalanceWeight u z (glsWeight K)))
+    (k : ℝ) (hκ : ∀ j, imbalanceCov K L z (imbalanceWeight u z (glsWeight K)) j = k)
+    (c : J → ℝ) (hc : ∑ j, u j * c j = 1) :
+    ∑ j, u j * P[fun ω => (E.correct u z j (∑ i, u i)⁻¹ ω - E.level j ω) ^ 2]
+      ≤ ∑ j, u j * P[fun ω => (E.correct u z j (c j) ω - E.level j ω) ^ 2] := by
+  obtain ⟨j, -, -⟩ := exists_ne_zero_of_sum_ne_zero (hc.trans_ne one_ne_zero)
+  have : Nonempty J := ⟨j⟩
+  simp only [E.mse_correct hK]
+  exact commonShift_optimal u _ _ _ k hu hV hκ c hc
+
+/-- **Independent cohorts: the common shift is the best balanced correction** (Wang–Fuller–Qu):
+for `K = diag(τ² + vⱼ)`, `L = τ²I`, `J ≥ 2` and the optimal factors `zⱼ*`, every `κⱼ = 0`, so
+for any exposures `u > 0` shifting all blends by `D/Σᵢuᵢ` minimises `Σⱼ uⱼ E[(θ̂ⱼ - μⱼ)²]`
+among the balanced corrections `μ̂ⱼᵇ + cⱼD`. -/
+theorem commonShift_mse_optimal_of_diag {τ2 : ℝ} {v : J → ℝ} (E : Estimates K (τ2 • 1) μ P)
+    (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j, 0 < τ2 + v j) (hJ : 1 < Fintype.card J)
+    (u : J → ℝ) (hu : ∀ j, 0 < u j)
+    (hV : 0 < imbalanceWeight u (fun j => (moments K τ2 v j).bestZ) (glsWeight K) ⬝ᵥ
+      (K *ᵥ imbalanceWeight u (fun j => (moments K τ2 v j).bestZ) (glsWeight K)))
+    (c : J → ℝ) (hc : ∑ j, u j * c j = 1) :
+    ∑ j, u j * P[fun ω => (E.correct u (fun j => (moments K τ2 v j).bestZ) j (∑ i, u i)⁻¹ ω
+        - E.level j ω) ^ 2]
+      ≤ ∑ j, u j * P[fun ω => (E.correct u (fun j => (moments K τ2 v j).bestZ) j (c j) ω
+        - E.level j ω) ^ 2] :=
+  E.commonShift_mse_optimal (by rw [hK, posDef_diagonal_iff]; exact hd) u _ hu hV 0
+    (imbalanceCov_of_diag hK hd hJ _) c hc
+
 omit [Fintype J] [DecidableEq J] in
 /-- A common component: add to every estimate and its level the same centred
 `Cⱼ`, uncorrelated with all estimates and levels, with `cov(Cᵢ, Cⱼ) = Rᵢⱼ`.

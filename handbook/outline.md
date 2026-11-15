@@ -19,6 +19,9 @@ voice, then trim towards 8 pages.
 - Best balanced blend (`Core.bestBalanced_optimal`, `bestBalanced_cost`, Finding 15): a
   "watch out" in the balance section: restoring exposure balance by bending `z` (keeping `b`)
   can double the error; shift all rates instead.
+- Common shift (`Core.Estimates.commonShift_mse_optimal_of_diag`, Finding 16): "use it":
+  for independent cohorts shifting all rates by the same amount is the best balanced
+  correction; under correlation it is within a few percent of the best.
 
 
 ## 0. Setting and notation (1 page)
