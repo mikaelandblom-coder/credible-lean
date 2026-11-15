@@ -506,6 +506,25 @@ series lengths and group levels (Section~\ref{sec:beyond}) are two more
 instances.
 \lean{Credibility.Model.Noise.bestZ_mse_optimal}
 
+\begin{result}[Next year's premium: the same $z$]\label{res:forecast}
+  If next year's outcome is $Y_j = \mu_j + \varepsilon_j$, with noise of mean zero
+  uncorrelated with the estimates and with $\mu_j$, then
+  \[
+    E(z\hmu_j + (1-z)\hmu - Y_j)^2 = E(z\hmu_j + (1-z)\hmu - \mu_j)^2 + \Var(\varepsilon_j),
+  \]
+  so the same $z_j$ is optimal for the forecast.
+  \lean{Credibility.Core.Estimates.mse_forecast}
+  \lean{Credibility.Core.Estimates.bestZ_forecast_optimal}
+\end{result}
+\use Price next year with the credibility estimate of the level; quote its
+error as the level's error plus next year's noise variance.
+\why Fresh noise cannot be predicted from this year's data, so it only adds
+a constant to the error.
+\begin{caveat}
+  Next year's noise must be uncorrelated with this year's estimates; noise that
+  persists from year to year is part of $\mu_j$, not of $\varepsilon_j$.
+\end{caveat}
+
 \begin{result}[``Unbiased'' is the true expectation]\label{res:integral_quad}
   For random variables $\mu_{jt}$ with the moments of Section~1, the
   expectation of any quadratic form of the data is computed from those

@@ -227,6 +227,61 @@ theorem bestZ_mse_optimal (hK : K.PosDef) (j : J)
   rw [E.mse_blend hK j, E.mse_blend hK j]
   exact (levelMoments K L (K j j) j).bestZ_optimal hgap z
 
+/-- **Forecasting** (PLAN G6): next year's outcome is `Yⱼ = μⱼ + εⱼ`, with noise `εⱼ` of
+mean `0` uncorrelated with all cohort estimates and with the level `μⱼ`. The mean
+squared error of the blend for `Yⱼ` is its error for the level plus next year's
+noise variance. -/
+theorem mse_forecast (hK : K.PosDef) (j : J) {ε : Ω → ℝ} (hε : MemLp ε 2 P)
+    (hε0 : P[ε] = 0) (hεest : ∀ i, cov[E.est i, ε; P] = 0) (hεlev : cov[E.level j, ε; P] = 0)
+    (z : ℝ) :
+    P[fun ω => (E.blend j z ω - (E.level j ω + ε ω)) ^ 2]
+      = (levelMoments K L (K j j) j).errVar z + Var[ε; P] := by
+  have : Nonempty J := ⟨j⟩
+  obtain ⟨h1, h2, h3, h4, h5, h6⟩ := E.levelMoments_eq hK j
+  set m := levelMoments K L (K j j) j
+  -- The target `Yⱼ` has the moments of `μⱼ`, with `Var(εⱼ)` added to its variance.
+  let m' : BlendMoments := { m with varTarget := m.varTarget + Var[ε; P] }
+  have hP : P[E.portEst] = μ := by
+    rw [portEst, Core.portEst, integral_portLin, sum_glsWeight hK, one_mul]
+  have hl := E.level_memLp j
+  have hY : MemLp (fun ω => E.level j ω + ε ω) 2 P := hl.add hε
+  have hYm : P[fun ω => E.level j ω + ε ω] = μ := by
+    rw [integral_add (hl.integrable (by norm_num)) (hε.integrable (by norm_num)),
+      E.level_mean, hε0, add_zero]
+  have hvar : ∀ X, MemLp X 2 P → Var[X; P] = cov[X, X; P] := fun X hX =>
+    (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
+  have hpm : MemLp E.portEst 2 P := E.memLp_portLin _
+  have hpε : cov[E.portEst, ε; P] = 0 := by
+    unfold portEst Core.portEst Core.portLin
+    rw [covariance_fun_sum_left (fun i => (E.est_memLp i).const_mul _) hε]
+    simp [covariance_const_mul_left, hεest]
+  have hY3 : Var[fun ω => E.level j ω + ε ω; P] = m'.varTarget := by
+    rw [hvar _ hY, cov_add_add hl hε hl hε, covariance_comm ε, hεlev, ← hvar _ hl,
+      ← hvar _ hε, h3]
+    simp [m']
+  have hY5 : cov[E.est j, fun ω => E.level j ω + ε ω; P] = m'.covCohortTarget := by
+    rw [show (fun ω => E.level j ω + ε ω) = E.level j + ε from rfl,
+      covariance_add_right (E.est_memLp j) hl hε, hεest, h5, add_zero]
+  have hY6 : cov[E.portEst, fun ω => E.level j ω + ε ω; P] = m'.covPortfolioTarget := by
+    rw [show (fun ω => E.level j ω + ε ω) = E.level j + ε from rfl,
+      covariance_add_right hpm hl hε, hpε, h6, add_zero]
+  rw [show (levelMoments K L (K j j) j).errVar z + Var[ε; P] = m'.errVar z by
+    simp only [m', BlendMoments.errVar]; ring]
+  exact BlendMoments.integral_sq_blend_sub m' (E.est_memLp j) hpm hY
+    (E.est_mean j) hP hYm h1 h2 hY3 h4 hY5 hY6 z
+
+/-- **The same `z` is best for next year** (PLAN G6): under the assumptions of
+`mse_forecast`, `zⱼ` of eq. (26) also minimises the actual mean squared error of the
+blend as a forecast of next year's outcome `μⱼ + εⱼ`. -/
+theorem bestZ_forecast_optimal (hK : K.PosDef) (j : J)
+    (hgap : 0 < (levelMoments K L (K j j) j).gap) {ε : Ω → ℝ} (hε : MemLp ε 2 P)
+    (hε0 : P[ε] = 0) (hεest : ∀ i, cov[E.est i, ε; P] = 0) (hεlev : cov[E.level j, ε; P] = 0)
+    (z : ℝ) :
+    P[fun ω => (E.blend j (levelMoments K L (K j j) j).bestZ ω - (E.level j ω + ε ω)) ^ 2]
+      ≤ P[fun ω => (E.blend j z ω - (E.level j ω + ε ω)) ^ 2] := by
+  rw [E.mse_forecast hK j hε hε0 hεest hεlev, E.mse_forecast hK j hε hε0 hεest hεlev]
+  linarith [(levelMoments K L (K j j) j).bestZ_optimal hgap z]
+
 /-- **The best balanced blend in true MSE** (PLAN G7): among the blends with the GLS
 portfolio estimate that are balanced for the weights `uⱼ ≠ 0`, the factors
 `zⱼ = 1 - c*·bⱼ/uⱼ` (`Core.bestBalanced_optimal`) minimise the weighted actual mean

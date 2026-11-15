@@ -2457,6 +2457,29 @@ these two covariances.
   Theorems~\ref{thm:blend_mse} and~\ref{thm:bestZ_optimal}.
 \end{proof}
 
+\begin{corollary}[Forecasting: the same $z_j$ is best for next year]\label{cor:Core_forecast}
+  \lean{Credibility.Core.Estimates.mse_forecast,
+        Credibility.Core.Estimates.bestZ_forecast_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_bestZ_mse}
+  Let next year's outcome be $Y_j = \mu_j + \varepsilon_j$, with $\mathbb E\varepsilon_j = 0$
+  and $\varepsilon_j$ uncorrelated with every $\hmu_i$ and with $\mu_j$. If $K \succ 0$, then
+  \[
+    \mathbb E[(z\hmu_j + (1-z)\hmu - Y_j)^2] = \mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]
+      + \Var(\varepsilon_j),
+  \]
+  so if $\Var(\hmu_j - \hmu) > 0$ the factor $z_j$ of Theorem~\ref{thm:Core_bestZ_mse}
+  also minimises the mean squared error of the forecast.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_mse, lem:sum_glsWeight, thm:blend_mse, thm:bestZ_optimal}
+  The target $Y_j$ has the moments of $\mu_j$ except $\Var(Y_j) = L_{jj} + \Var(\varepsilon_j)$:
+  its covariances with $\hmu_j$ and $\hmu = \sum_i b_i\hmu_i$ are unchanged. By
+  Theorem~\ref{thm:blend_mse} the error is \eqth{6} with this variance, which adds the
+  constant $\Var(\varepsilon_j)$; the minimiser stays $z_j$ (Theorem~\ref{thm:bestZ_optimal}).
+\end{proof}
+
 \begin{corollary}[The best balanced blend in true MSE]\label{cor:Core_bestBalanced_mse}
   \lean{Credibility.Core.Estimates.bestBalanced_mse_optimal}
   \leanok

@@ -147,6 +147,13 @@ the floor line and in the tests.
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.
+  *Proved 2026-11-15 (`Core.Estimates.mse_forecast`, `bestZ_forecast_optimal`):
+  for `Yⱼ = μⱼ + εⱼ` with fresh noise uncorrelated with the estimates and the
+  level, MSE = level MSE + `Var(εⱼ)`, and `zⱼ` stays optimal. App: add a
+  **premium step** after the blend: premium `= μ̂ⱼᵇ` (no change to `z`), its
+  forecast error `= MSE + σ̂ⱼ²/wⱼ,next` with next year's volume `wⱼ,next` (a
+  new input, default this year's mean `wⱼ*/T`), badge "proved"; the floor line
+  compares with the world's actual next-year draw.*
 - **G7. Balance** under correlation: the best balanced blend. *Proved
   2026-11-15 (`Core.bestBalanced_optimal`, true MSE
   `Estimates.bestBalanced_mse_optimal`, Finding 15): keeping `b`, the
