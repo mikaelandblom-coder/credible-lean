@@ -61,3 +61,18 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Jiang, Lahiri & Wan (2002), *A unified jackknife theory for empirical best prediction with
   M-estimation*, Ann. Stat. 30: jackknife MSEP of an EBLUP, no normality needed, deletes
   independent units (we delete years). Used in `studies/msep.js`.
+
+## 5. If a distribution is allowed (owner's question, 2026-11-15; not yet decided)
+- Stein (1981), *Estimation of the mean of a multivariate normal distribution*, Ann. Stat.: Stein's
+  lemma gives SURE, an *exact* unbiased estimate of the MSE of any (weakly differentiable)
+  data-dependent shrinkage under normal noise.
+- Hudson (1978), *A natural identity for exponential families with applications in multiparameter
+  estimation*, Ann. Stat.: the same for exponential families (e.g. Poisson, gamma).
+- Xie, Kou & Brown (2012), *SURE estimates for a heteroscedastic hierarchical model*, JASA:
+  shrinkage chosen by SURE with unequal variances (our unequal volumes); robust to a wrong prior.
+- Jewell (1974): in exponential dispersion families with conjugate priors, linear credibility *is*
+  the Bayes (best) predictor; then the plug-in MSEP behaves like Jiang–Lahiri–Wan's case.
+- Robust credibility for heavy tails: Künsch (1992), Gisler & Reinhard (1993); Bühlmann & Gisler
+  (2005), *A Course in Credibility Theory*.
+- Cross-validation and unbiased risk estimates are asymptotically equivalent (Stone 1977); both
+  are ways to choose a shrinkage, as are SURE and Mallows' Cp.
