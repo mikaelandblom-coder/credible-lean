@@ -97,6 +97,7 @@ button.primary { background: var(--accent); color: #fff; border-color: transpare
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .chart { width: 100%; display: block; overflow: visible; }
 .chart text { fill: var(--text-2); font-size: 11px; }
+.chart text.typ { fill: var(--muted); font-variant-numeric: tabular-nums; }
 .chart .axis { stroke: var(--border); }
 .chart .gridline { stroke: var(--grid); }
 .headline { font-size: 28px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
@@ -155,7 +156,7 @@ footer a { color: var(--accent); }
       <div><label for="m-fit">Fitted model</label><select id="m-fit"></select></div>
       <div><label for="m-ref">Reference</label><select id="m-ref"></select></div>
     </div>
-    <p class="sub" style="margin:10px 0 0">The correlation fits use the thesis estimators (37)–(41) and a damped <i>K̂</i>; “common” replaces every covariance between regions by their average. Unequal lengths and group levels come next.</p>
+    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
@@ -210,7 +211,7 @@ footer a { color: var(--accent); }
     { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
     { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
   ];
-  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'corr', seed: 12345, stepsOf: 'fit' });
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'vc', seed: 12345, stepsOf: 'fit' });
 
   const ws = $('world-sliders');
   for (const s of SLIDERS) {
@@ -233,6 +234,7 @@ footer a { color: var(--accent); }
     for (const [id, m] of Object.entries(E.MODELS)) {
       const o = document.createElement('option');
       o.value = id; o.textContent = m.ready ? m.name : `${m.name} (${m.note})`; o.disabled = !m.ready;
+      if (m.notRecommended) o.title = m.notRecommended;
       if (id === state[key]) o.selected = true;
       sel.appendChild(o);
     }
@@ -297,13 +299,17 @@ footer a { color: var(--accent); }
     const r = E.rng(state.seed);
     const { levels, data } = E.draw(world, r);
     const fit = E.MODELS[state.fit].fit(data), ref = E.MODELS[state.ref].fit(data);
+    // Typical error (jackknife MSEP) of the first slot whose model has one: an average-case error, not an interval.
+    const tId = E.MODELS[state.fit].msep ? state.fit : E.MODELS[state.ref].msep ? state.ref : null;
+    const typ = tId ? E.MODELS[tId].msep(data).typical : null;
+    const tShort = tId ? E.MODELS[tId].short : '';
     const wt = data.w.map(sum), J = world.J;
     const order = wt.map((_, j) => j); // regions are already sorted by volume
     const vals = [].concat(levels, fit.means, fit.rates, ref.rates);
     let lo = Math.min(...vals), hi = Math.max(...vals); const pad = 0.06 * (hi - lo || 0.1); lo -= pad; hi += pad;
 
     const svg = $('c-draw'); svg.innerHTML = '';
-    const W = svg.clientWidth || 360, rowH = J > 12 ? 22 : 28, left = 64, right = 12, top = 18, H = top + J * rowH + 8;
+    const W = svg.clientWidth || 360, rowH = J > 12 ? 22 : 28, left = 64, right = typ ? 52 : 12, top = 18, H = top + J * rowH + 8;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
     const x = (v) => left + (v - lo) / (hi - lo) * (W - left - right);
     for (const t of niceTicks(lo, hi, Math.max(3, Math.floor((W - left) / 70)))) {
@@ -313,6 +319,7 @@ footer a { color: var(--accent); }
     if (fit.mu != null) {
       el('line', { x1: x(fit.mu), x2: x(fit.mu), y1: top - 4, y2: H - 6, stroke: cssVar('--fit'), 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0.7 }, svg);
     }
+    if (typ) { const h = el('text', { x: W - 2, y: 11, 'text-anchor': 'end', class: 'typ' }, svg); h.textContent = 'typ. err.'; }
     const C = { truth: cssVar('--truth'), own: cssVar('--own'), fit: cssVar('--fit'), ref: cssVar('--ref'), surface: cssVar('--surface') };
     order.forEach((j, k) => {
       const y = top + k * rowH + rowH / 2;
@@ -324,11 +331,12 @@ footer a { color: var(--accent); }
       el('circle', { cx: x(ref.rates[j]), cy: y, r: 5, fill: C.ref, stroke: C.surface, 'stroke-width': 2 }, svg);
       el('circle', { cx: x(fit.rates[j]), cy: y, r: 5, fill: C.fit, stroke: C.surface, 'stroke-width': 2 }, svg);
       el('circle', { cx: x(levels[j]), cy: y, r: 5.5, fill: 'none', stroke: C.truth, 'stroke-width': 2 }, svg);
+      if (typ) { const tt = el('text', { x: W - 2, y: y + 4, 'text-anchor': 'end', class: 'typ' }, svg); tt.textContent = pct(typ[j], 1); }
       const hit = el('rect', { x: 0, y: y - rowH / 2, width: W, height: rowH, fill: 'transparent' }, svg);
       const html = `<b>Region ${j + 1}</b> · ${Math.round(wt[j]).toLocaleString()} vehicle-years<br>
         True level ${levels[j].toFixed(3)}<br>Own mean ${fit.means[j].toFixed(3)}<br>
         ${E.MODELS[state.fit].short} rate ${fit.rates[j].toFixed(3)}${fit.z ? ` (z = ${fit.z[j].toFixed(2)})` : ''}<br>
-        ${E.MODELS[state.ref].short} rate ${ref.rates[j].toFixed(3)}`;
+        ${E.MODELS[state.ref].short} rate ${ref.rates[j].toFixed(3)}${typ ? `<br>Typical error of ${tShort}: ${pct(typ[j], 2)} (average case, not an interval)` : ''}`;
       hit.addEventListener('pointerenter', (e) => showTip(html, e));
       hit.addEventListener('pointermove', (e) => showTip(html, e));
       hit.addEventListener('pointerdown', (e) => showTip(html, e));
@@ -340,12 +348,13 @@ footer a { color: var(--accent); }
     const errFit = E.weightedSE(data, fit.rates, levels), errRef = E.weightedSE(data, ref.rates, levels);
     const msgs = fit.warnings.map((m) => 'Fit: ' + m);
     if (state.ref !== state.fit) for (const m of ref.warnings) msgs.push('Reference: ' + m);
+    for (const id of new Set([state.fit, state.ref])) if (E.MODELS[id].notRecommended) msgs.unshift(`${E.MODELS[id].short} is not recommended (${E.MODELS[id].notRecommended}).`);
     warnBlock($('w-draw'), msgs);
     renderSteps({ fit, ref });
-    $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>`);
-    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th><th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th></tr></thead><tbody>` +
-      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td><td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td></tr>`).join('') +
-      '</tbody></table>';
+    $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
+    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th><th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th>${typ ? `<th>Typ. err.*</th>` : ''}</tr></thead><tbody>` +
+      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td><td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}</tr>`).join('') +
+      '</tbody></table>' + (typ ? `<p class="sub" style="margin:6px 0 0">* Typical error of the ${tShort} rate (jackknife MSEP): an average-case error over data sets like this one, not an interval.</p>` : '');
   }
 
   // ---------- fitting steps

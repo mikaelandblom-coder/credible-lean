@@ -239,3 +239,59 @@ test('Every step marked proved names a proved Lean declaration; every other step
     }
   }
 });
+
+// ---------------------------------------------------------------- correlated BS with credibility-weighted variances
+
+test('Correlated BS (vc): K̂ ≻ 0 for every draw, with no damping (Model.K_posDef, ρ̂ ∈ [0, 1))', () => {
+  const r = E.rng(16);
+  for (const params of [{}, { rho: 0.5 }, { rho: 0.9, J: 12, T: 3 }, { J: 3, T: 2, tau: 0.01 }, { rho: 0.95, spread: 2, T: 20 }]) {
+    const world = E.makeWorld(params);
+    for (let k = 0; k < 300; k++) {
+      const f = E.fitVC(E.draw(world, r).data);
+      assert.ok(E.cholesky(f.K), `K̂ ≻ 0 (${JSON.stringify(params)}, draw ${k})`);
+      assert.ok(f.rho >= 0 && f.rho < 1, 'ρ̂ ∈ [0, 1)');
+      assert.ok(f.sigma2.every((x) => x > 0), 'σ̃ⱼ² > 0');
+    }
+  }
+});
+
+test('Correlated BS (vc) equals BS when ρ̂ = 0 and all σ̃ⱼ equal (β² = 0)', () => {
+  const r = E.rng(17);
+  let checked = 0;
+  for (const params of [{ rho: 0 }, { rho: 0, J: 4, T: 3, spread: 2 }, { rho: 0, J: 15, tau: 0.03 }]) {
+    const world = E.makeWorld(params);
+    for (let k = 0; k < 400; k++) {
+      const { data } = E.draw(world, r), f = E.fitVC(data);
+      if (f.rhoRaw > 0 || f.between > 0) continue;
+      const bs = E.fitBS(data);
+      f.rates.forEach((x, j) => { close(x, bs.rates[j], 1e-9, 'rate'); close(f.z[j], bs.z[j], 1e-9, 'z'); close(f.b[j], bs.b[j], 1e-9, 'b'); });
+      checked++;
+    }
+  }
+  assert.ok(checked > 100, `only ${checked} draws with ρ̂ = 0 and β² = 0`);
+});
+
+test('Correlated BS (vc) and its jackknife MSEP match the studies (variance-credibility.js cred, msep.js)', () => {
+  const { fitVC } = require('../studies/variance-credibility.js'), M = require('../studies/msep.js');
+  const r = E.rng(18);
+  for (const params of [{}, { rho: 0.6, J: 5, T: 4 }]) {
+    const world = E.makeWorld(params);
+    for (let k = 0; k < 30; k++) {
+      const { data } = E.draw(world, r), ref = fitVC(data, 'cred'), jk = M.msep(data).jack, o = E.jackknifeMSEP(data);
+      E.fitVC(data).rates.forEach((x, j) => close(x, ref[j], 1e-12, 'rate'));
+      o.msep.forEach((x, j) => close(x, Math.max(jk[j], 0), 1e-12, 'MSEP'));
+    }
+  }
+});
+
+test('Jackknife MSEP is right on average within 25% (one fixed-seed world, finding 19)', () => {
+  const world = E.makeWorld({ rho: 0.5 }), r = E.rng(19), n = 600, J = world.J;
+  const act = new Array(J).fill(0), pred = new Array(J).fill(0);
+  for (let k = 0; k < n; k++) {
+    const { levels, data } = E.draw(world, r), o = E.jackknifeMSEP(data);
+    for (let j = 0; j < J; j++) { act[j] += (o.rates[j] - levels[j]) ** 2; pred[j] += o.msep[j]; }
+  }
+  const wt = world.w.map(sum), tot = (a) => sum(a.map((x, j) => x * wt[j]));
+  const ratio = tot(pred) / tot(act);
+  assert.ok(ratio > 0.75 && ratio < 1.25, `predicted / actual MSE ${ratio}`);
+});

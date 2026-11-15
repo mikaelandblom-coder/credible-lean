@@ -410,13 +410,111 @@
   }
 
   /**
+   * Correlated Bühlmann–Straub with credibility-weighted variances
+   * (studies/damping-theta.md, findings 15–17 and the Ansatz; studies/variance-credibility.js,
+   * mode 'cred'). Every parameter by a moment equation, nothing to tune, no damping:
+   *   σ̂ⱼ² = Qⱼⱼ/(T−1), σ̂² = mean of the σ̂ⱼ²,
+   *   Wⱼ = estimated Var(σ̂ⱼ²) from the yearly terms, β² = between-region variance of the σⱼ²,
+   *   σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̂², ζⱼ = β²/(β² + Wⱼ)   (Bühlmann–Straub one level up),
+   *   ρ̂ = Σᵢ<ⱼ Qᵢⱼ / Σᵢ<ⱼ σ̃ᵢσ̃ⱼ((T − 2) + Sᵢⱼ²/(wᵢ*wⱼ*)), clipped to [0, 1),
+   *   Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j), σ̃ⱼ²/wⱼ* (i = j); τ̂² by eq. (39) on Σ̂, truncated at 0.
+   * K̂ = Σ̂ + τ̂²I ≻ 0 by Model.K_posDef (the ρ-table 1 / ρ̂ is PSD for ρ̂ ∈ [0, 1)).
+   */
+  function vcEstimate(data) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data);
+    const S = [], Q = [];
+    for (let i = 0; i < J; i++) {
+      S.push([]); Q.push([]);
+      for (let j = 0; j < J; j++) {
+        let s = 0, q = 0;
+        for (let t = 0; t < T; t++) { const c = Math.sqrt(data.w[i][t] * data.w[j][t]); s += c; q += c * (data.X[i][t] - m[i]) * (data.X[j][t] - m[j]); }
+        S[i].push(s); Q[i].push(q);
+      }
+    }
+    const own = Q.map((row, j) => row[j] / (T - 1)), pooled = sum(own) / J;
+    const W = own.map((sj, j) => {
+      const u = data.X[j].map((x, t) => data.w[j][t] * (x - m[j]) ** 2 * T / (T - 1));
+      return sum(u.map((x) => (x - sj) ** 2)) / (T * (T - 1));
+    });
+    const betweenRaw = sum(own.map((x) => (x - pooled) ** 2)) / (J - 1) - sum(W) / J;
+    const between = Math.max(0, betweenRaw);
+    const zeta = W.map((Wj) => (between > 0 ? between / (between + Wj) : 0));
+    const s2 = own.map((x, j) => zeta[j] * x + (1 - zeta[j]) * pooled);
+    const sd = s2.map(Math.sqrt);
+    let qn = 0, qa = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { qn += Q[i][j]; qa += sd[i] * sd[j] * ((T - 2) + S[i][j] ** 2 / (wt[i] * wt[j])); }
+    const rhoRaw = qn / qa, rho = Math.min(Math.max(rhoRaw, 0), 1 - 1e-9);
+    const Sig = S.map((row, i) => row.map((x, j) => (i === j ? s2[i] / wt[i] : rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
+    const tt = thesisTau(m, wt, Sig);
+    return { m, wt, S, own, pooled, W, betweenRaw, between, zeta, s2, rhoRaw, rho, Sig, c: tt.c, tauRaw: tt.tau2, t2: Math.max(tt.tau2, 0) };
+  }
+
+  /** K̂, the GLS blend and its known-parameter MSE g₁₂ⱼ for parameters p, on the design (wt, S) and means m. */
+  function vcBlend(p, wt, S, m) {
+    const J = m.length, sd = p.s2.map(Math.sqrt);
+    const K = S.map((row, i) => row.map((x, j) => (i === j ? p.s2[i] / wt[i] + p.t2 : p.rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
+    const { b, z: z0, s2 } = bestBlendWeights(K, p.t2);
+    const z = p.t2 > 0 ? z0 : z0.map(() => 0);
+    const res = blend(m, z, b);
+    const g = Array.from({ length: J }, (_, j) => blendMSE(K, p.t2, b, s2, j, z[j]));
+    return { K, b, z, s2, mu: res.mu, rates: res.rates, g };
+  }
+
+  function fitVC(data) {
+    const p = vcEstimate(data), { m, wt, S } = p, J = m.length;
+    const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
+    const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
+    const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
+    const warnings = [];
+    if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
+    if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂`);
+    if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
+    if (flags.offBalance) warnings.push(`off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume`);
+    const steps = [
+      { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
+      { name: 'σ̂ⱼ²', formula: 'σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1),  σ̂² = (1/J) Σⱼ σ̂ⱼ²', values: p.own, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self', note: `pooled σ̂² = ${p.pooled.toPrecision(4)}` },
+      { name: 'Wⱼ, β²', formula: 'Wⱼ = Σₜ (uⱼₜ − σ̂ⱼ²)²/(T(T−1)), uⱼₜ = wⱼₜ(Xⱼₜ − μ̂ⱼ)²T/(T−1);  β² = Σⱼ(σ̂ⱼ² − σ̂²)²/(J−1) − (1/J)Σⱼ Wⱼ', values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
+      { name: 'σ̃ⱼ²', formula: 'σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̂²,  ζⱼ = β²/(β² + Wⱼ)', values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
+      { name: 'ρ̂', formula: 'ρ̂ = Σᵢ<ⱼ Qᵢⱼ / Σᵢ<ⱼ σ̃ᵢσ̃ⱼ((T−2) + Sᵢⱼ²/(wᵢ*wⱼ*)),  Qᵢⱼ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ)', values: [p.rhoRaw], badge: 'not proved yet', gap: 'G1', note: `one common correlation by a moment equation${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
+      { name: 'τ̂²', formula: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**),  ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ  (eq. (39))', values: [p.tauRaw], badge: 'not proved yet', gap: 'G1', note: `on the common-ρ Σ̂: unbiased if Σ̂ is${p.tauRaw <= 0 ? '; negative: truncated to 0 (eq. (40))' : ''}` },
+      { name: 'K̂', formula: 'K̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j),  σ̃ⱼ²/wⱼ* + τ̂² (i = j)', values: [p.rho], badge: 'proved', lean: 'Credibility.Model.K_posDef', note: `K̂ ≻ 0 for any ρ̂ ∈ [0, 1): no damping, no θ; ρ̂ = ${p.rho.toFixed(3)}` },
+      { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+      { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+      { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` },
+    ];
+    return { means: m, z, b, mu, rates, warnings, flags, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, steps };
+  }
+
+  /**
+   * Jackknife MSEP of the variance-credibility fit (Jiang, Lahiri & Wan 2002, Ann. Stat. 30;
+   * studies/msep.js), deleting one year at a time (independent years), region means kept:
+   *   MSEPⱼ = g₁₂ⱼ(θ̂) − (T−1)/T Σₜ (g₁₂ⱼ(θ̂₋ₜ) − g₁₂ⱼ(θ̂)) + (T−1)/T Σₜ (rateⱼ(θ̂₋ₜ) − rateⱼ(θ̂))².
+   * An average-case error over data sets like this one, not an interval for this data set
+   * (damping-theta.md, findings 19 and 26). Data only, no tuning.
+   */
+  function jackknifeMSEP(data) {
+    const T = data.X[0].length, p = vcEstimate(data), { m, wt, S } = p, J = m.length;
+    const full = vcBlend(p, wt, S, m);
+    const gDel = new Array(J).fill(0), rDel = new Array(J).fill(0);
+    for (let t = 0; t < T; t++) {
+      const d = { w: data.w.map((r) => r.filter((_, u) => u !== t)), X: data.X.map((r) => r.filter((_, u) => u !== t)) };
+      const o = vcBlend(vcEstimate(d), wt, S, m);
+      for (let j = 0; j < J; j++) { gDel[j] += o.g[j] - full.g[j]; rDel[j] += (o.rates[j] - full.rates[j]) ** 2; }
+    }
+    const c = (T - 1) / T;
+    const msep = full.g.map((g, j) => Math.max(g - c * gDel[j] + c * rDel[j], 0));
+    return { rates: full.rates, naive: full.g, msep, g3: rDel.map((x) => c * x), typical: msep.map(Math.sqrt) };
+  }
+
+  /**
    * The registry the page is drawn from (PLAN.md §6). Every fit takes the data
    * table and nothing else. `ready: false` entries are listed but disabled.
    */
   const MODELS = {
     bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
-    corr: { name: 'Thesis model with correlation (full K̂)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
-    corrC: { name: 'Thesis model, one common covariance', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true },
+    vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: fitVC, ready: true, msep: jackknifeMSEP },
+    corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
+    corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding 4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true },
   };
@@ -480,7 +578,7 @@
     DEFAULTS, MODELS, FEATURES,
     rng, solve, cholesky, makeWorld, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
-    fitBS, fitOwn, fitPool, fitCorr, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
   };
 });
