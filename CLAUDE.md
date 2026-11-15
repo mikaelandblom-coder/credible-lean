@@ -55,8 +55,12 @@ reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.
 Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
-those moments. The model is distribution-free (only first and second
-moments are assumed). Never add a distributional assumption.
+those moments. The core model is distribution-free (only first and second
+moments are assumed): never add a distributional assumption to it. An
+optional distribution layer is allowed (owner, 2026-11-15): results that
+assume a noise family (e.g. normal, gamma) live in their own files and
+sections, say so in their name and docstring (e.g. "under normal noise"),
+and nothing in the core depends on them.
 
 ## Rules
 - Theorem statements are the spec. Never weaken or change one to make it
