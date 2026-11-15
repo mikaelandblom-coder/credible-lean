@@ -16,7 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Watch-out for the balance entry: with correlation (or unequal σⱼ) the best blend is balanced for the weights bⱼ/(1 − zⱼ), not the exposures; forcing exposure balance costs up to ≈30% more error (studies/damping-theta.md, findings 27–28). Needs a Lean lemma before it can link (Core balance iff vⱼ(1 − zⱼ) ∝ bⱼ).
 
 
 ## 0. Setting and notation (1 page)
@@ -43,6 +42,9 @@ voice, then trim towards 8 pages.
 
 ## 2. Special cases (1.5 pages)
 6. Bühlmann–Straub at `ρ = 0`, and it is balanced — `thm:bs_z`, `thm:bs_balance`.
+   Which weights balance any blend (`uⱼ(1 − zⱼ) ∝ bⱼ`; diagonal `K`: precisions), with the
+   watch-out that forcing exposure balance under correlation costs up to ≈30% (findings 27–28) —
+   `thm:Core_balance`, `cor:Core_balance_diag`.
 7. Two cohorts: `z₁ = τ²/(τ² + σ₁² - σ₁σ₂ρ)` and `b₁ = z₁/(z₁+z₂)` —
    `thm:z1_eq`, `thm:b1_eq_z` (Finding 4).
 8. When `z₁ > 1` and the sign flip past the singularity —

@@ -270,10 +270,31 @@ rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 premium would have matched total claims. It is an identity, so it holds
 whether or not the model is right. It also holds when cohorts are observed
 over different periods (Section~\ref{sec:beyond}).
+
+\begin{result}[Which weights balance the blend]\label{res:balance}
+  For any factors $z_j$ and weights $b_j$ with $\sum_j b_j = 1$, the blend
+  $\hmu_j^b = z_j\hmu_j + (1 - z_j)\sum_i b_i\hmu_i$ satisfies
+  $\sum_j u_j(\hmu_j - \hmu_j^b) = 0$ for all data if and only if
+  \[
+    u_j(1 - z_j) \propto b_j .
+  \]
+  With uncorrelated cohorts ($K$ diagonal) and the optimal $z_j$, $b_j$ these
+  are the precisions $u_j \propto 1/v_j$.
+  \lean{Credibility.Core.balanced_iff}
+  \lean{Credibility.Core.balanced_iff_of_diag}
+\end{result}
+\use Every blend is balanced for \emph{some} weights, namely
+$b_j/(1 - z_j)$. In Bühlmann--Straub these are the exposures, which is why
+it balances premium against claims. With region-specific noise ($v_j =
+\sigma_j^2/w_{j*}$) they are $w_{j*}/\sigma_j^2$, not the exposures.
 \begin{caveat}
-  With correlated cohorts the blend is in general \emph{not} balanced. The
-  credibility factors are still optimal; if you need balance, rescale
-  afterwards and accept a slightly larger error.
+  With correlated cohorts some $b_j$ are negative, so no positive volume
+  measure balances the best blend; an off-balance of a few percent is
+  expected, not a bug. Forcing exposure balance afterwards (shift or scale
+  all rates) costs up to about 30\% more error at $\rho = 0.6$ in our
+  simulations: the exposure-weighted mean carries this year's common shock,
+  which the weights $b_j$ hedge away and balance puts back into every rate.
+  Without correlation and with a common $\sigma$ the cost is nil.
 \end{caveat}
 
 \subsection*{Two cohorts}

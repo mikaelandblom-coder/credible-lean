@@ -269,6 +269,82 @@ theorem invTotal_inv_add_rankOne [Nonempty J] {K : Matrix J J ℝ} (hK : K.PosDe
 
 end RankOne
 
+/-! ### Balance (§2.9) for any blend
+
+The blend `μ̂ⱼᵇ = zⱼμ̂ⱼ + (1 - zⱼ)Σᵢbᵢμ̂ᵢ` is balanced for weights `u` if
+`Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` for all data. Pure algebra: it holds exactly when
+`uⱼ(1 - zⱼ) ∝ bⱼ`. -/
+
+section Balance
+
+/-- The blend `μ̂ⱼᵇ = zⱼμ̂ⱼ + (1 - zⱼ)Σᵢbᵢμ̂ᵢ` is balanced for the weights `u`:
+`Σⱼ uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` for every data vector `μ̂`. -/
+def Balanced (u z b : J → ℝ) : Prop :=
+  ∀ m : J → ℝ, ∑ j, u j * (m j - (z j * m j + (1 - z j) * ∑ i, b i * m i)) = 0
+
+omit [DecidableEq J] in
+/-- `μ̂ⱼ - μ̂ⱼᵇ = (1 - zⱼ)(μ̂ⱼ - μ̂)` with `μ̂ = Σᵢbᵢμ̂ᵢ`. -/
+theorem sum_mul_sub_blend (u z b m : J → ℝ) :
+    ∑ j, u j * (m j - (z j * m j + (1 - z j) * ∑ i, b i * m i))
+      = ∑ j, u j * (1 - z j) * (m j - ∑ i, b i * m i) :=
+  sum_congr rfl fun j _ => by ring
+
+omit [DecidableEq J] in
+/-- Balance for any blend: with `Σbⱼ = 1`, the blend is balanced for the weights `u`
+iff `uⱼ(1 - zⱼ) = c·bⱼ` for some `c`. -/
+theorem balanced_iff (u z b : J → ℝ) (hb : ∑ j, b j = 1) :
+    Balanced u z b ↔ ∃ c, ∀ j, u j * (1 - z j) = c * b j := by
+  set a := fun j => u j * (1 - z j)
+  -- `Σⱼ aⱼ(μ̂ⱼ - Σᵢbᵢμ̂ᵢ) = Σⱼ (aⱼ - (Σa) bⱼ) μ̂ⱼ`: zero for all `μ̂` iff each coefficient is.
+  have key : ∀ m : J → ℝ, ∑ j, u j * (m j - (z j * m j + (1 - z j) * ∑ i, b i * m i))
+      = ∑ j, (a j - (∑ i, a i) * b j) * m j := by
+    intro m
+    rw [sum_mul_sub_blend]
+    simp only [a, mul_sub, sub_mul, sum_sub_distrib, ← sum_mul, mul_assoc, ← mul_sum]
+    rw [sum_mul univ (fun x => u x * z x)]; simp only [mul_assoc]
+  simp only [Balanced, key]
+  constructor
+  · classical
+    intro h
+    refine ⟨∑ i, a i, fun j => ?_⟩
+    have := h (Pi.single j 1)
+    simp only [Pi.single_apply, mul_ite, mul_one, mul_zero, sum_ite_eq', mem_univ,
+      ite_true] at this
+    exact sub_eq_zero.mp this
+  · rintro ⟨c, hc⟩ m
+    have hA : ∑ i, a i = c := by
+      simp only [a, hc, ← mul_sum, hb, mul_one]
+    refine sum_eq_zero fun j _ => ?_
+    rw [hA]; simp only [a, hc, sub_self, zero_mul]
+
+/-- With a diagonal `K = diag(τ² + vⱼ)`, `vⱼ ≠ 0` and the optimal `z` and `b`, the blend
+is balanced exactly for weights `uⱼ ∝ 1/(Kⱼⱼ - τ²) = 1/vⱼ`, the precisions of the noise. -/
+theorem balanced_iff_of_diag (hK : K = diagonal fun j => τ2 + v j) (hd : ∀ j, 0 < τ2 + v j)
+    (hv : ∀ j, v j ≠ 0) (hJ : 1 < Fintype.card J) (u : J → ℝ) :
+    Balanced u (fun j => (moments K τ2 v j).bestZ) (glsWeight K) ↔
+      ∃ c, ∀ j, u j = c / (K j j - τ2) := by
+  have hpd : K.PosDef := by rw [hK, posDef_diagonal_iff]; exact hd
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  set V := ∑ i, (τ2 + v i)⁻¹
+  have hV : 0 < V := sum_pos (fun i _ => inv_pos.mpr (hd i)) univ_nonempty
+  rw [balanced_iff _ _ _ (sum_glsWeight hpd)]
+  have hKjj : ∀ j, K j j - τ2 = v j := fun j => by rw [hK]; simp
+  simp only [bestZ_of_diag hK hd hJ, b_of_diag hK (fun j => (hd j).ne'), hKjj]
+  -- `uⱼ(1 - zⱼ) = uⱼvⱼ/(τ² + vⱼ)` and `bⱼ = (τ² + vⱼ)⁻¹/V`: both sides say `uⱼvⱼ` is constant.
+  have h : ∀ j (c : ℝ), u j * (1 - τ2 / (τ2 + v j)) = c * ((τ2 + v j)⁻¹ / V) ↔
+      u j = c / V / v j := fun j c => by
+    have := (hd j).ne'; have := hv j
+    rw [eq_div_iff (hv j)]
+    constructor <;> intro h
+    · field_simp at h ⊢; linarith
+    · field_simp; field_simp at h; linarith
+  constructor
+  · rintro ⟨c, hc⟩; exact ⟨c / V, fun j => (h j c).mp (hc j)⟩
+  · rintro ⟨c, hc⟩
+    exact ⟨c * V, fun j => (h j _).mpr (by rw [hc j, mul_div_cancel_right₀ _ hV.ne'])⟩
+
+end Balance
+
 /-! ### Block-diagonal `K`: two-stage GLS -/
 
 section Blocks

@@ -1161,6 +1161,73 @@ $\sum_j w_{j*}(1 - z_j)(\hmu_j - \hmu) = 0$. It fails for the proposed model
 in general (the simulation study measures by how much), but holds for
 Bühlmann--Straub.
 
+Balance is a property of the blend alone, for any factors $z_j$ and weights
+$b_j$ with $\sum_j b_j = 1$.
+
+\begin{definition}[Balanced blend]\label{def:Core_balanced}
+  \lean{Credibility.Core.Balanced}
+  \leanok
+  The blend $\hmu_j^b = z_j\hmu_j + (1 - z_j)\sum_i b_i\hmu_i$ is
+  \emph{balanced for the weights $u$} if $\sum_j u_j(\hmu_j - \hmu_j^b) = 0$
+  for all numbers $\hmu_j$.
+\end{definition}
+
+\begin{theorem}[Balance of any blend]\label{thm:Core_balance}
+  \lean{Credibility.Core.sum_mul_sub_blend, Credibility.Core.balanced_iff}
+  \leanok
+  \uses{def:Core_balanced}
+  Let $\sum_j b_j = 1$. Then
+  $\hmu_j - \hmu_j^b = (1 - z_j)(\hmu_j - \hmu)$ with $\hmu = \sum_i b_i\hmu_i$,
+  and the blend is balanced for the weights $u$ if and only if
+  $u_j(1 - z_j) = c\,b_j$ for some constant $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $a_j = u_j(1 - z_j)$ and $a_* = \sum_j a_j$,
+  $\sum_j u_j(\hmu_j - \hmu_j^b) = \sum_j (a_j - a_* b_j)\hmu_j$. This vanishes
+  for all $\hmu$ iff every coefficient does ($\hmu$ a unit vector), i.e.\
+  $a_j = a_* b_j$. Conversely, $a_j = c\,b_j$ gives $a_* = c$.
+\end{proof}
+
+\begin{corollary}[Balance with diagonal $K$]\label{cor:Core_balance_diag}
+  \lean{Credibility.Core.balanced_iff_of_diag}
+  \leanok
+  \uses{thm:Core_balance, thm:Core_diag}
+  Let $K = \operatorname{diag}(\tau^2 + v_j)$ with positive entries, $v_j \ne 0$
+  and $J \ge 2$, and take the optimal $z_j$ and GLS weights $b_j$. Then the
+  blend is balanced for the weights $u$ if and only if
+  $u_j \propto 1/(K_{jj} - \tau^2) = 1/v_j$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_balance, lem:sum_glsWeight, thm:Core_diag}
+  By Theorem~\ref{thm:Core_diag}, $1 - z_j = v_j/(\tau^2 + v_j)$ and
+  $b_j = (\tau^2 + v_j)^{-1}/V$, so the condition of
+  Theorem~\ref{thm:Core_balance} says that $u_j v_j$ is constant.
+\end{proof}
+
+So the blend is balanced for the \emph{precisions} $1/v_j$ of the cohort
+noise; with $v_j = \sigma^2/w_{j*}$ these are proportional to the volumes,
+which is Bühlmann--Straub.
+
+\begin{remark}[Findings 27--28: balance is the wrong target under correlation]\label{rem:balance_correlation}
+  \uses{thm:Core_balance, cor:Core_balance_diag}
+  By Theorem~\ref{thm:Core_balance} the optimal blend is balanced, for all
+  data, exactly for weights $u_j \propto b_j/(1 - z_j)$. In Bühlmann--Straub
+  these are the volumes $w_{j*}$; with a diagonal $K$ they are the precisions
+  $w_{j*}/\sigma_j^2$, so with region-specific $\sigma_j$ the blend is not
+  exposure-balanced. Under correlation some $b_j$ are negative, so no
+  positive volume measure is balanced. A simulation
+  (\texttt{studies/damping-theta.md}) finds negative $b_j$ in every world with
+  $\rho > 0$ even with the true parameters, and an exposure imbalance above
+  1\% in most draws when the $\sigma_j$ differ. Forcing exposure balance
+  afterwards (shifting or scaling the rates, or a Bühlmann--Straub-style
+  collective) costs up to about 30\% more error at $\rho = 0.6$: the
+  exposure-weighted mean carries the common year shock, which the GLS
+  weights hedge away and balance puts back into every rate. At $\rho = 0$
+  with equal $\sigma$ it costs nothing.
+\end{remark}
+
 \begin{theorem}[Bühlmann--Straub is balanced]\label{thm:bs_balance}
   \lean{Credibility.bs_balance}
   \leanok
@@ -1172,9 +1239,10 @@ Bühlmann--Straub.
 \end{theorem}
 \begin{proof}
   \leanok
-  $W_j(1 - z_j) = W_j\kappa/(W_j + \kappa) = \kappa z_j$, so the sum is
-  $\kappa\bigl(\sum_j z_j\hmu_j - z_*\hmu\bigr) = 0$ by the definition of
-  $\hmu$.
+  \uses{thm:Core_balance}
+  With $b_j = z_j/z_*$ we have $\sum_i b_i\hmu_i = \hmu$ and
+  $W_j(1 - z_j) = W_j\kappa/(W_j + \kappa) = \kappa z_j = \kappa z_*\,b_j$, so
+  Theorem~\ref{thm:Core_balance} applies with $u = W$.
 \end{proof}
 
 This holds whether or not the model assumptions \eqth{28} are met: it is
