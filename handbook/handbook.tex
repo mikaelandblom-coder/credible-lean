@@ -297,6 +297,45 @@ it balances premium against claims. With region-specific noise ($v_j =
   Without correlation and with a common $\sigma$ the cost is nil.
 \end{caveat}
 
+\begin{result}[The best blend that is balanced]\label{res:bestBalanced}
+  Fix weights $b_j$ with $\sum_j b_j = 1$ and volumes $u_j \ne 0$. The blends
+  balanced for $u$ are exactly $z_j = 1 - c\,b_j/u_j$ for some number $c$,
+  and one $c^*$ (explicit) minimises $\sum_j \varphi_j\,\mathrm{MSE}_j(z_j)$
+  among them, for any loss weights $\varphi_j \ge 0$ and any (also
+  correlated) moments.
+  \lean{Credibility.Core.bestBalanced_optimal}
+  \lean{Credibility.Core.bestBalanced_cost}
+\end{result}
+\begin{caveat}
+  Don't restore balance by bending $z$. Balance fixes the shape
+  $1 - z_j \propto b_j/u_j$: large cohorts are pushed towards $z_j = 1$ and
+  small ones far from their optimal $z_j$. In our simulations even the best
+  such blend has up to about twice the error of the optimal blend. Keep
+  $z$ and $b$, and shift the rates instead (next result).
+\end{caveat}
+
+\begin{result}[If you must balance, shift all rates]\label{res:commonShift}
+  Take the optimal blend $\hmu_j^b$ and its imbalance
+  $D = \sum_j u_j(\hmu_j - \hmu_j^b)$, with volumes $u_j > 0$. Every
+  correction $\theta_j = \hmu_j^b + c_jD$ with $\sum_j u_jc_j = 1$ is
+  balanced. For independent cohorts ($K = \mathrm{diag}(\tau^2 + v_j)$,
+  $L = \tau^2 I$, $J \ge 2$) the common shift
+  \[
+    \theta_j = \hmu_j^b + \frac{D}{\sum_i u_i}
+  \]
+  has the smallest volume-weighted true error $\sum_j u_j\,\mathbb
+  E(\theta_j - \mu_j)^2$ among them, for every distribution with these
+  moments.
+  \lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag}
+\end{result}
+\use This is the benchmarking of Wang, Fuller and Qu (2008): add the same
+amount to every rate so that total premium matches total claims.
+\why Without correlation the blend's errors are uncorrelated with every
+imbalance, so spreading $D$ unevenly only adds noise. Under correlation the
+best correction $c_j$ differs by cohort and needs the covariances of the
+errors with $D$, but in our simulations ($\rho$ up to $0.95$) the common
+shift is never more than about 2\% worse. Use the shift.
+
 \subsection*{Two cohorts}
 
 Take $J = 2$ with time-constant volumes, so each cohort has one noise
