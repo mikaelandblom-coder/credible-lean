@@ -51,6 +51,8 @@ function msep(data) {
   return { rates: full.rates, naive: full.g, jack: full.g.map((g, j) => g - c * gDel[j] + c * rDel[j]), g3: rDel.map((x) => c * x) };
 }
 
+module.exports = { msep, params, blendWith, design };
+if (require.main !== module) return;
 const LAWS = { normal: (r) => r.normal(), gamma2: (r) => (r.gamma(2) - 2) / Math.SQRT2, 'gamma¼': (r) => { const g = r.gamma(1.25) * Math.pow(r(), 4); return (g - 0.25) / 0.5; } };
 function run(label, J, T, sigF, rho, law) {
   const world = E.makeWorld({ J, T }), { w } = world, tau2 = world.truth.tau2, s = Math.sqrt(world.truth.sigma2);

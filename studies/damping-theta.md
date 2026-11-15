@@ -161,3 +161,25 @@ with g₁₂ the known-parameter MSE (`blendMSE`) and θ̂₋ₜ the parameters 
 
 Not measured yet: how noisy one data set's MSEP estimate is (its spread across draws), and
 whether an interval `rate ± 2√MSEP` covers the true level as often as it should.
+
+## The two extra terms, measured (`msep-terms.js`, output `msep-terms.out.txt`)
+
+Fit error = e* + d with e* the floor's error and d = fitted rate − floor rate, so
+MSE(fit) = MSE(floor) + C + g₃ with C = 2E[e*d], g₃ = E[d²]. In % of the floor MSE, 2000 draws:
+
+21. **The cross term C follows the excess kurtosis, not the skewness.** ρ = 0.6, T = 10: two-point
+    (κ = −2) +1.9, normal 0.0, gamma k = 2 (κ = 3) −2.5, gamma k = ¼ (κ = 24) −24.8, and its mirror
+    image (skewness −4, same κ) −24.1. Reason: d = (ẑ − z)(μ̂ⱼ − μ̂) + …, a parameter error
+    (quadratic in the noise) times a linear term, so e*·d is of fourth order in the noise. Under
+    normality the fourth cumulants vanish and C = 0 (Kackar–Harville). Heavy tails make C negative:
+    a large shock inflates the deviation μ̂ⱼ − μ̂ *and* the variance estimates, so ẑ shrinks harder
+    exactly when the raw mean is most off. The fit corrects itself; that is why it can beat the
+    floor.
+22. **The jackknife g₃ is good with T = 10 (0.87–1.15 of the true E[d²]) and too large with T = 5
+    (up to 2.7×)**, also at ρ = 0 (1.5–2.2×), where ρ̂ sits on its truncation at 0. Upward bias is
+    expected (Efron–Stein inequality: the jackknife variance estimate is biased upwards for any
+    statistic of independent units) and grows near the kinks (truncation of τ̂², ρ̂, β²).
+23. **The jackknife MSEP has no C at all.** Jiang–Lahiri–Wan work with the best predictor, whose
+    error is orthogonal to every function of the data; a linear credibility blend's error is only
+    orthogonal to linear functions, so C ≠ 0 without normality. The earlier 11–17% overstatement
+    under heavy tails is this missing negative C.
