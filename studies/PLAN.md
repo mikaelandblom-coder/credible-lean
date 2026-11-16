@@ -255,6 +255,11 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Finding 19 (2026-11-16): ignoring correlation costs at most `1/(1 − δ²)`
+  (`δ` = spectral norm of the noise correlation minus `I`; `1/(1 − ρ²)` for two
+  cohorts). App: in the world model show the exact cost of BS against the best
+  predictor and this bound; in the fit, `δ̂` from `ρ̂` as a quick "is correlation
+  worth modelling?" indicator.
 - Finding 18 (2026-11-16): the best linear unbiased predictor `d*` over all cohort
   estimates beats the blend unless cohort `j` has equal covariances with the others
   (always for two cohorts). App: show "price of the blend" `(w − d*)ᵀK(w − d*)` per

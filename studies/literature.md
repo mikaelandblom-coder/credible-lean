@@ -69,6 +69,15 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   Rao 1999, JSPI 78). Used: the two-stage weights as the target shape (`glsWeight_blockDiag`).
   New here: correlated noise, and `φτ²` from within- and across-group pairs (Finding 13).
 
+- Ignoring correlation (searched 2026-11-16 for Finding 19): Bloomfield & Watson (1975),
+  *The inefficiency of least squares*, Biometrika 62: the Kantorovich bound on OLS against
+  GLS, via Wielandt's inequality; Styan (1983) surveys it. Misspecified covariance in
+  prediction: Henderson (1975) and Cantet (1997) for BLUP in animal breeding, Stein (1999),
+  *Interpolation of spatial data*, for kriging (asymptotic; not checked for a finite
+  Kantorovich bound). Nothing found for credibility. Used: the Kantorovich factor
+  `(a + A)²/(4aA)` for any working model (`Core.linMse_blupWeight_working_le`); new here is
+  the credibility form `1/(1 − δ²)`, free of `τ²` and the noise variances.
+
 ## 4. Error of the plug-in fit (MSEP with estimated parameters)
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
   translation-invariant variance estimators, **under normality**. Without normality the cross term

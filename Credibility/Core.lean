@@ -956,5 +956,277 @@ theorem exists_blendWeight_eq_blupWeight_iff (hK : K.PosDef) (hτ : τ2 ≠ 0) (
 
 end Blup
 
+/-! ### A wrong covariance model (Finding 19)
+
+A fitted model computes its weights from a working `K̃`, `L̃` (e.g. ignoring the
+correlation between cohorts). If the working model's error variances are within factors
+`a ≤ A` of the true ones, the working best predictor loses at most the factor
+`(a + A)²/(4aA)` of Kantorovich (Wielandt's inequality). The variances compared are those of
+`Σᵢ dᵢμ̂ᵢ - tμⱼ` for all `d` and `t`. -/
+
+section Misspec
+
+/-- `Var(Σᵢ dᵢμ̂ᵢ - tμⱼ) = dᵀKd - 2t dᵀLⱼ + t²Lⱼⱼ`; `linMse` is the case `t = 1`. -/
+def predForm (K L : Matrix J J ℝ) (j : J) (d : J → ℝ) (t : ℝ) : ℝ :=
+  d ⬝ᵥ (K *ᵥ d) - 2 * t * (d ⬝ᵥ L j) + t ^ 2 * L j j
+
+omit [DecidableEq J] in
+lemma predForm_one (K L : Matrix J J ℝ) (j : J) (d : J → ℝ) :
+    predForm K L j d 1 = linMse K L j d := by
+  simp [predForm, linMse]
+
+omit [DecidableEq J] in
+/-- Expanding `Var(Σᵢ (s xᵢ + u yᵢ)μ̂ᵢ - sμⱼ)` around `x`, for symmetric `K`. -/
+lemma predForm_smul_add (hK : K.IsHermitian) (L : Matrix J J ℝ) (j : J) (x y : J → ℝ)
+    (s u : ℝ) :
+    predForm K L j (s • x + u • y) s = s ^ 2 * predForm K L j x 1
+      + 2 * s * u * (y ⬝ᵥ (K *ᵥ x) - y ⬝ᵥ L j) + u ^ 2 * (y ⬝ᵥ (K *ᵥ y)) := by
+  have hc := dotProduct_mulVec_comm_of_isHermitian hK x y
+  simp only [predForm, mulVec_add, mulVec_smul, dotProduct_add, add_dotProduct, smul_dotProduct,
+    dotProduct_smul, smul_eq_mul, hc]
+  ring
+
+omit [DecidableEq J] in
+/-- If `K x - Lⱼ` is a constant vector and `Σᵢ yᵢ = 0` then `yᵀ(K x - Lⱼ) = 0`. -/
+lemma dotProduct_sub_eq_zero_of_const (L : Matrix J J ℝ) (j : J) {x : J → ℝ} {c : ℝ}
+    (hx : ∀ i, (K *ᵥ x) i - L j i = c) {y : J → ℝ} (hy : ∑ i, y i = 0) :
+    y ⬝ᵥ (K *ᵥ x) - y ⬝ᵥ L j = 0 := by
+  have : ∑ i, y i * ((K *ᵥ x) i - L j i) = 0 := by simp only [hx, ← sum_mul, hy, zero_mul]
+  rw [← this]
+  simp only [dotProduct, ← sum_sub_distrib]
+  exact sum_congr rfl fun i _ => by ring
+
+/-- Wielandt's inequality for two directions, in the form needed here: if
+`a Q̃ ≤ Q ≤ A Q̃` for `Q(s, u) = s²r + 2sup + u²p` and `Q̃(s, u) = s²R + u²P` (the
+directions are orthogonal for `Q̃`, and the cross term of `Q` equals its `u²` term), then
+`(A + a)² p ≤ (A - a)² r`. -/
+lemma wielandt_aux {a A p r P R : ℝ} (ha : 0 ≤ a) (hA : 0 ≤ A) (hp : 0 ≤ p) (hr : 0 ≤ r)
+    (hlo : ∀ s u : ℝ, a * (s ^ 2 * R + u ^ 2 * P) ≤ s ^ 2 * r + 2 * s * u * p + u ^ 2 * p)
+    (hhi : ∀ s u : ℝ, s ^ 2 * r + 2 * s * u * p + u ^ 2 * p ≤ A * (s ^ 2 * R + u ^ 2 * P)) :
+    (A + a) ^ 2 * p ≤ (A - a) ^ 2 * r := by
+  -- `a(S + X) ≤ aAQ̃ ≤ A(S - X)` with `X = 2sup`, `S = s²r + u²p`, so `(A + a)X ≤ (A - a)S`.
+  have key : ∀ s u : ℝ, (A + a) * (2 * s * u * p) ≤ (A - a) * (s ^ 2 * r + u ^ 2 * p) :=
+    fun s u => by nlinarith [mul_le_mul_of_nonneg_left (hhi s u) ha,
+      mul_le_mul_of_nonneg_left (hlo s (-u)) hA]
+  rcases lt_or_ge a A with h | h
+  · -- `s = A - a`, `u = A + a`, then divide by `A - a > 0`.
+    have := key (A - a) (A + a)
+    nlinarith
+  · -- `A ≤ a`: then `(A + a)X ≤ (A - a)S ≤ 0` for both signs of `u`, so `p = 0` or `A + a = 0`.
+    have h1 := key 1 1
+    nlinarith [mul_le_mul_of_nonneg_left h1 (add_nonneg hA ha),
+      mul_nonneg (sub_nonneg.mpr h) (add_nonneg hr hp), mul_nonneg (add_nonneg hA ha) hp,
+      mul_nonneg (sq_nonneg (A - a)) hr]
+
+/-- **The best predictor of a wrong model** (Kantorovich bound): let the working `K̃`, `L̃`
+satisfy `a·Var̃ ≤ Var ≤ A·Var̃` for every `Σᵢ dᵢμ̂ᵢ - tμⱼ` (`predForm`), and its variances
+be nonnegative. Then the best linear unbiased predictor of the working model has mean
+squared error at most `(a + A)²/(4aA)` times the smallest. -/
+theorem linMse_blupWeight_working_le (hK : K.PosDef) {K' L' : Matrix J J ℝ} (hK' : K'.PosDef)
+    (L : Matrix J J ℝ) (j : J) {a A : ℝ} (ha : 0 ≤ a) (hA : 0 ≤ A)
+    (hlo : ∀ d t, a * predForm K' L' j d t ≤ predForm K L j d t)
+    (hhi : ∀ d t, predForm K L j d t ≤ A * predForm K' L' j d t)
+    (hQ : ∀ d t, 0 ≤ predForm K' L' j d t) :
+    4 * a * A * linMse K L j (blupWeight K' L' j)
+      ≤ (A + a) ^ 2 * linMse K L j (blupWeight K L j) := by
+  have : Nonempty J := ⟨j⟩
+  set e := blupWeight K' L' j
+  set h := e - blupWeight K L j
+  have he1 : ∑ i, e i = 1 := sum_blupWeight hK' L' j
+  have hsum : ∑ i, h i = 0 := by
+    simp [h, sum_sub_distrib, he1, sum_blupWeight hK]
+  -- Pythagoras: `MSE(e) = MSE(d*) + hᵀKh`.
+  have hpy := linMse_eq_blupWeight_add hK L j e (sum_blupWeight hK' L' j)
+  -- The cross term of the true form is `hᵀKh`, that of the working form `0`.
+  have hB : h ⬝ᵥ (K *ᵥ e) - h ⬝ᵥ L j = h ⬝ᵥ (K *ᵥ h) := by
+    have h0 := dotProduct_sub_eq_zero_of_const L j (mulVec_blupWeight hK L j) hsum
+    have he : e = blupWeight K L j + h := by simp [h]
+    rw [he, mulVec_add, dotProduct_add] at *
+    linarith
+  have hB' : h ⬝ᵥ (K' *ᵥ e) - h ⬝ᵥ L' j = 0 :=
+    dotProduct_sub_eq_zero_of_const L' j (mulVec_blupWeight hK' L' j) hsum
+  have hp : 0 ≤ h ⬝ᵥ (K *ᵥ h) := by
+    simpa using hK.posSemidef.dotProduct_mulVec_nonneg h
+  have hr : 0 ≤ linMse K L j e := by
+    rw [← predForm_one]
+    exact le_trans (mul_nonneg ha (hQ e 1)) (hlo e 1)
+  have hW := wielandt_aux (p := h ⬝ᵥ (K *ᵥ h)) (r := linMse K L j e)
+    (P := h ⬝ᵥ (K' *ᵥ h)) (R := linMse K' L' j e) ha hA hp hr
+    (fun s u => by
+      have := hlo (s • e + u • h) s
+      rw [predForm_smul_add hK.isHermitian, predForm_smul_add hK'.isHermitian, hB, hB'] at this
+      simp only [predForm_one] at this
+      linarith)
+    (fun s u => by
+      have := hhi (s • e + u • h) s
+      rw [predForm_smul_add hK.isHermitian, predForm_smul_add hK'.isHermitian, hB, hB'] at this
+      simp only [predForm_one] at this
+      linarith)
+  rw [hpy] at hW ⊢
+  nlinarith
+
+/-- With the true `L`, the working best predictor of a diagonal `K̃ = diag(τ² + vᵢ)` is the
+blend with `z = τ²/(τ² + vⱼ)` and inverse-variance weights: the Bühlmann–Straub estimate
+that ignores correlation. -/
+theorem blupWeight_diag_eq_blendWeight {τ2 : ℝ} {v : J → ℝ} (hd : ∀ i, 0 < τ2 + v i) (j : J) :
+    blupWeight (diagonal fun i => τ2 + v i) (τ2 • (1 : Matrix J J ℝ)) j
+      = blendWeight (diagonal fun i => τ2 + v i) j (τ2 / (τ2 + v j)) := by
+  have hK : (diagonal fun i => τ2 + v i).PosDef := by
+    rw [posDef_diagonal_iff]; exact hd
+  have := blendWeight_eq_blupWeight_of_equalCol (τ2 := τ2) hK j (c := 0)
+    (fun i hij => by simp [diagonal_apply_ne _ hij]) (by simpa using (hd j).ne)
+  simpa using this.symm
+
+/-- `K = τ²I + V` is positive definite when `τ² > 0` and the noise correlation is at most
+`δ < 1` (`|yᵀVy - Σᵢ vᵢyᵢ²| ≤ δ Σᵢ vᵢyᵢ²`): then `yᵀVy ≥ (1 - δ) Σᵢ vᵢyᵢ² ≥ 0`. -/
+lemma posDef_smul_one_add_of_corr {τ2 δ : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2)
+    (hV : V.IsHermitian) (hv : ∀ i, 0 ≤ V i i) (hδ1 : δ < 1)
+    (hδ : ∀ y : J → ℝ, |y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2| ≤ δ * ∑ i, V i i * y i ^ 2) :
+    (τ2 • (1 : Matrix J J ℝ) + V).PosDef := by
+  refine PosDef.of_dotProduct_mulVec_pos ?_ fun x hx => ?_
+  · exact (isHermitian_one.smul (IsSelfAdjoint.all τ2)).add hV
+  · have hxx : 0 < x ⬝ᵥ x := by
+      simpa [dotProduct, ← sq] using
+        (sum_pos_iff_of_nonneg (fun i _ => sq_nonneg (x i))).mpr
+          (by obtain ⟨i, hi⟩ := Function.ne_iff.mp hx
+              exact ⟨i, mem_univ _, lt_of_le_of_ne (sq_nonneg _) (Ne.symm (pow_ne_zero 2 hi))⟩)
+    have hW0 : 0 ≤ ∑ i, V i i * x i ^ 2 :=
+      sum_nonneg fun i _ => mul_nonneg (hv i) (sq_nonneg _)
+    have := hδ x
+    have h2 := neg_abs_le (x ⬝ᵥ (V *ᵥ x) - ∑ i, V i i * x i ^ 2)
+    simp only [star_trivial, add_mulVec, smul_mulVec, one_mulVec, dotProduct_add,
+      dotProduct_smul, smul_eq_mul]
+    nlinarith
+
+/-- **The price of ignoring correlation**: let the cohort estimates have covariance
+`K = τ²I + V` and the levels `L = τ²I`, with noise variances `vᵢ = Vᵢᵢ`. If the noise
+correlation is at most `δ < 1` in the sense `|yᵀVy - Σᵢ vᵢyᵢ²| ≤ δ Σᵢ vᵢyᵢ²` (`δ` is the
+spectral norm of the noise correlation matrix minus `I`), then the estimate that ignores the
+correlation (`K̃ = diag(τ² + vᵢ)`, `blupWeight_diag_eq_blendWeight`) has mean squared error
+at most `1/(1 - δ²)` times the smallest. -/
+theorem linMse_ignoreCorr_le {τ2 δ : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2) (hV : V.IsHermitian)
+    (hv : ∀ i, 0 ≤ V i i) (hδ0 : 0 ≤ δ) (hδ1 : δ < 1)
+    (hδ : ∀ y : J → ℝ, |y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2| ≤ δ * ∑ i, V i i * y i ^ 2)
+    (j : J) :
+    (1 - δ ^ 2) * linMse (τ2 • 1 + V) (τ2 • 1) j
+        (blupWeight (diagonal fun i => τ2 + V i i) (τ2 • 1) j)
+      ≤ linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  set K := τ2 • (1 : Matrix J J ℝ) + V
+  set K' := diagonal fun i => τ2 + V i i
+  set L := τ2 • (1 : Matrix J J ℝ)
+  have hW0 : ∀ y : J → ℝ, 0 ≤ ∑ i, V i i * y i ^ 2 :=
+    fun y => sum_nonneg fun i _ => mul_nonneg (hv i) (sq_nonneg _)
+  -- The two forms differ by `yᵀVy - Σ vᵢyᵢ²`; the working one is `τ²‖y‖² + Σ vᵢyᵢ²` on `K`.
+  have hKy : ∀ y : J → ℝ, y ⬝ᵥ (K *ᵥ y) = τ2 * (y ⬝ᵥ y) + y ⬝ᵥ (V *ᵥ y) := fun y => by
+    simp [K, add_mulVec, smul_mulVec, dotProduct_add]
+  have hK'y : ∀ y : J → ℝ, y ⬝ᵥ (K' *ᵥ y) = τ2 * (y ⬝ᵥ y) + ∑ i, V i i * y i ^ 2 := fun y => by
+    simp only [K', mulVec_diagonal, dotProduct, mul_sum, ← sum_add_distrib]
+    exact sum_congr rfl fun i _ => by ring
+  have hdiff : ∀ d t, predForm K L j d t - predForm K' L j d t
+      = d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2 := fun d t => by
+    simp only [predForm, hKy, hK'y]; ring
+  -- The working form is at least `Σ vᵢdᵢ²`: its rest is `τ²(‖d‖² - 2t dⱼ + t²) ≥ 0`.
+  have hLj : ∀ d : J → ℝ, d ⬝ᵥ L j = τ2 * d j := fun d => by
+    simp [L, dotProduct, Matrix.one_apply, mul_comm]
+  have hW : ∀ d t, ∑ i, V i i * d i ^ 2 ≤ predForm K' L j d t := fun d t => by
+    have hdd : d j ^ 2 ≤ d ⬝ᵥ d := by
+      simp only [dotProduct, ← sq]
+      exact single_le_sum (f := fun i => d i ^ 2) (fun i _ => sq_nonneg _) (mem_univ j)
+    have : predForm K' L j d t = τ2 * (d ⬝ᵥ d - 2 * t * d j + t ^ 2) + ∑ i, V i i * d i ^ 2 := by
+      simp only [predForm, hK'y, hLj, L, Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul,
+        mul_one]
+      ring
+    rw [this]
+    nlinarith [sq_nonneg (d j - t)]
+  have hlo : ∀ d t, (1 - δ) * predForm K' L j d t ≤ predForm K L j d t := fun d t => by
+    have h1 := hdiff d t
+    have h2 := neg_abs_le (d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2)
+    nlinarith [hδ d, hW d t, hW0 d]
+  have hhi : ∀ d t, predForm K L j d t ≤ (1 + δ) * predForm K' L j d t := fun d t => by
+    have h1 := hdiff d t
+    have h2 := le_abs_self (d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2)
+    nlinarith [hδ d, hW d t, hW0 d]
+  -- Both matrices are positive definite.
+  have hK' : K'.PosDef := by
+    rw [posDef_diagonal_iff]; exact fun i => add_pos_of_pos_of_nonneg hτ (hv i)
+  have hK : K.PosDef := posDef_smul_one_add_of_corr hτ hV hv hδ1 hδ
+  have := linMse_blupWeight_working_le hK hK' L j (by linarith : (0 : ℝ) ≤ 1 - δ)
+    (by linarith : (0 : ℝ) ≤ 1 + δ) hlo hhi fun d t => (hW0 d).trans (hW d t)
+  nlinarith
+
+omit [DecidableEq J] in
+/-- If every off-diagonal noise correlation is at most `r` (`Vᵢₖ² ≤ r² vᵢvₖ`), the bound of
+`linMse_ignoreCorr_le` holds with `δ = (J - 1)r`: by AM–GM,
+`2|yᵢVᵢₖyₖ| ≤ r(vᵢyᵢ² + vₖyₖ²)` for each pair. -/
+lemma corrBound_of_offDiag {V : Matrix J J ℝ} (hv : ∀ i, 0 ≤ V i i) {r : ℝ} (hr : 0 ≤ r)
+    (hV : ∀ i k, i ≠ k → V i k ^ 2 ≤ r ^ 2 * V i i * V k k) (y : J → ℝ) :
+    |y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2|
+      ≤ ((Fintype.card J : ℝ) - 1) * r * ∑ i, V i i * y i ^ 2 := by
+  classical
+  set f : J → ℝ := fun i => V i i * y i ^ 2
+  -- The off-diagonal part of `yᵀVy`.
+  have hoff : y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2
+      = ∑ i, ∑ k, if i = k then 0 else y i * V i k * y k := by
+    have h0 : ∀ i k, (if i = k then (0 : ℝ) else y i * V i k * y k)
+        = y i * V i k * y k - if i = k then y i * V i k * y k else 0 := fun i k => by
+      split_ifs <;> ring
+    simp_rw [h0]
+    simp only [sum_sub_distrib, sum_ite_eq, mem_univ, ite_true, dotProduct, mulVec, mul_sum]
+    congr 1
+    · exact sum_congr rfl fun i _ => sum_congr rfl fun k _ => by ring
+    · exact sum_congr rfl fun i _ => by ring
+  -- Each pair: `|yᵢVᵢₖyₖ| ≤ (r/2)(fᵢ + fₖ)`.
+  have hpair : ∀ i k, |if i = k then 0 else y i * V i k * y k|
+      ≤ if i = k then 0 else r / 2 * (f i + f k) := fun i k => by
+    split_ifs with h
+    · simp
+    · have h1 := hV i k h
+      have hfi : 0 ≤ f i := mul_nonneg (hv i) (sq_nonneg _)
+      have hfk : 0 ≤ f k := mul_nonneg (hv k) (sq_nonneg _)
+      have hsq : (y i * V i k * y k) ^ 2 ≤ (r / 2 * (f i + f k)) ^ 2 := by
+        have : (y i * V i k * y k) ^ 2 ≤ r ^ 2 * f i * f k := by
+          simp only [f]
+          have := mul_le_mul_of_nonneg_left h1 (mul_nonneg (sq_nonneg (y i)) (sq_nonneg (y k)))
+          nlinarith
+        nlinarith [sq_nonneg (f i - f k), mul_nonneg hr hr]
+      have hB : 0 ≤ r / 2 * (f i + f k) := by positivity
+      exact abs_le.mpr ⟨by nlinarith, by nlinarith⟩
+  -- Summing: `Σᵢ Σₖ≠ᵢ (r/2)(fᵢ + fₖ) = r(J - 1) Σ f`.
+  have hsum : ∑ i, ∑ k, (if i = k then 0 else r / 2 * (f i + f k))
+      = ((Fintype.card J : ℝ) - 1) * r * ∑ i, f i := by
+    have : ∀ i k, (if i = k then 0 else r / 2 * (f i + f k))
+        = r / 2 * (f i + f k) - if i = k then r / 2 * (f i + f k) else 0 := fun i k => by
+      split_ifs <;> ring
+    simp_rw [this]
+    simp only [sum_sub_distrib, sum_ite_eq, mem_univ, ite_true, mul_add, sum_add_distrib,
+      sum_const, card_univ, nsmul_eq_mul, ← mul_sum]
+    ring
+  rw [hoff]
+  calc |∑ i, ∑ k, if i = k then 0 else y i * V i k * y k|
+      ≤ ∑ i, |∑ k, if i = k then 0 else y i * V i k * y k| := abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i, ∑ k, |if i = k then 0 else y i * V i k * y k| :=
+        sum_le_sum fun i _ => abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i, ∑ k, (if i = k then 0 else r / 2 * (f i + f k)) :=
+        sum_le_sum fun i _ => sum_le_sum fun k _ => hpair i k
+    _ = ((Fintype.card J : ℝ) - 1) * r * ∑ i, V i i * y i ^ 2 := hsum
+
+/-- **The price of ignoring correlations of at most `r`**: if every noise correlation is at
+most `r` in absolute value (`Vᵢₖ² ≤ r² vᵢvₖ`) and `(J - 1)r < 1`, the estimate that ignores
+correlation has mean squared error at most `1/(1 - (J - 1)²r²)` times the smallest. For two
+cohorts: at most `1/(1 - ρ²)`. -/
+theorem linMse_ignoreCorr_le_of_offDiag {τ2 r : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2)
+    (hV : V.IsHermitian) (hv : ∀ i, 0 ≤ V i i) (hr : 0 ≤ r)
+    (hρ : ∀ i k, i ≠ k → V i k ^ 2 ≤ r ^ 2 * V i i * V k k)
+    (hJ : ((Fintype.card J : ℝ) - 1) * r < 1) (j : J) :
+    (1 - (((Fintype.card J : ℝ) - 1) * r) ^ 2) * linMse (τ2 • 1 + V) (τ2 • 1) j
+        (blupWeight (diagonal fun i => τ2 + V i i) (τ2 • 1) j)
+      ≤ linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  have hJ1 : (1 : ℝ) ≤ Fintype.card J := by
+    exact_mod_cast Fintype.card_pos_iff.mpr ⟨j⟩
+  exact linMse_ignoreCorr_le hτ hV hv (mul_nonneg (by linarith) hr) hJ
+    (corrBound_of_offDiag hv hr hρ) j
+
+end Misspec
+
 end Core
 end Credibility

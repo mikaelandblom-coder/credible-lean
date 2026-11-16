@@ -275,4 +275,27 @@ Gaps, extra hypotheses and new results found while formalizing.
    a question for the app (PLAN, Pending). All statements are
    distribution-free, in true MSE.
 
+19. **What ignoring correlation can cost (new; `Core.linMse_blupWeight_working_le`,
+   `Core.linMse_ignoreCorr_le`, `Core.linMse_ignoreCorr_le_of_offDiag`,
+   `Core.Estimates.ignoreCorr_mse_le`).** Bühlmann–Straub on correlated cohorts
+   is the best linear unbiased predictor of a wrong model, `K̃ = diag(τ² + vᵢ)`
+   (`Core.blupWeight_diag_eq_blendWeight`: the blend with `z = τ²/(τ² + vⱼ)` and
+   inverse-variance weights). With `K = τ²I + V`, `L = τ²I` and `δ` the spectral
+   norm of the noise correlation matrix minus `I`
+   (`|yᵀVy − Σ vᵢyᵢ²| ≤ δ Σ vᵢyᵢ²`), its mean squared error is at most
+   `1/(1 − δ²)` times the smallest, whatever `τ²` and the `vᵢ`. The proof is
+   Kantorovich's: the true and working variances of every `Σ dᵢμ̂ᵢ − tμⱼ`
+   are within factors `1 ∓ δ`, and Wielandt's inequality turns that into
+   `(a + A)²/(4aA)` for the predictor (`linMse_blupWeight_working_le`, any working
+   model). If every correlation is at most `r`, `δ ≤ (J − 1)r`; for two cohorts
+   the factor is `1/(1 − ρ²)` and nearly attained (`ρ = 0.5`: bound 1.333, worst
+   of 20000 random worlds 1.316). Checked in 15689 random worlds with `δ < 1`
+   (`J = 2..7`): never violated, worst ratio of excess to bound 0.81. The
+   bound is weak for many equicorrelated cohorts (`J = 3`, `ρ = 0.5` gives
+   `δ = 1`). Exact cost in the Finding 16 example (`τ² = 1`,
+   `v = (0.5, 1, 3)`, `ρ = 0.5`): 14.3%, 9.2%, 0.4% above the minimum, against
+   2.8%, 3.1%, 0.1% for the blend restriction (Finding 18). So with true
+   parameters the correlation matters more than the blend form; whether
+   estimating it pays is the fitted-model question of the studies (S6 in `studies/damping-theta.md`).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -77,6 +77,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
   was written from memory of the book; owner to check against it.
+- Finding 19 (2026-11-16): what ignoring correlation costs (at most `1/(1 − δ²)`,
+  Kantorovich); a paragraph in the Bühlmann–Straub section, Lean names
+  `Core.Estimates.ignoreCorr_mse_le`, `Core.linMse_ignoreCorr_le_of_offDiag`.
 - Finding 18 (2026-11-16): the blend against the best linear unbiased predictor;
   a paragraph where the blend is introduced (what the restriction to `z` costs, and
   when nothing), Lean names `Core.Estimates.blup_mse_optimal`,

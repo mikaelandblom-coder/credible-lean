@@ -487,6 +487,26 @@ theorem mse_blend_eq_blup_add (hK : K.PosDef) (j : J) (z : ℝ) :
   rw [E.mse_blend hK j z, E.mse_portLin j _ (sum_blupWeight hK L j)]
   exact errVar_eq_blupWeight_add hK L j z
 
+/-- **The price of ignoring correlation in true MSE** (Finding 19): for cohort estimates with
+covariance `K = τ²I + V` and uncorrelated levels (`L = τ²I`), if the noise correlation is at
+most `δ < 1` (`linMse_ignoreCorr_le`), the estimate that ignores it (weights of
+`K̃ = diag(τ² + vᵢ)`, the Bühlmann–Straub blend `blupWeight_diag_eq_blendWeight`) has actual
+mean squared error at most `1/(1 - δ²)` times that of the best linear unbiased predictor,
+for every distribution with these moments. -/
+theorem ignoreCorr_mse_le {τ2 δ : ℝ} {V : Matrix J J ℝ} (E : Estimates (τ2 • 1 + V) (τ2 • 1) μ P)
+    (hτ : 0 < τ2) (hV : V.IsHermitian) (hv : ∀ i, 0 ≤ V i i) (hδ0 : 0 ≤ δ) (hδ1 : δ < 1)
+    (hδ : ∀ y : J → ℝ, |y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2| ≤ δ * ∑ i, V i i * y i ^ 2)
+    (j : J) :
+    (1 - δ ^ 2) * P[fun ω => (E.portLin (blupWeight (diagonal fun i => τ2 + V i i) (τ2 • 1) j) ω
+        - E.level j ω) ^ 2]
+      ≤ P[fun ω => (E.portLin (blupWeight (τ2 • 1 + V) (τ2 • 1) j) ω - E.level j ω) ^ 2] := by
+  have : Nonempty J := ⟨j⟩
+  have hK := posDef_smul_one_add_of_corr hτ hV hv hδ1 hδ
+  have hK' : (diagonal fun i => τ2 + V i i).PosDef := by
+    rw [posDef_diagonal_iff]; exact fun i => add_pos_of_pos_of_nonneg hτ (hv i)
+  rw [E.mse_portLin j _ (sum_blupWeight hK' _ j), E.mse_portLin j _ (sum_blupWeight hK _ j)]
+  exact linMse_ignoreCorr_le hτ hV hv hδ0 hδ1 hδ j
+
 omit [Fintype J] [DecidableEq J] in
 /-- A common component: add to every estimate and its level the same centred
 `Cⱼ`, uncorrelated with all estimates and levels, with `cov(Cᵢ, Cⱼ) = Rᵢⱼ`.

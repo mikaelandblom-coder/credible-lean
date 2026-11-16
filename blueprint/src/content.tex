@@ -2804,6 +2804,169 @@ lost by not using the best of them all?
   error is $2.8\%$, $3.1\%$ and $0.1\%$ above the minimum.
 \end{remark}
 
+\subsection*{A wrong covariance model}
+
+A fitted model computes its weights from a working $\tilde K$, $\tilde L$, for
+example ignoring the correlation between cohorts. How much can that cost?
+
+\begin{definition}[Prediction variance]\label{def:Core_predForm}
+  \lean{Credibility.Core.predForm}
+  \leanok
+  \uses{def:Core_blup}
+  $Q_{K,L}(d,t) = d^TKd - 2t\,d^T\ell + t^2L_{jj}$, the variance of
+  $\sum_i d_i\hmu_i - t\mu_j$; $\mathrm{mse}_j(d) = Q_{K,L}(d,1)$.
+\end{definition}
+
+\begin{lemma}[Expanding the prediction variance]\label{lem:Core_predForm}
+  \lean{Credibility.Core.predForm_one, Credibility.Core.predForm_smul_add,
+        Credibility.Core.dotProduct_sub_eq_zero_of_const}
+  \leanok
+  \uses{def:Core_predForm}
+  For symmetric $K$:
+  $Q(sx + uy, s) = s^2\mathrm{mse}_j(x) + 2su\,y^T(Kx - \ell) + u^2y^TKy$. If
+  $Kx - \ell$ is a constant vector and $\sum_i y_i = 0$, then $y^T(Kx - \ell) = 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity and symmetry of $K$.
+\end{proof}
+
+\begin{lemma}[Wielandt's inequality, two directions]\label{lem:wielandt}
+  \lean{Credibility.Core.wielandt_aux}
+  \leanok
+  Let $0 \le a$, $0 \le A$, $p, r \ge 0$, and for all $s, u$:
+  $a(s^2R + u^2P) \le s^2r + 2sup + u^2p \le A(s^2R + u^2P)$. Then
+  $(A+a)^2p \le (A-a)^2r$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $X = 2sup$, $S = s^2r + u^2p$ and $\tilde Q = s^2R + u^2P$: the upper bound at
+  $(s,u)$ times $a$ and the lower bound at $(s,-u)$ times $A$ give
+  $(A+a)X \le (A-a)S$. Take $s = A - a$, $u = A + a$ and divide by $A - a$; if
+  $A \le a$ the same inequality at $s = u = 1$ forces $(A+a)p = 0$.
+\end{proof}
+
+\begin{theorem}[The best predictor of a wrong model]\label{thm:Core_working}
+  \lean{Credibility.Core.linMse_blupWeight_working_le}
+  \leanok
+  \uses{def:Core_predForm, def:Core_blup}
+  Let $K$, $\tilde K$ be positive definite, $0 \le a$, $0 \le A$, and for all $d$, $t$:
+  $0 \le Q_{\tilde K,\tilde L}(d,t)$ and
+  $a\,Q_{\tilde K,\tilde L}(d,t) \le Q_{K,L}(d,t) \le A\,Q_{\tilde K,\tilde L}(d,t)$.
+  Then the best linear unbiased predictor $\tilde d^*$ of the working model satisfies
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ (Kantorovich's factor).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:wielandt, lem:Core_predForm, lem:Core_blup_foc, thm:Core_blup_optimal}
+  Let $h = \tilde d^* - d^*$, so $\sum_i h_i = 0$ and
+  $\mathrm{mse}_j(\tilde d^*) = \mathrm{mse}_j(d^*) + h^TKh$. By the first-order
+  conditions the cross term of $Q_{K,L}$ between $(\tilde d^*, 1)$ and $(h, 0)$ is
+  $h^TKh$ and that of $Q_{\tilde K,\tilde L}$ is $0$. Lemma~\ref{lem:wielandt} gives
+  $(A+a)^2h^TKh \le (A-a)^2\mathrm{mse}_j(\tilde d^*)$; rearrange.
+\end{proof}
+
+\begin{lemma}[Ignoring correlation gives the Bühlmann–Straub blend]\label{lem:Core_blup_diag}
+  \lean{Credibility.Core.blupWeight_diag_eq_blendWeight}
+  \leanok
+  \uses{def:Core_blup}
+  For $\tilde K = \mathrm{diag}(\tau^2 + v_i)$ with positive entries and $L = \tau^2I$,
+  the best linear unbiased predictor is the blend with $z = \tau^2/(\tau^2 + v_j)$ and
+  inverse-variance weights.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_blend_blup_equalCol}
+  Corollary~\ref{cor:Core_blend_blup_equalCol} with $c = 0$.
+\end{proof}
+
+\begin{lemma}[Bounded correlation keeps $K$ positive definite]\label{lem:Core_posDef_corr}
+  \lean{Credibility.Core.posDef_smul_one_add_of_corr}
+  \leanok
+  If $\tau^2 > 0$, $V$ is symmetric with $v_i = V_{ii} \ge 0$, $\delta < 1$ and
+  $|y^TVy - \sum_i v_iy_i^2| \le \delta\sum_i v_iy_i^2$ for all $y$, then
+  $\tau^2I + V$ is positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $y^T(\tau^2I + V)y \ge \tau^2\lVert y\rVert^2 + (1-\delta)\sum_i v_iy_i^2 > 0$ for $y \ne 0$.
+\end{proof}
+
+\begin{theorem}[The price of ignoring correlation]\label{thm:Core_ignoreCorr}
+  \lean{Credibility.Core.linMse_ignoreCorr_le}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K = \tau^2I + V$, $L = \tau^2I$, with $\tau^2 > 0$, $V$ symmetric, $v_i = V_{ii} \ge 0$,
+  and let the noise correlation be at most $0 \le \delta < 1$:
+  $|y^TVy - \sum_i v_iy_i^2| \le \delta\sum_i v_iy_i^2$ for all $y$ ($\delta$ is the
+  spectral norm of the noise correlation matrix minus $I$). Then the estimate that
+  ignores correlation ($\tilde K = \mathrm{diag}(\tau^2 + v_i)$) satisfies
+  $(1-\delta^2)\,\mathrm{mse}_j(\tilde d^*) \le \mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_working, lem:Core_posDef_corr}
+  $Q_{K,L} - Q_{\tilde K,L} = y^TVy - \sum_i v_iy_i^2$, and
+  $Q_{\tilde K,L}(d,t) = \tau^2(\lVert d\rVert^2 - 2td_j + t^2) + \sum_i v_id_i^2 \ge \sum_i v_id_i^2$.
+  So $(1-\delta)Q_{\tilde K,L} \le Q_{K,L} \le (1+\delta)Q_{\tilde K,L}$; Theorem~\ref{thm:Core_working}
+  with $a = 1-\delta$, $A = 1+\delta$, where $(A+a)^2/(4aA) = 1/(1-\delta^2)$.
+\end{proof}
+
+\begin{lemma}[Correlations at most $r$]\label{lem:Core_corrBound_offDiag}
+  \lean{Credibility.Core.corrBound_of_offDiag}
+  \leanok
+  If $V_{ik}^2 \le r^2v_iv_k$ for $i \ne k$, $r \ge 0$, $v \ge 0$, then
+  $|y^TVy - \sum_i v_iy_i^2| \le (J-1)\,r\sum_i v_iy_i^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $2|y_iV_{ik}y_k| \le r(v_iy_i^2 + v_ky_k^2)$ for each pair, by AM--GM; sum over $i \ne k$.
+\end{proof}
+
+\begin{corollary}[Ignoring correlations of at most $r$]\label{cor:Core_ignoreCorr_offDiag}
+  \lean{Credibility.Core.linMse_ignoreCorr_le_of_offDiag}
+  \leanok
+  \uses{def:Core_blup}
+  If every noise correlation is at most $r$ and $(J-1)r < 1$, then
+  $(1 - (J-1)^2r^2)\,\mathrm{mse}_j(\tilde d^*) \le \mathrm{mse}_j(d^*)$. For two cohorts:
+  ignoring a correlation $\rho$ costs at most the factor $1/(1-\rho^2)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_ignoreCorr, lem:Core_corrBound_offDiag}
+  Theorem~\ref{thm:Core_ignoreCorr} with $\delta = (J-1)r$ (Lemma~\ref{lem:Core_corrBound_offDiag}).
+\end{proof}
+
+\begin{theorem}[The price of ignoring correlation in true MSE]\label{thm:Core_ignoreCorr_mse}
+  \lean{Credibility.Core.Estimates.ignoreCorr_mse_le}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} with $K = \tau^2I + V$
+  and $L = \tau^2I$, under the hypotheses of Theorem~\ref{thm:Core_ignoreCorr}: the true
+  mean squared error of the estimate that ignores correlation is at most $1/(1-\delta^2)$
+  times that of the best linear unbiased predictor, for every distribution with these
+  moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_ignoreCorr, lem:Core_posDef_corr, thm:Core_blup_mse, lem:Core_blup_foc}
+  Both predictors are unbiased, so their true mean squared errors are $\mathrm{mse}_j$
+  (Theorem~\ref{thm:Core_blup_mse}); then Theorem~\ref{thm:Core_ignoreCorr}.
+\end{proof}
+
+\begin{remark}[Finding 19: what ignoring correlation can cost]\label{rem:ignoreCorr}
+  \uses{thm:Core_ignoreCorr_mse, cor:Core_ignoreCorr_offDiag, lem:Core_blup_diag}
+  Bühlmann--Straub ignores the correlation between cohorts. With the true parameters this
+  can cost much more than restricting to the blend (Finding~18): in the example of
+  Remark~\ref{rem:blup} $14.3\%$, $9.2\%$, $0.4\%$ against $2.8\%$, $3.1\%$, $0.1\%$.
+  It is never more than the factor $1/(1-\delta^2)$, with $\delta$ the spectral norm of
+  the noise correlation matrix minus $I$, whatever $\tau^2$ and the noise variances.
+  For two cohorts $\delta = |\rho|$ and the bound is nearly attained ($\rho = 0.5$: bound
+  $1.333$, worst found $1.316$). For many cohorts with a common correlation $\delta$ is
+  large and the bound says nothing ($J = 3$, $\rho = 0.5$ gives $\delta = 1$). The general
+  inequality is Kantorovich's, used for OLS against GLS by Bloomfield and Watson (1975).
+\end{remark}
+
 \begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}
   \lean{Credibility.Model.integral_quad_of_cov}
   \leanok

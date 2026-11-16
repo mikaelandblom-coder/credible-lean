@@ -16,6 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Finding 19 (2026-11-16): the price of ignoring correlation, at most `1/(1 − δ²)`
+  (`Core.linMse_ignoreCorr_le`, `Core.linMse_ignoreCorr_le_of_offDiag`): one entry
+  "when can I ignore correlation?", with the two-cohort rule `1/(1 − ρ²)`.
 - Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
   blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
   `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".
