@@ -656,17 +656,347 @@ structures work too (\finding{5}).
 \lean{Credibility.Model.bestZ_of_equalCov} ·
 \app{Models} · \finding{2}, \finding{4}, \finding{5} · thesis §2.6, §2.7.
 
-\section{Balance}\label{sec:balance}
-\notyet{what balance is and why practitioners want it; when it holds for
-free; the cost of forcing it; how to balance if you must.}
 
+\oneline A blend is balanced when the blended rates, charged on the past
+volumes, would have brought in exactly the claims that came in; every blend
+is balanced for \emph{some} volume measure, Bühlmann--Straub happens to be
+balanced for the exposures, and under correlation forcing exposure balance
+costs accuracy, so if you must, shift all rates by the same amount.
+
+\idea Practitioners like balance because it is easy to explain: the tariff
+neither gives away nor overcharges the portfolio's own history. In
+Bühlmann--Straub it comes for free. For any data, total premium at the
+credibility rates equals total claims (\hb{res:bs}{9}). It is an identity,
+not an expectation, so it holds whether or not the model is right, and it
+survives cohorts observed over different periods (\finding{10}).
+
+\emph{Why it holds there, and what it is in general.} Write the blend as
+$\hmu_j^b = z_j\hmu_j + (1 - z_j)\hmu$. The blended rates are balanced for
+volumes $u_j$ exactly when $u_j(1 - z_j)$ is proportional to $b_j$
+(\hb{res:balance}{10}). So every blend is balanced for one volume measure,
+$u_j \propto b_j/(1 - z_j)$, and the only question is whether that measure is
+one you care about. In Bühlmann--Straub $b_j = z_j/z_*$ and
+$1 - z_j = \kappa z_j/w_{j*}$, so the measure is the exposure $w_{j*}$: that
+is the whole reason for the classical balance property. Change anything and
+the measure moves. With region-specific noise and no correlation, it is the
+precision $w_{j*}/\sigma_j^2$, not the exposure. With correlation some
+$b_j$ are negative (Section~\ref{sec:weights}), so some balancing volumes
+are negative: no positive volume measure balances the best blend.
+
+\emph{Off-balance is a property of the optimum, not of the fit.} With the
+true parameters the best blend already has a negative weight in every
+correlated world of the app's study, and it misses exposure balance by more
+than 1\% in half or more of the draws when cohorts differ in noise level
+(study finding S27 in \file{studies/damping-theta.md}). So an off-balance of
+a few percent is expected under correlation, not a sign that something went
+wrong.
+
+\emph{The cost of forcing it.} Suppose balance is a business requirement.
+Three ways come to mind, and all of them cost accuracy.
+\begin{itemize}
+  \item \emph{Bend the factors.} Keep the weights $b_j$ and choose the
+    factors among the balanced ones. The balanced blends form a line,
+    $1 - z_j \propto b_j/u_j$, and the best point on it has a closed form
+    for any loss weights and any correlation (\hb{res:bestBalanced}{11},
+    \finding{15}). But the line fixes the \emph{shape} of the factors:
+    large cohorts are pushed to $z_j \approx 1$ and small ones far from
+    their best $z_j$, even below zero. In the app's study worlds it costs up
+    to 96\% more error than the best blend.
+  \item \emph{Recompute the collective} the Bühlmann--Straub way, as the
+    $(1 - z_j)$-weighted mean of the cohort estimates. It is the worst of
+    the three, and unstable when the weights $w_{j*}(1 - z_j)$ sum to little.
+  \item \emph{Shift every rate by the same amount}, so that total premium
+    matches total claims. This is benchmarking in small-area estimation
+    (Wang, Fuller and Qu, 2008; \hb{res:commonShift}{12}). It is the
+    cheapest of the three: at most 41\% more error in the same worlds,
+    against 96\% for the best balanced factors, and nothing at all without
+    correlation and with a common noise level.
+\end{itemize}
+These costs are exact, not simulated: with the true parameters every one of
+these corrections is a linear rule, so its mean squared error is a formula
+in the second moments (\file{studies/exact-balance.js}). They do depend on
+the worlds chosen.
+
+\emph{Why balance costs anything.} The exposure-weighted mean of the cohort
+estimates carries this period's common shock in full. The GLS weights hedge
+that shock away (Section~\ref{sec:weights}); balance puts it back into every
+rate. Without correlation there is no common shock to hedge, and the cost
+vanishes.
+
+\emph{Is the shift the best balanced correction?} Among corrections that add
+a share $c_jD$ of the imbalance $D$ to each blend, the common shift is
+best for the volume-weighted error when cohorts are independent, for any
+distribution with the given moments (\hb{res:commonShift}{12}). That is
+Wang, Fuller and Qu's argument: the blend's errors are then uncorrelated
+with the imbalance, so spreading it unevenly only adds noise. Under
+correlation their premise fails, because our blend is the best linear
+predictor only for independent cohorts, and the claim as stated is false
+(\finding{16}). In a three-cohort counterexample the best shares are
+$(0.177, 0.121, 0.227)$ instead of $1/6$ each. But the difference is small:
+in 2000 random worlds the common shift was never more than 2.2\% worse than
+the best shares, which would need the fitted covariances of the errors with
+$D$. So the shift is the one to use.
+
+\watch
+\begin{itemize}
+  \item \emph{Decide what balance is for before forcing it.} If the goal is
+    accurate rates, do not force it: the best blend is balanced for its own
+    measure $b_j/(1 - z_j)$. If total premium must match total claims,
+    shift.
+  \item \emph{Don't restore balance by bending $z$.} It is the costliest
+    way and produces factors outside $[0, 1]$ for the small cohorts.
+  \item \emph{Balance is not a test of the model.} It is an identity in
+    Bühlmann--Straub and an expected miss under correlation; neither says
+    whether the parameters are right.
+  \item \emph{The app has no balance switch} for this reason; it reports
+    the off-balance as a note, not a warning (\app{Many draws}).
+\end{itemize}
+
+\see \hb{res:bs}{9}, \hb{res:balance}{10}, \hb{res:bestBalanced}{11},
+\hb{res:commonShift}{12} ·
+\lean{Credibility.bs_balance},
+\lean{Credibility.Unequal.balance_total},
+\lean{Credibility.Core.balanced_iff},
+\lean{Credibility.Core.balanced_iff_of_diag},
+\lean{Credibility.Core.bestBalanced_optimal},
+\lean{Credibility.Core.bestBalanced_cost},
+\lean{Credibility.Core.Estimates.bestBalanced_mse_optimal},
+\lean{Credibility.Core.bestCorrection_optimal},
+\lean{Credibility.Core.imbalanceCov_of_diag},
+\lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag} ·
+\app{Many draws} · \finding{10}, \finding{15}, \finding{16} ·
+\file{studies/damping-theta.md} (S27--S29), \file{studies/vc-balance.js},
+\file{studies/exact-balance.js} · \file{studies/literature.md} §4 ·
+thesis §2.9.
+
+% ===========================================================================
 \section{Estimating the parameters}\label{sec:estimation}
-\notyet{the unbiased estimators and what they need; the plug-in $\hat K$ and
-damping; a fit with no tuning; the error of a fitted model.}
 
+\oneline The thesis estimators of the noise covariances and of $\tau^2$ are
+unbiased for any distribution, given at least two periods and two cohorts;
+plugged into $K$ they need repair or a better-structured fit, and the
+fitted model's error is larger than its formula says, by a price of
+estimation that can itself be estimated from the data.
+
+\idea \emph{The unbiased estimators.} The noise covariance of two cohorts
+is estimated from how their deviations from their own means move together
+over the periods, and divided by a known factor that removes the bias, as
+$T - 1$ does for an ordinary variance (\hb{res:estimation}{16}). On the
+diagonal this is the Bühlmann--Straub $\hat\sigma_j^2$. The level variance
+$\tau^2$ is the spread of the cohort means around the portfolio mean, minus
+the part of that spread the noise explains. Both are unbiased with the
+actual expectation, for any random variables with the model's moments
+(Section~\ref{sec:moments}).
+
+\emph{What they need.} At least two periods ($T \ge 2$) and two cohorts
+($J \ge 2$); otherwise a denominator is zero (\finding{7}). The thesis does
+not say so, but Bühlmann--Straub needs the same, so this is a gap in the
+statement, not in the method. Its classical $\hat\tau^2$ is the uncorrelated
+special case, unbiased too, once a typo is fixed: the thesis averages the
+cohorts' $\hat\sigma_j^2$ with $1/T$ where it should be $1/J$
+(\hb{res:bs_tau}{17}). With cohorts observed over different periods, the
+$T - 2$ in the denominator becomes a volume-weighted count per pair
+(Section~\ref{sec:unequal}).
+
+\emph{The plug-in $\hat K$, and damping.} Unbiased does not mean usable.
+$\hat\tau^2$ is often negative, and the table of estimated covariances need
+not be positive semidefinite, so $\hat K$ may not be invertible. The first
+repair is the one of Section~\ref{sec:K}: truncate $\hat\tau^2$ at zero and
+multiply the off-diagonal correlations by a damping factor
+$\theta < 1$; then $\hat K$ is positive definite whenever the estimated
+correlation table is semidefinite (\hb{res:damped}{8}). How much to damp?
+The best fixed $\theta$ grows with the correlation and with the length of
+the history, from 0 without correlation to nearly 1 at $\rho = 0.9$ or 20
+years, and no damping at all ($\theta = 1$) is risky with short
+histories: with five years and eight regions, $\hat K$ fails to be positive
+definite in nearly a quarter of the draws (study findings S1, S2).
+
+\emph{Shrink for the loss you care about.} The obvious way to choose
+$\theta$ is to make $\hat K$ as close as possible to the true $K$. That is
+the wrong target. The rates want \emph{less} damping than the best estimate
+of $K$ would get, most of all under heavy tails (S12). The reason, a
+hypothesis so far: $\hat K$ is computed from the same years as the cohort
+means, so a hard winter in this data set shows up in $\hat K$ and the GLS
+weights cancel that very shock. $\hat K$ is worth more as a measurement of
+\emph{this} history's common noise than as an estimate of the population
+$K$ (S13). The minimum-variance portfolio literature reached the same
+lesson in finance (Ledoit and Wolf 2017; \file{studies/literature.md} §1).
+Leave-one-year-out cross-validation does not help either, for the same
+reason: a held-out year's shock cannot be cancelled (S14).
+
+\emph{A fit with no tuning.} Damping is a hand-set number, and the project's
+rule is that a fitted model needs none. The fit the app uses instead,
+\emph{correlated Bühlmann--Straub with credibility-weighted variances},
+gets there by giving the covariances fewer parameters
+(\file{studies/damping-theta.md}, ``Ansatz''):
+\begin{itemize}
+  \item \emph{One correlation} $\rho$ for all pairs, not one covariance:
+    with unequal volumes one common covariance exceeds the noise variance of
+    the large cohorts and their factors explode (S4; Section~\ref{sec:special}).
+    With one $\rho \in [0, 1)$ the fitted $\hat K$ is positive definite by
+    the theorem of Section~\ref{sec:K}, so damping disappears (S15).
+  \item \emph{Variances by credibility.} Each cohort's $\hat\sigma_j^2$ is
+    blended with the pooled one by a credibility factor whose own parameters
+    (the noise of $\hat\sigma_j^2$, the spread of the true $\sigma_j^2$)
+    come from moment equations: Bühlmann--Straub one level up (S17). A
+    common $\sigma^2$ fails when regions really differ (S16), and a separate
+    $\hat\sigma_j^2$ per region is fragile with short histories (S10).
+  \item \emph{Every parameter by a moment equation}, nothing chosen by hand.
+\end{itemize}
+Over 45 simulated worlds it is the most robust of the fits tried: best or
+near best almost everywhere, and equal to Bühlmann--Straub when there is no
+correlation (\file{studies/variance-credibility.js}). The model, $K \succ 0$
+and the blend are proved; the estimators' unbiasedness under this structure
+is not yet in Lean, and the quality of the whole is numerical, as it is for
+the EBLUP in small-area estimation (\file{studies/literature.md} §2).
+
+\emph{The error of a fitted model.} Plug estimates into the
+known-parameter error formula and you understate the error, by 13--50\% in
+the study (S18): the formula misses the \emph{price of estimation}. Small-area
+estimation splits the fitted model's error into the known-parameter error,
+a part from estimating the parameters, and a cross term (Kackar and
+Harville 1984, Prasad and Rao 1990; \file{studies/literature.md} §4). Under
+normal noise the cross term vanishes; under heavy tails it is negative,
+because a large shock inflates both a cohort's deviation and the variance
+estimates, so the fitted factor shrinks hardest exactly when the raw mean
+is most off (S21). That is how a fitted model can beat the best blend with
+fixed weights (S9).
+
+Two data-only estimates of the fitted error were tried. A jackknife that
+re-fits the parameters with one year deleted (Jiang, Lahiri and Wan 2002) is
+right on average within about $\pm15\%$ with ten years (S19), cautious under
+heavy tails because it has no cross term (S23). Stein's unbiased risk
+estimate, with the fitted covariances plugged in, is comparable, better
+under heavy tails and too small with short histories (S25). Neither tells
+you the error of \emph{this} data set: both estimate the average over data
+sets like it (S26).
+
+\watch
+\begin{itemize}
+  \item \emph{Two periods and two cohorts at least}, and more of both than
+    that for anything stable.
+  \item \emph{Check $\hat K$ before inverting it.} A negative $\hat\tau^2$
+    or an indefinite correlation table is a sample artefact; truncate and
+    repair, or use a fit whose $\hat K$ is positive definite by
+    construction.
+  \item \emph{Don't fit more covariances than the data carry.} Without
+    correlation, plain Bühlmann--Straub is slightly better than any
+    correlated fit (S6): that is the cost of estimating correlations that
+    are not there. Feasible GLS has the same weakness.
+  \item \emph{Report the fitted error as a typical error}, not as an
+    interval around this data set's rates (\app{One draw}, ``Typ.\ err.'').
+  \item \emph{Study numbers are numerical.} Findings S1--S26 come from
+    simulated worlds; each is labelled in
+    \file{studies/damping-theta.md} by how far it can be trusted if the
+    world changes.
+\end{itemize}
+
+\see \hb{res:damped}{8}, \hb{res:estimation}{16}, \hb{res:bs_tau}{17},
+\hb{res:integral_quad}{20} ·
+\lean{Credibility.Model.sigRhoHat_unbiased},
+\lean{Credibility.Model.tauHat_unbiased},
+\lean{Credibility.Model.KHat_unbiased},
+\lean{Credibility.Model.sigRhoHat_self},
+\lean{Credibility.Model.tauHatBS_unbiased},
+\lean{Credibility.Unequal.dampedK_posDef},
+\lean{Credibility.Unequal.K_posDef} ·
+\app{Models}, \app{Fitting steps} · \finding{7} ·
+\file{studies/damping-theta.md} (S1--S26),
+\file{studies/literature.md} §2, §4 · thesis §2.8, eqs.~(37)--(41).
+
+% ===========================================================================
 \section{Why the moments are real}\label{sec:moments}
-\notyet{given numbers versus actual covariances; true mean squared error;
-the assumptions are consistent exactly when $\rho \succeq 0$.}
+
+\oneline Everything up to here treats covariances and mean squared errors as
+given numbers; the moment layer proves that, for \emph{any} random
+variables with those first and second moments, they are the actual
+covariances, the blend is optimal in actual mean squared error, and such
+random variables exist exactly when the correlation table is positive
+semidefinite.
+
+\idea \emph{Given numbers versus actual covariances.} The thesis, like most
+credibility texts, works with second moments as symbols: $K_{ij}$ is
+``the covariance of $\hmu_i$ and $\hmu_j$'', and the best $z_j$ minimises a
+quadratic in those symbols. That is an algebraic optimisation. It becomes a
+statement about real data only once someone checks that the symbols are
+what they claim to be: that for random variables with the model's moments,
+$\cov(\hmu_i, \hmu_j)$ actually equals the $K_{ij}$ of the formula, and the
+quadratic actually equals $E(\hmu_j^b - \mu_j)^2$. In Lean that check is a
+separate layer, and it uses no distribution: any probability space, any
+square-integrable random variables with the stated means and covariances
+(\finding{11}).
+
+\emph{What the layer proves.}
+\begin{itemize}
+  \item \emph{The covariances are real.} $K$ is the actual covariance of the
+    cohort estimates, and the portfolio estimate $\hmu$ is unbiased with the
+    smallest actual variance among unbiased linear combinations
+    (\hb{res:mse}{18}).
+  \item \emph{The blend is optimal in true mean squared error.} The best
+    $z_j$ of Section~\ref{sec:z} minimises $E(z\hmu_j + (1-z)\hmu - \mu_j)^2$,
+    the actual expected squared error (\hb{res:mse}{18}). The same $z_j$ is
+    best for next year's outcome, whose error is the level's plus next
+    year's noise variance (\hb{res:forecast}{19}).
+  \item \emph{``Unbiased'' means the actual expectation.} The expectation of
+    any quadratic form in the data is computed from the moments alone, so
+    the estimators of Section~\ref{sec:estimation} are unbiased whatever the
+    distribution (\hb{res:integral_quad}{20}).
+\end{itemize}
+The layer is proved once, at the level of $K$: any unbiased estimates whose
+covariances with each other and with the true levels are known. The
+correlated cohorts, unequal lengths and group levels only supply those
+covariances, so each is a short corollary.
+
+\emph{The assumptions are consistent exactly when $\rho \succeq 0$.}
+Section~\ref{sec:K} needed the correlation table to be positive
+semidefinite for $K$ to be positive definite, a hypothesis the thesis did
+not state (\finding{1}). The moment layer shows it is not an extra
+assumption. Random variables with the model's moments exist if and only if
+the table is positive semidefinite (\hb{res:exists}{21}). So whenever the
+model describes anything at all, $K$ is positive definite for free. And if
+an \emph{estimated} correlation table fails the test, no data-generating
+process has those correlations: it is a sample artefact, to be repaired,
+not a feature of the portfolio. With cohorts observed over different
+periods the condition is weaker and again exactly right: per period, the
+correlations of the cohorts observed then must be semidefinite; two cohorts
+that never share a period can have any correlation (\finding{12}).
+
+\emph{What ``best'' means.} Everything in this section is about the best
+blend with \emph{fixed} weights: $z_j$ and $b_j$ computed from the true
+moments, then applied to the data. A fitted model's weights depend on the
+data, so it is a non-linear estimator and is not bound by that floor; under
+heavy-tailed noise it can do slightly better (Section~\ref{sec:estimation}).
+The app therefore calls the floor ``the best fixed blend''.
+
+\watch
+\begin{itemize}
+  \item \emph{Distribution-free is not assumption-free.} The layer needs
+    square-integrable random variables, uncorrelated periods, and cohort
+    effects uncorrelated with the noise. A trend or a persistent shock
+    breaks the second; noise that persists into next year belongs to the
+    level, not to next year's noise.
+  \item \emph{Second moments decide the blend, not its uncertainty.} How
+    precise the \emph{estimated} parameters are depends on fourth moments,
+    which the model leaves free; that is why the best damping and the
+    fitted error depend on the noise distribution
+    (\file{studies/damping-theta.md}, S7, S21).
+\end{itemize}
+
+\see \hb{res:mse}{18}, \hb{res:forecast}{19}, \hb{res:integral_quad}{20},
+\hb{res:exists}{21} ·
+\lean{Credibility.Core.Estimates.portEst_optimal},
+\lean{Credibility.Core.Estimates.mse_blend},
+\lean{Credibility.Core.Estimates.bestZ_mse_optimal},
+\lean{Credibility.Core.Estimates.bestZ_forecast_optimal},
+\lean{Credibility.Model.Noise.mse_blend},
+\lean{Credibility.Model.Noise.bestZ_mse_optimal},
+\lean{Credibility.Model.Noise.integral_quad},
+\lean{Credibility.Model.integral_quad_of_cov},
+\lean{Credibility.Model.exists_noise_iff},
+\lean{Credibility.Unequal.Noise.bestZ_mse_optimal},
+\lean{Credibility.Unequal.exists_noise_iff} ·
+\app{Many draws} (fit against the floor) · \finding{1}, \finding{11},
+\finding{12} · \file{studies/damping-theta.md} (S9).
 
 \section{Cohorts observed over different periods}\label{sec:unequal}
 \notyet{unequal lengths; the per-pair count.}

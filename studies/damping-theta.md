@@ -1,3 +1,5 @@
+Absorbed into paper §7 and §8 on 2026-11-16; kept as the working record.
+
 # Damping θ and the common-covariance fit: a numerical study
 
 2026-11-14. Script: `studies/damping-theta.js` (run `node studies/damping-theta.js 1000 tau`;

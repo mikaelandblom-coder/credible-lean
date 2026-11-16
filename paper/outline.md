@@ -42,7 +42,7 @@ Rules that keep this cheap to maintain:
 Status: `—` not started, `src` source material exists to absorb, `draft`,
 `done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
 "not yet written" note; §1–6 drafted. Later the same day: §0, A and C
-drafted.)
+drafted, then §7–9.)
 
 | # | Section | Covers | Source material | Status |
 |---|---|---|---|---|
@@ -53,9 +53,9 @@ drafted.)
 | 4 | The weights | inverse-variance within a cohort; GLS across cohorts; the link to the minimum-variance portfolio | thesis §2.5, `studies/literature.md` §1 | draft |
 | 5 | The credibility factor | the proposed `z`; how correlation moves it; `z > 1` and the sign flip | thesis §2.5, §2.7, Findings 3, 17 | draft |
 | 6 | Special cases | Bühlmann–Straub; two cohorts; equal covariances; weights from credibility factors | Findings 4, 5 | draft |
-| 7 | Balance | what it is and why practitioners want it; when it holds for free; the cost of forcing it; how to balance if you must | Findings 10, 15, 16, study findings S27–S29 | src |
-| 8 | Estimating the parameters | the unbiased estimators and what they need; plug-in `K̂` and damping; a fit with no tuning; the error of a fitted model | thesis §2.8, Finding 7, `studies/damping-theta.md`, `studies/literature.md` §2, §4 | src |
-| 9 | Why the moments are real | given numbers versus actual covariances; true MSE; the assumptions are consistent exactly when `ρ ⪰ 0` | Findings 11, 12 | src |
+| 7 | Balance | what it is and why practitioners want it; when it holds for free; the cost of forcing it; how to balance if you must | Findings 10, 15, 16, study findings S27–S29 | draft |
+| 8 | Estimating the parameters | the unbiased estimators and what they need; plug-in `K̂` and damping; a fit with no tuning; the error of a fitted model | thesis §2.8, Finding 7, `studies/damping-theta.md`, `studies/literature.md` §2, §4 | draft |
+| 9 | Why the moments are real | given numbers versus actual covariances; true MSE; the assumptions are consistent exactly when `ρ ⪰ 0` | Findings 11, 12 | draft |
 | 10 | Cohorts observed over different periods | unequal lengths; the per-pair count | `notes/unequal-lengths.md`, Findings 8–10, 12 | src |
 | 11 | Groups and shared levels | a shared level drops out; several groups; what the estimators see; towards hierarchical credibility | Finding 13 | src |
 | 12 | Choosing the cohorts | when merging pays off; equal credibility is not grouping; optimal cohorts are intervals; when they are not | `notes/merging-cohorts.md`, `notes/kmeans-bridge.md`, Findings 6, 14 | src |
