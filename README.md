@@ -19,8 +19,10 @@ when the correlations vanish.
 ## Status
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
-(regenerate with `python3 scripts/progress.py`). All 399 theorems are
-proved, with no `sorry`:
+(regenerate with `python3 scripts/progress.py`). Everything is proved,
+with no `sorry`: 65 main results, every finding backed by Lean, and 445
+Lean declarations in all (special cases are their own declarations, so
+PROGRESS.md also counts what does not grow with corollaries):
 
 - **The thesis, §2.1–2.9** (`Blend`, `Weights`, `Data`, `Core`, `Model`,
   `BuhlmannStraub`, `Balance`, `TwoCohorts`, `Expectation`, `Estimation`),
@@ -34,11 +36,12 @@ proved, with no `sorry`:
   the thesis model; a shared level within groups, towards hierarchical
   credibility, with its moment layer; forecasting next year's outcome (the
   same `z` is optimal); the best balanced blend and the best balanced
-  correction; damping off-diagonal entries; and optimal cohorts as
-  intervals (weighted k-means).
+  correction; the blend against the best linear unbiased predictor, and
+  the price of ignoring or damping correlation; damping off-diagonal
+  entries; and optimal cohorts as intervals (weighted k-means).
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
-found while formalizing (items 1–16), e.g. that two correlated cohorts can
+found while formalizing (items 1–20), e.g. that two correlated cohorts can
 push the credibility factor above one.
 
 The **[app](https://mikaelandblom-coder.github.io/credible-lean/app/)**
