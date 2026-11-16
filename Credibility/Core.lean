@@ -82,6 +82,72 @@ theorem bestZ_eq (hK : K.PosDef) (j : J) :
     Matrix.one_apply_eq, mul_one]
   ring
 
+/-- `Var(μ̂ⱼ - μ̂) = (eⱼ - b)ᵀ K (eⱼ - b)`: the gap variance as a quadratic form
+in the weights of `μ̂ⱼ - μ̂`. -/
+theorem quadForm_single_sub_glsWeight [Nonempty J] (hK : K.PosDef) (j : J) :
+    (Pi.single j 1 - glsWeight K) ⬝ᵥ (K *ᵥ (Pi.single j 1 - glsWeight K))
+      = K j j - (invTotal K)⁻¹ := by
+  -- `K(eⱼ - b) = Kₓⱼ - s²·1`; `eⱼ ⬝ Kₓⱼ = Kⱼⱼ`, `b ⬝ Kₓⱼ = (Kb)ⱼ = s²`, `(eⱼ - b) ⬝ 1 = 0`.
+  have hs : ∑ i, glsWeight K i * K i j = (invTotal K)⁻¹ := by
+    have h := congrFun (mulVec_glsWeight hK) j
+    simp only [mulVec, dotProduct] at h
+    rw [← h]; refine sum_congr rfl fun i _ => ?_
+    rw [mul_comm, ← hK.isHermitian.apply i j]; simp
+  rw [mulVec_sub, mulVec_glsWeight hK]
+  simp only [dotProduct, Pi.sub_apply, mulVec_single, sub_mul, mul_sub, sum_sub_distrib,
+    Pi.single_apply, ite_mul, one_mul, zero_mul, sum_ite_eq', mem_univ, ite_true, ← sum_mul,
+    sum_glsWeight hK]
+  simp [Matrix.col]
+  exact hs
+
+/-- Finding 17: the own-data weight is bounded. If `xᵀKx ≥ m‖x‖²` for all `x`
+(e.g. `m = λ_min(K)`), then `|zⱼ| ‖eⱼ - b‖ ≤ τ²/m`. The blend
+`zⱼμ̂ⱼ + (1 - zⱼ)μ̂ = μ̂ + zⱼ(eⱼ - b)·μ̂` therefore has bounded coefficients, in
+particular `cⱼ = bⱼ + zⱼ(1 - bⱼ)`, even where `zⱼ` is large. The proof:
+`zⱼ = (1 - bⱼ)τ²/Var(gap)`, `|1 - bⱼ| ≤ ‖eⱼ - b‖` and
+`Var(gap) = (eⱼ - b)ᵀK(eⱼ - b) ≥ m‖eⱼ - b‖²`. -/
+theorem abs_bestZ_mul_norm_le [Nonempty J] (hK : K.PosDef) (hτ : 0 ≤ τ2) {m : ℝ} (hm : 0 < m)
+    (hRay : ∀ x : J → ℝ, m * (x ⬝ᵥ x) ≤ x ⬝ᵥ (K *ᵥ x)) (j : J) (hKjj : K j j = τ2 + v j) :
+    |(moments K τ2 v j).bestZ| * √((Pi.single j 1 - glsWeight K) ⬝ᵥ (Pi.single j 1 - glsWeight K))
+      ≤ τ2 / m := by
+  set x := Pi.single j 1 - glsWeight K with hx
+  have hxj : x j = 1 - glsWeight K j := by simp [hx]
+  set n := x ⬝ᵥ x
+  have hn : 0 ≤ n := by simp only [n, dotProduct]; exact sum_nonneg fun i _ => mul_self_nonneg _
+  -- `(1 - bⱼ)² ≤ ‖x‖²`
+  have hxj2 : x j ^ 2 ≤ n := by
+    simp only [n, dotProduct, ← sq]
+    exact single_le_sum (f := fun i => x i ^ 2) (fun i _ => sq_nonneg _) (mem_univ j)
+  have hg : τ2 + v j - (invTotal K)⁻¹ = x ⬝ᵥ (K *ᵥ x) := by
+    rw [hx, quadForm_single_sub_glsWeight hK, hKjj]
+  rw [bestZ_eq hK, hg, ← hxj]
+  rcases hn.eq_or_lt with h0 | hpos
+  · rw [← h0, Real.sqrt_zero, mul_zero]; positivity
+  have hq : m * n ≤ x ⬝ᵥ (K *ᵥ x) := hRay x
+  have hqpos : 0 < x ⬝ᵥ (K *ᵥ x) := lt_of_lt_of_le (mul_pos hm hpos) hq
+  -- `|x j| τ² √n / q ≤ τ² n / (m n)` since `|x j| ≤ √n` and `q ≥ m n`.
+  have hab : |x j| ≤ √n := Real.abs_le_sqrt hxj2
+  rw [abs_div, abs_mul, abs_of_nonneg hτ, abs_of_pos hqpos, div_mul_eq_mul_div,
+    div_le_div_iff₀ hqpos hm]
+  calc |x j| * τ2 * √n * m ≤ √n * τ2 * √n * m := by gcongr
+    _ = τ2 * (m * n) := by rw [mul_comm √n τ2, mul_assoc τ2, Real.mul_self_sqrt hn]; ring
+    _ ≤ τ2 * x ⬝ᵥ (K *ᵥ x) := by gcongr
+
+/-- Finding 17: the own-data weight `cⱼ = bⱼ + zⱼ(1 - bⱼ)`, the coefficient of
+`μ̂ⱼ` in the blend, stays within `τ²/m` of `bⱼ`: `|zⱼ(1 - bⱼ)| ≤ τ²/m` whenever
+`xᵀKx ≥ m‖x‖²`, since `|1 - bⱼ| ≤ ‖eⱼ - b‖`. -/
+theorem abs_bestZ_mul_one_sub_le [Nonempty J] (hK : K.PosDef) (hτ : 0 ≤ τ2) {m : ℝ} (hm : 0 < m)
+    (hRay : ∀ x : J → ℝ, m * (x ⬝ᵥ x) ≤ x ⬝ᵥ (K *ᵥ x)) (j : J) (hKjj : K j j = τ2 + v j) :
+    |(moments K τ2 v j).bestZ * (1 - glsWeight K j)| ≤ τ2 / m := by
+  set x := Pi.single j 1 - glsWeight K with hx
+  have hxj : x j = 1 - glsWeight K j := by simp [hx]
+  have hxj2 : x j ^ 2 ≤ x ⬝ᵥ x := by
+    simp only [dotProduct, ← sq]
+    exact single_le_sum (f := fun i => x i ^ 2) (fun i _ => sq_nonneg _) (mem_univ j)
+  rw [abs_mul, ← hxj]
+  exact (mul_le_mul_of_nonneg_left (Real.abs_le_sqrt hxj2) (abs_nonneg _)).trans
+    (abs_bestZ_mul_norm_le hK hτ hm hRay j hKjj)
+
 /-! ### Solving `K x = 1` -/
 
 /-- If `K` is invertible and `K w = c·1` with `c ≠ 0`, then `K⁻¹1 = c⁻¹ w`. Every

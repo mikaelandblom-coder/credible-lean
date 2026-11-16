@@ -125,6 +125,21 @@ theorem bestZ_eq (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1)
   rw [Core.bestZ_eq (K_posDef hτ hρ), hb, hs]
   exact z1_eq h1 h2 hτ (abs_lt.1 hρ).2.le hsing
 
+/-- Finding 17: the blend is continuous through the singularity. Away from
+`ρ* = (τ² + σ₁²)/(σ₁σ₂)`, `z₁ (1 - b₁) = τ²/D`, so with the gap
+`μ̂₁ - μ̂ = (1 - b₁)(μ̂₁ - μ̂₂)` the best blend is
+`(b₁ + τ²/D) μ̂₁ + (b₂ - τ²/D) μ̂₂`, smooth in `ρ` on `|ρ| < 1`: the sign flip of
+`z₁` at `ρ*` is matched by the sign flip of `1 - b₁`. -/
+theorem bestZ_mul_one_sub_b1 (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) (hρ : |ρ| < 1)
+    (hsing : τ2 + σ1 ^ 2 - σ1 * σ2 * ρ ≠ 0) :
+    (Core.moments (K σ1 σ2 τ2 ρ) τ2 ![σ1 ^ 2, σ2 ^ 2] 0).bestZ * (1 - b1 σ1 σ2 τ2 ρ)
+      = τ2 / D σ1 σ2 τ2 ρ := by
+  -- `z₁ = τ²/A` and `1 - b₁ = A/D` with `A = τ² + σ₁² - σ₁σ₂ρ`.
+  have hD := (D_pos h1 h2 hτ (abs_lt.1 hρ).2.le).ne'
+  rw [bestZ_eq h1 h2 hτ hρ hsing, b1]
+  field_simp
+  rw [D]; ring
+
 /-- Bühlmann–Straub is recovered at `ρ = 0`: `z₁ = τ²/(τ² + σ₁²)`. -/
 theorem z1_rho_zero (h1 : 0 < σ1) (h2 : 0 < σ2) (hτ : 0 < τ2) :
     (Core.moments (K σ1 σ2 τ2 0) τ2 ![σ1 ^ 2, σ2 ^ 2] 0).bestZ = τ2 / (τ2 + σ1 ^ 2) := by

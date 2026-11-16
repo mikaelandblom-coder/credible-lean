@@ -16,9 +16,7 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Finding 17: own-data weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)`, bounded by
-  `|cⱼ − bⱼ| ≤ τ²/λ_min(K)`; two cohorts `z₁(1 − b₁) = τ²/D`. Add to
-  Result 5 / 14 once proved in Lean.
+(none; Finding 17 added to Results 5 and 13, 2026-11-16)
 
 
 ## 0. Setting and notation (1 page)

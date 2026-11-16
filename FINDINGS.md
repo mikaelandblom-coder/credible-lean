@@ -207,7 +207,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    app's balance step.
 
 17. **The blend is continuous through the two-cohort singularity
-   (discussion, numerics; no Lean yet).** Finding 3 and the thesis (§2.7,
+   (Lean: `TwoCohorts.bestZ_mul_one_sub_b1`,
+   `Core.abs_bestZ_mul_norm_le`, `Core.abs_bestZ_mul_one_sub_le`).** Finding 3 and the thesis (§2.7,
    eq. (34)) treat the sign flip of `z₁` at `ρ* = (τ² + σ₁²)/(σ₁σ₂)` as a
    breakdown and clip `z₁` to `[0, 1]`. But the gap is
    `μ̂₁ − μ̂ = (1 − b₁)(μ̂₁ − μ̂₂)` and `τ² + σ₁² − s² = Var(μ̂₁ − μ̂) =
@@ -223,15 +224,17 @@ Gaps, extra hypotheses and new results found while formalizing.
    `z₁ = −1`, coefficients `(1.154, −0.154)`. So with the true parameters a
    negative `z₁` is the best blend, not an error; clipping it to 0 charges
    `μ̂`, which past `ρ*` already overshoots `μ̂₁`. In a fitted model an
-   extreme `z` still signals a near-singular `K̂`. A Lean statement would be
-   `TwoCohorts`: `bestZ • gap = (τ²/D) • (μ̂₁ − μ̂₂)` away from `ρ*`.
+   extreme `z` still signals a near-singular `K̂`. In Lean:
+   `TwoCohorts.bestZ_mul_one_sub_b1`, `z₁(1 − b₁) = τ²/D` away from `ρ*`.
    *Reporting without the singularity (owner, 2026-11-16).* Keep `z` (the
    classical quantity, all results stated in it) and report next to it the
    own-data weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)`, the coefficient of `μ̂ⱼ` in the
    blend. It is bounded for any `J`: `zⱼ(eⱼ − b)` has norm at most
    `τ²/λ_min(K)`, since `zⱼ = (1 − bⱼ)τ²/Var(gap)`, `|1 − bⱼ| ≤ |eⱼ − b|` and
    `Var(gap) = (eⱼ − b)ᵀK(eⱼ − b) ≥ λ_min|eⱼ − b|²` (checked in 20000 random
-   worlds, `J = 2..6`: worst ratio 0.91; not in Lean). Example above:
+   worlds, `J = 2..6`: worst ratio 0.91). In Lean, with `xᵀKx ≥ m‖x‖²` for a
+   given `m > 0` in place of `λ_min`: `Core.abs_bestZ_mul_norm_le`, and
+   `|cⱼ − bⱼ| ≤ τ²/m` as `Core.abs_bestZ_mul_one_sub_le`. Example above:
    `c₁ = 1.000, 1.038, 1.064, 1.070, 1.154` at `ρ = 0.25, 0.4, 0.49, 0.51,
    0.75`. For `J = 2` also `ζ₁ = z₁(1 − b₁) = τ²/D`, the factor on
    `μ̂₁ − μ̂₂`; for `J ≥ 3` comparing with the reweighted rest

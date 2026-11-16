@@ -1047,8 +1047,56 @@ can occur, but not when. The following answers that.
   blend: $\lVert z_j(e_j - b)\rVert \le \tau^2/\lambda_{\min}(K)$, because
   $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$ and
   $\Var(\hmu_j - \hmu) \ge \lambda_{\min}(K)\lVert e_j - b\rVert^2$.
-  Not yet in Lean.
+  Both are proved: Theorems~\ref{thm:two_blend_continuous}
+  and~\ref{thm:Core_bestZ_bounded}.
 \end{remark}
+
+\begin{theorem}[Two cohorts: the blend is smooth through $\rho^*$]\label{thm:two_blend_continuous}
+  \lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1}
+  \leanok
+  \uses{thm:two_bestZ_eq, lem:D_pos}
+  If $|\rho| < 1$ and $\tau^2 + \sigma_1^2 \ne \sigma_1\sigma_2\rho$, then
+  $z_1(1 - b_1) = \tau^2/D$ with
+  $D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:two_bestZ_eq, lem:D_pos}
+  With $A = \tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho$: $z_1 = \tau^2/A$
+  (Theorem~\ref{thm:two_bestZ_eq}) and $1 - b_1 = A/D$, with $D > 0$.
+\end{proof}
+
+\begin{lemma}[The gap variance as a quadratic form]\label{lem:Core_quadForm_gap}
+  \lean{Credibility.Core.quadForm_single_sub_glsWeight}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  If $K$ is positive definite then
+  $(e_j - b)^T K (e_j - b) = K_{jj} - s^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $K(e_j - b) = Ke_j - s^2 u$, $b^TKe_j = (Kb)_j = s^2$ and $(e_j - b)^Tu = 0$.
+\end{proof}
+
+\begin{theorem}[The own-data weight is bounded]\label{thm:Core_bestZ_bounded}
+  \lean{Credibility.Core.abs_bestZ_mul_norm_le, Credibility.Core.abs_bestZ_mul_one_sub_le}
+  \leanok
+  \uses{def:Core.moments, lem:Core_quadForm_gap}
+  Let $K$ be positive definite with $K_{jj} = \tau^2 + v_j$, $\tau^2 \ge 0$, and
+  $x^TKx \ge m\lVert x\rVert^2$ for all $x$, with $m > 0$ (e.g.\
+  $m = \lambda_{\min}(K)$). Then
+  $\lvert z_j\rvert\,\lVert e_j - b\rVert \le \tau^2/m$; in particular
+  $\lvert c_j - b_j\rvert = \lvert z_j(1 - b_j)\rvert \le \tau^2/m$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, lem:Core_quadForm_gap}
+  By Theorem~\ref{thm:Core_bestZ_eq} and Lemma~\ref{lem:Core_quadForm_gap},
+  $z_j = (1 - b_j)\tau^2/q$ with $q = (e_j - b)^TK(e_j - b) \ge m\lVert e_j - b\rVert^2$,
+  and $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$. If $b = e_j$ both sides
+  are trivial.
+\end{proof}
 
 % ---------------------------------------------------------------------------
 \chapter{Parameter estimation}\label{ch:estimation}

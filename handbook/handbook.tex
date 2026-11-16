@@ -184,7 +184,12 @@ optimal. This is what makes the next result simple.
     z_j = \frac{(1 - b_j)\,\tau^2}{\tau^2 + v_j - s^2}
         = \frac{\cov(\hmu_j - \hmu,\; \mu_j)}{\Var(\hmu_j - \hmu)} .
   \]
+  The own-data weight $c_j = b_j + z_j(1 - b_j)$, the coefficient of $\hmu_j$
+  in the blend, is bounded: if $x^TKx \ge m\lVert x\rVert^2$ for all $x$
+  (e.g.\ $m = \lambda_{\min}(K)$) and $\tau^2 \ge 0$, then
+  $\lvert c_j - b_j\rvert \le \tau^2/m$.
   \lean{Credibility.Core.bestZ_eq}
+  \lean{Credibility.Core.abs_bestZ_mul_one_sub_le}
 \end{result}
 \use This is the formula to implement. Compute $K$, invert it once, and
 every $z_j$ follows. In the thesis this is eq.~(26).
@@ -193,6 +198,9 @@ of the gap between my cohort and the portfolio is real?''. The numerator is
 the real part of the gap: $\tau^2$, minus the share $b_j\tau^2$ of cohort
 $j$'s own effect that already sits in $\hmu$. The denominator is the whole
 gap, real plus noise.
+\use Report $c_j$ next to $z_j$: it never blows up, for any number of
+cohorts, while $z_j$ can be large or negative where $b_j$ is close to one
+(Finding 17).
 
 \begin{result}[Uncorrelated cohorts: Bühlmann--Straub]\label{res:diag}
   If $K = \operatorname{diag}(\tau^2 + v_j)$ with positive entries and
@@ -350,9 +358,11 @@ $\rho = \rho_{12}$.
     \qquad
     b_1 = \frac{z_1}{z_1 + z_2},
   \]
-  with $z_2$ likewise.
+  with $z_2$ likewise, and $z_1(1 - b_1) = \tau^2/D$ with
+  $D = \Var(\hmu_1 - \hmu_2) = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho$.
   \lean{Credibility.TwoCohorts.z1_eq}
   \lean{Credibility.TwoCohorts.b1_eq_z}
+  \lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1}
 \end{result}
 \use Bühlmann--Straub with the noise variance $\sigma_1^2$ replaced by
 $\sigma_1^2 - \sigma_1\sigma_2\rho$: the part of cohort~1's noise it shares
@@ -361,7 +371,9 @@ cancels in the gap $\hmu_1 - \hmu$. Any split of a portfolio in two (two
 segments of a rating factor) keeps the classical weights $b_j = z_j/z_*$.
 \why With two cohorts there is only one covariance, so both cohorts are
 ``equally correlated with the rest''. That is the condition of
-Result~\ref{res:equalcov}.
+Result~\ref{res:equalcov}. The last identity says the blend is
+$\hmu + (\tau^2/D)(\hmu_1 - \hmu_2)$: smooth in $\rho$, also where $z_1$
+blows up and changes sign (Result~\ref{res:z1_range}).
 
 \begin{result}[Credibility above one, and below zero]\label{res:z1_range}
   Let $\sigma_1, \sigma_2, \tau^2 > 0$ and
