@@ -108,7 +108,9 @@ of item 8 with unequal lengths), cohort-dependent series lengths
 ([`notes/unequal-lengths.md`](notes/unequal-lengths.md), items 8–10), the
 two small lemmas from van Rijn, Weber, Merz (`KMeans`, `OffDiagonal`), the
 k-means bridge (item 14), group levels with their moment layer (item 13),
-balance (items 15–16) and forecasting. Open:
+balance (items 15–16), forecasting, the blend through the two-cohort
+singularity and against the best linear unbiased predictor, and the price
+of ignoring or damping correlation (items 17–20). Open:
 
 - **Choosing cohorts from the data.** Pick the partition into cohorts that
   minimises the total credibility MSE itself, rather than clustering
