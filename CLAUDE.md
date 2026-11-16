@@ -161,6 +161,9 @@ still reads like the thesis; special cases are corollaries.
   handbook numbers), no proofs (gives Lean names).
 - **Blueprint**: the proof ledger (statements, proofs, dependency graph).
   Reached by link, not read front to back.
+The paper is `paper/paper.tex` (built by CI to `/paper/` and `paper.pdf`);
+`scripts/paper_check.py` (CI) checks its citations (Lean names proved,
+handbook numbers current: run it with `--fix` after renumbering the handbook).
 Don't restate across them: a formula lives in the handbook, an explanation
 in the paper, a proof in Lean and the blueprint; the others point to it.
 When a result is proved, a finding logged, or a statement changed, ask for

@@ -1,7 +1,8 @@
 name: Blueprint
 
 # Builds Lean, the blueprint (web + pdf) and checks they agree, in two parallel
-# jobs (`lean`, `docs`); `docs` also tests the app (app/) and publishes it at /app/.
+# jobs (`lean`, `docs`); `docs` also builds the handbook and the paper (PDF, and
+# the paper as a web page at /paper/) and tests the app (app/), published at /app/.
 # Deploys to GitHub Pages on pushes to main.
 # Pushes to main and tags only: session branches (ccr-…, claude/…) used to
 # trigger a second, duplicate run of every commit.
@@ -97,6 +98,7 @@ jobs:
           python3 scripts/blueprint_check.py --decls > "$RUNNER_TEMP/decls.txt"
           lake env lean --run scripts/CheckDecls.lean "$RUNNER_TEMP/decls.txt"
           python3 scripts/handbook_check.py
+          python3 scripts/paper_check.py
 
   docs:
     runs-on: ubuntu-latest
@@ -123,6 +125,17 @@ jobs:
         run: |
           latexmk -xelatex -interaction=nonstopmode -halt-on-error handbook.tex
           cp handbook.pdf ../blueprint/web/handbook.pdf
+
+      # The paper (paper/outline.md): a PDF next to the handbook, and one web
+      # page with a search box at /paper/ (plasTeX comes with leanblueprint).
+      - name: Build paper
+        working-directory: paper
+        run: |
+          latexmk -xelatex -interaction=nonstopmode -halt-on-error paper.tex
+          cp paper.pdf ../blueprint/web/paper.pdf
+          plastex -c plastex.cfg paper.tex
+          mkdir -p ../blueprint/web/paper
+          cp -r web/. ../blueprint/web/paper/
 
       # The `lean` job checks the names from `blueprint_check.py --decls`;
       # make sure that is the list leanblueprint itself extracted.

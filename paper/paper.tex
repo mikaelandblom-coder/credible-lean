@@ -1,0 +1,381 @@
+% The paper: the up-to-date version of the thesis, explained in words.
+% Concepts only: formulas live in the handbook (cited by number with \hb),
+% proofs in Lean (cited by name with \lean) and the blueprint.
+% Outline, rules and status: paper/outline.md.
+% Built by CI as a PDF (xelatex) and a searchable web page (plasTeX),
+% published next to the handbook. scripts/paper_check.py checks every
+% citation (run it with --fix after renumbering the handbook).
+\documentclass[11pt]{article}
+
+\usepackage{amssymb, amsmath}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}
+
+\newcommand{\hmu}{\hat\mu}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\cov}{\operatorname{cov}}
+
+% --- Citations (all checked by scripts/paper_check.py) ----------------------
+\newcommand{\site}{https://mikaelandblom-coder.github.io/credible-lean}
+\newcommand{\repo}{https://github.com/mikaelandblom-coder/credible-lean/blob/main}
+% \lean{Name}: a proved Lean declaration, linked to its source line.
+\newcommand{\lean}[1]{\href{\site/find/\#doc/#1}{\texttt{\detokenize{#1}}}}
+% \hb{label}{n}: handbook Result n (label = its \label in handbook.tex).
+\newcommand{\hb}[2]{\href{\site/handbook.pdf\#nameddest=result.#2}{Handbook~(#2)}}
+% \hbsec{label}{n}: handbook Section n.
+\newcommand{\hbsec}[2]{\href{\site/handbook.pdf\#nameddest=section.#2}{Handbook~\S#2}}
+% \finding{n}: item n of FINDINGS.md.
+\newcommand{\finding}[1]{\href{\repo/FINDINGS.md}{Finding~#1}}
+% \file{path}: a file in the repository (a working note, a study script).
+\newcommand{\file}[1]{\href{\repo/#1}{\texttt{\detokenize{#1}}}}
+% \app{step}: a step or switch of the app.
+\newcommand{\app}[1]{\href{\site/app/}{app: #1}}
+
+% --- The section template (paper/outline.md) --------------------------------
+\newcommand{\oneline}{\paragraph{In one sentence.}}
+\newcommand{\idea}{\paragraph{The idea.}}
+\newcommand{\watch}{\paragraph{When it applies, and what to watch out for.}}
+\newcommand{\see}{\paragraph{See.}}
+\newcommand{\notyet}[1]{\par\noindent\textit{Not yet written. Will cover: #1}\par}
+
+% Working title (owner to confirm: paper/outline.md, "Open choices").
+\title{Credibility from second moments: a guide}
+\author{M.~Andblom}
+\date{Draft}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  Credibility theory blends a segment's own experience with the portfolio's.
+  This paper explains one framework for doing that which assumes nothing but
+  means and covariances, lets segments be correlated, and contains classical
+  Bühlmann--Straub as a special case. It is the up-to-date version of the
+  master thesis it grew out of. It explains; it does not prove or list
+  formulas. The formulas are in the
+  \href{\site/handbook.pdf}{handbook}, cited by number, and every result is
+  machine-checked in Lean, cited by name; the
+  \href{\site/}{blueprint} has the proofs.
+\end{abstract}
+
+\tableofcontents
+
+% Section 0 is "How to read this", so the numbers match paper/outline.md.
+\setcounter{section}{-1}
+
+% ===========================================================================
+\section{How to read this}\label{sec:read}
+\notyet{the four documents (app, handbook, paper, blueprint) and what each
+is for; what ``machine-checked'' means and what it does not.}
+
+% ===========================================================================
+\section{What credibility is}\label{sec:credibility}
+
+\oneline Credibility is mixing a cohort's own, noisy experience with the
+steadier experience of the whole portfolio, in the proportion that makes the
+mix as accurate as possible.
+
+\idea Say you sell travel insurance through a dozen payment cards, and you
+want the risk premium per cardholder for each card. A small card has three
+years of data and a loss cost of 1.8 per cardholder; the portfolio as a
+whole runs at 1.0. Which number do you charge?
+
+Neither is right on its own. The card's own figure $\hmu_j$ aims at the right
+target, but with so little data much of the 1.8 may be luck. The portfolio
+figure $\hmu$ is stable, but it is blind to anything that really makes this
+card different. Credibility charges something in between:
+\[
+  \hmu_j^{\,b} = z_j\,\hmu_j + (1 - z_j)\,\hmu .
+\]
+The \emph{credibility factor} $z_j$ is how much you trust the card's own
+experience. At $z_j = 1$ you trust it fully; at $z_j = 0$ you charge the
+portfolio rate. Everything in this paper is about choosing $z_j$, and the two
+estimates it blends, well.
+
+\emph{Well} means: the blend should miss the card's true risk premium $\mu_j$
+by as little as possible on average. If both estimates are unbiased, missing
+by little on average means a small error variance. That variance is a
+parabola in $z_j$, so it has exactly one lowest point, the \emph{best}
+credibility factor (\hb{res:bestZ}{1}). Where the vertex sits depends on
+only six numbers: the variances of the two estimates, of the truth, and the
+three covariances between them. Nothing else about the data matters, and the
+result holds for any two unbiased estimates, not only the ones built in this
+paper.
+
+There is a second way to read the best $z_j$, and it is the one to keep in
+mind. Look at the gap $\hmu_j - \hmu$ between the card and the portfolio.
+Part of that gap is real (the card really is riskier) and part is noise. The
+best $z_j$ is the regression coefficient of the truth on the gap: the share
+of the gap you expect to be real (\hb{res:z}{5}). A big card with a
+stable history has a gap that is mostly real, so $z_j$ is near one. A tiny
+card's gap is mostly noise, so $z_j$ is near zero.
+
+Building the blend takes three choices: how to average a card's years into
+$\hmu_j$, how to average the cards into $\hmu$, and the factor $z_j$. They
+can be made one at a time, because no choice changes what the others are
+optimizing. Section~\ref{sec:weights} makes the first two,
+Section~\ref{sec:z} the third.
+
+This is the oldest idea in actuarial science that still has a name of its
+own. Bühlmann (1967) gave it its modern form and Bühlmann and Straub (1970)
+the version with volumes that most insurers use. What is new here is that
+cohorts may be \emph{correlated}: a cold winter or a surge in travel moves
+all the cards at once. Classical credibility assumes that away. This
+framework does not, and it gets Bühlmann--Straub back when the correlation
+is zero (Section~\ref{sec:special}).
+
+\watch
+\begin{itemize}
+  \item \emph{Unbiased means: you cannot tell the cohorts apart in
+    advance.} The model takes every cohort to have the same expected risk
+    before you look at its data. If you know that one card covers more, or
+    reports in another currency, correct for that first; otherwise the
+    known difference looks like real spread and every $z_j$ comes out too
+    high.
+  \item \emph{The blend does not replace the cohort's own figure.} The
+    historical $\hmu_j$ is still the right number for looking back. The
+    blend is a forecast.
+  \item \emph{With correlation, $z_j$ need not lie between 0 and 1.} When
+    the portfolio shares a cohort's noise, trusting the cohort ``more than
+    fully'' can be best. Section~\ref{sec:z} explains when, and what to do
+    about it.
+  \item \emph{The second moments are taken as given.} Here they are just
+    numbers. Section~\ref{sec:moments} shows they really are the
+    covariances of random variables, so the error variance is the true mean
+    squared error, and Section~\ref{sec:estimation} how to estimate them.
+\end{itemize}
+
+\see \hb{res:bestZ}{1}, \hb{res:z}{5} ·
+\lean{Credibility.BlendMoments.bestZ_optimal},
+\lean{Credibility.BlendMoments.bestZ_unique},
+\lean{Credibility.Core.bestZ_eq},
+\lean{Credibility.Core.Estimates.bestZ_mse_optimal} ·
+\app{One draw} · thesis §1, §2.1.
+
+% ===========================================================================
+\section{The model}\label{sec:model}
+
+\oneline Each observation is the overall level, plus a cohort effect that
+never changes, plus one period's noise; cohorts are linked only through the
+noise of the same period, and only means and covariances are assumed.
+
+\idea Write $\mu_{jt}$ for what cohort $j$ shows in period $t$: loss cost
+per cardholder in underwriting year $t$, say. The model is
+\[
+  \mu_{jt} = \underbrace{\mu + \tau\,\eta_j}_{\mu_j} + \sigma_{jt}\,\varepsilon_{jt},
+  \qquad
+  \cov(\varepsilon_{it}, \varepsilon_{js}) = \rho_{ij}\,\delta_{ts}.
+\]
+Read it from left to right.
+\begin{itemize}
+  \item $\mu$ is the portfolio's overall level.
+  \item $\eta_j$ is the \emph{cohort effect}: how far cohort $j$ really is
+    from the rest, in units of $\tau$. It is drawn once and stays. The
+    number $\tau^2$ says how different cohorts are; a homogeneous portfolio
+    has small $\tau^2$. The cohort's true level is $\mu_j = \mu + \tau\eta_j$:
+    the target.
+  \item $\varepsilon_{jt}$ is the \emph{noise}: what one period of data gets
+    wrong. Its size $\sigma_{jt}$ is small for a big cohort and large for a
+    small one, typically $\sigma^2/w_{jt}$ for volume $w_{jt}$.
+  \item $\rho_{ij}$ is the correlation of two cohorts' noise in the same
+    period. A surge in travel raises claims on every card in that year, not
+    equally. Noise in different periods is uncorrelated
+    ($\delta_{ts}$ is 1 when $t = s$ and 0 otherwise).
+\end{itemize}
+Both $\eta_j$ and $\varepsilon_{jt}$ are centred with unit variance, and the
+cohort effects are uncorrelated with each other and with the noise.
+
+\emph{Why error terms?} Classical credibility gives each cohort a risk
+parameter $\Theta_j$ and draws them independently. Independence is built
+into that language, so saying that cohorts are correlated takes effort.
+Written as error terms, the correlation is one line, the covariance above.
+This is the random-effects notation statisticians use, and it reads the same
+whether cohorts are correlated or not.
+
+\emph{Only means and covariances.} The model says nothing about the shape of
+the noise: no normal, no Poisson, no gamma. Everything in this paper, from
+the best $z_j$ to the unbiased estimators, needs only first and second
+moments, so it holds whatever the claims distribution. Results that do
+assume a noise family will live apart, named as such
+(Section~\ref{sec:open}).
+
+\emph{Bühlmann--Straub inside.} In Bühlmann--Straub notation $\mu$ is the
+collective premium $m$, $\tau^2$ is $a$, and $\sigma_{jt}^2$ is
+$\sigma^2/w_{jt}$; the full translation is in \hbsec{sec:setting}{1}. Of the
+classical independence assumptions, exactly one is dropped: that two
+cohorts' observations in the same period are uncorrelated. Put
+$\rho_{ij} = 0$ for $i \ne j$ and you are back in Bühlmann--Straub, with its
+credibility factors exactly (\hb{res:bs}{9}).
+
+\emph{Every cohort, every period.} Here each cohort is observed in the same
+$T$ periods. Section~\ref{sec:unequal} lets cohorts enter and leave; this
+model is its special case, and in Lean every result about it is proved
+there and read off.
+
+\watch
+\begin{itemize}
+  \item \emph{The correlations must fit together.} The table $(\rho_{ij})$
+    has to be a genuine correlation matrix (positive semidefinite): three
+    cohorts cannot each be strongly negatively correlated with the other
+    two. If the table fails this, no random variables have these moments
+    and every formula built on it is about nothing
+    (\hb{res:exists}{21}; Section~\ref{sec:moments}).
+  \item \emph{No correlation across periods.} A trend, a slow claims
+    inflation, or a reporting pattern that carries one year's errors into
+    the next breaks $\delta_{ts}$. That is an open direction
+    (Section~\ref{sec:open}).
+  \item \emph{$\tau^2$ is not what you see inside one cohort.} Looking at a
+    single cohort's history, its true level is already fixed, so its spread
+    over time shows only $\sigma_{jt}^2$. The spread between cohorts is what
+    reveals $\tau^2$, which is why estimating it needs several cohorts
+    (Section~\ref{sec:estimation}).
+\end{itemize}
+
+\see \hbsec{sec:setting}{1}, \hb{res:bs}{9}, \hb{res:exists}{21} ·
+\lean{Credibility.bs_z},
+\lean{Credibility.Model.exists_noise_iff} ·
+\app{World} · thesis §2.3.
+
+% ===========================================================================
+\section{From data to \texorpdfstring{$K$}{K}}\label{sec:K}
+
+\oneline Everything the framework gives you (the weights, the portfolio
+estimate, every credibility factor) is read off one matrix $K$, the
+covariance of the cohort estimates, provided $K$ is positive definite.
+
+\idea Credibility needs second moments, and in this framework they all come
+from one place. Collect the covariances of the cohort estimates in a matrix,
+$K_{ij} = \cov(\hmu_i, \hmu_j)$. The recipe has three steps
+(\hbsec{sec:setting}{1}, ``The recipe''):
+\begin{enumerate}
+  \item \emph{Build $K$.} A diagonal entry is how uncertain cohort $j$'s own
+    estimate is around the portfolio level: its noise, averaged over its
+    periods, plus $\tau^2$. An off-diagonal entry is how much two cohort
+    estimates move together, which here happens only through shocks in the
+    same period, so it is their averaged noise times $\rho_{ij}$
+    (\hb{res:posdef}{7}).
+  \item \emph{Check that $K$ is positive definite.}
+  \item \emph{Read off the rest.} Invert $K$ once. The best portfolio
+    weights, the variance of the portfolio estimate and every $z_j$ follow
+    (\hb{res:gls}{3}, \hb{res:z}{5}).
+\end{enumerate}
+
+The point of the recipe is that steps 2 and 3 never change. Unequal series
+lengths, a level shared within groups, or whatever comes next only change
+how $K$ is built in step 1. So the theory is organized the same way, and so
+is the Lean code: a \emph{core} proves everything that needs only a positive
+definite $K$ and $\tau^2$, once; each \emph{model} builds its $K$ and proves
+it positive definite; special cases are one-line corollaries. When a new
+extension arrives, the first question is which $K$ it has.
+
+\emph{Why positive definite, and not just semidefinite?} The thesis says
+that $K$ is a covariance matrix and therefore positive definite
+(\finding{1}). A covariance matrix is only positive \emph{semi}definite in
+general, and the difference matters: step 3 inverts $K$. Take two cohorts
+with no real difference between them ($\tau^2 = 0$) and identical,
+perfectly correlated noise. Their estimates are then the same random number
+twice; $K$ is singular, and there is no best way to weigh them because every
+way is the same. In the model, what saves you is $\tau^2 > 0$: the noise part
+of $K$ is semidefinite whenever the correlation table is, and adding $\tau^2$
+to every diagonal entry lifts every direction strictly above zero. So the
+two conditions to remember are $\tau^2 > 0$ and a positive semidefinite
+$(\rho_{ij})$.
+
+\emph{Why at least two cohorts?} With one cohort the portfolio \emph{is}
+that cohort: its weight is one, the gap $\hmu_1 - \hmu$ is always zero, and
+the formula for $z_1$ reads $0/0$ (\finding{2}). There is nothing to blend
+with. The thesis never says so, but the reduction to Bühlmann--Straub needs
+it.
+
+\emph{With estimated parameters.} In practice you plug estimates into $K$,
+and then positive definiteness is no longer automatic: the estimate of
+$\tau^2$ is often negative, and a correlation table estimated entry by entry
+need not be a correlation matrix. Truncate $\hat\tau^2$ at zero and shrink
+the off-diagonal correlations a little towards zero, and the plug-in
+$\hat K$ is positive definite again, whatever the data, as long as the
+estimated table is semidefinite (\hb{res:damped}{8}).
+Section~\ref{sec:estimation} goes further: a fit that needs no hand-set
+shrinkage.
+
+\watch
+\begin{itemize}
+  \item \emph{Check the correlation table before you invert.} An estimated
+    $(\hat\rho_{ij})$ can have a negative eigenvalue. Shrinking towards zero
+    does not repair that for every amount of shrinkage; repair the table
+    first (for example, clip its negative eigenvalues).
+  \item \emph{Positive definite is not the same as well conditioned.} Close
+    to singular, the credibility factors swing hard with small changes in
+    the inputs, and can leave $[0, 1]$ (Section~\ref{sec:z}).
+  \item \emph{$K$ is about the estimates, not the observations.} Its
+    entries depend on how each cohort's periods were averaged. Change the
+    averaging weights and you change $K$; the best ones are in
+    Section~\ref{sec:weights}.
+\end{itemize}
+
+\see \hbsec{sec:setting}{1}, \hb{res:gls}{3}, \hb{res:z}{5},
+\hb{res:posdef}{7}, \hb{res:damped}{8} ·
+\lean{Credibility.Model.K_apply},
+\lean{Credibility.Model.K_posDef},
+\lean{Credibility.Unequal.K_posDef},
+\lean{Credibility.Unequal.dampedK_posDef},
+\lean{Credibility.Core.bestZ_eq} ·
+\app{Fitting steps} · \finding{1}, \finding{2} · thesis §2.3--2.5.
+
+% ===========================================================================
+\section{The weights}\label{sec:weights}
+\notyet{inverse-variance weights within a cohort; GLS weights across
+cohorts; every cohort covaries equally with the portfolio; the link to the
+minimum-variance portfolio.}
+
+\section{The credibility factor}\label{sec:z}
+\notyet{the proposed $z_j$; how correlation moves it; $z_j > 1$ and the sign
+flip past the singularity.}
+
+\section{Special cases}\label{sec:special}
+\notyet{Bühlmann--Straub; two cohorts; equal covariances; weights from
+credibility factors.}
+
+\section{Balance}\label{sec:balance}
+\notyet{what balance is and why practitioners want it; when it holds for
+free; the cost of forcing it; how to balance if you must.}
+
+\section{Estimating the parameters}\label{sec:estimation}
+\notyet{the unbiased estimators and what they need; the plug-in $\hat K$ and
+damping; a fit with no tuning; the error of a fitted model.}
+
+\section{Why the moments are real}\label{sec:moments}
+\notyet{given numbers versus actual covariances; true mean squared error;
+the assumptions are consistent exactly when $\rho \succeq 0$.}
+
+\section{Cohorts observed over different periods}\label{sec:unequal}
+\notyet{unequal lengths; the per-pair count.}
+
+\section{Groups and shared levels}\label{sec:groups}
+\notyet{a shared level drops out; several groups; what the estimators see;
+towards hierarchical credibility.}
+
+\section{Choosing the cohorts}\label{sec:cohorts}
+\notyet{when merging pays off; equal credibility is not grouping; optimal
+cohorts are intervals, and when they are not.}
+
+\section{Open directions}\label{sec:open}
+\notyet{crossed levels; time trends; the optional distribution layer.}
+
+\section{Related work}\label{sec:related}
+\notyet{credibility with common effects, small-area estimation, covariance
+shrinkage: what is used from where.}
+
+\appendix
+
+\section{Changes from the thesis}\label{app:changes}
+\notyet{corrections and sharpenings, by thesis section; a concordance of
+thesis equation, handbook number and Lean name.}
+
+\section{Concept index}\label{app:index}
+\notyet{term, one-line meaning, section.}
+
+\section{Notation}\label{app:notation}
+\notyet{the symbols, with the Bühlmann--Straub translation.}
+
+\end{document}

@@ -40,14 +40,15 @@ Rules that keep this cheap to maintain:
 ## Sections
 
 Status: `—` not started, `src` source material exists to absorb, `draft`,
-`done`.
+`done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
+"not yet written" note; §1–3 drafted.)
 
 | # | Section | Covers | Source material | Status |
 |---|---|---|---|---|
 | 0 | How to read this | the four documents and what each is for; machine-checked means what | this file, README "How it was made" | — |
-| 1 | What credibility is | blending own experience with the portfolio; what `z` means; best blend | thesis §2.1, handbook 1 | src |
-| 2 | The model | error terms instead of risk parameters; correlation across cohorts within a period; distribution-free; translation to Bühlmann–Straub notation | thesis §2.3, handbook 0 | src |
-| 3 | From data to `K` | the recipe: build `K`, check it is positive definite, read off everything; why positive definite and not semidefinite; why two cohorts | Findings 1, 2 | src |
+| 1 | What credibility is | blending own experience with the portfolio; what `z` means; best blend | thesis §2.1, handbook 1 | draft |
+| 2 | The model | error terms instead of risk parameters; correlation across cohorts within a period; distribution-free; translation to Bühlmann–Straub notation | thesis §2.3, handbook 0 | draft |
+| 3 | From data to `K` | the recipe: build `K`, check it is positive definite, read off everything; why positive definite and not semidefinite; why two cohorts | Findings 1, 2 | draft |
 | 4 | The weights | inverse-variance within a cohort; GLS across cohorts; the link to the minimum-variance portfolio | thesis §2.5, `studies/literature.md` §1 | src |
 | 5 | The credibility factor | the proposed `z`; how correlation moves it; `z > 1` and the sign flip | thesis §2.5, §2.7, Finding 3 | src |
 | 6 | Special cases | Bühlmann–Straub; two cohorts; equal covariances; weights from credibility factors | Findings 4, 5 | src |
@@ -84,7 +85,12 @@ may need a paragraph.)
 3. Sections 10–14 from the notes; B last, regenerated as sections land.
 4. CI: build the paper as a searchable web page and a PDF next to the
    handbook; a `paper_check.py` like `handbook_check.py` (every Lean name
-   and handbook number cited must exist and be proved).
+   and handbook number cited must exist and be proved). *Done 2026-11-16:*
+   `/paper/` (one page, search box, `paper/search.js`) and `/paper.pdf`;
+   cite with `\lean{Name}`, `\hb{res:label}{n}`, `\hbsec{sec:label}{n}`,
+   `\finding{n}`, `\file{path}`, `\app{step}`. The handbook number is
+   written next to its label; `paper_check.py --fix` rewrites stale numbers
+   after the handbook is reordered.
 5. A coverage report: proved results cited by none of handbook, paper, app,
    with an explicit "not needed" list.
 6. When sections 1–9 are done: point README and `CITATION.cff` at the paper
