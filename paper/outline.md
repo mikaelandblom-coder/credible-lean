@@ -1,6 +1,7 @@
 # The paper: outline (draft, 2026-11-16)
 
-Working title: *Credibility for correlated cohorts: a guide*.
+Working title: *Credibility from second moments: a guide* (owner to confirm;
+see the end).
 
 The paper is the up-to-date version of the thesis and the first complete
 source for a reader who wants to understand or cite the work. It explains
@@ -90,12 +91,21 @@ may need a paragraph.)
    as the primary reference, and use it as the arXiv preprint (README
    "Sharing results" item 3).
 
+## Decided (owner, 2026-11-16)
+
+- **Source format.** LaTeX in `paper/paper.tex`, built by CI into a web page
+  with search (plasTeX) and a PDF, next to the handbook.
+- **Voice.** Looser than the thesis: plain words, "you", short sentences,
+  examples before generality.
+- **Title.** General enough to survive new theory (not tied to correlated
+  cohorts or to the thesis).
+
 ## Open choices for the owner
 
-- **Source format.** Recommended: LaTeX in `paper/paper.tex`, built by the
-  same tools CI already has (web page with search via plasTeX, PDF via
-  LaTeX), so handbook numbers and Lean links are checked the same way.
-  Alternative: Markdown, easier to read on a phone in the repo but no PDF
-  and no shared cross-references.
-- **Title.**
-- **Voice.** Same question as the handbook: the thesis's, or looser.
+- **Title**, among for example:
+  - *Credibility from second moments: a guide*: names what stays fixed
+    however the theory grows (only means and covariances are assumed).
+  - *Credibility theory, machine-checked: a guide*: leads with the Lean
+    proofs.
+  - *A unified credibility framework: concepts and practice*: matches the
+    handbook's "one unified framework".
