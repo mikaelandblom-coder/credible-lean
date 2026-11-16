@@ -5,7 +5,9 @@ One row per theorem/lemma: thesis equations (from its docstring), Lean name,
 and whether its proof still contains `sorry`. A last section lists theorem
 names that occur in several namespaces: the refactoring backlog of CLAUDE.md
 (Architecture), where a special case should be a corollary of its general
-version.
+version. A section "What the count means" gives three counts that do not grow
+with special cases: main results (blueprint theorems with a proof of their
+own), substantial Lean proofs, and findings backed by Lean.
 
     python3 scripts/progress.py          # rewrite PROGRESS.md
     python3 scripts/progress.py --check  # exit 1 if PROGRESS.md is stale
@@ -169,6 +171,98 @@ def backlog(files) -> str:
     return "\n".join(lines)
 
 
+SKIP_LINE = re.compile(r"^\s*(?:--|omit\b|@\[|set_option\b|attribute\b)")
+LONG = 10  # a proof of at least this many lines counts as substantial
+SHORT = 4  # a blueprint theorem whose Lean proofs are all shorter is flagged
+
+
+def proof_lines(row) -> int:
+    """Lines of the proof: what follows the first `:=`, without blank lines,
+    comments and the `omit … in` / attribute lines of the next declaration."""
+    body = row["body"]
+    i = body.find(":=")
+    proof = body[i + 2 :] if i != -1 else body
+    proof = re.sub(r"/-.*?-/", "", proof, flags=re.S)
+    proof = re.sub(r"^\s*by\b", "", proof)
+    return sum(1 for l in proof.split("\n") if l.strip() and not SKIP_LINE.match(l))
+
+
+def blueprint_statements():
+    """(kind, label, title, \\lean names, proof \\uses, proved) per blueprint environment."""
+    from blueprint_check import CONTENT, ENV, PROOF  # lazy: blueprint_check imports this file
+
+    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    out = []
+    for m in ENV.finditer(text):
+        kind, body = m.group(1), m.group(2)
+        label = (re.search(r"\\label\{([^}]*)\}", body) or [None, "?"])[1]
+        title = (re.match(r"\s*\[([^\]]*)\]", body) or [None, ""])[1]
+        names = [n.strip() for g in re.findall(r"\\lean\{([^}]*)\}", body) for n in g.split(",")]
+        p = PROOF.match(text, m.end()) if kind != "definition" else None
+        proved = bool(p and re.search(r"\\leanok\b", p.group(1)))
+        out.append((kind, label, title, [n for n in names if n], proved))
+    return out, text
+
+
+def findings_backed(text, proved_labels):
+    """Finding numbers whose blueprint remark \\uses a proved statement."""
+    backed = set()
+    for m in re.finditer(r"\\begin\{remark\}\[Findings? ([^\]]*)\](.*?)\\end\{remark\}", text, re.S):
+        nums = re.match(r"(\d+)(?:--(\d+))?", m.group(1))
+        if not nums:
+            continue
+        used = [u.strip() for g in re.findall(r"\\uses\{([^}]*)\}", m.group(2)) for u in g.split(",")]
+        if any(u in proved_labels for u in used):
+            lo = int(nums.group(1))
+            backed.update(range(lo, int(nums.group(2) or lo) + 1))
+    return backed
+
+
+def weight(files):
+    """The three counts of 'what is really proved' and the short-proof flags."""
+    rows = {r["name"]: r for f in files for r in scan(f)[1]}
+    lines = {n: proof_lines(r) for n, r in rows.items() if r["done"]}
+    long_ = sum(1 for k in lines.values() if k >= LONG)
+    stmts, text = blueprint_statements()
+    thms = [(lab, title, ns) for kind, lab, title, ns, ok in stmts if kind == "theorem" and ok]
+    flagged = [
+        (lab, title, max(lines.get(n, 0) for n in ns))
+        for lab, title, ns in thms
+        if ns and max(lines.get(n, 0) for n in ns) < SHORT
+    ]
+    proved_labels = {lab for kind, lab, _, _, ok in stmts if ok}
+    numbers = {int(n) for n in re.findall(r"^(\d+)\. \*\*", (ROOT / "FINDINGS.md").read_text(), re.M)}
+    backed = findings_backed(text, proved_labels) & numbers
+    return dict(thms=len(thms), own=len(thms) - len(flagged), long=long_, decls=len(lines),
+                backed=backed, findings=len(numbers), flagged=flagged)
+
+
+def weight_section(w) -> list:
+    out = [
+        "## What the count means",
+        "",
+        "Every special case is its own Lean declaration, so the count above",
+        "grows with corollaries. Three numbers that do not:",
+        "",
+        "| | Count | How it is measured |",
+        "|---|---|---|",
+        f"| Main results | {w['own']} | proved blueprint statements labelled *theorem*, one per statement (special cases are corollaries or lemmas there), with a Lean proof of at least {SHORT} lines; {w['thms']} counting thesis-facing restatements of a general result (listed below) |",
+        f"| Substantial proofs | {w['long']} | Lean proofs of at least {LONG} lines (of {w['decls']} proved) |",
+        f"| Findings backed by Lean | {len(w['backed'])} / {w['findings']} | entries of `FINDINGS.md` whose blueprint remark `\\uses` a proved statement: what is new against the thesis (missing: {', '.join(str(n) for n in sorted(set(range(1, w['findings'] + 1)) - w['backed'])) or 'none'}) |",
+        "",
+    ]
+    if w["flagged"]:
+        out += [
+            f"Blueprint theorems whose Lean proofs are all under {SHORT} lines, not counted as",
+            "main results: mostly thesis-facing statements proved from a general result",
+            "(CLAUDE.md, Architecture); relabel as corollary where the statement is not the point.",
+            "",
+            *[f"- `{lab}` ({k} lines): {title}" for lab, title, k in w["flagged"]],
+            "",
+        ]
+    return out
+
+
 def render() -> str:
     files = sorted(SRC.glob("*.lean"), key=lambda p: (ORDER.index(p.stem) if p.stem in ORDER else 99, p.stem))
     sections, total, done = [], 0, 0
@@ -192,6 +286,8 @@ def render() -> str:
         f"**{done} / {total} theorems proved.**",
         "",
         *summary,
+        "",
+        *weight_section(weight(files)),
     ]
     sections.append(backlog(files))
     return "\n".join(head) + "\n\n" + "\n\n".join(sections) + "\n"
