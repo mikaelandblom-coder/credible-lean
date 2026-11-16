@@ -41,11 +41,12 @@ Rules that keep this cheap to maintain:
 
 Status: `—` not started, `src` source material exists to absorb, `draft`,
 `done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
-"not yet written" note; §1–6 drafted.)
+"not yet written" note; §1–6 drafted. Later the same day: §0, A and C
+drafted.)
 
 | # | Section | Covers | Source material | Status |
 |---|---|---|---|---|
-| 0 | How to read this | the four documents and what each is for; machine-checked means what | this file, README "How it was made" | — |
+| 0 | How to read this | the four documents and what each is for; machine-checked means what | this file, README "How it was made" | draft |
 | 1 | What credibility is | blending own experience with the portfolio; what `z` means; best blend | thesis §2.1, handbook 1 | draft |
 | 2 | The model | error terms instead of risk parameters; correlation across cohorts within a period; distribution-free; translation to Bühlmann–Straub notation | thesis §2.3, handbook 0 | draft |
 | 3 | From data to `K` | the recipe: build `K`, check it is positive definite, read off everything; why positive definite and not semidefinite; why two cohorts | Findings 1, 2 | draft |
@@ -60,9 +61,9 @@ Status: `—` not started, `src` source material exists to absorb, `draft`,
 | 12 | Choosing the cohorts | when merging pays off; equal credibility is not grouping; optimal cohorts are intervals; when they are not | `notes/merging-cohorts.md`, `notes/kmeans-bridge.md`, Findings 6, 14 | src |
 | 13 | Open directions | crossed levels; time trends; the optional distribution layer | `notes/crossed-2x2.md`, `notes/roadmap.md`, `studies/literature.md` §5 | src |
 | 14 | Related work | credibility with common effects, small-area estimation, covariance shrinkage: what is used from where | `studies/literature.md` | src |
-| A | Changes from the thesis | corrections and sharpenings, by thesis section; concordance thesis equation ↔ handbook number ↔ Lean name | `FINDINGS.md` | src |
+| A | Changes from the thesis | corrections and sharpenings, by thesis section; concordance thesis equation ↔ handbook number ↔ Lean name | `FINDINGS.md` | draft |
 | B | Concept index | alphabetical: term → one-line meaning → section | — | — |
-| C | Notation | symbols, with the Bühlmann–Straub translation | handbook 0 | src |
+| C | Notation | symbols, with the Bühlmann–Straub translation | handbook 0 | draft |
 
 ## Absorbing the notes
 
@@ -74,7 +75,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-(none)
+- Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
+  was written from memory of the book; owner to check against it.
+- Appendix A: the concordance lists the Lean names at drafting time
+  (2026-11-16); add new thesis-facing theorems there as they come.
 
 ## Order of work
 

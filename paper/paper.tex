@@ -66,8 +66,83 @@
 
 % ===========================================================================
 \section{How to read this}\label{sec:read}
-\notyet{the four documents (app, handbook, paper, blueprint) and what each
-is for; what ``machine-checked'' means and what it does not.}
+
+\oneline This paper explains the ideas; the formulas, the proofs and the
+working tool each live in a document of their own, and the paper points to
+them instead of repeating them.
+
+\idea The work comes in four documents, one for each kind of content.
+\begin{itemize}
+  \item \emph{The paper} (this one) explains. It is the up-to-date version of
+    the master thesis it grew out of (Andblom, Stockholm University, 2023:2)
+    and the first thing to read or cite. Each section is one concept: what
+    it is, the idea in plain words, and what to watch out for. It has few
+    formulas and no proofs.
+  \item \emph{The \href{\site/handbook.pdf}{handbook}} holds the formulas:
+    the key results, numbered, each with a short note on how to use it. The
+    paper cites them as ``Handbook~(5)''.
+  \item \emph{The \href{\site/}{blueprint}} is the proof ledger: every
+    statement with its proof and a graph of what depends on what. You reach
+    it by following a link, not by reading it front to back.
+  \item \emph{The \href{\site/app/}{app}} shows the tools at work. You pick a
+    world (cohorts, volumes, correlation, noise), draw data, and compare
+    fitted models with the best blend for the true parameters. The fits see
+    only the data.
+\end{itemize}
+Every section ends with a \emph{See} line: the handbook results, the Lean
+names of the proofs, the app step to try, the findings it explains, and the
+thesis sections it replaces. Appendix~\ref{app:changes} lists what changed
+since the thesis, with a concordance from each thesis equation to its
+handbook number and Lean name; Appendix~\ref{app:notation} has the notation
+and its translation to Bühlmann--Straub.
+
+\emph{What ``machine-checked'' means.} Every result the paper states is a
+theorem in Lean, a proof assistant: a program that accepts a proof only if
+each step follows from the previous ones and from the axioms of mathematics.
+A Lean name such as \lean{Credibility.Core.bestZ_eq} links to the statement
+and its proof. Continuous integration rebuilds all proofs on every change
+and checks that none of them rests on an unfinished step or on an extra
+axiom. So if the paper says a result is proved, the statement as written in
+Lean is true; you do not need to trust the author, or the AI that wrote most
+of the Lean code with the author, to believe it.
+
+\emph{What it does not mean.}
+\begin{itemize}
+  \item \emph{The Lean statement is what is proved, not the paper's
+    paraphrase.} The paper and the handbook state results in words and
+    formulas; the hypotheses in full are in Lean. When the two seem to
+    differ, Lean is right, and the paper has a mistake to fix.
+  \item \emph{A theorem is about the model, not about your data.} That the
+    best $z_j$ is optimal is proved; that your portfolio follows the model
+    is an assumption you have to judge. The paper says where the model is
+    fragile (each ``What to watch out for'').
+  \item \emph{Numbers from simulations are not theorems.} Results from the
+    app's studies hold in the worlds that were simulated; the paper says so
+    and cites the script that produced them. Statements about the best
+    blend with known parameters are exact formulas and need no simulation.
+  \item \emph{Some arguments are on paper only.} Where a result is shown by
+    hand but not in Lean, the paper says so (for example the converse in
+    Section~\ref{sec:special}).
+\end{itemize}
+
+\emph{Findings.} Formalizing the thesis turned up gaps (a missing
+hypothesis, a typo) and new results. They are numbered in a dated log,
+\file{FINDINGS.md}, and cited as ``Finding~$n$''. The paper explains each
+one where it belongs; Appendix~\ref{app:changes} collects them by thesis
+section.
+
+\watch
+\begin{itemize}
+  \item \emph{Equation numbers} such as ``eq.~(26)'' refer to the thesis as
+    published; handbook numbers can change between versions, so cite the
+    handbook with its version or, better, the Lean name, which is stable.
+  \item \emph{Only means and covariances are assumed} throughout, unless a
+    result says otherwise in its name (Section~\ref{sec:model}).
+\end{itemize}
+
+\see \hbsec{sec:setting}{1} ·
+\lean{Credibility.Core.bestZ_eq} ·
+\app{World} · \file{FINDINGS.md}, \file{paper/outline.md} · thesis §1.
 
 % ===========================================================================
 \section{What credibility is}\label{sec:credibility}
@@ -614,13 +689,227 @@ shrinkage: what is used from where.}
 \appendix
 
 \section{Changes from the thesis}\label{app:changes}
-\notyet{corrections and sharpenings, by thesis section; a concordance of
-thesis equation, handbook number and Lean name.}
+
+The thesis (Andblom, Stockholm University, 2023:2) holds up: every result
+in its Section~2 is proved in Lean, some with a hypothesis it left unstated.
+This appendix lists what changed, by thesis section, and then maps each
+numbered thesis equation to its handbook result and Lean name. Equation
+numbers refer to the published thesis.
+
+\subsection*{Corrections and sharpenings}
+
+\begin{description}
+  \item[Notation (§2.3).] The cohort effect, $\varepsilon_j$ in the thesis,
+    is written $\eta_j$ here, to keep it apart from the noise
+    $\varepsilon_{jt}$ (Appendix~\ref{app:notation}).
+  \item[$K$ is positive definite (§2.4, after eq.~(20)).] The thesis
+    concludes this from $K$ being a covariance matrix, which only gives
+    \emph{semi}definite. It holds because $\tau^2 > 0$ and the correlation
+    table is positive semidefinite (\finding{1};
+    Section~\ref{sec:K}), and the second condition is not an extra
+    assumption: it holds whenever the model is consistent at all
+    (\finding{11}; Section~\ref{sec:moments}).
+  \item[At least two cohorts (§2.5--2.6).] With one cohort eq.~(26) reads
+    $0/0$; the reduction to Bühlmann--Straub needs $J \ge 2$
+    (\finding{2}).
+  \item[Credibility above one (§2.7).] The thesis observes that $z_1 > 1$
+    can happen. Now: below the singularity, exactly when
+    $\sigma_1 < \sigma_2\rho$, whatever $\tau^2$ (\finding{3};
+    Section~\ref{sec:z}).
+  \item[Clipping is not needed (§2.7, eq.~(34)).] The thesis treats the
+    sign flip of $z_1$ as a breakdown and clips $z_1$ to $[0, 1]$. With the
+    true parameters the blend is smooth through the singularity, and a
+    negative $z_1$ is still the best blend; clipping loses accuracy. Report
+    the own-data weight $c_j$ next to $z_j$, which is bounded for any
+    number of cohorts (\finding{17}; Section~\ref{sec:z}).
+  \item[Weights from factors (§2.7.1).] The identity
+    $b_1 = z_1/(z_1 + z_2)$ was on the defence slides, not in the published
+    thesis. It holds for two cohorts, fails in general from three on, and
+    extends to any number of cohorts with equal covariances (\finding{4},
+    \finding{5}; Section~\ref{sec:special}).
+  \item[Sample sizes for estimation (§2.8).] The unbiased estimators of
+    eq.~(39) need $T \ge 2$ periods and $J \ge 2$ cohorts, which the thesis
+    does not state (\finding{7}).
+  \item[A typo in eq.~(13).] The Bühlmann--Straub $\hat\sigma^2$ averages
+    the $J$ cohort estimates $\hat\sigma_j^2$, so the factor is $1/J$, not
+    $1/T$ (\finding{7}; \hb{res:bs_tau}{17}).
+  \item[Balance (§2.9).] The thesis shows that Bühlmann--Straub balances
+    and that the correlated blend need not. Now: which volumes balance any
+    given blend (\hb{res:balance}{10}); that the best blend constrained to
+    balance is a poor way to get balance; and that a common shift of all
+    rates is the best balanced correction without correlation, and close to
+    it with (\finding{15}, \finding{16}; Section~\ref{sec:balance}).
+\end{description}
+
+\subsection*{Beyond the thesis}
+
+New results, each explained in its own section: the moments are the actual
+covariances of any random variables with them, so the blend is optimal in
+true mean squared error, also as a forecast of next year
+(Section~\ref{sec:moments}; \finding{11}, \finding{12}); cohorts observed
+over different periods (Section~\ref{sec:unequal}; \finding{8}--\finding{10});
+levels shared within groups (Section~\ref{sec:groups}; \finding{13}); and
+choosing the cohorts: when merging pays, and when optimal cohorts are
+intervals (Section~\ref{sec:cohorts}; \finding{6}, \finding{14}).
+
+\subsection*{Concordance}
+
+Each numbered equation of the thesis, with the handbook result that states
+it now and the Lean names that prove it. Equations not listed are
+definitions or steps of a derivation.
+
+\begin{description}
+  \item[(1)] The blend $\hmu_j^{\,b}$. \hbsec{sec:setting}{1}.
+  \item[(2)--(5)] The three optimization problems: the weights within a
+    cohort, the weights across cohorts, the factor. They can be solved one
+    at a time (Section~\ref{sec:credibility}).
+  \item[(6)--(7)] Error variance of the blend and the best factor.
+    \hb{res:bestZ}{1} ·
+    \lean{Credibility.BlendMoments.errVar_eq},
+    \lean{Credibility.BlendMoments.bestZ_optimal},
+    \lean{Credibility.BlendMoments.bestZ_unique}; in true mean squared
+    error \lean{Credibility.Core.Estimates.mse_blend}.
+  \item[(8)--(13)] The Bühlmann--Straub model and its estimators.
+    \hb{res:bs}{9}, \hb{res:bs_tau}{17} ·
+    \lean{Credibility.bs_z},
+    \lean{Credibility.Model.tauHatBS_unbiased} (eq.~(13) with $1/J$).
+  \item[(14)] The Parodi--Bonche factor: literature, not formalized.
+  \item[(15)--(16)] The data model and the covariance of observations.
+    \hbsec{sec:setting}{1}, \hb{res:exists}{21} ·
+    \lean{Credibility.Model.exists_noise_iff},
+    \lean{Credibility.Model.Noise.cov_obs}.
+  \item[(17), (22)] Any linear estimates, and the factor for them.
+    \lean{Credibility.Model.bestZ_linear}.
+  \item[(18)--(21)] Noise covariances $\sigma_{ij}^2$, the portfolio
+    variance and $K$. \hb{res:posdef}{7} ·
+    \lean{Credibility.Unequal.K_eq_of_full},
+    \lean{Credibility.Model.Noise.cov_cohortEst}.
+  \item[(23)] Inverse-variance weights within a cohort.
+    \hb{res:invVar}{2} ·
+    \lean{Credibility.invVarWeight_optimal},
+    \lean{Credibility.invVarWeight_value},
+    \lean{Credibility.Model.Noise.cohortEst_optimal}.
+  \item[(24)--(25)] GLS weights across cohorts and their variance $s^2$.
+    \hb{res:gls}{3}, \hb{res:upsilon}{4} ·
+    \lean{Credibility.glsWeight_optimal},
+    \lean{Credibility.glsWeight_value},
+    \lean{Credibility.mulVec_glsWeight},
+    \lean{Credibility.Core.Estimates.portEst_optimal}.
+  \item[(26)] The proposed credibility factor. \hb{res:z}{5} ·
+    \lean{Credibility.Core.bestZ_eq},
+    \lean{Credibility.Model.bestZ_eq},
+    \lean{Credibility.Model.gap_eq},
+    \lean{Credibility.Core.Estimates.bestZ_mse_optimal}.
+  \item[(27)] The recipe in one display; $K_{ij} = \sigma_{ij}^2\rho_{ij} +
+    \tau^2\delta_{ij}$ and it is positive definite. \hb{res:posdef}{7} ·
+    \lean{Credibility.Model.K_apply},
+    \lean{Credibility.Model.K_posDef}.
+  \item[(28)--(30)] The Bühlmann--Straub special case. \hb{res:diag}{6},
+    \hb{res:bs}{9} ·
+    \lean{Credibility.bs_a},
+    \lean{Credibility.bs_z},
+    \lean{Credibility.Core.bestZ_of_diag}.
+  \item[(31)--(32)] Two cohorts: the weights and the factor.
+    \hb{res:two}{13} ·
+    \lean{Credibility.TwoCohorts.gls_two},
+    \lean{Credibility.TwoCohorts.z1_eq},
+    \lean{Credibility.TwoCohorts.b1_eq_z}.
+  \item[(33)--(36)] The singularity, clipping and the numerical example.
+    \hb{res:z1_range}{14} ·
+    \lean{Credibility.TwoCohorts.z1_gt_one_iff},
+    \lean{Credibility.TwoCohorts.z1_neg_iff},
+    \lean{Credibility.TwoCohorts.singularity_reachable_iff},
+    \lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1}. The error curves
+    (33), (35), (36) are plotted, not formalized.
+  \item[(37)--(39)] The unbiased estimators of $\sigma_{ij}^2\rho_{ij}$,
+    $\tau^2$ and $K$. \hb{res:estimation}{16} ·
+    \lean{Credibility.Model.unbiased_dev},
+    \lean{Credibility.Model.sigRhoHat_unbiased},
+    \lean{Credibility.Model.tauHat_unbiased},
+    \lean{Credibility.Model.KHat_unbiased}.
+  \item[(40)] Truncating $\hat\tau^2$ at zero. \hb{res:damped}{8} ·
+    \lean{Credibility.Unequal.dampedK_posDef}.
+  \item[(41)] On the diagonal, the Bühlmann--Straub $\hat\sigma_j^2$.
+    \hb{res:estimation}{16} ·
+    \lean{Credibility.Model.sigRhoHat_self}.
+  \item[§2.9] Balance (no equation number). \hb{res:bs}{9},
+    \hb{res:balance}{10} ·
+    \lean{Credibility.bs_balance},
+    \lean{Credibility.Core.balanced_iff}.
+\end{description}
 
 \section{Concept index}\label{app:index}
 \notyet{term, one-line meaning, section.}
 
 \section{Notation}\label{app:notation}
-\notyet{the symbols, with the Bühlmann--Straub translation.}
+
+The symbols of the paper, in the order they appear, with the
+Bühlmann--Straub equivalent where there is one (as in Bühlmann and Gisler,
+\emph{A Course in Credibility Theory}) and the thesis symbol where it
+differs. The handbook uses the same notation (\hbsec{sec:setting}{1}).
+
+\begin{center}
+\small
+\begin{tabular}{p{2.1cm}p{6.0cm}p{3.6cm}p{1.6cm}}
+  \toprule
+  Here & Meaning & Bühlmann--Straub & Thesis \\
+  \midrule
+  $j = 1, \dots, J$ & cohort (segment, rating class, card) & $i$, contract or risk & \\
+  $t = 1, \dots, T$ & period (underwriting year) & $j$, year & \\
+  $\mu_{jt}$ & observed key ratio of cohort $j$ in period $t$ & $X_{ij}$ & \\
+  $w_{jt}$ & volume (exposure) of a cell & $w_{ij}$ & \\
+  $w_{j*}$, $w_{**}$ & total volume of cohort $j$, of the portfolio & $w_{i\bullet}$, $w_{\bullet\bullet}$ & \\
+  $\mu$ & overall level & $m$, collective premium & \\
+  $\mu_j$ & true level of cohort $j$: the target & $\mu(\Theta_i)$ & \\
+  $\eta_j$ & cohort effect, centred, unit variance & $\Theta_i$, a risk parameter & $\varepsilon_j$ \\
+  $\tau^2$ & variance between cohorts & $a$ (Bühlmann--Gisler: $\tau^2$) & \\
+  $\varepsilon_{jt}$ & noise, centred, unit variance & & \\
+  $\sigma_{jt}$ & noise standard deviation of a cell & $\sigma/\sqrt{w_{ij}}$ & \\
+  $\rho_{ij}$ & correlation of two cohorts' noise in the same period & $0$ for $i \ne j$ & \\
+  $\delta_{ij}$ & 1 if $i = j$, else 0 & & \\
+  $\kappa$ & $\sigma^2/\tau^2$ & $\kappa$ & \\
+  \midrule
+  $a_{jt}$ & weight of period $t$ in $\hmu_j$ & $w_{ij}/w_{i\bullet}$ & \\
+  $\hmu_j$ & cohort estimate & $X_i$ & \\
+  $\sigma_{ij}^2$ & covariance factor of the noise in $\hmu_i$, $\hmu_j$ & & \\
+  $v_j$ & noise variance of $\hmu_j$ ($= \sigma_{jj}^2$) & $\sigma^2/w_{i\bullet}$ & $\sigma_{jj}^2$ \\
+  $K$ & covariance matrix of the cohort estimates & diagonal & \\
+  $\mathbf 1$ & vector of ones & & $\mathbf u$ \\
+  $b_j$ & portfolio (GLS) weight & $\alpha_i/\alpha_\bullet$ & \\
+  $\hmu$ & portfolio estimate & $\hat\mu_0$ & \\
+  $s^2$ & variance of $\hmu$ & & \\
+  $z_j$ & credibility factor & $\alpha_i$ & \\
+  $z_*$ & sum of the factors & $\alpha_\bullet$ & \\
+  $\hmu_j^{\,b}$ & the blend, the credibility estimate & $\widehat{\mu(\Theta_i)}$ & \\
+  $c_j$ & own-data weight $b_j + z_j(1 - b_j)$ & $\alpha_i + (1 - \alpha_i)\alpha_i/\alpha_\bullet$ & \\
+  \midrule
+  $\sigma_1, \sigma_2$ & two cohorts: noise standard deviation of $\hmu_j$ & & \\
+  $\kappa_j$ & two cohorts: $\sigma_j^2/\tau^2$ & & \\
+  $\rho^*$ & two cohorts: where $z_1$ is singular & & \\
+  $D$ & two cohorts: $\Var(\hmu_1 - \hmu_2)$ & & \\
+  $T_j$ & the periods in which cohort $j$ is observed & & \\
+  $L$ & covariance matrix of the true levels $\mu_j$ & $a\,I$ & $\tau^2 I$ \\
+  $\varphi$ & share of $\tau^2$ shared within a group & & \\
+  $u_j$ & volumes in a balance condition & $w_{i\bullet}$ & \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Reading Bühlmann--Straub in this notation.} Bühlmann--Straub is
+the case $\sigma_{jt}^2 = \sigma^2/w_{jt}$ and $\rho_{ij} = 0$ for
+$i \ne j$. Of its independence assumptions exactly one is dropped: that two
+cohorts' observations in the same period are uncorrelated
+(Section~\ref{sec:model}). With it, $v_j = \sigma^2/w_{j*}$, $K$ is
+diagonal, $z_j = w_{j*}/(w_{j*} + \kappa)$ and $b_j = z_j/z_*$
+(\hb{res:bs}{9}). Two things to watch:
+\begin{itemize}
+  \item \emph{Two different $\kappa$.} The thesis's two-cohort $\kappa_j =
+    \sigma_j^2/\tau^2$ is the noise variance of the cohort \emph{estimate}
+    over $\tau^2$, so it already contains the volume and the number of
+    periods; Bühlmann--Straub's $\kappa = \sigma^2/\tau^2$ is per unit of
+    volume.
+  \item \emph{$\sigma_{jt}$ is a standard deviation,} not a variance:
+    $\sigma_{jt}^2 = \sigma^2/w_{jt}$.
+\end{itemize}
 
 \end{document}
