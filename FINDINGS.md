@@ -195,8 +195,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `κⱼ = cov(μ̂ⱼᵇ − μⱼ, D)` and `V = Var D`. The best `c` is
    `cⱼ* = (λuⱼ/φⱼ − κⱼ)/V`, and for `φ = u` it is the shift exactly when `κⱼ`
    is the same for all `j`. WFQ get this from `κ = 0`, which holds when the
-   base predictor is the BLUP. Our blend is the BLUP only for independent
-   cohorts (`K` diagonal, `L = τ²I`), and then `κ = 0` (`imbalanceCov_of_diag`).
+   base predictor is the BLUP. Our blend is the BLUP for independent
+   cohorts (`K` diagonal, `L = τ²I`), and then `κ = 0` (`imbalanceCov_of_diag`);
+   in general only under the column condition of Finding 18.
    Counterexample under correlation: three cohorts, `τ² = 1`,
    `v = (0.5, 1, 3)`, `ρ = 0.5`, `u = (3, 2, 1)`, optimal `z`. Then
    `κ = (0.099, 0.183, 0.026)`, `c* = (0.177, 0.121, 0.227)` against `1/6`,
@@ -245,5 +246,33 @@ Gaps, extra hypotheses and new results found while formalizing.
    `J ≥ 3` needs all other weights zero. `cⱼ` differs from `zⱼ` in meaning:
    at `ρ = 0` in the example `z₁ = 0.5`, `c₁ = 0.947`. Restrict the blend,
    not `z`, if anything.
+
+18. **The blend against the best linear unbiased predictor (new;
+   `Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
+   `Core.exists_blendWeight_eq_blupWeight_iff`,
+   `Core.Estimates.blup_mse_optimal`, `Core.Estimates.mse_blend_eq_blup_add`).**
+   The thesis optimises `z` inside the family `z μ̂ⱼ + (1 − z) μ̂`. The
+   classical benchmark is wider: all `Σᵢ dᵢ μ̂ᵢ` with `Σᵢ dᵢ = 1` (unbiased
+   for any common mean), the homogeneous credibility estimator, i.e. the BLUP
+   of Goldberger (1962). With `ℓᵢ = cov(μⱼ, μ̂ᵢ)` (row `j` of `L`) its weights
+   are `d* = K⁻¹ℓ + (1 − 1ᵀK⁻¹ℓ) b`, and any unbiased weights `d` have
+   `MSE(d) = MSE(d*) + (d − d*)ᵀK(d − d*)`. So the blend with weights
+   `w = z eⱼ + (1 − z) b` pays exactly `(w − d*)ᵀK(w − d*)`. The blend *is*
+   the BLUP iff `Lⱼᵢ − z Kᵢⱼ` is the same for every `i`
+   (`Core.blendWeight_eq_blupWeight_iff`). For the thesis's `L = τ²I`: iff
+   cohort `j` has the same covariance `c ≠ Kⱼⱼ` with every other cohort
+   estimate, and then `z = τ²/(Kⱼⱼ − c)`. That holds always for two cohorts
+   (so §2.7 loses nothing), for equal covariances (Finding 5) and for
+   independent cohorts; it corrects the "only for independent cohorts" of
+   Finding 16. Otherwise the blend is strictly worse. Example (as in
+   Finding 16: `τ² = 1`, `v = (0.5, 1, 3)`, `ρ = 0.5`, optimal `z`): MSE of
+   the blend `0.4961, 0.8668, 1.5492` against `0.4827, 0.8404, 1.5470` for
+   the BLUP, i.e. 2.8%, 3.1%, 0.1% above. The BLUP weights for cohort 1 are
+   `(0.974, 0.079, −0.052)` against the blend's `(0.960, 0.032, 0.008)`: it
+   uses the other cohorts individually, some with negative weight. With the
+   true `K` the price of the blend is small here; whether the BLUP survives
+   estimation of `K` (it needs every `K̂ᵢⱼ`, the blend only `b̂` and `ẑ`) is
+   a question for the app (PLAN, Pending). All statements are
+   distribution-free, in true MSE.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

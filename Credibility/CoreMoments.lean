@@ -435,6 +435,58 @@ theorem commonShift_mse_optimal_of_diag {τ2 : ℝ} {v : J → ℝ} (E : Estimat
   E.commonShift_mse_optimal (by rw [hK, posDef_diagonal_iff]; exact hd) u _ hu hV 0
     (imbalanceCov_of_diag hK hd hJ _) c hc
 
+/-! ### The best linear unbiased predictor in true MSE (Finding 18) -/
+
+omit [DecidableEq J] in
+/-- The actual mean squared error of an unbiased linear predictor `Σᵢ dᵢ μ̂ᵢ`
+(`Σᵢ dᵢ = 1`) of `μⱼ` is `linMse`: `dᵀKd - 2 dᵀLⱼ + Lⱼⱼ`. -/
+theorem mse_portLin (j : J) (d : J → ℝ) (hd : ∑ i, d i = 1) :
+    P[fun ω => (E.portLin d ω - E.level j ω) ^ 2] = linMse K L j d := by
+  have hp := E.memLp_portLin d
+  have hl := E.level_memLp j
+  have hX : MemLp (fun ω => E.portLin d ω - E.level j ω) 2 P := hp.sub hl
+  have hXm : P[fun ω => E.portLin d ω - E.level j ω] = 0 := by
+    rw [integral_sub (hp.integrable (by norm_num)) (hl.integrable (by norm_num)),
+      integral_portLin, hd, E.level_mean]
+    ring
+  have hvar : ∀ X, MemLp X 2 P → Var[X; P] = cov[X, X; P] := fun X hX =>
+    (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
+  rw [← variance_of_integral_eq_zero hX.aestronglyMeasurable.aemeasurable hXm,
+    variance_fun_sub hp hl, variance_portLin, hvar _ hl, E.cov_level, covariance_comm,
+    cov_level_portLin, linMse]
+  simp only [mulVec, dotProduct_comm]
+
+omit [IsProbabilityMeasure P] in
+/-- The blend is the linear predictor with weights `z eⱼ + (1 - z) b`. -/
+theorem blend_eq_portLin (j : J) (z : ℝ) : E.blend j z = E.portLin (blendWeight K j z) := by
+  funext ω
+  simp only [blend, Core.blend, Core.portEst, portLin, Core.portLin, blendWeight, Pi.add_apply,
+    Pi.smul_apply, smul_eq_mul, add_mul, sum_add_distrib, mul_assoc, ← mul_sum,
+    Pi.single_apply, ite_mul, one_mul, zero_mul, sum_ite_eq', mem_univ, ite_true]
+
+/-- **The best linear unbiased predictor in true MSE**: among all `Σᵢ dᵢ μ̂ᵢ` with
+`Σᵢ dᵢ = 1`, the weights `d* = blupWeight` minimise the actual mean squared error for
+`μⱼ`, for every distribution with these moments. -/
+theorem blup_mse_optimal (hK : K.PosDef) (j : J) (d : J → ℝ) (hd : ∑ i, d i = 1) :
+    P[fun ω => (E.portLin (blupWeight K L j) ω - E.level j ω) ^ 2]
+      ≤ P[fun ω => (E.portLin d ω - E.level j ω) ^ 2] := by
+  have : Nonempty J := ⟨j⟩
+  rw [E.mse_portLin j _ (sum_blupWeight hK L j), E.mse_portLin j d hd]
+  exact blupWeight_optimal hK L j d hd
+
+/-- **The price of the blend in true MSE**: the blend with factor `z` has the mean
+squared error of the best linear unbiased predictor plus `(w - d*)ᵀK(w - d*)`,
+`w = z eⱼ + (1 - z) b`. So no blend beats it, and the blend is as good only when
+`w = d*` (`blendWeight_eq_blupWeight_iff`). -/
+theorem mse_blend_eq_blup_add (hK : K.PosDef) (j : J) (z : ℝ) :
+    P[fun ω => (E.blend j z ω - E.level j ω) ^ 2]
+      = P[fun ω => (E.portLin (blupWeight K L j) ω - E.level j ω) ^ 2]
+        + (blendWeight K j z - blupWeight K L j) ⬝ᵥ
+            (K *ᵥ (blendWeight K j z - blupWeight K L j)) := by
+  have : Nonempty J := ⟨j⟩
+  rw [E.mse_blend hK j z, E.mse_portLin j _ (sum_blupWeight hK L j)]
+  exact errVar_eq_blupWeight_add hK L j z
+
 omit [Fintype J] [DecidableEq J] in
 /-- A common component: add to every estimate and its level the same centred
 `Cⱼ`, uncorrelated with all estimates and levels, with `cov(Cᵢ, Cⱼ) = Rᵢⱼ`.

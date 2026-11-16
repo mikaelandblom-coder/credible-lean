@@ -77,6 +77,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
   was written from memory of the book; owner to check against it.
+- Finding 18 (2026-11-16): the blend against the best linear unbiased predictor;
+  a paragraph where the blend is introduced (what the restriction to `z` costs, and
+  when nothing), Lean names `Core.Estimates.blup_mse_optimal`,
+  `Core.Estimates.mse_blend_eq_blup_add`, `Core.exists_blendWeight_eq_blupWeight_iff`.
 - Appendix A: the concordance lists the Lean names at drafting time
   (2026-11-16); add new thesis-facing theorems there as they come.
 

@@ -2646,6 +2646,164 @@ these two covariances.
   $\kappa = 0$ by Lemma~\ref{lem:Core_imbalanceCov_diag}.
 \end{proof}
 
+\subsection*{The best linear unbiased predictor}
+
+The blend $z\hmu_j + (1-z)\hmu$ is one linear combination $\sum_i d_i\hmu_i$
+with $\sum_i d_i = 1$ (unbiased whatever the common mean $\mu$). How much is
+lost by not using the best of them all?
+
+\begin{definition}[Linear predictors of $\mu_j$]\label{def:Core_blup}
+  \lean{Credibility.Core.linMse, Credibility.Core.blupWeight, Credibility.Core.blendWeight}
+  \leanok
+  \uses{def:glsWeight}
+  Write $\ell = L_{j\cdot}$, so $\ell_i = \cov(\mu_j, \hmu_i)$. For weights $d$:
+  $\mathrm{mse}_j(d) = d^TKd - 2d^T\ell + L_{jj}$. The best linear unbiased
+  predictor has weights $d^* = K^{-1}\ell + (1 - 1^TK^{-1}\ell)\,b$, and the
+  blend has weights $w(z) = z e_j + (1-z)b$, with the GLS weights $b$.
+\end{definition}
+
+\begin{lemma}[First-order condition]\label{lem:Core_blup_foc}
+  \lean{Credibility.Core.sum_blupWeight, Credibility.Core.mulVec_blupWeight}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite then $\sum_i d^*_i = 1$ and
+  $Kd^* - \ell = (1 - 1^TK^{-1}\ell)\,s^2\,1$, a constant vector.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $Kb = s^2 1$ and $\sum_i b_i = 1$.
+\end{proof}
+
+\begin{lemma}[Pythagoras for linear predictors]\label{lem:Core_linMse_pythagoras}
+  \lean{Credibility.Core.linMse_eq_add_of_mulVec,
+        Credibility.Core.dotProduct_mulVec_comm_of_isHermitian}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K$ be symmetric and $Ke - \ell$ a constant vector. If
+  $\sum_i d_i = \sum_i e_i$ then
+  $\mathrm{mse}_j(d) = \mathrm{mse}_j(e) + (d-e)^TK(d-e)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand around $e$. The cross term is $2(d-e)^T(Ke - \ell)$, a constant times
+  $\sum_i (d_i - e_i) = 0$.
+\end{proof}
+
+\begin{theorem}[The best linear unbiased predictor]\label{thm:Core_blup_optimal}
+  \lean{Credibility.Core.blupWeight_optimal, Credibility.Core.blupWeight_unique,
+        Credibility.Core.linMse_eq_blupWeight_add}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite and $\sum_i d_i = 1$ then
+  $\mathrm{mse}_j(d) = \mathrm{mse}_j(d^*) + (d-d^*)^TK(d-d^*)$. So $d^*$ is
+  the unique minimiser of $\mathrm{mse}_j$ among unbiased weights.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blup_foc, lem:Core_linMse_pythagoras}
+  Lemma~\ref{lem:Core_linMse_pythagoras} with $e = d^*$
+  (Lemma~\ref{lem:Core_blup_foc}); $x^TKx > 0$ for $x \ne 0$.
+\end{proof}
+
+\begin{lemma}[The blend as a linear predictor]\label{lem:Core_blendWeight}
+  \lean{Credibility.Core.sum_blendWeight, Credibility.Core.mulVec_blendWeight,
+        Credibility.Core.linMse_blendWeight}
+  \leanok
+  \uses{def:Core_blup, def:Core.levelMoments, def:errVar}
+  If $K$ is positive definite then $\sum_i w(z)_i = 1$,
+  $Kw(z) = zK_{\cdot j} + (1-z)s^2 1$, and $\mathrm{mse}_j(w(z))$ is the error
+  variance \eqth{6} for the moments of Definition~\ref{def:Core.levelMoments}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $Kb = s^2 1$ and $\sum_i b_i = 1$; then compare coefficients.
+\end{proof}
+
+\begin{theorem}[The price of the blend]\label{thm:Core_blend_price}
+  \lean{Credibility.Core.errVar_eq_blupWeight_add}
+  \leanok
+  \uses{def:Core_blup, def:Core.levelMoments}
+  If $K$ is positive definite, the error variance of the blend with factor $z$
+  is $\mathrm{mse}_j(d^*) + (w(z)-d^*)^TK(w(z)-d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_optimal, lem:Core_blendWeight}
+  Theorem~\ref{thm:Core_blup_optimal} with $d = w(z)$.
+\end{proof}
+
+\begin{theorem}[When the blend is the best linear unbiased predictor]\label{thm:Core_blend_blup_iff}
+  \lean{Credibility.Core.blendWeight_eq_blupWeight_iff}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite then $w(z) = d^*$ iff
+  $\cov(\mu_j,\hmu_i) - z\cov(\hmu_i,\hmu_j) = L_{ji} - zK_{ij}$ is the same
+  for every cohort $i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blup_foc, lem:Core_blendWeight, lem:Core_linMse_pythagoras, thm:Core_blup_optimal}
+  If $w(z) = d^*$, subtract $Kw(z) = zK_{\cdot j} + (1-z)s^2 1$ from the
+  first-order condition. Conversely $Kw(z) - \ell$ is then constant, so by
+  Lemma~\ref{lem:Core_linMse_pythagoras} no unbiased weights beat $w(z)$, and
+  the minimiser is unique.
+\end{proof}
+
+\begin{corollary}[Uncorrelated levels: equal covariances in column $j$]\label{cor:Core_blend_blup_equalCol}
+  \lean{Credibility.Core.exists_blendWeight_eq_blupWeight_iff,
+        Credibility.Core.blendWeight_eq_blupWeight_of_equalCol}
+  \leanok
+  \uses{thm:Core_blend_blup_iff}
+  Let $L = \tau^2 I$, $\tau^2 \ne 0$ and $K$ positive definite. Some blend of
+  cohort $j$ is the best linear unbiased predictor of $\mu_j$ iff
+  $K_{ij} = c$ for all $i \ne j$ with $c \ne K_{jj}$; then
+  $z = \tau^2/(K_{jj} - c)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blend_blup_iff}
+  $\tau^2\delta_{ij} - zK_{ij}$ is constant in $i$ iff $zK_{ij} = zc$ off the
+  diagonal and $\tau^2 = z(K_{jj} - c)$; $z = 0$ would need $\tau^2 = 0$.
+\end{proof}
+
+\begin{theorem}[The best linear unbiased predictor in true MSE]\label{thm:Core_blup_mse}
+  \lean{Credibility.Core.Estimates.blup_mse_optimal, Credibility.Core.Estimates.mse_portLin,
+        Credibility.Core.Estimates.blend_eq_portLin,
+        Credibility.Core.Estimates.mse_blend_eq_blup_add}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} and
+  $\sum_i d_i = 1$:
+  $\mathbb E\bigl[(\sum_i d_i\hmu_i - \mu_j)^2\bigr] = \mathrm{mse}_j(d)$. So
+  for positive definite $K$ the weights $d^*$ minimise the true mean squared
+  error among all unbiased linear predictors, for every distribution with
+  these moments; the blend is $\sum_i w(z)_i\hmu_i$, and its true mean squared
+  error exceeds the minimum by $(w(z)-d^*)^TK(w(z)-d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin, thm:Core_blup_optimal, thm:Core_blend_price, thm:Core_bestZ_mse}
+  The error has mean zero, so its mean square is its variance,
+  $d^TKd - 2(Ld)_j + L_{jj}$. Then Theorems~\ref{thm:Core_blup_optimal}
+  and~\ref{thm:Core_blend_price}.
+\end{proof}
+
+\begin{remark}[Finding 18: the blend against the best linear predictor]\label{rem:blup}
+  \uses{thm:Core_blup_mse, cor:Core_blend_blup_equalCol}
+  The thesis optimises $z$ within the blend; the classical benchmark is the
+  best linear unbiased predictor over all cohort estimates (Goldberger 1962;
+  the homogeneous credibility estimator under dependence, Wen, Wu and Zhou
+  2009). With uncorrelated levels the blend is that predictor exactly when
+  cohort $j$ has the same covariance with every other cohort estimate: always
+  for two cohorts, for equal covariances and for independent cohorts
+  (correcting Finding 16, which said ``only for independent cohorts'').
+  Otherwise the blend pays $(w-d^*)^TK(w-d^*)$. Example ($\tau^2 = 1$,
+  $v = (0.5, 1, 3)$, $\rho = 0.5$, optimal $z$): the blend's mean squared
+  error is $2.8\%$, $3.1\%$ and $0.1\%$ above the minimum.
+\end{remark}
+
 \begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}
   \lean{Credibility.Model.integral_quad_of_cov}
   \leanok

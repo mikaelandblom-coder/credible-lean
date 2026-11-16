@@ -255,6 +255,11 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Finding 18 (2026-11-16): the best linear unbiased predictor `d*` over all cohort
+  estimates beats the blend unless cohort `j` has equal covariances with the others
+  (always for two cohorts). App: show "price of the blend" `(w − d*)ᵀK(w − d*)` per
+  cohort in the world model (exact, true `K`), and add the plug-in BLUP as a fitted
+  method to see whether it survives estimating every `K̂ᵢⱼ`.
 - Finding 17 (2026-11-16): a negative `z` past the two-cohort singularity is
   the best blend with true parameters (the blend is continuous; only the gap
   flips sign). The app's `z > 1` warning could get a sibling for `z < 0`

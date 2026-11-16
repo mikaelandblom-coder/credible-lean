@@ -16,7 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-(none; Finding 17 added to Results 5 and 13, 2026-11-16)
+- Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
+  blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
+  `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".
 
 
 ## 0. Setting and notation (1 page)

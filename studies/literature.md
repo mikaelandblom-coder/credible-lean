@@ -51,6 +51,15 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   estimation (Fay–Herriot EBLUP) reports the weight on the direct estimate, which is our own-data
   weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)` when the synthetic part is the GLS mean. Used: report `cⱼ` next to `z`.
 
+- The blend against the BLUP (searched 2026-11-16 for Finding 18): Goldberger (1962), *Best
+  linear unbiased prediction in the generalized linear regression model*, JASA 57: the predictor
+  `K⁻¹ℓ` plus the GLS mean of the remainder, which with an unknown common mean is the homogeneous
+  credibility estimator. Wen, Wu & Zhou (2009), *The credibility estimator with general dependence
+  structure over risks*, and Zhang & Chen (2018), Statistica Neerlandica 72(2) (equal correlation):
+  homogeneous and inhomogeneous estimators under dependence by orthogonal projection. Used: the
+  BLUP as the benchmark for the thesis's blend (`Core.blupWeight_optimal`); new here is the exact
+  price of the blend and the condition for it to be zero (Finding 18).
+
 ## 4. Error of the plug-in fit (MSEP with estimated parameters)
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
   translation-invariant variance estimators, **under normality**. Without normality the cross term

@@ -748,5 +748,213 @@ theorem glsWeight_blockDiag {K : Matrix J J ℝ} (hK : K.PosDef) (hb : IsBlockDi
 
 end Blocks
 
+/-! ### The best linear unbiased predictor (Finding 18)
+
+The blend `z μ̂ⱼ + (1 - z) μ̂` is one linear combination `Σᵢ dᵢ μ̂ᵢ` with `Σᵢ dᵢ = 1`
+(unbiased whatever the common mean). Among all of them the best one for `μⱼ` is the
+classical best linear unbiased predictor (Goldberger 1962; the homogeneous credibility
+estimator). Its weights, the exact loss of any other weights against it, and when the
+blend is the best one. Row `j` of `L` is `cov(μⱼ, μ̂ᵢ)`. -/
+
+section Blup
+
+/-- The mean squared error `dᵀKd - 2 dᵀLⱼ + Lⱼⱼ` of `Σᵢ dᵢ μ̂ᵢ` (`Σᵢ dᵢ = 1`) for `μⱼ`
+(`Estimates.mse_portLin`). -/
+def linMse (K L : Matrix J J ℝ) (j : J) (d : J → ℝ) : ℝ :=
+  d ⬝ᵥ (K *ᵥ d) - 2 * (d ⬝ᵥ L j) + L j j
+
+/-- The weights of the best linear unbiased predictor of `μⱼ`:
+`d* = K⁻¹Lⱼ + (1 - 1ᵀK⁻¹Lⱼ) b`, with the GLS weights `b`. -/
+noncomputable def blupWeight (K L : Matrix J J ℝ) (j : J) : J → ℝ :=
+  K⁻¹ *ᵥ L j + (1 - 1 ⬝ᵥ (K⁻¹ *ᵥ L j)) • glsWeight K
+
+/-- The weights `z eⱼ + (1 - z) b` of the blend `z μ̂ⱼ + (1 - z) μ̂` on the cohort
+estimates. -/
+noncomputable def blendWeight (K : Matrix J J ℝ) (j : J) (z : ℝ) : J → ℝ :=
+  z • Pi.single j 1 + (1 - z) • glsWeight K
+
+omit [DecidableEq J] in
+/-- For symmetric `K`, `xᵀKy = yᵀKx`. -/
+lemma dotProduct_mulVec_comm_of_isHermitian (hK : K.IsHermitian) (x y : J → ℝ) :
+    x ⬝ᵥ (K *ᵥ y) = y ⬝ᵥ (K *ᵥ x) := by
+  have hsymm : Kᵀ = K := by rw [← conjTranspose_eq_transpose_of_trivial]; exact hK
+  rw [dotProduct_mulVec, ← hsymm, vecMul_transpose, hsymm, dotProduct_comm]
+
+/-- The best predictor is unbiased: `Σᵢ d*ᵢ = 1`. -/
+theorem sum_blupWeight [Nonempty J] (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) :
+    ∑ i, blupWeight K L j i = 1 := by
+  simp only [blupWeight, Pi.add_apply, Pi.smul_apply, smul_eq_mul, sum_add_distrib, ← mul_sum,
+    sum_glsWeight hK, one_dotProduct]
+  ring
+
+/-- The first-order condition: `K d* - Lⱼ` is a constant vector. -/
+theorem mulVec_blupWeight (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) (i : J) :
+    (K *ᵥ blupWeight K L j) i - L j i = (1 - 1 ⬝ᵥ (K⁻¹ *ᵥ L j)) * (invTotal K)⁻¹ := by
+  have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
+  rw [blupWeight, mulVec_add, mulVec_mulVec, mul_nonsing_inv K hdet, one_mulVec, mulVec_smul,
+    mulVec_glsWeight hK]
+  simp
+
+omit [DecidableEq J] in
+/-- Pythagoras for linear predictors: if `K e - Lⱼ` is a constant vector, then any
+weights `d` with the same sum as `e` lose exactly `(d - e)ᵀK(d - e)` against `e`. -/
+theorem linMse_eq_add_of_mulVec (hK : K.IsHermitian) (L : Matrix J J ℝ) (j : J)
+    {e : J → ℝ} {c : ℝ} (he : ∀ i, (K *ᵥ e) i - L j i = c) (d : J → ℝ)
+    (hd : ∑ i, d i = ∑ i, e i) :
+    linMse K L j d = linMse K L j e + (d - e) ⬝ᵥ (K *ᵥ (d - e)) := by
+  have hsymm := dotProduct_mulVec_comm_of_isHermitian hK e d
+  -- `(d - e)ᵀ(K e - Lⱼ) = c Σ(d - e) = 0`.
+  have hx : d ⬝ᵥ (K *ᵥ e) - e ⬝ᵥ (K *ᵥ e) - (d ⬝ᵥ L j - e ⬝ᵥ L j) = 0 := by
+    have : ∑ i, (d i - e i) * ((K *ᵥ e) i - L j i) = 0 := by
+      simp only [he, ← sum_mul, sum_sub_distrib, hd, sub_self, zero_mul]
+    rw [← this]
+    simp only [dotProduct, ← sum_sub_distrib]
+    exact sum_congr rfl fun i _ => by ring
+  simp only [linMse, mulVec_sub, dotProduct_sub, sub_dotProduct]
+  linarith
+
+/-- The loss of any unbiased weights `d` against the best predictor is
+`(d - d*)ᵀK(d - d*)`. -/
+theorem linMse_eq_blupWeight_add [Nonempty J] (hK : K.PosDef) (L : Matrix J J ℝ) (j : J)
+    (d : J → ℝ) (hd : ∑ i, d i = 1) :
+    linMse K L j d = linMse K L j (blupWeight K L j)
+      + (d - blupWeight K L j) ⬝ᵥ (K *ᵥ (d - blupWeight K L j)) :=
+  linMse_eq_add_of_mulVec hK.isHermitian L j (mulVec_blupWeight hK L j) d
+    (hd.trans (sum_blupWeight hK L j).symm)
+
+/-- **The best linear unbiased predictor**: `d*` has the smallest mean squared error
+among all weights with `Σᵢ dᵢ = 1`. -/
+theorem blupWeight_optimal (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) (d : J → ℝ)
+    (hd : ∑ i, d i = 1) : linMse K L j (blupWeight K L j) ≤ linMse K L j d := by
+  have : Nonempty J := ⟨j⟩
+  rw [linMse_eq_blupWeight_add hK L j d hd]
+  have := hK.posSemidef.dotProduct_mulVec_nonneg (d - blupWeight K L j)
+  simp only [star_trivial] at this
+  linarith
+
+/-- …and it is the only one. -/
+theorem blupWeight_unique (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) {d : J → ℝ}
+    (hd : ∑ i, d i = 1) (h : linMse K L j d ≤ linMse K L j (blupWeight K L j)) :
+    d = blupWeight K L j := by
+  have : Nonempty J := ⟨j⟩
+  rw [linMse_eq_blupWeight_add hK L j d hd] at h
+  by_contra hne
+  have := hK.dotProduct_mulVec_pos (x := d - blupWeight K L j) (sub_ne_zero.mpr hne)
+  simp only [star_trivial] at this
+  linarith
+
+/-- The blend is unbiased: its weights sum to one. -/
+theorem sum_blendWeight [Nonempty J] (hK : K.PosDef) (j : J) (z : ℝ) :
+    ∑ i, blendWeight K j z i = 1 := by
+  simp only [blendWeight, Pi.add_apply, Pi.smul_apply, smul_eq_mul, sum_add_distrib, ← mul_sum,
+    sum_glsWeight hK, Finset.sum_pi_single', mem_univ, ite_true]
+  ring
+
+/-- `K(z eⱼ + (1 - z) b) = z Kₓⱼ + (1 - z) s² 1`. -/
+theorem mulVec_blendWeight (hK : K.PosDef) (j : J) (z : ℝ) (i : J) :
+    (K *ᵥ blendWeight K j z) i = z * K i j + (1 - z) * (invTotal K)⁻¹ := by
+  rw [blendWeight, mulVec_add, mulVec_smul, mulVec_smul, mulVec_glsWeight hK, mulVec_single_one]
+  simp
+
+/-- The mean squared error of the blend's weights is `errVar`, eq. (6). -/
+theorem linMse_blendWeight [Nonempty J] (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) (z : ℝ) :
+    linMse K L j (blendWeight K j z) = (levelMoments K L (K j j) j).errVar z := by
+  have h1 : blendWeight K j z ⬝ᵥ (K *ᵥ blendWeight K j z)
+      = z * (z * K j j + (1 - z) * (invTotal K)⁻¹) + (1 - z) * (invTotal K)⁻¹ := by
+    have hb : glsWeight K ⬝ᵥ (K *ᵥ blendWeight K j z) = (invTotal K)⁻¹ := by
+      rw [dotProduct_mulVec_comm_of_isHermitian hK.isHermitian, mulVec_glsWeight hK]
+      simp only [dotProduct, ← sum_mul, sum_blendWeight hK, one_mul]
+    rw [show blendWeight K j z ⬝ᵥ (K *ᵥ blendWeight K j z)
+      = (z • Pi.single j 1 + (1 - z) • glsWeight K) ⬝ᵥ (K *ᵥ blendWeight K j z) from rfl,
+      add_dotProduct, smul_dotProduct, smul_dotProduct, single_one_dotProduct, hb,
+      mulVec_blendWeight hK]
+    simp only [smul_eq_mul]
+  have h2 : blendWeight K j z ⬝ᵥ L j = z * L j j + (1 - z) * (L *ᵥ glsWeight K) j := by
+    rw [blendWeight, add_dotProduct, smul_dotProduct, smul_dotProduct, single_one_dotProduct]
+    simp only [smul_eq_mul, mulVec, dotProduct_comm]
+  rw [linMse, h1, h2]
+  simp only [BlendMoments.errVar, levelMoments, mulVec_glsWeight hK]
+  ring
+
+/-- **The price of the blend**: the blend with factor `z` loses exactly
+`(w - d*)ᵀK(w - d*)` against the best linear unbiased predictor, `w = z eⱼ + (1 - z) b`. -/
+theorem errVar_eq_blupWeight_add [Nonempty J] (hK : K.PosDef) (L : Matrix J J ℝ) (j : J)
+    (z : ℝ) :
+    (levelMoments K L (K j j) j).errVar z = linMse K L j (blupWeight K L j)
+      + (blendWeight K j z - blupWeight K L j) ⬝ᵥ
+          (K *ᵥ (blendWeight K j z - blupWeight K L j)) := by
+  rw [← linMse_blendWeight hK]
+  exact linMse_eq_blupWeight_add hK L j _ (sum_blendWeight hK j z)
+
+/-- **When the blend is the best linear unbiased predictor**: exactly when
+`cov(μⱼ, μ̂ᵢ) - z cov(μ̂ᵢ, μ̂ⱼ)` is the same for every cohort `i`. -/
+theorem blendWeight_eq_blupWeight_iff (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) (z : ℝ) :
+    blendWeight K j z = blupWeight K L j ↔ ∃ c, ∀ i, L j i - z * K i j = c := by
+  have : Nonempty J := ⟨j⟩
+  constructor
+  · intro h
+    refine ⟨(1 - z) * (invTotal K)⁻¹ - (1 - 1 ⬝ᵥ (K⁻¹ *ᵥ L j)) * (invTotal K)⁻¹, fun i => ?_⟩
+    have h1 := mulVec_blupWeight hK L j i
+    rw [← h, mulVec_blendWeight hK] at h1
+    linarith
+  · rintro ⟨c, hc⟩
+    have he : ∀ i, (K *ᵥ blendWeight K j z) i - L j i = (1 - z) * (invTotal K)⁻¹ - c :=
+      fun i => by rw [mulVec_blendWeight hK]; linarith [hc i]
+    refine blupWeight_unique hK L j (sum_blendWeight hK j z) ?_
+    rw [linMse_eq_add_of_mulVec hK.isHermitian L j he (blupWeight K L j)
+      ((sum_blupWeight hK L j).trans (sum_blendWeight hK j z).symm)]
+    have := hK.posSemidef.dotProduct_mulVec_nonneg (blupWeight K L j - blendWeight K j z)
+    simp only [star_trivial] at this
+    linarith
+
+/-- **Uncorrelated levels** (`L = τ²I`, the thesis): if cohort `j` has the same covariance
+`c ≠ Kⱼⱼ` with every other cohort estimate, the blend with `z = τ²/(Kⱼⱼ - c)` is the best
+linear unbiased predictor of `μⱼ`. Two cohorts, equal covariances and independent cohorts
+are cases. -/
+theorem blendWeight_eq_blupWeight_of_equalCol (hK : K.PosDef) (j : J) {c : ℝ}
+    (hc : ∀ i, i ≠ j → K i j = c) (hne : c ≠ K j j) :
+    blendWeight K j (τ2 / (K j j - c)) = blupWeight K (τ2 • (1 : Matrix J J ℝ)) j := by
+  have hd : K j j - c ≠ 0 := sub_ne_zero.mpr (Ne.symm hne)
+  refine (blendWeight_eq_blupWeight_iff hK _ j _).mpr ⟨-(τ2 / (K j j - c) * c), fun i => ?_⟩
+  by_cases hij : i = j
+  · subst hij
+    simp only [Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul, mul_one]
+    field_simp
+    ring
+  · simp only [Matrix.smul_apply, Matrix.one_apply_ne (Ne.symm hij), smul_eq_mul, mul_zero,
+      hc i hij]
+    ring
+
+/-- **Uncorrelated levels: the blend is the best linear unbiased predictor only then.**
+For `L = τ²I`, `τ² ≠ 0`, some blend of cohort `j` is the best linear unbiased predictor of
+`μⱼ` exactly when `j` has the same covariance `c ≠ Kⱼⱼ` with every other cohort estimate. -/
+theorem exists_blendWeight_eq_blupWeight_iff (hK : K.PosDef) (hτ : τ2 ≠ 0) (j : J) :
+    (∃ z, blendWeight K j z = blupWeight K (τ2 • (1 : Matrix J J ℝ)) j)
+      ↔ ∃ c, c ≠ K j j ∧ ∀ i, i ≠ j → K i j = c := by
+  constructor
+  · rintro ⟨z, hz⟩
+    obtain ⟨c, hc⟩ := (blendWeight_eq_blupWeight_iff hK _ j z).mp hz
+    have hj := hc j
+    simp only [Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul, mul_one] at hj
+    have hi : ∀ i, i ≠ j → -(z * K i j) = c := fun i hij => by
+      have := hc i
+      simpa [Matrix.one_apply_ne (Ne.symm hij)] using this
+    by_cases hz0 : z = 0
+    · -- Then `c = τ² ≠ 0` and `c = 0` at any other cohort, so there is none.
+      refine ⟨K j j + 1, by linarith, fun i hij => absurd ?_ hτ⟩
+      have := hi i hij
+      rw [hz0] at this hj
+      linarith
+    · refine ⟨-c / z, fun h => hτ ?_, fun i hij => ?_⟩
+      · rw [← h] at hj
+        field_simp at hj
+        linarith
+      · rw [← hi i hij]
+        field_simp
+  · rintro ⟨c, hne, hc⟩
+    exact ⟨_, blendWeight_eq_blupWeight_of_equalCol hK j hc hne⟩
+
+end Blup
+
 end Core
 end Credibility
