@@ -1,6 +1,7 @@
 import Mathlib
 import Credibility.Blend
 import Credibility.Weights
+import Credibility.OffDiagonal
 
 /-!
 # The credibility factor at the level of `K` (thesis §2.5, eqs. (24)–(26))
@@ -1098,6 +1099,139 @@ lemma posDef_smul_one_add_of_corr {τ2 δ : ℝ} {V : Matrix J J ℝ} (hτ : 0 <
       dotProduct_smul, smul_eq_mul]
     nlinarith
 
+/-- For `K = τ²I + X` and `L = τ²I`: `Var(Σᵢ dᵢμ̂ᵢ - tμⱼ) = τ²(‖d‖² - 2t dⱼ + t²) + dᵀXd`. -/
+lemma predForm_smul_one_add (τ2 : ℝ) (X : Matrix J J ℝ) (j : J) (d : J → ℝ) (t : ℝ) :
+    predForm (τ2 • 1 + X) (τ2 • 1) j d t
+      = τ2 * (d ⬝ᵥ d - 2 * t * d j + t ^ 2) + d ⬝ᵥ (X *ᵥ d) := by
+  have hLj : d ⬝ᵥ (τ2 • (1 : Matrix J J ℝ)) j = τ2 * d j := by
+    simp [dotProduct, Matrix.one_apply, mul_comm]
+  simp only [predForm, add_mulVec, smul_mulVec, one_mulVec, dotProduct_add, dotProduct_smul,
+    smul_eq_mul, hLj, Matrix.smul_apply, Matrix.one_apply_eq, mul_one]
+  ring
+
+omit [DecidableEq J] in
+lemma dotProduct_sub_two_mul_add_sq_nonneg (d : J → ℝ) (j : J) (t : ℝ) :
+    0 ≤ d ⬝ᵥ d - 2 * t * d j + t ^ 2 := by
+  have hdd : d j ^ 2 ≤ d ⬝ᵥ d := by
+    simp only [dotProduct, ← sq]
+    exact single_le_sum (f := fun i => d i ^ 2) (fun i _ => sq_nonneg _) (mem_univ j)
+  nlinarith [sq_nonneg (d j - t)]
+
+/-- **A working noise covariance within factors `a ≤ 1 ≤ A`**: let the true and working
+covariances be `K = τ²I + V` and `K̃ = τ²I + Ṽ` with `L = τ²I`, and
+`a·yᵀṼy ≤ yᵀVy ≤ A·yᵀṼy` for all `y`. Then the best predictor of the working model has
+mean squared error at most `(A + a)²/(4aA)` times the smallest. -/
+theorem linMse_noiseWorking_le {τ2 a A : ℝ} {V W : Matrix J J ℝ} (hτ : 0 < τ2)
+    (hV : V.IsHermitian) (hW : W.PosSemidef) (ha : 0 ≤ a) (ha1 : a ≤ 1) (hA1 : 1 ≤ A)
+    (hlo : ∀ y : J → ℝ, a * (y ⬝ᵥ (W *ᵥ y)) ≤ y ⬝ᵥ (V *ᵥ y))
+    (hhi : ∀ y : J → ℝ, y ⬝ᵥ (V *ᵥ y) ≤ A * (y ⬝ᵥ (W *ᵥ y))) (j : J) :
+    4 * a * A * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + W) (τ2 • 1) j)
+      ≤ (A + a) ^ 2 * linMse (τ2 • 1 + V) (τ2 • 1) j
+          (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  have hW0 : ∀ y : J → ℝ, 0 ≤ y ⬝ᵥ (W *ᵥ y) := fun y => by
+    simpa using hW.dotProduct_mulVec_nonneg y
+  have hVpsd : V.PosSemidef := PosSemidef.of_dotProduct_mulVec_nonneg hV fun y => by
+    simpa using (mul_nonneg ha (hW0 y)).trans (hlo y)
+  have hI : (τ2 • (1 : Matrix J J ℝ)).PosDef := PosDef.one.smul hτ
+  refine linMse_blupWeight_working_le (hI.add_posSemidef hVpsd) (hI.add_posSemidef hW) _ j ha
+    (by linarith) (fun d t => ?_) (fun d t => ?_) (fun d t => ?_)
+  · rw [predForm_smul_one_add, predForm_smul_one_add]
+    have hT := dotProduct_sub_two_mul_add_sq_nonneg d j t
+    nlinarith [hlo d, mul_le_mul_of_nonneg_right ha1 (mul_nonneg hτ.le hT)]
+  · rw [predForm_smul_one_add, predForm_smul_one_add]
+    have hT := dotProduct_sub_two_mul_add_sq_nonneg d j t
+    nlinarith [hhi d, mul_le_mul_of_nonneg_right hA1 (mul_nonneg hτ.le hT)]
+  · rw [predForm_smul_one_add]
+    exact add_nonneg (mul_nonneg hτ.le (dotProduct_sub_two_mul_add_sq_nonneg d j t)) (hW0 d)
+
+omit [DecidableEq J] in
+/-- `yᵀ(shrinkOffDiag θ V)y = Σᵢ vᵢyᵢ² + θ(yᵀVy - Σᵢ vᵢyᵢ²)`. -/
+lemma dotProduct_shrinkOffDiag_mulVec [DecidableEq J] (θ : ℝ) (V : Matrix J J ℝ) (y : J → ℝ) :
+    y ⬝ᵥ (shrinkOffDiag θ V *ᵥ y)
+      = ∑ i, V i i * y i ^ 2 + θ * (y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2) := by
+  have hd : y ⬝ᵥ (diagonal V.diag *ᵥ y) = ∑ i, V i i * y i ^ 2 := by
+    simp only [mulVec_diagonal, dotProduct, Matrix.diag_apply]
+    exact sum_congr rfl fun i _ => by ring
+  rw [shrinkOffDiag_eq, add_mulVec, smul_mulVec, smul_mulVec, dotProduct_add, dotProduct_smul,
+    dotProduct_smul, hd, smul_eq_mul, smul_eq_mul]
+  ring
+
+/-- **The price of damping correlation**: let the noise correlation lie between `-δ₋` and
+`δ₊` (`-δ₋ Σᵢ vᵢyᵢ² ≤ yᵀVy - Σᵢ vᵢyᵢ² ≤ δ₊ Σᵢ vᵢyᵢ²`, `δ₋ < 1`), and the working model
+multiply the noise covariances off the diagonal by `θ ∈ [0, 1]` (`shrinkOffDiag`). Its best
+predictor has mean squared error at most `(A + a)²/(4aA)` times the smallest, with
+`a = (1 - δ₋)/(1 - θδ₋)` and `A = (1 + δ₊)/(1 + θδ₊)`. `θ = 0` ignores the correlation,
+`θ = 1` is the true model. -/
+theorem linMse_damped_le {τ2 θ δm δp : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2)
+    (hV : V.IsHermitian) (hv : ∀ i, 0 ≤ V i i) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hm0 : 0 ≤ δm)
+    (hm1 : δm < 1) (hp0 : 0 ≤ δp)
+    (hδ : ∀ y : J → ℝ, -δm * ∑ i, V i i * y i ^ 2 ≤ y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ∧
+      y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ≤ δp * ∑ i, V i i * y i ^ 2) (j : J) :
+    4 * ((1 - δm) * (1 + δp) * (1 - θ * δm) * (1 + θ * δp))
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + shrinkOffDiag θ V) (τ2 • 1) j)
+      ≤ ((1 + δp) * (1 - θ * δm) + (1 - δm) * (1 + θ * δp)) ^ 2
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  have hS0 : ∀ y : J → ℝ, 0 ≤ ∑ i, V i i * y i ^ 2 :=
+    fun y => sum_nonneg fun i _ => mul_nonneg (hv i) (sq_nonneg _)
+  have hm : 0 < 1 - θ * δm := by nlinarith
+  have hp : 0 < 1 + θ * δp := by positivity
+  have hm' : 0 < 1 - δm := by linarith
+  have hVt : (shrinkOffDiag θ V).PosSemidef := by
+    refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun y => ?_
+    · rw [shrinkOffDiag_eq]
+      exact (hV.smul (IsSelfAdjoint.all θ)).add
+        (isHermitian_diagonal_of_self_adjoint _ (IsSelfAdjoint.all _) |>.smul
+          (IsSelfAdjoint.all _))
+    · simp only [star_trivial]
+      rw [dotProduct_shrinkOffDiag_mulVec]
+      nlinarith [(hδ y).1, hS0 y]
+  have key := linMse_noiseWorking_le (a := (1 - δm) / (1 - θ * δm))
+    (A := (1 + δp) / (1 + θ * δp)) hτ hV hVt (by positivity)
+    (by rw [div_le_one hm]; nlinarith) (by rw [le_div_iff₀ hp]; nlinarith)
+    (fun y => by
+      rw [dotProduct_shrinkOffDiag_mulVec, div_mul_eq_mul_div, div_le_iff₀ hm]
+      nlinarith [(hδ y).1, hS0 y, mul_nonneg (sub_nonneg.mpr hθ1)
+        (show 0 ≤ y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 + δm * ∑ i, V i i * y i ^ 2 by
+          linarith [(hδ y).1])])
+    (fun y => by
+      rw [dotProduct_shrinkOffDiag_mulVec, div_mul_eq_mul_div, le_div_iff₀ hp]
+      nlinarith [(hδ y).2, hS0 y, mul_nonneg (sub_nonneg.mpr hθ1)
+        (show 0 ≤ δp * ∑ i, V i i * y i ^ 2 - (y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2) by
+          linarith [(hδ y).2])]) j
+  have e1 : 4 * ((1 - δm) * (1 + δp) * (1 - θ * δm) * (1 + θ * δp))
+      = (4 * ((1 - δm) / (1 - θ * δm)) * ((1 + δp) / (1 + θ * δp)))
+        * ((1 - θ * δm) * (1 + θ * δp)) ^ 2 := by
+    field_simp
+  have e2 : ((1 + δp) * (1 - θ * δm) + (1 - δm) * (1 + θ * δp)) ^ 2
+      = ((1 + δp) / (1 + θ * δp) + (1 - δm) / (1 - θ * δm)) ^ 2
+        * ((1 - θ * δm) * (1 + θ * δp)) ^ 2 := by
+    field_simp
+  rw [e1, e2, mul_right_comm, mul_right_comm _ (((1 - θ * δm) * (1 + θ * δp)) ^ 2)]
+  exact mul_le_mul_of_nonneg_right key (sq_nonneg _)
+
+/-- **The price of ignoring correlation, two-sided**: if the noise correlation lies between
+`-δ₋` and `δ₊` (`δ₋ < 1`), the estimate that ignores it (`K̃ = diag(τ² + vᵢ)`) has mean
+squared error at most `(2 + δ₊ - δ₋)²/(4(1 - δ₋)(1 + δ₊))` times the smallest: `δ₋` and
+`δ₊` are `1` minus the smallest and the largest eigenvalue minus `1` of the noise
+correlation matrix. -/
+theorem linMse_ignoreCorr_le_two_sided {τ2 δm δp : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2)
+    (hV : V.IsHermitian) (hv : ∀ i, 0 ≤ V i i) (hm0 : 0 ≤ δm) (hm1 : δm < 1) (hp0 : 0 ≤ δp)
+    (hδ : ∀ y : J → ℝ, -δm * ∑ i, V i i * y i ^ 2 ≤ y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ∧
+      y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ≤ δp * ∑ i, V i i * y i ^ 2) (j : J) :
+    4 * ((1 - δm) * (1 + δp)) * linMse (τ2 • 1 + V) (τ2 • 1) j
+        (blupWeight (diagonal fun i => τ2 + V i i) (τ2 • 1) j)
+      ≤ (2 + δp - δm) ^ 2
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  have h0 : τ2 • (1 : Matrix J J ℝ) + shrinkOffDiag 0 V = diagonal fun i => τ2 + V i i := by
+    ext i k
+    by_cases h : i = k
+    · subst h; simp [shrinkOffDiag]
+    · simp [shrinkOffDiag, h, Matrix.one_apply_ne h]
+  have := linMse_damped_le hτ hV hv le_rfl zero_le_one hm0 hm1 hp0 hδ j
+  rw [h0] at this
+  convert this using 2 <;> ring
+
+
 /-- **The price of ignoring correlation**: let the cohort estimates have covariance
 `K = τ²I + V` and the levels `L = τ²I`, with noise variances `vᵢ = Vᵢᵢ`. If the noise
 correlation is at most `δ < 1` in the sense `|yᵀVy - Σᵢ vᵢyᵢ²| ≤ δ Σᵢ vᵢyᵢ²` (`δ` is the
@@ -1111,47 +1245,8 @@ theorem linMse_ignoreCorr_le {τ2 δ : ℝ} {V : Matrix J J ℝ} (hτ : 0 < τ2)
     (1 - δ ^ 2) * linMse (τ2 • 1 + V) (τ2 • 1) j
         (blupWeight (diagonal fun i => τ2 + V i i) (τ2 • 1) j)
       ≤ linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
-  set K := τ2 • (1 : Matrix J J ℝ) + V
-  set K' := diagonal fun i => τ2 + V i i
-  set L := τ2 • (1 : Matrix J J ℝ)
-  have hW0 : ∀ y : J → ℝ, 0 ≤ ∑ i, V i i * y i ^ 2 :=
-    fun y => sum_nonneg fun i _ => mul_nonneg (hv i) (sq_nonneg _)
-  -- The two forms differ by `yᵀVy - Σ vᵢyᵢ²`; the working one is `τ²‖y‖² + Σ vᵢyᵢ²` on `K`.
-  have hKy : ∀ y : J → ℝ, y ⬝ᵥ (K *ᵥ y) = τ2 * (y ⬝ᵥ y) + y ⬝ᵥ (V *ᵥ y) := fun y => by
-    simp [K, add_mulVec, smul_mulVec, dotProduct_add]
-  have hK'y : ∀ y : J → ℝ, y ⬝ᵥ (K' *ᵥ y) = τ2 * (y ⬝ᵥ y) + ∑ i, V i i * y i ^ 2 := fun y => by
-    simp only [K', mulVec_diagonal, dotProduct, mul_sum, ← sum_add_distrib]
-    exact sum_congr rfl fun i _ => by ring
-  have hdiff : ∀ d t, predForm K L j d t - predForm K' L j d t
-      = d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2 := fun d t => by
-    simp only [predForm, hKy, hK'y]; ring
-  -- The working form is at least `Σ vᵢdᵢ²`: its rest is `τ²(‖d‖² - 2t dⱼ + t²) ≥ 0`.
-  have hLj : ∀ d : J → ℝ, d ⬝ᵥ L j = τ2 * d j := fun d => by
-    simp [L, dotProduct, Matrix.one_apply, mul_comm]
-  have hW : ∀ d t, ∑ i, V i i * d i ^ 2 ≤ predForm K' L j d t := fun d t => by
-    have hdd : d j ^ 2 ≤ d ⬝ᵥ d := by
-      simp only [dotProduct, ← sq]
-      exact single_le_sum (f := fun i => d i ^ 2) (fun i _ => sq_nonneg _) (mem_univ j)
-    have : predForm K' L j d t = τ2 * (d ⬝ᵥ d - 2 * t * d j + t ^ 2) + ∑ i, V i i * d i ^ 2 := by
-      simp only [predForm, hK'y, hLj, L, Matrix.smul_apply, Matrix.one_apply_eq, smul_eq_mul,
-        mul_one]
-      ring
-    rw [this]
-    nlinarith [sq_nonneg (d j - t)]
-  have hlo : ∀ d t, (1 - δ) * predForm K' L j d t ≤ predForm K L j d t := fun d t => by
-    have h1 := hdiff d t
-    have h2 := neg_abs_le (d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2)
-    nlinarith [hδ d, hW d t, hW0 d]
-  have hhi : ∀ d t, predForm K L j d t ≤ (1 + δ) * predForm K' L j d t := fun d t => by
-    have h1 := hdiff d t
-    have h2 := le_abs_self (d ⬝ᵥ (V *ᵥ d) - ∑ i, V i i * d i ^ 2)
-    nlinarith [hδ d, hW d t, hW0 d]
-  -- Both matrices are positive definite.
-  have hK' : K'.PosDef := by
-    rw [posDef_diagonal_iff]; exact fun i => add_pos_of_pos_of_nonneg hτ (hv i)
-  have hK : K.PosDef := posDef_smul_one_add_of_corr hτ hV hv hδ1 hδ
-  have := linMse_blupWeight_working_le hK hK' L j (by linarith : (0 : ℝ) ≤ 1 - δ)
-    (by linarith : (0 : ℝ) ≤ 1 + δ) hlo hhi fun d t => (hW0 d).trans (hW d t)
+  have := linMse_ignoreCorr_le_two_sided hτ hV hv hδ0 hδ1 hδ0
+    (fun y => (abs_le.mp (hδ y)).imp (fun h => by linarith) id) j
   nlinarith
 
 omit [DecidableEq J] in
@@ -1225,6 +1320,97 @@ theorem linMse_ignoreCorr_le_of_offDiag {τ2 r : ℝ} {V : Matrix J J ℝ} (hτ 
     exact_mod_cast Fintype.card_pos_iff.mpr ⟨j⟩
   exact linMse_ignoreCorr_le hτ hV hv (mul_nonneg (by linarith) hr) hJ
     (corrBound_of_offDiag hv hr hρ) j
+
+/-- An equicorrelated noise covariance, `Vᵢᵢ = vᵢ` and `Vᵢₖ = r√(vᵢvₖ)` (`i ≠ k`), has
+`yᵀVy - Σᵢ vᵢyᵢ² = r((Σᵢ √vᵢ yᵢ)² - Σᵢ vᵢyᵢ²)`: correlation between `-r` and `(J - 1)r`. -/
+lemma equicorr_bounds {v : J → ℝ} (hv : ∀ i, 0 ≤ v i) {r : ℝ} (hr : 0 ≤ r) (y : J → ℝ) :
+    -r * ∑ i, (of fun i k => if i = k then v i else r * √(v i * v k) : Matrix J J ℝ) i i
+        * y i ^ 2
+      ≤ y ⬝ᵥ ((of fun i k => if i = k then v i else r * √(v i * v k)) *ᵥ y)
+        - ∑ i, (of fun i k => if i = k then v i else r * √(v i * v k) : Matrix J J ℝ) i i
+          * y i ^ 2 ∧
+    y ⬝ᵥ ((of fun i k => if i = k then v i else r * √(v i * v k)) *ᵥ y)
+        - ∑ i, (of fun i k => if i = k then v i else r * √(v i * v k) : Matrix J J ℝ) i i
+          * y i ^ 2
+      ≤ ((Fintype.card J : ℝ) - 1) * r
+        * ∑ i, (of fun i k => if i = k then v i else r * √(v i * v k) : Matrix J J ℝ) i i
+          * y i ^ 2 := by
+  set s : J → ℝ := fun i => √(v i)
+  have hs : ∀ i, s i ^ 2 = v i := fun i => Real.sq_sqrt (hv i)
+  have hdiag : ∀ i, (of fun i k => if i = k then v i else r * √(v i * v k) : Matrix J J ℝ) i i
+      = v i := fun i => by simp
+  simp only [hdiag]
+  set S := ∑ i, v i * y i ^ 2
+  have hentry : ∀ i k, (if i = k then v i else r * √(v i * v k))
+      = r * (s i * s k) + if i = k then (1 - r) * v i else 0 := fun i k => by
+    by_cases h : i = k
+    · subst h; simp only [ite_true, s]; rw [← sq, hs]; ring
+    · simp only [h, ite_false, s, Real.sqrt_mul (hv i)]; ring
+  have hq : y ⬝ᵥ ((of fun i k => if i = k then v i else r * √(v i * v k)) *ᵥ y)
+      = r * (∑ i, s i * y i) ^ 2 + (1 - r) * S := by
+    simp only [dotProduct, mulVec, of_apply, hentry]
+    calc ∑ x, y x * ∑ i, (r * (s x * s i) + if x = i then (1 - r) * v x else 0) * y i
+        = ∑ x, (r * (s x * y x) * ∑ i, s i * y i + (1 - r) * (v x * y x ^ 2)) :=
+          sum_congr rfl fun x _ => by
+            simp only [add_mul, sum_add_distrib, ite_mul, zero_mul, sum_ite_eq, mem_univ,
+              ite_true, mul_add, mul_sum]
+            congr 1
+            · exact sum_congr rfl fun i _ => by ring
+            · ring
+      _ = r * (∑ i, s i * y i) ^ 2 + (1 - r) * S := by
+          simp only [sum_add_distrib, ← sum_mul, ← mul_sum, S, sq]; ring
+  have hS : ∑ i, (s i * y i) ^ 2 = S := sum_congr rfl fun i _ => by rw [mul_pow, hs]
+  have hcs := sq_sum_le_card_mul_sum_sq (s := univ) (f := fun i => s i * y i)
+  rw [hS, card_univ] at hcs
+  rw [hq]
+  constructor
+  · nlinarith [mul_nonneg hr (sq_nonneg (∑ i, s i * y i))]
+  · nlinarith [mul_le_mul_of_nonneg_left hcs hr]
+
+/-- **The price of damping equal correlations**: if all noise correlations equal `r ∈ [0, 1)`
+(`Vᵢₖ = r√(vᵢvₖ)`) and the working model multiplies them by `θ ∈ [0, 1]`, its best predictor
+has mean squared error at most `(A + a)²/(4aA)` times the smallest, with
+`a = (1 - r)/(1 - θr)` and `A = (1 + (J - 1)r)/(1 + θ(J - 1)r)`. -/
+theorem linMse_damped_equicorr_le {τ2 θ r : ℝ} {v : J → ℝ} (hτ : 0 < τ2) (hv : ∀ i, 0 ≤ v i)
+    (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hr0 : 0 ≤ r) (hr1 : r < 1) (j : J) :
+    let V : Matrix J J ℝ := of fun i k => if i = k then v i else r * √(v i * v k)
+    let ρ := ((Fintype.card J : ℝ) - 1) * r
+    4 * ((1 - r) * (1 + ρ) * (1 - θ * r) * (1 + θ * ρ))
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + shrinkOffDiag θ V) (τ2 • 1) j)
+      ≤ ((1 + ρ) * (1 - θ * r) + (1 - r) * (1 + θ * ρ)) ^ 2
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  intro V ρ
+  have hJ1 : (1 : ℝ) ≤ Fintype.card J := by exact_mod_cast Fintype.card_pos_iff.mpr ⟨j⟩
+  have hV : V.IsHermitian := by
+    ext i k
+    simp only [V, conjTranspose_apply, of_apply, star_trivial]
+    by_cases h : i = k
+    · subst h; rfl
+    · simp [h, Ne.symm h, mul_comm (v i)]
+  exact linMse_damped_le hτ hV (fun i => by simpa [V] using hv i) hθ0 hθ1 hr0 hr1
+    (mul_nonneg (by linarith) hr0) (equicorr_bounds hv hr0) j
+
+/-- **The price of ignoring equal correlations**: if all noise correlations equal
+`r ∈ [0, 1)`, the estimate that ignores them has mean squared error at most
+`(2 + (J - 2)r)²/(4(1 - r)(1 + (J - 1)r))` times the smallest, and this is sharp (as
+`τ² → 0`). Two cohorts: `1/(1 - r²)`; three cohorts and `r = 0.5`: `1.5625`. -/
+theorem linMse_ignoreCorr_equicorr_le {τ2 r : ℝ} {v : J → ℝ} (hτ : 0 < τ2)
+    (hv : ∀ i, 0 ≤ v i) (hr0 : 0 ≤ r) (hr1 : r < 1) (j : J) :
+    let V : Matrix J J ℝ := of fun i k => if i = k then v i else r * √(v i * v k)
+    4 * ((1 - r) * (1 + ((Fintype.card J : ℝ) - 1) * r))
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (diagonal fun i => τ2 + v i) (τ2 • 1) j)
+      ≤ (2 + ((Fintype.card J : ℝ) - 2) * r) ^ 2
+        * linMse (τ2 • 1 + V) (τ2 • 1) j (blupWeight (τ2 • 1 + V) (τ2 • 1) j) := by
+  intro V
+  have h := linMse_damped_equicorr_le hτ hv le_rfl zero_le_one hr0 hr1 j
+  have h0 : τ2 • (1 : Matrix J J ℝ) + shrinkOffDiag 0 V = diagonal fun i => τ2 + v i := by
+    ext i k
+    by_cases h : i = k
+    · subst h; simp [V, shrinkOffDiag]
+    · simp [V, shrinkOffDiag, h, Matrix.one_apply_ne h]
+  simp only at h
+  rw [h0] at h
+  convert h using 2 <;> ring
 
 end Misspec
 

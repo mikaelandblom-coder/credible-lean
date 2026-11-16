@@ -2892,6 +2892,86 @@ example ignoring the correlation between cohorts. How much can that cost?
   $y^T(\tau^2I + V)y \ge \tau^2\lVert y\rVert^2 + (1-\delta)\sum_i v_iy_i^2 > 0$ for $y \ne 0$.
 \end{proof}
 
+\begin{lemma}[Prediction variance for $K = \tau^2I + X$]\label{lem:Core_predForm_smul_one}
+  \lean{Credibility.Core.predForm_smul_one_add, Credibility.Core.dotProduct_sub_two_mul_add_sq_nonneg}
+  \leanok
+  \uses{def:Core_predForm}
+  For $K = \tau^2I + X$ and $L = \tau^2I$:
+  $Q_{K,L}(d,t) = \tau^2(\lVert d\rVert^2 - 2td_j + t^2) + d^TXd$, and
+  $\lVert d\rVert^2 - 2td_j + t^2 \ge 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand; $\lVert d\rVert^2 - 2td_j + t^2 \ge d_j^2 - 2td_j + t^2 = (d_j - t)^2$.
+\end{proof}
+
+\begin{theorem}[A working noise covariance within factors]\label{thm:Core_noiseWorking}
+  \lean{Credibility.Core.linMse_noiseWorking_le}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K = \tau^2I + V$, $\tilde K = \tau^2I + \tilde V$, $L = \tau^2I$ with $\tau^2 > 0$,
+  $V$ symmetric, $\tilde V$ positive semidefinite, $0 \le a \le 1 \le A$ and
+  $a\,y^T\tilde Vy \le y^TVy \le A\,y^T\tilde Vy$ for all $y$. Then
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_working, lem:Core_predForm_smul_one}
+  Both forms share the part $\tau^2(\lVert d\rVert^2 - 2td_j + t^2) \ge 0$, which lies
+  between $a$ and $A$ times itself; so $aQ_{\tilde K,L} \le Q_{K,L} \le AQ_{\tilde K,L}$
+  (Lemma~\ref{lem:Core_predForm_smul_one}). Theorem~\ref{thm:Core_working}.
+\end{proof}
+
+\begin{lemma}[The damped quadratic form]\label{lem:Core_shrinkOffDiag_form}
+  \lean{Credibility.Core.dotProduct_shrinkOffDiag_mulVec}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $y^TV^\theta y = \sum_i v_iy_i^2 + \theta\,(y^TVy - \sum_i v_iy_i^2)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:shrinkOffDiag_eq}
+  $V^\theta = \theta V + (1-\theta)\mathrm{diag}(V)$ (Lemma~\ref{lem:shrinkOffDiag_eq}).
+\end{proof}
+
+\begin{theorem}[The price of damping correlation]\label{thm:Core_damped}
+  \lean{Credibility.Core.linMse_damped_le}
+  \leanok
+  \uses{def:Core_blup, def:shrinkOffDiag}
+  Let $K = \tau^2I + V$, $L = \tau^2I$ with $\tau^2 > 0$, $V$ symmetric, $v_i = V_{ii} \ge 0$,
+  and the noise correlation between $-\delta_-$ and $\delta_+$:
+  $-\delta_-\sum_i v_iy_i^2 \le y^TVy - \sum_i v_iy_i^2 \le \delta_+\sum_i v_iy_i^2$ for all
+  $y$, with $0 \le \delta_- < 1$, $0 \le \delta_+$ ($1-\delta_-$ and $1+\delta_+$ are the
+  extreme eigenvalues of the noise correlation matrix). The working model
+  $\tilde K = \tau^2I + V^\theta$ damps the off-diagonal noise covariances by
+  $\theta \in [0,1]$ (Definition~\ref{def:shrinkOffDiag}). Then its best predictor satisfies
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ with
+  $a = (1-\delta_-)/(1-\theta\delta_-)$, $A = (1+\delta_+)/(1+\theta\delta_+)$
+  (in Lean with denominators cleared).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_noiseWorking, lem:Core_shrinkOffDiag_form, lem:shrinkOffDiag_eq}
+  With $x$ the correlation term over $\sum_i v_iy_i^2$, $y^TVy / y^TV^\theta y = (1+x)/(1+\theta x)$
+  (Lemma~\ref{lem:Core_shrinkOffDiag_form}), increasing in $x \in [-\delta_-, \delta_+]$, so
+  between $a$ and $A$; $a \le 1 \le A$ and $V^\theta \succeq 0$.
+  Theorem~\ref{thm:Core_noiseWorking}.
+\end{proof}
+
+\begin{corollary}[Ignoring correlation, two-sided]\label{cor:Core_ignoreCorr_two_sided}
+  \lean{Credibility.Core.linMse_ignoreCorr_le_two_sided}
+  \leanok
+  \uses{def:Core_blup}
+  Under the hypotheses of Theorem~\ref{thm:Core_damped}, the estimate that ignores
+  correlation ($\tilde K = \mathrm{diag}(\tau^2 + v_i)$) satisfies
+  $4(1-\delta_-)(1+\delta_+)\,\mathrm{mse}_j(\tilde d^*) \le (2 + \delta_+ - \delta_-)^2\,\mathrm{mse}_j(d^*)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped}
+  Theorem~\ref{thm:Core_damped} with $\theta = 0$.
+\end{proof}
+
 \begin{theorem}[The price of ignoring correlation]\label{thm:Core_ignoreCorr}
   \lean{Credibility.Core.linMse_ignoreCorr_le}
   \leanok
@@ -2905,11 +2985,9 @@ example ignoring the correlation between cohorts. How much can that cost?
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:Core_working, lem:Core_posDef_corr}
-  $Q_{K,L} - Q_{\tilde K,L} = y^TVy - \sum_i v_iy_i^2$, and
-  $Q_{\tilde K,L}(d,t) = \tau^2(\lVert d\rVert^2 - 2td_j + t^2) + \sum_i v_id_i^2 \ge \sum_i v_id_i^2$.
-  So $(1-\delta)Q_{\tilde K,L} \le Q_{K,L} \le (1+\delta)Q_{\tilde K,L}$; Theorem~\ref{thm:Core_working}
-  with $a = 1-\delta$, $A = 1+\delta$, where $(A+a)^2/(4aA) = 1/(1-\delta^2)$.
+  \uses{cor:Core_ignoreCorr_two_sided}
+  Corollary~\ref{cor:Core_ignoreCorr_two_sided} with $\delta_- = \delta_+ = \delta$:
+  $(2)^2/(4(1-\delta)(1+\delta)) = 1/(1-\delta^2)$.
 \end{proof}
 
 \begin{lemma}[Correlations at most $r$]\label{lem:Core_corrBound_offDiag}
@@ -2937,6 +3015,58 @@ example ignoring the correlation between cohorts. How much can that cost?
   Theorem~\ref{thm:Core_ignoreCorr} with $\delta = (J-1)r$ (Lemma~\ref{lem:Core_corrBound_offDiag}).
 \end{proof}
 
+\begin{lemma}[Equal correlations]\label{lem:Core_equicorr}
+  \lean{Credibility.Core.equicorr_bounds}
+  \leanok
+  If $V_{ii} = v_i \ge 0$ and $V_{ik} = r\sqrt{v_iv_k}$ for $i \ne k$, $r \ge 0$, then
+  $-r\sum_i v_iy_i^2 \le y^TVy - \sum_i v_iy_i^2 \le (J-1)\,r\sum_i v_iy_i^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $y^TVy - \sum_i v_iy_i^2 = r\bigl((\sum_i\sqrt{v_i}\,y_i)^2 - \sum_i v_iy_i^2\bigr)$;
+  the square is between $0$ and $J\sum_i v_iy_i^2$ (Cauchy--Schwarz).
+\end{proof}
+
+\begin{corollary}[Damping equal correlations]\label{cor:Core_damped_equicorr}
+  \lean{Credibility.Core.linMse_damped_equicorr_le}
+  \leanok
+  \uses{def:Core_blup, def:shrinkOffDiag}
+  If all noise correlations equal $r \in [0,1)$ and the working model damps them by
+  $\theta \in [0,1]$, then $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ with
+  $a = (1-r)/(1-\theta r)$ and $A = (1+(J-1)r)/(1+\theta(J-1)r)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped, lem:Core_equicorr}
+  Theorem~\ref{thm:Core_damped} with $\delta_- = r$, $\delta_+ = (J-1)r$ (Lemma~\ref{lem:Core_equicorr}).
+\end{proof}
+
+\begin{corollary}[Ignoring equal correlations]\label{cor:Core_ignoreCorr_equicorr}
+  \lean{Credibility.Core.linMse_ignoreCorr_equicorr_le}
+  \leanok
+  \uses{def:Core_blup}
+  If all noise correlations equal $r \in [0,1)$, the estimate that ignores them satisfies
+  $4(1-r)(1+(J-1)r)\,\mathrm{mse}_j(\tilde d^*) \le (2+(J-2)r)^2\,\mathrm{mse}_j(d^*)$.
+  For $J = 2$ this is $1/(1-r^2)$; for $J = 3$, $r = 0.5$ it is $1.5625$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_damped_equicorr}
+  Corollary~\ref{cor:Core_damped_equicorr} with $\theta = 0$.
+\end{proof}
+
+\begin{remark}[Finding 20: equal correlations, sharp]\label{rem:equicorr}
+  \uses{cor:Core_ignoreCorr_equicorr, cor:Core_damped_equicorr}
+  Only directions $(\tilde d^* + uh, 1)$ with $\sum_i h_i = 0$ enter the proof, so one might
+  hope that the large eigenvalue $1 + (J-1)r$ of an equicorrelated matrix (direction $\mathbf 1$)
+  drops out and $\delta = r$ suffices. It does not: the correlation acts on $\sqrt{v_i}\,h_i$,
+  which need not sum to zero, and as $\tau^2 \to 0$ nothing else damps it. For $J = 3$,
+  $r = 0.5$, $\tau^2 = 0.001$, $v = (1, 1000, 30)$ the ratio is $1.561 > 4/3$. The two-sided
+  bound of Corollary~\ref{cor:Core_ignoreCorr_equicorr} is finite for every $r < 1$ and is
+  attained numerically ($J = 2..7$, $r \le 0.9$, worst case equals the bound to four digits).
+  Damping by half ($\theta = 0.5$) at $J = 3$, $r = 0.5$ cuts the worst case from $56\%$ to $12.5\%$.
+\end{remark}
+
 \begin{theorem}[The price of ignoring correlation in true MSE]\label{thm:Core_ignoreCorr_mse}
   \lean{Credibility.Core.Estimates.ignoreCorr_mse_le}
   \leanok
@@ -2963,7 +3093,8 @@ example ignoring the correlation between cohorts. How much can that cost?
   the noise correlation matrix minus $I$, whatever $\tau^2$ and the noise variances.
   For two cohorts $\delta = |\rho|$ and the bound is nearly attained ($\rho = 0.5$: bound
   $1.333$, worst found $1.316$). For many cohorts with a common correlation $\delta$ is
-  large and the bound says nothing ($J = 3$, $\rho = 0.5$ gives $\delta = 1$). The general
+  large and the bound says nothing ($J = 3$, $\rho = 0.5$ gives $\delta = 1$); the two-sided
+  bound (Remark~\ref{rem:equicorr}) fixes this. The general
   inequality is Kantorovich's, used for OLS against GLS by Bloomfield and Watson (1975).
 \end{remark}
 

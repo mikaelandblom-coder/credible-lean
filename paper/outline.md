@@ -80,6 +80,9 @@ may need a paragraph.)
 - Finding 19 (2026-11-16): what ignoring correlation costs (at most `1/(1 − δ²)`,
   Kantorovich); a paragraph in the Bühlmann–Straub section, Lean names
   `Core.Estimates.ignoreCorr_mse_le`, `Core.linMse_ignoreCorr_le_of_offDiag`.
+- Finding 20 (2026-11-16): same paragraph: equal correlations need both eigenvalues
+  (sharp bound), and damping by `θ` cuts the cost; `Core.linMse_ignoreCorr_equicorr_le`,
+  `Core.linMse_damped_equicorr_le`.
 - Finding 18 (2026-11-16): the blend against the best linear unbiased predictor;
   a paragraph where the blend is introduced (what the restriction to `z` costs, and
   when nothing), Lean names `Core.Estimates.blup_mse_optimal`,

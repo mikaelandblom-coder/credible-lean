@@ -298,4 +298,24 @@ Gaps, extra hypotheses and new results found while formalizing.
    parameters the correlation matters more than the blend form; whether
    estimating it pays is the fitted-model question of the studies (S6 in `studies/damping-theta.md`).
 
+20. **Equal correlations: the sharp price of ignoring or damping them (new;
+   `Core.linMse_damped_le`, `Core.linMse_ignoreCorr_le_two_sided`,
+   `Core.linMse_damped_equicorr_le`, `Core.linMse_ignoreCorr_equicorr_le`).**
+   Question (owner): the proof of Finding 19 only uses directions `(d̃* + uh, 1)`
+   with `Σ hᵢ = 0`, so is the large eigenvalue `1 + (J − 1)r` of an equicorrelated
+   noise correlation needed, or does `δ = r` (bound `1/(1 − r²)`) suffice? **No**:
+   the correlation acts on `√vᵢ hᵢ`, which need not sum to zero, and as `τ² → 0`
+   nothing else dampens it. Counterexample: `J = 3`, `r = 0.5`, `τ² = 0.001`,
+   `v = (1, 1000, 30)`: ratio 1.561 > 4/3. What does hold, and is sharp: Kantorovich
+   with the two eigenvalues separately, `a = 1 − δ₋`, `A = 1 + δ₊`, giving
+   `(2 + δ₊ − δ₋)²/(4(1 − δ₋)(1 + δ₊))`; for equal correlations `δ₋ = r`,
+   `δ₊ = (J − 1)r`, so `(2 + (J − 2)r)²/(4(1 − r)(1 + (J − 1)r))`, finite for every
+   `r < 1` (`J = 3`, `r = 0.5`: 1.5625; `J = 2`: `1/(1 − r²)` again). Numerically the
+   worst case over `τ²`, `v`, `j` equals this bound to four digits (`J = 2..7`,
+   `r` up to 0.9; attained as `τ² → 0`). A working model that damps the noise
+   correlations by `θ ∈ [0, 1]` (`shrinkOffDiag`) has `a = (1 − δ₋)/(1 − θδ₋)`,
+   `A = (1 + δ₊)/(1 + θδ₊)`; checked on 80000 random cases (equicorrelated and
+   general correlation matrices), never violated, attained. Halfway damping at
+   `J = 3`, `r = 0.5` cuts the worst case from 56% to 12.5%.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -260,6 +260,9 @@ One chat per step; none needs Lean except step 5.
   cohorts). App: in the world model show the exact cost of BS against the best
   predictor and this bound; in the fit, `δ̂` from `ρ̂` as a quick "is correlation
   worth modelling?" indicator.
+- Finding 20 (2026-11-16): the sharp two-sided bound (equal correlations:
+  `(2 + (J − 2)r)²/(4(1 − r)(1 + (J − 1)r))`) and the bound for damping by `θ`.
+  App: use it for the indicator above, and show the worst case of the fit's damping `θ̂`.
 - Finding 18 (2026-11-16): the best linear unbiased predictor `d*` over all cohort
   estimates beats the blend unless cohort `j` has equal covariances with the others
   (always for two cohorts). App: show "price of the blend" `(w − d*)ᵀK(w − d*)` per
