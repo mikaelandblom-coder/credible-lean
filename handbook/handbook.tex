@@ -385,7 +385,10 @@ corrects for it. The condition does not involve $\tau^2$.
   Clipping $z$ to $[0,1]$ (as the thesis proposes) gives up some accuracy
   when $z_1 > 1$ is genuine. A negative $z$ only happens past the
   singularity, which needs one cohort much noisier than the other and $\rho$
-  close to one: treat it as a sign that $\hat\rho$ or $\hat\tau^2$ is off.
+  close to one. With the true parameters it is still the best blend: the
+  gap $\hmu_1 - \hmu$ changes sign there and $z_1$ with it, while the blend
+  moves smoothly (Finding 17). In a fitted model, check $\hat\rho$ and
+  $\hat\tau^2$ first: a near-singular $\hat K$ is the likelier cause.
 \end{caveat}
 
 \subsection*{Equal covariances, any number of cohorts}

@@ -252,3 +252,10 @@ One chat per step; none needs Lean except step 5.
   telling settings as the handbook's worked examples.
   - [x] README: linked as a preview (2026-11-16, v2.0.0).
   - [ ] Handbook link and screenshots.
+
+## Pending
+(Results or findings that may need a switch, step or message in the app.)
+- Finding 17 (2026-11-16): a negative `z` past the two-cohort singularity is
+  the best blend with true parameters (the blend is continuous; only the gap
+  flips sign). The app's `z > 1` warning could get a sibling for `z < 0`
+  that says this, and points at `ρ̂`/`τ̂²` as the likelier cause in a fit.

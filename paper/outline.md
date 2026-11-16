@@ -41,7 +41,7 @@ Rules that keep this cheap to maintain:
 
 Status: `—` not started, `src` source material exists to absorb, `draft`,
 `done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
-"not yet written" note; §1–3 drafted.)
+"not yet written" note; §1–6 drafted.)
 
 | # | Section | Covers | Source material | Status |
 |---|---|---|---|---|
@@ -49,9 +49,9 @@ Status: `—` not started, `src` source material exists to absorb, `draft`,
 | 1 | What credibility is | blending own experience with the portfolio; what `z` means; best blend | thesis §2.1, handbook 1 | draft |
 | 2 | The model | error terms instead of risk parameters; correlation across cohorts within a period; distribution-free; translation to Bühlmann–Straub notation | thesis §2.3, handbook 0 | draft |
 | 3 | From data to `K` | the recipe: build `K`, check it is positive definite, read off everything; why positive definite and not semidefinite; why two cohorts | Findings 1, 2 | draft |
-| 4 | The weights | inverse-variance within a cohort; GLS across cohorts; the link to the minimum-variance portfolio | thesis §2.5, `studies/literature.md` §1 | src |
-| 5 | The credibility factor | the proposed `z`; how correlation moves it; `z > 1` and the sign flip | thesis §2.5, §2.7, Finding 3 | src |
-| 6 | Special cases | Bühlmann–Straub; two cohorts; equal covariances; weights from credibility factors | Findings 4, 5 | src |
+| 4 | The weights | inverse-variance within a cohort; GLS across cohorts; the link to the minimum-variance portfolio | thesis §2.5, `studies/literature.md` §1 | draft |
+| 5 | The credibility factor | the proposed `z`; how correlation moves it; `z > 1` and the sign flip | thesis §2.5, §2.7, Findings 3, 17 | draft |
+| 6 | Special cases | Bühlmann–Straub; two cohorts; equal covariances; weights from credibility factors | Findings 4, 5 | draft |
 | 7 | Balance | what it is and why practitioners want it; when it holds for free; the cost of forcing it; how to balance if you must | Findings 10, 15, 16, study findings S27–S29 | src |
 | 8 | Estimating the parameters | the unbiased estimators and what they need; plug-in `K̂` and damping; a fit with no tuning; the error of a fitted model | thesis §2.8, Finding 7, `studies/damping-theta.md`, `studies/literature.md` §2, §4 | src |
 | 9 | Why the moments are real | given numbers versus actual covariances; true MSE; the assumptions are consistent exactly when `ρ ⪰ 0` | Findings 11, 12 | src |

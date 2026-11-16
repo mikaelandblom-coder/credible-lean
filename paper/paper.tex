@@ -324,17 +324,233 @@ shrinkage.
 
 % ===========================================================================
 \section{The weights}\label{sec:weights}
-\notyet{inverse-variance weights within a cohort; GLS weights across
-cohorts; every cohort covaries equally with the portfolio; the link to the
-minimum-variance portfolio.}
 
+\oneline A cohort's estimate averages its periods by how precise each one
+is, and the portfolio estimate averages the cohorts by the weights that make
+it as precise as possible given $K$: the generalized least squares (GLS)
+weights, which finance knows as the minimum-variance portfolio.
+
+\idea Two averages come before any blending: a cohort's periods into
+$\hmu_j$, and the cohorts into $\hmu$. Any weights that sum to one give an
+unbiased estimate; the question is which give the most precise one.
+
+\emph{Within a cohort}, weigh each period by the inverse of its noise
+variance (\hb{res:invVar}{2}). A year with twice the volume has half the
+noise variance and counts twice. With $\sigma_{jt}^2 = \sigma^2/w_{jt}$ this
+is the volume-weighted mean, exactly as in Bühlmann--Straub. Correlation
+between cohorts does not change it: within one cohort the noise of
+different periods is uncorrelated, and how the cohort moves with the others
+only shows up later, in $K$.
+
+\emph{Across cohorts}, the variance of a weighted average
+$\sum_j c_j\hmu_j$ is a quadratic form in $K$, and the weights that make it
+smallest are $K^{-1}\mathbf 1$, scaled to sum to one
+(\hb{res:gls}{3}). Call them $b_j$, and the variance they reach $s^2$.
+Without correlation $K$ is diagonal and $b_j$ is proportional to
+$1/K_{jj} = 1/(\tau^2 + v_j)$, where $v_j$ is the noise variance of
+$\hmu_j$. Note the $\tau^2$: even a cohort measured without any noise
+only tells you about its own level $\mu_j$, which sits a typical $\tau$ away
+from $\mu$. That is why a huge cohort does not take over the portfolio, and
+why Bühlmann--Straub weighs cohorts by their credibility factors and not by
+their volumes (Section~\ref{sec:special}).
+
+With correlation, a cohort that moves with many others gets \emph{less}
+weight than its precision alone would earn: much of what it says, the
+others already say. Weights can even turn negative. A negative weight is
+the portfolio estimate using one cohort to cancel noise it shares with
+another, the way a hedge works.
+
+One consequence of optimality carries the rest of the theory: every cohort
+covaries with the portfolio estimate by the same amount, $s^2$
+(\hb{res:upsilon}{4}). If some cohort covaried more, moving weight away
+from it would make $\hmu$ more precise, and the weights would not have been
+the best. Section~\ref{sec:z} uses this to make the credibility factor
+simple.
+
+\emph{The finance connection.} Read the cohorts as assets and $K$ as the
+covariance of their returns: $b$ is then the global minimum-variance
+portfolio, the most studied object in portfolio theory. Its main lesson
+carries over: weights computed from an \emph{estimated} $K$ are noisy, and
+shrinking them pays when the shrinkage is chosen for the loss you actually
+care about (Section~\ref{sec:estimation}; \file{studies/literature.md}, §1).
+
+\watch
+\begin{itemize}
+  \item \emph{GLS weights are not exposure weights.} The portfolio estimate
+    $\hmu$ is not total claims over total exposure, and the blended rates
+    need not reproduce total claims. When that matters, see
+    Section~\ref{sec:balance}.
+  \item \emph{Negative and very large weights are fragile.} They are
+    optimal for the true $K$, but they amplify errors in an estimated one.
+  \item \emph{The weights are best for $\hmu$, and that is enough.} They are
+    chosen for the portfolio level $\mu$, not for each blend; the
+    credibility factor then makes the best of the $\hmu$ it is given. The
+    moment layer confirms that $\hmu$ is best in true mean squared error
+    too (Section~\ref{sec:moments}).
+\end{itemize}
+
+\see \hb{res:invVar}{2}, \hb{res:gls}{3}, \hb{res:upsilon}{4} ·
+\lean{Credibility.invVarWeight_optimal},
+\lean{Credibility.invVarWeight_value},
+\lean{Credibility.glsWeight_optimal},
+\lean{Credibility.glsWeight_value},
+\lean{Credibility.mulVec_glsWeight},
+\lean{Credibility.Core.Estimates.portEst_optimal} ·
+\app{Models} · \file{studies/literature.md} §1 · thesis §2.5,
+eqs.~(23)--(25).
+
+% ===========================================================================
 \section{The credibility factor}\label{sec:z}
-\notyet{the proposed $z_j$; how correlation moves it; $z_j > 1$ and the sign
-flip past the singularity.}
 
+\oneline The best credibility factor is the part of the gap between cohort
+and portfolio that is real, divided by everything the gap varies by; with
+correlation it can exceed one, and in extreme cases turn negative, without
+anything having gone wrong.
+
+\idea Take the regression reading of Section~\ref{sec:credibility}: $z_j$ is
+the share of the gap $\hmu_j - \hmu$ you expect to be real. With $K$ and the
+GLS weights in hand, both parts of that share are short
+(\hb{res:z}{5}).
+\begin{itemize}
+  \item \emph{The real part} is $(1 - b_j)\tau^2$: the cohort's own effect,
+    minus the share $b_j$ of it that already sits inside $\hmu$. A cohort
+    that dominates the portfolio has little real gap left to show.
+  \item \emph{The whole gap varies by} $\tau^2 + v_j - s^2$: the cohort's
+    own variance minus the portfolio's. That it is this simple is the
+    ``every cohort covaries equally with the portfolio'' fact of
+    Section~\ref{sec:weights}.
+\end{itemize}
+So the recipe is: compute $K$, invert it once, and every $z_j$ follows.
+Without correlation it collapses to $\tau^2/(\tau^2 + v_j)$, the
+Bühlmann--Straub factor (\hb{res:diag}{6}).
+
+\emph{How correlation moves it.} Two cohorts show it best. Cohort~1's factor
+is Bühlmann--Straub's with its noise variance $\sigma_1^2$ replaced by
+$\sigma_1^2 - \sigma_1\sigma_2\rho$ (\hb{res:two}{13}). The noise that cohort~1
+shares with cohort~2 also sits in $\hmu$, so it cancels in the gap and does
+not count against cohort~1. Positive correlation raises $z_1$, negative
+lowers it, and unlike in Bühlmann--Straub, $z_1$ now depends on the other
+cohort's size too.
+
+\emph{Above one.} The thesis noticed that $z_j > 1$ can happen and proposed
+clipping it to $[0, 1]$, without saying when it happens. For two cohorts the
+answer is short: $z_1 > 1$ exactly when $\sigma_1 < \sigma_2\rho$, that is,
+when cohort~1 is the precise one and the noise is correlated enough
+(\finding{3}, \hb{res:z1_range}{14}). The condition does not involve $\tau^2$.
+What happens is noise cancellation. The gap $\hmu_1 - \hmu$ is then mostly
+cohort~2's noise with its sign flipped, and the best blend corrects for it
+by moving \emph{past} $\hmu_1$, away from $\hmu$. Clipping throws that
+correction away.
+
+\emph{The singularity, and below zero.} Push the correlation further and
+$z_1$ blows up, then comes back negative. In the thesis's example, cohort~1
+has sixteen times cohort~2's volume and $\tau^2$ equals cohort~1's noise
+variance; then $z_1 = 1$ at $\rho = 0.25$, $2.5$ at $\rho = 0.4$, $\pm 25$
+on either side of $\rho = 0.5$, and $-1$ at $\rho = 0.75$. What goes on is
+in the weights. As $\rho$ rises, cohort~1's GLS weight climbs towards one,
+so $\hmu$ becomes cohort~1's own estimate and the gap shrinks to nothing.
+At the singularity it is exactly zero; past it $b_1 > 1$, $\hmu$ overshoots
+$\hmu_1$, and the gap changes sign. The factor $z_1$ flips sign \emph{with
+the gap}, but the blend itself does not jump: on both sides it is $\hmu$
+plus the same smoothly varying multiple of $\hmu_1 - \hmu_2$
+(\finding{17}). Only at the singularity itself is the blend stuck at
+$\hmu_1$, because every $z$ gives the same thing there. So a negative $z_1$
+is the best blend written in an awkward coordinate, not an error. Reaching
+the singularity at all takes very unequal cohorts and strong correlation
+(\hb{res:z1_range}{14}).
+
+\watch
+\begin{itemize}
+  \item \emph{In a fitted model, look twice at extreme factors.} With the
+    true parameters a large or negative $z_j$ is right. With estimated
+    ones it more often means that $\hat K$ is close to singular, typically
+    through $\hat\rho$ close to one or $\hat\tau^2$ close to zero
+    (Section~\ref{sec:estimation}).
+  \item \emph{$v_j$ is the noise of the cohort's estimate,} after averaging
+    its periods, not of one period's observation.
+  \item \emph{The same $z_j$ is best for next year's premium,} not only
+    for the historical level (\hb{res:forecast}{19}).
+\end{itemize}
+
+\see \hb{res:z}{5}, \hb{res:diag}{6}, \hb{res:two}{13},
+\hb{res:z1_range}{14}, \hb{res:forecast}{19} ·
+\lean{Credibility.Core.bestZ_eq},
+\lean{Credibility.Model.bestZ_eq},
+\lean{Credibility.TwoCohorts.z1_eq},
+\lean{Credibility.TwoCohorts.z1_gt_one_iff},
+\lean{Credibility.TwoCohorts.z1_neg_iff},
+\lean{Credibility.TwoCohorts.singularity_reachable_iff},
+\lean{Credibility.Core.Estimates.bestZ_forecast_optimal} ·
+\app{One draw} (the $z > 1$ warning) · \finding{3}, \finding{17} ·
+thesis §2.5, eq.~(26); §2.7, eqs.~(32)--(34).
+
+% ===========================================================================
 \section{Special cases}\label{sec:special}
-\notyet{Bühlmann--Straub; two cohorts; equal covariances; weights from
-credibility factors.}
+
+\oneline When $K$ is simple enough to invert by hand (no correlation, two
+cohorts, or one covariance shared by all pairs), the credibility factors
+have closed forms and the portfolio weights are the factors themselves,
+rescaled to sum to one.
+
+\idea \emph{Bühlmann--Straub.} No correlation, and noise variance
+$\sigma^2$ over volume. Then $z_j = w_{j*}/(w_{j*} + \kappa)$ with
+$w_{j*}$ the cohort's total volume and $\kappa = \sigma^2/\tau^2$, and the
+portfolio weights are $b_j = z_j/z_*$ with $z_*$ the sum of the factors
+(\hb{res:bs}{9}). This is the classical model, recovered exactly; it needs
+at least two cohorts (\finding{2}). It is also balanced, a property
+Section~\ref{sec:balance} takes up.
+
+\emph{Two cohorts.} Bühlmann--Straub with $\sigma_1^2 - \sigma_1\sigma_2\rho$
+in place of $\sigma_1^2$, as in Section~\ref{sec:z}, and again
+$b_1 = z_1/(z_1 + z_2)$ (\hb{res:two}{13}). That second identity is not in
+the published thesis; it appeared on the defence slides (\finding{4}). It
+means that any split of a portfolio in two, such as the two levels of a
+binary rating factor, keeps the classical weight formula under
+correlation.
+
+\emph{Equal covariances.} Suppose every pair of cohorts has the same noise
+covariance $c$: a shock that hits all cohorts alike, such as inflation.
+Then subtract $c$ from each cohort's noise variance and use the classical
+formulas; the weights are again $z_j/z_*$ (\hb{res:equalcov}{15},
+\finding{5}). Bühlmann--Straub is $c = 0$ and two cohorts are
+$c = \sigma_1\sigma_2\rho$, so this one result contains the other two. The
+reason in one line: equal covariances add the same amount to every entry of
+$K$, a term that shifts every cohort alike and leaves the direction of the
+best weights unchanged.
+
+\emph{When do weights follow from factors?} In all three cases the
+portfolio weights are the credibility factors rescaled. That is not true in
+general. With three or more cohorts and unequal covariances it fails; in one
+random example the weights are $(0.536, 0.226, 0.238)$ against
+$z/z_* = (0.564, 0.177, 0.259)$ (\finding{4}). For exactly three cohorts (and no zero weight),
+equal covariances are also necessary, a converse shown on paper but not in
+Lean; from four cohorts on, other
+structures work too (\finding{5}).
+
+\watch
+\begin{itemize}
+  \item \emph{Equal correlations are not equal covariances.} If cohorts
+    differ in size, the same $\rho$ for every pair gives different
+    covariances $\sigma_i\sigma_j\rho$, and the shortcut fails already with
+    three cohorts.
+  \item \emph{The formulas look classical, but the inputs are not.} In the
+    two-cohort and equal-covariance forms, a cohort's ``noise'' is reduced
+    by what it shares with the others, so its factor depends on them.
+  \item \emph{Forcing one covariance on unequal cohorts backfires.} As a
+    fitted model, a single covariance for all pairs gives exploding factors
+    when volumes differ; the app offers it only with that warning
+    (\app{Models}, ``common'').
+\end{itemize}
+
+\see \hb{res:diag}{6}, \hb{res:bs}{9}, \hb{res:two}{13},
+\hb{res:equalcov}{15} ·
+\lean{Credibility.bs_z},
+\lean{Credibility.Core.bestZ_of_diag},
+\lean{Credibility.TwoCohorts.b1_eq_z},
+\lean{Credibility.Core.b_eq_of_equalCov},
+\lean{Credibility.Core.bestZ_of_equalCov},
+\lean{Credibility.Model.bestZ_of_equalCov} ·
+\app{Models} · \finding{2}, \finding{4}, \finding{5} · thesis §2.6, §2.7.
 
 \section{Balance}\label{sec:balance}
 \notyet{what balance is and why practitioners want it; when it holds for

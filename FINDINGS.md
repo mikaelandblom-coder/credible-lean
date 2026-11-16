@@ -206,4 +206,24 @@ Gaps, extra hypotheses and new results found while formalizing.
    than `c*`, and `c*` needs `κ`, i.e. fitted `K` and `L`. The shift stays the
    app's balance step.
 
+17. **The blend is continuous through the two-cohort singularity
+   (discussion, numerics; no Lean yet).** Finding 3 and the thesis (§2.7,
+   eq. (34)) treat the sign flip of `z₁` at `ρ* = (τ² + σ₁²)/(σ₁σ₂)` as a
+   breakdown and clip `z₁` to `[0, 1]`. But the gap is
+   `μ̂₁ − μ̂ = (1 − b₁)(μ̂₁ − μ̂₂)` and `τ² + σ₁² − s² = Var(μ̂₁ − μ̂) =
+   (1 − b₁)²D` with `D = Var(μ̂₁ − μ̂₂) = σ₁² + σ₂² + 2τ² − 2σ₁σ₂ρ > 0`, so
+   `z₁(μ̂₁ − μ̂) = (τ²/D)(μ̂₁ − μ̂₂)` and the best blend is
+   `μ̂₁ᵇ = (b₁ + τ²/D) μ̂₁ + (b₂ − τ²/D) μ̂₂`, smooth in `ρ` on all of
+   `|ρ| < 1`. At `ρ*` the GLS weight `b₁` passes through 1 (so `μ̂ = μ̂₁`)
+   and the gap changes sign; `z₁` flips with it. Only at `ρ*` itself the blend
+   family degenerates (every `z` gives `μ̂₁`), and the limit from both sides
+   is not reached. Example (thesis §2.7.2: `κ₁ = 1`, `κ₂ = 16`, `τ² = 1`):
+   `ρ = 0.49`, `0.51` give `z₁ = 25`, `−25` but coefficients on
+   `(μ̂₁, μ̂₂)` of `(1.064, −0.064)`, `(1.070, −0.070)`; `ρ = 0.75` gives
+   `z₁ = −1`, coefficients `(1.154, −0.154)`. So with the true parameters a
+   negative `z₁` is the best blend, not an error; clipping it to 0 charges
+   `μ̂`, which past `ρ*` already overshoots `μ̂₁`. In a fitted model an
+   extreme `z` still signals a near-singular `K̂`. A Lean statement would be
+   `TwoCohorts`: `bestZ • gap = (τ²/D) • (μ̂₁ − μ̂₂)` away from `ρ*`.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
