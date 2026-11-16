@@ -1,7 +1,7 @@
 # correlated-credibility
 
 [![Blueprint](https://github.com/mikaelandblom-coder/credible-lean/actions/workflows/blueprint.yml/badge.svg?branch=main)](https://github.com/mikaelandblom-coder/credible-lean/actions/workflows/blueprint.yml?query=branch%3Amain)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054632.svg)](https://doi.org/10.5281/zenodo.24054632)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24054631.svg)](https://doi.org/10.5281/zenodo.24054631)
 
 A Lean 4 + Mathlib formalization of *Generalized Bühlmann–Straub credibility
 theory for correlated data* (M. Andblom, master thesis in actuarial
@@ -154,7 +154,7 @@ The thesis is the foundation: notation and model for all later work. Plan:
    blueprint chapter in the thesis notation.
 2. **Make the repo citable.** `CITATION.cff` (GitHub's "Cite this
    repository"); Zenodo archives each tagged release (concept DOI
-   [10.5281/zenodo.24054632](https://doi.org/10.5281/zenodo.24054632),
+   [10.5281/zenodo.24054631](https://doi.org/10.5281/zenodo.24054631),
    always the latest version);
    GitHub topics `credibility-theory`, `actuarial-science`, `lean4`,
    `formalization`.
