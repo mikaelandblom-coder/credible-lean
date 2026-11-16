@@ -42,7 +42,7 @@ Rules that keep this cheap to maintain:
 Status: `—` not started, `src` source material exists to absorb, `draft`,
 `done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
 "not yet written" note; §1–6 drafted. Later the same day: §0, A and C
-drafted, then §7–9.)
+drafted, then §7–9, then §10–11.)
 
 | # | Section | Covers | Source material | Status |
 |---|---|---|---|---|
@@ -56,8 +56,8 @@ drafted, then §7–9.)
 | 7 | Balance | what it is and why practitioners want it; when it holds for free; the cost of forcing it; how to balance if you must | Findings 10, 15, 16, study findings S27–S29 | draft |
 | 8 | Estimating the parameters | the unbiased estimators and what they need; plug-in `K̂` and damping; a fit with no tuning; the error of a fitted model | thesis §2.8, Finding 7, `studies/damping-theta.md`, `studies/literature.md` §2, §4 | draft |
 | 9 | Why the moments are real | given numbers versus actual covariances; true MSE; the assumptions are consistent exactly when `ρ ⪰ 0` | Findings 11, 12 | draft |
-| 10 | Cohorts observed over different periods | unequal lengths; the per-pair count | `notes/unequal-lengths.md`, Findings 8–10, 12 | src |
-| 11 | Groups and shared levels | a shared level drops out; several groups; what the estimators see; towards hierarchical credibility | Finding 13 | src |
+| 10 | Cohorts observed over different periods | unequal lengths; the per-pair count | `notes/unequal-lengths.md`, Findings 8–10, 12 | draft |
+| 11 | Groups and shared levels | a shared level drops out; several groups; what the estimators see; towards hierarchical credibility | Finding 13, handbook §6, `studies/literature.md` §3 | draft |
 | 12 | Choosing the cohorts | when merging pays off; equal credibility is not grouping; optimal cohorts are intervals; when they are not | `notes/merging-cohorts.md`, `notes/kmeans-bridge.md`, Findings 6, 14 | src |
 | 13 | Open directions | crossed levels; time trends; the optional distribution layer | `notes/crossed-2x2.md`, `notes/roadmap.md`, `studies/literature.md` §5 | src |
 | 14 | Related work | credibility with common effects, small-area estimation, covariance shrinkage: what is used from where | `studies/literature.md` | src |
@@ -81,6 +81,12 @@ may need a paragraph.)
   a paragraph where the blend is introduced (what the restriction to `z` costs, and
   when nothing), Lean names `Core.Estimates.blup_mse_optimal`,
   `Core.Estimates.mse_blend_eq_blup_add`, `Core.exists_blendWeight_eq_blupWeight_iff`.
+- §11: the hierarchical-credibility references (Jewell 1975, Taylor 1979,
+  Bühlmann–Gisler ch. 6, Stukel–Rao 1999) were written from memory; owner to
+  check, and add them to §14 when it is drafted.
+- §10–11: when the app gets its "Unequal lengths" and "Group levels"
+  switches (`studies/PLAN.md` step 4), replace "(soon)" in the See lines
+  with the step, and add study numbers if a fit is simulated.
 - Appendix A: the concordance lists the Lean names at drafting time
   (2026-11-16); add new thesis-facing theorems there as they come.
 

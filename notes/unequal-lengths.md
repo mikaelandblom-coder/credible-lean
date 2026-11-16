@@ -1,3 +1,5 @@
+Absorbed into paper §10 on 2026-11-16; kept as the working record.
+
 # Cohort-dependent series lengths
 
 README "Later goals → Cohort-dependent series length". Lean (all proved):

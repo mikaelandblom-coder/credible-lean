@@ -60,6 +60,15 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   BLUP as the benchmark for the thesis's blend (`Core.blupWeight_optimal`); new here is the exact
   price of the blend and the condition for it to be zero (Finding 18).
 
+- Hierarchical credibility (cited in paper §11, 2026-11-16; references from memory, owner to
+  check): Jewell (1975), *The use of collateral data in credibility theory: a hierarchical
+  model*, Giornale dell'Istituto Italiano degli Attuari 38; Taylor (1979), *Credibility analysis
+  of a general hierarchical model*, Scand. Actuar. J.; Bühlmann & Gisler (2005), *A Course in
+  Credibility Theory*, ch. 6. Nested levels with independent noise; the group variance estimated
+  from the spread of group means. Small-area analogue: two-fold nested error models (Stukel &
+  Rao 1999, JSPI 78). Used: the two-stage weights as the target shape (`glsWeight_blockDiag`).
+  New here: correlated noise, and `φτ²` from within- and across-group pairs (Finding 13).
+
 ## 4. Error of the plug-in fit (MSEP with estimated parameters)
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
   translation-invariant variance estimators, **under normality**. Without normality the cross term

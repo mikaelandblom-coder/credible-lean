@@ -656,6 +656,8 @@ structures work too (\finding{5}).
 \lean{Credibility.Model.bestZ_of_equalCov} ·
 \app{Models} · \finding{2}, \finding{4}, \finding{5} · thesis §2.6, §2.7.
 
+% ===========================================================================
+\section{Balance}\label{sec:balance}
 
 \oneline A blend is balanced when the blended rates, charged on the past
 volumes, would have brought in exactly the claims that came in; every blend
@@ -998,13 +1000,242 @@ The app therefore calls the floor ``the best fixed blend''.
 \app{Many draws} (fit against the floor) · \finding{1}, \finding{11},
 \finding{12} · \file{studies/damping-theta.md} (S9).
 
+% ===========================================================================
 \section{Cohorts observed over different periods}\label{sec:unequal}
-\notyet{unequal lengths; the per-pair count.}
 
+\oneline When cohorts have histories of different lengths (a region entered
+three years ago, a product discontinued last year), everything carries over
+with sums restricted to the periods a cohort, or a pair of cohorts, is
+observed in; the one thing that changes is the unbiased count in the
+covariance estimator, which becomes a volume-weighted count per pair.
+
+\idea \emph{The model, with holes.} Cohort $j$ is observed in a set of
+periods $T_j$, its own and not empty. Nothing else changes: the same
+levels, the same noise, correlation between cohorts within a period, and
+none across periods. So two cohorts' noise can only correlate in the
+periods they share, $T_i \cap T_j$. Within a cohort the best weights are
+still inverse-variance weights, now over $T_j$ only.
+
+\emph{$K$ keeps its shape.} The covariance of two cohort estimates is
+still a noise part plus $\tau^2$ on the diagonal, and the noise part is
+summed over the shared periods only (\hb{res:unequal}{22}). Two cohorts that
+never share a period have no noise covariance at all. The GLS weights and
+the credibility factor only see $K$, so Sections~\ref{sec:weights}
+and~\ref{sec:z} apply word for word: this is the recipe of
+Section~\ref{sec:K} at work, with only step one (build $K$) new. With every
+cohort observed in every period it is the thesis model again.
+
+\emph{A weaker condition on the correlations.} For $K$ to be positive
+definite the thesis needs the correlation table to be positive
+semidefinite. Here it is enough that, period by period, the correlations of
+the cohorts observed \emph{in that period} are semidefinite. Correlations
+of cohorts that never meet never act, so they are not constrained, and need
+not even fit into any correlation table. For example, with three cohorts
+observed in periods $\{1\}$, $\{1,2\}$ and $\{2\}$, correlations $0.9$ for
+the two overlapping pairs and $-0.9$ for the pair that never meets make no
+valid correlation table, yet $K$ is positive definite (\finding{8}). As in
+Section~\ref{sec:moments}, this condition is not an extra assumption:
+random variables with the model's moments exist exactly when it holds
+(\finding{12}). In practice you only ever need correlations for pairs that
+overlap, and Lean checks that any way of filling in the others gives the
+same $K$ and the same factors.
+
+\emph{The per-pair count.} The estimators of
+Section~\ref{sec:estimation} still work, with one change that is easy to
+get wrong. The thesis divides the cross-products of deviations by a factor
+containing $T - 2$; the natural guess with unequal lengths is the number of
+shared periods minus two. That guess is biased whenever the two cohorts are
+not observed in exactly the same periods (\finding{9}). The reason: each
+cohort's deviations are taken from its \emph{own} mean, over its own
+periods. In the thesis each of the two means removes one period's worth of
+information, hence the $-2$. Here a cohort's mean removes only the part of
+its volume that lies in the overlap. So the count is the number of shared
+periods minus the two cohorts' volume shares in the overlap
+(\hb{res:unequal_est}{23}). With identical periods both shares are one, and
+the thesis count returns; on the diagonal it is Bühlmann--Straub with the
+cohort's own length.
+
+\emph{One shared period can be enough.} The thesis needs $T \ge 2$
+(\finding{7}). Here a pair sharing two or more periods is always fine. A
+pair sharing a single period is fine too, provided both cohorts are also
+observed elsewhere: their own means then come from other periods, and the
+one shared period shows how their deviations move together. Out of reach is
+only a pair where one cohort is observed in the shared period alone. Pairs that
+share nothing need no estimate: their noise covariance is zero.
+
+\emph{Balance survives.} Without correlation and with a common noise
+level, the Bühlmann--Straub blend is balanced whatever periods each cohort
+is observed in, because the thesis argument works cohort by cohort
+(\finding{10}; Section~\ref{sec:balance}).
+
+\watch
+\begin{itemize}
+  \item \emph{Without correlation this is classical.} Bühlmann--Straub has
+    always allowed missing periods (weight zero). What is new is the
+    correlated case, and there the per-pair count matters.
+  \item \emph{Don't use the naive count} (shared periods minus two). It
+    gives biased covariances, and so a biased $\hat K$, whenever the
+    histories differ.
+  \item \emph{Equal covariances need full overlap.} If all pairs are assumed
+    to have the same noise covariance and one pair never meets, that common
+    covariance is forced to zero (\finding{10};
+    Section~\ref{sec:special}).
+  \item \emph{Short new cohorts carry little.} A cohort observed for two
+    years gets a small $z_j$ and a variance estimate with one degree of
+    freedom; with correlation, its covariance with others rests on even
+    fewer shared periods. The credibility-weighted variances of
+    Section~\ref{sec:estimation} are the natural help, but their behaviour
+    with unequal lengths has not been studied yet.
+  \item \emph{Only observed cells are used.} Lean checks that $\hat K$ reads
+    no cell outside a cohort's own periods, so nothing silently assumes the
+    missing years exist.
+  \item \emph{The app has no switch for this yet} (\app{World}, ``Unequal
+    lengths'', marked ``soon'').
+\end{itemize}
+
+\see \hb{res:unequal}{22}, \hb{res:unequal_est}{23} ·
+\lean{Credibility.Unequal.K_posDef},
+\lean{Credibility.Unequal.K_posDef_of_posSemidef},
+\lean{Credibility.Unequal.K_eq_of_full},
+\lean{Credibility.Unequal.bestZ_eq},
+\lean{Credibility.PartialCorr.K_extend},
+\lean{Credibility.PartialCorr.bestZ_extend},
+\lean{Credibility.PartialCorr.K_posDef},
+\lean{Credibility.Unequal.exists_noise_iff},
+\lean{Credibility.Unequal.Noise.bestZ_mse_optimal},
+\lean{Credibility.Unequal.sigRhoHat_unbiased},
+\lean{Credibility.Unequal.tauHat_unbiased},
+\lean{Credibility.Unequal.KHat_unbiased},
+\lean{Credibility.Unequal.KHat_observed},
+\lean{Credibility.Unequal.den_pos_of_two_le},
+\lean{Credibility.Unequal.den_of_overlap_singleton},
+\lean{Credibility.Unequal.balance},
+\lean{Credibility.Unequal.equalCov_eq_zero} ·
+\app{World} (soon) · \finding{8}, \finding{9}, \finding{10},
+\finding{12} · \file{notes/unequal-lengths.md} · not in the thesis.
+
+% ===========================================================================
 \section{Groups and shared levels}\label{sec:groups}
-\notyet{a shared level drops out; several groups; what the estimators see;
-towards hierarchical credibility.}
 
+\oneline When cohorts fall into groups (regions of one country, say) whose
+cohorts share part of their level, a level shared by the whole portfolio
+drops out and the thesis procedure is already right; with several groups
+the credibility factor gains a term for the group, the weights become
+two-stage, and the thesis $\hat\tau^2$ is biased, but pairs of cohorts
+within and across groups repair it.
+
+\idea \emph{The model.} The thesis gives every cohort its own level,
+uncorrelated with the others. Here a fraction $\phi$ of the level variance
+is shared within a group: two cohorts in the same group have level
+covariance $\phi\tau^2$, cohorts in different groups none
+(\hbsec{sec:beyond}{6}). The noise is as before, so this is a second,
+independent source of correlation, in the levels rather than in the
+period's shocks. It is the first step towards hierarchical credibility
+(Jewell 1975; Bühlmann and Gisler 2005, ch.~6), built in this framework
+from second moments and with correlated noise.
+
+\emph{One shared level drops out.} If the whole portfolio is one group, the
+shared part of the level is common to every cohort, to the portfolio
+estimate and to the target alike, and cancels in every blend's error. The
+best factor is the thesis one with $\tau^2$ replaced by the non-shared part
+$(1-\phi)\tau^2$, and the thesis estimators estimate exactly that part
+(\hb{res:phi}{25}). So the thesis procedure is right as it stands. The
+other side of the coin: like the overall mean $\mu$, a level shared by all
+is invisible to the data, and $\phi$ cannot be estimated from one
+portfolio. In Lean this is a fact about $K$: adding the same amount to
+every entry of $K$ does not move the GLS weights, and shifts all the
+blend's moments together.
+
+\emph{Several groups: the factor sees the group.} With several groups the
+shared part no longer cancels. The best factor has one more term: the
+shared part $\phi\tau^2$ is discounted by $1 - B_g$, where $B_g$ is the
+total weight the portfolio estimate puts on cohort $j$'s whole group
+(\hb{res:groups}{26}). The intuition: the portfolio estimate already
+contains the group's shared level to the extent $B_g$, so a cohort in a
+heavy group needs less of its own data to get it, and one in a small group
+more. With one group $B_g = 1$, and the term vanishes. The assumptions are
+again consistent exactly when the noise correlations are (semidefinite, or
+the block condition of Section~\ref{sec:unequal} with unequal lengths): the
+group effects add no constraint, and the whole section holds with unequal
+lengths too.
+
+\emph{Two-stage weights.} If the noise is also uncorrelated across groups,
+$K$ is block diagonal by group, and the GLS weights split in two
+(\hb{res:twostage}{27}): GLS within each group, which is the thesis with the
+non-shared $(1-\phi)\tau^2$; then inverse-variance weights across the group
+estimates, each group's variance including the shared $\phi\tau^2$. The
+shared level flattens the group weights: no group can dominate the
+portfolio by volume alone, because its own level is uncertain however much
+data it has. This is the shape of classical hierarchical credibility.
+
+\emph{What the estimators see.} The thesis $\hat\tau^2$ compares cohort
+means with the portfolio mean. With several groups it measures something
+between the non-shared part and the full $\tau^2$: $\tau^2$ minus
+$\phi\tau^2$ times the volume-weighted share of same-group pairs
+(\finding{13}; \hb{res:est_groups}{28}). So with one group it is exactly
+what the blend needs (above); with singleton groups it is $\tau^2$, also
+right; in between it fits neither the within-group nor the across-group
+part of $K$. Pairs separate them. The squared difference of two cohort
+means, minus its noise estimate, is unbiased for twice the non-shared part
+when the two share a group, and twice the full $\tau^2$ when they do not.
+So one pair of each kind identifies $\phi\tau^2$. As everywhere in this
+paper, ``unbiased'' is the actual expectation for any distribution with the
+model's moments (Section~\ref{sec:moments}).
+
+\emph{Towards hierarchical credibility.} What is here: the covariance
+$K$ for one level of grouping, its positive definiteness, the best factor
+in true mean squared error, the two-stage weights, and unbiased estimators
+of both level parts. What is not yet: a fit that pools the pair estimates
+into one $\widehat{\phi\tau^2}$ with no hand-set choices, its behaviour in
+simulation, and more than one level of grouping. Cohorts that share levels
+across groups (Swedish and Norwegian sports cars sharing ``sports car'') are
+a crossed structure, not a nested one (Section~\ref{sec:open}).
+
+\watch
+\begin{itemize}
+  \item \emph{One group: do nothing.} The thesis estimators and factors
+    already handle a level shared by the whole portfolio.
+  \item \emph{Several groups: don't plug the thesis $\hat\tau^2$ into the
+    group model.} It overstates the within-group level variance by
+    $\phi\tau^2$ times the share of across-group pairs. Estimate the two
+    parts from pairs within and across groups.
+  \item \emph{The groups are given.} Everything here takes the grouping as
+    known. Choosing it from the same data is a different question
+    (Section~\ref{sec:cohorts}).
+  \item \emph{A single pair is noisy.} One within-group and one
+    across-group pair identify $\phi\tau^2$ in principle; in practice you
+    want many of each, and a rule for combining them is open.
+  \item \emph{The app has no switch for this yet} (\app{World}, ``Group
+    levels'', marked ``soon'').
+\end{itemize}
+
+\see \hbsec{sec:beyond}{6}, \hb{res:phi}{25}, \hb{res:groups}{26},
+\hb{res:twostage}{27}, \hb{res:est_groups}{28} ·
+\lean{Credibility.Model.Kφ_eq},
+\lean{Credibility.Model.Kφ_posDef},
+\lean{Credibility.Model.bestZ_φ_eq},
+\lean{Credibility.Model.tauHat_unbiasedφ},
+\lean{Credibility.Model.KHat_unbiasedφ},
+\lean{Credibility.Core.glsWeight_add_rankOne},
+\lean{Credibility.Model.KG_eq},
+\lean{Credibility.Model.KG_posDef},
+\lean{Credibility.Model.bestZ_G_eq},
+\lean{Credibility.Unequal.KG_posDef},
+\lean{Credibility.Unequal.bestZ_G_eq},
+\lean{Credibility.Model.NoiseG.bestZ_mse_optimal},
+\lean{Credibility.Unequal.NoiseG.bestZ_mse_optimal},
+\lean{Credibility.Model.exists_noiseG_iff},
+\lean{Credibility.Unequal.exists_noiseG_iff},
+\lean{Credibility.Core.glsWeight_blockDiag},
+\lean{Credibility.Model.glsWeight_KG},
+\lean{Credibility.Model.tauHat_unbiasedG},
+\lean{Credibility.Model.KHat_unbiasedG_iff},
+\lean{Credibility.Model.pairHat_unbiasedG},
+\lean{Credibility.Model.phiTauHat_unbiasedG} ·
+\app{World} (soon) · \finding{13} · \file{studies/literature.md} §3 ·
+not in the thesis.
+
+% ===========================================================================
 \section{Choosing the cohorts}\label{sec:cohorts}
 \notyet{when merging pays off; equal credibility is not grouping; optimal
 cohorts are intervals, and when they are not.}
