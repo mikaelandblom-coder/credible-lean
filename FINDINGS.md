@@ -234,7 +234,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `Var(gap) = (eⱼ − b)ᵀK(eⱼ − b) ≥ λ_min|eⱼ − b|²` (checked in 20000 random
    worlds, `J = 2..6`: worst ratio 0.91). In Lean, with `xᵀKx ≥ m‖x‖²` for a
    given `m > 0` in place of `λ_min`: `Core.abs_bestZ_mul_norm_le`, and
-   `|cⱼ − bⱼ| ≤ τ²/m` as `Core.abs_bestZ_mul_one_sub_le`. Example above:
+   `|cⱼ − bⱼ| ≤ τ²/m` as `Core.abs_bestZ_mul_one_sub_le`; with `m = λ_min(K)`
+   (Rayleigh bound from the spectral theorem):
+   `Core.abs_bestZ_mul_norm_le_eigenvalues`, `Core.abs_bestZ_mul_one_sub_le_eigenvalues`. Example above:
    `c₁ = 1.000, 1.038, 1.064, 1.070, 1.154` at `ρ = 0.25, 0.4, 0.49, 0.51,
    0.75`. For `J = 2` also `ζ₁ = z₁(1 − b₁) = τ²/D`, the factor on
    `μ̂₁ − μ̂₂`; for `J ≥ 3` comparing with the reweighted rest

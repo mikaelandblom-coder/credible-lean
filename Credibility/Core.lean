@@ -13,6 +13,30 @@ its case `Tⱼ = T`) build their own `K` and take these results as corollaries.
 
 open Finset Matrix
 
+/-- Rayleigh-quotient bound for a real symmetric matrix: if every eigenvalue is at
+least `m`, then `m‖x‖² ≤ xᵀAx`. With `A = U diag(λ) Uᵀ` and `y = Uᵀx`,
+`xᵀAx = Σ λᵢ yᵢ²` and `‖y‖ = ‖x‖`. -/
+theorem Matrix.IsHermitian.mul_dotProduct_le_dotProduct_mulVec {n : Type*} [Fintype n]
+    [DecidableEq n] {A : Matrix n n ℝ} (hA : A.IsHermitian) {m : ℝ}
+    (hm : ∀ i, m ≤ hA.eigenvalues i) (x : n → ℝ) : m * (x ⬝ᵥ x) ≤ x ⬝ᵥ (A *ᵥ x) := by
+  set U : Matrix n n ℝ := (hA.eigenvectorUnitary : Matrix n n ℝ)
+  have hA' : A = U * diagonal hA.eigenvalues * Uᵀ := by
+    conv_lhs => rw [hA.spectral_theorem]
+    simp [U, star_eq_conjTranspose]
+  have hUU : U * Uᵀ = 1 := by
+    have := Unitary.coe_mul_star_self hA.eigenvectorUnitary
+    simpa [U, star_eq_conjTranspose] using this
+  set y := Uᵀ *ᵥ x
+  have hq : x ⬝ᵥ (A *ᵥ x) = y ⬝ᵥ (diagonal hA.eigenvalues *ᵥ y) := by
+    conv_lhs => rw [hA']
+    rw [← mulVec_mulVec, ← mulVec_mulVec, dotProduct_mulVec, ← mulVec_transpose]
+  have hn : x ⬝ᵥ x = y ⬝ᵥ y := by
+    rw [dotProduct_mulVec, ← mulVec_transpose, transpose_transpose, mulVec_mulVec, hUU,
+      one_mulVec]
+  rw [hq, hn]
+  simp only [dotProduct, mulVec_diagonal, mul_sum]
+  exact sum_le_sum fun i _ => by nlinarith [hm i, mul_self_nonneg (y i)]
+
 namespace Credibility
 namespace Core
 
@@ -147,6 +171,23 @@ theorem abs_bestZ_mul_one_sub_le [Nonempty J] (hK : K.PosDef) (hτ : 0 ≤ τ2) 
   rw [abs_mul, ← hxj]
   exact (mul_le_mul_of_nonneg_left (Real.abs_le_sqrt hxj2) (abs_nonneg _)).trans
     (abs_bestZ_mul_norm_le hK hτ hm hRay j hKjj)
+
+/-- Finding 17 with the smallest eigenvalue: `|zⱼ| ‖eⱼ - b‖ ≤ τ²/λ_min(K)`. -/
+theorem abs_bestZ_mul_norm_le_eigenvalues [Nonempty J] (hK : K.PosDef) (hτ : 0 ≤ τ2) (j : J)
+    (hKjj : K j j = τ2 + v j) :
+    |(moments K τ2 v j).bestZ| * √((Pi.single j 1 - glsWeight K) ⬝ᵥ (Pi.single j 1 - glsWeight K))
+      ≤ τ2 / univ.inf' univ_nonempty hK.isHermitian.eigenvalues :=
+  abs_bestZ_mul_norm_le hK hτ ((lt_inf'_iff _).2 fun i _ => hK.eigenvalues_pos i)
+    (hK.isHermitian.mul_dotProduct_le_dotProduct_mulVec fun i => inf'_le _ (mem_univ i)) j hKjj
+
+/-- Finding 17 with the smallest eigenvalue: the own-data weight
+`cⱼ = bⱼ + zⱼ(1 - bⱼ)` satisfies `|cⱼ - bⱼ| ≤ τ²/λ_min(K)`. -/
+theorem abs_bestZ_mul_one_sub_le_eigenvalues [Nonempty J] (hK : K.PosDef) (hτ : 0 ≤ τ2) (j : J)
+    (hKjj : K j j = τ2 + v j) :
+    |(moments K τ2 v j).bestZ * (1 - glsWeight K j)|
+      ≤ τ2 / univ.inf' univ_nonempty hK.isHermitian.eigenvalues :=
+  abs_bestZ_mul_one_sub_le hK hτ ((lt_inf'_iff _).2 fun i _ => hK.eigenvalues_pos i)
+    (hK.isHermitian.mul_dotProduct_le_dotProduct_mulVec fun i => inf'_le _ (mem_univ i)) j hKjj
 
 /-! ### Solving `K x = 1` -/
 

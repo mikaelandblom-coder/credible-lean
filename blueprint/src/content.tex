@@ -1048,7 +1048,7 @@ can occur, but not when. The following answers that.
   $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$ and
   $\Var(\hmu_j - \hmu) \ge \lambda_{\min}(K)\lVert e_j - b\rVert^2$.
   Both are proved: Theorems~\ref{thm:two_blend_continuous}
-  and~\ref{thm:Core_bestZ_bounded}.
+  and~\ref{thm:Core_bestZ_bounded}, Corollary~\ref{cor:Core_bestZ_bounded_eig}.
 \end{remark}
 
 \begin{theorem}[Two cohorts: the blend is smooth through $\rho^*$]\label{thm:two_blend_continuous}
@@ -1096,6 +1096,34 @@ can occur, but not when. The following answers that.
   $z_j = (1 - b_j)\tau^2/q$ with $q = (e_j - b)^TK(e_j - b) \ge m\lVert e_j - b\rVert^2$,
   and $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$. If $b = e_j$ both sides
   are trivial.
+\end{proof}
+
+\begin{lemma}[Rayleigh bound]\label{lem:rayleigh_eigenvalues}
+  \lean{Matrix.IsHermitian.mul_dotProduct_le_dotProduct_mulVec}
+  \leanok
+  If $A$ is real symmetric and every eigenvalue of $A$ is at least $m$, then
+  $x^TAx \ge m\lVert x\rVert^2$ for all $x$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $A = U\operatorname{diag}(\lambda)U^T$ and $y = U^Tx$:
+  $x^TAx = \sum_i \lambda_i y_i^2 \ge m\lVert y\rVert^2 = m\lVert x\rVert^2$.
+\end{proof}
+
+\begin{corollary}[The bound with $\lambda_{\min}$]\label{cor:Core_bestZ_bounded_eig}
+  \lean{Credibility.Core.abs_bestZ_mul_norm_le_eigenvalues,
+        Credibility.Core.abs_bestZ_mul_one_sub_le_eigenvalues}
+  \leanok
+  \uses{thm:Core_bestZ_bounded, lem:rayleigh_eigenvalues}
+  Let $K$ be positive definite with $K_{jj} = \tau^2 + v_j$ and $\tau^2 \ge 0$. Then
+  $\lvert z_j\rvert\,\lVert e_j - b\rVert \le \tau^2/\lambda_{\min}(K)$ and
+  $\lvert c_j - b_j\rvert \le \tau^2/\lambda_{\min}(K)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_bounded, lem:rayleigh_eigenvalues}
+  Theorem~\ref{thm:Core_bestZ_bounded} with $m = \lambda_{\min}(K) > 0$, by
+  Lemma~\ref{lem:rayleigh_eigenvalues}.
 \end{proof}
 
 % ---------------------------------------------------------------------------
