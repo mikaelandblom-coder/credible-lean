@@ -507,6 +507,37 @@ theorem ignoreCorr_mse_le {τ2 δ : ℝ} {V : Matrix J J ℝ} (E : Estimates (τ
   rw [E.mse_portLin j _ (sum_blupWeight hK' _ j), E.mse_portLin j _ (sum_blupWeight hK _ j)]
   exact linMse_ignoreCorr_le hτ hV hv hδ0 hδ1 hδ j
 
+/-- **The price of damping correlation in true MSE** (Finding 20): for cohort estimates with
+covariance `K = τ²I + V` and uncorrelated levels (`L = τ²I`), if the noise correlation lies
+between `-δ₋` and `δ₊` (`linMse_damped_le`), the estimate of the working model that multiplies
+the noise covariances off the diagonal by `θ ∈ [0, 1]` has actual mean squared error at most
+`(A + a)²/(4aA)` times that of the best linear unbiased predictor, with
+`a = (1 - δ₋)/(1 - θδ₋)` and `A = (1 + δ₊)/(1 + θδ₊)`, for every distribution with these
+moments. -/
+theorem damped_mse_le {τ2 θ δm δp : ℝ} {V : Matrix J J ℝ}
+    (E : Estimates (τ2 • 1 + V) (τ2 • 1) μ P) (hτ : 0 < τ2) (hV : V.IsHermitian)
+    (hv : ∀ i, 0 ≤ V i i) (hθ0 : 0 ≤ θ) (hθ1 : θ ≤ 1) (hm0 : 0 ≤ δm) (hm1 : δm < 1)
+    (hp0 : 0 ≤ δp)
+    (hδ : ∀ y : J → ℝ, -δm * ∑ i, V i i * y i ^ 2 ≤ y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ∧
+      y ⬝ᵥ (V *ᵥ y) - ∑ i, V i i * y i ^ 2 ≤ δp * ∑ i, V i i * y i ^ 2) (j : J) :
+    4 * ((1 - δm) * (1 + δp) * (1 - θ * δm) * (1 + θ * δp))
+        * P[fun ω => (E.portLin (blupWeight (τ2 • 1 + shrinkOffDiag θ V) (τ2 • 1) j) ω
+          - E.level j ω) ^ 2]
+      ≤ ((1 + δp) * (1 - θ * δm) + (1 - δm) * (1 + θ * δp)) ^ 2
+        * P[fun ω => (E.portLin (blupWeight (τ2 • 1 + V) (τ2 • 1) j) ω - E.level j ω) ^ 2] := by
+  have : Nonempty J := ⟨j⟩
+  have hVpsd : V.PosSemidef := PosSemidef.of_dotProduct_mulVec_nonneg hV fun y => by
+    have h0 : 0 ≤ ∑ i, V i i * y i ^ 2 :=
+      sum_nonneg fun i _ => mul_nonneg (hv i) (sq_nonneg _)
+    have := (hδ y).1
+    simp only [star_trivial]
+    nlinarith
+  have hI : (τ2 • (1 : Matrix J J ℝ)).PosDef := PosDef.one.smul hτ
+  have hK := hI.add_posSemidef hVpsd
+  have hK' := hI.add_posSemidef (posSemidef_shrinkOffDiag hVpsd hθ0 hθ1)
+  rw [E.mse_portLin j _ (sum_blupWeight hK' _ j), E.mse_portLin j _ (sum_blupWeight hK _ j)]
+  exact linMse_damped_le hτ hV hv hθ0 hθ1 hm0 hm1 hp0 hδ j
+
 omit [Fintype J] [DecidableEq J] in
 /-- A common component: add to every estimate and its level the same centred
 `Cⱼ`, uncorrelated with all estimates and levels, with `cov(Cᵢ, Cⱼ) = Rᵢⱼ`.

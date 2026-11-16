@@ -16,11 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Finding 19 (2026-11-16): the price of ignoring correlation, at most `1/(1 − δ²)`
-  (`Core.linMse_ignoreCorr_le`, `Core.linMse_ignoreCorr_le_of_offDiag`): one entry
-  "when can I ignore correlation?", with the two-cohort rule `1/(1 − ρ²)`.
-- Finding 20 (2026-11-16): same entry, sharp for equal correlations
-  (`Core.linMse_ignoreCorr_equicorr_le`) and with damping `θ` (`Core.linMse_damped_equicorr_le`).
 - Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
   blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
   `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".
@@ -47,6 +42,9 @@ voice, then trim towards 8 pages.
    `J ≥ 2` is needed (Finding 2).
 5a. Damped plug-in `K̂`: `ρ̂ ⪰ 0`, `θ ∈ [0,1)`, `τ̂² ≥ 0` (truncated) give
    `K̂ ≻ 0` — `thm:U_dampedK_posDef` (drafted).
+5b. What ignoring or damping correlation costs (Findings 19–20): sharp
+   `(A + a)²/(4aA)` for equal correlations — `cor:Core_ignoreCorr_equicorr`,
+   `cor:Core_damped_equicorr`, `thm:Core_damped_mse` (drafted).
 
 ## 2. Special cases (1.5 pages)
 6. Bühlmann–Straub at `ρ = 0`, and it is balanced — `thm:bs_z`, `thm:bs_balance`.

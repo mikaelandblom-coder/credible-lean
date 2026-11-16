@@ -251,6 +251,32 @@ cohorts with $\hat\rho_{12} = 1$ can make $\hat K$ singular.
 uncorrelated cohorts, which is positive definite on its own. Damping does not
 rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 
+\begin{result}[What ignoring or damping correlation costs]\label{res:ignoreCorr}
+  Let all noise correlations equal $r \in [0,1)$, with $J$ cohorts, and use a $K$ whose
+  off-diagonal noise covariances are multiplied by $\theta \in [0,1]$ ($\theta = 0$:
+  Bühlmann--Straub, Result~\ref{res:diag}). Then its predictor's mean squared error is at most
+  \[
+    \frac{(A+a)^2}{4aA}\ \text{times the best}, \qquad
+    a = \frac{1-r}{1-\theta r},\quad A = \frac{1+(J-1)r}{1+\theta(J-1)r}.
+  \]
+  Ignoring ($\theta = 0$): $\dfrac{(2+(J-2)r)^2}{4(1-r)(1+(J-1)r)}$, and $1/(1-r^2)$ for two cohorts.
+  For any correlation table, take $a = 1-\delta_-$ and $A = 1+\delta_+$ from its smallest
+  eigenvalue $1-\delta_-$ and largest $1+\delta_+$.
+  \lean{Credibility.Core.linMse_ignoreCorr_equicorr_le}
+  \lean{Credibility.Core.linMse_damped_equicorr_le}
+  \lean{Credibility.Core.Estimates.damped_mse_le}
+\end{result}
+\use A quick ``can I ignore it?'' test. At $r = 0.2$, $J = 3$ the worst case is $8\%$;
+at $r = 0.5$ it is $33\%$ ($J = 2$), $56\%$ ($J = 3$), $104\%$ ($J = 5$). Damping by half
+($\theta = 0.5$) at $J = 3$, $r = 0.5$ brings $56\%$ down to $12.5\%$.
+\why Both sides of the bound matter: the common direction of an equicorrelated table
+does not drop out, because the correlation acts on $\sqrt{v_j}$-scaled weights (Finding 20).
+\begin{caveat}
+  These are worst cases over $\tau^2$ and the $v_j$, reached when $\tau^2$ is small and
+  the $v_j$ very unequal; typical losses are smaller. They hold for the true parameters,
+  not for fitted ones.
+\end{caveat}
+
 \begin{caveat}
   You need at least two cohorts. With $J = 1$, $b_1 = 1$ and
   $s^2 = \tau^2 + v_1$, so Result~\ref{res:z} reads $0/0$: there is nothing

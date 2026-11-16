@@ -3084,6 +3084,23 @@ example ignoring the correlation between cohorts. How much can that cost?
   (Theorem~\ref{thm:Core_blup_mse}); then Theorem~\ref{thm:Core_ignoreCorr}.
 \end{proof}
 
+\begin{theorem}[The price of damping correlation in true MSE]\label{thm:Core_damped_mse}
+  \lean{Credibility.Core.Estimates.damped_mse_le}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup, def:shrinkOffDiag}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} with $K = \tau^2I + V$
+  and $L = \tau^2I$, under the hypotheses of Theorem~\ref{thm:Core_damped}: the true mean
+  squared error of the damped working model's predictor is at most $(A+a)^2/(4aA)$ times
+  that of the best linear unbiased predictor, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped, thm:shrinkOffDiag_posDef, thm:Core_blup_mse, lem:Core_blup_foc}
+  Both predictors are unbiased ($V \succeq 0$ and $V^\theta \succeq 0$ by
+  Theorem~\ref{thm:shrinkOffDiag_posDef}), so their true mean squared errors are
+  $\mathrm{mse}_j$ (Theorem~\ref{thm:Core_blup_mse}); then Theorem~\ref{thm:Core_damped}.
+\end{proof}
+
 \begin{remark}[Finding 19: what ignoring correlation can cost]\label{rem:ignoreCorr}
   \uses{thm:Core_ignoreCorr_mse, cor:Core_ignoreCorr_offDiag, lem:Core_blup_diag}
   Bühlmann--Straub ignores the correlation between cohorts. With the true parameters this

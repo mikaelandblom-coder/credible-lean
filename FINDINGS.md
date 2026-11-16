@@ -300,7 +300,8 @@ Gaps, extra hypotheses and new results found while formalizing.
 
 20. **Equal correlations: the sharp price of ignoring or damping them (new;
    `Core.linMse_damped_le`, `Core.linMse_ignoreCorr_le_two_sided`,
-   `Core.linMse_damped_equicorr_le`, `Core.linMse_ignoreCorr_equicorr_le`).**
+   `Core.linMse_damped_equicorr_le`, `Core.linMse_ignoreCorr_equicorr_le`,
+   `Core.Estimates.damped_mse_le`).**
    Question (owner): the proof of Finding 19 only uses directions `(d̃* + uh, 1)`
    with `Σ hᵢ = 0`, so is the large eigenvalue `1 + (J − 1)r` of an equicorrelated
    noise correlation needed, or does `δ = r` (bound `1/(1 − r²)`) suffice? **No**:
