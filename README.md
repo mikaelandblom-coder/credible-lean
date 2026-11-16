@@ -99,68 +99,56 @@ minimises the actual mean squared error (likewise `CoreMoments`,
 ## Later goals
 
 Planned next steps, in order: [`notes/roadmap.md`](notes/roadmap.md). How the
-results become something a practitioner can use (a planned interactive app:
-world model against fitted model, and the theorems still missing):
-[`studies/PLAN.md`](studies/PLAN.md).
+results become something a practitioner can use (the app, and the theorems it
+still needs): [`studies/PLAN.md`](studies/PLAN.md).
 
-Once the thesis results are proved:
+Done since the thesis: the moment layer (FINDINGS items 11–12: the assumed
+moments are consistent exactly when `ρ ⪰ 0`, or the per-period block condition
+of item 8 with unequal lengths), cohort-dependent series lengths
+([`notes/unequal-lengths.md`](notes/unequal-lengths.md), items 8–10), the
+two small lemmas from van Rijn, Weber, Merz (`KMeans`, `OffDiagonal`), the
+k-means bridge (item 14), group levels with their moment layer (item 13),
+balance (items 15–16) and forecasting. Open:
 
-- ~~**Moment layer (still distribution-free).**~~ Done
-  (`Credibility/Moments.lean`, FINDINGS item 11): for *any* probability
-  space and *any* square-integrable `ηⱼ`, `εⱼₜ` with the assumed moments,
-  eqs. (16) and (21) are the actual covariances, the weights are optimal
-  in actual variance, and `zⱼ` minimises the actual mean squared error.
-  Such variables exist exactly when `ρ` is positive semidefinite, the
-  condition `K` needs anyway (FINDINGS item 1). The same holds with
-  unequal lengths (`Credibility/UnequalMoments.lean`, FINDINGS item 12),
-  where consistency is exactly the per-period block condition of item 8.
-- ~~**Cohort-dependent series length.**~~ Done: cohorts observed on
-  their own periods `Tⱼ ⊆ T`, correlations acting only on shared periods.
-  Not in the thesis. Notes in
-  [`notes/unequal-lengths.md`](notes/unequal-lengths.md), proved in
-  `Credibility/Unequal.lean` (FINDINGS items 8–10).
 - **Choosing cohorts from the data.** Pick the partition into cohorts that
   minimises the total credibility MSE itself, rather than clustering
   credibility estimates by Euclidean distance (as in van Rijn, Weber, Merz,
-  *Credibility Clustering for Experience Rating*, arXiv:2611.07110).
-  Questions: when do the two criteria agree; how does choosing cohorts
-  from the same data bias the second-stage estimate (winner's curse); how
-  do correlations between cohorts change the optimal partition (a first
-  answer for one pair: [`notes/merging-cohorts.md`](notes/merging-cohorts.md)). Starting
-  points: Diao & Weng, *Regression tree credibility model*, NAAJ 23(2)
-  (2019) (greedy splits on a credibility loss); Campo & Antonio, *On
-  clustering levels of a hierarchical categorical risk factor*, AAS 18(3)
-  (2024), arXiv:2304.09046.
-- **Small lemmas from that paper.** (a) Optimal one-dimensional weighted
-  k-means groups are contiguous intervals of the sorted values, so they
-  can be found exactly by dynamic programming (Fisher 1958; Nielsen & Nock,
-  arXiv:1403.2485). Done: `Credibility/KMeans.lean`. (b) Multiplying the
-  off-diagonal entries of a covariance matrix `τ` by `ρ ∈ [0,1]` keeps it
-  positive semidefinite, and positive definite if `ρ < 1` and the diagonal
-  is positive. Done: `Credibility/OffDiagonal.lean`.
-- **Towards hierarchical credibility.** Begun, not in the thesis
-  (`Credibility/Hierarchical.lean`): the cohort levels share a level within
-  groups. A shared level drops out of credibility (only the non-shared part
-  `(1-φ)τ²` counts); with several groups the GLS weights are two-stage (GLS
-  within groups, inverse variance across them), and the §2.8 estimator `τ̂²`
-  is biased by the within-group pairs, which pairs within and across groups
-  correct (FINDINGS item 13). Its moment layer is done
-  (`Credibility/HierarchicalMoments.lean`): with group effects as actual random
-  variables, `K_G` is the true covariance and `zⱼ` minimises the true MSE.
-  Open: consistency of those assumptions, and efficient estimation of `φ`.
+  *Credibility Clustering for Experience Rating*, arXiv:2611.07110). Known
+  so far: for exposure-weighted pooling, and for the blend with a common
+  variance, the optimal cohorts are intervals of the sorted levels, so
+  dynamic programming finds them exactly; with unequal variances the blend's
+  optimum need not be an interval (FINDINGS item 14,
+  [`notes/kmeans-bridge.md`](notes/kmeans-bridge.md); one pair:
+  [`notes/merging-cohorts.md`](notes/merging-cohorts.md)). Open: how choosing
+  cohorts from the same data biases the second-stage estimate (winner's
+  curse), and how correlations between cohorts change the optimal partition.
+  Starting points: Diao & Weng, *Regression tree credibility model*, NAAJ
+  23(2) (2019); Campo & Antonio, *On clustering levels of a hierarchical
+  categorical risk factor*, AAS 18(3) (2024), arXiv:2304.09046.
+- **Hierarchical credibility.** With group levels (`Hierarchical`,
+  `HierarchicalMoments`) a shared level drops out of credibility, the GLS
+  weights are two-stage, and `τ̂²` needs pairs within and across groups
+  (item 13). Open: consistency of the assumptions, and efficient estimation
+  of `φ` from all pairs (PLAN G4).
 - **Crossed levels.** Not started in Lean: cohorts in a table (country ×
   car type) sharing a level along both rows and columns, so that sport cars
   in Norway inform sport cars in Sweden. The balanced 2×2 case is worked out
   in [`notes/crossed-2x2.md`](notes/crossed-2x2.md): the best linear
   predictor has one credibility factor per layer (country, type, cell), and
   the thesis blend is the same formula with one common factor.
+- **The app** (preview): unequal lengths and group levels in its world and
+  fits, then proofs of the gaps it shows to matter (PLAN steps 4–5). Its
+  study findings S1–S29 are numerical results in fixed simulated worlds,
+  not theorems; they are reported with their world and script so they can
+  be rerun. Statements about the best blend with known parameters have
+  exact formulas and need no simulation.
 
 ## Sharing results
 
 The thesis is the foundation: notation and model for all later work. Plan:
 
-1. **The thesis formalization (§2) is done.** So are the
-   unequal-lengths extension and the moment layer. Next, pick further credibility papers to formalize
+1. **The thesis formalization (§2) is done**, and so are the extensions
+   above (v2.0.0). Next, pick further credibility papers to formalize
    (candidates such as Jewell's hierarchical model and Hachemeister's
    regression model), each as its own `Credibility/<Topic>.lean` and
    blueprint chapter in the thesis notation.
