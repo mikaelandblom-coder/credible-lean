@@ -152,11 +152,27 @@ still reads like the thesis; special cases are corollaries.
 - Refactors are done in a dedicated chat, one file at a time, with
   `lake build` passing after each file.
 
+## Four documents, one home per kind of content (owner, 2026-11-16)
+- **App** (`app/`): shows the ideas and tools at work. Focus: application.
+- **Handbook** (`handbook/`): quick access to formulas, short notes on use.
+- **Paper** (`paper/`, outline and status in `paper/outline.md`): the
+  up-to-date version of the thesis and the first complete source for a
+  reader. Explains concepts, organized for lookup; few formulas (cites
+  handbook numbers), no proofs (gives Lean names).
+- **Blueprint**: the proof ledger (statements, proofs, dependency graph).
+  Reached by link, not read front to back.
+Don't restate across them: a formula lives in the handbook, an explanation
+in the paper, a proof in Lean and the blueprint; the others point to it.
+When a result is proved, a finding logged, or a statement changed, ask for
+each of app, handbook and paper: does it need this? Update it in the same
+commit, or add a line under "Pending" in `studies/PLAN.md`,
+`handbook/outline.md` or `paper/outline.md`.
+
 ## Blueprint
 `blueprint/src/content.tex` is a condensed §2 of `thesis/original/main.tex`
 (`leanblueprint`; `\lean{}`/`\uses{}`, dependency graph, `FINDINGS.md` items
-as remarks). The owner wants it to become the up-to-date, shorter version of
-the thesis. CI builds it and deploys to GitHub Pages from `main`.
+as remarks). It is the proof ledger; explanation beyond what a statement
+needs belongs in the paper. CI builds it and deploys to GitHub Pages from `main`.
 - When you close a `sorry`, add `\leanok` to that proof in `content.tex`;
   new theorems need a blueprint entry. `python3 scripts/blueprint_check.py`
   must pass before committing (it compares with the same test as

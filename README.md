@@ -158,7 +158,9 @@ The thesis is the foundation: notation and model for all later work. Plan:
    always the latest version);
    GitHub topics `credibility-theory`, `actuarial-science`, `lean4`,
    `formalization`.
-3. **Preprint on arXiv** (q-fin.RM, cross-list stat.AP or math.ST) once the
+3. **Preprint on arXiv** (the paper, `paper/outline.md`: the up-to-date
+   version of the thesis, explaining the concepts and pointing to the
+   handbook for formulas and to Lean for proofs) (q-fin.RM, cross-list stat.AP or math.ST) once the
    findings are proved: the new results (`FINDINGS.md`, merging cohorts),
    stating that every result is machine-checked and linking here. arXiv is
    indexed by Google Scholar; GitHub is not.
