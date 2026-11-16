@@ -241,7 +241,8 @@ One chat per step; none needs Lean except step 5.
   beats BS and corr, and the jackknife ratio is in (0.75, 0.95), in one fixed-seed spread world.
   Expected flags (2026-11-15, `studies/vc-balance.js`, findings S27–S29): the floor (true K) has
   negative b and is off exposure balance too; forcing balance costs up to ≈30% more error, so no
-  balance switch. corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
+  balance switch (the floor's costs are exact: `studies/exact-balance.js`, pinned by a test).
+  corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
   when ρ̂ > 0 (off-balance also when β² > 0); `simulate` reports their share as `expected`. Tests:
   the floor's b < 0, z < 1 and balance in bⱼ/(1 − zⱼ); notes ↔ expected flags; balancing costs > 5%.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.

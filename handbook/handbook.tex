@@ -291,8 +291,9 @@ it balances premium against claims. With region-specific noise ($v_j =
   With correlated cohorts some $b_j$ are negative, so no positive volume
   measure balances the best blend; an off-balance of a few percent is
   expected, not a bug. Forcing exposure balance afterwards (shift or scale
-  all rates) costs up to about 30\% more error at $\rho = 0.6$ in our
-  simulations: the exposure-weighted mean carries this year's common shock,
+  all rates) costs up to about 40\% more error at $\rho = 0.6$ in our
+  example worlds, even with the true parameters (an exact computation, not a
+  simulation): the exposure-weighted mean carries this year's common shock,
   which the weights $b_j$ hedge away and balance puts back into every rate.
   Without correlation and with a common $\sigma$ the cost is nil.
 \end{caveat}
@@ -309,7 +310,7 @@ it balances premium against claims. With region-specific noise ($v_j =
 \begin{caveat}
   Don't restore balance by bending $z$. Balance fixes the shape
   $1 - z_j \propto b_j/u_j$: large cohorts are pushed towards $z_j = 1$ and
-  small ones far from their optimal $z_j$. In our simulations even the best
+  small ones far from their optimal $z_j$. In our example worlds even the best
   such blend has up to about twice the error of the optimal blend. Keep
   $z$ and $b$, and shift the rates instead (next result).
 \end{caveat}

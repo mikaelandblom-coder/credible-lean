@@ -1316,10 +1316,12 @@ which is Bühlmann--Straub.
   \uses{thm:Core_bestBalanced}
   The line $z(c)$ fixes the shape $1 - z_j \propto b_j/u_j$: large cohorts
   are pushed to $z_j \approx 1$, small ones far from $z_j^*$. In the app's
-  worlds (\texttt{studies/vc-balance.js}) the best balanced blend has up to
-  about twice the error of the optimal blend, while adding one common
-  shift to all rates (the benchmarking of Wang, Fuller and Qu, 2008, which
-  leaves the blend class) costs at most 46\%.
+  worlds the best balanced blend has up to about twice the error of the
+  optimal blend (at most $+96\%$), while adding one common shift to all
+  rates (the benchmarking of Wang, Fuller and Qu, 2008, which leaves the
+  blend class) costs at most $41\%$. Both are linear rules with the true
+  $K$, so these numbers are computed exactly from the second moments, not
+  simulated (\texttt{studies/exact-balance.js}).
 \end{remark}
 
 \begin{definition}[Imbalance and corrections]\label{def:Core_imbalance}

@@ -44,7 +44,7 @@ voice, then trim towards 8 pages.
 ## 2. Special cases (1.5 pages)
 6. Bühlmann–Straub at `ρ = 0`, and it is balanced — `thm:bs_z`, `thm:bs_balance`.
    Which weights balance any blend (`uⱼ(1 − zⱼ) ∝ bⱼ`; diagonal `K`: precisions), with the
-   watch-out that forcing exposure balance under correlation costs up to ≈30% (findings 27–28) —
+   watch-out that forcing exposure balance under correlation costs up to ≈40% even with the true parameters (exact; study findings S27–S28) —
    `thm:Core_balance`, `cor:Core_balance_diag`. If you must balance: don't bend `z`
    (best balanced blend, up to 2× the error; Finding 15) — `thm:Core_bestBalanced`;
    shift all rates, best for independent cohorts and within ≈2% under correlation

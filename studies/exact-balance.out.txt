@@ -1,0 +1,21 @@
+Exact floor rows of vc-balance.js (no simulation; any noise law with these second moments).
+Errors in % of the floor. min b, max z: the floor's GLS weights and factors.
+σⱼ spread J= 8 T= 5 ρ=0.0 | min b  0.04 max z 0.76 | bal  115 shift  114 opt  194
+σⱼ spread J= 8 T= 5 ρ=0.3 | min b -0.02 max z 0.87 | bal  125 shift  123 opt  192
+σⱼ spread J= 8 T= 5 ρ=0.6 | min b -0.09 max z 0.92 | bal  143 shift  141 opt  182
+σⱼ spread J= 8 T=10 ρ=0.0 | min b  0.05 max z 0.87 | bal  109 shift  107 opt  155
+σⱼ spread J= 8 T=10 ρ=0.3 | min b -0.00 max z 0.94 | bal  114 shift  112 opt  152
+σⱼ spread J= 8 T=10 ρ=0.6 | min b -0.07 max z 0.99 | bal  124 shift  121 opt  147
+σⱼ spread J=20 T=10 ρ=0.0 | min b  0.01 max z 0.93 | bal  104 shift  103 opt  172
+σⱼ spread J=20 T=10 ρ=0.3 | min b -0.03 max z 0.97 | bal  123 shift  119 opt  196
+σⱼ spread J=20 T=10 ρ=0.6 | min b -0.06 max z 0.97 | bal  149 shift  141 opt  182
+σⱼ equal  J= 8 T= 5 ρ=0.0 | min b  0.04 max z 0.76 | bal  100 shift  100 opt  100
+σⱼ equal  J= 8 T= 5 ρ=0.3 | min b -0.02 max z 0.87 | bal  108 shift  107 opt  146
+σⱼ equal  J= 8 T= 5 ρ=0.6 | min b -0.09 max z 0.92 | bal  124 shift  121 opt  151
+σⱼ equal  J= 8 T=10 ρ=0.0 | min b  0.05 max z 0.87 | bal  100 shift  100 opt  100
+σⱼ equal  J= 8 T=10 ρ=0.3 | min b -0.00 max z 0.94 | bal  104 shift  103 opt  117
+σⱼ equal  J= 8 T=10 ρ=0.6 | min b -0.07 max z 0.99 | bal  114 shift  111 opt  129
+σⱼ equal  J=20 T=10 ρ=0.0 | min b  0.01 max z 0.91 | bal  100 shift  100 opt  100
+σⱼ equal  J=20 T=10 ρ=0.3 | min b -0.03 max z 0.95 | bal  108 shift  107 opt  147
+σⱼ equal  J=20 T=10 ρ=0.6 | min b -0.07 max z 0.97 | bal  124 shift  119 opt  140
+σⱼ spread J= 8 T=10 ρ=0.6 vol spread 2 | min b -0.02 max z 0.94 | bal  117 shift  114 opt  154

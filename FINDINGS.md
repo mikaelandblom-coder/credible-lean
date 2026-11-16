@@ -174,11 +174,14 @@ Gaps, extra hypotheses and new results found while formalizing.
    that blend is already balanced). It needs no sign on `b`, so it covers
    correlation, and holds in true MSE for any distribution. But the line
    fixes the *shape* `1 − zⱼ ∝ bⱼ/uⱼ`: big cohorts are forced to `z ≈ 1`, small
-   ones far from `zⱼ*` (even `z < 0`). In the app's worlds
-   (`studies/vc-balance.js`, column `opt`, formula checked against the
-   simulation) it costs up to about 100% more error than the floor, where
-   shifting all rates by the same amount (Wang–Fuller–Qu 2008) costs at most
-   46%; both cost nothing at `ρ = 0` with equal `σⱼ`. Balance should be
+   ones far from `zⱼ*` (even `z < 0`). In the 19 worlds of the app's study
+   (`studies/vc-balance.js`) it costs up to 96% more error than the floor,
+   where shifting all rates by the same amount (Wang–Fuller–Qu 2008) costs at
+   most 41%; both cost nothing at `ρ = 0` with equal `σⱼ`. These numbers are
+   exact, not simulated: both corrections are linear rules with the true `K`,
+   so their MSE is a formula in the second moments (`studies/exact-balance.js`,
+   tested in `app/engine.test.js`; the simulation gave 103% and 46%). They
+   still depend on the worlds chosen. Balance should be
    restored by a common shift, not by bending `z`: the shift is outside the
    blend class.
 

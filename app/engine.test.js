@@ -428,3 +428,45 @@ test('Premium step: premium = rates, forecast = plug-in level MSE + σ̂ⱼ²/w�
   pv.mse.forEach((m, j) => close(m, jk.msep[j] + vc.sigma2[j] / wn[j], 1e-12, 'vc forecast'));
   assert.equal(E.premium(E.fitOwn(data), data, wn), null);
 });
+
+// ---------------------------------------------------------------- exact checks of study numbers
+// studies/exact-balance.js: the floor and its balanced corrections are linear rules, so their error
+// is a formula in K and τ² (no simulation). These tests tie the documented numbers to it.
+const X = require('../studies/exact-balance.js');
+
+test('Exact floor error equals the engine\'s blendMSE, weighted (studies/exact-balance.js)', () => {
+  for (const { params } of X.worlds()) {
+    const r = X.exactRow(params), { fl, wt, t2 } = r;
+    const viaEngine = wt.reduce((s, w, j) => s + w * E.blendMSE(fl.K, t2, fl.b, fl.s2, j, fl.z[j]), 0) / wt.reduce((s, w) => s + w, 0);
+    assert.ok(Math.abs(r.floor - viaEngine) < 1e-9 * viaEngine, `${r.floor} vs ${viaEngine}`);
+  }
+});
+
+test('Exact floor and shift errors agree with simulation within 4 standard errors (one world)', () => {
+  const params = { J: 8, T: 10, rho: 0.6, noiseSpread: 1 }, r = X.exactRow(params);
+  const world = E.makeWorld(params), fl = E.floorBlend(world), rng = E.rng(11), N = 2000;
+  const wt = world.w.map((w) => w.reduce((s, x) => s + x, 0)), W = wt.reduce((s, x) => s + x, 0);
+  const A = X.shiftMatrix(X.blendMatrix(fl.z, fl.b), wt);
+  const f = [], s = [];
+  for (let n = 0; n < N; n++) {
+    const { levels, data } = E.draw(world, rng), m = E.cohortMeans(data).m;
+    f.push(E.weightedSE(data, fl.apply(data).rates, levels));
+    s.push(E.weightedSE(data, A.map((row) => row.reduce((t, a, i) => t + a * m[i], 0)), levels));
+  }
+  const chk = (xs, exact) => {
+    const mean = xs.reduce((t, x) => t + x, 0) / N, sd = Math.sqrt(xs.reduce((t, x) => t + (x - mean) ** 2, 0) / (N - 1));
+    assert.ok(Math.abs(mean - exact) < 4 * sd / Math.sqrt(N), `simulated ${mean} vs exact ${exact}`);
+  };
+  chk(f, r.floor); chk(s, r.floor * r.shift / 100);
+  assert.ok(W > 0);
+});
+
+test('Documented balance costs are the exact ones (FINDINGS 15, S28): change the docs if this fails', () => {
+  const rows = X.worlds().map(({ params }) => X.exactRow(params));
+  assert.equal(Math.round(Math.max(...rows.map((r) => r.shift))), 141);   // shift: at most +41%
+  assert.equal(Math.round(Math.max(...rows.map((r) => r.opt))), 196);     // best balanced blend: up to +96%
+  const eq0 = X.worlds().map((w, i) => [w, rows[i]]).filter(([w]) => w.params.rho === 0 && w.params.noiseSpread === 0);
+  for (const [, r] of eq0) { assert.ok(Math.abs(r.shift - 100) < 1e-6); assert.ok(Math.abs(r.opt - 100) < 1e-6); }
+  assert.ok(rows.every((r, i) => (X.worlds()[i].params.rho > 0) === (r.minB < 0)));  // S27: b < 0 iff ρ > 0
+  assert.ok(rows.every((r) => r.maxZ < 1));                                          // S29: the floor has z < 1
+});
