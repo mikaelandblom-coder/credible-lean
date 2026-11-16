@@ -225,5 +225,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    `μ̂`, which past `ρ*` already overshoots `μ̂₁`. In a fitted model an
    extreme `z` still signals a near-singular `K̂`. A Lean statement would be
    `TwoCohorts`: `bestZ • gap = (τ²/D) • (μ̂₁ − μ̂₂)` away from `ρ*`.
+   *Reporting without the singularity (owner, 2026-11-16).* Keep `z` (the
+   classical quantity, all results stated in it) and report next to it the
+   own-data weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)`, the coefficient of `μ̂ⱼ` in the
+   blend. It is bounded for any `J`: `zⱼ(eⱼ − b)` has norm at most
+   `τ²/λ_min(K)`, since `zⱼ = (1 − bⱼ)τ²/Var(gap)`, `|1 − bⱼ| ≤ |eⱼ − b|` and
+   `Var(gap) = (eⱼ − b)ᵀK(eⱼ − b) ≥ λ_min|eⱼ − b|²` (checked in 20000 random
+   worlds, `J = 2..6`: worst ratio 0.91; not in Lean). Example above:
+   `c₁ = 1.000, 1.038, 1.064, 1.070, 1.154` at `ρ = 0.25, 0.4, 0.49, 0.51,
+   0.75`. For `J = 2` also `ζ₁ = z₁(1 − b₁) = τ²/D`, the factor on
+   `μ̂₁ − μ̂₂`; for `J ≥ 3` comparing with the reweighted rest
+   `Σᵢ≠ⱼ bᵢμ̂ᵢ/(1 − bⱼ)` moves the singularity to `bⱼ = 1`, so `cⱼ` is the
+   general choice. `zⱼ` is singular only at `b = eⱼ` (`K ≻ 0`), which for
+   `J ≥ 3` needs all other weights zero. `cⱼ` differs from `zⱼ` in meaning:
+   at `ρ = 0` in the example `z₁ = 0.5`, `c₁ = 0.947`. Restrict the blend,
+   not `z`, if anything.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

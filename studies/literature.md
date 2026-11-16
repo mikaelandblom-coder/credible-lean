@@ -45,6 +45,11 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   CommonCorrelation plan (unbiased `ρσ²`); likely the closest prior art.
 - Yang & Wang (2024), Comm. Stat. 53(8): REML and linear-Bayes estimators of structural
   parameters in the Bühlmann model with correlated risks.
+- Factors outside `[0, 1]` (searched 2026-11-16 for Finding 17): Pinquet (2020), as cited by
+  Ahn, Jeong & Lu (arXiv 2109.07956), notes that credibility coefficients of dynamic (serially
+  correlated) models need not be non-negative; nothing found on reparametrizing them. Small-area
+  estimation (Fay–Herriot EBLUP) reports the weight on the direct estimate, which is our own-data
+  weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)` when the synthetic part is the GLS mean. Used: report `cⱼ` next to `z`.
 
 ## 4. Error of the plug-in fit (MSEP with estimated parameters)
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,

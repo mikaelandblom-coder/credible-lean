@@ -1042,7 +1042,12 @@ can occur, but not when. The following answers that.
   $|\rho| < 1$. At $\rho^*$ the weight $b_1$ passes through $1$ and the gap
   changes sign; $z_1$ flips with it. With the true parameters a negative
   $z_1$ is therefore the best blend, and clipping it \eqth{34} loses
-  accuracy. Not yet in Lean.
+  accuracy. A number without the singularity, for any $J$, is the own-data
+  weight $c_j = b_j + z_j(1 - b_j)$, the coefficient of $\hmu_j$ in the
+  blend: $\lVert z_j(e_j - b)\rVert \le \tau^2/\lambda_{\min}(K)$, because
+  $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$ and
+  $\Var(\hmu_j - \hmu) \ge \lambda_{\min}(K)\lVert e_j - b\rVert^2$.
+  Not yet in Lean.
 \end{remark}
 
 % ---------------------------------------------------------------------------

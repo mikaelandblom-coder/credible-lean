@@ -459,6 +459,33 @@ is the best blend written in an awkward coordinate, not an error. Reaching
 the singularity at all takes very unequal cohorts and strong correlation
 (\hb{res:z1_range}{14}).
 
+\emph{Better numbers to report.} The awkwardness comes from measuring the
+gap against a portfolio that contains the cohort itself. Two other numbers
+avoid it (\finding{17}).
+\begin{itemize}
+  \item \emph{The own-data weight} $c_j = b_j + z_j(1 - b_j)$: the share of
+    the blended rate that comes from cohort $j$'s own estimate, counting the
+    part that reaches it through $\hmu$. It never blows up, for any number
+    of cohorts: its distance from $b_j$ is at most $\tau^2$ over the smallest
+    eigenvalue of $K$. In the example above it reads $1.000$, $1.038$,
+    $1.064$, $1.070$, $1.154$ where $z_1$ read $1$, $2.5$, $25$, $-25$, $-1$.
+    A value above one says what $z > 1$ was trying to say: the rate moves
+    past the cohort's own figure.
+  \item \emph{Two cohorts: the gap to the other cohort.} The blend is
+    $\hmu$ plus $\tau^2/D$ times $\hmu_1 - \hmu_2$, where $D$ is the
+    variance of that difference. This factor is always positive and smooth.
+    With more cohorts the same trick (compare with the rest, reweighted)
+    only moves the trouble to $b_j = 1$, so $c_j$ is the one to use.
+\end{itemize}
+Neither replaces $z_j$: it is the classical quantity, the results are
+stated in it, and it means something else. In the same example at
+$\rho = 0$, $z_1 = 0.5$ but $c_1 = 0.947$, because cohort~1 dominates
+$\hmu$. Report $c_j$ next to $z_j$. And if you want to restrict anything,
+restrict the blend, not $z_j$: clipping $z_j$ to $[0, 1]$ is what loses
+accuracy here. With three or more cohorts $z_j$ is singular only when every
+other weight is zero, so the sign flip is mostly a two-cohort affair, but
+$z_j$ can still be large near it.
+
 \watch
 \begin{itemize}
   \item \emph{In a fitted model, look twice at extreme factors.} With the

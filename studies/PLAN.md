@@ -259,3 +259,5 @@ One chat per step; none needs Lean except step 5.
   the best blend with true parameters (the blend is continuous; only the gap
   flips sign). The app's `z > 1` warning could get a sibling for `z < 0`
   that says this, and points at `ρ̂`/`τ̂²` as the likelier cause in a fit.
+  Also show the own-data weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)` next to `z` in the
+  rates table (bounded for any `J`; Finding 17, owner 2026-11-16).
