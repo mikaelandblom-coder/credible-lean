@@ -5,7 +5,7 @@ of that day; search the titles.
 
 ## 1. Our `b` is the global minimum-variance portfolio (GMV)
 `b = K⁻¹1 / 1ᵀK⁻¹1` is the GMV portfolio with covariance `K`. Estimating it from a sample
-covariance is a large literature, and its central lesson matches findings 11–13: **shrink for
+covariance is a large literature, and its central lesson matches study findings S11–S13: **shrink for
 the loss you care about.**
 - Ledoit & Wolf (2017), *Nonlinear shrinkage of the covariance matrix for portfolio selection:
   Markowitz meets Goldilocks*, RFS 30(12). Shrinkage derived for the portfolio's out-of-sample
@@ -19,10 +19,10 @@ the loss you care about.**
 - Ledoit & Wolf (2004), *Honey, I shrunk the sample covariance matrix*, JPM 30(4): the
   **constant-correlation target** (average sample correlation × sample variances), from Elton &
   Gruber's constant-correlation model. This is our H1 model; linear shrinkage intensity there is
-  Frobenius-optimal (our stand-in loss, which finding 12 shows is the wrong one for rates).
+  Frobenius-optimal (our stand-in loss, which finding S12 shows is the wrong one for rates).
 
 Difference to note: their target is *out-of-sample* variance (new data); our error compares the
-rates with the levels of the *same* history, so the in-sample effect of finding 13 is ours.
+rates with the levels of the *same* history, so the in-sample effect of finding S13 is ours.
 G6 (forecasting next year) would move us to their setting.
 
 ## 2. Plug-in parameters in BLUP (small-area estimation)
@@ -34,7 +34,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Fay–Herriot with correlated sampling errors (Statistics Canada LFS work, Verret & Walker 2025):
   estimated covariances are smoothed / restricted to a working structure before use.
 - Feasible GLS: with few observations per covariance parameter it can be worse than OLS;
-  restrict Σ to few parameters (our BS-vs-full result at ρ = 0, finding 6).
+  restrict Σ to few parameters (our BS-vs-full result at ρ = 0, finding S6).
 
 ## 3. Credibility with common effects (our correlation model)
 - Yeo & Valdez (2006), *Claim dependence with common effects in credibility models*, IME 38(3);
@@ -50,7 +50,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
   translation-invariant variance estimators, **under normality**. Without normality the cross term
   `2E[(BLUP − target)(EBLUP − BLUP)]` need not vanish; it can be negative, which explains why our
-  fit beats the fixed-weight floor under heavy tails (damping-theta.md, finding 9).
+  fit beats the fixed-weight floor under heavy tails (damping-theta.md, finding S9).
 - Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve

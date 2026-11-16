@@ -19,15 +19,35 @@ when the correlations vanish.
 ## Status
 
 See **[PROGRESS.md](PROGRESS.md)** for every theorem and whether it's proved
-(regenerate with `python3 scripts/progress.py`). All 146 theorems are
-proved, with no `sorry`: §2.1–2.9 of the thesis (`Blend`, `Weights`,
-`Model`, `BuhlmannStraub`, `TwoCohorts`, `Estimation`) and three
-extensions: merging two cohorts (`Merging`), cohort-dependent series
-lengths (`Unequal`) and the distribution-free moment layer (`Moments`).
+(regenerate with `python3 scripts/progress.py`). All 399 theorems are
+proved, with no `sorry`:
+
+- **The thesis, §2.1–2.9** (`Blend`, `Weights`, `Data`, `Core`, `Model`,
+  `BuhlmannStraub`, `Balance`, `TwoCohorts`, `Expectation`, `Estimation`),
+  proved once at the level of a positive definite `K` (`Core`) with the
+  thesis statements as corollaries.
+- **Extensions** (not in the thesis): merging two cohorts; cohort-dependent
+  series lengths `Tⱼ`, with their estimation and balance; a
+  distribution-free moment layer (the second moments are the actual
+  covariances of *any* random variables with those moments, and `zⱼ`
+  minimises the true MSE), at the level of `K`, for unequal lengths and for
+  the thesis model; a shared level within groups, towards hierarchical
+  credibility, with its moment layer; forecasting next year's outcome (the
+  same `z` is optimal); the best balanced blend and the best balanced
+  correction; damping off-diagonal entries; and optimal cohorts as
+  intervals (weighted k-means).
 
 **[FINDINGS.md](FINDINGS.md)** lists gaps in the thesis and new results
-found while formalizing, e.g. that two correlated cohorts can push the
-credibility factor above one.
+found while formalizing (items 1–16), e.g. that two correlated cohorts can
+push the credibility factor above one.
+
+The **[app](https://mikaelandblom-coder.github.io/credible-lean/app/)**
+(preview, `app/`) puts the results to work: pick a world (regions,
+volumes, correlation, noise), draw data, and compare fitted credibility
+models with the best blend for the true parameters. The fits see only the
+data, with no hand-set tuning. Plan and the simulation studies behind it
+(findings S1–S29): [`studies/PLAN.md`](studies/PLAN.md),
+[`studies/damping-theta.md`](studies/damping-theta.md).
 
 The **[handbook](https://mikaelandblom-coder.github.io/credible-lean/handbook.pdf)**
 (draft, `handbook/handbook.tex`) is the short version for practitioners: the
@@ -67,12 +87,14 @@ and deploys it to GitHub Pages on pushes to `main`. Locally:
 | extension: a shared level within groups, towards hierarchical credibility | `Credibility/Hierarchical.lean`, `Credibility/GroupWeights.lean`, `Credibility/HierarchicalMoments.lean` (its moment layer) |
 | extension: damping off-diagonal entries keeps PSD/PD | `Credibility/OffDiagonal.lean` |
 | extension: optimal 1-D weighted k-means groups are intervals | `Credibility/KMeans.lean` |
+| extension: exposure-weighted pooling is weighted k-means, so optimal cohorts are intervals ([notes](notes/kmeans-bridge.md)) | `Credibility/KMeansBridge.lean` |
 
 Like the thesis, the formalization is **distribution-free**: only first and
 second moments are assumed. Most files take the second moments (`τ²`, `σⱼₜ`,
 `ρᵢⱼ`) as given numbers; `Moments` proves that they are the actual
 covariances of *any* random variables with those moments, and that `zⱼ`
-minimises the actual mean squared error.
+minimises the actual mean squared error (likewise `CoreMoments`,
+`UnequalMoments` and `HierarchicalMoments`).
 
 ## Later goals
 

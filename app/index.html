@@ -492,7 +492,7 @@ footer a { color: var(--accent); }
         .map((k) => `${WHAT[k]} in ${share(res[id].flags[k] - (ex[k] || 0))}`);
       if (parts.length) msgs.push(`${who}: ${parts.join('; ')} of draws`);
       const eparts = Object.keys(WHAT).filter((k) => ex[k] > 0).map((k) => `${WHAT[k]} in ${share(ex[k])}`);
-      if (eparts.length) notes.push(`${who}: ${eparts.join('; ')} of draws, expected under correlation or region-specific σⱼ: the best blend for the true K shows them too (negative b, z close to 1, balance in the weights bⱼ/(1 − zⱼ) instead of the exposures). Forcing exposure balance costs up to about 30% more error (studies/vc-balance.js, finding 28).`);
+      if (eparts.length) notes.push(`${who}: ${eparts.join('; ')} of draws, expected under correlation or region-specific σⱼ: the best blend for the true K shows them too (negative b, z close to 1, balance in the weights bⱼ/(1 − zⱼ) instead of the exposures). Forcing exposure balance costs up to about 30% more error (studies/vc-balance.js, finding S28).`);
     }
     warnBlock($('w-many'), msgs, notes);
     $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +

@@ -114,7 +114,7 @@ a recipe from data.
 | Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`), `τ̂²` of eq. (13) (`tauHatBS_unbiased`) | |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
 | Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z` | unbiasedness of `ρ̂σ²`, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
-| Correlation, one common covariance (not recommended, finding 4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
+| Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind) | pooling all pairs (G4) |
 | `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only | G3 |
@@ -224,22 +224,22 @@ One chat per step; none needs Lean except step 5.
   fixes the one draw and the many draws. A Node test checks that every step
   marked proved names a declaration in `progress.py --proved`.
 - [x] 3b. No-tuning fit and its error (2026-11-15; `studies/damping-theta.md`, findings
-  15–26). `fitVC` in `engine.js`: correlated BS with credibility-weighted variances
+  S15–S26). `fitVC` in `engine.js`: correlated BS with credibility-weighted variances
   (`variance-credibility.js`, mode `cred`), every parameter by a moment equation, no `θ`;
   the default reference. The common-covariance fit stays in the list, marked not recommended
-  (finding 4). `jackknifeMSEP` (`msep.js`) gives each region a "typical error" of the `vc`
+  (finding S4). `jackknifeMSEP` (`msep.js`) gives each region a "typical error" of the `vc`
   rate, shown in the one-draw chart and table as an average-case error, not an interval
-  (finding 26). Tests: `K̂ ≻ 0` on every draw; equal to BS when `ρ̂ = 0` and `β² = 0`;
+  (finding S26). Tests: `K̂ ≻ 0` on every draw; equal to BS when `ρ̂ = 0` and `β² = 0`;
   identical to the study scripts; jackknife MSEP within 25% of the actual MSE on average in
   one fixed-seed world (ratio 1.00).
   World switch "spread of noise across regions" (`noiseSpread`, 2026-11-15): σⱼ = σ·4^(s((j mod 4)/3 − ½)),
   s = 1 is the ×0.5–2 spread world of `variance-credibility.js` and `msep.js` (σⱼ column in the
   one-draw table). Checked in the app's own world (gamma noise, 1000 draws, % of floor): at ρ = 0.6
   BS / corrBS / corr = 151 / 113 / 118 (J=8 T=10), 167 / 135 / 144 (T=5), 183 / 114 / 118 (J=20);
-  jackknife predicted/actual 0.81, 0.89, 0.86 (finding 19: 0.85–0.90). At ρ = 0 and T = 5 the three
+  jackknife predicted/actual 0.81, 0.89, 0.86 (finding S19: 0.85–0.90). At ρ = 0 and T = 5 the three
   tie (≈150). Tests: σⱼ and true `K` equal the studies'; draws have Var σⱼ²/w and corr ρ; corrBS
   beats BS and corr, and the jackknife ratio is in (0.75, 0.95), in one fixed-seed spread world.
-  Expected flags (2026-11-15, `studies/vc-balance.js`, findings 27–29): the floor (true K) has
+  Expected flags (2026-11-15, `studies/vc-balance.js`, findings S27–S29): the floor (true K) has
   negative b and is off exposure balance too; forcing balance costs up to ≈30% more error, so no
   balance switch. corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
   when ρ̂ > 0 (off-balance also when β² > 0); `simulate` reports their share as `expected`. Tests:
@@ -249,3 +249,5 @@ One chat per step; none needs Lean except step 5.
   to "proved".
 - [ ] 6. Link the app from the README and handbook; screenshots of a few
   telling settings as the handbook's worked examples.
+  - [x] README: linked as a preview (2026-11-16, v2.0.0).
+  - [ ] Handbook link and screenshots.

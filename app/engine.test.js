@@ -287,7 +287,7 @@ test('Correlated BS (vc) and its jackknife MSEP match the studies (variance-cred
   }
 });
 
-test('Jackknife MSEP is right on average within 25% (one fixed-seed world, finding 19)', () => {
+test('Jackknife MSEP is right on average within 25% (one fixed-seed world, finding S19)', () => {
   const world = E.makeWorld({ rho: 0.5 }), r = E.rng(19), n = 600, J = world.J;
   const act = new Array(J).fill(0), pred = new Array(J).fill(0);
   for (let k = 0; k < n; k++) {
@@ -329,14 +329,14 @@ test('Noise spread: true K is the studies’ K, and the draws have Var = σⱼ²
   close(s00 / n, 1, 0.05, 'Var u₀'); close(s33 / n, 1, 0.05, 'Var u₃'); close(s03 / Math.sqrt(s00 * s33), 0.5, 0.05, 'corr');
 });
 
-test('Spread world (σⱼ ×0.5–2, ρ = 0.6): corrBS beats BS and the damped full fit (finding 19 world)', () => {
+test('Spread world (σⱼ ×0.5–2, ρ = 0.6): corrBS beats BS and the damped full fit (finding S19 world)', () => {
   const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), res = E.simulate(world, ['bs', 'vc', 'corr'], 800, 22);
   const gap = (a, b) => (res[a].mse - res[b].mse) / Math.hypot(res[a].se, res[b].se);
   assert.ok(gap('bs', 'vc') > 3, `BS ${res.bs.mse} vs corrBS ${res.vc.mse}`);
   assert.ok(res.corr.mse > res.vc.mse, `corr ${res.corr.mse} vs corrBS ${res.vc.mse}`);
 });
 
-test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding 19)', () => {
+test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding S19)', () => {
   const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), r = E.rng(23), n = 600, J = world.J;
   const act = new Array(J).fill(0), pred = new Array(J).fill(0);
   for (let k = 0; k < n; k++) {
@@ -347,7 +347,7 @@ test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding 19)
   assert.ok(ratio > 0.75 && ratio < 0.95, `predicted / actual MSE ${ratio}`);
 });
 
-test('corrBS: flags the true-K optimum shows too are notes, not warnings (studies/vc-balance.js, findings 27–29)', () => {
+test('corrBS: flags the true-K optimum shows too are notes, not warnings (studies/vc-balance.js, findings S27–S29)', () => {
   const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), fl = E.floorBlend(world);
   // The floor itself: negative b, z below but close to 1, balanced for vⱼ ∝ bⱼ/(1 − zⱼ) and not for the exposures.
   assert.ok(fl.b.some((b) => b < 0), 'floor has a negative b');

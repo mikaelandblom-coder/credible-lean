@@ -458,7 +458,7 @@
 
   /**
    * Correlated Bühlmann–Straub with credibility-weighted variances
-   * (studies/damping-theta.md, findings 15–17 and the Ansatz; studies/variance-credibility.js,
+   * (studies/damping-theta.md, findings S15–S17 and the Ansatz; studies/variance-credibility.js,
    * mode 'cred'). Every parameter by a moment equation, nothing to tune, no damping:
    *   σ̂ⱼ² = Qⱼⱼ/(T−1), σ̂² = mean of the σ̂ⱼ²,
    *   Wⱼ = estimated Var(σ̂ⱼ²) from the yearly terms, β² = between-region variance of the σⱼ²,
@@ -512,7 +512,7 @@
     const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
     const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
-    // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings 27–29): with ρ̂ > 0
+    // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings S27–S29): with ρ̂ > 0
     // the true-K blend has negative b and z near 1 (so ẑ > 1 by noise); with ρ̂ > 0 or unequal σ̃ⱼ it is
     // balanced for the weights bⱼ/(1 − zⱼ), not for the exposures. These go to `notes`, not `warnings`.
     const expected = { zOver1: p.rho > 0, bNeg: p.rho > 0, offBalance: p.rho > 0 || p.between > 0 };
@@ -550,7 +550,7 @@
    * studies/msep.js), deleting one year at a time (independent years), region means kept:
    *   MSEPⱼ = g₁₂ⱼ(θ̂) − (T−1)/T Σₜ (g₁₂ⱼ(θ̂₋ₜ) − g₁₂ⱼ(θ̂)) + (T−1)/T Σₜ (rateⱼ(θ̂₋ₜ) − rateⱼ(θ̂))².
    * An average-case error over data sets like this one, not an interval for this data set
-   * (damping-theta.md, findings 19 and 26). Data only, no tuning.
+   * (damping-theta.md, findings S19 and S26). Data only, no tuning.
    */
   function jackknifeMSEP(data) {
     const T = data.X[0].length, p = vcEstimate(data), { m, wt, S } = p, J = m.length;
@@ -574,7 +574,7 @@
     bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
     vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: fitVC, ready: true, msep: jackknifeMSEP },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
-    corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding 4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
+    corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true },
   };
