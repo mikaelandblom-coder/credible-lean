@@ -227,4 +227,26 @@ theorem posDef_distTaper_hadamard {K : Matrix n n ℝ} (hK : K.PosDef) (t : n �
     {ρ : ℝ} (h0 : 0 ≤ ρ) (h1 : ρ ≤ 1) : (distTaper ρ t ⊙ K).PosDef :=
   posDef_hadamard_of_corr (distTaper_posSemidef t h0 h1) (distTaper_self ρ t) hK
 
+/-- Damping does not repair an indefinite table for every amount. The three-cohort
+table with all correlations `-1` is not positive semidefinite, and keeping a share
+`θ ≥ 0` of its off-diagonal entries makes it so exactly when `θ ≤ 1/2`: along
+`x = (1, 1, 1)` the form is `3 - 6θ`, and for `θ ≤ 1/2` it is
+`(1 - 2θ)‖x‖² + θ Σ_{i<j} (xᵢ - xⱼ)²`. -/
+theorem posSemidef_shrinkOffDiag_negOne_iff {θ : ℝ} (h0 : 0 ≤ θ) :
+    (shrinkOffDiag θ (Matrix.of fun i j : Fin 3 => if i = j then (1 : ℝ) else -1)).PosSemidef
+      ↔ θ ≤ 1 / 2 := by
+  have hH : (shrinkOffDiag θ (Matrix.of fun i j : Fin 3 => if i = j then (1 : ℝ) else -1)).IsHermitian := by
+    ext i j; fin_cases i <;> fin_cases j <;> simp [shrinkOffDiag]
+  constructor
+  · intro h
+    have := h.dotProduct_mulVec_nonneg 1
+    simp [shrinkOffDiag, dotProduct, mulVec, Fin.sum_univ_three] at this
+    linarith
+  · intro h
+    refine PosSemidef.of_dotProduct_mulVec_nonneg hH fun x => ?_
+    simp [shrinkOffDiag, dotProduct, mulVec, Fin.sum_univ_three]
+    nlinarith [mul_nonneg (sub_nonneg.mpr h) (add_nonneg (add_nonneg (sq_nonneg (x 0))
+      (sq_nonneg (x 1))) (sq_nonneg (x 2))), mul_nonneg h0 (sq_nonneg (x 0 - x 1)),
+      mul_nonneg h0 (sq_nonneg (x 0 - x 2)), mul_nonneg h0 (sq_nonneg (x 1 - x 2))]
+
 end Credibility

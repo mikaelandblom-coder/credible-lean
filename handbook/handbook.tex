@@ -452,8 +452,11 @@ formulas.
 rank-one part along $\bu$ does not change the direction of $K^{-1}\bu$.
 \begin{caveat}
   Equal \emph{correlations} are not enough when the $\sigma_j$ differ: then
-  $b_j = z_j/z_*$ fails already for three cohorts. It is the covariances
-  $\sigma_{ij}^2\rho_{ij}$ that must agree.
+  $b_j = z_j/z_*$ fails already for three cohorts
+  (\lean{Credibility.Model.exists_b_ne_z_equalCorr}). It is the covariances
+  $\sigma_{ij}^2\rho_{ij}$ that must agree: with three cohorts and no zero
+  weight, $b = z/z_*$ holds only under equal covariances
+  (\lean{Credibility.Model.equalCov_of_b_eq_z}).
 \end{caveat}
 
 % ===========================================================================

@@ -121,8 +121,8 @@ of the Lean code with the author, to believe it.
     and cites the script that produced them. Statements about the best
     blend with known parameters are exact formulas and need no simulation.
   \item \emph{Some arguments are on paper only.} Where a result is shown by
-    hand but not in Lean, the paper says so (for example the converse in
-    Section~\ref{sec:special}).
+    hand but not in Lean, the paper says so (for example the four-cohort
+    example in Section~\ref{sec:special}).
 \end{itemize}
 
 \emph{Findings.} Formalizing the thesis turned up gaps (a missing
@@ -381,8 +381,10 @@ shrinkage.
 \begin{itemize}
   \item \emph{Check the correlation table before you invert.} An estimated
     $(\hat\rho_{ij})$ can have a negative eigenvalue. Shrinking towards zero
-    does not repair that for every amount of shrinkage; repair the table
-    first (for example, clip its negative eigenvalues).
+    does not repair that for every amount of shrinkage: three cohorts with all
+    correlations $-1$ stay indefinite unless at least half of each correlation
+    is removed (\lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff}). Repair
+    the table first (for example, clip its negative eigenvalues).
   \item \emph{Positive definite is not the same as well conditioned.} Close
     to singular, the credibility factors swing hard with small changes in
     the inputs, and can leave $[0, 1]$ (Section~\ref{sec:z}).
@@ -398,6 +400,7 @@ shrinkage.
 \lean{Credibility.Model.K_posDef},
 \lean{Credibility.Unequal.K_posDef},
 \lean{Credibility.Unequal.dampedK_posDef},
+\lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff},
 \lean{Credibility.Core.bestZ_eq} ·
 \app{Fitting steps} · \finding{1}, \finding{2} · thesis §2.3--2.5.
 
@@ -662,10 +665,14 @@ best weights unchanged.
 portfolio weights are the credibility factors rescaled. That is not true in
 general. With three or more cohorts and unequal covariances it fails; in one
 random example the weights are $(0.536, 0.226, 0.238)$ against
-$z/z_* = (0.564, 0.177, 0.259)$ (\finding{4}). For exactly three cohorts (and no zero weight),
-equal covariances are also necessary, a converse shown on paper but not in
-Lean; from four cohorts on, other
-structures work too (\finding{5}).
+$z/z_* = (0.564, 0.177, 0.259)$ (\finding{4}). Two small three-cohort models in
+Lean make this exact: equal noise with one correlated pair
+(\lean{Credibility.Model.exists_b_ne_z}), and equal correlations with unequal
+noise levels (\lean{Credibility.Model.exists_b_ne_z_equalCorr}): equal
+correlations are not enough, the covariances must be equal. For exactly three
+cohorts (and no zero weight), equal covariances are also necessary
+(\lean{Credibility.Model.equalCov_of_b_eq_z}); from four cohorts on, other
+structures work too, an example shown on paper (\finding{5}).
 
 \emph{What ignoring correlation costs.} Apply Bühlmann--Straub to cohorts
 that are in fact correlated. That is not just a blend with the wrong
@@ -725,6 +732,9 @@ same bound covers every damping factor.
 \lean{Credibility.Core.b_eq_of_equalCov},
 \lean{Credibility.Core.bestZ_of_equalCov},
 \lean{Credibility.Model.bestZ_of_equalCov},
+\lean{Credibility.Model.equalCov_of_b_eq_z},
+\lean{Credibility.Model.exists_b_ne_z},
+\lean{Credibility.Model.exists_b_ne_z_equalCorr},
 \lean{Credibility.Core.blupWeight_diag_eq_blendWeight},
 \lean{Credibility.Core.linMse_blupWeight_working_le},
 \lean{Credibility.Core.linMse_ignoreCorr_le},
@@ -1258,7 +1268,7 @@ data it has. This is the shape of classical hierarchical credibility.
 means with the portfolio mean. With several groups it measures something
 between the non-shared part and the full $\tau^2$: $\tau^2$ minus
 $\phi\tau^2$ times the volume-weighted share of same-group pairs
-(\finding{13}; \hb{res:est_groups}{29}). So with one group it is exactly
+(\lean{Credibility.Model.tauHat_unbiasedG}; \finding{13}; \hb{res:est_groups}{29}). So with one group it is exactly
 what the blend needs (above); with singleton groups it is $\tau^2$, also
 right; in between it fits neither the within-group nor the across-group
 part of $K$. Pairs separate them. The squared difference of two cohort

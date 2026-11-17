@@ -183,5 +183,90 @@ theorem bestZ_of_equalCov [Nonempty T] (hK : M.K.PosDef) (c : ℝ)
     (M.moments j).bestZ = M.τ2 / (M.τ2 + M.σ2 j j - c) :=
   Core.bestZ_of_equalCov hK M.τ2_pos.ne' c (fun _ _ => M.K_of_equalCov hc) M.K_self hd j hb
 
+/-- Finding 5, the converse for three cohorts: if the portfolio weights are the
+credibility factors rescaled, `bⱼ = zⱼ/z*` for every `j`, and no weight is zero,
+then all cohort pairs have the same covariance `σ²ᵢⱼρᵢⱼ = c`. Together with
+`b_eq_of_equalCov`: for three cohorts with nonzero weights, weights follow from
+factors exactly under equal covariances. -/
+theorem equalCov_of_b_eq_z (M : Model (Fin 3) T) (hK : M.K.PosDef) (hb : ∀ j, M.b j ≠ 0)
+    (hz : ∀ j, M.b j = (M.moments j).bestZ / ∑ i, (M.moments i).bestZ) :
+    ∃ c, ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c := by
+  have : Nonempty T := M.nonempty_of_posDef hK 0
+  obtain ⟨c, hc⟩ := Core.equalCov_of_b_eq_z hK M.K_self hb hz
+  exact ⟨c, fun i j h => by simpa [M.K_apply, h] using hc i j h⟩
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] in
+/-- With one period, `σ²ᵢⱼ = σᵢσⱼ`. -/
+lemma σ2_of_unique [Unique T] (i j : J) :
+    M.σ2 i j = M.σ i default * M.σ j default := by
+  have h : ∀ k, M.a k default = 1 := fun k => by
+    simp [a, invVarWeight, (M.σ_pos k default).ne']
+  simp [σ2, h]
+
+/-- Finding 4: for three or more cohorts the weights need not be the credibility
+factors rescaled. Example: three cohorts, one period, `τ² = 1`, equal noise
+`σⱼ = 1`, correlations `ρ₁₂ = 1/4`, `ρ₁₃ = ρ₂₃ = 0`; then `b ≠ z/z*`. -/
+theorem exists_b_ne_z : ∃ M : Model (Fin 3) (Fin 1), (∀ j t, M.σ j t = 1) ∧ M.K.PosDef ∧
+    ¬ ∀ j, M.b j = (M.moments j).bestZ / ∑ i, (M.moments i).bestZ := by
+  let ρ : Fin 3 → Fin 3 → ℝ := fun i j =>
+    if i = j then 1 else if (i = 0 ∧ j = 1) ∨ (i = 1 ∧ j = 0) then 1 / 4 else 0
+  let M : Model (Fin 3) (Fin 1) :=
+    { τ2 := 1, σ := fun _ _ => 1, ρ := ρ, τ2_pos := one_pos, σ_pos := fun _ _ => one_pos,
+      ρ_self := fun j => by simp [ρ],
+      ρ_symm := fun i j => by fin_cases i <;> fin_cases j <;> simp [ρ] }
+  have hρ : (Matrix.of M.ρ).PosSemidef := by
+    refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
+    · ext i j; fin_cases i <;> fin_cases j <;> simp [M, ρ]
+    · simp [M, ρ, dotProduct, mulVec, Fin.sum_univ_three]
+      nlinarith [sq_nonneg (x 0 + x 1), sq_nonneg (x 0), sq_nonneg (x 1), sq_nonneg (x 2)]
+  have hK := M.K_posDef hρ
+  have hKe : ∀ i j, M.K i j = M.ρ i j + if i = j then 1 else 0 := fun i j => by
+    simp [M.K_apply, σ2_of_unique, M]
+  refine ⟨M, fun _ _ => rfl, hK, fun hz => ?_⟩
+  have hx : M.K *ᵥ ![4 / 9, 4 / 9, 1 / 2] = 1 := by
+    ext i; simp only [mulVec, dotProduct, Fin.sum_univ_three, hKe]
+    fin_cases i <;> simp [M, ρ] <;> norm_num
+  have hb : ∀ j, M.b j ≠ 0 := fun j => by
+    rw [b, Core.glsWeight_of_mulVec hK hx]; fin_cases j <;> simp [Fin.sum_univ_three] <;> norm_num
+  obtain ⟨c, hc⟩ := M.equalCov_of_b_eq_z hK hb hz
+  have h01 := hc 0 1 (by decide)
+  have h02 := hc 0 2 (by decide)
+  simp [σ2_of_unique, M, ρ] at h01 h02
+  linarith
+
+/-- Finding 4: equal correlations do not help when the noise levels differ.
+Example: three cohorts, one period, `τ² = 1`, `σ = (1, 1, 2)`, every correlation
+`ρᵢⱼ = 1/2`; then `b ≠ z/z*`. (With equal `σⱼ` too, the covariances are equal and
+`b = z/z*` by `b_eq_of_equalCov`.) -/
+theorem exists_b_ne_z_equalCorr : ∃ M : Model (Fin 3) (Fin 1),
+    (∀ i j, i ≠ j → M.ρ i j = 1 / 2) ∧ M.K.PosDef ∧
+    ¬ ∀ j, M.b j = (M.moments j).bestZ / ∑ i, (M.moments i).bestZ := by
+  let ρ : Fin 3 → Fin 3 → ℝ := fun i j => if i = j then 1 else 1 / 2
+  let σ : Fin 3 → Fin 1 → ℝ := fun j _ => if j = 2 then 2 else 1
+  let M : Model (Fin 3) (Fin 1) :=
+    { τ2 := 1, σ := σ, ρ := ρ, τ2_pos := one_pos,
+      σ_pos := fun j _ => by fin_cases j <;> simp [σ],
+      ρ_self := fun j => by simp [ρ],
+      ρ_symm := fun i j => by fin_cases i <;> fin_cases j <;> simp [ρ] }
+  have hρ : (Matrix.of M.ρ).PosSemidef := by
+    refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun x => ?_
+    · ext i j; fin_cases i <;> fin_cases j <;> simp [M, ρ]
+    · simp [M, ρ, dotProduct, mulVec, Fin.sum_univ_three]
+      nlinarith [sq_nonneg (x 0 + x 1 + x 2), sq_nonneg (x 0), sq_nonneg (x 1), sq_nonneg (x 2)]
+  have hK := M.K_posDef hρ
+  have hKe : ∀ i j, M.K i j = σ i 0 * σ j 0 * ρ i j + if i = j then 1 else 0 := fun i j => by
+    simp [M.K_apply, σ2_of_unique, M]
+  refine ⟨M, fun i j h => by simp [M, ρ, h], hK, fun hz => ?_⟩
+  have hx : M.K *ᵥ ![8 / 21, 8 / 21, 1 / 21] = 1 := by
+    ext i; simp only [mulVec, dotProduct, Fin.sum_univ_three, hKe]
+    fin_cases i <;> simp [σ, ρ] <;> norm_num
+  have hb : ∀ j, M.b j ≠ 0 := fun j => by
+    rw [b, Core.glsWeight_of_mulVec hK hx]; fin_cases j <;> simp [Fin.sum_univ_three] <;> norm_num
+  obtain ⟨c, hc⟩ := M.equalCov_of_b_eq_z hK hb hz
+  have h01 := hc 0 1 (by decide)
+  have h02 := hc 0 2 (by decide)
+  simp [σ2_of_unique, M, σ, ρ] at h01 h02
+  linarith
+
 end Model
 end Credibility

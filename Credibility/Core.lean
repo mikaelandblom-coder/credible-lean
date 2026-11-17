@@ -320,6 +320,83 @@ theorem bestZ_of_equalCov (hK : K.PosDef) (hτ : τ2 ≠ 0) (c : ℝ)
     intro h; apply hVv; field_simp; linarith
   field_simp
 
+/-- Finding 5, the converse direction: if the weights are the credibility factors
+rescaled, `bⱼ = zⱼ/z*` for all `j` (with `z* ≠ 0` and every gap
+`τ² + vⱼ - s² ≠ 0`), then one shift `λ = τ²/z* - s²` makes every row's
+off-diagonal sum vanish: `Σ_{i≠j} (Kⱼᵢ + λ) bᵢ = 0`. Reason: `z = z*·b` turns
+eq. (26) into `(1 - bⱼ)τ² = z* bⱼ (Kⱼⱼ - s²)`, and `K b = s² u` gives
+`Σ_{i≠j} Kⱼᵢ bᵢ = s² - Kⱼⱼ bⱼ`. -/
+theorem exists_shift_of_b_eq_z (hK : K.PosDef) (hdiag : ∀ j, K j j = τ2 + v j)
+    (hgap : ∀ j, τ2 + v j - (invTotal K)⁻¹ ≠ 0)
+    (hZ : ∑ i, (moments K τ2 v i).bestZ ≠ 0)
+    (hz : ∀ j, glsWeight K j = (moments K τ2 v j).bestZ / ∑ i, (moments K τ2 v i).bestZ) :
+    ∃ l : ℝ, ∀ j, ∑ i ∈ univ.erase j, (K j i + l) * glsWeight K i = 0 := by
+  refine ⟨τ2 / ∑ i, (moments K τ2 v i).bestZ - (invTotal K)⁻¹, fun j => ?_⟩
+  have hj := hz j
+  rw [eq_div_iff hZ, bestZ_eq hK, eq_div_iff (hgap j)] at hj
+  have hKb : ∑ i, K j i * glsWeight K i = (invTotal K)⁻¹ :=
+    congrFun (mulVec_glsWeight hK) j
+  have : Nonempty J := ⟨j⟩
+  have hsum := sum_glsWeight hK
+  simp only [add_mul, sum_add_distrib, ← mul_sum,
+    sum_erase_eq_sub (mem_univ j), hKb, hsum, hdiag]
+  field_simp
+  linear_combination -hj
+
+/-- Finding 5, the converse for three cohorts: if `bⱼ = zⱼ/z*` for every `j` and no
+weight is zero, then all cohort pairs have the same covariance. With
+`xᵢⱼ = Kᵢⱼ + λ` the three conditions of `exists_shift_of_b_eq_z` are a linear
+system in `(x₁₂, x₁₃, x₂₃)` with determinant `2 b₁b₂b₃ ≠ 0`, so every `xᵢⱼ = 0`. -/
+theorem equalCov_of_b_eq_z {K : Matrix (Fin 3) (Fin 3) ℝ} {v : Fin 3 → ℝ} (hK : K.PosDef)
+    (hdiag : ∀ j, K j j = τ2 + v j) (hb : ∀ j, glsWeight K j ≠ 0)
+    (hz : ∀ j, glsWeight K j = (moments K τ2 v j).bestZ / ∑ i, (moments K τ2 v i).bestZ) :
+    ∃ c, ∀ i j, i ≠ j → K i j = c := by
+  have hZ : ∑ i, (moments K τ2 v i).bestZ ≠ 0 := by
+    intro h; apply hb 0; rw [hz 0, h, div_zero]
+  have hgap : ∀ j, τ2 + v j - (invTotal K)⁻¹ ≠ 0 := by
+    intro j
+    rw [← hdiag, ← quadForm_single_sub_glsWeight hK]
+    refine (hK.dotProduct_mulVec_pos ?_).ne'
+    intro h0
+    obtain ⟨i, hij⟩ : ∃ i, i ≠ j := ⟨j + 1, by fin_cases j <;> decide⟩
+    have := congrFun h0 i
+    simp [hij] at this
+    exact hb i this
+  obtain ⟨l, hl⟩ := exists_shift_of_b_eq_z hK hdiag hgap hZ hz
+  have hs : ∀ i j, K i j = K j i := fun i j => by simpa using hK.isHermitian.apply j i
+  have e0 := hl 0
+  have e1 := hl 1
+  have e2 := hl 2
+  simp [sum_erase_eq_sub, Fin.sum_univ_three] at e0 e1 e2
+  set b0 := glsWeight K 0
+  set b1 := glsWeight K 1
+  set b2 := glsWeight K 2
+  rw [hs 1 0] at e1
+  rw [hs 2 0, hs 2 1] at e2
+  have h0 := hb 0; have h1 := hb 1; have h2 := hb 2
+  have hw : K 0 1 + l = 0 := by
+    have : (2 * b0 * b1 * b2) * (K 0 1 + l) = 0 := by
+      linear_combination b0 * b2 * e0 + b1 * b2 * e1 - b2 ^ 2 * e2
+    exact (mul_eq_zero.mp this).resolve_left (mul_ne_zero (mul_ne_zero (mul_ne_zero two_ne_zero h0) h1) h2)
+  have hy : K 0 2 + l = 0 := by
+    have : (2 * b0 * b1 * b2) * (K 0 2 + l) = 0 := by
+      linear_combination b0 * b1 * e0 - b1 ^ 2 * e1 + b1 * b2 * e2
+    exact (mul_eq_zero.mp this).resolve_left (mul_ne_zero (mul_ne_zero (mul_ne_zero two_ne_zero h0) h1) h2)
+  have hx : K 1 2 + l = 0 := by
+    have : (2 * b0 * b1 * b2) * (K 1 2 + l) = 0 := by
+      linear_combination - b0 ^ 2 * e0 + b0 * b1 * e1 + b0 * b2 * e2
+    exact (mul_eq_zero.mp this).resolve_left (mul_ne_zero (mul_ne_zero (mul_ne_zero two_ne_zero h0) h1) h2)
+  refine ⟨-l, fun i j hij => ?_⟩
+  fin_cases i <;> fin_cases j <;> simp at hij ⊢
+  all_goals first | linarith | (rw [hs]; linarith)
+
+/-- `K⁻¹u = x` from `Kx = u`, so `bⱼ = xⱼ/x*`: to compute the weights, solve `Kx = u`. -/
+lemma glsWeight_of_mulVec {K : Matrix J J ℝ} (hK : K.PosDef) {x : J → ℝ} (hx : K *ᵥ x = 1)
+    (j : J) : glsWeight K j = x j / ∑ i, x i := by
+  have hdet : IsUnit K.det := (Matrix.isUnit_iff_isUnit_det K).mp hK.isUnit
+  have : K⁻¹ *ᵥ 1 = x := by rw [← hx, mulVec_mulVec, nonsing_inv_mul _ hdet, one_mulVec]
+  simp [glsWeight, invTotal, this, one_dotProduct]
+
 /-! ### A rank-one term along `1` -/
 
 section RankOne

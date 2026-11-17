@@ -568,6 +568,53 @@ the rank-one part lies along $u$.
   $1 - b_j = (w_* - w_j)/w_*$. Cancel $w_* - w_j \ne 0$.
 \end{proof}
 
+\begin{lemma}[Weights from factors force a common shift]\label{lem:Core_exists_shift_of_b_eq_z}
+  \lean{Credibility.Core.exists_shift_of_b_eq_z}
+  \leanok
+  \uses{thm:Core_bestZ_eq, def:glsWeight}
+  Let $K \succ 0$ with $K_{jj} = \tau^2 + v_j$, every gap $\tau^2 + v_j - s^2 \ne 0$ and
+  $z_* \ne 0$. If $b_j = z_j/z_*$ for every $j$, then
+  $\lambda = \tau^2/z_* - s^2$ satisfies $\sum_{i \ne j} (K_{ji} + \lambda)\, b_i = 0$
+  for every $j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, lem:sum_glsWeight}
+  By Theorem~\ref{thm:Core_bestZ_eq}, $z_j = z_* b_j$ reads
+  $(1 - b_j)\tau^2 = z_* b_j (K_{jj} - s^2)$. From $Kb = s^2 u$,
+  $\sum_{i \ne j} K_{ji} b_i = s^2 - K_{jj} b_j$, and
+  $\sum_{i \ne j} b_i = 1 - b_j$. Substitute and multiply by $z_*$.
+\end{proof}
+
+\begin{theorem}[Three cohorts: the converse]\label{thm:Core_equalCov_of_b_eq_z}
+  \lean{Credibility.Core.equalCov_of_b_eq_z}
+  \leanok
+  \uses{lem:Core_exists_shift_of_b_eq_z}
+  Let $J = 3$, $K \succ 0$ with $K_{jj} = \tau^2 + v_j$, and all $b_j \ne 0$. If
+  $b_j = z_j/z_*$ for every $j$, then $K_{ij} = c$ for all $i \ne j$, for some $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_exists_shift_of_b_eq_z, lem:Core_quadForm_gap}
+  $z_* \ne 0$, else $b = 0$. Each gap is
+  $(e_j - b)^\top K (e_j - b) > 0$ (Lemma~\ref{lem:Core_quadForm_gap}), since
+  $e_j \ne b$ when the other weights are nonzero. Lemma~\ref{lem:Core_exists_shift_of_b_eq_z}
+  then gives, with $p, q, r$ the three values $K_{ij} + \lambda$,
+  $p b_2 + q b_3 = p b_1 + r b_3 = q b_1 + r b_2 = 0$: a linear system with
+  determinant $2 b_1 b_2 b_3 \ne 0$. So $p = q = r = 0$ and $c = -\lambda$.
+\end{proof}
+
+\begin{lemma}[Weights from a solve]\label{lem:Core_glsWeight_of_mulVec}
+  \lean{Credibility.Core.glsWeight_of_mulVec}
+  \leanok
+  \uses{def:glsWeight}
+  If $K \succ 0$ and $Kx = u$, then $b_j = x_j / x_*$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $K^{-1}u = K^{-1}Kx = x$.
+\end{proof}
+
 \section{The proposed credibility factor}
 
 \begin{definition}[Portfolio weights of the model]\label{def:Model.b}
@@ -862,14 +909,14 @@ $\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
 \end{proof}
 
 \begin{remark}[Finding 4: only for two cohorts]\label{rem:b1_eq_z}
-  \uses{thm:b1_eq_z}
+  \uses{thm:b1_eq_z, thm:exists_b_ne_z, thm:exists_b_ne_z_equalCorr}
   The second equality is not in the published thesis; it comes from the
   defence slides. It is the Bühlmann--Straub form $b_j = z_j/z_*$, which
   therefore survives correlation for any binary split of a portfolio
   (e.g.\ two segments of a rating factor). For three or more correlated
-  cohorts it fails in general (numerically, e.g.\ $J = 3$ with random
-  $\sigma_j$ and $\rho_{ij}$), even with equal correlations
-  $\rho_{ij} = \rho$. What carries over is equal \emph{covariances}
+  cohorts it fails in general (Theorem~\ref{thm:exists_b_ne_z}), even with
+  equal correlations $\rho_{ij} = \rho$ (Theorem~\ref{thm:exists_b_ne_z_equalCorr}).
+  What carries over is equal \emph{covariances}
   (Theorem~\ref{thm:b_eq_of_equalCov}).
 \end{remark}
 
@@ -927,17 +974,73 @@ $d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
   $1 - b_j = (v_* - v_j)/v_*$. Cancel $v_* - v_j \ne 0$.
 \end{proof}
 
+\begin{theorem}[Finding 5: the converse for three cohorts]\label{thm:equalCov_of_b_eq_z}
+  \lean{Credibility.Model.equalCov_of_b_eq_z}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  With three cohorts, $K \succ 0$ and all $b_j \ne 0$: if $b_j = z_j/z_*$ for every
+  $j$, then $\sigma^2_{ij}\rho_{ij} = c$ for all $i \ne j$, for some $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_equalCov_of_b_eq_z, lem:K_apply}
+  Theorem~\ref{thm:Core_equalCov_of_b_eq_z}, and $K_{ij} = \sigma^2_{ij}\rho_{ij}$
+  for $i \ne j$ (Lemma~\ref{lem:K_apply}).
+\end{proof}
+
+\begin{lemma}[One period]\label{lem:sigma2_of_unique}
+  \lean{Credibility.Model.σ2_of_unique}
+  \leanok
+  \uses{def:K}
+  With a single period, $a_{j1} = 1$ and $\sigma^2_{ij} = \sigma_i\sigma_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Eq.~\eqth{23} with one term.
+\end{proof}
+
+\begin{theorem}[Finding 4: three cohorts break $b = z/z_*$]\label{thm:exists_b_ne_z}
+  \lean{Credibility.Model.exists_b_ne_z}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  There is a model with three cohorts, one period and equal noise $\sigma_j = 1$,
+  $K \succ 0$, in which $b_j \ne z_j/z_*$ for some $j$: $\tau^2 = 1$,
+  $\rho_{12} = 1/4$, $\rho_{13} = \rho_{23} = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:equalCov_of_b_eq_z, lem:K_posDef, lem:sigma2_of_unique, lem:Core_glsWeight_of_mulVec}
+  $K = 2I + \tfrac14(e_1e_2^\top + e_2e_1^\top)$ solves $Kx = u$ with
+  $x = (4/9, 4/9, 1/2)$, so no weight is zero
+  (Lemma~\ref{lem:Core_glsWeight_of_mulVec}). The covariances $1/4, 0, 0$ are not
+  equal, so Theorem~\ref{thm:equalCov_of_b_eq_z} rules out $b = z/z_*$.
+\end{proof}
+
+\begin{theorem}[Finding 4: equal correlations are not enough]\label{thm:exists_b_ne_z_equalCorr}
+  \lean{Credibility.Model.exists_b_ne_z_equalCorr}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  There is a model with three cohorts, one period and equal correlations
+  $\rho_{ij} = 1/2$, $K \succ 0$, in which $b_j \ne z_j/z_*$ for some $j$:
+  $\tau^2 = 1$, $\sigma = (1, 1, 2)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:equalCov_of_b_eq_z, lem:K_posDef, lem:sigma2_of_unique, lem:Core_glsWeight_of_mulVec}
+  The covariances are $\sigma_i\sigma_j/2 = 1/2, 1, 1$, and $Kx = u$ with
+  $x = (8/21, 8/21, 1/21)$. As in Theorem~\ref{thm:exists_b_ne_z}.
+\end{proof}
+
 \begin{remark}[Finding 5: equal covariances is the right condition]\label{rem:equalCov}
-  \uses{thm:b_eq_of_equalCov}
-  For $J = 3$ the condition is also necessary (when all $b_j \ne 0$).
-  Writing $(Kb)_j = s^2$ shows that $b_j = z_j/z_*$ for all $j$ iff there is a
-  $\lambda$ with $\sum_{i \ne j} (K_{ij} + \lambda)\, b_i = 0$ for every $j$.
-  With $p, q, r$ the three values $K_{ij} + \lambda$ this is
-  $p b_2 + q b_3 = p b_1 + r b_3 = q b_1 + r b_2 = 0$, which forces
-  $p = q = r = 0$. For $J \ge 4$ it is not necessary: with equal $\sigma_j$, any
+  \uses{thm:b_eq_of_equalCov, thm:equalCov_of_b_eq_z}
+  For $J = 3$ the condition is also necessary when all $b_j \ne 0$
+  (Theorem~\ref{thm:equalCov_of_b_eq_z}): $b_j = z_j/z_*$ for all $j$ gives a
+  $\lambda$ with $\sum_{i \ne j} (K_{ij} + \lambda)\, b_i = 0$ for every $j$
+  (Lemma~\ref{lem:Core_exists_shift_of_b_eq_z}; the converse of that lemma holds
+  too, on paper). For $J \ge 4$ it is not necessary: with equal $\sigma_j$, any
   correlation matrix with equal row sums gives $b = z/z_* = u/J$, whether or not
-  the covariances are equal. Bühlmann--Straub is the case $c = 0$; two cohorts
-  are the case $c = \sigma_1\sigma_2\rho$. Not yet in Lean.
+  the covariances are equal (on paper, not in Lean). Bühlmann--Straub is the case
+  $c = 0$; two cohorts are the case $c = \sigma_1\sigma_2\rho$.
 \end{remark}
 
 \begin{remark}[Finding 6: equal credibility is not grouping]\label{rem:equalZ_grouping}
@@ -3250,6 +3353,20 @@ $\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
   $\rho\in[0,1]$ (Theorem~\ref{thm:hadamard_corr}). For $\rho < 1$, $R \succ 0$
   and Theorem~\ref{thm:posDef_hadamard_of_diag_pos} applies with $A$ only
   semidefinite.
+\end{proof}
+
+\begin{theorem}[Damping does not always repair]\label{thm:shrinkOffDiag_negOne}
+  \lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  Let $A$ be the $3 \times 3$ table with unit diagonal and all off-diagonal
+  entries $-1$; it is not positive semidefinite. For $\rho \ge 0$,
+  $A^\rho \succeq 0$ if and only if $\rho \le 1/2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Along $x = (1, 1, 1)$ the form is $3 - 6\rho$. For $\rho \le 1/2$ it is
+  $(1 - 2\rho)\|x\|^2 + \rho\sum_{i<j}(x_i - x_j)^2 \ge 0$.
 \end{proof}
 
 \section{The distance taper}
