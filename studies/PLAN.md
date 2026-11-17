@@ -263,6 +263,12 @@ One chat per step; none needs Lean except step 5.
   plug-in BLUP survives estimation on corrBS's few-parameter `K̂` and beats the blend
   under correlation, often below the blend's own floor; it costs nothing at `ρ = 0`.
   Owner: make BLUP the default reference? (Not done: the blend is the thesis's object.)
+  *Pair-specific correlation (2026-11-17, `blup-pairs.js`, S30–S32 in `damping-theta.md`):* with
+  countries or heterogeneous loadings (corrBS's one-ρ̂ `K̂` misspecified) the BLUP on it is never
+  more than 1 point worse than corrBS and up to 23 better; the blend form costs 22–73% over the
+  BLUP with true parameters in country worlds; the BLUP on the full damped `K̂` wins only with
+  J = 20 and strong structure, and is worst at T = 5. For step 4: a group-structured `K̂` (ρ within
+  and between) with a BLUP on it, and a world switch for countries.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
 - [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
   to "proved".

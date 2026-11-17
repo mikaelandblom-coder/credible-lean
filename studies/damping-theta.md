@@ -267,3 +267,29 @@ App: corrBS moves these three flags from warnings to notes ("expected under corr
 "with region-specific σⱼ" when ρ̂ = 0 but β² > 0); τ̂² ≤ 0 stays a warning. Lean candidate (Core,
 one line from `blend`): Σ vⱼ(μ̂ⱼ − μ̂ⱼᵇ) = 0 for all μ̂ iff vⱼ(1 − zⱼ) ∝ bⱼ; with diagonal K the
 balanced weights are 1/(Kⱼⱼ − τ²). `bs_balance` is the BS case.
+
+## The plug-in BLUP under pair-specific correlation (`blup-pairs.js`, output `blup-pairs.out.txt`)
+
+Finding 18 asks whether the best linear unbiased predictor survives estimating `K`. In the app's
+own worlds (one common ρ) the BLUP on corrBS's `K̂` beat corrBS everywhere (PLAN 3c). Those worlds
+favour it: corrBS's one-ρ̂ `K̂` is exactly right there. Here the noise has a factor structure
+(countries with ρ 0.8 within and 0.2 or 0 between, heterogeneous loadings ρᵢⱼ = λᵢλⱼ, two factors
+with some ρᵢⱼ < 0), so the one-ρ̂ `K̂` is misspecified. 18 worlds, 2000 draws each, MSE in % of the
+blend floor. Two plug-in BLUPs: on corrBS's `K̂` (app fit "BLUP"), and on the thesis's full damped
+`K̂` (every pair estimated).
+
+- S30. *[numerical]* **BLUP on corrBS's `K̂` never loses to corrBS.** In all 18 worlds it is at most
+    1 point worse (ties in the hard T = 5 worlds) and up to 23 points better (J = 20, common ρ:
+    106 → 83; J = 20, 2 countries with σⱼ spread: 119 → 101). Under misspecification its gain
+    is −1 to 18 points: it does not turn into a real loss. It costs nothing at ρ = 0 (PLAN 3c). So
+    it is a safe upgrade of the blend on the same `K̂`.
+- S31. *[exact]* **The blend form is expensive with country structure.** With true parameters the
+    best blend is 6–18% above the BLUP in MSE with heterogeneous loadings or two factors, but 22–36% (J = 8) and
+    61–73% (J = 20) with countries. The blend reaches the other regions only through one μ̂, so it
+    cannot tell a same-country neighbour from a foreign one. This is the Finding 18 gap at its
+    largest, and it grows with J.
+- S32. *[numerical]* **BLUP on the full `K̂` is high-variance.** With strong structure and enough
+    data it is the best fit (J = 20, countries: 78, 92, 84, below the blend floor). With T = 5 or
+    unstructured loadings it is often the worst correlated fit (up to 141–144, against corrBS 116–126):
+    J(J − 1)/2 noisy pairs. The gap of S31 calls for a `K̂` with few parameters that knows the
+    groups (ρ within and between: the group-levels step of the PLAN, step 4), and the BLUP on it.

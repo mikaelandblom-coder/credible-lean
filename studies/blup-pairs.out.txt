@@ -1,0 +1,20 @@
+draws 2000; gamma noise; MSE in % of the blend floor (100 = best blend with true K, τ²)
+world                                         | BLUPfl   BS  corr corrBS BLUP BLUPfull | blend over BLUP (exact)
+J=8 T=10 common ρ = 0.6 (corrBS right)        |   86  130  110  105   94  104 |  15.5%
+J=8 T=10 2 countries 0.8 within / 0.2 between |   77  127  113  110  104   96 |  32.0%
+J=8 T=10 4 countries 0.8 within / 0 between   |   83  115  118  114  114  110 |  21.8%
+J=8 T=10 loadings U(0.2, 0.95): ρᵢⱼ = λᵢλⱼ    |   94  118  114  107  104  117 |   6.1%
+J=8 T=10 two factors, some ρᵢⱼ < 0            |   88  118  121  115  114  117 |  13.8%
+J=8 T=10 2 countries 0.8/0.2, σⱼ ×0.5–2       |   78  149  122  117  111  106 |  29.5%
+J=20 T=10 common ρ = 0.6 (corrBS right)       |   76  142  112  106   83  100 |  33.1%
+J=20 T=10 2 countries 0.8 within / 0.2 between|   59  137  113  110   93   78 |  71.2%
+J=20 T=10 4 countries 0.8 within / 0 between  |   63  117  115  111  109   92 |  61.3%
+J=20 T=10 loadings U(0.2, 0.95): ρᵢⱼ = λᵢλⱼ   |   88  123  112  108  100  120 |  12.3%
+J=20 T=10 two factors, some ρᵢⱼ < 0           |   85  111  113  111  110  120 |  18.0%
+J=20 T=10 2 countries 0.8/0.2, σⱼ ×0.5–2      |   58  177  122  119  101   84 |  72.7%
+J=8 T=5 common ρ = 0.6 (corrBS right)         |   86  141  125  114  104  121 |  16.5%
+J=8 T=5 2 countries 0.8 within / 0.2 between  |   75  138  133  122  118  122 |  35.8%
+J=8 T=5 4 countries 0.8 within / 0 between    |   80  120  136  124  125  141 |  25.0%
+J=8 T=5 loadings U(0.2, 0.95): ρᵢⱼ = λᵢλⱼ     |   94  125  130  116  116  141 |   6.1%
+J=8 T=5 two factors, some ρᵢⱼ < 0             |   89  124  137  126  126  144 |  12.3%
+J=8 T=5 2 countries 0.8/0.2, σⱼ ×0.5–2        |   77  167  150  140  139  139 |  30.7%
