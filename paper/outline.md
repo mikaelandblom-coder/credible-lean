@@ -76,10 +76,14 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
-  was written from memory of the book; owner to check against it.
-- §11, §14: Bühlmann–Gisler ch. 6 (hierarchical credibility) is cited from
-  memory; owner to check against the book. The other references were checked
+- Appendix C: Bühlmann–Gisler notation checked against pp. 145–147 (owner's
+  photo, 2026-11-17): `X_ij`, `w_ij`, `Θ_i`, `μ(Θ_i)`, `σ²(Θ_i)/w_ij`, `X_i`,
+  `μ̂_0`, collective premium `μ_0` (was `m`: fixed, also in §3 and the handbook),
+  homogeneous estimator with double hat and "hom". Still unchecked: `α_i`,
+  `α_•`, `w_{i•}`, `κ`, `τ²` (Theorem 4.4 / §4.2 of the book).
+- §11, §14: Bühlmann–Gisler ch. 6 is hierarchical credibility (checked,
+  §6.2 p. 145: levels Ψ_g, Φ_h, Θ_i, X_ij; Bühlmann–Straub its two-level case;
+  estimator bottom-up then top-down). The other references were checked
   by web search (2026-11-17, details in `studies/literature.md`): bibliographic
   details and abstracts only, not full texts.
 - §10–11: when the app gets its "Unequal lengths" and "Group levels"

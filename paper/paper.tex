@@ -279,7 +279,8 @@ assume a noise family will live apart, named as such
 (Section~\ref{sec:open}).
 
 \emph{Bühlmann--Straub inside.} In Bühlmann--Straub notation $\mu$ is the
-collective premium $m$, $\tau^2$ is $a$, and $\sigma_{jt}^2$ is
+collective premium $\mu_0$ ($m$ in older texts), $\tau^2$ keeps its name
+($a$ in older texts), and $\sigma_{jt}^2$ is
 $\sigma^2/w_{jt}$; the full translation is in \hbsec{sec:setting}{1}. Of the
 classical independence assumptions, exactly one is dropped: that two
 cohorts' observations in the same period are uncorrelated. Put
@@ -1925,10 +1926,10 @@ differs. The handbook uses the same notation (\hbsec{sec:setting}{1}).
   $\mu_{jt}$ & observed key ratio of cohort $j$ in period $t$ & $X_{ij}$ & \\
   $w_{jt}$ & volume (exposure) of a cell & $w_{ij}$ & \\
   $w_{j*}$, $w_{**}$ & total volume of cohort $j$, of the portfolio & $w_{i\bullet}$, $w_{\bullet\bullet}$ & \\
-  $\mu$ & overall level & $m$, collective premium & \\
+  $\mu$ & overall level & $\mu_0$, collective premium (older: $m$) & \\
   $\mu_j$ & true level of cohort $j$: the target & $\mu(\Theta_i)$ & \\
   $\eta_j$ & cohort effect, centred, unit variance & $\Theta_i$, a risk parameter & $\varepsilon_j$ \\
-  $\tau^2$ & variance between cohorts & $a$ (Bühlmann--Gisler: $\tau^2$) & \\
+  $\tau^2$ & variance between cohorts & $\tau^2$ (older: $a$) & \\
   $\varepsilon_{jt}$ & noise, centred, unit variance & & \\
   $\sigma_{jt}$ & noise standard deviation of a cell & $\sigma/\sqrt{w_{ij}}$ & \\
   $\rho_{ij}$ & correlation of two cohorts' noise in the same period & $0$ for $i \ne j$ & \\
@@ -1946,7 +1947,7 @@ differs. The handbook uses the same notation (\hbsec{sec:setting}{1}).
   $s^2$ & variance of $\hmu$ & & \\
   $z_j$ & credibility factor & $\alpha_i$ & \\
   $z_*$ & sum of the factors & $\alpha_\bullet$ & \\
-  $\hmu_j^{\,b}$ & the blend, the credibility estimate & $\widehat{\mu(\Theta_i)}$ & \\
+  $\hmu_j^{\,b}$ & the blend, the credibility estimate & $\widehat{\widehat{\mu(\Theta_i)}}^{\,\mathrm{hom}}$ & \\
   $c_j$ & own-data weight $b_j + z_j(1 - b_j)$ & $\alpha_i + (1 - \alpha_i)\alpha_i/\alpha_\bullet$ & \\
   \midrule
   $\sigma_1, \sigma_2$ & two cohorts: noise standard deviation of $\hmu_j$ & & \\
@@ -1954,7 +1955,7 @@ differs. The handbook uses the same notation (\hbsec{sec:setting}{1}).
   $\rho^*$ & two cohorts: where $z_1$ is singular & & \\
   $D$ & two cohorts: $\Var(\hmu_1 - \hmu_2)$ & & \\
   $T_j$ & the periods in which cohort $j$ is observed & & \\
-  $L$ & covariance matrix of the true levels $\mu_j$ & $a\,I$ & $\tau^2 I$ \\
+  $L$ & covariance matrix of the true levels $\mu_j$ & $\tau^2 I$ & \\
   $\varphi$ & share of $\tau^2$ shared within a group & & \\
   $u_j$ & volumes in a balance condition & $w_{i\bullet}$ & \\
   \bottomrule
