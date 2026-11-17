@@ -55,25 +55,33 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   linear unbiased prediction in the generalized linear regression model*, JASA 57: the predictor
   `K⁻¹ℓ` plus the GLS mean of the remainder, which with an unknown common mean is the homogeneous
   credibility estimator. Wen, Wu & Zhou (2009), *The credibility estimator with general dependence
-  structure over risks*, and Zhang & Chen (2018), Statistica Neerlandica 72(2) (equal correlation):
+  structure over risks*, and Zhang & Chen (2018), *Credibility estimators with dependence structure over risks and time
+  under balanced loss function*, Statistica Neerlandica 72(2), 157–173 (equal dependence over
+  risks and time; checked 2026-11-17):
   homogeneous and inhomogeneous estimators under dependence by orthogonal projection. Used: the
   BLUP as the benchmark for the thesis's blend (`Core.blupWeight_optimal`); new here is the exact
   price of the blend and the condition for it to be zero (Finding 18).
 
-- Hierarchical credibility (cited in paper §11, 2026-11-16; references from memory, owner to
-  check): Jewell (1975), *The use of collateral data in credibility theory: a hierarchical
-  model*, Giornale dell'Istituto Italiano degli Attuari 38; Taylor (1979), *Credibility analysis
-  of a general hierarchical model*, Scand. Actuar. J.; Bühlmann & Gisler (2005), *A Course in
+- Hierarchical credibility (cited in paper §11, 2026-11-16; details checked by web search
+  2026-11-17, contents from abstracts only): Jewell (1975), *The use of collateral data in
+  credibility theory: a hierarchical model*, IIASA Research Memorandum RM-75-24 (the Giornale
+  dell'Istituto Italiano degli Attuari 38 version is not confirmed); Bühlmann–Straub as the
+  limit of a diffuse hyperprior; Taylor (1979), *Credibility analysis
+  of a general hierarchical model*, Scand. Actuar. J. 1979(1), 1–12 (reduces it to a sequence of
+  standard credibility analyses); Bühlmann & Gisler (2005), *A Course in
   Credibility Theory*, ch. 6. Nested levels with independent noise; the group variance estimated
   from the spread of group means. Small-area analogue: two-fold nested error models (Stukel &
-  Rao 1999, JSPI 78). Used: the two-stage weights as the target shape (`glsWeight_blockDiag`).
+  Rao 1999, *On small-area estimation under two-fold nested error regression models*, JSPI 78,
+  131–147). Used: the two-stage weights as the target shape (`glsWeight_blockDiag`).
   New here: correlated noise, and `φτ²` from within- and across-group pairs (Finding 13).
 
 - Ignoring correlation (searched 2026-11-16 for Finding 19): Bloomfield & Watson (1975),
   *The inefficiency of least squares*, Biometrika 62: the Kantorovich bound on OLS against
   GLS, via Wielandt's inequality; Styan (1983) surveys it. Misspecified covariance in
-  prediction: Henderson (1975) and Cantet (1997) for BLUP in animal breeding, Stein (1999),
-  *Interpolation of spatial data*, for kriging (asymptotic; not checked for a finite
+  prediction: Henderson (1975), *Best linear unbiased estimation and prediction under a selection model*,
+  Biometrics 31, 423–447, and Cantet (1997) for BLUP in animal breeding, Stein (1999),
+  *Interpolation of spatial data: some theory for kriging*, Springer, §3.5 "Prediction with the
+  wrong spectral density" and ch. 6, for kriging (asymptotic; not checked for a finite
   Kantorovich bound). Nothing found for credibility. Used: the Kantorovich factor
   `(a + A)²/(4aA)` for any working model (`Core.linMse_blupWeight_working_le`); new here is
   the credibility form `1/(1 − δ²)`, free of `τ²` and the noise variances.
@@ -119,3 +127,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   (2005), *A Course in Credibility Theory*.
 - Cross-validation and unbiased risk estimates are asymptotically equivalent (Stone 1977); both
   are ways to choose a shrinkage, as are SURE and Mallows' Cp.
+
+- Checked by web search 2026-11-17 (paper §12, §14): Fisher (1958), *On grouping for maximum
+  homogeneity*, JASA 53, 789–798; Dannenburg, Kaas & Goovaerts (1996), *Practical actuarial
+  credibility models*, IAE Amsterdam (ch. 6: the two-way cross classification model).
