@@ -190,7 +190,10 @@ Building the blend takes three choices: how to average a card's years into
 $\hmu_j$, how to average the cards into $\hmu$, and the factor $z_j$. They
 can be made one at a time, because no choice changes what the others are
 optimizing. Section~\ref{sec:weights} makes the first two,
-Section~\ref{sec:z} the third.
+Section~\ref{sec:z} the third. Whether restricting the rate to this form,
+own estimate against portfolio, costs anything against a rule that uses
+every cohort separately is answered there too: nothing for two cohorts or
+without correlation, a little otherwise.
 
 This is the oldest idea in actuarial science that still has a name of its
 own. Bühlmann (1967) gave it its modern form and Bühlmann and Straub (1970)
@@ -561,6 +564,27 @@ accuracy here. With three or more cohorts $z_j$ is singular only when every
 other weight is zero, so the sign flip is mostly a two-cohort affair, but
 $z_j$ can still be large near it.
 
+\emph{Is the blend form enough?} The blend lets a cohort's rate use two
+numbers, its own estimate and the portfolio's. A wider rule lets it use
+every cohort's estimate separately, with any weights that sum to one. The
+best such rule is the best linear unbiased predictor (BLUP) of Goldberger
+(1962), which credibility calls the homogeneous credibility estimator. Every
+other unbiased linear rule is worse by an exact amount: a quadratic form in
+$K$ of its distance from the BLUP weights (\finding{18}). So the price of the
+blend form is a formula, not a simulation. It is zero exactly when cohort
+$j$ covaries equally with every other cohort's estimate. That holds without
+correlation (so Bühlmann--Straub is the BLUP), with equal covariances, and
+always for two cohorts: the thesis's two-cohort analysis loses nothing by
+working with the blend. Otherwise the blend is strictly worse, but in the
+three-cohort example of \finding{16} ($\tau^2 = 1$, noise variances
+$0.5, 1, 3$, all correlations $0.5$) only by $2.8\%$, $3.1\%$ and $0.1\%$.
+The BLUP gets there by using the other cohorts one by one, some with
+negative weight: for cohort~1 it puts $(0.974, 0.079, -0.052)$ on the three
+estimates where the blend puts $(0.960, 0.032, 0.008)$. That needs every
+entry of $K$ to be right, where the blend needs only the weights and the
+factor. Whether the BLUP's small gain survives estimating them is open
+(Section~\ref{sec:open}).
+
 \watch
 \begin{itemize}
   \item \emph{In a fitted model, look twice at extreme factors.} With the
@@ -584,8 +608,14 @@ $z_j$ can still be large near it.
 \lean{Credibility.TwoCohorts.z1_gt_one_iff},
 \lean{Credibility.TwoCohorts.z1_neg_iff},
 \lean{Credibility.TwoCohorts.singularity_reachable_iff},
-\lean{Credibility.Core.Estimates.bestZ_forecast_optimal} ·
-\app{One draw} (the $z > 1$ warning) · \finding{3}, \finding{17} ·
+\lean{Credibility.Core.Estimates.bestZ_forecast_optimal},
+\lean{Credibility.Core.blupWeight_optimal},
+\lean{Credibility.Core.errVar_eq_blupWeight_add},
+\lean{Credibility.Core.exists_blendWeight_eq_blupWeight_iff},
+\lean{Credibility.Core.Estimates.blup_mse_optimal},
+\lean{Credibility.Core.Estimates.mse_blend_eq_blup_add} ·
+\app{One draw} (the $z > 1$ warning) · \finding{3}, \finding{17},
+\finding{18} · \file{studies/literature.md} §3 ·
 thesis §2.5, eq.~(26); §2.7, eqs.~(32)--(34).
 
 % ===========================================================================
@@ -631,6 +661,36 @@ equal covariances are also necessary, a converse shown on paper but not in
 Lean; from four cohorts on, other
 structures work too (\finding{5}).
 
+\emph{What ignoring correlation costs.} Apply Bühlmann--Straub to cohorts
+that are in fact correlated. That is not just a blend with the wrong
+factors: it is the best predictor of a wrong model, the one whose $K$ has
+the same diagonal and zeros elsewhere. How much worse than the best can it
+be, with every other parameter right? The answer is a classical one from
+the inefficiency of least squares (Kantorovich's inequality; Bloomfield and
+Watson 1975), and here it takes a clean form (\finding{19}): the mean
+squared error is at most $1/(1 - \delta^2)$ times the smallest, where
+$\delta$ measures how far the noise correlation table is from the identity,
+whatever $\tau^2$ and the noise variances. For two cohorts it is
+$1/(1 - \rho^2)$, at most $33\%$ more error at $\rho = 0.5$, and that worst
+case is nearly reached.
+
+With many cohorts the single $\delta$ is crude, and the sharp bound uses the
+smallest and largest eigenvalues of the correlation table separately
+(\hb{res:ignoreCorr}{9}, \finding{20}). One might hope only the small one
+matters, since the weights sum to one and so the common direction seems to
+drop out. It does not: the correlation acts on weights scaled by each
+cohort's noise, and those need not sum to zero. For equal correlations $r$
+among $J$ cohorts the worst case at $r = 0.5$ is $33\%$ for two cohorts,
+$56\%$ for three and $104\%$ for five; at $r = 0.2$ and three cohorts it is
+$8\%$. These are worst cases over $\tau^2$ and the noise variances, reached
+when $\tau^2$ is small and cohorts are very unequal. In the example above
+the exact costs are $14.3\%$, $9.2\%$ and $0.4\%$, against $2.8\%$, $3.1\%$
+and $0.1\%$ for the blend form (Section~\ref{sec:z}). So with the true
+parameters, getting the correlation into $K$ matters more than going beyond
+the blend. Damping the correlations halfway instead of dropping them cuts
+the three-cohort worst case at $r = 0.5$ from $56\%$ to $12.5\%$, and the
+same bound covers every damping factor.
+
 \watch
 \begin{itemize}
   \item \emph{Equal correlations are not equal covariances.} If cohorts
@@ -644,17 +704,31 @@ structures work too (\finding{5}).
     fitted model, a single covariance for all pairs gives exploding factors
     when volumes differ; the app offers it only with that warning
     (\app{Models}, ``common'').
+  \item \emph{The price of ignoring correlation is for true parameters.}
+    With fitted ones the comparison can turn: where there is no
+    correlation, estimating it costs a little against plain
+    Bühlmann--Straub (Section~\ref{sec:estimation}, S6). Use the bound as a quick ``can I ignore it?'' test, with $\hat\rho$
+    in place of $\rho$.
 \end{itemize}
 
-\see \hb{res:diag}{6}, \hb{res:bs}{10}, \hb{res:two}{14},
-\hb{res:equalcov}{16} ·
+\see \hb{res:diag}{6}, \hb{res:ignoreCorr}{9}, \hb{res:bs}{10},
+\hb{res:two}{14}, \hb{res:equalcov}{16} ·
 \lean{Credibility.bs_z},
 \lean{Credibility.Core.bestZ_of_diag},
 \lean{Credibility.TwoCohorts.b1_eq_z},
 \lean{Credibility.Core.b_eq_of_equalCov},
 \lean{Credibility.Core.bestZ_of_equalCov},
-\lean{Credibility.Model.bestZ_of_equalCov} ·
-\app{Models} · \finding{2}, \finding{4}, \finding{5} · thesis §2.6, §2.7.
+\lean{Credibility.Model.bestZ_of_equalCov},
+\lean{Credibility.Core.blupWeight_diag_eq_blendWeight},
+\lean{Credibility.Core.linMse_blupWeight_working_le},
+\lean{Credibility.Core.linMse_ignoreCorr_le},
+\lean{Credibility.Core.linMse_ignoreCorr_le_of_offDiag},
+\lean{Credibility.Core.linMse_ignoreCorr_equicorr_le},
+\lean{Credibility.Core.linMse_damped_equicorr_le},
+\lean{Credibility.Core.Estimates.ignoreCorr_mse_le},
+\lean{Credibility.Core.Estimates.damped_mse_le} ·
+\app{Models} · \finding{2}, \finding{4}, \finding{5}, \finding{19},
+\finding{20} · \file{studies/literature.md} §3 · thesis §2.6, §2.7.
 
 % ===========================================================================
 \section{Balance}\label{sec:balance}
@@ -731,9 +805,10 @@ best for the volume-weighted error when cohorts are independent, for any
 distribution with the given moments (\hb{res:commonShift}{13}). That is
 Wang, Fuller and Qu's argument: the blend's errors are then uncorrelated
 with the imbalance, so spreading it unevenly only adds noise. Under
-correlation their premise fails, because our blend is the best linear
-predictor only for independent cohorts, and the claim as stated is false
-(\finding{16}). In a three-cohort counterexample the best shares are
+correlation their premise fails, because our blend is then in general not
+the best linear unbiased predictor (it still is for two cohorts and for
+equal covariances; Section~\ref{sec:z}, \finding{18}), and the claim as
+stated is false (\finding{16}). In a three-cohort counterexample the best shares are
 $(0.177, 0.121, 0.227)$ instead of $1/6$ each. But the difference is small:
 in 2000 random worlds the common shift was never more than 2.2\% worse than
 the best shares, which would need the fitted covariances of the errors with
@@ -811,7 +886,11 @@ The best fixed $\theta$ grows with the correlation and with the length of
 the history, from 0 without correlation to nearly 1 at $\rho = 0.9$ or 20
 years, and no damping at all ($\theta = 1$) is risky with short
 histories: with five years and eight regions, $\hat K$ fails to be positive
-definite in nearly a quarter of the draws (study findings S1, S2).
+definite in nearly a quarter of the draws (study findings S1, S2). Damping is
+not free either: with the true correlations, damping by $\theta$ has an exact
+worst-case price, between none at $\theta = 1$ and the price of ignoring
+correlation at $\theta = 0$ (\hb{res:ignoreCorr}{9};
+Section~\ref{sec:special}).
 
 \emph{Shrink for the loss you care about.} The obvious way to choose
 $\theta$ is to make $\hat K$ as close as possible to the true $K$. That is
@@ -1237,15 +1316,319 @@ not in the thesis.
 
 % ===========================================================================
 \section{Choosing the cohorts}\label{sec:cohorts}
-\notyet{when merging pays off; equal credibility is not grouping; optimal
-cohorts are intervals, and when they are not.}
 
+\oneline Merging two cohorts pays only when their true levels are closer
+than the noise in their observed gap and the spread of levels together
+allow, which has nothing to do with equal credibility factors; and when
+cohorts are cut out of many small units, the best cohorts are intervals of
+the sorted levels for pooling and for the blend with a common noise level,
+but not in general.
+
+\idea Everything so far takes the cohorts as given. In practice someone
+chose them: rating classes, regions, cards. This section asks which choice
+is best for the error of the rates.
+
+\emph{Equal credibility is not grouping.} With equal covariances the
+portfolio weights are the factors rescaled (Section~\ref{sec:special}), so
+two cohorts with the same $z$ get the same weight and the portfolio
+estimate sees them only through their sum. It is tempting to read that as
+``cohorts with equal $z$ belong together''. It is not so (\finding{6}).
+Equal $z$ means equally \emph{reliable}, not equally \emph{risky}: two
+cohorts with the same $z$ and estimates $0.5$ and $1.5$ keep different
+rates. And putting two cohorts into one risk group means assuming their
+levels are equal. That changes $K$, so it changes every factor and the
+portfolio estimate too.
+
+\emph{When merging two cohorts pays.} Compare two rules for a pair: keep
+them separate, with their own credibility rates, or merge them into one
+level. Two numbers decide (\hb{res:merge}{25}): how far apart the true
+levels typically are, $d$, the expected squared gap; and how precisely the
+data measure that gap, $V$, the variance of the difference of the two
+estimates. For a pair on its own, merge exactly when the reciprocal of $d$
+exceeds the reciprocals of $V$ and of $\tau^2$ added: the true gap must be
+small compared with \emph{both} the noise in the observed gap and the
+spread of levels. Correlation enters only through $V$. Positively
+correlated noise cancels in the difference, so the gap is measured more
+precisely and even small real differences are worth keeping: correlation
+makes merging \emph{harder}. Equal factors play no role at all. Under the
+thesis model two cohorts' levels are unrelated, $d = 2\tau^2$, and merging
+never pays; the rule is for pairs you have reason to think are closer than
+a random pair. In the language of Section~\ref{sec:groups}, the pair must
+share more than half its level variance before merging pays.
+
+Inside a large portfolio, where the overall level is well known, merging
+usually pays a little sooner, because the merged pair's common deviation
+from that level now has to be predicted and the merged model describes it
+better. For equal noise and no correlation the threshold on the shared share
+falls from $1/(2 - z)$ to $(1 + z^2)/2$. In general it has no closed form,
+and for very unequal cohorts with strong positive correlation the order can
+reverse (\file{notes/merging-cohorts.md}, \S3; numerical, not in Lean).
+
+\emph{Merge and separate are the two ends of one model.} The group model of
+Section~\ref{sec:groups} sits between them: a share $\phi$ of the level is
+shared, and the best rule for the true $\phi$ never has to choose. The
+merging rule says which end is closer to it. Choosing only matters when a
+partition is required, as for tariff cells.
+
+\emph{The right distance between cohorts.} Replace $d$ by its estimate from
+the data and the rule becomes: merge when the squared observed gap is below
+a threshold that grows with $V$. So the natural distance between two
+cohorts is their observed gap divided by its own noise, $\sqrt V$, which
+differs from pair to pair. Clustering credibility estimates with one
+distance for all pairs (for example arXiv:2611.07110) ignores that
+correlated cohorts have more precisely measured gaps.
+
+\emph{Optimal cohorts are intervals, for pooling.} Now cut many units, each
+with a true level and an unbiased, uncorrelated estimate, into at most $k$
+cohorts, and charge each unit its cohort's pooled estimate. Measured by the
+exposure-weighted mean squared error, the loss is \emph{exactly} the
+weighted $k$-means cost of the levels plus the number of cohorts
+(\hb{res:pool_intervals}{30}, \finding{14}): the noise part contributes one
+unit per cohort whoever its members are. On a line the best $k$-means
+clusters are intervals, so the best cohorts are intervals of the sorted
+levels: a unit whose level lies between two members of a cohort belongs to
+it. That turns a search over all groupings into a search over cuts of one
+sorted list, which dynamic programming solves exactly in about $kn^2$ steps
+for $n$ units (\file{notes/kmeans-bridge.md}).
+
+\emph{For the blend with a common noise level, too.} Predict each unit by
+its cohort's credibility blend towards a known overall level. If all units
+are equally noisy, a cohort's loss depends on it only through its size and
+the sum of its levels, and a swap argument shows the best cohorts are again
+intervals (\hb{res:blend_intervals}{31}).
+
+\emph{But not in general.} With unequal noise levels the blend's optimal
+cohorts need not be intervals (\finding{14}). Three units at levels
+$-\tfrac12$, $0$, $\tfrac12$ around a known level $0$, with $\tau^2 = \tfrac12$
+and noise variances $16$, $\tfrac12$, $16$, in at most two cohorts: the best
+grouping puts the two outer units together and leaves the middle one alone
+(total error $0.680$, against $0.742$ for the best intervals). The precise
+middle unit sits at the overall level and is served better by the collective
+than by a neighbour, while the two noisy outer units gain more from sharing
+noise than they lose in bias. It is the merging rule at work: with unequal
+noise, ``close'' is scaled pair by pair and is not a distance on the line.
+Pooling with an unweighted loss fails the same way.
+
+\watch
+\begin{itemize}
+  \item \emph{All of this is for a choice fixed in advance.} Deciding which
+    cohorts to merge from the same data you then fit is a pre-test: pairs
+    that look close by chance get merged. That winner's curse is not
+    quantified yet.
+  \item \emph{The levels are unknown.} The interval results sort the true
+    levels; in practice you sort their estimates, which is a plug-in.
+  \item \emph{Correlated units are not covered} by the interval results:
+    then a cohort's pooled noise depends on which units share it.
+  \item \emph{Use the exposure-weighted loss} if you want the interval
+    guarantee for any noise levels; it is also the loss that matches total
+    premium.
+  \item \emph{The app has no step for choosing cohorts yet.}
+\end{itemize}
+
+\see \hb{res:merge}{25}, \hb{res:pool_intervals}{30},
+\hb{res:blend_intervals}{31} ·
+\lean{Credibility.Merging.merge_iff},
+\lean{Credibility.kmeans_contiguous},
+\lean{Credibility.pool_mse_eq_kmeansCost},
+\lean{Credibility.pool_optimal_contiguous},
+\lean{Credibility.blend_optimal_contiguous} ·
+\finding{6}, \finding{14} · \file{notes/merging-cohorts.md},
+\file{notes/kmeans-bridge.md} · not in the thesis.
+
+% ===========================================================================
 \section{Open directions}\label{sec:open}
-\notyet{crossed levels; time trends; the optional distribution layer.}
 
+\oneline The framework extends by building new $K$s, so the open
+directions are mostly new $K$s (crossed levels, correlation over time), one
+genuinely new shape (trends, where the factor becomes a matrix), and an
+optional layer for results that need a noise distribution.
+
+\idea \emph{Crossed levels.} Section~\ref{sec:groups} nests cohorts in
+groups. Real tariffs cross them: Swedish and Norwegian sports cars share
+``sports car'', Swedish sports and family cars share ``Sweden''. Then the
+level covariance has one term per grouping, and in a balanced two-by-two
+table the best linear predictor splits into three credibility factors, one
+for the country effect, one for the car-type effect and one for what is
+left in the cell (\file{notes/crossed-2x2.md}). The blend of this paper is
+the same formula with one common factor for all three, so it is covered by
+the core already, but it loses whenever the layers differ. In the note's
+example the best blend reaches a total error of $5.94$ and the full
+predictor $5.13$, while getting the single factor exactly right instead of
+approximately only moves $6.04$ to $5.94$. The full predictor can also rate
+a cell with no data of its own, from its row and column, which a blend
+cannot. In Lean, the best linear unbiased predictor of Section~\ref{sec:z}
+is the first step; the crossed $K$, its positive definiteness, and
+estimators from pairs in the same row, the same column and neither are
+next. Crossed-classification credibility (Dannenburg, Kaas and Goovaerts
+1996) is the actuarial precedent; mixed models with crossed random effects
+the statistical one.
+
+\emph{Time.} The model has no correlation across periods. Three steps lead
+out of that, in order of size.
+\begin{itemize}
+  \item \emph{Period shocks are already in.} A random effect common to all
+    cohorts in a period, with cohort-specific loadings, is a particular
+    correlation table; the equal-correlation and rank-one structures the
+    core handles are exactly this. What is missing is a short theorem that
+    says so.
+  \item \emph{Serial correlation.} Replace ``no correlation across
+    periods'' by a general covariance over cells (cohort, period), an
+    autoregressive one for example. That is a new $K$; prove it positive
+    definite and the core applies unchanged. Unequal lengths become a
+    special case.
+  \item \emph{Trends.} A slope per cohort, as in Hachemeister's model,
+    makes the credibility factor a matrix and the target next period's
+    level instead of a constant one. This is the largest step, and the one
+    actuaries would recognise first.
+\end{itemize}
+
+\emph{Better fits.} Several questions are about fitted models, not about
+the model.
+\begin{itemize}
+  \item Does the best linear unbiased predictor of Section~\ref{sec:z}
+    survive estimation? It needs every entry of $\hat K$; the blend needs
+    only $\hat b$ and $\hat z$.
+  \item A fit for the group model that pools the within- and across-group
+    pair estimates into one $\widehat{\phi\tau^2}$ with no hand-set
+    choices, and its behaviour in simulation (Section~\ref{sec:groups}).
+  \item The credibility-weighted variances of
+    Section~\ref{sec:estimation} with unequal lengths, and the
+    unbiasedness of the fitted parameters under that structure in Lean.
+  \item The winner's curse of choosing cohorts from the same data
+    (Section~\ref{sec:cohorts}).
+\end{itemize}
+
+\emph{The optional distribution layer.} The core assumes only first and
+second moments, and it stays that way. But some questions need more: how
+precise the estimated parameters are depends on fourth moments, and an
+exact estimate of a fitted model's error needs a noise family. Results that
+assume one (normal, Poisson, gamma) are allowed in a separate layer, named
+as such, with nothing in the core depending on them (owner, 2026-11-15).
+Natural first results: Stein's unbiased risk estimate, exact under normal
+noise and its exponential-family analogue (Stein 1981, Hudson 1978); and
+the classical fact that in exponential dispersion families with conjugate
+priors the linear credibility estimator is the Bayes predictor (Jewell
+1974), so the best linear rule is then the best rule.
+
+\emph{Multiplicative tariffs.} Tariffs usually multiply relativities; the
+model is additive in the key ratio. A multiplicative version is the model on
+the log scale, which neither the thesis nor this paper treats.
+
+\watch
+\begin{itemize}
+  \item \emph{These are directions, not results.} Nothing in this section
+    is proved; the working notes it cites have the calculations done so
+    far.
+  \item \emph{New extensions start with one question:} which $K$ do they
+    have (Section~\ref{sec:K})? Only what is genuinely new (that $K$, its
+    positive definiteness, its moments) needs proving.
+\end{itemize}
+
+\see \lean{Credibility.Core.blupWeight_optimal} ·
+\file{notes/crossed-2x2.md}, \file{notes/roadmap.md},
+\file{studies/PLAN.md} · \file{studies/literature.md} §5.
+
+% ===========================================================================
 \section{Related work}\label{sec:related}
-\notyet{credibility with common effects, small-area estimation, covariance
-shrinkage: what is used from where.}
+
+\oneline The framework takes its pieces from three literatures that rarely
+cite each other (credibility, small-area estimation, minimum-variance
+portfolios) and combines them on one covariance matrix $K$; what is new is
+mostly the combination, the conditions made exact, and the machine-checked
+proofs.
+
+\idea \emph{Credibility.} The blend and the best factor go back to Bühlmann
+(1967) and Bühlmann and Straub (1970); Bühlmann and Gisler (2005) is the
+standard text, and the notation table in Appendix~\ref{app:notation} maps to
+it. Dependence between risks through a common effect has been studied by
+Yeo and Valdez (2006) and Wen, Wu and Zhou (2009), who derive credibility
+estimators under general dependence by orthogonal projection, and by Zhang
+and Chen (2018) for equal correlations. Ebrahimzadeh, Ibrahim, Jemain and
+Kilicman (2012) give unbiased estimators of the structural parameters with
+common effects and are probably the closest prior art to
+Section~\ref{sec:estimation}; Yang and Wang (2024) give likelihood-based and
+linear-Bayes ones. Hierarchical credibility (Jewell 1975, Taylor 1979;
+Bühlmann and Gisler 2005, ch.~6) is the target shape of
+Section~\ref{sec:groups}, and crossed classification (Dannenburg, Kaas and
+Goovaerts 1996) of the crossed levels in Section~\ref{sec:open}. The thesis
+also discusses the credibility factor of Parodi and Bonche, which is not
+formalized here. \emph{Used:} the blend, Bühlmann--Straub as the special
+case, hierarchical credibility as the target. \emph{New here:} correlated
+noise within a period as the one dropped independence assumption, the
+factor for any positive definite $K$, when it leaves $[0,1]$ and what to
+report instead (\finding{3}, \finding{17}), and the group model with
+correlated noise and pair estimators (\finding{13}).
+
+\emph{Best linear unbiased prediction.} Credibility estimators are best
+linear unbiased predictors, and Goldberger (1962) gives the general form:
+the GLS mean plus a correction from the covariances with the target. It is
+the benchmark for the blend in Section~\ref{sec:z}. \emph{New here:} the
+exact price of the blend form and the condition under which it is zero
+(\finding{18}). How much a wrong working covariance costs a GLS estimate is
+the classical inefficiency of least squares: the Kantorovich bound via
+Wielandt's inequality (Bloomfield and Watson 1975; survey by Styan 1983).
+Misspecified covariances in prediction have been studied in animal breeding
+(Henderson 1975) and for kriging (Stein 1999). \emph{New here:} its
+credibility form, free of $\tau^2$ and the noise variances, and the sharp
+two-sided version for equal correlations and for damping (\finding{19},
+\finding{20}).
+
+\emph{Small-area estimation.} With estimated variance parameters a BLUP
+becomes an EBLUP, and the small-area literature has worked out what that
+costs. Kackar and Harville (1984) split the fitted model's error into the
+known-parameter error and a price of estimation; Prasad and Rao (1990) and
+Das, Jiang and Rao (2004) approximate the second; Jiang, Lahiri and Wan
+(2002) estimate the whole by a jackknife. Fay--Herriot models with
+correlated sampling errors restrict estimated covariances to a working
+structure before use, as the fit of Section~\ref{sec:estimation} does.
+Benchmarking, forcing small-area estimates to add up to a direct total, is
+the balance of Section~\ref{sec:balance}: Pfeffermann and Barnard (1991),
+Wang, Fuller and Qu (2008), and Bell, Datta and Ghosh (2013) for several
+constraints. Two-fold nested error models (Stukel and Rao 1999) are the
+analogue of the group levels. \emph{Used:} the decomposition of the fitted
+error, the jackknife, and the common shift as the way to balance.
+\emph{New here:} that the shift is best only for independent cohorts and
+close to best under correlation (\finding{16}); the per-pair count for
+cohorts with different histories (\finding{9}).
+
+\emph{Minimum-variance portfolios.} The portfolio weights $K^{-1}\mathbf 1$,
+normalized, are the global minimum-variance portfolio of finance
+(Section~\ref{sec:weights}). Its estimation from a sample covariance is a
+large literature with one central lesson: shrink for the loss you care
+about. Ledoit and Wolf (2004) introduce the constant-correlation shrinkage
+target, which is the one-correlation structure of the app's fit; Ledoit and
+Wolf (2017) derive shrinkage for the portfolio's own variance; Frahm and
+Memmel (2010) and Bodnar, Parolya and Schmid (2018) shrink the weights
+directly. \emph{Used:} the lesson, and the constant-correlation structure.
+\emph{Different here:} the error compares the rates with the levels of the
+\emph{same} history, so the plug-in $\hat K$ is worth more as a measurement
+of this history's shocks than as an estimate of the population $K$
+(Section~\ref{sec:estimation}). The same weights are the
+minimum-variance distortionless beamformer of array signal processing.
+
+\emph{Error of a fitted model in reserving.} Mack (1993) splits the error
+of a chain-ladder reserve into process variance and estimation error,
+distribution-free; Gisler and Wüthrich (2008) and Happ, Maier and Merz
+(2011) do the same for credibility and for correlated triangles. They are
+the actuarial counterpart of the small-area decomposition.
+
+\emph{Grouping on a line.} That optimal one-dimensional clusters are
+intervals, and can be found by dynamic programming over the sorted values,
+is classical (Fisher 1958). \emph{New here:} that exposure-weighted
+credibility pooling is exactly weighted $k$-means, and the interval result
+for the blend with a common noise level (\finding{14}).
+
+\watch
+\begin{itemize}
+  \item \emph{Read from abstracts.} Most of these works were collected from
+    abstracts and summaries; the full texts have not all been read, and
+    some references are from memory (\file{studies/literature.md}). A
+    precedent found later moves a ``new here'' to ``used''.
+  \item \emph{The full list,} with what was taken from each and for which
+    study, is \file{studies/literature.md}.
+\end{itemize}
+
+\see \file{studies/literature.md} §1--5 · thesis §1, references.
 
 \appendix
 
@@ -1294,6 +1677,12 @@ numbers refer to the published thesis.
   \item[A typo in eq.~(13).] The Bühlmann--Straub $\hat\sigma^2$ averages
     the $J$ cohort estimates $\hat\sigma_j^2$, so the factor is $1/J$, not
     $1/T$ (\finding{7}; \hb{res:bs_tau}{18}).
+  \item[The blend form (§2.5, §2.7).] The thesis optimizes $z$ within
+    blends of a cohort's own estimate and the portfolio's. Against the best
+    rule that uses every cohort separately, the blend loses nothing for two
+    cohorts, without correlation and with equal covariances, and a little
+    otherwise; the price is an exact formula (\finding{18};
+    Section~\ref{sec:z}).
   \item[Balance (§2.9).] The thesis shows that Bühlmann--Straub balances
     and that the correlated blend need not. Now: which volumes balance any
     given blend (\hb{res:balance}{11}); that the best blend constrained to
@@ -1309,7 +1698,9 @@ covariances of any random variables with them, so the blend is optimal in
 true mean squared error, also as a forecast of next year
 (Section~\ref{sec:moments}; \finding{11}, \finding{12}); cohorts observed
 over different periods (Section~\ref{sec:unequal}; \finding{8}--\finding{10});
-levels shared within groups (Section~\ref{sec:groups}; \finding{13}); and
+levels shared within groups (Section~\ref{sec:groups}; \finding{13});
+what ignoring or damping correlation costs at worst
+(Section~\ref{sec:special}; \finding{19}, \finding{20}); and
 choosing the cohorts: when merging pays, and when optimal cohorts are
 intervals (Section~\ref{sec:cohorts}; \finding{6}, \finding{14}).
 
@@ -1400,7 +1791,113 @@ definitions or steps of a derivation.
 \end{description}
 
 \section{Concept index}\label{app:index}
-\notyet{term, one-line meaning, section.}
+
+Each term with a one-line meaning and the section that explains it.
+
+\begin{description}
+  \item[Balance.] Blended rates on past volumes reproduce past claims
+    exactly; every blend is balanced for some volume measure.
+    \S\ref{sec:balance}.
+  \item[Benchmarking.] Small-area name for forcing estimates to add up to a
+    direct total; here, exposure balance by a common shift.
+    \S\ref{sec:balance}, \S\ref{sec:related}.
+  \item[Best fixed blend.] The blend with $b$ and $z$ computed from the true
+    moments; the floor for linear rules, not for fitted ones.
+    \S\ref{sec:moments}.
+  \item[Blend.] $z_j\hmu_j + (1 - z_j)\hmu$: a cohort's own estimate mixed
+    with the portfolio's. \S\ref{sec:credibility}.
+  \item[Block condition.] With unequal lengths, the correlations of the
+    cohorts observed in each period must be positive semidefinite.
+    \S\ref{sec:unequal}.
+  \item[BLUP.] Best linear unbiased predictor: the best rule using every
+    cohort's estimate separately; the benchmark for the blend.
+    \S\ref{sec:z}.
+  \item[Bühlmann--Straub.] The classical model: no correlation between
+    cohorts, noise variance over volume. \S\ref{sec:model},
+    \S\ref{sec:special}.
+  \item[Cohort.] A segment whose rate is blended: a rating class, region,
+    card. \S\ref{sec:model}.
+  \item[Cohort effect $\eta_j$.] How far a cohort's true level is from the
+    overall level, in units of $\tau$. \S\ref{sec:model}.
+  \item[Common shift.] Add the same amount to every rate so that total
+    premium matches total claims; the cheapest way to force balance.
+    \S\ref{sec:balance}.
+  \item[Credibility factor $z_j$.] The weight on the cohort's own estimate;
+    the share of the gap to the portfolio expected to be real.
+    \S\ref{sec:credibility}, \S\ref{sec:z}.
+  \item[Crossed levels.] Cohorts sharing levels along two groupings at once
+    (country and car type). \S\ref{sec:open}.
+  \item[Damping.] Multiplying estimated off-diagonal correlations by
+    $\theta < 1$ to keep $\hat K$ positive definite; it has a price.
+    \S\ref{sec:K}, \S\ref{sec:estimation}, \S\ref{sec:special}.
+  \item[Distribution-free.] Only means and covariances are assumed; no noise
+    family. \S\ref{sec:model}, \S\ref{sec:moments}.
+  \item[Distribution layer.] Optional results that assume a noise family,
+    kept apart from the core. \S\ref{sec:open}.
+  \item[Equal covariances.] Every pair of cohorts has the same noise
+    covariance; classical formulas with reduced noise. \S\ref{sec:special}.
+  \item[GLS weights $b_j$.] The portfolio weights $K^{-1}\mathbf 1$, scaled
+    to sum to one; the most precise unbiased average. \S\ref{sec:weights}.
+  \item[Group level.] A part $\phi\tau^2$ of the level variance shared by
+    the cohorts of one group. \S\ref{sec:groups}.
+  \item[Hierarchical credibility.] Cohorts nested in groups with levels of
+    their own; the target shape of the group model. \S\ref{sec:groups}.
+  \item[Intervals.] Optimal cohorts that are runs of the sorted levels; for
+    pooling always, for the blend with a common noise level.
+    \S\ref{sec:cohorts}.
+  \item[Inverse-variance weights.] A cohort's periods averaged by their
+    precision; the volume-weighted mean in Bühlmann--Straub.
+    \S\ref{sec:weights}.
+  \item[$K$.] The covariance matrix of the cohort estimates; everything is
+    read off it. \S\ref{sec:K}.
+  \item[$k$-means.] Exposure-weighted pooling loss is weighted $k$-means
+    plus the number of cohorts. \S\ref{sec:cohorts}.
+  \item[Machine-checked.] Proved in Lean, with no unfinished step or extra
+    axiom; the Lean statement is what is proved. \S\ref{sec:read}.
+  \item[Merging rule.] Merge two cohorts iff
+    $1/d > 1/V + 1/\tau^2$. \S\ref{sec:cohorts}.
+  \item[Minimum-variance portfolio.] The finance name for the GLS weights.
+    \S\ref{sec:weights}, \S\ref{sec:related}.
+  \item[Moment layer.] The proofs that the given second moments are the
+    actual covariances of any random variables with them.
+    \S\ref{sec:moments}.
+  \item[Noise $\varepsilon_{jt}$.] What one period of data gets wrong;
+    correlated across cohorts within a period. \S\ref{sec:model}.
+  \item[Own-data weight $c_j$.] The share of the blended rate that comes
+    from the cohort's own estimate, $b_j + z_j(1 - b_j)$; bounded, report
+    it next to $z_j$. \S\ref{sec:z}.
+  \item[Per-pair count.] The bias-removing count in the covariance estimator
+    with unequal lengths: shared periods minus the two volume shares in the
+    overlap. \S\ref{sec:unequal}.
+  \item[Positive definite.] What $K$ must be for the recipe to work; given
+    by $\tau^2 > 0$ and a semidefinite correlation table. \S\ref{sec:K}.
+  \item[Price of estimation.] How much a fitted model's error exceeds its
+    known-parameter formula. \S\ref{sec:estimation}.
+  \item[Price of ignoring correlation.] At most $1/(1 - \rho^2)$ for two
+    cohorts; a sharp bound for equal correlations and for damping.
+    \S\ref{sec:special}.
+  \item[Price of the blend.] The exact excess of the blend over the BLUP;
+    zero for two cohorts. \S\ref{sec:z}.
+  \item[Recipe.] Build $K$, check it is positive definite, read off the
+    rest. \S\ref{sec:K}.
+  \item[$s^2$.] The variance of the portfolio estimate; every cohort
+    covaries with it by this amount. \S\ref{sec:weights}.
+  \item[Singularity.] Where the two-cohort $z_1$ blows up and changes sign;
+    the blend itself stays smooth. \S\ref{sec:z}.
+  \item[$\tau^2$.] The variance of the true levels between cohorts.
+    \S\ref{sec:model}.
+  \item[Two-stage weights.] With group levels and no correlation across
+    groups: GLS within groups, then inverse variance across.
+    \S\ref{sec:groups}.
+  \item[Unbiased estimators.] Of the noise covariances and $\tau^2$; need
+    two periods and two cohorts. \S\ref{sec:estimation}.
+  \item[Unequal lengths.] Cohorts observed in different sets of periods.
+    \S\ref{sec:unequal}.
+  \item[Winner's curse.] The bias from choosing cohorts with the same data
+    you then fit; open. \S\ref{sec:cohorts}.
+  \item[$z > 1$.] Trusting a cohort more than fully: noise cancellation,
+    not an error. \S\ref{sec:z}.
+\end{description}
 
 \section{Notation}\label{app:notation}
 

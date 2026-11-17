@@ -1,3 +1,5 @@
+Absorbed into paper §12 on 2026-11-17; kept as the working record.
+
 # When does merging two cohorts lower the credibility MSE?
 
 A note on the open question in FINDINGS item 6 and README "Later goals →

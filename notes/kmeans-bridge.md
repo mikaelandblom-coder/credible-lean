@@ -1,3 +1,5 @@
+Absorbed into paper §12 on 2026-11-17; kept as the working record.
+
 # The k-means bridge: when are MSE-optimal cohorts intervals?
 
 On paper, 2026-11-11 (roadmap §1). The aim is to use `kmeans_contiguous`

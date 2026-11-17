@@ -1,3 +1,5 @@
+Absorbed into paper §13 on 2026-11-17; kept as the working record.
+
 # Crossed levels: sport car Sweden vs sport car Norway
 
 A note on a possible extension, not in the thesis and not yet in Lean. The
