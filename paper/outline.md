@@ -90,9 +90,6 @@ may need a paragraph.)
   switches (`studies/PLAN.md` step 4), replace "(soon)" in the See lines
   with the step, and add study numbers if a fit is simulated.
 - §14: the "new here" claims stand until a precedent turns up.
-- §12: arXiv:2611.07110 is cited as an example of clustering credibility
-  estimates (from Finding 6); not found by web search (2026-11-17), and
-  arxiv.org is blocked in the Default environment. Owner to confirm.
 - §12: when the app gets a step for choosing cohorts (`studies/PLAN.md`, G5),
   add it to the See line. (The BLUP fit is in: §5 and §13 cite it, 2026-11-17.)
 - B: regenerate when sections change; the list is written by hand.

@@ -1382,7 +1382,8 @@ the data and the rule becomes: merge when the squared observed gap is below
 a threshold that grows with $V$. So the natural distance between two
 cohorts is their observed gap divided by its own noise, $\sqrt V$, which
 differs from pair to pair. Clustering credibility estimates with one
-distance for all pairs (for example arXiv:2611.07110) ignores that
+distance for all pairs (for example van Rijn, Weber and Merz 2026,
+arXiv:2611.07110) ignores that
 correlated cohorts have more precisely measured gaps.
 
 \emph{Optimal cohorts are intervals, for pooling.} Now cut many units, each
@@ -1624,7 +1625,9 @@ the actuarial counterpart of the small-area decomposition.
 
 \emph{Grouping on a line.} That optimal one-dimensional clusters are
 intervals, and can be found by dynamic programming over the sorted values,
-is classical (Fisher 1958). \emph{New here:} that exposure-weighted
+is classical (Fisher 1958). In credibility, van Rijn, Weber and Merz (2026)
+cluster credibility estimates with plain $k$-means to form risk groups, and
+set aside exposure-weighted $k$-means on the raw rates. \emph{New here:} that exposure-weighted
 credibility pooling is exactly weighted $k$-means, and the interval result
 for the blend with a common noise level (\finding{14}).
 

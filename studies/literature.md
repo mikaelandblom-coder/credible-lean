@@ -131,3 +131,16 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Checked by web search 2026-11-17 (paper §12, §14): Fisher (1958), *On grouping for maximum
   homogeneity*, JASA 53, 789–798; Dannenburg, Kaas & Goovaerts (1996), *Practical actuarial
   credibility models*, IAE Amsterdam (ch. 6: the two-way cross classification model).
+
+- Clustering credibility estimates (checked 2026-11-17, full text read; cited in paper §12, §14,
+  Finding 6, `notes/roadmap.md` §5): van Rijn, Weber & Merz (2026), *Credibility Clustering for
+  Experience Rating: An Automated Approach to Risk Group Allocation in Group Life Insurance*,
+  arXiv:2611.07110. Multidimensional Bühlmann–Straub per economic sector, then unweighted
+  Euclidean k-means (100 random starts) on the credibility estimates, then credibility again on
+  the groups. They reject exposure-weighted k-means on raw rates (it "cancels" the
+  observed-to-expected ratios). Their `ρ` is a shrinkage of the correlation between risk measures
+  (frequency, severity), not between risks: noise is independent across sectors. No interval
+  result, no dynamic programming, no winner's curse. Used: the problem (risk groups from
+  experience). New here: pooled MSE is exactly exposure-weighted k-means on the raw rates, so
+  optimal groups are intervals found exactly by DP (Finding 14); distance by gap noise with
+  correlated cohorts (Finding 6, §12).
