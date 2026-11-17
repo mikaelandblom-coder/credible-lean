@@ -582,8 +582,13 @@ The BLUP gets there by using the other cohorts one by one, some with
 negative weight: for cohort~1 it puts $(0.974, 0.079, -0.052)$ on the three
 estimates where the blend puts $(0.960, 0.032, 0.008)$. That needs every
 entry of $K$ to be right, where the blend needs only the weights and the
-factor. Whether the BLUP's small gain survives estimating them is open
-(Section~\ref{sec:open}).
+factor. In simulation the gain survives estimation when $\hat K$ has few
+parameters: plugged into the one-correlation fit of
+Section~\ref{sec:estimation}, the BLUP beats the fitted blend in every
+correlated world tried, often below the blend's own floor, and ties at
+$\rho = 0$; on a fully estimated $\hat K$ it is noisy (\app{Models},
+``BLUP''; \file{studies/PLAN.md} 3c, \file{studies/damping-theta.md}
+S30--S32).
 
 \watch
 \begin{itemize}
@@ -1485,9 +1490,12 @@ out of that, in order of size.
 \emph{Better fits.} Several questions are about fitted models, not about
 the model.
 \begin{itemize}
-  \item Does the best linear unbiased predictor of Section~\ref{sec:z}
-    survive estimation? It needs every entry of $\hat K$; the blend needs
-    only $\hat b$ and $\hat z$.
+  \item The best linear unbiased predictor of Section~\ref{sec:z}
+    survives estimation in simulation on the one-correlation $\hat K$, but
+    that $\hat K$ is wrong when correlation differs between pairs (regions
+    in countries), and there the blend form costs most. Open: a $\hat K$
+    with few parameters that knows the group structure, and the price of
+    estimation in the sense of Kackar and Harville (Section~\ref{sec:related}).
   \item A fit for the group model that pools the within- and across-group
     pair estimates into one $\widehat{\phi\tau^2}$ with no hand-set
     choices, and its behaviour in simulation (Section~\ref{sec:groups}).
@@ -1524,7 +1532,7 @@ the log scale, which neither the thesis nor this paper treats.
     positive definiteness, its moments) needs proving.
 \end{itemize}
 
-\see \lean{Credibility.Core.blupWeight_optimal} ·
+\see \lean{Credibility.Core.blupWeight_optimal} · \app{Models} (``BLUP'') ·
 \file{notes/crossed-2x2.md}, \file{notes/roadmap.md},
 \file{studies/PLAN.md} · \file{studies/literature.md} §5.
 

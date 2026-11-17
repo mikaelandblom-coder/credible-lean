@@ -78,8 +78,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
   was written from memory of the book; owner to check against it.
-- App (2026-11-17, `studies/PLAN.md` 3c): the plug-in BLUP survives estimation (beats corrBS
-  in every correlated world tried, ties at `ρ = 0`); one sentence in the Finding 18 paragraph.
 - §11: the hierarchical-credibility references (Jewell 1975, Taylor 1979,
   Bühlmann–Gisler ch. 6, Stukel–Rao 1999) were written from memory; owner to
   check (they are now in §14 too).
@@ -92,8 +90,8 @@ may need a paragraph.)
   Zhang and Chen (2018). The "new here" claims stand until a precedent turns up.
 - §12: arXiv:2611.07110 is cited as an example of clustering credibility
   estimates (from Finding 6); owner to confirm it is the right paper.
-- §12–13: when the app gets a step for choosing cohorts or a BLUP fit
-  (`studies/PLAN.md`, Pending), add it to the See lines.
+- §12: when the app gets a step for choosing cohorts (`studies/PLAN.md`, G5),
+  add it to the See line. (The BLUP fit is in: §5 and §13 cite it, 2026-11-17.)
 - B: regenerate when sections change; the list is written by hand.
 - Appendix A: the concordance lists the Lean names at drafting time
   (2026-11-16); add new thesis-facing theorems there as they come.
