@@ -3148,12 +3148,60 @@ example ignoring the correlation between cohorts. How much can that cost?
   Bilinearity: the cross terms vanish.
 \end{proof}
 
-\chapter{Extension: damping off-diagonal entries}\label{ch:offdiag}
-% Not in the thesis: README "Later goals -> Small lemmas" (b).
-% Lean: Credibility/OffDiagonal.lean
+\chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
+% Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
+% Schur product theorem. Lean: Credibility/OffDiagonal.lean
 
-Not in the thesis. A general fact about matrices, used for covariance
-matrices whose correlations are damped by a common factor $\rho$.
+Not in the thesis. A general fact about matrices: multiplying a covariance
+matrix entrywise by a correlation matrix (\emph{tapering}, as in
+Furrer--Genton--Nychka 2006) keeps it a covariance matrix. Damping the
+correlations by a common factor $\rho$ and the distance taper
+$\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
+(Hadamard) product.
+
+\begin{lemma}[A floor under a positive definite matrix]\label{lem:posDef_floor}
+  \lean{Matrix.PosDef.exists_posSemidef_sub_smul_one}
+  \leanok
+  If $A \succ 0$, then $A - cI \succeq 0$ for some $c > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Take $c$ the least eigenvalue of $A$; the spectrum of $A - cI$ is that of
+  $A$ shifted by $-c$.
+\end{proof}
+
+\begin{theorem}[Schur product theorem, Oppenheim-type]\label{thm:posDef_hadamard_of_diag_pos}
+  \lean{Credibility.posDef_hadamard_of_diag_pos}
+  \leanok
+  If $A \succ 0$, $B \succeq 0$ and $B_{ii} > 0$ for all $i$, then
+  $A \odot B \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posDef_floor}
+  With $c$ from Lemma~\ref{lem:posDef_floor},
+  $A \odot B = (A - cI)\odot B + c\operatorname{diag}(B_{ii})$: positive
+  semidefinite by the Schur product theorem (Mathlib), plus a positive
+  definite diagonal.
+\end{proof}
+
+\begin{theorem}[Tapering keeps a covariance matrix]\label{thm:hadamard_corr}
+  \lean{Credibility.posSemidef_hadamard_of_corr, Credibility.posDef_hadamard_of_corr,
+    Credibility.hadamard_diag_of_corr}
+  \leanok
+  Let $R \succeq 0$ with $R_{ii} = 1$ (a correlation matrix). Then
+  $(R\odot K)_{ii} = K_{ii}$; if $K \succeq 0$ then $R \odot K \succeq 0$, and if
+  $K \succ 0$ then $R \odot K \succ 0$. $R$ itself need not be definite
+  (e.g.\ $R = \mathbf 1\mathbf 1^T$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:posDef_hadamard_of_diag_pos}
+  The semidefinite case is the Schur product theorem; the definite case is
+  Theorem~\ref{thm:posDef_hadamard_of_diag_pos} with $A = K$, $B = R$.
+\end{proof}
+
+\section{Damping}
 
 \begin{definition}[Damped matrix]\label{def:shrinkOffDiag}
   \lean{Credibility.shrinkOffDiag}
@@ -3173,19 +3221,87 @@ matrices whose correlations are damped by a common factor $\rho$.
   Compare entries.
 \end{proof}
 
+\begin{lemma}[Damping is tapering]\label{lem:shrinkOffDiag_hadamard}
+  \lean{Credibility.shrinkOffDiag_eq_hadamard, Credibility.shrinkOffDiag_one_eq,
+    Credibility.posSemidef_ones}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $A^\rho = (\mathbf 1\mathbf 1^T)^\rho \odot A$, and
+  $(\mathbf 1\mathbf 1^T)^\rho = \rho\,\mathbf 1\mathbf 1^T + (1-\rho) I$ with
+  $\mathbf 1\mathbf 1^T \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; $\mathbf 1\mathbf 1^T$ is a Gram matrix.
+\end{proof}
+
 \begin{theorem}[Damping keeps positive (semi)definiteness]\label{thm:shrinkOffDiag_posDef}
   \lean{Credibility.posSemidef_shrinkOffDiag, Credibility.posDef_shrinkOffDiag}
   \leanok
-  \uses{lem:shrinkOffDiag_eq}
+  \uses{def:shrinkOffDiag}
   If $A \succeq 0$ and $0 \le \rho \le 1$, then $A^\rho \succeq 0$. If moreover
   $\rho < 1$ and $A_{ii} > 0$ for all $i$, then $A^\rho \succ 0$.
 \end{theorem}
 \begin{proof}
   \leanok
-  By Lemma~\ref{lem:shrinkOffDiag_eq}, $A^\rho$ is a sum of $\rho A \succeq 0$
-  and $(1-\rho)\operatorname{diag}(A_{ii})$, which is $\succeq 0$, and
-  $\succ 0$ when $\rho < 1$ and the diagonal is positive.
+  \uses{lem:shrinkOffDiag_hadamard, thm:hadamard_corr, thm:posDef_hadamard_of_diag_pos}
+  By Lemma~\ref{lem:shrinkOffDiag_hadamard}, $A^\rho$ is $A$ tapered by
+  $R = \rho\,\mathbf 1\mathbf 1^T + (1-\rho)I$, a correlation matrix for
+  $\rho\in[0,1]$ (Theorem~\ref{thm:hadamard_corr}). For $\rho < 1$, $R \succ 0$
+  and Theorem~\ref{thm:posDef_hadamard_of_diag_pos} applies with $A$ only
+  semidefinite.
 \end{proof}
+
+\section{The distance taper}
+
+\begin{definition}[Distance taper]\label{def:distTaper}
+  \lean{Credibility.distTaper}
+  \leanok
+  For positions $t_i \in \mathbb N$ and $\rho\in\mathbb R$,
+  $R_{ij} = \rho^{|t_i - t_j|}$. With $t_i = i$ it is the Kac--Murdock--Szeg\H{o}
+  matrix (the correlation of an AR(1) process). Its diagonal is $1$.
+\end{definition}
+
+\begin{lemma}[A product of two-block matrices]\label{lem:distTaper_prod}
+  \lean{Credibility.posSemidef_twoBlock, Credibility.posSemidef_prod_twoBlock,
+    Credibility.card_separating, Credibility.distTaper_eq_prod}
+  \leanok
+  \uses{def:distTaper}
+  For a gap $k$, let $B^{(k)}_{ij} = 1$ if $t_i$ and $t_j$ are on the same side
+  of $k$ ($t_i \le k \iff t_j \le k$), and $\rho$ otherwise. Then
+  $B^{(k)} = \rho\,\mathbf 1\mathbf 1^T + (1-\rho)(uu^T + vv^T)$ ($u$, $v$ the
+  side indicators) is $\succeq 0$ for $\rho\in[0,1]$, and
+  $R = B^{(0)} \odot \dots \odot B^{(N-1)}$ for $N \ge \max_i t_i$: exactly
+  $|t_i - t_j|$ gaps separate $t_i$ and $t_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; the separating gaps are $[\min, \max)$. A Hadamard product of
+  positive semidefinite matrices is positive semidefinite (Schur).
+\end{proof}
+
+\begin{theorem}[The distance taper keeps a covariance matrix]\label{thm:distTaper}
+  \lean{Credibility.distTaper_self, Credibility.distTaper_posSemidef, Credibility.posSemidef_distTaper_hadamard,
+    Credibility.posDef_distTaper_hadamard}
+  \leanok
+  \uses{def:distTaper}
+  For $\rho \in [0,1]$ and any positions (ties allowed), $R \succeq 0$; hence
+  $R \odot K \succeq 0$ if $K \succeq 0$ and $R \odot K \succ 0$ if $K \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:distTaper_prod, thm:hadamard_corr}
+  Lemma~\ref{lem:distTaper_prod} and Theorem~\ref{thm:hadamard_corr}.
+\end{proof}
+
+\begin{remark}[No Kac--Murdock--Szeg\H{o} algebra needed]
+  The usual proofs that the KMS matrix is positive (semi)definite use its
+  Cholesky factor or tridiagonal inverse, which need distinct, equally spaced
+  positions. The two-block factorization needs neither: ties are allowed, so
+  $R$ is then only semidefinite, but tapering still keeps $K \succ 0$
+  (Theorem~\ref{thm:hadamard_corr}). Real positions (the exponential kernel
+  $e^{-a|t_i-t_j|}$) would need a limit argument and are not formalized.
+\end{remark}
 
 \section{Application: a damped plug-in $\hat K$}
 

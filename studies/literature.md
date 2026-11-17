@@ -144,3 +144,20 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   experience). New here: pooled MSE is exactly exposure-weighted k-means on the raw rates, so
   optimal groups are intervals found exactly by DP (Finding 14); distance by gap noise with
   correlated cohorts (Finding 6, §12).
+
+## 6. Covariance tapering (2026-11-17, for `OffDiagonal.lean`)
+- Furrer, Genton & Nychka (2006), *Covariance tapering for interpolation of large spatial
+  datasets*, J. Comput. Graph. Stat. 15(3), 502–523 (checked by web search): kriging (the
+  BLUP) with the covariance multiplied entrywise by a compactly supported correlation function,
+  to make it sparse; tapered matrix stays positive definite by the Schur product theorem.
+  Kaufman, Schervish & Nychka (2008, JASA) extend it to likelihood estimation. Used: the idea
+  that any correlation matrix is a valid taper; our damping `θ` is the taper
+  `θ11ᵀ + (1-θ)I`, and `ρ^|tᵢ-tⱼ|` the exponential taper on ordered cohorts.
+- Schur (1911): the Hadamard product of PSD matrices is PSD (Mathlib
+  `Matrix.PosSemidef.hadamard`). Oppenheim (1930): `A ≻ 0`, `B ⪰ 0` with positive diagonal
+  give `A ⊙ B ≻ 0` (proved here as `posDef_hadamard_of_diag_pos`, via `A - cI ⪰ 0`).
+- Kac, Murdock & Szegő (1953), *On the eigenvalues of certain Hermitian forms*, J. Rational
+  Mech. Anal. 2: the matrix `ρ^|i-j|` (AR(1) correlation). Its positivity is not needed in KMS
+  form: a Hadamard product of two-block matrices, one per gap, gives it for any ℕ positions.
+- Covariance shrinkage towards a target (Ledoit & Wolf, §1) is additive; tapering is
+  multiplicative. Both keep `K̂ ⪰ 0`; damping is both at once (`shrinkOffDiag_eq`).

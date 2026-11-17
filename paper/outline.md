@@ -76,6 +76,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Plug-in `K̂` repair (2026-11-17): damping is now a corollary of tapering by any
+  correlation matrix (Schur product theorem; `Credibility.posDef_hadamard_of_corr`,
+  `Credibility.distTaper_posSemidef`). One sentence where the paper explains damping,
+  citing Furrer–Genton–Nychka (2006) for tapering.
 - Appendix C: Bühlmann–Gisler notation checked against pp. 89–90 (Theorem 4.4)
   and 145–147 (owner's photos, 2026-11-17): all symbols match, after fixing the
   collective premium `μ_0` (was `m`; also in §3 and the handbook), `τ²` (was `a`),

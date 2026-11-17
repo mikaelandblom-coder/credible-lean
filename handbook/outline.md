@@ -16,6 +16,11 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
+  matrix keeps it positive (semi)definite and keeps the variances
+  (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
+  (`Credibility.distTaper_posSemidef`). One line next to the damped plug-in result
+  (`res:damped`): "damping is one taper; ordered cohorts can use the distance taper".
 - Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
   blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
   `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".

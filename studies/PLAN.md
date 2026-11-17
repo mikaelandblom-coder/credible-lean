@@ -279,3 +279,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Taper switch (2026-11-17, `OffDiagonal.lean`): repair or regularize `K̂` by tapering it
+  with a correlation matrix `R` instead of only damping (`posDef_hadamard_of_corr`: `R ⪰ 0`
+  with unit diagonal keeps `K̂ ≻ 0` and the variances). Options: "damp θ" (today's
+  `R = θ11ᵀ + (1-θ)I`) and "distance ρ^|tᵢ-tⱼ|" for cohorts with an order (years, age
+  bands; `distTaper_posSemidef`, ties allowed). Badge "proved" for both when `Σ̂ ⪰ 0`.
+  Its `ρ` must be fitted, not hand-set (§1): e.g. choose it like `θ`, by the plug-in
+  criterion of `studies/damping-theta.md`.
