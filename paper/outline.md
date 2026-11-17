@@ -76,11 +76,11 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Appendix C: Bühlmann–Gisler notation checked against pp. 145–147 (owner's
-  photo, 2026-11-17): `X_ij`, `w_ij`, `Θ_i`, `μ(Θ_i)`, `σ²(Θ_i)/w_ij`, `X_i`,
-  `μ̂_0`, collective premium `μ_0` (was `m`: fixed, also in §3 and the handbook),
-  homogeneous estimator with double hat and "hom". Still unchecked: `α_i`,
-  `α_•`, `w_{i•}`, `κ`, `τ²` (Theorem 4.4 / §4.2 of the book).
+- Appendix C: Bühlmann–Gisler notation checked against pp. 89–90 (Theorem 4.4)
+  and 145–147 (owner's photos, 2026-11-17): all symbols match, after fixing the
+  collective premium `μ_0` (was `m`; also in §3 and the handbook), `τ²` (was `a`),
+  and the double hats of the homogeneous estimators. Only `κ` is unseen (the
+  book writes `σ²/τ²` inside `α_i`); low priority.
 - §11, §14: Bühlmann–Gisler ch. 6 is hierarchical credibility (checked,
   §6.2 p. 145: levels Ψ_g, Φ_h, Θ_i, X_ij; Bühlmann–Straub its two-level case;
   estimator bottom-up then top-down). The other references were checked
