@@ -3,7 +3,7 @@
 Written 2026-11-11 from a planning chat. The aim: tie the extensions and
 stand-alone lemmas into the framework, then extend it, and end with
 something a practitioner can use. Tick items off or delete them as they are
-done; details of finished work live in `README.md` and `FINDINGS.md`.
+done; details of finished work live in `FINDINGS.md` and `PROGRESS.md`.
 
 ## 1. Finish the integration
 
@@ -23,7 +23,7 @@ done; details of finished work live in `README.md` and `FINDINGS.md`.
 - [x] **Moment layer once, for a level covariance `L`** (done 2026-11-10:
   `Core.Estimates`, `HierarchicalMoments.lean`).
 - [ ] **Housekeeping.** Handbook sections 2–5; README status paragraph
-  (theorem count, list of extensions); backlog from
+  (done 2026-11-17: the README no longer carries counts); backlog from
   `progress.py --dupes`.
 
 ## 2. Time trends (in this order)
@@ -62,3 +62,41 @@ Detailed plan (an interactive app, world against fitted model; gap theorems):
 
 Suggested order: the two bridges in 1, the handbook, serial correlation,
 the R package.
+
+## 5. Open problems (moved from the README, 2026-11-17)
+
+- **Choosing cohorts from the data.** Pick the partition into cohorts that
+  minimises the total credibility MSE itself, rather than clustering
+  credibility estimates by Euclidean distance (as in van Rijn, Weber, Merz,
+  *Credibility Clustering for Experience Rating*, arXiv:2611.07110). Known
+  so far: for exposure-weighted pooling, and for the blend with a common
+  variance, the optimal cohorts are intervals of the sorted levels, so
+  dynamic programming finds them exactly; with unequal variances the blend's
+  optimum need not be an interval (FINDINGS item 14,
+  [`kmeans-bridge.md`](kmeans-bridge.md); one pair:
+  [`merging-cohorts.md`](merging-cohorts.md)). Open: how choosing cohorts
+  from the same data biases the second-stage estimate (winner's curse), and
+  how correlations between cohorts change the optimal partition. Starting
+  points: Diao & Weng, *Regression tree credibility model*, NAAJ 23(2)
+  (2019); Campo & Antonio, *On clustering levels of a hierarchical
+  categorical risk factor*, AAS 18(3) (2024), arXiv:2304.09046.
+- **Hierarchical credibility.** With group levels (`Hierarchical`,
+  `HierarchicalMoments`) a shared level drops out of credibility, the GLS
+  weights are two-stage, and `τ̂²` needs pairs within and across groups
+  (item 13). Open: consistency of the assumptions, and efficient estimation
+  of `φ` from all pairs (PLAN G4).
+- **Crossed levels.** Not started in Lean: cohorts in a table (country ×
+  car type) sharing a level along both rows and columns, so that sport cars
+  in Norway inform sport cars in Sweden. The balanced 2×2 case is worked out
+  in [`crossed-2x2.md`](crossed-2x2.md): the best linear predictor has one
+  credibility factor per layer (country, type, cell), and the thesis blend
+  is the same formula with one common factor.
+- **The app** (preview): unequal lengths and group levels in its world and
+  fits, then proofs of the gaps it shows to matter (PLAN steps 4–5). Its
+  study findings are numerical results in fixed simulated worlds, not
+  theorems; they are reported with their world and script so they can be
+  rerun. Statements about the best blend with known parameters have exact
+  formulas and need no simulation.
+- **Further credibility papers** to formalize in the thesis notation, each
+  as its own `Credibility/<Topic>.lean` and blueprint chapter (candidates:
+  Jewell's hierarchical model, Hachemeister's regression model).

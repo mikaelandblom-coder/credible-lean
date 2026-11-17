@@ -116,8 +116,22 @@ may need a paragraph.)
 5. A coverage report: proved results cited by none of handbook, paper, app,
    with an explicit "not needed" list.
 6. When sections 1–9 are done: point README and `CITATION.cff` at the paper
-   as the primary reference, and use it as the arXiv preprint (README
-   "Sharing results" item 3).
+   as the primary reference, and use it as the arXiv preprint ("Publication plan" below).
+
+## Publication plan (moved from the README, 2026-11-17)
+
+1. **Citable repo** (done, v2.0.0): `CITATION.cff`; Zenodo archives each
+   tagged release (concept DOI 10.5281/zenodo.24054631); GitHub topics
+   `credibility-theory`, `actuarial-science`, `lean4`, `formalization`.
+2. **Preprint on arXiv**: this paper (q-fin.RM, cross-list stat.AP or
+   math.ST), stating that every result is machine-checked and linking the
+   repo. arXiv is indexed by Google Scholar; GitHub is not.
+3. **Two audiences.** The credibility results to an actuarial journal
+   (Scandinavian Actuarial Journal, ASTIN Bulletin, European Actuarial
+   Journal, Variance). The formalization itself to CPP/ITP or *Annals of
+   Formalized Mathematics*.
+4. **General lemmas** stay in the repo: Mathlib asks for hand-written code
+   and comments in contributors' own words (see `CLAUDE.md`).
 
 ## Decided (owner, 2026-11-16)
 

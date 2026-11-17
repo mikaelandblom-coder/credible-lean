@@ -52,7 +52,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    every `z` and `μ̂`. Open question: when does merging two cohorts
    lower the total MSE? Probably it depends on the data, not on `zᵢ = zⱼ`.
    Natural setting: two-level (hierarchical) credibility, cohorts nested in
-   groups (Bühlmann & Gisler, ch. 6). See README "Later goals".
+   groups (Bühlmann & Gisler, ch. 6). See `notes/roadmap.md` §5.
    *Partly answered (`notes/merging-cohorts.md`; the pair-alone result is
    proved in `Credibility/Merging.lean`, `merge_iff`).* With
    `d = E(μ₁-μ₂)²` and `V = Var(μ̂₁-μ̂₂) = σ₁² + σ₂² - 2σ₁σ₂ρ`, for a pair
@@ -77,7 +77,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    does not touch eq. (13); `sigRhoHat_self` only uses `σ̂ⱼ²`.
 
 8. **Unequal lengths keep `K` positive definite (new).** With
-   cohort `j` observed in `Tⱼ ⊆ T` (README "Later goals"; notes in
+   cohort `j` observed in `Tⱼ ⊆ T` (an open goal at the time; notes in
    `notes/unequal-lengths.md`), `Kᵢⱼ = σ²ᵢⱼρᵢⱼ + τ²δᵢⱼ` still holds with
    `σ²ᵢⱼ` summed over `Tᵢ ∩ Tⱼ`, and `K ≻ 0` for any overlap pattern as soon
    as, for each period `t`, the correlations of the cohorts observed at `t`

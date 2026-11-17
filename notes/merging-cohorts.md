@@ -2,8 +2,8 @@ Absorbed into paper §12 on 2026-11-17; kept as the working record.
 
 # When does merging two cohorts lower the credibility MSE?
 
-A note on the open question in FINDINGS item 6 and README "Later goals →
-Choosing cohorts from the data". Result A (excess-loss identity and
+A note on the open question in FINDINGS item 6 and the roadmap
+(`notes/roadmap.md` §5, "Choosing cohorts from the data"; formerly in the README). Result A (excess-loss identity and
 `merge_iff`) is in [`Credibility/Merging.lean`](../Credibility/Merging.lean). Numbers are
 checked by [`merging_cohorts.py`](merging_cohorts.py).
 
@@ -278,7 +278,7 @@ What the numbers show:
   fixed in advance, so they do not give its MSE. With one observation of the
   gap, $(X_1-X_2)^2$ is very noisy (one degree of freedom under normality),
   and pairs that look close by chance get merged. Quantifying this is the
-  next step for the README goal.
+  next step for this roadmap goal.
 
 ## 5. Possible Lean targets later
 
