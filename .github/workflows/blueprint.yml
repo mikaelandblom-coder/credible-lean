@@ -150,7 +150,7 @@ jobs:
         run: |
           node --test app/engine.test.js
           mkdir -p blueprint/web/app
-          cp app/index.html app/engine.js blueprint/web/app/
+          cp -r app/index.html app/engine.js app/manifest.webmanifest app/icons blueprint/web/app/
 
       - uses: actions/upload-pages-artifact@v3
         with:
