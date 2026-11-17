@@ -78,6 +78,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Appendix C: the Bühlmann–Gisler column (`X_i`, `α_i`, `μ̂_0`, `w_{i•}`)
   was written from memory of the book; owner to check against it.
+- App (2026-11-17, `studies/PLAN.md` 3c): the plug-in BLUP survives estimation (beats corrBS
+  in every correlated world tried, ties at `ρ = 0`); one sentence in the Finding 18 paragraph.
 - §11: the hierarchical-credibility references (Jewell 1975, Taylor 1979,
   Bühlmann–Gisler ch. 6, Stukel–Rao 1999) were written from memory; owner to
   check (they are now in §14 too).

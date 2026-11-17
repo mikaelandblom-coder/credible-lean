@@ -245,6 +245,24 @@ One chat per step; none needs Lean except step 5.
   corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
   when ρ̂ > 0 (off-balance also when β² > 0); `simulate` reports their share as `expected`. Tests:
   the floor's b < 0, z < 1 and balance in bⱼ/(1 − zⱼ); notes ↔ expected flags; balancing costs > 5%.
+- [x] 3c. Findings 17–20 in the app (2026-11-17). Card "Is correlation worth modelling?":
+  from the draw, `δ̂₋`, `δ̂₊` (eigenvalues of corrBS's noise correlation, one `ρ̂`) and the
+  bound `(a + A)²/(4aA)` for ignoring it and for each model's `θ` (BS 0, corr `θ̂`, corrBS and
+  BLUP 1; `Engine.correlationIndicator`, `dampedBound`); in the world, exact MSE of the BLUP,
+  the best blend (+ price of the blend, Finding 18) and BS with true variances (+ price of
+  ignoring, Finding 19), per region in a table (`Engine.worldPrice`). New fit "BLUP": the
+  plug-in BLUP on corrBS's `K̂` (`fitBLUP`); a second floor, the BLUP with true `K`, in the
+  Many draws table. `z < 0` is a warning with the Finding 17 text; the draw table shows the
+  own-data weight `cⱼ`. Tests: BLUP optimality and Pythagoras, diagonal case, two-cohort
+  equality, the Finding 18–19 example pinned (2.8/3.1/0.1%, 14.3/9.2/0.4%), equal-correlation
+  `δ±` and closed form, bound never violated in 40 app worlds (also damped), floor BLUP
+  matches its exact MSE. **Seen (2000 draws, typical error in % of the blend floor; BS /
+  corrBS / BLUP / BLUP floor):** `ρ = 0`: 104 / 105 / 105 / 100; `ρ = 0.3`: 108 / 104 / 103 / 99;
+  `ρ = 0.6`: 115 / 103 / 98 / 93; with noise spread 121 / 105 / 102 / 94; `T = 5`:
+  119 / 106 / 102 / 93; `J = 20`: 119 / 103 / 91 / 87; `J = 4`: 110 / 104 / 101 / 97. So the
+  plug-in BLUP survives estimation on corrBS's few-parameter `K̂` and beats the blend
+  under correlation, often below the blend's own floor; it costs nothing at `ρ = 0`.
+  Owner: make BLUP the default reference? (Not done: the blend is the thesis's object.)
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
 - [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
   to "proved".
@@ -255,22 +273,3 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
-- Finding 19 (2026-11-16): ignoring correlation costs at most `1/(1 − δ²)`
-  (`δ` = spectral norm of the noise correlation minus `I`; `1/(1 − ρ²)` for two
-  cohorts). App: in the world model show the exact cost of BS against the best
-  predictor and this bound; in the fit, `δ̂` from `ρ̂` as a quick "is correlation
-  worth modelling?" indicator.
-- Finding 20 (2026-11-16): the sharp two-sided bound (equal correlations:
-  `(2 + (J − 2)r)²/(4(1 − r)(1 + (J − 1)r))`) and the bound for damping by `θ`.
-  App: use it for the indicator above, and show the worst case of the fit's damping `θ̂`.
-- Finding 18 (2026-11-16): the best linear unbiased predictor `d*` over all cohort
-  estimates beats the blend unless cohort `j` has equal covariances with the others
-  (always for two cohorts). App: show "price of the blend" `(w − d*)ᵀK(w − d*)` per
-  cohort in the world model (exact, true `K`), and add the plug-in BLUP as a fitted
-  method to see whether it survives estimating every `K̂ᵢⱼ`.
-- Finding 17 (2026-11-16): a negative `z` past the two-cohort singularity is
-  the best blend with true parameters (the blend is continuous; only the gap
-  flips sign). The app's `z > 1` warning could get a sibling for `z < 0`
-  that says this, and points at `ρ̂`/`τ̂²` as the likelier cause in a fit.
-  Also show the own-data weight `cⱼ = bⱼ + zⱼ(1 − bⱼ)` next to `z` in the
-  rates table (bounded for any `J`; Finding 17, owner 2026-11-16).

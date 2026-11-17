@@ -167,7 +167,7 @@ footer a { color: var(--accent); }
     <div class="row">
       <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
     </div>
-    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
+    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
@@ -190,6 +190,13 @@ footer a { color: var(--accent); }
     <details><summary>Table</summary><div class="tablewrap" id="t-many"></div></details>
   </section>
 
+  <section class="card" aria-labelledby="h-price">
+    <h2 id="h-price">Is correlation worth modelling?</h2>
+    <div id="price-data"></div>
+    <div id="price-world"></div>
+    <details><summary>Per region (true parameters)</summary><div class="tablewrap" id="t-price"></div></details>
+  </section>
+
   <section class="card" aria-labelledby="h-steps">
     <h2 id="h-steps">Fitting steps <span class="sub">(this draw)</span></h2>
     <div class="tabs" id="steps-tabs"></div>
@@ -198,7 +205,7 @@ footer a { color: var(--accent); }
   </section>
 
   <footer>
-    <p>The floor is the best credibility blend if the true parameters were known (thesis eq. (26) on the true <i>K</i>): a benchmark, never a fit. The gap between fit and floor is the price of estimating the parameters.</p>
+    <p>The floor is the best credibility blend if the true parameters were known (thesis eq. (26) on the true <i>K</i>): a benchmark, never a fit. The gap between fit and floor is the price of estimating the parameters. The table under Many draws also shows the best linear unbiased predictor with the true <i>K</i>, the lower floor that the blend form itself can miss (Finding 18).</p>
     <p>Every fitted number comes from the simulated data alone. Levels and noise are skewed (gamma): the theory assumes only two moments. <a href="../">Blueprint</a> · <a href="../handbook.pdf">Handbook</a></p>
   </footer>
 </main>
@@ -313,6 +320,40 @@ footer a { color: var(--accent); }
     return p;
   }
 
+  /** Own-data weight cⱼ = bⱼ + zⱼ(1 − bⱼ) (Finding 17), or the fit's own c (BLUP); 1 for z = 1 without b. */
+  function ownWeight(f, j) {
+    if (f.c) return f.c[j];
+    if (!f.b) return f.z ? f.z[j] : 1;
+    return f.b[j] + f.z[j] * (1 - f.b[j]);
+  }
+
+  // ---------- is correlation worth modelling? (Findings 18–20)
+  const lean = (name, text) => `<a href="../find/#doc/Credibility.${name}" target="_blank" rel="noopener" style="color:var(--accent)">${text || name.replace(/^.*\./, '')}</a>`;
+  const ratio = (x) => (Number.isFinite(x) ? `×${x.toFixed(2)} (+${pct(x - 1, 1)})` : 'no bound');
+  function renderPrice(data, fits) {
+    const ind = E.correlationIndicator(data, null);
+    const kept = [];
+    for (const [id, f] of fits) {
+      if (f.theta == null || kept.some((k) => k.id === id)) continue;
+      const th = f.theta, b = E.dampedBound(ind.dm, ind.dp, th);
+      kept.push({ id, text: th === 1 ? `${E.MODELS[id].short} models it (θ = 1, bound ×1)` : th === 0 ? `${E.MODELS[id].short} ignores it (θ = 0)` : `${E.MODELS[id].short} damps it by θ̂ = ${th}: at most ${ratio(b)}` });
+    }
+    const verdict = ind.ignore < 1.02 ? 'no: ignoring it costs at most 2% in mean squared error' : ind.ignore < 1.1 ? 'hardly: ignoring it costs at most 10%' : 'worth checking: in the worst case ignoring it costs this much (compare fit and reference under Many draws for the actual cost)';
+    $('price-data').innerHTML = `<p class="sub" style="margin:0"><b>From this draw</b> (data only): corrBS estimates ρ̂ = ${ind.rho.toFixed(2)}, so the noise correlation matrix has eigenvalues in [1 − ${ind.dm.toFixed(2)}, 1 + ${ind.dp.toFixed(2)}]. Plugged into the bound, a model that ignores the correlation has mean squared error at most ${ratio(ind.ignore)} that of the best linear predictor; ${verdict}.${kept.length ? ' ' + kept.map((k) => k.text).join('; ') + '.' : ''} <span class="badge proved">proved</span> for the true parameters: ${lean('Core.linMse_ignoreCorr_le_two_sided')}, ${lean('Core.linMse_damped_le')}; here an estimate.</p>`;
+    const p = E.worldPrice(world), w = p.weighted;
+    const rows = [
+      [lean('Core.Estimates.blup_mse_optimal', 'Best linear predictor (BLUP)'), w.best, '—'],
+      [lean('Core.Estimates.mse_blend_eq_blup_add', 'Best blend, eq. (26) (the floor)'), w.blend, '+' + pct(w.blend / w.best - 1, 1)],
+      [lean('Core.Estimates.ignoreCorr_mse_le', 'BS, true variances, correlation ignored'), w.ignore, '+' + pct(w.ignore / w.best - 1, 1)],
+    ];
+    $('price-world').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>In this world</b> (true parameters, exact; links go to the Lean theorems):</p>
+      <div class="tablewrap"><table><thead><tr><th>Known parameters</th><th>Typ. error</th><th>MSE vs BLUP</th></tr></thead><tbody>` +
+      rows.map((r) => `<tr><td>${r[0]}</td><td>${pct(Math.sqrt(r[1]), 2)}</td><td>${r[2]}</td></tr>`).join('') +
+      `</tbody></table></div><p class="sub" style="margin:6px 0 0">Bound for ignoring it, from the true eigenvalues (δ₋ = ${p.dm.toFixed(2)}, δ₊ = ${p.dp.toFixed(2)}): ${ratio(p.bound)} per region. The blend row is what restricting to zμ̂ⱼ + (1 − z)μ̂ costs; it is zero for two regions or equal covariances (Finding 18). Whether the BLUP survives estimation: pick it as the fit and compare.</p>`;
+    $('t-price').innerHTML = '<table><thead><tr><th>Region</th><th>BLUP error</th><th>Blend +MSE</th><th>Ignore +MSE</th></tr></thead><tbody>' +
+      p.best.map((b, j) => `<tr><td>R${j + 1}</td><td>${pct(Math.sqrt(b), 2)}</td><td>${pct(p.blend[j] / b - 1, 1)}</td><td>${pct(p.ignore[j] / b - 1, 1)}</td></tr>`).join('') + '</tbody></table>';
+  }
+
   // ---------- one draw
   function renderDraw() {
     const r = E.rng(state.seed);
@@ -363,7 +404,7 @@ footer a { color: var(--accent); }
       const hit = el('rect', { x: 0, y: y - rowH / 2, width: W, height: rowH, fill: 'transparent' }, svg);
       const html = `<b>Region ${j + 1}</b> · ${Math.round(wt[j]).toLocaleString()} vehicle-years<br>
         True level ${levels[j].toFixed(3)}<br>Own mean ${fit.means[j].toFixed(3)}<br>
-        ${E.MODELS[state.fit].short} rate ${fit.rates[j].toFixed(3)}${fit.z ? ` (z = ${fit.z[j].toFixed(2)})` : ''}<br>
+        ${E.MODELS[state.fit].short} rate ${fit.rates[j].toFixed(3)}${fit.z ? ` (z = ${fit.z[j].toFixed(2)}, own weight ${ownWeight(fit, j).toFixed(2)})` : ` (own weight ${ownWeight(fit, j).toFixed(2)})`}<br>
         ${E.MODELS[state.ref].short} rate ${ref.rates[j].toFixed(3)}${typ ? `<br>Typical error of ${tShort}: ${pct(typ[j], 2)} (average case, not an interval)` : ''}`;
       hit.addEventListener('pointerenter', (e) => showTip(html, e));
       hit.addEventListener('pointermove', (e) => showTip(html, e));
@@ -382,13 +423,14 @@ footer a { color: var(--accent); }
     warnBlock($('w-draw'), msgs, notes);
     const withPremium = (f, p) => (p ? Object.assign({}, f, { steps: f.steps.concat([p.step]) }) : f);
     renderSteps({ fit: withPremium(fit, pFit), ref: withPremium(ref, pRef) });
+    renderPrice(data, [[state.fit, fit], [state.ref, ref]]);
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
     const fe = (rates) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) ** 2)) / sum(wt);
-    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th>${spreadOn ? '<th>σⱼ</th>' : ''}<th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>${E.MODELS[state.ref].short}</th>${typ ? `<th>Typ. err.*</th>` : ''}${pFit ? '<th>Fit forecast err.†</th>' : ''}<th>Next year‡</th></tr></thead><tbody>` +
-      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td>${spreadOn ? `<td>${Math.sqrt(world.truth.sigmaj2[j]).toFixed(1)}</td>` : ''}<td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}${pFit ? `<td>${pct(pFit.typical[j], 2)}</td>` : ''}<td>${Y[j].toFixed(3)}</td></tr>`).join('') +
+    $('t-draw').innerHTML = `<table><thead><tr><th>Region</th><th>Vehicle-years</th>${spreadOn ? '<th>σⱼ</th>' : ''}<th>True</th><th>Own</th><th>${E.MODELS[state.fit].short}</th><th>z</th><th>cⱼ§</th><th>${E.MODELS[state.ref].short}</th>${typ ? `<th>Typ. err.*</th>` : ''}${pFit ? '<th>Fit forecast err.†</th>' : ''}<th>Next year‡</th></tr></thead><tbody>` +
+      order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td>${spreadOn ? `<td>${Math.sqrt(world.truth.sigmaj2[j]).toFixed(1)}</td>` : ''}<td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ownWeight(fit, j).toFixed(2)}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}${pFit ? `<td>${pct(pFit.typical[j], 2)}</td>` : ''}<td>${Y[j].toFixed(3)}</td></tr>`).join('') +
       '</tbody></table>' + (typ ? `<p class="sub" style="margin:6px 0 0">* Typical error of the ${tShort} rate (jackknife MSEP): an average-case error over data sets like this one, not an interval.</p>` : '') +
-      `<p class="sub" style="margin:6px 0 0">${pFit ? `† Premium = the fit's rate (z unchanged). Its typical error for next year's outcome: √(MSEⱼ + σ̂ⱼ²/wⱼ,next), the level error plus next year's noise (<a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener">mse_forecast</a>, proved). ` : ''}‡ The world's actual next-year outcome, with next year's volume ×${state.next.toFixed(2)} this year's mean. This draw, error against it: fit ${pct(Math.sqrt(fe(fit.rates)), 2)}, reference ${pct(Math.sqrt(fe(ref.rates)), 2)}.</p>`;
+      `<p class="sub" style="margin:6px 0 0">${pFit ? `† Premium = the fit's rate (z unchanged). Its typical error for next year's outcome: √(MSEⱼ + σ̂ⱼ²/wⱼ,next), the level error plus next year's noise (<a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener">mse_forecast</a>, proved). ` : ''}§ Own-data weight of the fit: the coefficient of the region's own mean in its rate, cⱼ = bⱼ + zⱼ(1 − bⱼ) for a blend (for BLUP the weight d̂ⱼⱼ). Unlike z it stays bounded through the two-cohort singularity (Finding 17, <a href="../find/#doc/Credibility.Core.abs_bestZ_mul_one_sub_le" target="_blank" rel="noopener">abs_bestZ_mul_one_sub_le</a>). ‡ The world's actual next-year outcome, with next year's volume ×${state.next.toFixed(2)} this year's mean. This draw, error against it: fit ${pct(Math.sqrt(fe(fit.rates)), 2)}, reference ${pct(Math.sqrt(fe(ref.rates)), 2)}.</p>`;
   }
 
   // ---------- fitting steps
@@ -432,7 +474,7 @@ footer a { color: var(--accent); }
       done += CHUNK;
       if (done < N) { setTimeout(step, 0); return; }
       const merged = {};
-      for (const id of ids.concat(['floor'])) {
+      for (const id of ids.concat(['floor', 'floorBlup'])) {
         const ms = parts.map((p) => p[id]);
         const mse = sum(ms.map((m) => m.mse)) / ms.length;
         const se = Math.sqrt(sum(ms.map((m) => m.se * m.se))) / ms.length;
@@ -487,7 +529,7 @@ footer a { color: var(--accent); }
       hit.addEventListener('pointerleave', hideTip);
     });
     const msgs = [], WHAT = {
-      tauNeg: 'τ̂² ≤ 0 (set to 0)', zOver1: 'z > 1 for some region', bNeg: 'a negative weight b',
+      tauNeg: 'τ̂² ≤ 0 (set to 0)', zOver1: 'z > 1 for some region', zNeg: 'z < 0 for some region', bNeg: 'a negative weight b',
       thetaLow: 'damping lowered below θ = 0.95', offBalance: 'off-balance above 1%',
     };
     const pairs = state.fit === state.ref ? [[state.fit, 'Fit and reference']] : [[state.fit, 'Fit'], [state.ref, 'Reference']];
@@ -502,7 +544,7 @@ footer a { color: var(--accent); }
     }
     warnBlock($('w-many'), msgs, notes);
     $('t-many').innerHTML = '<table><thead><tr><th>Model</th><th>Typical error</th><th>±2 SE</th></tr></thead><tbody>' +
-      rows.map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
+      rows.concat([{ label: 'Floor, best linear predictor (BLUP, known K)', ...toR(res.floorBlup) }]).map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
     const fr = (id) => pct(Math.sqrt(res[id].fmse), 2);
     $('forecast-many').innerHTML = `<b>Premium for next year</b> (volume ×${state.next.toFixed(2)} this year's mean): typical error against the world's next-year outcome, fit ${fr(state.fit)}, reference ${fr(state.ref)}, floor ${fr('floor')}; the floor's theory √(level MSE + σⱼ²/wⱼ,next) is ${pct(Math.sqrt(res.floor.ftheory), 2)} <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener" style="color:var(--accent)">mse_forecast</a>. Most of it is next year's noise, which no premium can remove.`;
     $('n-draws').textContent = N.toLocaleString();

@@ -1,5 +1,5 @@
 /*
- * Credibility app engine (studies/PLAN.md, steps 1–3, and the premium step of G6).
+ * Credibility app engine (studies/PLAN.md, steps 1–3, the premium step of G6, and Findings 17–20).
  *
  * One file, run by the page (app/index.html) and by the tests under Node
  * (app/engine.test.js). No dependencies.
@@ -97,6 +97,24 @@
   }
 
   const sum = (a) => a.reduce((s, x) => s + x, 0);
+
+  /** Eigenvalues of a symmetric matrix, ascending (cyclic Jacobi; the matrices here are at most 20 × 20). */
+  function eigSym(A) {
+    const n = A.length, M = A.map((row) => row.slice());
+    for (let sweep = 0; sweep < 100; sweep++) {
+      let off = 0;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += M[p][q] * M[p][q];
+      if (off < 1e-30) break;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+        if (Math.abs(M[p][q]) < 1e-300) continue;
+        const th = (M[q][q] - M[p][p]) / (2 * M[p][q]);
+        const t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th * th + 1)), c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+        for (let k = 0; k < n; k++) { const a = M[k][p], b = M[k][q]; M[k][p] = c * a - sn * b; M[k][q] = sn * a + c * b; }
+        for (let k = 0; k < n; k++) { const a = M[p][k], b = M[q][k]; M[p][k] = c * a - sn * b; M[q][k] = sn * a + c * b; }
+      }
+    }
+    return M.map((row, i) => row[i]).sort((a, b) => a - b);
+  }
 
   // ---------------------------------------------------------------- the world
 
@@ -239,6 +257,90 @@
     return z * z * A + (1 - z) * (1 - z) * B + 2 * z * (1 - z) * C;
   }
 
+  // ---------------------------------------------------------------- the best linear predictor (Findings 18–20)
+
+  /** The blend as weights on the cohort estimates: z eⱼ + (1 − z) b (Core.linMse_blendWeight). */
+  function blendWeight(z, b, j) {
+    return b.map((bi, i) => (i === j ? z : 0) + (1 - z) * bi);
+  }
+
+  /**
+   * Best linear unbiased predictor of μⱼ from all cohort estimates, levels L = τ²I (Finding 18,
+   * Core.blupWeight): d* = K⁻¹ℓ + (1 − 1ᵀK⁻¹ℓ) b with ℓ = τ²eⱼ and the GLS weights b.
+   */
+  function blupWeight(K, tau2, j) {
+    const J = K.length, u = solve(K, new Array(J).fill(1)), tot = sum(u), b = u.map((x) => x / tot);
+    const l = solve(K, K.map((_, i) => (i === j ? tau2 : 0))), s = sum(l);
+    return l.map((x, i) => x + (1 - s) * b[i]);
+  }
+
+  /** True MSE of Σᵢ dᵢμ̂ᵢ for μⱼ when cov(μ̂) = K and L = τ²I (Core.linMse): dᵀKd − 2τ²dⱼ + τ². */
+  function linMse(K, tau2, j, d) {
+    let q = 0;
+    for (let i = 0; i < d.length; i++) for (let k = 0; k < d.length; k++) q += d[i] * K[i][k] * d[k];
+    return q - 2 * tau2 * d[j] + tau2;
+  }
+
+  /**
+   * The noise correlation's spread around I (Finding 20): with R = D^(−½)VD^(−½) the correlation
+   * matrix of the noise V = K − τ²I, δ₋ = 1 − λmin(R) and δ₊ = λmax(R) − 1, so that
+   * −δ₋ Σvᵢyᵢ² ≤ yᵀVy − Σvᵢyᵢ² ≤ δ₊ Σvᵢyᵢ² (the hypothesis of Core.linMse_damped_le).
+   */
+  function noiseDeltas(V) {
+    const R = V.map((row, i) => row.map((x, k) => (i === k ? 1 : x / Math.sqrt(V[i][i] * V[k][k]))));
+    const ev = eigSym(R);
+    return { dm: Math.max(0, 1 - ev[0]), dp: Math.max(0, ev[ev.length - 1] - 1) };
+  }
+
+  /**
+   * Worst-case MSE ratio of a working model that damps the noise correlations by θ, against the
+   * best predictor (Core.linMse_damped_le, Kantorovich): (a + A)²/(4aA) with
+   * a = (1 − δ₋)/(1 − θδ₋), A = (1 + δ₊)/(1 + θδ₊). θ = 0 ignores the correlation
+   * (Core.linMse_ignoreCorr_le_two_sided), θ = 1 is the true model (ratio 1). Infinite if δ₋ ≥ 1.
+   */
+  function dampedBound(dm, dp, theta) {
+    if (!(dm < 1)) return Infinity;
+    const a = (1 - dm) / (1 - theta * dm), A = (1 + dp) / (1 + theta * dp);
+    return (a + A) * (a + A) / (4 * a * A);
+  }
+
+  /**
+   * The prices in a world with known parameters (Findings 18–19), per region j, in true MSE:
+   *   best   — the best linear unbiased predictor d* (Core.blupWeight_optimal);
+   *   blend  — the best blend, eq. (26) (the floor): pays (w − d*)ᵀK(w − d*) (Core.errVar_eq_blupWeight_add);
+   *   ignore — Bühlmann–Straub with the true variances, i.e. the predictor of K̃ = diag(τ² + vᵢ)
+   *            (Core.blupWeight_diag_eq_blendWeight), at most `bound` × best (Core.linMse_ignoreCorr_le_two_sided).
+   * Weighted: Σ wⱼ* MSEⱼ / w**, as the app's error. Reads the truth.
+   */
+  function correlationPrice(K, tau2, wt) {
+    const J = K.length, Kd = K.map((row, i) => row.map((x, k) => (i === k ? x : 0)));
+    const { b, z } = bestBlendWeights(K, tau2);
+    const best = [], blendM = [], ignore = [];
+    for (let j = 0; j < J; j++) {
+      best.push(linMse(K, tau2, j, blupWeight(K, tau2, j)));
+      blendM.push(linMse(K, tau2, j, blendWeight(z[j], b, j)));
+      ignore.push(linMse(K, tau2, j, blupWeight(Kd, tau2, j)));
+    }
+    const { dm, dp } = noiseDeltas(K.map((row, i) => row.map((x, k) => (i === k ? x - tau2 : x))));
+    const wall = sum(wt), agg = (a) => sum(a.map((x, j) => wt[j] * x)) / wall;
+    return { best, blend: blendM, ignore, dm, dp, bound: dampedBound(dm, dp, 0), weighted: { best: agg(best), blend: agg(blendM), ignore: agg(ignore) } };
+  }
+
+  /** correlationPrice of a world: the true K. Reads the truth. */
+  function worldPrice(world) {
+    return correlationPrice(trueK(world), world.truth.tau2, world.w.map(sum));
+  }
+
+  /**
+   * "Is correlation worth modelling?" from data only (Findings 19–20): δ̂₋, δ̂₊ of corrBS's noise
+   * table Σ̂ (one ρ̂, credibility-weighted σ̃ⱼ), and the bounds for ignoring it (θ = 0) and for a
+   * fit that keeps a share θ of it (θ = 1: none).
+   */
+  function correlationIndicator(data, theta) {
+    const p = vcEstimate(data), { dm, dp } = noiseDeltas(p.Sig);
+    return { rho: p.rho, dm, dp, ignore: dampedBound(dm, dp, 0), damped: theta == null ? null : dampedBound(dm, dp, theta) };
+  }
+
   // ---------------------------------------------------------------- next year (G6)
 
   /** Next year's volumes: this year's mean wⱼ* / T, times a factor (default 1). */
@@ -268,7 +370,7 @@
     if (!fit.K) return null;
     const wt = data.w.map(sum), J = wt.length, tau2 = fit.tau2;
     const { b, s2 } = bestBlendWeights(fit.K, tau2);
-    const level = levelMSE || Array.from({ length: J }, (_, j) => blendMSE(fit.K, tau2, b, s2, j, fit.z[j]));
+    const level = levelMSE || fit.levelMSE || Array.from({ length: J }, (_, j) => blendMSE(fit.K, tau2, b, s2, j, fit.z[j]));
     const noise = wt.map((x, j) => (fit.K[j][j] - tau2) * x / wNext[j]);
     const mse = level.map((g, j) => g + noise[j]);
     const step = {
@@ -301,7 +403,7 @@
     const b = zs > 0 ? z.map((x) => x / zs) : wt.map((x) => x / wall);
     const res = blend(m, z, b);
     return {
-      means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags: { tauNeg: tauRaw <= 0 },
+      means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags: { tauNeg: tauRaw <= 0 }, theta: 0,
       sigma2, tau2, K: wt.map((x, i) => wt.map((_, j) => (i === j ? sigma2 / x + tau2 : 0))),
       steps: [
         { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.bs_a' },
@@ -417,12 +519,13 @@
     const res = blend(m, z, b);
     const offBal = sum(wt.map((x, j) => x * (m[j] - res.rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = {
-      tauNeg: tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0),
+      tauNeg: tauRaw <= 0, zOver1: z.some((x) => x > 1), zNeg: z.some((x) => x < 0), bNeg: b.some((x) => x < 0),
       thetaLow: theta < THETAS[0], offBalance: Math.abs(offBal) > 0.01,
     };
     const warnings = [];
     if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
     if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂ (thesis eq. (34) would clip it)`);
+    if (flags.zNeg) warnings.push(`z < 0 for ${z.filter((x) => x < 0).length} region(s): with the true parameters a negative z can be the best blend (Finding 17: past a singularity the gap μ̂ⱼ − μ̂ flips sign together with z, and the own-data weight cⱼ = bⱼ + zⱼ(1 − bⱼ) stays bounded), so clipping z to 0 is not the fix; in a fit it more likely means K̂ is nearly singular: look at ρ̂ and τ̂²`);
     if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
     if (flags.thetaLow) warnings.push(`K̂ was not positive definite at θ = ${THETAS[0]}; damping lowered to θ = ${theta}`);
     if (flags.offBalance) warnings.push(`off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume`);
@@ -511,16 +614,17 @@
     const p = vcEstimate(data), { m, wt, S } = p, J = m.length;
     const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
     const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
-    const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
+    const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), zNeg: z.some((x) => x < 0), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
     // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings S27–S29): with ρ̂ > 0
     // the true-K blend has negative b and z near 1 (so ẑ > 1 by noise); with ρ̂ > 0 or unequal σ̃ⱼ it is
     // balanced for the weights bⱼ/(1 − zⱼ), not for the exposures. These go to `notes`, not `warnings`.
-    const expected = { zOver1: p.rho > 0, bNeg: p.rho > 0, offBalance: p.rho > 0 || p.between > 0 };
+    const expected = { zOver1: p.rho > 0, zNeg: false, bNeg: p.rho > 0, offBalance: p.rho > 0 || p.between > 0 };
     const why = p.rho > 0 ? 'expected under correlation' : 'expected with region-specific σⱼ';
     const msg = {
       tauNeg: 'τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂',
       zOver1: `z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂` +
         (expected.zOver1 ? '; the best z of a large region is close to 1 here, so the estimate can land above 1 (capping it at 1 changes nothing measurable)' : ''),
+      zNeg: `z < 0 for ${z.filter((x) => x < 0).length} region(s): with the true parameters a negative z can be the best blend (Finding 17: past a singularity the gap μ̂ⱼ − μ̂ flips sign together with z, and the own-data weight cⱼ = bⱼ + zⱼ(1 − bⱼ) stays bounded), so clipping z to 0 is not the fix; in a fit it more likely means K̂ is nearly singular: look at ρ̂ and τ̂²`,
       bNeg: `negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise` +
         (expected.bNeg ? '; the best weights for the true K have negative entries too' : ''),
       offBalance: `off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume` +
@@ -542,7 +646,29 @@
       { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
       { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` },
     ];
-    return { means: m, z, b, mu, rates, warnings, notes, flags, expected, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, steps };
+    return { means: m, z, b, mu, rates, warnings, notes, flags, expected, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, theta: 1, steps };
+  }
+
+  /**
+   * Plug-in best linear unbiased predictor (Finding 18) on corrBS's K̂ and τ̂²: each region's rate
+   * Σᵢ d̂ᵢμ̂ᵢ with d̂ = blupWeight(K̂, τ̂², j), using every other region individually rather than
+   * through μ̂. Optimal for the true K (Core.blupWeight_optimal); whether it survives estimating
+   * every K̂ᵢⱼ is what the app shows. `c` holds the own-data weights d̂ⱼⱼ; `levelMSE` the plug-in MSE.
+   */
+  function fitBLUP(data) {
+    const base = fitVC(data), { K, tau2, means: m, b } = base, J = m.length;
+    const D = m.map((_, j) => blupWeight(K, tau2, j));
+    const rates = D.map((d) => sum(d.map((x, i) => x * m[i])));
+    const c = D.map((d, j) => d[j]);
+    const levelMSE = D.map((d, j) => linMse(K, tau2, j, d));
+    const negOther = D.filter((d, j) => d.some((x, i) => i !== j && x < 0)).length;
+    const warnings = base.flags.tauNeg ? [base.warnings.find((w) => w.startsWith('τ̂²')) || 'τ̂² ≤ 0, set to 0: every region gets the portfolio level'] : [];
+    const steps = base.steps.filter((s) => !['b', 'z', 'rates'].includes(s.name)).concat([
+      { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+      { name: 'BLUP weights', formula: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ', values: c, badge: 'proved', lean: 'Credibility.Core.blupWeight_optimal', note: `the weights sum to 1 and use every region individually; ${negOther} region(s) give some other region a negative weight` },
+      { name: 'rates', formula: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ', values: rates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal', note: 'the parameters are plugged in: optimal among all unbiased linear predictors for the true K, τ²' },
+    ]);
+    return { means: m, z: null, b, c, mu: base.mu, rates, warnings, notes: [], flags: { tauNeg: base.flags.tauNeg }, K, tau2, rho: base.rho, theta: 1, levelMSE, steps };
   }
 
   /**
@@ -573,6 +699,7 @@
   const MODELS = {
     bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
     vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: fitVC, ready: true, msep: jackknifeMSEP },
+    blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: fitBLUP, ready: true },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
@@ -625,11 +752,12 @@
    */
   function simulate(world, ids, n, seed, nextFactor) {
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
+    const Dstar = fl.K.map((_, j) => blupWeight(fl.K, world.truth.tau2, j));
     const wt = world.w.map(sum), wall = sum(wt);
     const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
     const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
     const acc = {};
-    for (const id of ids.concat(['floor'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, warn: 0, flags: {}, expected: {} };
+    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, warn: 0, flags: {}, expected: {} };
     const fe = (rates, Y) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) * (x - Y[j]))) / wall;
     for (let k = 0; k < n; k++) {
       const { levels, data } = draw(world, r), Y = drawNext(world, levels, wNext, rn);
@@ -643,6 +771,9 @@
       }
       const fr = fl.apply(data).rates, e = weightedSE(data, fr, levels), g = fe(fr, Y);
       acc.floor.s += e; acc.floor.ss += e * e; acc.floor.f += g; acc.floor.ff += g * g;
+      const mm = cohortMeans(data).m, br = Dstar.map((d) => sum(d.map((x, i) => x * mm[i])));
+      const eb = weightedSE(data, br, levels), gb = fe(br, Y);
+      acc.floorBlup.s += eb; acc.floorBlup.ss += eb * eb; acc.floorBlup.f += gb; acc.floorBlup.ff += gb * gb;
     }
     const out = {};
     for (const id in acc) {
@@ -661,7 +792,8 @@
     DEFAULTS, MODELS, FEATURES,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
     nextVolumes, drawNext, premium, floorForecast,
   };

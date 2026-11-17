@@ -470,3 +470,126 @@ test('Documented balance costs are the exact ones (FINDINGS 15, S28): change the
   assert.ok(rows.every((r, i) => (X.worlds()[i].params.rho > 0) === (r.minB < 0)));  // S27: b < 0 iff ρ > 0
   assert.ok(rows.every((r) => r.maxZ < 1));                                          // S29: the floor has z < 1
 });
+
+// ---------------------------------------------------------------- Findings 17–20: the best linear predictor and the price of correlation
+
+/** Finding 16/18/19 example: τ² = 1, v = (0.5, 1, 3), noise correlation 0.5. */
+const exampleK = () => {
+  const v = [0.5, 1, 3];
+  return v.map((vi, i) => v.map((vk, k) => (i === k ? 1 + vi : 0.5 * Math.sqrt(vi * vk))));
+};
+
+test('BLUP weights sum to 1, are optimal, and MSE(d) = MSE(d*) + (d − d*)ᵀK(d − d*) (Core.blupWeight_optimal, linMse_eq_blupWeight_add)', () => {
+  const r = E.rng(31);
+  for (let rep = 0; rep < 20; rep++) {
+    const K = E.trueK(E.makeWorld({ J: 2 + (rep % 6), rho: 0.8 * r(), noiseSpread: r(), tau: 0.02 + 0.2 * r() })), tau2 = K[0][0] - K[0][0] + (0.02 + 0.2 * r()) ** 2;
+    const J = K.length, j = rep % J, d = E.blupWeight(K, tau2, j), best = E.linMse(K, tau2, j, d);
+    assert.ok(Math.abs(d.reduce((s, x) => s + x, 0) - 1) < 1e-10);
+    for (let k = 0; k < 5; k++) {
+      const h = Array.from({ length: J }, () => r() - 0.5), m = h.reduce((s, x) => s + x, 0) / J;
+      const e = d.map((x, i) => x + h[i] - m), diff = e.map((x, i) => x - d[i]);
+      close(E.linMse(K, tau2, j, e), best + E.linMse(K, 0, j, diff), 1e-9, 'value');
+      assert.ok(E.linMse(K, tau2, j, e) >= best - 1e-12);
+    }
+  }
+});
+
+test('The blend as weights has the blend’s MSE, and is the BLUP for two cohorts (Core.linMse_blendWeight, exists_blendWeight_eq_blupWeight_iff)', () => {
+  const K = exampleK(), { b, z, s2 } = E.bestBlendWeights(K, 1);
+  for (let j = 0; j < 3; j++) close(E.linMse(K, 1, j, E.blendWeight(z[j], b, j)), E.blendMSE(K, 1, b, s2, j, z[j]), 1e-12, 'value');
+  const K2 = [[1.5, 0.4], [0.4, 3]], f = E.bestBlendWeights(K2, 1);
+  for (let j = 0; j < 2; j++) {
+    const w = E.blendWeight(f.z[j], f.b, j), d = E.blupWeight(K2, 1, j);
+    w.forEach((x, i) => close(x, d[i], 1e-12, 'value'));
+  }
+});
+
+test('Diagonal K: the BLUP is the blend with z = τ²/(τ² + vⱼ) and inverse-variance b (Core.blupWeight_diag_eq_blendWeight)', () => {
+  const v = [0.5, 1, 3, 0.2], tau2 = 0.7, K = v.map((vi, i) => v.map((_, k) => (i === k ? tau2 + vi : 0)));
+  const inv = v.map((x) => 1 / (tau2 + x)), tot = inv.reduce((s, x) => s + x, 0), b = inv.map((x) => x / tot);
+  for (let j = 0; j < v.length; j++) {
+    const d = E.blupWeight(K, tau2, j), w = E.blendWeight(tau2 / (tau2 + v[j]), b, j);
+    d.forEach((x, i) => close(x, w[i], 1e-12, 'value'));
+  }
+});
+
+test('Finding 18–19 example: blend 2.8/3.1/0.1% and ignoring correlation 14.3/9.2/0.4% above the BLUP (pinned: change FINDINGS if this fails)', () => {
+  const p = E.correlationPrice(exampleK(), 1, [1, 1, 1]);
+  const pc = (a) => a.map((x, j) => Math.round(1000 * (x / p.best[j] - 1)) / 10);
+  assert.deepEqual(p.best.map((x) => +x.toFixed(4)), [0.4827, 0.8404, 1.5470]);
+  assert.deepEqual(p.blend.map((x) => +x.toFixed(4)), [0.4961, 0.8668, 1.5492]);
+  assert.deepEqual(pc(p.blend), [2.8, 3.1, 0.1]);
+  assert.deepEqual(pc(p.ignore), [14.3, 9.2, 0.4]);
+  close(p.dm, 0.5, 1e-9, 'δ₋'); close(p.dp, 1, 1e-9, 'δ₊');   // J = 3, r = 0.5: δ₋ = r, δ₊ = 2r
+  close(p.bound, 1.5625, 1e-9, 'value');                        // Finding 20: (2 + r)²/(4(1 − r)(1 + 2r))
+});
+
+test('Equal correlations: δ₋ = r, δ₊ = (J − 1)r and the closed form bound (Core.linMse_ignoreCorr_equicorr_le)', () => {
+  for (const [J, r] of [[2, 0.5], [3, 0.5], [8, 0.6], [20, 0.3]]) {
+    const R = Array.from({ length: J }, (_, i) => Array.from({ length: J }, (_, k) => (i === k ? 1 : r)));
+    const { dm, dp } = E.noiseDeltas(R);
+    close(dm, r, 1e-9, `δ₋ J=${J}`); close(dp, (J - 1) * r, 1e-9, `δ₊ J=${J}`);
+    const closed = (2 + (J - 2) * r) ** 2 / (4 * (1 - r) * (1 + (J - 1) * r));
+    close(E.dampedBound(dm, dp, 0), closed, 1e-12, 'value');
+    if (J === 2) close(closed, 1 / (1 - r * r), 1e-12, 'value');
+  }
+  close(E.dampedBound(0.5, 1, 0.5), 1.125, 1e-12, 'value');   // Finding 20: halfway damping at J = 3, r = 0.5 → 12.5%
+  assert.equal(E.dampedBound(0.5, 1, 1), 1);
+});
+
+test('Ignoring correlation and damping never cost more than the bound, in app worlds (Core.linMse_damped_le)', () => {
+  const r = E.rng(77);
+  for (let rep = 0; rep < 40; rep++) {
+    const world = E.makeWorld({ J: 2 + (rep % 10), rho: 0.9 * r(), noiseSpread: 1.5 * r(), spread: 2 * r(), tau: 0.01 + 0.2 * r() });
+    const K = E.trueK(world), tau2 = world.truth.tau2, p = E.worldPrice(world);
+    for (let j = 0; j < world.J; j++) {
+      assert.ok(p.best[j] <= p.blend[j] + 1e-15 && p.blend[j] <= p.ignore[j] * (1 + 1e-12) + 1e-15 || p.best[j] <= p.ignore[j] + 1e-15);
+      assert.ok(p.ignore[j] <= p.bound * p.best[j] * (1 + 1e-9), `ignore, rep ${rep}`);
+      const theta = r(), Kt = K.map((row, i) => row.map((x, k) => (i === k ? x : theta * x)));
+      const md = E.linMse(K, tau2, j, E.blupWeight(Kt, tau2, j));
+      assert.ok(md <= E.dampedBound(p.dm, p.dp, theta) * p.best[j] * (1 + 1e-9), `damped, rep ${rep}`);
+    }
+  }
+});
+
+test('Indicator from data: δ̂ = 0 when ρ̂ = 0, bound 1 for a fit that keeps the correlation (θ = 1)', () => {
+  const world = E.makeWorld({ rho: 0 });
+  let zeros = 0;
+  for (let k = 0; k < 20; k++) {
+    const { data } = E.draw(world, E.rng(500 + k)), ind = E.correlationIndicator(data, 1);
+    assert.equal(ind.damped, 1);
+    if (ind.rho === 0) { zeros++; assert.ok(ind.dm < 1e-12 && ind.dp < 1e-12 && Math.abs(ind.ignore - 1) < 1e-12); }
+  }
+  assert.ok(zeros > 0);
+});
+
+test('Plug-in BLUP: weights from corrBS’s K̂, rates Σ d̂ᵢμ̂ᵢ, equal to the blend for J = 2', () => {
+  const world = E.makeWorld({ J: 2, rho: 0.4 }), { data } = E.draw(world, E.rng(3));
+  const b = E.fitBLUP(data), v = E.fitVC(data);
+  b.rates.forEach((x, j) => close(x, v.rates[j], 1e-10, 'value'));
+  const w8 = E.makeWorld({ rho: 0.6 }), d8 = E.draw(w8, E.rng(4)).data, f = E.fitBLUP(d8);
+  f.rates.forEach((x, j) => { const d = E.blupWeight(f.K, f.tau2, j); close(x, d.reduce((s, y, i) => s + y * f.means[i], 0), 1e-12, 'value'); });
+  const pr = E.premium(f, d8, E.nextVolumes(d8, 1));
+  pr.level.forEach((g, j) => close(g, f.levelMSE[j], 1e-15, 'value'));
+});
+
+test('Floor BLUP in simulation is at most the blend floor, and matches its true MSE (Core.Estimates.blup_mse_optimal)', () => {
+  const world = E.makeWorld({ rho: 0.6 }), res = E.simulate(world, ['bs'], 3000, 99), p = E.worldPrice(world);
+  assert.ok(res.floorBlup.mse < res.floor.mse);
+  assert.ok(Math.abs(res.floorBlup.mse - p.weighted.best) < 4 * res.floorBlup.se);
+  assert.ok(Math.abs(res.floor.mse - p.weighted.blend) < 4 * res.floor.se);
+});
+
+test('z < 0 is flagged as a warning (Finding 17), not as an expected note', () => {
+  const r = E.rng(5);
+  let seen = 0;
+  for (let k = 0; k < 400 && seen < 3; k++) {
+    const world = E.makeWorld({ J: 3, T: 4, rho: 0.85, spread: 2, noiseSpread: 1.5 });
+    const { data } = E.draw(world, r);
+    for (const f of [E.fitVC(data), E.fitCorr(data)]) {
+      assert.equal(!!f.flags.zNeg, f.z.some((x) => x < 0));
+      if (f.flags.zNeg) { seen++; assert.ok(f.warnings.some((w) => w.startsWith('z < 0'))); }
+    }
+  }
+  assert.ok(seen > 0, 'no z < 0 in 400 draws: pick a harsher world');
+});

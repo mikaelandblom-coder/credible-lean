@@ -19,6 +19,8 @@ voice, then trim towards 8 pages.
 - Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
   blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
   `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".
+  App (2026-11-17, `studies/PLAN.md` 3c): the plug-in BLUP on corrBS's `K̂` beats the blend
+  under correlation (98% of the blend floor at `ρ = 0.6`), ties at `ρ = 0`: worth a "use it" line.
 
 
 ## 0. Setting and notation (1 page)
