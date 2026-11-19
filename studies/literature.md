@@ -220,7 +220,14 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
   Bühlmann–Straub, p. 177) and ch. 8 (§8.3.2 Hachemeister, p. 205): not read (book). Our
   `moments_bestZ_buhlmannGisler`/`weight_buhlmannGisler` reproduce the 1997 paper's
   `Zᵣ = A(A + Wᵣ⁻¹)⁻¹` and the `Z`-weighted collective `(ΣZᵢ)⁻¹ΣZᵢbᵢ` (the form quoted for
-  §7.3); page-level check against the book still open. Bühlmann,
+  §7.3). Page check, pp. 177–179 read (2026-11-19, owner's photos): Model Assumptions 7.7
+  match ours. A1: given `Θᵢ`, years independent with mean `μ(Θᵢ)`; A2: risks independent,
+  `Θᵢ` i.i.d. (our block-diagonal `K`, `L` with `Lⱼⱼ = Λ`). Conditional covariance either
+  diagonal `σₖ²(Θ)/wᵢⱼ⁽ᵏ⁾` (7.30, "standard") or `Σ(Θ)/wᵢⱼ` with one weight (7.31,
+  "alternative"); under the general (7.32) the book says its results fail. Ours takes the
+  cohort estimates as given with any `Sⱼ`, so it covers (7.32) for predictors linear in those
+  estimates. `vecBalanced_buhlmannGisler` is the (7.31) case `Sⱼ = S₀/wⱼ`. Still to read:
+  the theorem with `Zᵢ` and the collective estimator (pp. 180ff.). Bühlmann,
   Gisler & Kollöffel (2003), multidimensional credibility: cited by Englund et al., not read.
 - Frequency–severity with dependent risk profiles, Bayesian: Cheung, Ni, Oh & Woo (2021), IME
   100, 274–295; Q-credibility (ARCH 2025 abstract, Tang): factors chosen to minimise the MSE of
