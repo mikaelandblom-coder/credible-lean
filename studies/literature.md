@@ -252,10 +252,21 @@ credibility texts assume independence across risks. "No references" is too stron
   credibility estimators with random common effects and time effects*, J. Syst. Sci. Complex.
   30, 1107–1120. A **time effect common to all risks** correlates the risks within a period:
   that is our correlated noise, in parametric form.
-- Dannenburg (1995), *Crossed classification credibility models*, TI 95-64; Dannenburg, Kaas &
-  Goovaerts (1996), ch. 6; Goulet (2001); Fung & Xu (2009), Variance 4(1), 66–80 (REML,
-  independent and exchangeable errors). A year factor crossed with the cohort factor gives
-  equicorrelated noise within a year (ρ ≥ 0 only).
+- Dannenburg (1995), *Crossed classification credibility models*, TI 95-64 (DARE has the
+  record only, no PDF); Dannenburg, Kaas & Goovaerts (1996), ch. 6; Goulet (2001).
+  `y_ijt = β + α_i⁽¹⁾ + α_j⁽²⁾ + α_ij + ε_ijt`: both factors are *risk* classifications, so
+  cells sharing a row correlate permanently, not per year. Taking the second factor to be the
+  year would give equicorrelated noise within a year (ρ ≥ 0 only), but that is our reading,
+  not their use.
+- Fung & Xu (2009), *Estimation and robustness of linear mixed models in credibility context*,
+  Variance 2(1), 66–80 (read in full, casact.org). ML/REML for Hachemeister and Dannenburg
+  under normality. Their correlated errors (MA(1), AR(1), exchangeable) are **within one risk
+  over time**; risks stay independent ("yᵢ and yⱼ are statistically independent for i ≠ j").
+  They survey the actuarial correlated-error work the same way: Cossette & Luong (2003,
+  weighted least squares) and Lo, Fung & Zhu (2006, 2007, GEE), all within-panel; Frees et
+  al. (1999) and Antonio & Beirlant (2006) "only independent error structure". So the
+  actuarial mixed-model line supports the thesis's finding: correlation *across* risks in the
+  same period is not treated there.
 - Remark on the thesis's reading of `wen2`: a common effect that is *permanent* (one `Λ` for all
   years) only enters the inhomogeneous estimator. A common effect *per year* is noise
   correlated within the period and does change the homogeneous estimator; that is the thesis's
@@ -273,6 +284,13 @@ So correlated noise is standard in mixed models and BLUP theory; the thesis's co
 in bringing it into the Bühlmann–Straub form: the blend with GLS weights, eq. (26), its
 singularities and factors outside [0, 1], the §2.8 estimators of `K` from same-period cross
 products, and balance. Proofs here use only that foundation (no distribution).
+
+**Status (2026-11-19, second pass).** Allowlisted `dare.uva.nl`, `casact.org`,
+`www.casact.org`, `sysmath.cjoe.ac.cn` in the Default environment. Fung & Xu read; Dannenburg
+has no open PDF; `sysmath.cjoe.ac.cn` refuses the session (HTTP 403 from the site). The three
+candidates that may contain within-period dependence across risks (Wen & Wu 2011, Huang & Wu
+2015, Zhang, Cui & Chen 2017) are paywalled: owner to supply PDFs or photos of the model
+assumptions, the homogeneous estimator and any parameter estimation.
 
 **For a reviewer.** (1) Read Wen & Wu (2011) and Huang & Wu (2015) in full and say whether
 eq. (26) or the §2.8 estimators appear there; if so, cite and move the "new here" in paper §15.
