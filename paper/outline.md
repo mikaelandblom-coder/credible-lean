@@ -76,6 +76,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Matrix blend (2026-11-19, `CoreVector.lean`): vector levels, credibility matrix, matrix GLS
+  with correlated cohorts (Jewell 1973; Bühlmann–Gisler ch. 7 has independent cohorts). One
+  paragraph in §13 once the Hachemeister corollary is proved.
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

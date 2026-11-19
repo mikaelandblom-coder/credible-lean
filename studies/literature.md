@@ -175,7 +175,33 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   (checked): four ways to bring frequency and severity into credibility stem from one
   minimisation problem. Starting point for the frequency–severity comparison; to read in full.
 - Hewitt (1971), credibility for severity (CAS Proceedings; cited via Goulet et al.).
-- Not yet checked: Jewell (1973) multidimensional credibility; Gerber & Jones (1975) evolving
-  levels; Werner & Modlin, *Basic Ratemaking* (separate frequency and severity trends).
+- Not yet checked: Gerber & Jones (1975) evolving levels; Werner & Modlin, *Basic Ratemaking*
+  (separate frequency and severity trends).
+
+### 7a. Vector levels, for `Credibility/CoreVector.lean` (2026-11-19)
+Searched by web; casact.org is not reachable from the **lean** environment, so only abstracts
+and tables of contents were read. Standard results below are from memory and marked so.
+- Jewell (1973), *Multi-dimensional credibility*, ORC 73-7, UC Berkeley (10th ASTIN Colloquium;
+  full text not found). Matrix credibility factor; the number of structural parameters grows
+  with the dimension. Bühlmann (1974), *A comparison of three credibility formulae using
+  multidimensional techniques*, ASTIN Bull. 7(3), 203–207: Jewell's framework applied to total
+  losses and claim counts (frequency × severity). Used: the vector blend itself.
+- Bühlmann & Gisler (2005), *A Course in Credibility Theory and its Applications*, Springer:
+  ch. 7 multidimensional credibility (§7.3 multidimensional Bühlmann–Straub, p. 177), ch. 8
+  regression (§8.3.2 Hachemeister's general case, p. 205). From memory: the credibility
+  estimator is `Zⱼ X̄ⱼ + (I - Zⱼ) μ̂` with `Zⱼ = T (T + Sⱼ)⁻¹` and the homogeneous `μ̂` the
+  `Zⱼ`-weighted mean; cohorts are *independent*, so `K` is block diagonal. Used: the target
+  `CoreVector` must reproduce this when `K` is block diagonal (next step).
+- Hachemeister (1975) and Bühlmann & Gisler (1997), see §7: the regression case is the
+  `P = 2` vector blend with design-dependent `K`.
+- Frequency–severity with dependent risk profiles: Cheung, Ni, Oh & Woo (2021), IME 100,
+  274–295 (bivariate prior; Bayesian); Englund et al. (2008; authors from memory),
+  ASTIN Bull. 38(1), multivariate latent risk, a multivariate Bühlmann–Straub; Q-credibility
+  (ARCH 2025 abstract, Tang): factors for frequency and severity chosen to minimise the MSE of
+  the *pure premium*. Used: the target `aᵀμⱼ` (theorem `bestZ_optimal_dotProduct`) covers the
+  first-order premium; the Q-credibility idea (optimise for the product) is the next question.
+- New here: the cohorts are correlated, `K` is a full matrix over cohorts × components, and
+  the portfolio estimate is the matrix GLS `μ̂ = (UᵀK⁻¹U)⁻¹UᵀK⁻¹x`; the best `Zⱼ` is
+  `(Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹`, the matrix form of eq. (26).
 - New here (if it holds): correlated cohorts in both; component-specific `ρ` (winters move
   frequency, not severity); relativities are free of a common trend.

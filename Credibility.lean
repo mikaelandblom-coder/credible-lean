@@ -21,3 +21,4 @@ import Credibility.HierarchicalMoments
 import Credibility.KMeans
 import Credibility.KMeansBridge
 import Credibility.Trend
+import Credibility.CoreVector

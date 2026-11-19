@@ -147,6 +147,10 @@ same machinery. State it as such, don't hide the approximation.
 4. `CoreVector.lean`: the matrix Blend, PD of the block `K`, best `Z`,
    balance. Then Hachemeister with correlated cohorts and bivariate
    frequency–severity as its two corollaries.
+   *Started 2026-11-19:* matrix eq. (7) (Loewner-optimal, unique for the
+   trace, `P = Unit` is the scalar blend), matrix GLS weights (optimal) and
+   matrix eq. (26) are proved. Open: block-diagonal `K` gives Bühlmann–Gisler
+   ch. 7; balance; the moment layer; the two corollaries.
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)

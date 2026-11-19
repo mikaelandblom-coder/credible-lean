@@ -112,6 +112,9 @@ def refers_to_namesake(row) -> bool:
 # Groups that share a name but are not duplicates to merge: neither copy can be
 # a corollary of the other without changing a statement. Reviewed 2026-11-11.
 EXEMPT = {
+    "bestZ_optimal": "the scalar `BlendMoments` result is thesis eq. (6)/(7) with a short direct proof; the `VecBlendMoments` (matrix) one needs symmetry hypotheses and contains it via `BlendMoments.toVec`, so deriving the scalar one from it would only lengthen it",
+    "bestZ_unique": "the scalar `BlendMoments` result is thesis eq. (6)/(7) with a short direct proof; the `VecBlendMoments` (matrix) one needs symmetry hypotheses and contains it via `BlendMoments.toVec`, so deriving the scalar one from it would only lengthen it",
+    "errVar_eq": "the scalar `BlendMoments` result is thesis eq. (6)/(7) with a short direct proof; the `VecBlendMoments` (matrix) one needs symmetry hypotheses and contains it via `BlendMoments.toVec`, so deriving the scalar one from it would only lengthen it",
     "wtot_pos": "`Model.wtot_pos` has no model in its statement, so it cannot call "
     "the `Unequal` one (that needs a whole `Unequal` model); both are one-line `Finset.sum_pos`",
     "memLp_trueMean": "deleting `Model.Noise.memLp_trueMean` for the `Unequal` one "

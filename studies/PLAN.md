@@ -286,6 +286,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
+  matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the
+  frequency × severity comparison (`notes/time-trends.md` §3 item 3) can add a fourth fit,
+  the bivariate blend, once the step from `(φ, ψ)` to the premium is settled.
 - Claim trend (2026-11-19, `Trend.lean`, Finding 21): restating with the true `g` moves no
   weight (`K̃ = (1+g)^(2n)K`, `bestZ_detrend`); with `ĝ ≠ g` relativities move slightly. App:
   switch "claim trend g" (today `growth` is volume growth) and the `ĝ` study of

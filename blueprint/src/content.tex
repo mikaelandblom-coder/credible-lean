@@ -3411,6 +3411,145 @@ So nothing new is needed; this chapter records that the fit does not move.
   only when every cohort's data have the same time profile.
 \end{remark}
 
+% ---------------------------------------------------------------------------
+\chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
+% Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
+
+Not in the thesis. Each cohort has a level vector $\mu_j \in \mathbb{R}^P$
+(level and slope, Hachemeister 1975; frequency and severity, Jewell 1973),
+an estimate $\hmu_j$, and the blend is $\hmu + Z(\hmu_j - \hmu)$ with a
+$P \times P$ credibility matrix $Z$. Unlike the multidimensional
+Bühlmann--Straub model (Bühlmann--Gisler 2005, ch.~7) the cohorts may be
+correlated: the stacked estimates have one covariance $K$ over
+cohorts $\times$ components. For random vectors
+$\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
+
+\begin{definition}[Matrix blend moments]\label{def:VBM}
+  \lean{Credibility.VecBlendMoments, Credibility.VecBlendMoments.gap,
+        Credibility.VecBlendMoments.cross, Credibility.VecBlendMoments.varRest,
+        Credibility.VecBlendMoments.errVar, Credibility.VecBlendMoments.bestZ}
+  \leanok
+  \uses{def:errVar, def:bestZ}
+  Six $P \times P$ matrices: $\mathrm{Var}(\hmu_j)$, $\mathrm{Var}(\hmu)$,
+  $\mathrm{Var}(\mu_j)$, $\mathrm{cov}(\hmu_j, \hmu)$, $\mathrm{cov}(\hmu_j, \mu_j)$,
+  $\mathrm{cov}(\hmu, \mu_j)$. With $G = \mathrm{Var}(\hmu_j - \hmu)$,
+  $C = \mathrm{cov}(\hmu_j - \hmu, \mu_j - \hmu)$ and $W = \mathrm{Var}(\mu_j - \hmu)$,
+  the error covariance of the blend is
+  $\mathrm{errVar}(Z) = ZGZ^\top - ZC - C^\top Z^\top + W$, and
+  $Z^\ast = C^\top G^{-1}$.
+\end{definition}
+
+\begin{theorem}[Matrix eq.\ (7) is optimal]\label{thm:VBM_optimal}
+  \lean{Credibility.VecBlendMoments.gap_transpose, Credibility.VecBlendMoments.errVar_eq,
+        Credibility.VecBlendMoments.bestZ_optimal,
+        Credibility.VecBlendMoments.bestZ_optimal_dotProduct,
+        Credibility.VecBlendMoments.bestZ_optimal_trace}
+  \leanok
+  \uses{def:VBM}
+  If $\mathrm{Var}(\hmu_j)$ and $\mathrm{Var}(\hmu)$ are symmetric and $G$ is
+  invertible, $\mathrm{errVar}(Z) = \mathrm{errVar}(Z^\ast) + (Z - Z^\ast)G(Z - Z^\ast)^\top$.
+  If moreover $G \succeq 0$, then $\mathrm{errVar}(Z) - \mathrm{errVar}(Z^\ast) \succeq 0$:
+  $Z^\ast$ is best for the trace and for every linear combination $a^\top\mu_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $Z^\ast G = C^\top$ and $GZ^{\ast\top} = C$; expand. The remainder is
+  $DGD^\top \succeq 0$ with $D = Z - Z^\ast$.
+\end{proof}
+
+\begin{theorem}[\ldots and unique]\label{thm:VBM_unique}
+  \lean{Credibility.VecBlendMoments.bestZ_unique}
+  \leanok
+  \uses{def:VBM}
+  If $G \succ 0$ and $\mathrm{tr}\,\mathrm{errVar}(Z) \le \mathrm{tr}\,\mathrm{errVar}(Z^\ast)$,
+  then $Z = Z^\ast$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:VBM_optimal}
+  $\mathrm{tr}(DGD^\top) = \sum_i d_i^\top G d_i$ over the rows $d_i$ of $D$;
+  it is $\le 0$, so every $d_i = 0$.
+\end{proof}
+
+\begin{theorem}[The scalar blend is $P = 1$]\label{thm:VBM_scalar}
+  \lean{Credibility.BlendMoments.toVec, Credibility.BlendMoments.toVec_errVar,
+        Credibility.BlendMoments.toVec_bestZ}
+  \leanok
+  \uses{def:VBM}
+  As $1 \times 1$ matrices, $\mathrm{errVar}$ and $Z^\ast$ are \eqth{6} and \eqth{7}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Compute.
+\end{proof}
+
+\begin{definition}[Matrix GLS weights]\label{def:CV_glsW}
+  \lean{Credibility.CoreVector.stack, Credibility.CoreVector.info,
+        Credibility.CoreVector.glsW}
+  \leanok
+  \uses{def:glsWeight}
+  $U$ stacks $|J|$ identity matrices ($U^\top x = \sum_j x_j$). The information
+  matrix is $I_K = U^\top K^{-1} U$ and the weights are $\mathcal W = K^{-1}U I_K^{-1}$:
+  $\hmu = \mathcal W^\top x = \sum_j B_j\hmu_j$.
+\end{definition}
+
+\begin{lemma}[Matrix GLS weights]\label{lem:CV_glsW}
+  \lean{Credibility.CoreVector.stack_mulVec_injective, Credibility.CoreVector.info_posDef,
+        Credibility.CoreVector.stack_transpose_mul_glsW, Credibility.CoreVector.mul_glsW}
+  \leanok
+  \uses{def:CV_glsW}
+  For $K \succ 0$ (and at least one cohort): $I_K \succ 0$, $\sum_j B_j = U^\top\mathcal W = I$,
+  and $K\mathcal W = U I_K^{-1}$ (matrix version of Lemma~\ref{lem:mulVec_glsWeight}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  $U$ has full column rank, so $U^\top K^{-1} U \succ 0$; the rest is
+  $K K^{-1} = I$ and $I_K I_K^{-1} = I$.
+\end{proof}
+
+\begin{theorem}[Matrix GLS weights are optimal]\label{thm:CV_glsW_optimal}
+  \lean{Credibility.CoreVector.glsW_optimal}
+  \leanok
+  \uses{def:CV_glsW}
+  For weights $A$ with $U^\top A = I$:
+  $A^\top K A - \mathcal W^\top K \mathcal W \succeq 0$ (matrix version of
+  Theorem~\ref{thm:glsWeight_optimal}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  With $D = A - \mathcal W$, $U^\top D = 0$, so
+  $\mathcal W^\top K D = I_K^{-1}U^\top D = 0$ and the difference is $D^\top K D$.
+\end{proof}
+
+\begin{definition}[Matrix blend moments of cohort $j$]\label{def:CV_moments}
+  \lean{Credibility.CoreVector.sel, Credibility.CoreVector.moments}
+  \leanok
+  \uses{def:VBM, def:CV_glsW, def:Core.levelMoments}
+  $E_j$ picks the block of cohort $j$. For data covariance $K$ and level
+  covariance $L$ (both stacked over cohorts $\times$ components):
+  $\mathrm{Var}(\hmu_j) = K_{jj}$, $\mathrm{Var}(\hmu) = I_K^{-1}$,
+  $\mathrm{Var}(\mu_j) = \mathrm{cov}(\hmu_j, \mu_j) = L_{jj}$,
+  $\mathrm{cov}(\hmu_j, \hmu) = E_j^\top K\mathcal W$,
+  $\mathrm{cov}(\hmu, \mu_j) = \mathcal W^\top L E_j$.
+\end{definition}
+
+\begin{theorem}[Matrix eq.\ (26)]\label{thm:CV_bestZ}
+  \lean{Credibility.CoreVector.sel_transpose_mul_stack, Credibility.CoreVector.moments_covEst,
+        Credibility.CoreVector.moments_gap, Credibility.CoreVector.moments_bestZ}
+  \leanok
+  \uses{def:CV_moments}
+  For $K \succ 0$ and $L^\top = L$: $\mathrm{cov}(\hmu_j, \hmu) = I_K^{-1}$,
+  $\mathrm{Var}(\hmu_j - \hmu) = K_{jj} - I_K^{-1}$ and
+  \[ Z_j^\ast = (L_{jj} - E_j^\top L\mathcal W)\,(K_{jj} - I_K^{-1})^{-1}, \]
+  the matrix version of Theorem~\ref{thm:Core_levelMoments_bestZ_eq}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  $E_j^\top K\mathcal W = E_j^\top U I_K^{-1} = I_K^{-1}$ by Lemma~\ref{lem:CV_glsW}; substitute.
+\end{proof}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean
