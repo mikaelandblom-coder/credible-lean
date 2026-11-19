@@ -105,12 +105,55 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install TeX, graphviz and leanblueprint
+      # TeX: a small TeX Live (the official installer, only the packages in
+      # .github/texlive-packages.txt), cached. Installing texlive from apt on
+      # every run took 1.5 to 18 minutes depending on the Ubuntu mirror.
+      - name: Cache TeX Live
+        id: tex-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/texlive
+          key: texlive-${{ runner.os }}-${{ hashFiles('.github/texlive-packages.txt') }}
+
+      - name: Install TeX Live
+        if: steps.tex-cache.outputs.cache-hit != 'true'
         run: |
+          cd "$RUNNER_TEMP"
+          bash "$GITHUB_WORKSPACE/scripts/retry.sh" curl -sSfLO \
+            https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+          tar xzf install-tl-unx.tar.gz
+          cat > texlive.profile <<EOF
+          selected_scheme scheme-basic
+          TEXDIR $HOME/texlive
+          TEXMFLOCAL $HOME/texlive/texmf-local
+          TEXMFSYSCONFIG $HOME/texlive/texmf-config
+          TEXMFSYSVAR $HOME/texlive/texmf-var
+          tlpdbopt_install_docfiles 0
+          tlpdbopt_install_srcfiles 0
+          tlpdbopt_autobackup 0
+          instopt_adjustpath 0
+          EOF
+          cd install-tl-2*
+          bash "$GITHUB_WORKSPACE/scripts/retry.sh" perl install-tl --no-interaction \
+            --profile="$RUNNER_TEMP/texlive.profile"
+          bash "$GITHUB_WORKSPACE/scripts/retry.sh" "$HOME/texlive/bin/x86_64-linux/tlmgr" \
+            install $(grep -v '^#' "$GITHUB_WORKSPACE/.github/texlive-packages.txt")
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-leanblueprint-0.0.20
+
+      # graphviz (for leanblueprint's dependency graph) is small; skip the
+      # man-db trigger, which is slow on the runners.
+      - name: Install graphviz and leanblueprint
+        run: |
+          echo "$HOME/texlive/bin/x86_64-linux" >> "$GITHUB_PATH"
+          sudo rm -f /var/lib/man-db/auto-update
           bash scripts/retry.sh sudo apt-get update
           bash scripts/retry.sh sudo apt-get install -y --no-install-recommends \
-            graphviz libgraphviz-dev latexmk texlive-xetex texlive-latex-extra \
-            texlive-fonts-recommended texlive-science lmodern fonts-lmodern
+            graphviz libgraphviz-dev
           bash scripts/retry.sh pip install leanblueprint==0.0.20
 
       - name: Build blueprint

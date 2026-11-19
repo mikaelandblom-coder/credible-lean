@@ -1,0 +1,14 @@
+# TeX Live packages for the docs job (blueprint, handbook, paper; xelatex).
+# Installed on top of scheme-basic and cached: editing this file reinstalls.
+collection-xetex
+collection-latexrecommended
+collection-fontsrecommended
+latexmk
+mathtools
+booktabs
+geometry
+hyperref
+fontspec
+unicode-math
+lm
+lm-math
