@@ -47,6 +47,23 @@ via a matrix Blend shared with bivariate frequency–severity credibility).
   matrix, so `Blend` needs a matrix version. Biggest step, most recognised
   by actuaries. The target changes from `μⱼ` to next period's level.
 
+## 2b. Classical extensions without correlation (2026-11-19)
+
+Correlation is one choice of `K`; these extend the linear, second-moment theory itself.
+Lean work (**lean** environment).
+
+- [ ] **Scalar inhomogeneous credibility.** Known collective mean `μ`: best `z` for
+  `μ + z(μ̂ⱼ - μ)`, a short Core corollary (the vector version exists:
+  `CoreVector.moments_bestZ_buhlmannGisler`). Compare with the homogeneous `z` of eq. (26).
+- [ ] **General target (evolutionary credibility).** Predict any random target `Y` with known
+  `Cov(Y, μ̂)` instead of the fixed level `μⱼ`. Gives next period's claim under random-walk or
+  AR(1) levels (Gerber & Jones 1975; Bühlmann & Gisler ch. 10, Kalman filter), and joins the
+  serial-correlation item in §2. Check first whether `Core.Estimates` with its `L` already
+  covers it.
+- [ ] **Balanced loss.** Loss `ω(δ - X̄)² + (1 - ω)(δ - target)²` (Zhang & Chen 2018,
+  `studies/literature.md` §3): still linear and quadratic, so the best `z` should be a
+  convex shift of eq. (26); prove at Core level.
+
 ## 3. Complex numbers (low priority)
 
 - [ ] **Remark now.** `b = K⁻¹1 / 1ᵀK⁻¹1` is the minimum-variance
