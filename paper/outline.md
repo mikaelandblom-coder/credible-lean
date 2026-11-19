@@ -81,6 +81,9 @@ may need a paragraph.)
   recovered: `Credibility.CoreVector.moments_bestZ_buhlmannGisler`). Hachemeister with correlated
   cohorts proved (`Credibility.CoreVector.hachemeister_bestZ`): one paragraph in §13 now
   possible (trend lines per cohort; a year shock correlates the cohorts' lines).
+  Frequency × severity (Finding 22): vector credibility beats separate credibility as a best
+  predictor (`Credibility.CoreVector.trace_linMse_blupW_le_separate`), not as a blend; one
+  paragraph with the counterexample's moral (restricted predictors are not ordered).
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

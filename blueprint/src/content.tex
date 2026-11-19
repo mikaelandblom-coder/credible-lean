@@ -3715,6 +3715,144 @@ $\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
   Theorem~\ref{thm:CV_buhlmannGisler} with $\Lambda = A$, $S_j = W_j^{-1}$.
 \end{proof}
 
+\section*{The best linear unbiased predictor and separate blends}
+
+A linear predictor $A^\top x$ of $\mu_j$ from the stacked estimates $x$ ($A$ of size
+$(J \times P) \times P$) is unbiased for any common mean iff $U^\top A = I$. Separate blends
+(one scalar blend per component, on that component's data alone, e.g.\ frequency and
+severity) are such predictors, and so is the matrix blend.
+
+\begin{definition}[Matrix linear predictors]\label{def:CV_blup}
+  \lean{Credibility.CoreVector.linMse, Credibility.CoreVector.blupW,
+        Credibility.CoreVector.blendW}
+  \leanok
+  \uses{def:CV_moments, def:Core_blup}
+  $\mathrm{mse}_j(A) = A^\top KA - A^\top LE_j - E_j^\top LA + E_j^\top LE_j$,
+  $A^\ast = K^{-1}LE_j + W(I - U^\top K^{-1}LE_j)$, and the blend's weights
+  $W + (E_j - W)Z^\top$.
+\end{definition}
+
+\begin{lemma}[Pythagoras for matrix predictors]\label{lem:CV_linMse_pythagoras}
+  \lean{Credibility.CoreVector.linMse_eq_add_of_mul}
+  \leanok
+  \uses{def:CV_blup}
+  Let $K$, $L$ be symmetric and $KE - LE_j = UC$. If $U^\top A = U^\top E$ then
+  $\mathrm{mse}_j(A) = \mathrm{mse}_j(E) + (A-E)^\top K(A-E)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $D = A - E$, $U^\top D = 0$, so the cross terms
+  $D^\top(KE - LE_j) = (U^\top D)^\top C$ and their transposes vanish.
+\end{proof}
+
+\begin{lemma}[The best predictor: first-order condition]\label{lem:CV_blup_foc}
+  \lean{Credibility.CoreVector.stack_transpose_mul_blupW, Credibility.CoreVector.mul_blupW}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$ then $U^\top A^\ast = I$ and
+  $KA^\ast - LE_j = U(U^\top K^{-1}U)^{-1}(I - U^\top K^{-1}LE_j)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  $U^\top W = I$ and $KW = U(U^\top K^{-1}U)^{-1}$.
+\end{proof}
+
+\begin{theorem}[The matrix best linear unbiased predictor]\label{thm:CV_blup_optimal}
+  \lean{Credibility.CoreVector.linMse_eq_blupW_add, Credibility.CoreVector.blupW_optimal,
+        Credibility.CoreVector.blupW_optimal_dotProduct,
+        Credibility.CoreVector.blupW_optimal_trace}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$, $L$ is symmetric and $U^\top A = I$ then
+  $\mathrm{mse}_j(A) = \mathrm{mse}_j(A^\ast) + (A - A^\ast)^\top K(A - A^\ast)$: $A^\ast$ is
+  optimal in the Loewner order, so for every premium $a^\top\mu_j$ and for the trace.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_linMse_pythagoras, lem:CV_blup_foc}
+  Lemma~\ref{lem:CV_linMse_pythagoras} with $E = A^\ast$ (Lemma~\ref{lem:CV_blup_foc}).
+\end{proof}
+
+\begin{lemma}[The matrix blend as a linear predictor]\label{lem:CV_blendW}
+  \lean{Credibility.CoreVector.stack_transpose_mul_blendW, Credibility.CoreVector.linMse_blendW}
+  \leanok
+  \uses{def:CV_blup, def:VBM}
+  If $K \succ 0$ and $L$ is symmetric, the blend's weights are unbiased and
+  $\mathrm{mse}_j(W + (E_j - W)Z^\top) = \mathrm{errVar}(Z)$ for the moments of
+  Definition~\ref{def:CV_moments}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW, thm:CV_bestZ}
+  $E_j^\top KW = W^\top KE_j = W^\top KW = (U^\top K^{-1}U)^{-1}$, so the cross terms in $Z$
+  cancel; compare coefficients.
+\end{proof}
+
+\begin{theorem}[The price of the matrix blend]\label{thm:CV_blend_price}
+  \lean{Credibility.CoreVector.errVar_eq_blupW_add}
+  \leanok
+  \uses{def:CV_blup, def:VBM}
+  The matrix blend with credibility matrix $Z$ has error covariance
+  $\mathrm{mse}_j(A^\ast) + (A - A^\ast)^\top K(A - A^\ast)$, $A = W + (E_j - W)Z^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blendW, thm:CV_blup_optimal}
+  Theorem~\ref{thm:CV_blup_optimal} with the blend's weights (Lemma~\ref{lem:CV_blendW}).
+\end{proof}
+
+\begin{definition}[Separate weights per component]\label{def:CV_sepW}
+  \lean{Credibility.CoreVector.component, Credibility.CoreVector.sepW}
+  \leanok
+  \uses{def:CV_blup}
+  $K^{(p)} = (K_{(i,p),(k,p)})_{ik}$, the covariance of the $p$-th components across
+  cohorts. Separate weights $a_p \in \mathbb{R}^J$ predict component $p$ by
+  $\sum_k a_{pk}\hmu_{kp}$.
+\end{definition}
+
+\begin{lemma}[Separate predictors]\label{lem:CV_sepW}
+  \lean{Credibility.CoreVector.component_posDef, Credibility.CoreVector.stack_transpose_mul_sepW,
+        Credibility.CoreVector.linMse_sepW_apply}
+  \leanok
+  \uses{def:CV_sepW, def:Core_blup}
+  $K \succ 0$ gives $K^{(p)} \succ 0$; separate weights with $\sum_k a_{pk} = 1$ are
+  unbiased; and if $L$ is symmetric the $(p,p)$ entry of their error covariance is the
+  scalar $\mathrm{mse}_j(a_p)$ for $K^{(p)}$, $L^{(p)}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only the $p$-th components enter the $(p,p)$ entry.
+\end{proof}
+
+\begin{theorem}[Vector credibility beats separate credibility]\label{thm:CV_beats_separate}
+  \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
+  \leanok
+  \uses{thm:CV_blup_optimal, lem:CV_sepW}
+  If $K \succ 0$ and $L$ is symmetric, the summed error variance of the matrix best linear
+  unbiased predictor is at most that of the separate scalar blends (each with the scalar
+  GLS $\hmu$ of its component and any factor $z_p$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_blup_optimal, lem:CV_sepW, lem:Core_blendWeight}
+  The separate blends have weights $a_p = w(z_p)$ for $K^{(p)}$
+  (Lemma~\ref{lem:Core_blendWeight}); Theorem~\ref{thm:CV_blup_optimal} for the trace and
+  Lemma~\ref{lem:CV_sepW} for its diagonal.
+\end{proof}
+
+\begin{remark}[Finding 22: the matrix blend need not beat separate blends]\label{rem:CV_separate}
+  \uses{thm:CV_beats_separate, thm:CV_blend_price}
+  Separate blends use their own portfolio estimate per component, not the matrix GLS
+  $\hmu$, so they are not a matrix blend with diagonal $Z$, and the matrix blend can lose to
+  them. Three cohorts, $L = I \otimes \Lambda$, $\Lambda = \begin{psmallmatrix}2 & 1\\ 1 &
+  4\end{psmallmatrix}$, noise without frequency--severity covariance,
+  $N_F = \begin{psmallmatrix}5&2&1\\2&1&1\\1&1&5\end{psmallmatrix}$,
+  $N_Y = \begin{psmallmatrix}2&1&2\\1&1&1\\2&1&3\end{psmallmatrix}$, $K = L + N$, cohort 2:
+  summed MSE $1.9768$ for the matrix blend, $1.9726$ for the separate blends and $1.8172$ for
+  the best predictor. With independent cohorts (Bühlmann--Gisler) no such example was found.
+\end{remark}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean

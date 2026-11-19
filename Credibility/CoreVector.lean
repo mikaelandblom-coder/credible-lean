@@ -1,6 +1,7 @@
 import Mathlib
 import Credibility.Blend
 import Credibility.Weights
+import Credibility.Core
 
 /-!
 # The matrix Blend: vector levels (towards Hachemeister and frequency × severity)
@@ -730,6 +731,235 @@ theorem hachemeister_bestZ_of_blockDiag [Nonempty J] {Φ : Matrix (J × T) (J ×
     ← blk_eq, hA]
 
 end Hachemeister
+
+/-! ### The best linear unbiased predictor, and separate blends per component
+
+A linear predictor `Aᵀx` of `μⱼ` from the stacked cohort estimates `x` is unbiased whatever
+the common mean iff `UᵀA = I` (`Σⱼ Aⱼ = I`). Its error covariance is
+`AᵀKA - AᵀLEⱼ - EⱼᵀLA + Lⱼⱼ`. The best one (the homogeneous credibility estimator, matrix
+version of `Core.blupWeight`) is `A* = K⁻¹LEⱼ + W(I - UᵀK⁻¹LEⱼ)`, optimal in the Loewner order.
+The matrix blend is one such predictor; so are *separate* blends, one scalar blend per
+component (e.g. frequency and severity) that uses only that component's data. So the best
+predictor beats separate blending; the matrix *blend* need not (Finding 22). -/
+
+/-- The error covariance `Var(Aᵀx - μⱼ) = AᵀKA - AᵀLEⱼ - EⱼᵀLA + Lⱼⱼ` of the linear
+predictor `Aᵀx` (matrix version of `Core.linMse`). -/
+def linMse (K L : Matrix (J × P) (J × P) ℝ) (j : J) (A : Matrix (J × P) P ℝ) : Matrix P P ℝ :=
+  Aᵀ * K * A - Aᵀ * L * sel P j - (sel P j)ᵀ * L * A + (sel P j)ᵀ * L * sel P j
+
+/-- The weights of the best linear unbiased predictor of `μⱼ`:
+`A* = K⁻¹LEⱼ + W(I - UᵀK⁻¹LEⱼ)` (matrix version of `Core.blupWeight`). -/
+noncomputable def blupW (K L : Matrix (J × P) (J × P) ℝ) (j : J) : Matrix (J × P) P ℝ :=
+  K⁻¹ * L * sel P j + glsW K * (1 - (stack J P)ᵀ * K⁻¹ * L * sel P j)
+
+/-- The weights `W + (Eⱼ - W)Zᵀ` of the matrix blend `μ̂ + Z(μ̂ⱼ - μ̂)` on `x`. -/
+noncomputable def blendW (K : Matrix (J × P) (J × P) ℝ) (j : J) (Z : Matrix P P ℝ) :
+    Matrix (J × P) P ℝ :=
+  glsW K + (sel P j - glsW K) * Zᵀ
+
+/-- Pythagoras for linear predictors: if `KE - LEⱼ = UC`, then any weights `A` with
+`UᵀA = UᵀE` lose exactly `(A - E)ᵀK(A - E)` against `E`. -/
+theorem linMse_eq_add_of_mul {K L : Matrix (J × P) (J × P) ℝ} (hKt : Kᵀ = K) (hL : Lᵀ = L)
+    (j : J) {E : Matrix (J × P) P ℝ} {C : Matrix P P ℝ}
+    (hE : K * E - L * sel P j = stack J P * C) (A : Matrix (J × P) P ℝ)
+    (hA : (stack J P)ᵀ * A = (stack J P)ᵀ * E) :
+    linMse K L j A = linMse K L j E + (A - E)ᵀ * K * (A - E) := by
+  obtain ⟨D, rfl⟩ : ∃ D, A = E + D := ⟨A - E, by abel⟩
+  have hD : (stack J P)ᵀ * D = 0 := by
+    rw [Matrix.mul_add] at hA
+    simpa using hA
+  have h1 : Dᵀ * K * E - Dᵀ * L * sel P j = 0 := by
+    rw [Matrix.mul_assoc, Matrix.mul_assoc, ← Matrix.mul_sub, hE, ← Matrix.mul_assoc,
+      show Dᵀ * stack J P = ((stack J P)ᵀ * D)ᵀ by rw [transpose_mul, transpose_transpose], hD,
+      transpose_zero, Matrix.zero_mul]
+  have h2 : Eᵀ * K * D - (sel P j)ᵀ * L * D = 0 := by
+    have := congrArg transpose h1
+    simpa [transpose_sub, transpose_mul, hKt, hL, Matrix.mul_assoc] using this
+  have key : linMse K L j (E + D) = linMse K L j E + Dᵀ * K * D
+      + (Dᵀ * K * E - Dᵀ * L * sel P j) + (Eᵀ * K * D - (sel P j)ᵀ * L * D) := by
+    simp only [linMse, transpose_add, Matrix.add_mul, Matrix.mul_add]
+    abel
+  rw [key, h1, h2, add_sub_cancel_left]
+  abel
+
+/-- The best predictor is unbiased: `UᵀA* = I`. -/
+theorem stack_transpose_mul_blupW [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) : (stack J P)ᵀ * blupW K L j = 1 := by
+  rw [blupW, Matrix.mul_add, ← Matrix.mul_assoc (stack J P)ᵀ (glsW K),
+    stack_transpose_mul_glsW hK, Matrix.one_mul]
+  simp only [Matrix.mul_assoc]
+  abel
+
+/-- The first-order condition: `KA* - LEⱼ = U(UᵀK⁻¹U)⁻¹(I - UᵀK⁻¹LEⱼ)`. -/
+theorem mul_blupW {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) :
+    K * blupW K L j - L * sel P j
+      = stack J P * ((info K)⁻¹ * (1 - (stack J P)ᵀ * K⁻¹ * L * sel P j)) := by
+  have hKu : IsUnit K.det := isUnit_iff_ne_zero.2 hK.det_pos.ne'
+  rw [blupW, Matrix.mul_add, ← Matrix.mul_assoc K (glsW K), mul_glsW hK,
+    show K * (K⁻¹ * L * sel P j) = L * sel P j by
+      rw [Matrix.mul_assoc, mul_nonsing_inv_cancel_left _ _ hKu],
+    add_sub_cancel_left, Matrix.mul_assoc]
+
+/-- The loss of any unbiased weights `A` against the best predictor is `(A - A*)ᵀK(A - A*)`
+(matrix version of `Core.linMse_eq_blupWeight_add`). -/
+theorem linMse_eq_blupW_add [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) {A : Matrix (J × P) P ℝ}
+    (hA : (stack J P)ᵀ * A = 1) :
+    linMse K L j A = linMse K L j (blupW K L j) + (A - blupW K L j)ᵀ * K * (A - blupW K L j) :=
+  linMse_eq_add_of_mul (by simpa [conjTranspose_eq_transpose_of_trivial] using hK.isHermitian.eq)
+    hL j (mul_blupW hK L j) A (hA.trans (stack_transpose_mul_blupW hK L j).symm)
+
+/-- **The best linear unbiased predictor** (matrix version of `Core.blupWeight_optimal`):
+`A*` is optimal in the Loewner order among all weights with `Σⱼ Aⱼ = I`. -/
+theorem blupW_optimal [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) {A : Matrix (J × P) P ℝ}
+    (hA : (stack J P)ᵀ * A = 1) :
+    (linMse K L j A - linMse K L j (blupW K L j)).PosSemidef := by
+  rw [linMse_eq_blupW_add hK hL j hA, add_sub_cancel_left]
+  simpa [conjTranspose_eq_transpose_of_trivial] using
+    hK.posSemidef.conjTranspose_mul_mul_same (A - blupW K L j)
+
+/-- …so it is best for every premium `aᵀμⱼ`… -/
+theorem blupW_optimal_dotProduct [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) {A : Matrix (J × P) P ℝ}
+    (hA : (stack J P)ᵀ * A = 1) (a : P → ℝ) :
+    a ⬝ᵥ (linMse K L j (blupW K L j) *ᵥ a) ≤ a ⬝ᵥ (linMse K L j A *ᵥ a) := by
+  have h := (blupW_optimal hK hL j hA).dotProduct_mulVec_nonneg a
+  simp only [star_trivial, sub_mulVec, dotProduct_sub] at h
+  linarith
+
+/-- …and for the trace. -/
+theorem blupW_optimal_trace [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) {A : Matrix (J × P) P ℝ}
+    (hA : (stack J P)ᵀ * A = 1) :
+    (linMse K L j (blupW K L j)).trace ≤ (linMse K L j A).trace := by
+  have h := (blupW_optimal hK hL j hA).trace_nonneg
+  rw [trace_sub] at h
+  linarith
+
+/-- The matrix blend is unbiased: `Uᵀ(W + (Eⱼ - W)Zᵀ) = I`. -/
+theorem stack_transpose_mul_blendW [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (j : J) (Z : Matrix P P ℝ) : (stack J P)ᵀ * blendW K j Z = 1 := by
+  rw [blendW, Matrix.mul_add, ← Matrix.mul_assoc, Matrix.mul_sub, stack_transpose_mul_glsW hK,
+    show (stack J P)ᵀ * sel P j = ((sel P j)ᵀ * stack J P)ᵀ by
+      rw [transpose_mul, transpose_transpose],
+    sel_transpose_mul_stack, transpose_one, sub_self, Matrix.zero_mul, add_zero]
+
+/-- The error covariance of the matrix blend's weights is `errVar`
+(matrix version of `Core.linMse_blendWeight`). -/
+theorem linMse_blendW [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) (Z : Matrix P P ℝ) :
+    linMse K L j (blendW K j Z) = (moments K L j).errVar Z := by
+  have hKt : Kᵀ = K := by simpa [conjTranspose_eq_transpose_of_trivial] using hK.isHermitian.eq
+  have hS : ((info K)⁻¹)ᵀ = (info K)⁻¹ := by
+    simpa [conjTranspose_eq_transpose_of_trivial] using (info_posDef hK).inv.isHermitian.eq
+  set W := glsW K
+  set E := sel P j
+  set S := (info K)⁻¹
+  have h1 : Eᵀ * K * W = S := moments_covEst hK L j
+  have h2 : Wᵀ * K * E = S := by
+    rw [← hS, ← h1]; simp [transpose_mul, hKt, Matrix.mul_assoc]
+  have h3 : Wᵀ * K * W = S := by
+    rw [Matrix.mul_assoc, mul_glsW hK, ← Matrix.mul_assoc,
+      show Wᵀ * stack J P = ((stack J P)ᵀ * W)ᵀ by rw [transpose_mul, transpose_transpose],
+      stack_transpose_mul_glsW hK, transpose_one, Matrix.one_mul]
+  have h4 : (Wᵀ * L * E)ᵀ = Eᵀ * L * W := by simp [transpose_mul, hL, Matrix.mul_assoc]
+  have h5 : (Eᵀ * L * E)ᵀ = Eᵀ * L * E := by simp [transpose_mul, hL, Matrix.mul_assoc]
+  have key : linMse K L j (W + (E - W) * Zᵀ)
+      = Wᵀ * K * W + Z * (Eᵀ * K * W - Wᵀ * K * W) + (Wᵀ * K * E - Wᵀ * K * W) * Zᵀ
+        + Z * (Eᵀ * K * E - Eᵀ * K * W - Wᵀ * K * E + Wᵀ * K * W) * Zᵀ
+        - Wᵀ * L * E - Z * (Eᵀ * L * E - Wᵀ * L * E) - Eᵀ * L * W
+        - (Eᵀ * L * E - Eᵀ * L * W) * Zᵀ + Eᵀ * L * E := by
+    simp only [linMse, transpose_add, transpose_mul, transpose_sub, transpose_transpose,
+      Matrix.add_mul, Matrix.mul_add, Matrix.sub_mul, Matrix.mul_sub, Matrix.mul_assoc]
+    abel
+  have rhs : (moments K L j).errVar Z = Z * (Eᵀ * K * E - S) * Zᵀ
+      - Z * (Eᵀ * L * E - Wᵀ * L * E) - (Eᵀ * L * E - Eᵀ * L * W) * Zᵀ
+      + (Eᵀ * L * E - Wᵀ * L * E - Eᵀ * L * W + S) := by
+    rw [VecBlendMoments.errVar, moments_gap hK, VecBlendMoments.cross,
+      VecBlendMoments.varRest, moments_covEst hK]
+    simp only [moments]
+    rw [transpose_sub, transpose_add, transpose_sub, h4, h5, hS]
+    noncomm_ring
+  rw [blendW, key, h1, h2, h3, rhs]
+  noncomm_ring
+
+/-- **The price of the matrix blend** (matrix version of `Core.errVar_eq_blupWeight_add`):
+the blend with credibility matrix `Z` loses exactly `(A - A*)ᵀK(A - A*)` against the best
+linear unbiased predictor, `A = W + (Eⱼ - W)Zᵀ`. -/
+theorem errVar_eq_blupW_add [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) (Z : Matrix P P ℝ) :
+    (moments K L j).errVar Z = linMse K L j (blupW K L j)
+      + (blendW K j Z - blupW K L j)ᵀ * K * (blendW K j Z - blupW K L j) := by
+  rw [← linMse_blendW hK hL]
+  exact linMse_eq_blupW_add hK hL j (stack_transpose_mul_blendW hK j Z)
+
+/-! #### Separate blends per component (frequency × severity) -/
+
+/-- The covariance across cohorts of the `p`-th components, `(M(i,p),(k,p))ᵢₖ`. -/
+def component (M : Matrix (J × P) (J × P) ℝ) (p : P) : Matrix J J ℝ :=
+  fun i k => M (i, p) (k, p)
+
+omit [Fintype P] [DecidableEq P] [Fintype J] [DecidableEq J] in
+/-- The component covariances of a positive definite `K` are positive definite. -/
+theorem component_posDef {M : Matrix (J × P) (J × P) ℝ} (hM : M.PosDef) (p : P) :
+    (component M p).PosDef :=
+  hM.submatrix (e := fun i => (i, p)) fun _ _ h => (Prod.mk.inj h).1
+
+/-- Separate weights: component `p` of the prediction is `Σₖ aₚₖ μ̂ₖₚ`, from the `p`-th
+components only. -/
+def sepW (a : P → J → ℝ) : Matrix (J × P) P ℝ := fun x q => if x.2 = q then a q x.1 else 0
+
+omit [DecidableEq J] in
+/-- Separate weights are unbiased when each component's weights sum to one. -/
+theorem stack_transpose_mul_sepW {a : P → J → ℝ} (ha : ∀ p, ∑ k, a p k = 1) :
+    (stack J P)ᵀ * sepW a = 1 := by
+  ext p q
+  simp only [Matrix.mul_apply, transpose_apply, stack, sepW, Fintype.sum_prod_type, ite_mul,
+    one_mul, zero_mul, Matrix.one_apply]
+  by_cases hpq : p = q
+  · subst hpq; simp [ha]
+  · simp [hpq]
+
+/-- The error variance of component `p` of separate predictions is the scalar `Core.linMse`
+of that component's data alone. -/
+theorem linMse_sepW_apply {K L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J)
+    (a : P → J → ℝ) (p : P) :
+    linMse K L j (sepW a) p p = Core.linMse (component K p) (component L p) j (a p) := by
+  have hLs : ∀ x y, L x y = L y x := fun x y => by
+    rw [← transpose_apply L y x, hL]
+  simp only [linMse, Core.linMse, Matrix.sub_apply, Matrix.add_apply, Matrix.mul_apply,
+    transpose_apply, sepW, sel, component, Fintype.sum_prod_type, dotProduct, mulVec,
+    ite_mul, mul_ite, zero_mul, mul_zero, one_mul, mul_one, Finset.sum_ite_eq',
+    Finset.mem_univ, ite_true, ite_and]
+  simp only [Finset.sum_ite_irrel, Finset.sum_const_zero, Finset.sum_ite_eq', Finset.mem_univ,
+    ite_true, hLs (_, p) (j, p)]
+  have e1 : ∑ x, (∑ y, a p y * K (y, p) (x, p)) * a p x
+      = ∑ i, a p i * ∑ k, K (i, p) (k, p) * a p k := by
+    simp only [Finset.sum_mul, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
+  have e2 : ∑ x, L (j, p) (x, p) * a p x = ∑ x, a p x * L (j, p) (x, p) :=
+    Finset.sum_congr rfl fun _ _ => mul_comm _ _
+  rw [e1, e2]
+  ring
+
+/-- **Vector credibility beats separate credibility** (frequency × severity): the best
+linear unbiased predictor of the level vector has a summed error variance no larger than
+that of separate scalar blends, one per component on that component's data alone, whatever
+their credibility factors `zₚ`. (The matrix *blend* is not always better: Finding 22.) -/
+theorem trace_linMse_blupW_le_separate [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) (z : P → ℝ) :
+    (linMse K L j (blupW K L j)).trace
+      ≤ ∑ p, (Core.levelMoments (component K p) (component L p) (K (j, p) (j, p)) j).errVar
+          (z p) := by
+  let a : P → J → ℝ := fun p => Core.blendWeight (component K p) j (z p)
+  have ha : ∀ p, ∑ k, a p k = 1 := fun p => Core.sum_blendWeight (component_posDef hK p) j (z p)
+  refine (blupW_optimal_trace hK hL j (stack_transpose_mul_sepW ha)).trans_eq ?_
+  refine Finset.sum_congr rfl fun p _ => ?_
+  rw [diag_apply, linMse_sepW_apply hL j a p]
+  exact Core.linMse_blendWeight (component_posDef hK p) (component L p) j (z p)
 
 end CoreVector
 end Credibility

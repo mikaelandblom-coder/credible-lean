@@ -289,7 +289,9 @@ One chat per step; none needs Lean except step 5.
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
   matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the
   frequency × severity comparison (`notes/time-trends.md` §3 item 3) can add a fourth fit,
-  the bivariate blend, once the step from `(φ, ψ)` to the premium is settled. Hachemeister
+  the bivariate blend, once the step from `(φ, ψ)` to the premium is settled. Finding 22:
+  the bivariate *blend* can lose to separate blends with correlated cohorts (small gap);
+  the bivariate best predictor `blupW` never does. Show both, or the predictor. Hachemeister
   with correlated cohorts is proved too (`hachemeister_bestZ`): an app step "cohort trend
   lines" (level + slope per cohort, shared year shocks) would show `Z` as a 2 × 2 matrix.
 - Claim trend (2026-11-19, `Trend.lean`, Finding 21): restating with the true `g` moves no

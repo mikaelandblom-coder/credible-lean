@@ -341,4 +341,29 @@ Gaps, extra hypotheses and new results found while formalizing.
    holds for every `g`), and the target year never matters. `ĝ` is a pure level
    shift only when all cohorts' data have the same time profile.
 
+22. **Vector credibility beats separate credibility only as a predictor, not as a blend
+   (new; `CoreVector.blupW_optimal`, `CoreVector.errVar_eq_blupW_add`,
+   `CoreVector.trace_linMse_blupW_le_separate`).** Planning target
+   (`notes/time-trends.md` §2): "the vector blend's MSE ≤ the separate blends' (each is a
+   restricted linear predictor), via `bestZ_optimal` restricted to diagonal `Z`". The route
+   fails: separate blends use their own portfolio estimate per component (scalar GLS on
+   `K_F`, `K_Y`), not the matrix GLS `μ̂` of the vector blend, so they are not a diagonal-`Z`
+   vector blend. They coincide only if `K` has no covariance between components, and in the
+   compound model `K = L + N` that forces `Λ` diagonal, where the two are equal anyway. **The
+   statement is false with correlated cohorts.** Counterexample: three cohorts, independent
+   levels `L = I ⊗ Λ`, `Λ = [[2, 1], [1, 4]]` (frequency, severity), compound noise
+   (no frequency–severity covariance) correlated across cohorts,
+   `N_F = [[5, 2, 1], [2, 1, 1], [1, 1, 5]]`, `N_Y = [[2, 1, 2], [1, 1, 1], [2, 1, 3]]`,
+   `K = L + N`, cohort 2. Summed MSE: vector blend (matrix GLS, `Z*`)
+   `819884/414757 ≈ 1.9768`, separate blends (scalar GLS and best `z` per component)
+   `649/329 ≈ 1.9726`: the frequency MSE is `0.9768` against `0.9726`. What is true is the
+   classical statement one level up: the matrix best linear unbiased predictor
+   `A* = K⁻¹LEⱼ + W(I − UᵀK⁻¹LEⱼ)` beats every unbiased linear predictor in the Loewner
+   order, so both blends (here `2455/1351 ≈ 1.8172`), and the matrix blend loses exactly
+   `(A − A*)ᵀK(A − A*)` against it (the matrix Finding 18). Numerically (random search, not
+   proved): with independent cohorts or two cohorts the vector blend never lost (there it is
+   the predictor, as in Finding 18), so the gap needs correlated cohorts and three or more
+   of them; with `L = I ⊗ Λ` it is small. As Bühlmann (1974) found for one risk, restricted
+   predictors are not ordered: don't claim an order between the vector and separate blends.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

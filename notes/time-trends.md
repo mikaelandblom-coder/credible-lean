@@ -127,7 +127,10 @@ cohorts on top: **the same Core generalisation as Hachemeister** (step 3).
 Separate blending is its special case `Λ` diagonal; blending `B` is the
 other extreme. Theorem targets:
 - the vector blend's MSE ≤ both separate blends and the single `B` blend
-  (each is a restricted linear predictor);
+  (each is a restricted linear predictor); **false for the blend** (Finding 22: the
+  separate blends use their own portfolio estimates, so they are not a diagonal-`Z` vector
+  blend, and with correlated cohorts the vector blend can lose). True for the matrix best
+  linear unbiased predictor (`CoreVector.trace_linMse_blupW_le_separate`);
 - equality conditions: separate = vector iff `Λ` diagonal and `K_FY = 0`.
 - precedent: Bühlmann (1974, ASTIN 7(3)) did this for one risk with independent
   levels (`literature.md` §7a): the two-statistic formula always wins, and the
@@ -163,7 +166,13 @@ same machinery. State it as such, don't hide the approximation.
    `Zⱼ = A(A + Wⱼ⁻¹)⁻¹`. Note: each cohort's line still uses only its own `Φⱼⱼ`; with
    correlated `Φ` a joint GLS of all lines would be more efficient (not pursued: the Core
    takes the `bⱼ` as given estimates and `K` accounts for their correlation).
-   Open: frequency–severity; balance; moment layer.
+   Then: the matrix best linear unbiased predictor `A* = K⁻¹LEⱼ + W(I − UᵀK⁻¹LEⱼ)` is
+   Loewner-optimal among unbiased linear predictors (`blupW_optimal`), the matrix blend loses
+   `(A − A*)ᵀK(A − A*)` against it (`errVar_eq_blupW_add`), and it beats separate blends per
+   component (`trace_linMse_blupW_le_separate`); the matrix *blend* need not (Finding 22).
+   Open: balance; moment layer; when the matrix blend is the BLUP (independent cohorts, as
+   `Core.blendWeight_eq_blupWeight_iff`); equality of vector and separate BLUPs when `K`, `L`
+   have no cross-component covariance.
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)
