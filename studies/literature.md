@@ -265,10 +265,18 @@ credibility texts assume independence across risks. "No references" is too stron
   links two risks in the *same* period only. **Not the thesis model.** Note that `ρ` only moves
   variance from the noise `Σ` to the level `V` (`Σ − ρ` and `V + ρ`), so for prediction it acts
   like a larger level variance.
-- Huang & Wu (2015), *The credibility premiums with dependence structure over risks and time
-  horizon*, J. Ind. Manag. Optim. 11(2), 365–380. Not read; by its title and by Zhang, Cui &
-  Chen (who extend Wen & Deng with "uniform conditional dependence over time for each
-  individual risk") probably the same kind of time dependence. Last open candidate.
+- Huang & Wu (2015), *Credibility models with dependence structure over risks and time
+  horizon*, J. Ind. Manag. Optim. 11(2), 365–380. **Read in full (owner's PDF, 2026-11-19).**
+  Assumption 1/3: `Cov(Xᵢ | Θ) = σ²(Θᵢ)/wᵢⱼ I + ρ(Θᵢ) 11ᵀ` within risk `i` (exchangeable over
+  time), `Cov(μ(Θᵢ), μ(Θⱼ)) = τᵢⱼ` across risks; Lemma 3.1/4.1:
+  `Σ_XX = diag(1ₙᵢ) R diag(1ₙᵢᵀ) + diag(Gᵢ)`, block diagonal noise. So across risks only the
+  levels correlate, as in Wen & Wu (2011). **Not the thesis model.** Their introduction surveys
+  the field as two strands, "dependence over risks" (common effects, correlated levels) and
+  "conditional dependence over time" (within a risk), with no work combining them; noise
+  correlated across risks within a period is in neither. Their conclusion: under dependence the
+  premium is no longer `(1 − z)·mean + z·own mean` in general, only a linear function of all
+  claims. That is the BLUP-vs-blend gap that Finding 18 makes exact (price of the blend, and
+  when it is zero).
 - Dannenburg (1995), *Crossed classification credibility models*, TI 95-64 (DARE has the
   record only, no PDF); Dannenburg, Kaas & Goovaerts (1996), ch. 6; Goulet (2001).
   `y_ijt = β + α_i⁽¹⁾ + α_j⁽²⁾ + α_ij + ε_ijt`: both factors are *risk* classifications, so
@@ -306,12 +314,13 @@ products, and balance. Proofs here use only that foundation (no distribution).
 `www.casact.org`, `sysmath.cjoe.ac.cn` in the Default environment. Fung & Xu read; Dannenburg
 has no open PDF; `sysmath.cjoe.ac.cn` refuses the session (HTTP 403 from the site). The three
 candidates that might contain within-period dependence across risks were paywalled. Wen & Wu
-(2011) and Zhang, Cui & Chen (2017) are now read from photos and are not it (levels only;
-permanent common effect plus within-risk time correlation). Huang & Wu (2015) remains: owner to supply PDFs or photos of the model
+(2011) and Zhang, Cui & Chen (2017) are read from photos, Huang & Wu (2015) in full from the
+owner's PDF; none of them is it (correlated levels, permanent common effects, within-risk
+time correlation). No open candidates; a reviewer may still search further: owner to supply PDFs or photos of the model
 assumptions, the homogeneous estimator and any parameter estimation.
 
-**For a reviewer.** (1) Read Huang & Wu (2015) in full and say whether eq. (26) or the §2.8
-estimators appear there (Wen & Wu 2011 and Zhang, Cui & Chen 2017 checked: neither has
-noise correlated across risks within a period); if so, cite and move the "new here" in paper §15.
+**For a reviewer.** (1) Search for any credibility or small-area paper with noise correlated
+across units within a period (Wen & Wu 2011, Huang & Wu 2015, Zhang, Cui & Chen 2017, Fung &
+Xu 2009 checked: none has it); if so, cite and move the "new here" in paper §15.
 (2) Check that `Core.blupWeight_optimal` matches Goldberger's/Harville's predictor.
 (3) Check Bühlmann & Gisler (2005) for any within-period dependence across risks.
