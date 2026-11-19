@@ -335,6 +335,17 @@ theorem sel_transpose_mul_sel (i k : J) :
   ext p q
   split_ifs with hik <;> simp [Matrix.one_apply, hik]
 
+/-- `Eᵢᵀ(EₖX) = X` if `i = k`, else `0`. -/
+theorem sel_transpose_mul_sel_mul {n : Type*} (i k : J) (X : Matrix P n ℝ) :
+    (sel P i)ᵀ * (sel P k * X) = if i = k then X else 0 := by
+  rw [← Matrix.mul_assoc, sel_transpose_mul_sel]
+  split_ifs <;> simp
+
+/-- `Eᵢᵀ Σₖ EₖXₖ = Xᵢ`. -/
+theorem sel_transpose_mul_sum_sel {n : Type*} (i : J) (X : J → Matrix P n ℝ) :
+    (sel P i)ᵀ * ∑ k, sel P k * X k = X i := by
+  simp [Matrix.mul_sum, sel_transpose_mul_sel_mul]
+
 omit [Fintype P] in
 /-- `U = Σⱼ Eⱼ`. -/
 theorem stack_eq_sum_sel : stack J P = ∑ j, sel P j := by
@@ -542,6 +553,183 @@ theorem weight_buhlmannGisler [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
   simp only [← hKj]
   rw [Matrix.mul_inv_rev, Matrix.mul_assoc, ← Matrix.mul_assoc Λ⁻¹, nonsing_inv_mul _ hΛ,
     Matrix.one_mul]
+
+/-- A matrix is cohort block diagonal iff its off-diagonal blocks `EᵢᵀMEₖ` vanish. -/
+theorem isCohortBlockDiag_iff (M : Matrix (J × P) (J × P) ℝ) :
+    IsCohortBlockDiag M ↔ ∀ i k : J, i ≠ k → (sel P i)ᵀ * M * sel P k = 0 := by
+  simp only [sel_transpose_mul_mul_sel]
+  constructor
+  · intro h i k hik; ext p q; exact h i k hik p q
+  · intro h i k hik p q; exact congrFun (congrFun (h i k hik) p) q
+
+theorem blk_eq (M : Matrix (J × P) (J × P) ℝ) (j : J) : blk M j = (sel P j)ᵀ * M * sel P j :=
+  (sel_transpose_mul_mul_sel M j j).symm
+
+/-! ### Hachemeister's regression model with correlated cohorts
+
+Cohort `j` has observations `Xⱼ ∈ ℝᵀ` (one per period), design `Yⱼ` (`T × P`, e.g. columns
+`1` and `t` for level and slope) and `Xⱼ = Yⱼβⱼ + εⱼ`. The stacked noise `ε` has covariance
+`Φ` over cohorts × periods, *not* necessarily block diagonal (a year shock hits all
+cohorts), and the stacked `β` has covariance `L`. Each cohort's line is fitted by its own GLS,
+`bⱼ = MⱼXⱼ` with `Mⱼ = (YⱼᵀΦⱼⱼ⁻¹Yⱼ)⁻¹YⱼᵀΦⱼⱼ⁻¹`. As `MⱼYⱼ = I`, `bⱼ = βⱼ + Mⱼεⱼ` and
+`Var(b) = L + MΦMᵀ`. Hachemeister (1975) and Bühlmann & Gisler (1997) have `Φ` block
+diagonal; then `Var(bⱼ) = A + Wⱼ⁻¹` with `Wⱼ = YⱼᵀΦⱼⱼ⁻¹Yⱼ` and `Zⱼ = A(A + Wⱼ⁻¹)⁻¹`. -/
+
+section Hachemeister
+
+variable {T : Type*} [Fintype T] [DecidableEq T]
+
+/-- `Wⱼ = YⱼᵀΦⱼⱼ⁻¹Yⱼ`, the GLS information of cohort `j`. -/
+noncomputable def gram (Y : J → Matrix T P ℝ) (Φ : Matrix (J × T) (J × T) ℝ) (j : J) :
+    Matrix P P ℝ :=
+  (Y j)ᵀ * (blk Φ j)⁻¹ * Y j
+
+/-- `Mⱼ = Wⱼ⁻¹YⱼᵀΦⱼⱼ⁻¹`: cohort `j`'s own GLS line is `bⱼ = MⱼXⱼ`. -/
+noncomputable def indiv (Y : J → Matrix T P ℝ) (Φ : Matrix (J × T) (J × T) ℝ) (j : J) :
+    Matrix P T ℝ :=
+  (gram Y Φ j)⁻¹ * (Y j)ᵀ * (blk Φ j)⁻¹
+
+/-- The stacked estimator `b = MX`, `M = Σⱼ EⱼMⱼEⱼᵀ`. -/
+noncomputable def hachM (Y : J → Matrix T P ℝ) (Φ : Matrix (J × T) (J × T) ℝ) :
+    Matrix (J × P) (J × T) ℝ :=
+  ∑ j, sel P j * indiv Y Φ j * (sel T j)ᵀ
+
+/-- The stacked design `D = Σⱼ EⱼYⱼEⱼᵀ`: `X = Dβ + ε`. -/
+def design (Y : J → Matrix T P ℝ) : Matrix (J × T) (J × P) ℝ :=
+  ∑ j, sel T j * Y j * (sel P j)ᵀ
+
+/-- `K = Var(b) = L + MΦMᵀ`, the covariance of the individual line estimates. -/
+noncomputable def hachK (L : Matrix (J × P) (J × P) ℝ) (Y : J → Matrix T P ℝ)
+    (Φ : Matrix (J × T) (J × T) ℝ) : Matrix (J × P) (J × P) ℝ :=
+  L + hachM Y Φ * Φ * (hachM Y Φ)ᵀ
+
+omit [DecidableEq P] [Fintype J] [DecidableEq J] in
+/-- `Wⱼ ≻ 0` when `Φ ≻ 0` and `Yⱼ` has full column rank. -/
+theorem gram_posDef {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) (j : J) : (gram Y Φ j).PosDef := by
+  simpa [gram, conjTranspose_eq_transpose_of_trivial] using
+    (blk_posDef hΦ j).inv.conjTranspose_mul_mul_same (hY j)
+
+omit [Fintype J] [DecidableEq J] in
+/-- `MⱼYⱼ = I`: the own GLS line is unbiased for `βⱼ`. -/
+theorem indiv_mul {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) (j : J) : indiv Y Φ j * Y j = 1 := by
+  rw [indiv, Matrix.mul_assoc, Matrix.mul_assoc, ← Matrix.mul_assoc (Y j)ᵀ, ← gram,
+    nonsing_inv_mul _ (isUnit_iff_ne_zero.2 (gram_posDef hΦ hY j).det_pos.ne')]
+
+/-- `EᵢᵀM = MᵢEᵢᵀ`. -/
+theorem sel_transpose_mul_hachM (Y : J → Matrix T P ℝ) (Φ : Matrix (J × T) (J × T) ℝ) (i : J) :
+    (sel P i)ᵀ * hachM Y Φ = indiv Y Φ i * (sel T i)ᵀ := by
+  rw [hachM]
+  simp only [Matrix.mul_assoc]
+  exact sel_transpose_mul_sum_sel i _
+
+/-- `MD = I`: the stacked lines are unbiased, `b = β + Mε`. -/
+theorem hachM_mul_design {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) : hachM Y Φ * design Y = 1 := by
+  rw [← sum_sel_mul_sel_transpose (J := J) (P := P), hachM, Matrix.sum_mul]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  have hd : (sel T j)ᵀ * design Y = Y j * (sel P j)ᵀ := by
+    rw [design]
+    simp only [Matrix.mul_assoc]
+    exact sel_transpose_mul_sum_sel j _
+  rw [Matrix.mul_assoc, Matrix.mul_assoc, hd, ← Matrix.mul_assoc (indiv Y Φ j),
+    indiv_mul hΦ hY, Matrix.one_mul]
+
+/-- **Distribution-free covariance of the lines**: if `Var(X) = DLDᵀ + Φ` (levels and noise
+uncorrelated), then `Var(b) = M Var(X) Mᵀ = L + MΦMᵀ`. -/
+theorem hachM_mul_cov_mul {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef)
+    {Y : J → Matrix T P ℝ} (hY : ∀ j, Function.Injective (Y j).mulVec)
+    (L : Matrix (J × P) (J × P) ℝ) :
+    hachM Y Φ * (design Y * L * (design Y)ᵀ + Φ) * (hachM Y Φ)ᵀ = hachK L Y Φ := by
+  have h := hachM_mul_design hΦ hY
+  have ht : (design Y)ᵀ * (hachM Y Φ)ᵀ = 1 := by rw [← transpose_mul, h, transpose_one]
+  rw [hachK, Matrix.mul_add, Matrix.add_mul]
+  congr 1
+  rw [← Matrix.mul_assoc, ← Matrix.mul_assoc, h, Matrix.one_mul, Matrix.mul_assoc, ht,
+    Matrix.mul_one]
+
+/-- The covariance of the lines is positive definite: `Φ ≻ 0`, `L ⪰ 0` and every design of
+full column rank. -/
+theorem hachK_posDef {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) {L : Matrix (J × P) (J × P) ℝ}
+    (hL : L.PosSemidef) : (hachK L Y Φ).PosDef := by
+  have ht : (design Y)ᵀ * (hachM Y Φ)ᵀ = 1 := by
+    rw [← transpose_mul, hachM_mul_design hΦ hY, transpose_one]
+  have hinj : Function.Injective (hachM Y Φ)ᵀ.mulVec := fun a b hab => by
+    have := congrArg ((design Y)ᵀ *ᵥ ·) hab
+    simpa only [mulVec_mulVec, ht, one_mulVec] using this
+  have := hΦ.conjTranspose_mul_mul_same hinj
+  simp only [conjTranspose_eq_transpose_of_trivial, transpose_transpose] at this
+  exact Matrix.PosDef.posSemidef_add hL this
+
+/-- **Hachemeister with correlated cohorts**: matrix eq. (26) for the line estimates,
+`Zⱼ = (Lⱼⱼ - EⱼᵀL𝒲)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` with `K = L + MΦMᵀ`. -/
+theorem hachemeister_bestZ [Nonempty J] {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef)
+    {Y : J → Matrix T P ℝ} (hY : ∀ j, Function.Injective (Y j).mulVec)
+    {L : Matrix (J × P) (J × P) ℝ} (hL : L.PosSemidef) (j : J) :
+    (moments (hachK L Y Φ) L j).bestZ
+      = ((sel P j)ᵀ * L * sel P j - (sel P j)ᵀ * L * glsW (hachK L Y Φ))
+        * ((sel P j)ᵀ * hachK L Y Φ * sel P j - (info (hachK L Y Φ))⁻¹)⁻¹ :=
+  moments_bestZ (hachK_posDef hΦ hY hL)
+    (by simpa [conjTranspose_eq_transpose_of_trivial] using hL.isHermitian.eq) j
+
+/-- With independent cohorts (`Φ` block diagonal) the noise part `MΦMᵀ` is block diagonal
+with blocks `MⱼΦⱼⱼMⱼᵀ = Wⱼ⁻¹`. -/
+theorem hachM_noise_blockDiag {Φ : Matrix (J × T) (J × T) ℝ} (hΦ : Φ.PosDef)
+    (hb : IsCohortBlockDiag Φ) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) (i k : J) :
+    (sel P i)ᵀ * (hachM Y Φ * Φ * (hachM Y Φ)ᵀ) * sel P k
+      = if i = k then (gram Y Φ i)⁻¹ else 0 := by
+  have hk : (hachM Y Φ)ᵀ * sel P k = sel T k * (indiv Y Φ k)ᵀ := by
+    rw [← transpose_transpose (sel P k), ← transpose_mul, sel_transpose_mul_hachM,
+      transpose_mul, transpose_transpose]
+  have e1 : (sel P i)ᵀ * (hachM Y Φ * Φ * (hachM Y Φ)ᵀ) * sel P k
+      = ((sel P i)ᵀ * hachM Y Φ) * Φ * ((hachM Y Φ)ᵀ * sel P k) := by
+    simp only [Matrix.mul_assoc]
+  rw [e1, sel_transpose_mul_hachM, hk]
+  have e2 : indiv Y Φ i * (sel T i)ᵀ * Φ * (sel T k * (indiv Y Φ k)ᵀ)
+      = indiv Y Φ i * ((sel T i)ᵀ * Φ * sel T k) * (indiv Y Φ k)ᵀ := by
+    simp only [Matrix.mul_assoc]
+  rw [e2, sel_transpose_mul_mul_sel_of_blockDiag hb]
+  split_ifs with h
+  · subst h
+    have hS : ∀ {M : Matrix P P ℝ}, M.PosDef → (M⁻¹)ᵀ = M⁻¹ := fun h => by
+      simpa [conjTranspose_eq_transpose_of_trivial] using h.inv.isHermitian.eq
+    have hF : ((blk Φ i)⁻¹)ᵀ = (blk Φ i)⁻¹ := by
+      simpa [conjTranspose_eq_transpose_of_trivial] using (blk_posDef hΦ i).inv.isHermitian.eq
+    have hBu : IsUnit (blk Φ i).det := isUnit_iff_ne_zero.2 (blk_posDef hΦ i).det_pos.ne'
+    have hGu : IsUnit (gram Y Φ i).det :=
+      isUnit_iff_ne_zero.2 (gram_posDef hΦ hY i).det_pos.ne'
+    -- `W⁻¹YᵀΦ⁻¹ Φ Φ⁻¹YW⁻¹ = W⁻¹ W W⁻¹`
+    simp only [indiv, transpose_mul, transpose_transpose, hF, hS (gram_posDef hΦ hY i),
+      Matrix.mul_assoc]
+    rw [← Matrix.mul_assoc (blk Φ i)⁻¹ (blk Φ i), nonsing_inv_mul _ hBu, Matrix.one_mul,
+      ← Matrix.mul_assoc (Y i)ᵀ, ← Matrix.mul_assoc ((Y i)ᵀ * (blk Φ i)⁻¹), ← gram,
+      ← Matrix.mul_assoc, nonsing_inv_mul _ hGu, Matrix.one_mul]
+  · simp
+
+/-- **Classical Hachemeister** (independent cohorts, independent `βⱼ` with covariance `A`):
+`Zⱼ = A(A + Wⱼ⁻¹)⁻¹`, `Wⱼ = YⱼᵀΦⱼⱼ⁻¹Yⱼ` (Bühlmann & Gisler 1997; 2005, §8.3), and the
+collective line is the `Z`-weighted mean of the cohort lines. -/
+theorem hachemeister_bestZ_of_blockDiag [Nonempty J] {Φ : Matrix (J × T) (J × T) ℝ}
+    (hΦ : Φ.PosDef) (hΦb : IsCohortBlockDiag Φ) {Y : J → Matrix T P ℝ}
+    (hY : ∀ j, Function.Injective (Y j).mulVec) {L : Matrix (J × P) (J × P) ℝ}
+    (hL : L.PosSemidef) (hLb : IsCohortBlockDiag L) {A : Matrix P P ℝ} (hA : ∀ j, blk L j = A)
+    {i j : J} (hij : i ≠ j) :
+    (moments (hachK L Y Φ) L j).bestZ = A * (A + (gram Y Φ j)⁻¹)⁻¹ := by
+  have hKb : IsCohortBlockDiag (hachK L Y Φ) := by
+    rw [isCohortBlockDiag_iff] at hLb ⊢
+    intro i k hik
+    rw [hachK, Matrix.mul_add, Matrix.add_mul, hLb i k hik, hachM_noise_blockDiag hΦ hΦb hY,
+      if_neg hik, add_zero]
+  refine moments_bestZ_buhlmannGisler (hachK_posDef hΦ hY hL) hKb
+    (by simpa [conjTranspose_eq_transpose_of_trivial] using hL.isHermitian.eq) hLb
+    (S := fun j => (gram Y Φ j)⁻¹) (fun k => ?_) hA hij
+  rw [blk_eq, hachK, Matrix.mul_add, Matrix.add_mul, hachM_noise_blockDiag hΦ hΦb hY, if_pos rfl,
+    ← blk_eq, hA]
+
+end Hachemeister
 
 end CoreVector
 end Credibility

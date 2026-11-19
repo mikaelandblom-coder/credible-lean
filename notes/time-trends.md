@@ -157,7 +157,13 @@ same machinery. State it as such, don't hide the approximation.
    (Eⱼ - W)ᵀK(Eⱼ - W)` is PD iff `Eⱼ - W` has full column rank (vector `b ≠ eⱼ`);
    block-diagonal `K`, `L` give `Zⱼ = LⱼⱼKⱼⱼ⁻¹` (PD gap with a second cohort) and, with
    `Kⱼⱼ = Λ + Sⱼ`, `Lⱼⱼ = Λ`, Bühlmann–Gisler: `Zⱼ = Λ(Λ+Sⱼ)⁻¹`, `Bⱼ = (ΣZᵢ)⁻¹Zⱼ`.
-   Open: Hachemeister with correlated cohorts; frequency–severity; balance; moment layer.
+   Hachemeister with correlated cohorts: own GLS lines `bⱼ = MⱼXⱼ`, `MⱼYⱼ = I`, so
+   `Var(b) = L + MΦMᵀ` for any noise covariance `Φ` over cohorts × periods; PD for full-rank
+   designs; matrix eq. (26) applies (`hachemeister_bestZ`). Block-diagonal `Φ` gives back
+   `Zⱼ = A(A + Wⱼ⁻¹)⁻¹`. Note: each cohort's line still uses only its own `Φⱼⱼ`; with
+   correlated `Φ` a joint GLS of all lines would be more efficient (not pursued: the Core
+   takes the `bⱼ` as given estimates and `K` accounts for their correlation).
+   Open: frequency–severity; balance; moment layer.
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)

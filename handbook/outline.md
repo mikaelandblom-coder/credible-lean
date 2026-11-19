@@ -16,8 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Matrix blend (2026-11-19, `CoreVector.lean`): wait for the Hachemeister and bivariate
-  frequency–severity corollaries; then one entry with the formula of
+- Matrix blend (2026-11-19, `CoreVector.lean`): Hachemeister done
+  (`Credibility.CoreVector.hachemeister_bestZ`, classical case
+  `hachemeister_bestZ_of_blockDiag`); wait for the bivariate frequency–severity corollary; then one entry with the formula of
   `Credibility.CoreVector.moments_bestZ` and "it is best for every premium `aᵀμⱼ`"
   (`Credibility.VecBlendMoments.bestZ_optimal_dotProduct`).
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation

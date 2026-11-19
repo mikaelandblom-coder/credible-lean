@@ -3649,6 +3649,72 @@ $\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
   Substitute; $\bigl(\Lambda\sum_i K_{ii}^{-1}\bigr)^{-1}\Lambda = \bigl(\sum_i K_{ii}^{-1}\bigr)^{-1}$.
 \end{proof}
 
+\begin{definition}[Hachemeister's model with correlated cohorts]\label{def:CV_hach}
+  \lean{Credibility.CoreVector.gram, Credibility.CoreVector.indiv,
+        Credibility.CoreVector.hachM, Credibility.CoreVector.design,
+        Credibility.CoreVector.hachK}
+  \leanok
+  \uses{def:CV_blockDiag}
+  Cohort $j$ has observations $X_j \in \mathbb{R}^T$, a design $Y_j$ ($T \times P$) and
+  $X_j = Y_j\beta_j + \varepsilon_j$; the stacked noise has covariance $\Phi$ over
+  cohorts $\times$ periods (not necessarily block diagonal), the stacked $\beta$ has
+  covariance $L$. Each cohort's own GLS line is $b_j = M_jX_j$ with
+  $W_j = Y_j^\top\Phi_{jj}^{-1}Y_j$ and $M_j = W_j^{-1}Y_j^\top\Phi_{jj}^{-1}$. Stacked:
+  $M = \sum_j E_jM_jE_j^\top$, design $D = \sum_j E_jY_jE_j^\top$, and
+  $K = L + M\Phi M^\top$.
+\end{definition}
+
+\begin{lemma}[The lines and their covariance]\label{lem:CV_hach}
+  \lean{Credibility.CoreVector.isCohortBlockDiag_iff, Credibility.CoreVector.blk_eq,
+        Credibility.CoreVector.sel_transpose_mul_sel_mul,
+        Credibility.CoreVector.sel_transpose_mul_sum_sel,
+        Credibility.CoreVector.gram_posDef, Credibility.CoreVector.indiv_mul,
+        Credibility.CoreVector.sel_transpose_mul_hachM,
+        Credibility.CoreVector.hachM_mul_design, Credibility.CoreVector.hachM_mul_cov_mul,
+        Credibility.CoreVector.hachK_posDef}
+  \leanok
+  \uses{def:CV_hach, lem:CV_weight}
+  For $\Phi \succ 0$ and every $Y_j$ of full column rank: $W_j \succ 0$, $M_jY_j = I$, so
+  $MD = I$ and $b = \beta + M\varepsilon$; if $\mathrm{Var}(X) = DLD^\top + \Phi$ then
+  $\mathrm{Var}(b) = M\,\mathrm{Var}(X)M^\top = K$; and $K \succ 0$ when $L \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_weight, lem:CV_blockDiag}
+  $E_i^\top\sum_k E_kX_k = X_i$. $M^\top$ has the left inverse $D^\top$, so it is injective
+  and $M\Phi M^\top \succ 0$.
+\end{proof}
+
+\begin{theorem}[Hachemeister with correlated cohorts]\label{thm:CV_hachemeister}
+  \lean{Credibility.CoreVector.hachemeister_bestZ}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_bestZ}
+  Under the conditions of Lemma~\ref{lem:CV_hach}, the best credibility matrix of the line
+  of cohort $j$ is matrix eq.\ (26) with $K = L + M\Phi M^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_bestZ}
+  Theorem~\ref{thm:CV_bestZ} with $K \succ 0$.
+\end{proof}
+
+\begin{theorem}[Classical Hachemeister]\label{thm:CV_hachemeister_blockDiag}
+  \lean{Credibility.CoreVector.hachM_noise_blockDiag,
+        Credibility.CoreVector.hachemeister_bestZ_of_blockDiag}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_buhlmannGisler}
+  If the cohorts are independent ($\Phi$ and $L$ cohort block diagonal, $L_{jj} = A$) and
+  there is a second cohort, then $M\Phi M^\top$ is block diagonal with blocks $W_j^{-1}$ and
+  $Z_j^\ast = A(A + W_j^{-1})^{-1}$ (Hachemeister 1975; Bühlmann--Gisler 1997).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_hach, lem:CV_blockDiag, thm:CV_buhlmannGisler}
+  $E_i^\top M\Phi M^\top E_k = M_i\Phi_{ik}M_k^\top$, and
+  $M_j\Phi_{jj}M_j^\top = W_j^{-1}W_jW_j^{-1}$. Then
+  Theorem~\ref{thm:CV_buhlmannGisler} with $\Lambda = A$, $S_j = W_j^{-1}$.
+\end{proof}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean
