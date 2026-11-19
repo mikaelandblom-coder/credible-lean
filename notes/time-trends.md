@@ -2,7 +2,9 @@
 
 Planning note, 2026-11-19 (owner's question). Not in the thesis. Expands
 `notes/roadmap.md` §2 ("Deterministic trend") and answers how to blend when
-frequency and severity are observed separately. Nothing here is proved yet.
+frequency and severity are observed separately. Steps 1–2 are proved in
+`Credibility/Trend.lean` (2026-11-19); step 2's claim holds only for the true
+`g` (Finding 21).
 
 ## 1. Trends: four steps, simplest first
 
@@ -33,10 +35,12 @@ premium just scales. One-line corollaries of `Unequal`. Handbook: one entry
 
 Usual practice: fit `log` of the portfolio's yearly rate on `t`, or take an
 external index. Facts worth stating:
-- **Relativities are trend-free.** The blend's relativity `μ̂ⱼ / μ̂` does not
-  depend on `g` at all in the constant-CV case (both are scaled by the same
-  factor). So `ĝ` only moves the overall level, never the ranking or `z`.
-  This is a theorem, and the main practical message.
+- **Relativities are trend-free** (`Unequal.Noise.relativity_detrend`): restated
+  with the true `g`, the blend's relativity `μ̂ⱼ / μ̂` does not depend on `g`
+  (constant CV). `z`, `a`, `b` do not depend on `ĝ` at all. But an estimate
+  `ĝ ≠ g` leaves a year-dependent factor that reweights years within a cohort,
+  so relativities do move slightly (Finding 21, counterexample there); `ĝ` is a
+  pure level shift only when all cohorts share one time profile.
 - The error in `ĝ` is a common factor on every cohort's projection: a
   *common shock* on the prediction, i.e. an equal-correlation term.
   Year effects (hard winters, already our `ρ`) inflate the variance of `ĝ`;

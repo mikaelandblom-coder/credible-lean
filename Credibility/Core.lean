@@ -107,6 +107,18 @@ theorem bestZ_eq (hK : K.PosDef) (j : J) :
     Matrix.one_apply_eq, mul_one]
   ring
 
+/-- Scaling `K`, `τ²` and `v` by `c ≠ 0` scales all blend moments by `c`. -/
+theorem moments_smul {c : ℝ} (hc : c ≠ 0) (j : J) :
+    moments (c • K) (c * τ2) (c • v) j = (moments K τ2 v j).smul c := by
+  simp only [moments, BlendMoments.smul, glsWeight_smul K hc, invTotal_smul K hc, smul_mulVec,
+    Pi.smul_apply, smul_eq_mul, mul_inv, inv_inv]
+  congr 1 <;> ring
+
+/-- …so the best credibility factor does not change (it is unit-free). -/
+theorem bestZ_smul {c : ℝ} (hc : c ≠ 0) (j : J) :
+    (moments (c • K) (c * τ2) (c • v) j).bestZ = (moments K τ2 v j).bestZ := by
+  rw [moments_smul hc, BlendMoments.bestZ_smul _ hc]
+
 /-- `Var(μ̂ⱼ - μ̂) = (eⱼ - b)ᵀ K (eⱼ - b)`: the gap variance as a quadratic form
 in the weights of `μ̂ⱼ - μ̂`. -/
 theorem quadForm_single_sub_glsWeight [Nonempty J] (hK : K.PosDef) (j : J) :

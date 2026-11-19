@@ -3251,6 +3251,166 @@ example ignoring the correlation between cohorts. How much can that cost?
   Bilinearity: the cross terms vanish.
 \end{proof}
 
+% ---------------------------------------------------------------------------
+\chapter{Extension: a known common trend}\label{ch:trend}
+% Not in the thesis. Lean: Credibility/Trend.lean (notes/time-trends.md §1, steps 1–2)
+
+The world has a common claim trend $g > -1$ and noise that grows with the
+level (constant coefficient of variation):
+$X_{jt} = (1+g)^t(\mu_j + \sigma_{jt}\varepsilon_{jt})$. Restated to the
+target year $n$ (usually $T+1$),
+$\tilde X_{jt} = (1+g)^{n-t}X_{jt} = (1+g)^n(\mu_j + \sigma_{jt}\varepsilon_{jt})$:
+the model of Chapter~\ref{ch:unequal} in a unit $(1+g)^n$ times smaller.
+So nothing new is needed; this chapter records that the fit does not move.
+
+\begin{lemma}[Scaling $K$]\label{lem:glsWeight_smul}
+  \lean{Credibility.inv_smul_of_ne_zero, Credibility.invTotal_smul,
+        Credibility.glsWeight_smul}
+  \leanok
+  \uses{def:glsWeight}
+  For $c \ne 0$: $(cK)^{-1} = c^{-1}K^{-1}$ (also for singular $K$),
+  $(cK)^{-1}_{**} = c^{-1}K^{-1}_{**}$, and the GLS weights of $cK$ are those of $K$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The factor $c^{-1}$ cancels in $b = K^{-1}\bu/K^{-1}_{**}$.
+\end{proof}
+
+\begin{definition}[Scaling the blend moments]\label{def:BM_smul}
+  \lean{Credibility.BlendMoments.smul}
+  \leanok
+  \uses{def:errVar}
+  Multiply all six second moments of the blend by $c$.
+\end{definition}
+
+\begin{lemma}[$z^\ast$ is unit-free]\label{lem:BM_smul}
+  \lean{Credibility.BlendMoments.errVar_smul, Credibility.BlendMoments.gap_smul,
+        Credibility.BlendMoments.bestZ_smul}
+  \leanok
+  \uses{def:BM_smul, def:bestZ}
+  The error variance and the curvature scale by $c$; for $c \ne 0$, $z^\ast$ is unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $z^\ast$ is a ratio of two expressions linear in the moments.
+\end{proof}
+
+\begin{lemma}[Scaling $K$, $\tau^2$ and $v$]\label{lem:Core_moments_smul}
+  \lean{Credibility.Core.moments_smul, Credibility.Core.bestZ_smul}
+  \leanok
+  \uses{def:Core.moments, def:BM_smul}
+  For $c \ne 0$ the blend moments of $(cK, c\tau^2, cv)$ are those of
+  $(K, \tau^2, v)$ times $c$, so $z_j$ is unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:glsWeight_smul, lem:BM_smul}
+  $b$ is unchanged and $s^2 = 1/K^{-1}_{**}$ scales by $c$
+  (Lemma~\ref{lem:glsWeight_smul}); then Lemma~\ref{lem:BM_smul}.
+\end{proof}
+
+\begin{definition}[Scaled and restated model]\label{def:U_scale}
+  \lean{Credibility.Unequal.scale, Credibility.Unequal.detrend}
+  \leanok
+  \uses{def:Unequal}
+  For $c > 0$, $\mathrm{scale}\,c$ replaces $\tau^2$ by $c^2\tau^2$ and every
+  $\sigma_{jt}$ by $c\sigma_{jt}$, keeping $\rho$ and the periods $T_j$. The data
+  restated to year $n$ with a known trend $g > -1$ have the model
+  $\mathrm{detrend}\,g\,n = \mathrm{scale}\,(1+g)^n$.
+\end{definition}
+
+\begin{theorem}[Scaling moves no weight]\label{thm:U_scale}
+  \lean{Credibility.Unequal.a_scale, Credibility.Unequal.σ2_scale,
+        Credibility.Unequal.K_scale, Credibility.Unequal.b_scale,
+        Credibility.Unequal.s2_scale, Credibility.Unequal.moments_scale,
+        Credibility.Unequal.bestZ_scale, Credibility.Unequal.K_posDef_scale}
+  \leanok
+  \uses{def:U_scale, thm:U_bestZ_eq}
+  In the scaled model the cell weights $a_{jt}$, the GLS weights $b_j$ and
+  $z_j$ are unchanged; $\sigma^2_{ij}$, $K$, $s^2$ and all blend moments are
+  multiplied by $c^2$, and $K$ stays positive definite.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_K_apply, lem:glsWeight_smul, lem:Core_moments_smul}
+  $c^2$ cancels in \eqth{23}, so $\sigma^2_{ij}$ scales by $c^2$, and so does
+  $K_{ij} = \sigma^2_{ij}\rho_{ij} + \tau^2\delta_{ij}$
+  (Lemma~\ref{lem:U_K_apply}). Then Lemmas~\ref{lem:glsWeight_smul}
+  and~\ref{lem:Core_moments_smul}.
+\end{proof}
+
+\begin{theorem}[Trend first, then blend]\label{thm:U_detrend}
+  \lean{Credibility.Unequal.a_detrend, Credibility.Unequal.K_detrend,
+        Credibility.Unequal.b_detrend, Credibility.Unequal.s2_detrend,
+        Credibility.Unequal.bestZ_detrend, Credibility.Unequal.K_posDef_detrend}
+  \leanok
+  \uses{def:U_scale}
+  The restated data have $\tilde K = (1+g)^{2n}K$ and
+  $\tilde s^2 = (1+g)^{2n}s^2$; $a_{jt}$, $b_j$ and $z_j$ do not depend on $g$ or $n$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_scale}
+  Theorem~\ref{thm:U_scale} with $c = (1+g)^n$.
+\end{proof}
+
+\begin{definition}[The same noise in the scaled model]\label{def:U_Noise_scale}
+  \lean{Credibility.Unequal.Noise.scale, Credibility.Unequal.Noise.detrend}
+  \leanok
+  \uses{def:U_Noise, def:U_scale}
+  Moment assumptions for $M$ (Definition~\ref{def:U_Noise}) are moment
+  assumptions for the scaled model, with the same $\eta$ and $\varepsilon$.
+\end{definition}
+
+\begin{theorem}[Restated data are the thesis model]\label{thm:U_detrend_obs}
+  \lean{Credibility.Unequal.Noise.obsVal_scale, Credibility.Unequal.Noise.cohortEst_scale,
+        Credibility.Unequal.Noise.portEst_scale, Credibility.Unequal.Noise.blend_scale,
+        Credibility.Unequal.Noise.detrend_obs}
+  \leanok
+  \uses{def:U_Noise_scale}
+  With mean $c\mu$, every observation, cohort estimate, portfolio estimate
+  and blend of the scaled model is $c$ times that of $M$, outcome by outcome.
+  In particular, for any numbering of the years, the trended observation
+  restated to year $n$, $(1+g)^{n-t}\,(1+g)^t\mu_{jt}$, is the observation of
+  $\mathrm{detrend}\,g\,n$ with mean $(1+g)^n\mu$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_scale}
+  $\sqrt{c^2\tau^2} = c\tau$; the weights $a$, $b$ are unchanged
+  (Theorem~\ref{thm:U_scale}) and the estimates are linear in the data.
+\end{proof}
+
+\begin{theorem}[Relativities are trend-free]\label{thm:U_relativity}
+  \lean{Credibility.Unequal.Noise.relativity_detrend}
+  \leanok
+  \uses{thm:U_detrend_obs, thm:U_detrend}
+  In the world with trend $g$, the fitted relativity
+  $\bigl(z_j\hmu_j + (1-z_j)\hmu\bigr)/\hmu$ of the data restated with $g$, with
+  the best $z_j$, equals that of the untrended world for the same outcome: it
+  does not depend on $g$ or on the target year. The trend moves only the level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_detrend_obs, thm:U_detrend}
+  $z_j$ is unchanged (Theorem~\ref{thm:U_detrend}), and numerator and
+  denominator are both multiplied by $(1+g)^n$ (Theorem~\ref{thm:U_detrend_obs}).
+\end{proof}
+
+\begin{remark}[Finding 21: an estimated trend does move relativities]\label{rem:trend_estimated}
+  \uses{thm:U_relativity, thm:U_detrend}
+  Theorem~\ref{thm:U_relativity} restates with the \emph{true} $g$. Restating
+  with an estimate $\hat g \ne g$ leaves a residual trend
+  $((1+g)/(1+\hat g))^t$ that varies across years, so it reweights old against
+  recent data within each cohort, and relativities change.
+  Counterexample: two cohorts, two years, equal $\sigma$, $\rho = 0$, data
+  $(2, 1)$ and $(1, 2)$. Restated with $r = 1+\hat g$, $\hmu_1/\hmu_2 = (2r+1)/(r+2)$:
+  $1$ at $\hat g = 0$, $1.032$ at $\hat g = 10\%$. What does hold for any
+  $\hat g$: $a$, $b$ and $z$ do not depend on it (Theorem~\ref{thm:U_detrend}),
+  and the target year never matters. The error of $\hat g$ is a level shift
+  only when every cohort's data have the same time profile.
+\end{remark}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean

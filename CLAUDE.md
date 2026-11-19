@@ -36,6 +36,9 @@ tactics.
   `Core.Estimates.addCommon`; `Model.NoiseG` results are corollaries via `NoiseG.toUnequal`; likewise
   `Model.KG`/`momentsG`/`bestZ_G_eq` in `Hierarchical.lean` via `Unequal.KG` and `KG_eq_toUnequal`)
   → `Credibility/HierarchicalMoments.lean`
+- extension: a known common trend `g` (`notes/time-trends.md` §1 steps 1–2): `Unequal.scale`/`detrend`,
+  `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, trend-free relativities (Finding 21)
+  → `Credibility/Trend.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are

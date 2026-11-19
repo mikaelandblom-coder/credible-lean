@@ -76,6 +76,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
+  weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
+  (time trends), citing handbook `res:trend`.
 - Plug-in `K̂` repair (2026-11-17): damping is now a corollary of tapering by any
   correlation matrix (Schur product theorem; `Credibility.posDef_hadamard_of_corr`,
   `Credibility.distTaper_posSemidef`). One sentence where the paper explains damping,

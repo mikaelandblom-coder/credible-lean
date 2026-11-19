@@ -326,4 +326,19 @@ Gaps, extra hypotheses and new results found while formalizing.
    general correlation matrices), never violated, attained. Halfway damping at
    `J = 3`, `r = 0.5` cuts the worst case from 56% to 12.5%.
 
+21. **A known trend moves no weight, but an estimated one moves relativities (new;
+   `Unequal.K_detrend`, `Unequal.bestZ_detrend`, `Unequal.Noise.relativity_detrend`).**
+   Planning claim (`notes/time-trends.md` §1 step 2): "relativities `μ̂ⱼ/μ̂` do not
+   depend on `g`, so `ĝ` only moves the overall level, never the ranking or `z`".
+   True for the world's `g` when the data are restated with that same `g`
+   (constant CV): `K̃ = (1+g)^(2n) K`, so `a`, `b`, `z` are unchanged and every
+   estimate is `(1+g)^n` times the untrended one. **False for an estimate
+   `ĝ ≠ g`**: the leftover factor `((1+g)/(1+ĝ))^t` varies with the year, so it
+   reweights old against recent data within each cohort. Counterexample: two
+   cohorts, two years, equal `σ`, `ρ = 0`, data `(2, 1)` and `(1, 2)`; restated
+   with `r = 1+ĝ`, `μ̂₁/μ̂₂ = (2r+1)/(r+2)`: 1 at `ĝ = 0`, 1.032 at `ĝ = 10%`.
+   What survives for any `ĝ`: `a`, `b`, `z` do not depend on it (`bestZ_detrend`
+   holds for every `g`), and the target year never matters. `ĝ` is a pure level
+   shift only when all cohorts' data have the same time profile.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

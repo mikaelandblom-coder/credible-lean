@@ -134,5 +134,28 @@ theorem glsWeight_optimal {K : Matrix J J ℝ} (hK : K.PosDef) (b : J → ℝ)
   rw [glsWeight_value hK]
   linarith
 
+/-- `(cK)⁻¹ = c⁻¹K⁻¹` for `c ≠ 0`, also when `K` is singular (both sides are `0`). -/
+theorem inv_smul_of_ne_zero (K : Matrix J J ℝ) {c : ℝ} (hc : c ≠ 0) :
+    (c • K)⁻¹ = c⁻¹ • K⁻¹ := by
+  by_cases h : IsUnit K.det
+  · exact Matrix.inv_smul' (A := K) (k := Units.mk0 c hc) (h := h)
+  · have h' : ¬ IsUnit (c • K).det := by
+      rw [det_smul, isUnit_iff_ne_zero]
+      rw [isUnit_iff_ne_zero, not_not] at h
+      simp [h]
+    rw [nonsing_inv_apply_not_isUnit _ h, nonsing_inv_apply_not_isUnit _ h', smul_zero]
+
+/-- Scaling `K` by `c ≠ 0` scales `uᵀK⁻¹u` by `c⁻¹`. -/
+theorem invTotal_smul (K : Matrix J J ℝ) {c : ℝ} (hc : c ≠ 0) :
+    invTotal (c • K) = c⁻¹ * invTotal K := by
+  rw [invTotal, invTotal, inv_smul_of_ne_zero K hc, smul_mulVec, dotProduct_smul, smul_eq_mul]
+
+/-- The GLS weights do not change when `K` is scaled by `c ≠ 0`. -/
+theorem glsWeight_smul (K : Matrix J J ℝ) {c : ℝ} (hc : c ≠ 0) :
+    glsWeight (c • K) = glsWeight K := by
+  ext j
+  rw [glsWeight, glsWeight, invTotal_smul K hc, inv_smul_of_ne_zero K hc, smul_mulVec,
+    Pi.smul_apply, smul_eq_mul, mul_div_mul_left _ _ (inv_ne_zero hc)]
+
 end GLS
 end Credibility

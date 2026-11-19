@@ -638,6 +638,42 @@ period can have any correlation, since it never acts.
   periods. $\omega_i$ is the share of cohort $i$'s volume in the overlap.
 \end{caveat}
 
+\subsection*{A known common trend}
+
+Claims grow by $g$ a year in every cohort, and the noise grows with them
+(constant coefficient of variation): $X_{jt} = (1+g)^t(\mu_j + \sigma_{jt}\varepsilon_{jt})$.
+Restate every cell to the target year $n$ (usually $T+1$):
+$\tilde X_{jt} = (1+g)^{n-t}X_{jt}$.
+
+\begin{result}[Trend first, then blend]\label{res:trend}
+  The restated data follow the model of Section~1 with $\tau$ and every
+  $\sigma_{jt}$ multiplied by $(1+g)^n$, so
+  \[
+    \tilde K = (1+g)^{2n} K,
+  \]
+  and the cell weights $a_{jt}$, the portfolio weights $b_j$ and the
+  credibility factors $z_j$ are those without trend. The premium is
+  $(1+g)^n$ times the untrended one, so the relativities
+  $\hmu_j^{\text{cred}}/\hmu$ do not depend on $g$.
+  \lean{Credibility.Unequal.K_detrend}
+  \lean{Credibility.Unequal.bestZ_detrend}
+  \lean{Credibility.Unequal.Noise.detrend_obs}
+  \lean{Credibility.Unequal.Noise.relativity_detrend}
+\end{result}
+\use Restate to the target year first, then run the recipe unchanged; the
+weights do not move. Estimate $\tau^2$, $\sigma^2\rho$ on the restated data.
+\why A common factor is a change of unit: every variance scales by the same
+$(1+g)^{2n}$ and cancels in every weight.
+\begin{caveat}
+  Only with the \emph{true} $g$. With an estimate $\hat g \ne g$ the leftover
+  trend reweights old against recent years within a cohort, and relativities
+  move a little (two cohorts with data $(2,1)$ and $(1,2)$: ratio $1$ at
+  $\hat g = 0$, $1.032$ at $\hat g = 10\%$). The weights $a$, $b$, $z$ never
+  depend on $\hat g$. If the noise does not grow with the trend (additive),
+  restated old years are noisier: use per-cell $\sigma_{jt}(1+g)^{n-t}$, still
+  Result~\ref{res:unequal}.
+\end{caveat}
+
 \subsection*{When to merge two cohorts}
 
 Two cohorts on their own, with error variances $v_1, v_2$, error covariance

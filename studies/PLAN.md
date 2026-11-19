@@ -286,6 +286,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Claim trend (2026-11-19, `Trend.lean`, Finding 21): restating with the true `g` moves no
+  weight (`K̃ = (1+g)^(2n)K`, `bestZ_detrend`); with `ĝ ≠ g` relativities move slightly. App:
+  switch "claim trend g" (today `growth` is volume growth) and the `ĝ` study of
+  `notes/time-trends.md` step 2 should show the size of that effect.
 - Taper switch (2026-11-17, `OffDiagonal.lean`): repair or regularize `K̂` by tapering it
   with a correlation matrix `R` instead of only damping (`posDef_hadamard_of_corr`: `R ⪰ 0`
   with unit diagonal keeps `K̂ ≻ 0` and the variances). Options: "damp θ" (today's

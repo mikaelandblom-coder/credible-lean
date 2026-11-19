@@ -84,6 +84,10 @@ voice, then trim towards 8 pages.
     `thm:U_K_posDef`, `thm:U_bestZ_eq`, `thm:U_balance`, `thm:U_exists_noise`;
     estimation with the per-pair count `nᵢⱼ` — `thm:U_unbiased`, `lem:U_den`
     (Findings 8–10, 12).
+13a. A known common trend (drafted): restate to the target year, then blend;
+    `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, relativities trend-free;
+    "watch out": only for the true `g` (Finding 21) — `thm:U_detrend`,
+    `thm:U_detrend_obs`, `thm:U_relativity`.
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
 15. A shared level drops out (one group); several groups: `z` with `B_g`,
     true MSE, consistency; two-stage GLS; estimation biased with several

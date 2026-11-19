@@ -96,5 +96,33 @@ theorem gap_shift (m : BlendMoments) (c : ℝ) : (m.shift c).gap = m.gap := by
 theorem bestZ_shift (m : BlendMoments) (c : ℝ) : (m.shift c).bestZ = m.bestZ := by
   rw [bestZ, gap_shift, bestZ]; simp only [shift]; ring_nf
 
+/-! ### Scaling all moments by a constant -/
+
+/-- Multiply all six second moments of the blend by `c`: what measuring every
+quantity in a unit `√c` times smaller does (e.g. restating the data to a later year). -/
+def smul (m : BlendMoments) (c : ℝ) : BlendMoments where
+  varCohort := c * m.varCohort
+  varPortfolio := c * m.varPortfolio
+  varTarget := c * m.varTarget
+  covEst := c * m.covEst
+  covCohortTarget := c * m.covCohortTarget
+  covPortfolioTarget := c * m.covPortfolioTarget
+
+/-- The error variance scales by `c`. -/
+theorem errVar_smul (m : BlendMoments) (c z : ℝ) : (m.smul c).errVar z = c * m.errVar z := by
+  simp only [errVar, smul]; ring
+
+/-- `Var(μ̂ⱼ - μ̂)` scales by `c`. -/
+theorem gap_smul (m : BlendMoments) (c : ℝ) : (m.smul c).gap = c * m.gap := by
+  simp only [gap, smul]; ring
+
+/-- The best credibility factor is unit-free: scaling all moments by `c ≠ 0` leaves it unchanged. -/
+theorem bestZ_smul (m : BlendMoments) {c : ℝ} (hc : c ≠ 0) : (m.smul c).bestZ = m.bestZ := by
+  rw [bestZ, gap_smul, bestZ]
+  simp only [smul]
+  rw [show c * m.varPortfolio - c * m.covEst + c * m.covCohortTarget - c * m.covPortfolioTarget
+      = c * (m.varPortfolio - m.covEst + m.covCohortTarget - m.covPortfolioTarget) by ring,
+    mul_div_mul_left _ _ hc]
+
 end BlendMoments
 end Credibility
