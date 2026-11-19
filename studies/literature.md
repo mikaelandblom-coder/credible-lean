@@ -255,11 +255,20 @@ credibility texts assume independence across risks. "No references" is too stron
   bibliography but not cited in the text): equal correlation between risks, homogeneous and
   inhomogeneous estimators by projection. The common-effect paper the thesis discusses is
   `wen2` = Wen, Wu & Zhou (2009), IME 44 (§3).
+- Zhang, Cui & Chen (2017), *Multidimensional credibility estimators with random common
+  effects and time effects*, J. Syst. Sci. Complex. 30, 1107–1120. **Read §2 and Lemma 2.1
+  (pp. 1108–1110, owner's photos, 2026-11-19).** One permanent common effect `Λ`; `Θᵢ`
+  independent given `Λ`; vector claims `Xᵢⱼ ∈ ℝᵖ`. The "time effect" is a uniform correlation
+  *within a risk over time*: `Cov(Xᵢⱼ, Xᵢₜ | Θᵢ, Λ) = ρ(Θᵢ, Λ)`, `j ≠ t`. Across risks,
+  `Cov(Xᵢⱼ, Xₛₜ) = W = Var μ(Λ)` for every pair of periods, so eq. (7),
+  `Σ_XX = I_K ⊗ (I_n ⊗ (Σ − ρ) + 1ₙ1ₙᵀ ⊗ (V + ρ)) + 1_{nK}1_{nK}ᵀ ⊗ W`, has no term that
+  links two risks in the *same* period only. **Not the thesis model.** Note that `ρ` only moves
+  variance from the noise `Σ` to the level `V` (`Σ − ρ` and `V + ρ`), so for prediction it acts
+  like a larger level variance.
 - Huang & Wu (2015), *The credibility premiums with dependence structure over risks and time
-  horizon*, J. Ind. Manag. Optim. 11(2), 365–380; Zhang, Cui & Chen (2017), *Multidimensional
-  credibility estimators with random common effects and time effects*, J. Syst. Sci. Complex.
-  30, 1107–1120. A **time effect common to all risks** correlates the risks within a period:
-  that is our correlated noise, in parametric form.
+  horizon*, J. Ind. Manag. Optim. 11(2), 365–380. Not read; by its title and by Zhang, Cui &
+  Chen (who extend Wen & Deng with "uniform conditional dependence over time for each
+  individual risk") probably the same kind of time dependence. Last open candidate.
 - Dannenburg (1995), *Crossed classification credibility models*, TI 95-64 (DARE has the
   record only, no PDF); Dannenburg, Kaas & Goovaerts (1996), ch. 6; Goulet (2001).
   `y_ijt = β + α_i⁽¹⁾ + α_j⁽²⁾ + α_ij + ε_ijt`: both factors are *risk* classifications, so
@@ -297,11 +306,12 @@ products, and balance. Proofs here use only that foundation (no distribution).
 `www.casact.org`, `sysmath.cjoe.ac.cn` in the Default environment. Fung & Xu read; Dannenburg
 has no open PDF; `sysmath.cjoe.ac.cn` refuses the session (HTTP 403 from the site). The three
 candidates that might contain within-period dependence across risks were paywalled. Wen & Wu
-(2011) is now read from photos and is not it (levels only). Huang & Wu (2015) and Zhang, Cui &
-Chen (2017) remain: owner to supply PDFs or photos of the model
+(2011) and Zhang, Cui & Chen (2017) are now read from photos and are not it (levels only;
+permanent common effect plus within-risk time correlation). Huang & Wu (2015) remains: owner to supply PDFs or photos of the model
 assumptions, the homogeneous estimator and any parameter estimation.
 
-**For a reviewer.** (1) Read Huang & Wu (2015) and Zhang, Cui & Chen (2017) in full and say
-whether eq. (26) or the §2.8 estimators appear there (Wen & Wu 2011 checked: levels only); if so, cite and move the "new here" in paper §15.
+**For a reviewer.** (1) Read Huang & Wu (2015) in full and say whether eq. (26) or the §2.8
+estimators appear there (Wen & Wu 2011 and Zhang, Cui & Chen 2017 checked: neither has
+noise correlated across risks within a period); if so, cite and move the "new here" in paper §15.
 (2) Check that `Core.blupWeight_optimal` matches Goldberger's/Harville's predictor.
 (3) Check Bühlmann & Gisler (2005) for any within-period dependence across risks.
