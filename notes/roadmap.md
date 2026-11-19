@@ -68,6 +68,10 @@ Detailed plan (an interactive app, world against fitted model; gap theorems):
   parameters. Even one result with estimated ones (truncating `τ̂²` at zero,
   negative `b`) is what practitioners ask first.
 - [ ] **Handbook and preprint**, with the worked example in both.
+- [ ] **XoL: experience against exposure rating.** Eq. (7) with an MLE
+  experience estimate and a rating tool (possibly expert judgment); `τ²` and
+  the tool's bias from the current book's gaps. Discussion:
+  [`xol-blend.md`](xol-blend.md).
 
 Suggested order: the two bridges in 1, the handbook, serial correlation,
 the R package.
