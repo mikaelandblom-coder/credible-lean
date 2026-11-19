@@ -324,3 +324,25 @@ across units within a period (Wen & Wu 2011, Huang & Wu 2015, Zhang, Cui & Chen 
 Xu 2009 checked: none has it); if so, cite and move the "new here" in paper §15.
 (2) Check that `Core.blupWeight_optimal` matches Goldberger's/Harville's predictor.
 (3) Check Bühlmann & Gisler (2005) for any within-period dependence across risks.
+
+## 9. Contemporaneous correlation in econometrics (2026-11-19)
+Why the thesis assumption is new to credibility but not to statistics. Citations from memory,
+not re-checked online.
+- Zellner (1962), *An efficient method of estimating seemingly unrelated regressions and tests
+  for aggregation bias*, JASA 57, 348–368 (SUR): equations whose errors are correlated in the
+  same period and independent across periods, `Cov(εᵢₜ, εⱼₛ) = σᵢⱼ δₜₛ`. That is exactly the
+  thesis's `ρᵢⱼ δₜₛ`. Feasible SUR estimates `σᵢⱼ` from same-period cross products of
+  residuals, as §2.8 does for `K`.
+- Parks (1967), JASA 62, 500–509: FGLS with errors both contemporaneously and serially (AR(1))
+  correlated; the roadmap's "serial correlation" step.
+- Beck & Katz (1995), *What to do (and not to do) with time-series cross-section data*, APSR
+  89, 634–647: Parks FGLS with the full `Σ̂` is badly overconfident unless T is much larger
+  than the number of units; they recommend OLS with panel-corrected standard errors. Same
+  lesson as the thesis's over-parametrization worry and our studies S6, S11–S13 (restrict or
+  damp `K̂`).
+- Driscoll & Kraay (1998), Rev. Econ. Stat. 80, 549–560; Pesaran (2006), *common correlated
+  effects*, Econometrica 74, 967–1012; Bai (2009), interactive fixed effects, Econometrica
+  77, 1229–1279: cross-sectional dependence as common factors with unit-specific loadings, the
+  rank-one / low-rank `K` of Core (`notes/roadmap.md`, "period shocks are already in").
+Used: the interpretation (thesis model = SUR error structure inside a credibility model) and
+the warning on full `K̂`. New here: the combination with random levels and the blend.
