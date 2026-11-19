@@ -28,6 +28,10 @@ done; details of finished work live in `FINDINGS.md` and `PROGRESS.md`.
 
 ## 2. Time trends (in this order)
 
+Detailed plan, with frequency × severity: [`time-trends.md`](time-trends.md)
+(2026-11-19: known common trend first, then estimated, then Hachemeister
+via a matrix Blend shared with bivariate frequency–severity credibility).
+
 - [ ] **Period shocks are already in the model.** A common random period
   effect is an equal-correlation `ρ`; loadings `λᵢλⱼ` give the rank-one `K`
   of Core. A short interpretation theorem: where `ρ` comes from.

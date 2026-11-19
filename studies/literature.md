@@ -161,3 +161,21 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   form: a Hadamard product of two-block matrices, one per gap, gives it for any ℕ positions.
 - Covariance shrinkage towards a target (Ledoit & Wolf, §1) is additive; tapering is
   multiplicative. Both keep `K̂ ⪰ 0`; damping is both at once (`shrinkOffDiag_eq`).
+
+## 7. Time trends and frequency × severity (2026-11-19, for `notes/time-trends.md`)
+- Hachemeister (1975), *Credibility for regression models with application to trend*, in Kahn
+  (ed.), *Credibility: Theory and Applications* (checked by web search, CAS abstract): random
+  level and slope per state, matrix credibility. Used: the model of trend step 3.
+- Bühlmann & Gisler (1997), *Credibility in the regression case revisited*, ASTIN Bull. 27(1),
+  83–98 (checked): centre time at each risk's mean so level and slope decouple into scalar
+  credibilities. Used: the parametrisation for correlated Hachemeister.
+- Jewell (1975), regression credibility with parameters inflated by unknown amounts (cited via
+  the search; not read).
+- Goulet, Forgues & Lu (2006), *Credibility for severity revisited*, NAAJ 10(1), 49–62
+  (checked): four ways to bring frequency and severity into credibility stem from one
+  minimisation problem. Starting point for the frequency–severity comparison; to read in full.
+- Hewitt (1971), credibility for severity (CAS Proceedings; cited via Goulet et al.).
+- Not yet checked: Jewell (1973) multidimensional credibility; Gerber & Jones (1975) evolving
+  levels; Werner & Modlin, *Basic Ratemaking* (separate frequency and severity trends).
+- New here (if it holds): correlated cohorts in both; component-specific `ρ` (winters move
+  frequency, not severity); relativities are free of a common trend.
