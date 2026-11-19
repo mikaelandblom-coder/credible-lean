@@ -226,8 +226,13 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
   diagonal `σₖ²(Θ)/wᵢⱼ⁽ᵏ⁾` (7.30, "standard") or `Σ(Θ)/wᵢⱼ` with one weight (7.31,
   "alternative"); under the general (7.32) the book says its results fail. Ours takes the
   cohort estimates as given with any `Sⱼ`, so it covers (7.32) for predictors linear in those
-  estimates. `vecBalanced_buhlmannGisler` is the (7.31) case `Sⱼ = S₀/wⱼ`. Still to read:
-  the theorem with `Zᵢ` and the collective estimator (pp. 180ff.). Bühlmann,
+  estimates. `vecBalanced_buhlmannGisler` is the (7.31) case `Sⱼ = S₀/wⱼ`. Pp. 180–181:
+  compression `Bᵢ = Wᵢ•⁻¹ΣⱼWᵢⱼXᵢⱼ` (diagonal weight matrices), `Cov(Bᵢ|Θᵢ) =
+  Wᵢ•^(-1/2)Σ(Θᵢ)Wᵢ•^(-1/2)` (7.35, fails under 7.32), and Theorem 7.8 (inhomogeneous, `μ`
+  known): `Aᵢ = T(T + Wᵢ•^(-1/2)SWᵢ•^(-1/2))⁻¹`, `T = Cov(μ(Θ))`, `S = E[Σ(Θ)]`. This is our
+  `Zⱼ = Λ(Λ + Sⱼ)⁻¹` with `Λ = T`, `Sⱼ = Wⱼ•^(-1/2)SWⱼ•^(-1/2)`; ours is the homogeneous case
+  (GLS `μ̂`), where `moments_bestZ_of_blockDiag` shows the same `Z`. Still to read: the
+  homogeneous estimator (collective `(ΣAᵢ)⁻¹ΣAᵢBᵢ`, presumably Theorem 7.9). Bühlmann,
   Gisler & Kollöffel (2003), multidimensional credibility: cited by Englund et al., not read.
 - Frequency–severity with dependent risk profiles, Bayesian: Cheung, Ni, Oh & Woo (2021), IME
   100, 274–295; Q-credibility (ARCH 2025 abstract, Tang): factors chosen to minimise the MSE of
