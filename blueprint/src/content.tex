@@ -3996,6 +3996,96 @@ severity) are such predictors, and so is the matrix blend.
   $\operatorname{diag}(\sigma^2)$.
 \end{proof}
 
+\section*{The moment layer: real random vectors}
+% Lean: Credibility/CoreVectorMoments.lean
+
+\begin{lemma}[Errors of two linear predictors]\label{lem:CV_moments_lin}
+  \lean{Credibility.Core.Estimates.transpose_L,
+        Credibility.Core.Estimates.cov_portLin_sub_level}
+  \leanok
+  \uses{def:Core_Estimates}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates}, $L$ is symmetric and
+  $\cov(\sum_x d_x\hmu_x - \mu_i, \sum_x d'_x\hmu_x - \mu_k)
+  = d^\top Kd' - (Ld)_k - (Ld')_i + L_{ik}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin}
+  Bilinearity, with Lemma~\ref{lem:Core_moments_lin} for each term.
+\end{proof}
+
+\begin{definition}[Vector estimates and levels]\label{def:CV_Estimates}
+  \lean{Credibility.CoreVector.VecEstimates, Credibility.CoreVector.VecEstimates.vec,
+        Credibility.CoreVector.VecEstimates.err, Credibility.CoreVector.VecEstimates.mse,
+        Credibility.CoreVector.VecEstimates.portEst, Credibility.CoreVector.VecEstimates.blend}
+  \leanok
+  \uses{def:Core_Estimates, def:CV_blup}
+  On a probability space: square-integrable $\hmu_{jp}$ and $\mu_{jp}$, $(j,p) \in J \times P$,
+  with $\mathbb E\hmu_{jp} = \mathbb E\mu_{jp} = m_p$, $\cov(\hmu_x, \hmu_y) = K_{xy}$ and
+  $\cov(\mu_x, \hmu_y) = \cov(\mu_x, \mu_y) = L_{xy}$. No distribution is assumed. The matrix
+  MSE of a random vector $Y$ predicting $\mu_j$ is $\mathbb E[(Y - \mu_j)(Y - \mu_j)^\top]$;
+  the portfolio estimate is $\hmu = W^\top x$ and the blend $\hmu + Z(\hmu_j - \hmu)$.
+\end{definition}
+
+\begin{lemma}[Centring, and the blend as a linear predictor]\label{lem:CV_centred}
+  \lean{Credibility.CoreVector.VecEstimates.centred,
+        Credibility.CoreVector.VecEstimates.sum_mul_mean,
+        Credibility.CoreVector.VecEstimates.err_eq,
+        Credibility.CoreVector.mul_sel_apply,
+        Credibility.CoreVector.sel_transpose_mul_apply,
+        Credibility.CoreVector.sel_transpose_mulVec,
+        Credibility.CoreVector.VecEstimates.blend_eq}
+  \leanok
+  \uses{def:CV_Estimates}
+  $\hmu_{jp} - m_p$ and $\mu_{jp} - m_p$ are estimates and levels over $J \times P$ as in
+  Definition~\ref{def:Core_Estimates}, with mean $0$ and the same $K$, $L$. If $U^\top A = I$
+  then $\sum_x A_{xp}m_{x_2} = m_p$, so the error of $A^\top x$ is that of the centred
+  variables. The blend is $(W + (E_j - W)Z^\top)^\top x$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates, def:CV_blup}
+  Subtracting constants keeps covariances; $(U^\top A)_{qp} = \sum_j A_{(j,q),p}$.
+\end{proof}
+
+\begin{theorem}[$\mathrm{mse}_j(A)$ is the true error covariance]\label{thm:CV_mse_linear}
+  \lean{Credibility.CoreVector.VecEstimates.integral_err,
+        Credibility.CoreVector.VecEstimates.mse_linear}
+  \leanok
+  \uses{def:CV_Estimates, def:CV_blup}
+  If $U^\top A = I$, the error $A^\top x - \mu_j$ has mean $0$ and
+  $\mathbb E[(A^\top x - \mu_j)(A^\top x - \mu_j)^\top] = \mathrm{mse}_j(A)$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_centred, lem:CV_moments_lin, lem:Core_moments_lin}
+  The $(p,r)$ entry is the covariance of two centred linear predictors
+  (Lemmas~\ref{lem:CV_centred} and~\ref{lem:CV_moments_lin}), with $L$ symmetric.
+\end{proof}
+
+\begin{theorem}[The matrix blend and the best predictor in true MSE]\label{thm:CV_mse_blend}
+  \lean{Credibility.CoreVector.VecEstimates.mse_blend,
+        Credibility.CoreVector.VecEstimates.blup_mse_optimal,
+        Credibility.CoreVector.VecEstimates.mse_blend_eq_blup_add,
+        Credibility.CoreVector.VecEstimates.bestZ_mse_optimal}
+  \leanok
+  \uses{def:CV_Estimates, def:CV_moments}
+  If $K \succ 0$: the blend's true error covariance is $\mathrm{errVar}(Z)$ for the moments of
+  Definition~\ref{def:CV_moments}; the best linear unbiased predictor minimises the true error
+  covariance in the Loewner order; the blend loses exactly $(A - A^\ast)^\top K(A - A^\ast)$
+  against it; and if $\Var(\hmu_j - \hmu) \succ 0$ the matrix $Z_j^\ast$ of
+  Theorem~\ref{thm:CV_bestZ} minimises the blend's true error covariance in the Loewner order.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_mse_linear, lem:CV_centred, lem:CV_blendW, lem:CV_blup_foc,
+        thm:CV_blup_optimal, thm:CV_blend_price, thm:VBM_optimal}
+  Theorem~\ref{thm:CV_mse_linear} for the weights of the blend (Lemma~\ref{lem:CV_centred})
+  and of $A^\ast$; then Lemma~\ref{lem:CV_blendW}, Theorems~\ref{thm:CV_blup_optimal},
+  \ref{thm:CV_blend_price} and~\ref{thm:VBM_optimal}.
+\end{proof}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean

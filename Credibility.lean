@@ -22,3 +22,4 @@ import Credibility.KMeans
 import Credibility.KMeansBridge
 import Credibility.Trend
 import Credibility.CoreVector
+import Credibility.CoreVectorMoments

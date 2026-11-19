@@ -301,6 +301,9 @@ One chat per step; none needs Lean except step 5.
   no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
   bivariate one, so the app's fourth fit only matters when cohorts or components correlate.
   Balance of the matrix blend (`vecBalanced_iff`) needs no app switch beyond the scalar one.
+  Moment layer (`CoreVectorMoments.lean`): the matrix MSE formulas are the true error
+  covariances of any random vectors with these moments, so the app's simulated bivariate
+  fits can be checked against `errVar Z` exactly as the scalar ones; no new switch.
 - Claim trend (2026-11-19, `Trend.lean`, Finding 21): restating with the true `g` moves no
   weight (`K̃ = (1+g)^(2n)K`, `bestZ_detrend`); with `ĝ ≠ g` relativities move slightly. App:
   switch "claim trend g" (today `growth` is volume growth) and the `ĝ` study of

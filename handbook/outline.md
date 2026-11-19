@@ -29,7 +29,9 @@ voice, then trim towards 8 pages.
   frequency–severity covariance separate best predictors are enough
   (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`). Balance: matrix blends are
   balanced for `Uⱼ` iff `Uⱼ(I − Zⱼ) = CBⱼ` (`Credibility.CoreVector.vecBalanced_iff`);
-  Bühlmann–Gisler is balanced for the volumes.
+  Bühlmann–Gisler is balanced for the volumes. The formulas are true error covariances for
+  any distribution (`Credibility.CoreVector.VecEstimates.mse_blend`): add it to the "why" of
+  the matrix entry, no entry of its own.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one

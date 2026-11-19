@@ -177,7 +177,11 @@ same machinery. State it as such, don't hide the approximation.
    Balance: the matrix blends are balanced for weights `Uⱼ` iff `Uⱼ(I − Zⱼ) = CBⱼ`
    (`vecBalanced_iff`); Bühlmann–Gisler with `Sⱼ = S₀/wⱼ` is balanced for the volumes
    (`vecBalanced_buhlmannGisler`).
-   Open: moment layer (as `CoreMoments.lean`).
+   Moment layer (`CoreVectorMoments.lean`): for any random `μ̂ⱼₚ`, `μⱼₚ` with component means
+   `mₚ` and stacked covariances `K`, `L`, an unbiased `Aᵀx` has true error covariance
+   `linMse K L j A` (`VecEstimates.mse_linear`), the blend's is `errVar Z` (`mse_blend`), and
+   the BLUP and `bestZ` are optimal in true MSE. Proved by centring each component, which
+   gives a `Core.Estimates` over `J × P`: nothing re-proved. Item 4 is done.
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)

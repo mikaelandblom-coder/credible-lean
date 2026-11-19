@@ -41,7 +41,8 @@ tactics.
   → `Credibility/Trend.lean`
 - extension: the matrix Blend (vector levels `μⱼ ∈ ℝᴾ`, credibility matrix `Z`, joint `K` over
   cohorts × components, matrix GLS, matrix eq. (26); `notes/time-trends.md` §3 item 4)
-  → `Credibility/CoreVector.lean`
+  → `Credibility/CoreVector.lean`; its moment layer (`CoreVector.VecEstimates`, centred to a
+  `Core.Estimates` over `J × P`) → `Credibility/CoreVectorMoments.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
@@ -59,7 +60,7 @@ estimation / EBLUP, portfolio and covariance shrinkage) for work to build on, an
 used in `studies/literature.md`: combine the best existing pieces in this framework rather than
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
-Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`,
+Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`, `CoreVectorMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second

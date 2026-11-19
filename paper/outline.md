@@ -95,7 +95,9 @@ may need a paragraph.)
   (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`): one sentence each, they
   bracket Finding 22. Balance of the matrix blend (`Credibility.CoreVector.vecBalanced_iff`;
   Bühlmann–Gisler balanced for the volumes, `vecBalanced_buhlmannGisler`): one sentence in
-  the balance section.
+  the balance section. Moment layer (`Credibility.CoreVector.VecEstimates.mse_blend`,
+  `Credibility.CoreVector.VecEstimates.blup_mse_optimal`): one sentence, as for the scalar
+  moment layer: the matrix MSEs are true error covariances for every distribution.
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.
