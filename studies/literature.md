@@ -231,8 +231,12 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
   Wᵢ•^(-1/2)Σ(Θᵢ)Wᵢ•^(-1/2)` (7.35, fails under 7.32), and Theorem 7.8 (inhomogeneous, `μ`
   known): `Aᵢ = T(T + Wᵢ•^(-1/2)SWᵢ•^(-1/2))⁻¹`, `T = Cov(μ(Θ))`, `S = E[Σ(Θ)]`. This is our
   `Zⱼ = Λ(Λ + Sⱼ)⁻¹` with `Λ = T`, `Sⱼ = Wⱼ•^(-1/2)SWⱼ•^(-1/2)`; ours is the homogeneous case
-  (GLS `μ̂`), where `moments_bestZ_of_blockDiag` shows the same `Z`. Still to read: the
-  homogeneous estimator (collective `(ΣAᵢ)⁻¹ΣAᵢBᵢ`, presumably Theorem 7.9). Bühlmann,
+  (GLS `μ̂`), where `moments_bestZ_of_blockDiag` shows the same `Z`. Pp. 183–184: Theorem 7.9
+  (homogeneous) `Aᵢ Bᵢ + (I − Aᵢ)(ΣAᵢ)⁻¹ΣAᵢBᵢ` is our `weight_buhlmannGisler` (needs `T`
+  invertible; our GLS form `(ΣKᵢᵢ⁻¹)⁻¹Kⱼⱼ⁻¹` does not). Theorem 7.10 (componentwise balance
+  for the volumes under (7.30) or (7.31)) is our `vecBalanced_buhlmannGisler_diag` and
+  `vecBalanced_buhlmannGisler`, both from `vecBalanced_of_mul_noise` (`UⱼSⱼ` constant).
+  Check of §7.3 against the book done (2026-11-19). Bühlmann,
   Gisler & Kollöffel (2003), multidimensional credibility: cited by Englund et al., not read.
 - Frequency–severity with dependent risk profiles, Bayesian: Cheung, Ni, Oh & Woo (2021), IME
   100, 274–295; Q-credibility (ARCH 2025 abstract, Tang): factors chosen to minimise the MSE of

@@ -3964,19 +3964,36 @@ severity) are such predictors, and so is the matrix blend.
   $\sum_i A_i = C$.
 \end{proof}
 
-\begin{corollary}[Multidimensional Bühlmann--Straub is balanced for the volumes]\label{cor:CV_balance_buhlmannGisler}
-  \lean{Credibility.CoreVector.vecBalanced_buhlmannGisler}
+\begin{theorem}[Bühlmann--Gisler balance]\label{thm:CV_balance_noise}
+  \lean{Credibility.CoreVector.vecBalanced_of_mul_noise}
   \leanok
   \uses{thm:CV_balance, thm:CV_buhlmannGisler}
-  Independent cohorts with $K_{jj} = \Lambda + S_0/w_j$, the credibility matrices
-  $Z_j = \Lambda(\Lambda + S_0/w_j)^{-1}$ of Theorem~\ref{thm:CV_buhlmannGisler} and the
-  GLS portfolio are balanced for the volumes: $\sum_j w_j(\hmu_j - \hmu_j^b) = 0$.
-\end{corollary}
+  Independent cohorts with $K_{jj} = \Lambda + S_j$, the credibility matrices
+  $Z_j = \Lambda(\Lambda + S_j)^{-1}$ of Theorem~\ref{thm:CV_buhlmannGisler} and the GLS
+  portfolio are balanced for any weights with $U_jS_j = S_0$ the same for every cohort.
+\end{theorem}
 \begin{proof}
   \leanok
   \uses{thm:CV_balance, lem:CV_weight, lem:CV_blockDiag, lem:CV_glsW}
-  $w_j(I - Z_j) = w_j(S_0/w_j)K_{jj}^{-1} = S_0K_{jj}^{-1} = CB_j$ with
+  $U_j(I - Z_j) = U_jS_jK_{jj}^{-1} = S_0K_{jj}^{-1} = CB_j$ with
   $C = S_0\sum_i K_{ii}^{-1}$.
+\end{proof}
+
+\begin{corollary}[Balance for the volumes]\label{cor:CV_balance_buhlmannGisler}
+  \lean{Credibility.CoreVector.vecBalanced_buhlmannGisler,
+        Credibility.CoreVector.vecBalanced_buhlmannGisler_diag}
+  \leanok
+  \uses{thm:CV_balance_noise}
+  With $S_j = S_0/w_j$ (Bühlmann--Gisler 2005, (7.31)) the blends are balanced for the
+  volumes, $\sum_j w_j(\hmu_j - \hmu_j^b) = 0$; with $S_j = \operatorname{diag}(\sigma_p^2/w_{jp})$
+  (their standard assumption (7.30)) they are balanced componentwise,
+  $\sum_j w_{jp}(\hmu_{jp} - \hmu_{jp}^b) = 0$. This is their Theorem 7.10.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_balance_noise}
+  $U_j = w_jI$, resp.\ $\operatorname{diag}(w_j)$, gives $U_jS_j = S_0$, resp.\
+  $\operatorname{diag}(\sigma^2)$.
 \end{proof}
 
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}

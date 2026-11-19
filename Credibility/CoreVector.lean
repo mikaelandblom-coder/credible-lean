@@ -1132,29 +1132,55 @@ theorem vecBalanced_iff (U Z B : J → Matrix P P ℝ) (hB : ∑ j, B j = 1) :
     rw [hsum]
     simp [hA, hC]
 
-/-- **Multidimensional Bühlmann–Straub is balanced for the volumes.** Independent cohorts
-with `Var(μ̂ⱼ) = Λ + S₀/wⱼ` (`S₀` the noise covariance per unit volume) and the credibility
-matrices `Zⱼ = Λ(Λ + S₀/wⱼ)⁻¹` (the best ones, `moments_bestZ_buhlmannGisler`) with the GLS
-portfolio are balanced for the volumes: `Σⱼ wⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` (vector version of the
-Bühlmann–Straub balance, `Core.balanced_iff_of_diag`). -/
-theorem vecBalanced_buhlmannGisler [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
-    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ S₀ : Matrix P P ℝ} {w : J → ℝ}
-    (hw : ∀ j, w j ≠ 0) (hKj : ∀ j, blk K j = Λ + (w j)⁻¹ • S₀) :
-    VecBalanced (fun j => w j • (1 : Matrix P P ℝ)) (fun j => Λ * (Λ + (w j)⁻¹ • S₀)⁻¹)
-      (weight K) := by
+/-- **Bühlmann–Gisler balance** (Bühlmann & Gisler 2005, Theorem 7.10): independent cohorts
+with `Var(μ̂ⱼ) = Λ + Sⱼ`, the credibility matrices `Zⱼ = Λ(Λ + Sⱼ)⁻¹`
+(`moments_bestZ_buhlmannGisler`) and the GLS portfolio are balanced for any weights `Uⱼ`
+that undo the noise, `UⱼSⱼ = S₀` the same for every cohort. -/
+theorem vecBalanced_of_mul_noise [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ S₀ : Matrix P P ℝ} {U S : J → Matrix P P ℝ}
+    (hKj : ∀ j, blk K j = Λ + S j) (hU : ∀ j, U j * S j = S₀) :
+    VecBalanced U (fun j => Λ * (Λ + S j)⁻¹) (weight K) := by
   refine (vecBalanced_iff _ _ _ (sum_weight hK)).mpr ⟨S₀ * ∑ i, (blk K i)⁻¹, fun j => ?_⟩
   have hu : IsUnit (blk K j).det := isUnit_iff_ne_zero.2 (blk_posDef hK j).det_pos.ne'
   have hI : IsUnit (∑ i, (blk K i)⁻¹).det := by
     rw [← info_of_blockDiag hK hb]
     exact isUnit_iff_ne_zero.2 (info_posDef hK).det_pos.ne'
   -- `I - Λ(Λ + S)⁻¹ = S(Λ + S)⁻¹`
-  have h1 : 1 - Λ * (blk K j)⁻¹ = (w j)⁻¹ • S₀ * (blk K j)⁻¹ := by
+  have h1 : 1 - Λ * (blk K j)⁻¹ = S j * (blk K j)⁻¹ := by
     rw [← mul_nonsing_inv _ hu]
     nth_rewrite 1 [hKj j]
     rw [Matrix.add_mul, add_sub_cancel_left]
   rw [weight_of_blockDiag hK hb, ← Matrix.mul_assoc, Matrix.mul_assoc S₀,
-    mul_nonsing_inv _ hI, Matrix.mul_one, ← hKj, h1, Matrix.smul_mul, Matrix.smul_mul,
-    Matrix.one_mul, smul_smul, mul_inv_cancel₀ (hw j), one_smul]
+    mul_nonsing_inv _ hI, Matrix.mul_one, ← hKj, h1, ← Matrix.mul_assoc, hU]
+
+/-- **Multidimensional Bühlmann–Straub is balanced for the volumes.** Independent cohorts
+with `Var(μ̂ⱼ) = Λ + S₀/wⱼ` (`S₀` the noise covariance per unit volume, Bühlmann & Gisler
+2005, (7.31)) and the credibility matrices `Zⱼ = Λ(Λ + S₀/wⱼ)⁻¹` (the best ones,
+`moments_bestZ_buhlmannGisler`) with the GLS portfolio are balanced for the volumes:
+`Σⱼ wⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` (vector version of the Bühlmann–Straub balance,
+`Core.balanced_iff_of_diag`). -/
+theorem vecBalanced_buhlmannGisler [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ S₀ : Matrix P P ℝ} {w : J → ℝ}
+    (hw : ∀ j, w j ≠ 0) (hKj : ∀ j, blk K j = Λ + (w j)⁻¹ • S₀) :
+    VecBalanced (fun j => w j • (1 : Matrix P P ℝ)) (fun j => Λ * (Λ + (w j)⁻¹ • S₀)⁻¹)
+      (weight K) :=
+  vecBalanced_of_mul_noise hK hb hKj fun j => by
+    rw [Matrix.smul_mul, Matrix.one_mul, smul_smul, mul_inv_cancel₀ (hw j), one_smul]
+
+/-- **Componentwise balance** (Bühlmann & Gisler 2005, Theorem 7.10 under the standard
+assumption (7.30)): with noise `diag(σₚ²/wⱼₚ)`, a volume per cohort and component, the
+blends are balanced for each component's volumes, `Σⱼ wⱼₚ(μ̂ⱼₚ - μ̂ⱼₚᵇ) = 0`. -/
+theorem vecBalanced_buhlmannGisler_diag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ : Matrix P P ℝ} {σ2 : P → ℝ}
+    {w : J → P → ℝ} (hw : ∀ j p, w j p ≠ 0)
+    (hKj : ∀ j, blk K j = Λ + diagonal fun p => σ2 p / w j p) :
+    VecBalanced (fun j => diagonal (w j)) (fun j => Λ * (Λ + diagonal fun p => σ2 p / w j p)⁻¹)
+      (weight K) :=
+  vecBalanced_of_mul_noise hK hb hKj (S₀ := diagonal σ2) fun j => by
+    rw [diagonal_mul_diagonal]
+    congr 1
+    funext p
+    field_simp [hw j p]
 
 end CoreVector
 end Credibility
