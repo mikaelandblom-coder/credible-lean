@@ -229,3 +229,52 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
   collective mean is either known or a GLS under that independence. We allow a full `K` over
   cohorts × components (year shocks correlate cohorts) and the matrix GLS
   `μ̂ = (UᵀK⁻¹U)⁻¹UᵀK⁻¹x`; the best `Zⱼ` is `(Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹`.
+
+## 8. Correlated noise across cohorts: prior art and foundation (2026-11-19)
+Owner's question: the thesis (§2.2.3) found no reference for correlated *observation noise*
+across cohorts in the same period. Re-searched by web; publisher pages were not reachable from
+the session, so contents below are from abstracts and listings only.
+
+**Verdict.** The thesis is right about the two papers it cites, and right that the classical
+credibility texts assume independence across risks. "No references" is too strong, though:
+- Wen & Wu (2011), *The credibility estimator with general dependence structure over risks*,
+  Comm. Stat. Theory Methods 40(10), 1893–1910. Rebuilds the inhomogeneous and **homogeneous**
+  Bühlmann and Bühlmann–Straub estimators (and Hachemeister) by projection when risks are
+  dependent with a general positive definite matrix. Closest prior art to eq. (26). **To check
+  in the full text:** whether the matrix is on the risk parameters, on the conditional
+  (within-period) covariance of the claims, or both; and whether it gives estimators of it.
+- Wen & Deng (2011), J. Syst. Sci. Complex. 24(3), 532–539 (thesis ref `wen`, in the
+  bibliography but not cited in the text): equal correlation between risks, homogeneous and
+  inhomogeneous estimators by projection. The common-effect paper the thesis discusses is
+  `wen2` = Wen, Wu & Zhou (2009), IME 44 (§3).
+- Huang & Wu (2015), *The credibility premiums with dependence structure over risks and time
+  horizon*, J. Ind. Manag. Optim. 11(2), 365–380; Zhang, Cui & Chen (2017), *Multidimensional
+  credibility estimators with random common effects and time effects*, J. Syst. Sci. Complex.
+  30, 1107–1120. A **time effect common to all risks** correlates the risks within a period:
+  that is our correlated noise, in parametric form.
+- Dannenburg (1995), *Crossed classification credibility models*, TI 95-64; Dannenburg, Kaas &
+  Goovaerts (1996), ch. 6; Goulet (2001); Fung & Xu (2009), Variance 4(1), 66–80 (REML,
+  independent and exchangeable errors). A year factor crossed with the cohort factor gives
+  equicorrelated noise within a year (ρ ≥ 0 only).
+- Remark on the thesis's reading of `wen2`: a common effect that is *permanent* (one `Λ` for all
+  years) only enters the inhomogeneous estimator. A common effect *per year* is noise
+  correlated within the period and does change the homogeneous estimator; that is the thesis's
+  case, so the two statements do not conflict.
+
+**Foundation (agreed).** The data model of §2.3 is a linear mixed model specified by first and
+second moments only. The best linear unbiased estimator of the mean under an arbitrary positive
+definite covariance is Aitken's GLS (Aitken 1935, Proc. R. Soc. Edinb. 55, 42–48); the best
+linear unbiased predictor of a random effect under arbitrary covariances of effects *and* errors
+is Goldberger (1962, JASA 57) and Henderson / Harville (1976, *Extension of the Gauss–Markov
+theorem to include the estimation of random effects*, Ann. Stat. 4(2), 384–395). Frees, Young &
+Luo (1999), *A longitudinal data analysis interpretation of credibility models*, IME 24,
+229–247, show the additive credibility models are special cases of this longitudinal model.
+So correlated noise is standard in mixed models and BLUP theory; the thesis's contribution lies
+in bringing it into the Bühlmann–Straub form: the blend with GLS weights, eq. (26), its
+singularities and factors outside [0, 1], the §2.8 estimators of `K` from same-period cross
+products, and balance. Proofs here use only that foundation (no distribution).
+
+**For a reviewer.** (1) Read Wen & Wu (2011) and Huang & Wu (2015) in full and say whether
+eq. (26) or the §2.8 estimators appear there; if so, cite and move the "new here" in paper §15.
+(2) Check that `Core.blupWeight_optimal` matches Goldberger's/Harville's predictor.
+(3) Check Bühlmann & Gisler (2005) for any within-period dependence across risks.
