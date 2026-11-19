@@ -39,6 +39,9 @@ tactics.
 - extension: a known common trend `g` (`notes/time-trends.md` §1 steps 1–2): `Unequal.scale`/`detrend`,
   `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, trend-free relativities (Finding 21)
   → `Credibility/Trend.lean`
+- extension: shock plus process noise (Finding 23): `cov = δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, its `K`
+  for any cohort weights, `K ≻ 0`, unbiased `Ĉ`, `ŝ²` (identified only through volume variation)
+  → `Credibility/Shock.lean`
 - extension: the matrix Blend (vector levels `μⱼ ∈ ℝᴾ`, credibility matrix `Z`, joint `K` over
   cohorts × components, matrix GLS, matrix eq. (26); `notes/time-trends.md` §3 item 4)
   → `Credibility/CoreVector.lean`; its moment layer (`CoreVector.VecEstimates`, centred to a

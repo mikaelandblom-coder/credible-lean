@@ -35,7 +35,9 @@ via a matrix Blend shared with bivariate frequency–severity credibility).
 - [ ] **Period shocks are already in the model.** A common random period
   effect is an equal-correlation `ρ`; loadings `λᵢλⱼ` give the rank-one `K`
   of Core. A short interpretation theorem: where `ρ` comes from.
-- [ ] **Shock plus process noise (Finding 23).** Replace `σᵢₜσⱼₜρᵢⱼ` by
+- [x] **Shock plus process noise (Finding 23).** Done 2026-11-19 (`Credibility/Shock.lean`):
+  `K`, `K ≻ 0`, `bestZ`, unbiased `Ĉ` and `ŝ²` (needs volume variation, `T ≥ 3`). Open: `τ̂²`
+  and `K̂` for this table, the moment layer, and the comparison below. Replace `σᵢₜσⱼₜρᵢⱼ` by
   `Cᵢⱼ + δᵢⱼ sᵢ²/wᵢₜ`: a period shock that does not shrink with volume. New `obsCov`
   table; `K`, positive definiteness (`C ⪰ 0`, `s² > 0`) and unbiased estimators of `C`
   and `s²` (rank-one `C = λλᵀ` as the one-parameter-per-cohort case). Compare with the

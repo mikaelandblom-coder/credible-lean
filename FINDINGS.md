@@ -386,5 +386,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    (`C ⪰ 0` plus a positive diagonal) and unbiased estimators of `C` and `s²` are the work;
    the expectation layer (`Ecov`, `UnbiasedCov` for a general table) already applies.
    Econometrics names it a common factor with loadings (`studies/literature.md` §9).
+   **In Lean (2026-11-19, `Credibility/Shock.lean`).** For any cohort weights summing to one,
+   `Kᵢⱼ = (Σₜ aᵢₜaⱼₜ)Cᵢⱼ + δᵢⱼ(sᵢ²Σₜ aᵢₜ²/wᵢₜ + τ²)` and `K ≻ 0` (`Shock.K_apply`,
+   `Shock.K_posDef`); `bestZ` is the Core formula (`Shock.bestZ_eq`). Same-period residual
+   cross products estimate `Cᵢⱼ`, `i ≠ j`, without bias (`Shock.crossHat_unbiased`). On the
+   diagonal a squared residual mixes `Cⱼⱼ` and `sⱼ²`; two weightings of the squared residuals
+   separate them by Cramer's rule (`Shock.CdiagHat_unbiased`, `Shock.s2Hat_unbiased`) when a
+   2×2 determinant is nonzero. That needs volume variation: with a constant volume no
+   estimator is unbiased for `sⱼ²` (`Shock.not_unbiased_s2_of_const`), and with `T = 2` the
+   residuals of a cohort are proportional, so the determinant is `0` for any weightings.
+   Numerically (exposure weights, weightings `1` and `w`), the determinant is negative once
+   `T ≥ 3` and the volumes vary; not proved.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

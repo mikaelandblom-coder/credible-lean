@@ -128,6 +128,8 @@ EXEMPT = {
     "toUnequal_cohortEst": "the bridges `Model.Noise.toUnequal_cohortEst` and `Model.NoiseG.toUnequal_cohortEst` to `Tⱼ = T` are for different random variables (without and with group effects)",
     "toUnequal_obsVal": "the bridges `Model.Noise.toUnequal_obsVal` and `Model.NoiseG.toUnequal_obsVal` to `Tⱼ = T` are for different random variables (without and with group effects)",
     "toUnequal_portEst": "the bridges `Model.Noise.toUnequal_portEst` and `Model.NoiseG.toUnequal_portEst` to `Tⱼ = T` are for different random variables (without and with group effects)",
+    "K_eq_errCov": "`Unequal.K_eq_errCov` and `Shock.K_eq_errCov` split two different models' `K` (period-fixed correlations against shock plus process noise); neither table is a case of the other",
+    "cov_symm": "`Model.cov_symm` and `Shock.cov_symm` are the symmetry of two different covariance tables (eq. (16) against shock plus process noise); neither is a case of the other",
     "toUnequal_trueMean": "the bridges `Model.Noise.toUnequal_trueMean` and `Model.NoiseG.toUnequal_trueMean` to `Tⱼ = T` are for different random variables (without and with group effects)",
 }
 

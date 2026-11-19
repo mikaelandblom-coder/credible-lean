@@ -360,5 +360,10 @@ not re-checked online.
   effects*, Econometrica 74, 967–1012; Bai (2009), interactive fixed effects, Econometrica
   77, 1229–1279: cross-sectional dependence as common factors with unit-specific loadings, the
   rank-one / low-rank `K` of Core (`notes/roadmap.md`, "period shocks are already in").
+- Separating a common component from sampling noise of known relative size `1/wⱼₜ` is the
+  method-of-moments step of variance-component estimation (Henderson's method III; in small-area
+  estimation the Fay–Herriot model takes the sampling variances as known). From memory.
+  `Credibility/Shock.lean` uses it on the diagonal: the volumes must vary for `Cⱼⱼ` and `sⱼ²`
+  to be identified.
 Used: the interpretation (thesis model = SUR error structure inside a credibility model) and
 the warning on full `K̂`. New here: the combination with random levels and the blend.

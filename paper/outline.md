@@ -80,7 +80,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Finding 23 (2026-11-19, modelling remark): a common period shock does not shrink with
   volume; eq. (16) with fixed `ρ` makes it shrink. One sentence in the model section and in
-  §13 (Time) next to "period shocks are already in".
+  §13 (Time) next to "period shocks are already in". Now in Lean (`Credibility/Shock.lean`):
+  a paragraph on the shock model, and that shock and process noise are told apart only by
+  volume variation (`Credibility.Shock.not_unbiased_s2_of_const`).
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels, credibility matrix, matrix GLS
   with correlated cohorts (Jewell 1973; Bühlmann–Gisler ch. 7 has independent cohorts, and is
   recovered: `Credibility.CoreVector.moments_bestZ_buhlmannGisler`). Hachemeister with correlated

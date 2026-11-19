@@ -288,7 +288,11 @@ One chat per step; none needs Lean except step 5.
 (Results or findings that may need a switch, step or message in the app.)
 - Finding 23 (2026-11-19): the world model's period shock should be `C + s²/w` (does not
   shrink with volume), not `σ²ρ/w`. Check what `engine.js` simulates; with growing volumes
-  the thesis fit is then misspecified, which the app could show.
+  the thesis fit is then misspecified, which the app could show. Now proved
+  (`Credibility/Shock.lean`): a fit switch "shock + process noise" with `K` from
+  `Shock.K_apply` and `Ĉ`, `ŝ²` from `Shock.CHat`, `Shock.s2Hat` (exposure weights, weightings
+  `1` and `w`; needs `T ≥ 3` and varying volumes, else fall back to the thesis fit). `τ̂²` for
+  this table is still open.
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
   matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the
   frequency × severity comparison (`notes/time-trends.md` §3 item 3) can add a fourth fit,

@@ -17,7 +17,12 @@ voice, then trim towards 8 pages.
 ## Pending
 (Results proved since the last handbook update that may belong here.)
 - Finding 23 (2026-11-19): "watch out" next to the estimators: with volumes that change over
-  time, the thesis's `ρ` assumes the common shock shrinks with volume.
+  time, the thesis's `ρ` assumes the common shock shrinks with volume. Now proved
+  (`Credibility.Shock.K_apply`, `Credibility.Shock.CHat_unbiased`,
+  `Credibility.Shock.s2Hat_unbiased`, closed forms `Credibility.Shock.dSum_expo_w`,
+  `Credibility.Shock.hSum_expo_w`): an entry with the shock `K` and the estimators, "watch out":
+  shock and process noise separate only with volumes that vary (`T ≥ 3`;
+  `Credibility.Shock.not_unbiased_s2_of_const`).
 - Matrix blend (2026-11-19, `CoreVector.lean`): Hachemeister done
   (`Credibility.CoreVector.hachemeister_bestZ`, classical case
   `hachemeister_bestZ_of_blockDiag`); frequency × severity settled (Finding 22: the best
