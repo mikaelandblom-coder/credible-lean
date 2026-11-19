@@ -593,3 +593,51 @@ test('z < 0 is flagged as a warning (Finding 17), not as an expected note', () =
   }
   assert.ok(seen > 0, 'no z < 0 in 400 draws: pick a harsher world');
 });
+
+// ---------------------------------------------------------------- the Recipe section
+
+test('Recipes match the fits: same steps, formulas and badges (one formula table F)', () => {
+  const cases = [[{ rho: 0.3 }, 15], [{ rho: 0 }, 2], [{ rho: 0.6, noiseSpread: 1 }, 7], [{ tau: 0.005, J: 4, T: 3 }, 3]];
+  for (const [params, seed] of cases) {
+    const world = E.makeWorld(params), { data } = E.draw(world, E.rng(seed));
+    for (const [id, m] of Object.entries(E.MODELS)) {
+      const r = E.RECIPES[id];
+      assert.ok(r && r.intro && r.steps.length, `${id}: no recipe`);
+      const fit = m.fit(data), pr = E.premium(fit, data, E.nextVolumes(data));
+      const steps = fit.steps.concat(pr ? [pr.step] : []);
+      if (!steps.length) continue;   // own, pool: no estimation steps on the page
+      assert.deepEqual(r.steps.map((s) => s.name).sort(), steps.map((s) => s.name).sort(), `${id}: step names`);
+      for (const s of steps) {
+        const rs = r.steps.find((x) => x.name === s.name);
+        assert.ok(s.formula.startsWith(rs.formula), `${id}/${s.name}: formula differs from the recipe`);
+        if (!rs.varies) {
+          assert.equal(rs.badge, s.badge, `${id}/${s.name}: badge`);
+          assert.equal(rs.lean || null, s.lean || null, `${id}/${s.name}: Lean name`);
+        }
+      }
+    }
+  }
+});
+
+test('Recipes: every symbol is defined (notation or an earlier formula), every proved step names a proved declaration', () => {
+  const path = require('node:path'), { execFileSync } = require('node:child_process');
+  const proved = new Set(execFileSync('python3', [path.join(__dirname, '..', 'scripts', 'progress.py'), '--proved'],
+    { encoding: 'utf8' }).split(/\s+/).filter(Boolean));
+  // Symbols a reader cannot know without a definition, and how a step defines them.
+  const SYMBOLS = ['μ̄', 'Sᵢⱼ', 'Qᵢⱼ', 'Σ̂ᵢⱼ', 'v̂ⱼ', 'δᵢⱼ', ' eⱼ', 'z*', 'τ̂²⁺', 'w**', 'wⱼ*', 's²', 'ĉⱼ', 'ζⱼ', 'Wⱼ', 'β²', 'σ̃ⱼ', 'uⱼₜ', 'ℓ', 'θ', 'σ̂ⱼ²', 'd̂', 'wⱼ,next', 'MSEⱼ', 'Aⱼ', 'Bⱼ', 'Cⱼ'];
+  for (const id of Object.keys(E.MODELS)) {
+    const r = E.RECIPES[id], notes = E.recipeNotation(id).map((n) => n.sym + ' ' + n.text).join(' ');
+    const texts = r.steps.map((s) => [s.formula, s.rule || '', s.note || ''].join(' ')).join(' ');
+    for (const sym of SYMBOLS) {
+      if (!texts.includes(sym)) continue;
+      const defined = notes.includes(sym) || new RegExp(`(^|[ ,;(:])${sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^ ]{0,3} =`).test(texts) ||
+        (sym === 'θ' && /θ = the largest/.test(texts)) || (sym === 'σ̃ⱼ' && texts.includes('σ̃ⱼ² ='));
+      assert.ok(defined, `${id}: ${sym} is used but not defined`);
+    }
+    for (const s of r.steps) {
+      if (s.badge === 'proved') assert.ok(proved.has(s.lean), `${id}/${s.name}: ${s.lean} is not a proved declaration`);
+      else assert.ok(s.gap, `${id}/${s.name}: no gap named`);
+    }
+    assert.ok(E.recipeText(id).includes(r.steps[0].formula), `${id}: text export`);
+  }
+});

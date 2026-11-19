@@ -138,6 +138,17 @@ footer a { color: var(--accent); }
 .badge.proved { background: var(--ok-bg); color: var(--ok); }
 .badge.open { background: var(--warn-bg); color: var(--warn); }
 .step a { color: var(--accent); font-size: 13px; }
+.rule { font-size: 13px; margin: 2px 0; overflow-wrap: anywhere; }
+.rule b { font-weight: 600; color: var(--text-2); }
+.notation { margin: 6px 0 4px; font-size: 13px; }
+.notation div { margin: 3px 0; overflow-wrap: anywhere; }
+.notation .sym { font-weight: 600; margin-right: 6px; }
+ol.recipe { margin: 4px 0 0; padding-left: 1.6em; }
+ol.recipe li { border-top: 1px solid var(--grid); padding: 8px 0; }
+ol.recipe li:first-child { border-top: 0; }
+ol.recipe li::marker { color: var(--muted); font-size: 13px; }
+.recipe-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.recipe-head .tabs { margin: 0; }
 </style>
 </head>
 <body>
@@ -204,6 +215,13 @@ footer a { color: var(--accent); }
     <p class="sub" style="margin:8px 0 0"><span class="badge proved">proved</span> the formula is a theorem in Lean (link). <span class="badge open">not proved yet</span> a heuristic step: one of the gaps G0–G7 of the plan.</p>
   </section>
 
+  <section class="card" aria-labelledby="h-recipe">
+    <h2 id="h-recipe">Recipe <span class="sub">(apply the model to your own data)</span></h2>
+    <p class="sub" style="margin:0 0 10px">Every formula and rule the model uses, in order, from your data table alone: a ratio <i>X</i>ⱼₜ and a volume <i>w</i>ⱼₜ per region and year. The same formulas as under Fitting steps, without this draw's numbers.</p>
+    <div class="recipe-head"><div class="tabs" id="recipe-tabs"></div><button type="button" id="b-copy">Copy as text</button></div>
+    <div id="recipe"></div>
+  </section>
+
   <footer>
     <p>The floor is the best credibility blend if the true parameters were known (thesis eq. (26) on the true <i>K</i>): a benchmark, never a fit. The gap between fit and floor is the price of estimating the parameters. The table under Many draws also shows the best linear unbiased predictor with the true <i>K</i>, the lower floor that the blend form itself can miss (Finding 18).</p>
     <p>Every fitted number comes from the simulated data alone. Levels and noise are skewed (gamma): the theory assumes only two moments. <a href="../">Blueprint</a> · <a href="../handbook.pdf">Handbook</a></p>
@@ -231,7 +249,7 @@ footer a { color: var(--accent); }
     { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
     { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
   ];
-  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'vc', seed: 12345, stepsOf: 'fit', next: 1 });
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, fit: 'bs', ref: 'vc', seed: 12345, stepsOf: 'fit', recipeOf: 'fit', next: 1 });
 
   const ws = $('world-sliders');
   for (const s of SLIDERS) {
@@ -423,6 +441,7 @@ footer a { color: var(--accent); }
     warnBlock($('w-draw'), msgs, notes);
     const withPremium = (f, p) => (p ? Object.assign({}, f, { steps: f.steps.concat([p.step]) }) : f);
     renderSteps({ fit: withPremium(fit, pFit), ref: withPremium(ref, pRef) });
+    renderRecipe();
     renderPrice(data, [[state.fit, fit], [state.ref, ref]]);
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
@@ -460,6 +479,41 @@ footer a { color: var(--accent); }
         ${s.note || link ? `<div class="sub">${s.note ? esc(s.note) : ''}${s.note && link ? ' · ' : ''}${link}</div>` : ''}</div>`;
     }).join('');
   }
+
+  // ---------- recipe (the selected model's formulas and rules, no numbers)
+  function renderRecipe() {
+    const ids = [['fit', `Fit: ${E.MODELS[state.fit].short}`], ['ref', `Reference: ${E.MODELS[state.ref].short}`]];
+    const tabs = $('recipe-tabs');
+    tabs.innerHTML = ids.map(([k, lab]) => `<button type="button" data-k="${k}" aria-pressed="${state.recipeOf === k}">${esc(lab)}</button>`).join('');
+    tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { state.recipeOf = b.dataset.k; renderRecipe(); }));
+    const id = state[state.recipeOf], r = E.RECIPES[id];
+    const notation = E.recipeNotation(id).map((n) => `<div><span class="sym">${esc(n.sym)}</span>${esc(n.text)}</div>`).join('');
+    const steps = r.steps.map((s) => {
+      const badge = s.badge === 'proved'
+        ? `<span class="badge proved">proved</span>`
+        : `<span class="badge open">not proved yet${s.gap ? ' · ' + s.gap : ''}</span>`;
+      const link = s.lean ? `<a href="../find/#doc/${esc(s.lean)}" target="_blank" rel="noopener">${esc(s.lean.replace(/^Credibility\./, ''))}</a>` : '';
+      return `<li><div class="step-head"><span class="step-name">${esc(s.name)}</span>${badge}</div>
+        <div class="formula">${esc(s.formula)}</div>
+        ${s.rule ? `<div class="rule"><b>Rule:</b> ${esc(s.rule)}</div>` : ''}
+        ${s.note || link ? `<div class="sub">${s.note ? esc(s.note) : ''}${s.note && link ? ' · ' : ''}${link}</div>` : ''}</li>`;
+    }).join('');
+    $('recipe').innerHTML = `<p style="margin:10px 0 4px"><b>${esc(E.MODELS[id].name)}.</b> ${esc(r.intro)}</p>
+      <details open><summary>Notation</summary><div class="notation">${notation}</div></details>
+      <ol class="recipe">${steps}</ol>`;
+  }
+  $('b-copy').addEventListener('click', () => {
+    const text = E.recipeText(state[state.recipeOf]), btn = $('b-copy');
+    const done = (ok) => { btn.textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { btn.textContent = 'Copy as text'; }, 1500); };
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta); done(ok);
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => done(true), fallback);
+    else fallback();
+  });
 
   // ---------- many draws (computed in chunks so the sliders stay responsive)
   const N = 2000, CHUNK = 250;

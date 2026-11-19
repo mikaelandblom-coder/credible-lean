@@ -361,6 +361,37 @@
   }
 
   /**
+   * The formulas, written once: the fits' steps (this draw) and RECIPES (the page's Recipe
+   * section) both read them, so the recipe is always what the fit computes.
+   */
+  const F = {
+    means: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*',
+    bsSigma: 'σ̂² = (1/J) Σⱼ Σₜ wⱼₜ (Xⱼₜ − μ̂ⱼ)² / (T−1)',
+    bsTau: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)',
+    bsZ: 'zⱼ = wⱼ* / (wⱼ* + σ̂²/τ̂²)',
+    bOfZ: 'bⱼ = zⱼ / z*',
+    rates: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σⱼ bⱼ μ̂ⱼ',
+    sigDiag: 'σ²ⱼⱼ^ = σ̂ⱼ²/wⱼ*,  σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1)  (eq. (41))',
+    sigOff: 'σ²ᵢⱼρᵢⱼ^ = Qᵢⱼ / (Sᵢⱼ + (T−2)wᵢ*wⱼ*/Sᵢⱼ)  (eq. (39))',
+    common: 'ĉ = average of σ²ᵢⱼρᵢⱼ^ over the pairs i ≠ j',
+    cj: 'ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ',
+    tau: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**)  (eq. (39))',
+    damped: 'K̂ = Σ̂ with off-diagonal × θ, + τ̂²⁺ I',
+    zEq: 'zⱼ = τ̂² / (τ̂² + v̂ⱼ − θĉ)',
+    gls: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))',
+    z26: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))',
+    vcSigma: 'σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1),  σ̂² = (1/J) Σⱼ σ̂ⱼ²',
+    vcW: 'Wⱼ = Σₜ (uⱼₜ − σ̂ⱼ²)²/(T(T−1)), uⱼₜ = wⱼₜ(Xⱼₜ − μ̂ⱼ)²T/(T−1);  β² = Σⱼ(σ̂ⱼ² − σ̂²)²/(J−1) − (1/J)Σⱼ Wⱼ',
+    vcTilde: 'σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̂²,  ζⱼ = β²/(β² + Wⱼ)',
+    vcRho: 'ρ̂ = Σᵢ<ⱼ Qᵢⱼ / Σᵢ<ⱼ σ̃ᵢσ̃ⱼ((T−2) + Sᵢⱼ²/(wᵢ*wⱼ*))',
+    vcTau: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**),  ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ  (eq. (39))',
+    vcK: 'K̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j),  σ̃ⱼ²/wⱼ* + τ̂² (i = j)',
+    blupD: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ',
+    blupRates: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ',
+    premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
+  };
+
+  /**
    * The premium step (PLAN G6, Core.Estimates.mse_forecast): premium = μ̂ⱼᵇ (z unchanged),
    * forecast error = level MSE + σ̂ⱼ²/wⱼ,next. The level MSE is the plug-in g₁₂ⱼ on the fit's
    * K̂, τ̂² (or `levelMSE`, e.g. the jackknife MSEP); σ̂ⱼ² = (K̂ⱼⱼ − τ̂²)·wⱼ*. Null for a fit
@@ -374,7 +405,7 @@
     const noise = wt.map((x, j) => (fit.K[j][j] - tau2) * x / wNext[j]);
     const mse = level.map((g, j) => g + noise[j]);
     const step = {
-      name: 'premium', formula: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next', values: mse.map(Math.sqrt),
+      name: 'premium', formula: F.premium, values: mse.map(Math.sqrt),
       badge: 'proved', lean: 'Credibility.Core.Estimates.mse_forecast',
       note: `values: forecast error (root) for next year; the same z is optimal for next year (bestZ_forecast_optimal); MSEⱼ ${levelMSE ? 'by the jackknife' : 'plug-in, on K̂ and τ̂²'}`,
     };
@@ -406,12 +437,12 @@
       means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags: { tauNeg: tauRaw <= 0 }, theta: 0,
       sigma2, tau2, K: wt.map((x, i) => wt.map((_, j) => (i === j ? sigma2 / x + tau2 : 0))),
       steps: [
-        { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.bs_a' },
-        { name: 'σ̂²', formula: 'σ̂² = (1/J) Σⱼ Σₜ wⱼₜ (Xⱼₜ − μ̂ⱼ)² / (T−1)', values: [sigma2], badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
-        { name: 'τ̂²', formula: 'τ̂² = (Σⱼ wⱼ*(μ̂ⱼ − μ̄)² − (J−1)σ̂²) / (w** − Σⱼ wⱼ*²/w**)', values: [tauRaw], badge: 'proved', lean: 'Credibility.Model.tauHatBS_unbiased', note: 'classical eq. (13): unbiased when the regions are uncorrelated with a common σ (G0)' },
-        { name: 'z', formula: 'zⱼ = wⱼ* / (wⱼ* + σ̂²/τ̂²)', values: z, badge: 'proved', lean: 'Credibility.bs_z' },
-        { name: 'b', formula: 'bⱼ = zⱼ / z*', values: b, badge: 'proved', lean: 'Credibility.bs_b' },
-        { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂', values: res.rates, badge: 'proved', lean: 'Credibility.bs_balance' },
+        { name: 'cohort means', formula: F.means, values: m, badge: 'proved', lean: 'Credibility.bs_a' },
+        { name: 'σ̂²', formula: F.bsSigma, values: [sigma2], badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+        { name: 'τ̂²', formula: F.bsTau, values: [tauRaw], badge: 'proved', lean: 'Credibility.Model.tauHatBS_unbiased', note: 'classical eq. (13): unbiased when the regions are uncorrelated with a common σ (G0)' },
+        { name: 'z', formula: F.bsZ, values: z, badge: 'proved', lean: 'Credibility.bs_z' },
+        { name: 'b', formula: F.bOfZ, values: b, badge: 'proved', lean: 'Credibility.bs_b' },
+        { name: 'rates', formula: F.rates, values: res.rates, badge: 'proved', lean: 'Credibility.bs_balance' },
       ],
     };
   }
@@ -532,30 +563,30 @@
     const offs = [];
     for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) offs.push(Sig[i][j]);
     const steps = [
-      { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
-      { name: 'Σ̂ diagonal', formula: 'σ²ⱼⱼ^ = σ̂ⱼ²/wⱼ*,  σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1)  (eq. (41))', values: v, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
-      { name: 'Σ̂ off-diagonal', formula: 'σ²ᵢⱼρᵢⱼ^ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ) / (Sᵢⱼ + (T−2)wᵢ*wⱼ*/Sᵢⱼ)  (eq. (39))', values: offs, summary: true, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; J(J−1)/2 pairs' },
+      { name: 'cohort means', formula: F.means, values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
+      { name: 'Σ̂ diagonal', formula: F.sigDiag, values: v, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+      { name: 'Σ̂ off-diagonal', formula: F.sigOff, values: offs, summary: true, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; J(J−1)/2 pairs' },
     ];
     if (o.common) {
-      steps.push({ name: 'common covariance', formula: 'ĉ = average of σ²ᵢⱼρᵢⱼ^ over the pairs i ≠ j', values: [cbar], badge: 'not proved yet', gap: 'G1', note: 'unbiased for a common c: not proved yet (G1)' });
+      steps.push({ name: 'common covariance', formula: F.common, values: [cbar], badge: 'not proved yet', gap: 'G1', note: 'unbiased for a common c: not proved yet (G1)' });
     }
     steps.push(
-      { name: 'ĉⱼ', formula: 'ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ', values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
-      { name: 'τ̂²', formula: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**)  (eq. (39))', values: [tauRaw], badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.tauHat_unbiased', gap: o.common ? 'G1' : null, note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
-      { name: 'damped K̂', formula: `K̂ = Σ̂ with off-diagonal × θ, + τ̂²⁺ I;  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1; the choice θ = ${theta} is a heuristic (G2)` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem (G2)` },
+      { name: 'ĉⱼ', formula: F.cj, values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
+      { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.tauHat_unbiased', gap: o.common ? 'G1' : null, note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
+      { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1; the choice θ = ${theta} is a heuristic (G2)` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem (G2)` },
     );
     if (o.common && tau2 > 0) {
       steps.push(
-        { name: 'z', formula: 'zⱼ = τ̂² / (τ̂² + v̂ⱼ − θĉ)', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_of_equalCov' },
-        { name: 'b', formula: 'bⱼ = zⱼ / z*', values: b, badge: 'proved', lean: 'Credibility.Core.b_eq_of_equalCov' },
+        { name: 'z', formula: F.zEq, values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_of_equalCov' },
+        { name: 'b', formula: F.bOfZ, values: b, badge: 'proved', lean: 'Credibility.Core.b_eq_of_equalCov' },
       );
     } else {
       steps.push(
-        { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
-        { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+        { name: 'b', formula: F.gls, values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+        { name: 'z', formula: F.z26, values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
       );
     }
-    steps.push({ name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: res.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` });
+    steps.push({ name: 'rates', formula: F.rates, values: res.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` });
     return { means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags, K, theta, tauRaw, tau2, cbar, steps };
   }
 
@@ -635,16 +666,16 @@
       if (expected[k]) notes.push(`${why[0].toUpperCase()}${why.slice(1)}: ${msg[k]}`); else warnings.push(msg[k]);
     }
     const steps = [
-      { name: 'cohort means', formula: 'μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
-      { name: 'σ̂ⱼ²', formula: 'σ̂ⱼ² = Σₜ wⱼₜ(Xⱼₜ − μ̂ⱼ)²/(T−1),  σ̂² = (1/J) Σⱼ σ̂ⱼ²', values: p.own, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self', note: `pooled σ̂² = ${p.pooled.toPrecision(4)}` },
-      { name: 'Wⱼ, β²', formula: 'Wⱼ = Σₜ (uⱼₜ − σ̂ⱼ²)²/(T(T−1)), uⱼₜ = wⱼₜ(Xⱼₜ − μ̂ⱼ)²T/(T−1);  β² = Σⱼ(σ̂ⱼ² − σ̂²)²/(J−1) − (1/J)Σⱼ Wⱼ', values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
-      { name: 'σ̃ⱼ²', formula: 'σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̂²,  ζⱼ = β²/(β² + Wⱼ)', values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
-      { name: 'ρ̂', formula: 'ρ̂ = Σᵢ<ⱼ Qᵢⱼ / Σᵢ<ⱼ σ̃ᵢσ̃ⱼ((T−2) + Sᵢⱼ²/(wᵢ*wⱼ*)),  Qᵢⱼ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ)', values: [p.rhoRaw], badge: 'not proved yet', gap: 'G1', note: `one common correlation by a moment equation${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
-      { name: 'τ̂²', formula: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**),  ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ  (eq. (39))', values: [p.tauRaw], badge: 'not proved yet', gap: 'G1', note: `on the common-ρ Σ̂: unbiased if Σ̂ is${p.tauRaw <= 0 ? '; negative: truncated to 0 (eq. (40))' : ''}` },
-      { name: 'K̂', formula: 'K̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j),  σ̃ⱼ²/wⱼ* + τ̂² (i = j)', values: [p.rho], badge: 'proved', lean: 'Credibility.Model.K_posDef', note: `K̂ ≻ 0 for any ρ̂ ∈ [0, 1): no damping, no θ; ρ̂ = ${p.rho.toFixed(3)}` },
-      { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
-      { name: 'z', formula: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))', values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
-      { name: 'rates', formula: 'μ̂ⱼᵇ = zⱼ μ̂ⱼ + (1 − zⱼ) μ̂,  μ̂ = Σ bⱼ μ̂ⱼ', values: rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` },
+      { name: 'cohort means', formula: F.means, values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
+      { name: 'σ̂ⱼ²', formula: F.vcSigma, values: p.own, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self', note: `pooled σ̂² = ${p.pooled.toPrecision(4)}` },
+      { name: 'Wⱼ, β²', formula: F.vcW, values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
+      { name: 'σ̃ⱼ²', formula: F.vcTilde, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
+      { name: 'ρ̂', formula: F.vcRho, values: [p.rhoRaw], badge: 'not proved yet', gap: 'G1', note: `one common correlation by a moment equation${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
+      { name: 'τ̂²', formula: F.vcTau, values: [p.tauRaw], badge: 'not proved yet', gap: 'G1', note: `on the common-ρ Σ̂: unbiased if Σ̂ is${p.tauRaw <= 0 ? '; negative: truncated to 0 (eq. (40))' : ''}` },
+      { name: 'K̂', formula: F.vcK, values: [p.rho], badge: 'proved', lean: 'Credibility.Model.K_posDef', note: `K̂ ≻ 0 for any ρ̂ ∈ [0, 1): no damping, no θ; ρ̂ = ${p.rho.toFixed(3)}` },
+      { name: 'b', formula: F.gls, values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+      { name: 'z', formula: F.z26, values: z, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+      { name: 'rates', formula: F.rates, values: rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` },
     ];
     return { means: m, z, b, mu, rates, warnings, notes, flags, expected, K, tauRaw: p.tauRaw, tau2: p.t2, rho: p.rho, rhoRaw: p.rhoRaw, sigma2: p.s2, between: p.between, theta: 1, steps };
   }
@@ -664,9 +695,9 @@
     const negOther = D.filter((d, j) => d.some((x, i) => i !== j && x < 0)).length;
     const warnings = base.flags.tauNeg ? [base.warnings.find((w) => w.startsWith('τ̂²')) || 'τ̂² ≤ 0, set to 0: every region gets the portfolio level'] : [];
     const steps = base.steps.filter((s) => !['b', 'z', 'rates'].includes(s.name)).concat([
-      { name: 'b', formula: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))', values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
-      { name: 'BLUP weights', formula: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ', values: c, badge: 'proved', lean: 'Credibility.Core.blupWeight_optimal', note: `the weights sum to 1 and use every region individually; ${negOther} region(s) give some other region a negative weight` },
-      { name: 'rates', formula: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ', values: rates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal', note: 'the parameters are plugged in: optimal among all unbiased linear predictors for the true K, τ²' },
+      { name: 'b', formula: F.gls, values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+      { name: 'BLUP weights', formula: F.blupD, values: c, badge: 'proved', lean: 'Credibility.Core.blupWeight_optimal', note: `the weights sum to 1 and use every region individually; ${negOther} region(s) give some other region a negative weight` },
+      { name: 'rates', formula: F.blupRates, values: rates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal', note: 'the parameters are plugged in: optimal among all unbiased linear predictors for the true K, τ²' },
     ]);
     return { means: m, z: null, b, c, mu: base.mu, rates, warnings, notes: [], flags: { tauNeg: base.flags.tauNeg }, K, tau2, rho: base.rho, theta: 1, levelMSE, steps };
   }
@@ -705,6 +736,151 @@
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true },
   };
+
+  /**
+   * Notation for the recipes. `match` decides whether a recipe needs the entry (it is listed
+   * only if some step's formula or rule contains it); `always` entries are always listed.
+   */
+  const NOTATION = [
+    { sym: 'Xⱼₜ, wⱼₜ', text: 'the data: observed ratio (claim cost per vehicle-year ÷ tariff) and volume (vehicle-years) of region j = 1…J in year t = 1…T', always: true },
+    { sym: 'wⱼ*, w**', text: 'wⱼ* = Σₜ wⱼₜ, the region’s total volume; w** = Σⱼ wⱼ*, the portfolio’s', always: true },
+    { sym: 'μ̄', text: 'μ̄ = Σⱼ wⱼ* μ̂ⱼ / w**, the volume-weighted mean of the region means', match: 'μ̄' },
+    { sym: 'Sᵢⱼ', text: 'Sᵢⱼ = Σₜ √(wᵢₜwⱼₜ) (so Sⱼⱼ = wⱼ*)', match: 'Sᵢⱼ' },
+    { sym: 'Qᵢⱼ', text: 'Qᵢⱼ = Σₜ √(wᵢₜwⱼₜ)(Xᵢₜ − μ̂ᵢ)(Xⱼₜ − μ̂ⱼ), the weighted cross-products of the deviations', match: 'Q' },
+    { sym: 'Σ̂ᵢⱼ, v̂ⱼ', text: 'Σ̂ᵢⱼ: the estimated noise covariance of μ̂ᵢ and μ̂ⱼ (the table built in the steps above); v̂ⱼ = Σ̂ⱼⱼ', match: 'Σ̂' },
+    { sym: 'δᵢⱼ', text: 'δᵢⱼ = 1 if i = j, else 0', match: 'δᵢⱼ' },
+    { sym: '1, eⱼ, K̂⁻¹', text: '1: the vector of ones; eⱼ: the j-th unit vector; K̂⁻¹v: the solution x of K̂x = v (a linear solve, e.g. Cholesky)', match: 'K̂⁻¹' },
+    { sym: 'z*', text: 'z* = Σⱼ zⱼ', match: 'z*' },
+    { sym: 'τ̂²⁺', text: 'τ̂²⁺ = max(τ̂², 0)', match: 'τ̂²⁺' },
+    { sym: 'wⱼ,next', text: 'next year’s volume of region j', match: 'wⱼ,next' },
+  ];
+
+  /** The plug-in level MSE of a blend, used by the premium step (blendMSE). */
+  const BLEND_MSE = 'MSEⱼ = zⱼ²Aⱼ + (1 − zⱼ)²Bⱼ + 2zⱼ(1 − zⱼ)Cⱼ with Aⱼ = K̂ⱼⱼ − τ̂², Bⱼ = s² − 2bⱼτ̂² + τ̂², Cⱼ = s² − bⱼτ̂², s² = 1/1ᵀK̂⁻¹1';
+  const premiumStep = (mse) => ({
+    name: 'premium', formula: F.premium, badge: 'proved', lean: 'Credibility.Core.Estimates.mse_forecast',
+    rule: `σ̂ⱼ² = (K̂ⱼⱼ − τ̂²)·wⱼ*, the noise of one vehicle-year; ${mse}`,
+    note: 'the premium is the rate (the same z is optimal for next year); the error is an average over data sets like this one, not an interval',
+  });
+  const TAU_ZERO = 'if τ̂² ≤ 0, use τ̂² = 0 from here on (eq. (40)): then z = 0 and every region gets the portfolio level μ̂';
+
+  /**
+   * The recipe of each model (the page's Recipe section): the fit's steps with formulas and the
+   * rules the code applies (truncations, the choice of θ), without numbers, so the model can be
+   * applied outside the app. Names, formulas and badges must match MODELS[id].fit's steps (tested).
+   */
+  const RECIPES = {
+    bs: {
+      intro: 'Bühlmann–Straub: regions uncorrelated, one common noise variance σ².',
+      steps: [
+        { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.bs_a' },
+        { name: 'σ̂²', formula: F.bsSigma, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+        { name: 'τ̂²', formula: F.bsTau, badge: 'proved', lean: 'Credibility.Model.tauHatBS_unbiased', rule: 'if τ̂² ≤ 0, set τ̂² = 0: then z = 0 and b = wⱼ*/w**, every region gets μ̄', note: 'unbiased when the regions are uncorrelated with a common σ' },
+        { name: 'z', formula: F.bsZ, badge: 'proved', lean: 'Credibility.bs_z' },
+        { name: 'b', formula: F.bOfZ, badge: 'proved', lean: 'Credibility.bs_b' },
+        { name: 'rates', formula: F.rates, badge: 'proved', lean: 'Credibility.bs_balance', note: 'balanced: Σⱼ wⱼ* μ̂ⱼᵇ = Σⱼ wⱼ* μ̂ⱼ' },
+        premiumStep(`K̂ is diagonal with K̂ⱼⱼ = σ̂²/wⱼ* + τ̂²; ${BLEND_MSE}`),
+      ],
+    },
+    vc: {
+      intro: 'Correlated Bühlmann–Straub: one correlation ρ between regions within a year, region variances shrunk towards the pooled one by their own credibility. Nothing to tune.',
+      steps: [
+        { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
+        { name: 'σ̂ⱼ²', formula: F.vcSigma, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+        { name: 'Wⱼ, β²', formula: F.vcW, badge: 'not proved yet', gap: 'G1', rule: 'if β² ≤ 0, set β² = 0 (then every σ̃ⱼ² below is the pooled σ̂²)', note: 'Wⱼ estimates Var(σ̂ⱼ²) from the yearly terms; β² is the between-region variance of the σⱼ²' },
+        { name: 'σ̃ⱼ²', formula: F.vcTilde, badge: 'not proved yet', gap: 'G1', rule: 'ζⱼ = 0 when β² = 0' },
+        { name: 'ρ̂', formula: F.vcRho, badge: 'not proved yet', gap: 'G1', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)' },
+        { name: 'τ̂²', formula: F.vcTau, badge: 'not proved yet', gap: 'G1', rule: `Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j; ${TAU_ZERO}` },
+        { name: 'K̂', formula: F.vcK, badge: 'proved', lean: 'Credibility.Model.K_posDef', note: 'positive definite for any ρ̂ in [0, 1): no damping needed' },
+        { name: 'b', formula: F.gls, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+        { name: 'z', formula: F.z26, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+        { name: 'rates', formula: F.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: 'optimal for the true K and τ²; with estimates plugged in, not exactly balanced' },
+        premiumStep('MSEⱼ by the jackknife over years: MSEⱼ = gⱼ − (T−1)/T Σₜ (gⱼ,₋ₜ − gⱼ) + (T−1)/T Σₜ (rateⱼ,₋ₜ − rateⱼ)², where gⱼ = ' +
+          BLEND_MSE.replace('MSEⱼ = ', '') + ', and “−t” means: redo steps 1–6 on the data without year t (its own region means included) to get σ̃ⱼ², ρ̂, τ̂²; then build K̂, b, z with the full-data wⱼ*, Sᵢⱼ and apply them to the full-data μ̂ⱼ; set MSEⱼ to 0 if negative'),
+      ],
+    },
+    blup: {
+      intro: 'Best linear unbiased predictor on corrBS’s K̂ and τ̂²: each region’s rate uses every other region individually, not only through μ̂.',
+      steps: null,   // corrBS's steps up to K̂, then these (filled below)
+      tail: [
+        { name: 'b', formula: F.gls, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+        { name: 'BLUP weights', formula: F.blupD, badge: 'proved', lean: 'Credibility.Core.blupWeight_optimal', note: 'for each region j a weight vector d̂ over all regions, summing to 1' },
+        { name: 'rates', formula: F.blupRates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal' },
+        premiumStep('MSEⱼ = d̂ᵀK̂d̂ − 2τ̂²d̂ⱼ + τ̂², with d̂ region j’s BLUP weights'),
+      ],
+    },
+    corr: {
+      intro: 'The thesis model with correlation: the estimators (37)–(41) for every pair of regions, then a damped K̂.',
+      steps: null,   // filled below (corrSteps)
+    },
+    corrC: {
+      intro: 'One common covariance for all pairs of regions. Not recommended with unequal volumes (its z can explode).',
+      steps: null,
+    },
+    own: {
+      intro: 'Each region on its own data: z = 1.',
+      steps: [{ name: 'rates', formula: 'rateⱼ = μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', badge: 'proved', lean: 'Credibility.bs_a' }],
+    },
+    pool: {
+      intro: 'One tariff for all: z = 0.',
+      steps: [{ name: 'rates', formula: 'rateⱼ = μ̄ for every region, μ̂ⱼ = Σₜ wⱼₜ Xⱼₜ / wⱼ*', badge: 'proved', lean: 'Credibility.bs_a' }],
+    },
+  };
+  RECIPES.blup.steps = RECIPES.vc.steps.filter((s) => !['b', 'z', 'rates', 'premium'].includes(s.name)).concat(RECIPES.blup.tail);
+  delete RECIPES.blup.tail;
+  function corrSteps(common) {
+    const steps = [
+      { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
+      { name: 'Σ̂ diagonal', formula: F.sigDiag, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
+      { name: 'Σ̂ off-diagonal', formula: F.sigOff, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; one value per pair of regions' },
+    ];
+    if (common) steps.push({ name: 'common covariance', formula: F.common, badge: 'not proved yet', gap: 'G1', rule: 'use ĉ in place of every off-diagonal Σ̂ᵢⱼ below' });
+    steps.push(
+      { name: 'ĉⱼ', formula: F.cj, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.cHat_unbiased', gap: common ? 'G1' : null },
+      { name: 'τ̂²', formula: F.tau, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.tauHat_unbiased', gap: common ? 'G1' : null, rule: TAU_ZERO },
+      { name: 'damped K̂', formula: F.damped, badge: 'not proved yet', gap: 'G2', varies: true,
+        rule: 'θ = the largest of 0.95, 0.9, 0.8, 0.7, …, 0.1, 0 for which K̂ is positive definite (a Cholesky factorisation succeeds)',
+        note: 'K̂ ≻ 0 for every θ < 1 is proved when Σ̂ is positive semidefinite (posDef_shrinkOffDiag); the choice of θ is a heuristic' },
+    );
+    if (common) {
+      steps.push(
+        { name: 'z', formula: F.zEq, badge: 'proved', lean: 'Credibility.Core.bestZ_of_equalCov', rule: 'if τ̂² = 0: z = 0 and b by GLS, b = K̂⁻¹1 / 1ᵀK̂⁻¹1' },
+        { name: 'b', formula: F.bOfZ, badge: 'proved', lean: 'Credibility.Core.b_eq_of_equalCov' },
+      );
+    } else {
+      steps.push(
+        { name: 'b', formula: F.gls, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+        { name: 'z', formula: F.z26, badge: 'proved', lean: 'Credibility.Core.bestZ_eq' },
+      );
+    }
+    steps.push(
+      { name: 'rates', formula: F.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: 'optimal for the true K and τ²; with estimates plugged in, not exactly balanced' },
+      premiumStep(BLEND_MSE),
+    );
+    return steps;
+  }
+  RECIPES.corr.steps = corrSteps(false);
+  RECIPES.corrC.steps = corrSteps(true);
+
+  /** The notation a recipe needs: entries marked always, and those its text mentions. */
+  function recipeNotation(id) {
+    const text = RECIPES[id].steps.map((s) => [s.formula, s.rule || '', s.note || ''].join(' ')).join(' ');
+    return NOTATION.filter((n) => n.always || text.includes(n.match));
+  }
+
+  /** The recipe as plain text, for copying. */
+  function recipeText(id) {
+    const r = RECIPES[id], out = [MODELS[id].name, r.intro, '', 'Notation'];
+    for (const n of recipeNotation(id)) out.push(`  ${n.sym}: ${n.text}`);
+    out.push('', 'Steps');
+    r.steps.forEach((s, k) => {
+      out.push(`${k + 1}. ${s.name}: ${s.formula}`);
+      if (s.rule) out.push(`   rule: ${s.rule}`);
+      if (s.note) out.push(`   note: ${s.note}`);
+      out.push(`   ${s.badge === 'proved' ? 'proved: ' + s.lean.replace(/^Credibility\./, '') : 'not proved yet' + (s.gap ? ' (' + s.gap + ')' : '')}`);
+    });
+    return out.join('\n');
+  }
 
   /**
    * World and fit features (PLAN.md §2, §6). `world` / `fit` say whether that
@@ -789,7 +965,7 @@
   }
 
   return {
-    DEFAULTS, MODELS, FEATURES,
+    DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,

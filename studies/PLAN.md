@@ -65,6 +65,12 @@ thesis model with correlation.
    **not proved yet** (a heuristic step; these are the gaps of section 5).
 4. *Warnings* when they occur: `τ̂² < 0` (truncated), `z > 1`, negative
    `b`, off-balance.
+5. *Recipe* (added 2026-11-19, owner's request), at the bottom: for the fit or the
+   reference, every formula and rule in order (truncations, the choice of `θ`, the
+   jackknife), the notation it needs and the badges, with "Copy as text", so the model
+   can be applied outside the app. Built from `RECIPES` in `engine.js`, which shares the
+   formula table `F` with the fits; a test checks that recipe and fit agree step by step
+   and that every symbol is defined. A new fit model needs its recipe entry.
 
 ## 3. The world's story
 
@@ -186,6 +192,7 @@ difference on the screen is dropped.
 A feature is one entry in a list in `engine.js`:
 
 - its name and controls;
+- its recipe (`RECIPES`: formulas from `F`, rules, badges);
 - how it changes the world (generator);
 - how it changes the fit (which estimation steps it adds);
 - per step: formula, handbook result, Lean theorem, proved or not.
