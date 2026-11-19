@@ -21,7 +21,7 @@ Rules that keep this cheap to maintain:
 - A formula is displayed in the paper only when the explanation cannot be
   read without it (the model, the blend, the credibility factor). Otherwise:
   "Handbook (n)".
-- Sections are concepts, not results. A new result is normally a paragraph
+- Sections are concepts, not results. A new result is normally a subsection
   in an existing section.
 - No proofs. A proof idea in one or two sentences is welcome when it is the
   explanation.
@@ -33,8 +33,10 @@ Rules that keep this cheap to maintain:
 ## Section template
 
 1. **In one sentence.** What the concept is.
-2. **The idea.** Plain words, a small example where it helps.
-3. **When it applies, and what to watch out for.**
+2. **The idea**, in numbered subsections, one per topic (a short
+   unheaded intro before the first is fine). Plain words, a small example
+   where it helps. A new result is normally a new subsection.
+3. **What to watch out for** (a subsection): when it applies, what can go wrong.
 4. **See.** Handbook (n) · `Lean.name` · app: step · note.
 
 ## Sections
