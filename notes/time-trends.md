@@ -129,6 +129,10 @@ other extreme. Theorem targets:
 - the vector blend's MSE ≤ both separate blends and the single `B` blend
   (each is a restricted linear predictor);
 - equality conditions: separate = vector iff `Λ` diagonal and `K_FY = 0`.
+- precedent: Bühlmann (1974, ASTIN 7(3)) did this for one risk with independent
+  levels (`literature.md` §7a): the two-statistic formula always wins, and the
+  two restricted ones (claim count only, total only) are *not ordered*. Expect
+  the same for separate vs single-`B` blends; don't try to prove an order.
 For the premium `φψ` itself, a linear predictor is not optimal; the
 first-order (delta-method) target `ψ̄ φ + φ̄ ψ` is linear and fits the
 same machinery. State it as such, don't hide the approximation.

@@ -179,29 +179,50 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   (separate frequency and severity trends).
 
 ### 7a. Vector levels, for `Credibility/CoreVector.lean` (2026-11-19)
-Searched by web; casact.org is not reachable from the **lean** environment, so only abstracts
-and tables of contents were read. Standard results below are from memory and marked so.
-- Jewell (1973), *Multi-dimensional credibility*, ORC 73-7, UC Berkeley (10th ASTIN Colloquium;
-  full text not found). Matrix credibility factor; the number of structural parameters grows
-  with the dimension. Bühlmann (1974), *A comparison of three credibility formulae using
-  multidimensional techniques*, ASTIN Bull. 7(3), 203–207: Jewell's framework applied to total
-  losses and claim counts (frequency × severity). Used: the vector blend itself.
-- Bühlmann & Gisler (2005), *A Course in Credibility Theory and its Applications*, Springer:
-  ch. 7 multidimensional credibility (§7.3 multidimensional Bühlmann–Straub, p. 177), ch. 8
-  regression (§8.3.2 Hachemeister's general case, p. 205). From memory: the credibility
-  estimator is `Zⱼ X̄ⱼ + (I - Zⱼ) μ̂` with `Zⱼ = T (T + Sⱼ)⁻¹` and the homogeneous `μ̂` the
-  `Zⱼ`-weighted mean; cohorts are *independent*, so `K` is block diagonal. Used: the target
-  `CoreVector` must reproduce this when `K` is block diagonal (next step).
-- Hachemeister (1975) and Bühlmann & Gisler (1997), see §7: the regression case is the
-  `P = 2` vector blend with design-dependent `K`.
-- Frequency–severity with dependent risk profiles: Cheung, Ni, Oh & Woo (2021), IME 100,
-  274–295 (bivariate prior; Bayesian); Englund et al. (2008; authors from memory),
-  ASTIN Bull. 38(1), multivariate latent risk, a multivariate Bühlmann–Straub; Q-credibility
-  (ARCH 2025 abstract, Tang): factors for frequency and severity chosen to minimise the MSE of
-  the *pure premium*. Used: the target `aᵀμⱼ` (theorem `bestZ_optimal_dotProduct`) covers the
-  first-order premium; the Q-credibility idea (optimise for the product) is the next question.
-- New here: the cohorts are correlated, `K` is a full matrix over cohorts × components, and
-  the portfolio estimate is the matrix GLS `μ̂ = (UᵀK⁻¹U)⁻¹UᵀK⁻¹x`; the best `Zⱼ` is
-  `(Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹`, the matrix form of eq. (26).
-- New here (if it holds): correlated cohorts in both; component-specific `ρ` (winters move
-  frequency, not severity); relativities are free of a common trend.
+Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except where marked.
+- Hachemeister (1975), *Credibility for regression models with application to trend*, in Kahn
+  (ed.), *Credibility: Theory and Applications*, 129–163; CAS Forum Spring 1992 reprint, 307ff
+  (read). States' severity trends (BI, 5 states). The "super" covariance of all observations
+  is block diagonal: "observations from one state are independent of those from another
+  state". Country-wide line = pooled GLS `β̂ = (YᵀC⁻¹Y)⁻¹YᵀC⁻¹X` with the *noise* covariance
+  `C`. Estimator `a₀ + XᵀA` (inhomogeneous), best by unbiasedness + minimum variance; structural
+  parameters estimated unbiasedly (trace argument, as our §2.8). Quinn's discussion flags
+  autocorrelation and heteroscedasticity. Used: the model of the Hachemeister corollary.
+- Bühlmann & Gisler (1997), *Credibility in the regression case revisited*, ASTIN Bull. 27(1),
+  83–98 (read). General case: `β̂ᵣ = (I - Zᵣ)b + Zᵣ bᵣˣ`, `Zᵣ = A(A + Wᵣ⁻¹)⁻¹`, `Wᵣ = YᵣᵀΦᵣ⁻¹Yᵣ`,
+  `bᵣˣ = Wᵣ⁻¹YᵣᵀΦᵣ⁻¹Xᵣ` (individual GLS), `A = Cov(β(Θ))`. Risks iid. Uncentred time gives
+  `Z` with weights outside [0, 1] and lines "out of range" (their examples 1–3); intercept at the
+  volume-weighted barycentre makes `W` diagonal, so with `A` diagonal `Z` splits into two scalar
+  credibilities (volumes `V` and `V·Var(k)`). General case: weighted Gram–Schmidt on the design.
+  Caveat (§7): orthogonality holds for one sampling distribution only, so per risk it is only
+  "nearly" separated. Used: in our notation the risk-`r` estimate has `Kᵣᵣ = A + Wᵣ⁻¹`, `L = A`,
+  and their known-mean `Zᵣ = Lᵣᵣ Kᵣᵣ⁻¹`; our `moments_bestZ` is the homogeneous version, and
+  with correlated cohorts `K` is not block diagonal.
+- Bühlmann (1974), *A comparison of three credibility formulae using multidimensional
+  techniques*, ASTIN Bull. 7(3), 203–207 (read; poor scan). Inspired by Jewell (1973), which was
+  never published in ASTIN ("in agreement with the author"). Target: the pure premium
+  `E_k(η)·E_y(θ)` (frequency × severity) with η, θ *independent*; predict linearly from the
+  claim count `k` and the total `T = Σ yᵢ`. Three cases: both statistics (multidimensional),
+  only `k`, only `T` (one-dimensional). Case I is always best; II and III are **not ordered**
+  (either can win). Used: the precedent for our target "vector blend ≤ separate and single-`B`
+  blends", and a warning that separate vs single `B` has no general order.
+- Jewell (1973), *Multi-dimensional credibility*, ORC 73-7, UC Berkeley (not found online; known
+  through Bühlmann 1974 and Englund et al. 2008).
+- Englund, Guillén, Gustafsson, Nielsen & Nielsen (2008), *Multivariate latent risk: a
+  credibility approach*, ASTIN Bull. 38(1), 137–146 (read). One latent risk *per line*, `Θᵢ ∈ ℝᴾ`
+  with covariance `T` (B–G 2005's multidimensional model has one common Θ: correlation 1).
+  Estimator `E θ + Cov(θ, Ȳ)Var(Ȳ)⁻¹(Ȳ - EȲ)` (eq. 2), customers independent. Danish data:
+  correlation 0.62 between water and theft; with time dependence also cross-lagged. Used:
+  `L` with non-trivial off-diagonal blocks is what data show; our `L` allows it.
+- Taylor (2007), *Credibility, hypothesis testing and regression software*, ASTIN Bull. 37(2),
+  517ff (abstract and intro read): matrix credibility via F-statistics; for the estimation step.
+- Bühlmann & Gisler (2005), *A Course in Credibility Theory*, ch. 7 (§7.3 multidimensional
+  Bühlmann–Straub, p. 177) and ch. 8 (§8.3.2 Hachemeister, p. 205): not read (book). Bühlmann,
+  Gisler & Kollöffel (2003), multidimensional credibility: cited by Englund et al., not read.
+- Frequency–severity with dependent risk profiles, Bayesian: Cheung, Ni, Oh & Woo (2021), IME
+  100, 274–295; Q-credibility (ARCH 2025 abstract, Tang): factors chosen to minimise the MSE of
+  the *pure premium*, as Bühlmann (1974). Not read.
+- New here: in all of the above, risks/cohorts are independent (`K` block diagonal) and the
+  collective mean is either known or a GLS under that independence. We allow a full `K` over
+  cohorts × components (year shocks correlate cohorts) and the matrix GLS
+  `μ̂ = (UᵀK⁻¹U)⁻¹UᵀK⁻¹x`; the best `Zⱼ` is `(Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹`.
