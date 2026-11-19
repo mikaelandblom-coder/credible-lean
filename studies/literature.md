@@ -238,11 +238,19 @@ the session, so contents below are from abstracts and listings only.
 **Verdict.** The thesis is right about the two papers it cites, and right that the classical
 credibility texts assume independence across risks. "No references" is too strong, though:
 - Wen & Wu (2011), *The credibility estimator with general dependence structure over risks*,
-  Comm. Stat. Theory Methods 40(10), 1893–1910. Rebuilds the inhomogeneous and **homogeneous**
-  Bühlmann and Bühlmann–Straub estimators (and Hachemeister) by projection when risks are
-  dependent with a general positive definite matrix. Closest prior art to eq. (26). **To check
-  in the full text:** whether the matrix is on the risk parameters, on the conditional
-  (within-period) covariance of the claims, or both; and whether it gives estimators of it.
+  Comm. Stat. Theory Methods 40(10), 1893–1910. **Read §2–3.1 (pp. 1895–1897, owner's photos,
+  2026-11-19).** Assumption 3.1: given `Θᵢ` the claims of risk `i` are conditionally
+  independent with `Var(Xᵢⱼ | Θᵢ) = σ²(Θᵢ)`. Assumption 3.2: `Cov(μ(Θᵢ), μ(Θⱼ)) = τᵢⱼ`, and
+  "the dependence structure can be specified by" `R = (τᵢⱼ)`. So the dependence is on the
+  **levels** (a general-matrix version of Nurrohmah), permanent over time; the noise stays
+  uncorrelated across risks. **Not the thesis model.** In our terms it is Core with level
+  covariance `L = R` and `K = R + diag(σᵢ²/nᵢ)`. Their Lemma 2.1 (from Wen, Wu & Zhou 2009) is
+  the general tool: for any covariance `Σ_XX`, the homogeneous projection (2.5) is
+  `(Σ_YX + (μ_Y − Σ_YXΣ_XX⁻¹μ_X)μ_X′ / μ_X′Σ_XX⁻¹μ_X) Σ_XX⁻¹ X`, i.e. Goldberger's predictor
+  (with `μ_X = μ1`: GLS mean plus correction). It holds for the thesis's `Σ_XX` with correlated
+  noise too, so it is the same foundation as `Core.blupWeight_optimal`, in projection form.
+  With equal `τᵢⱼ` off the diagonal (a permanent common effect) the homogeneous estimator is
+  unchanged, consistent with `wen2`.
 - Wen & Deng (2011), J. Syst. Sci. Complex. 24(3), 532–539 (thesis ref `wen`, in the
   bibliography but not cited in the text): equal correlation between risks, homogeneous and
   inhomogeneous estimators by projection. The common-effect paper the thesis discusses is
@@ -288,11 +296,12 @@ products, and balance. Proofs here use only that foundation (no distribution).
 **Status (2026-11-19, second pass).** Allowlisted `dare.uva.nl`, `casact.org`,
 `www.casact.org`, `sysmath.cjoe.ac.cn` in the Default environment. Fung & Xu read; Dannenburg
 has no open PDF; `sysmath.cjoe.ac.cn` refuses the session (HTTP 403 from the site). The three
-candidates that may contain within-period dependence across risks (Wen & Wu 2011, Huang & Wu
-2015, Zhang, Cui & Chen 2017) are paywalled: owner to supply PDFs or photos of the model
+candidates that might contain within-period dependence across risks were paywalled. Wen & Wu
+(2011) is now read from photos and is not it (levels only). Huang & Wu (2015) and Zhang, Cui &
+Chen (2017) remain: owner to supply PDFs or photos of the model
 assumptions, the homogeneous estimator and any parameter estimation.
 
-**For a reviewer.** (1) Read Wen & Wu (2011) and Huang & Wu (2015) in full and say whether
-eq. (26) or the §2.8 estimators appear there; if so, cite and move the "new here" in paper §15.
+**For a reviewer.** (1) Read Huang & Wu (2015) and Zhang, Cui & Chen (2017) in full and say
+whether eq. (26) or the §2.8 estimators appear there (Wen & Wu 2011 checked: levels only); if so, cite and move the "new here" in paper §15.
 (2) Check that `Core.blupWeight_optimal` matches Goldberger's/Harville's predictor.
 (3) Check Bühlmann & Gisler (2005) for any within-period dependence across risks.
