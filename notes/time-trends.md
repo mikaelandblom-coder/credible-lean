@@ -170,9 +170,14 @@ same machinery. State it as such, don't hide the approximation.
    Loewner-optimal among unbiased linear predictors (`blupW_optimal`), the matrix blend loses
    `(A − A*)ᵀK(A − A*)` against it (`errVar_eq_blupW_add`), and it beats separate blends per
    component (`trace_linMse_blupW_le_separate`); the matrix *blend* need not (Finding 22).
-   Open: balance; moment layer; when the matrix blend is the BLUP (independent cohorts, as
-   `Core.blendWeight_eq_blupWeight_iff`); equality of vector and separate BLUPs when `K`, `L`
-   have no cross-component covariance.
+   Then: the matrix blend with `Z` is the BLUP iff `LEⱼ − KEⱼZᵀ = UC` (`blendW_eq_blupW_iff`);
+   independent cohorts: `Zⱼ = LⱼⱼKⱼⱼ⁻¹` is the BLUP (`blendW_eq_blupW_of_blockDiag`), so
+   Bühlmann–Gisler loses nothing by blending; no cross-component covariance in `K` and `L`:
+   the vector BLUP is the separate scalar BLUPs (`blupW_eq_sepW_of_componentBlockDiag`).
+   Balance: the matrix blends are balanced for weights `Uⱼ` iff `Uⱼ(I − Zⱼ) = CBⱼ`
+   (`vecBalanced_iff`); Bühlmann–Gisler with `Sⱼ = S₀/wⱼ` is balanced for the volumes
+   (`vecBalanced_buhlmannGisler`).
+   Open: moment layer (as `CoreMoments.lean`).
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)

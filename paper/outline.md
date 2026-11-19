@@ -89,6 +89,13 @@ may need a paragraph.)
   Frequency × severity (Finding 22): vector credibility beats separate credibility as a best
   predictor (`Credibility.CoreVector.trace_linMse_blupW_le_separate`), not as a blend; one
   paragraph with the counterexample's moral (restricted predictors are not ordered).
+  With independent cohorts the matrix blend *is* the best predictor
+  (`Credibility.CoreVector.blendW_eq_blupW_of_blockDiag`), and without cross-component
+  covariance the vector best predictor is the separate ones
+  (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`): one sentence each, they
+  bracket Finding 22. Balance of the matrix blend (`Credibility.CoreVector.vecBalanced_iff`;
+  Bühlmann–Gisler balanced for the volumes, `vecBalanced_buhlmannGisler`): one sentence in
+  the balance section.
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

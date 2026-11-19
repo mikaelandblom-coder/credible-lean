@@ -961,5 +961,200 @@ theorem trace_linMse_blupW_le_separate [Nonempty J] {K : Matrix (J × P) (J × P
   rw [diag_apply, linMse_sepW_apply hL j a p]
   exact Core.linMse_blendWeight (component_posDef hK p) (component L p) j (z p)
 
+/-! #### When the matrix blend is the best predictor -/
+
+/-- The first-order condition characterises the best predictor: unbiased weights `A` with
+`KA - LEⱼ = UC` for some `C` are `A*`. -/
+theorem eq_blupW_of_mul [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) {A : Matrix (J × P) P ℝ} {C : Matrix P P ℝ}
+    (hA : (stack J P)ᵀ * A = 1) (hC : K * A - L * sel P j = stack J P * C) :
+    A = blupW K L j := by
+  set C₀ := (info K)⁻¹ * (1 - (stack J P)ᵀ * K⁻¹ * L * sel P j)
+  have hKu : IsUnit K.det := isUnit_iff_ne_zero.2 hK.det_pos.ne'
+  have hD : K * (A - blupW K L j) = stack J P * (C - C₀) := by
+    rw [Matrix.mul_sub, Matrix.mul_sub, ← hC, ← mul_blupW hK L j]; abel
+  have hD' : A - blupW K L j = K⁻¹ * stack J P * (C - C₀) := by
+    rw [Matrix.mul_assoc, ← hD, ← Matrix.mul_assoc, nonsing_inv_mul _ hKu, Matrix.one_mul]
+  have h0 : info K * (C - C₀) = 0 := by
+    have : (stack J P)ᵀ * (A - blupW K L j) = 0 := by
+      rw [Matrix.mul_sub, hA, stack_transpose_mul_blupW hK, sub_self]
+    rw [hD'] at this
+    simpa [info, Matrix.mul_assoc] using this
+  have hC0 : C - C₀ = 0 := by
+    have hi : IsUnit (info K).det := isUnit_iff_ne_zero.2 (info_posDef hK).det_pos.ne'
+    rw [← Matrix.one_mul (C - C₀), ← nonsing_inv_mul _ hi, Matrix.mul_assoc, h0,
+      Matrix.mul_zero]
+  rw [← sub_eq_zero, hD', hC0, Matrix.mul_zero]
+
+/-- `K(W + (Eⱼ - W)Zᵀ) = U(S - SZᵀ) + KEⱼZᵀ` with `S = (UᵀK⁻¹U)⁻¹`. -/
+theorem mul_blendW {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef) (j : J) (Z : Matrix P P ℝ) :
+    K * blendW K j Z
+      = stack J P * ((info K)⁻¹ - (info K)⁻¹ * Zᵀ) + K * sel P j * Zᵀ := by
+  rw [blendW, Matrix.mul_add, mul_glsW hK, ← Matrix.mul_assoc, Matrix.mul_sub, mul_glsW hK]
+  simp only [Matrix.sub_mul, Matrix.mul_sub, Matrix.mul_assoc]
+  abel
+
+/-- **When the matrix blend is the best predictor** (matrix version of
+`Core.blendWeight_eq_blupWeight_iff`): the blend with credibility matrix `Z` is the best
+linear unbiased predictor iff `LEⱼ - KEⱼZᵀ = UC` for some `C`, i.e. the block
+`cov(x, μⱼ) - cov(x, μ̂ⱼ)Zᵀ` is the same for every cohort. -/
+theorem blendW_eq_blupW_iff [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) (Z : Matrix P P ℝ) :
+    blendW K j Z = blupW K L j
+      ↔ ∃ C : Matrix P P ℝ, L * sel P j - K * sel P j * Zᵀ = stack J P * C := by
+  constructor
+  · intro h
+    have h1 := mul_blupW hK L j
+    rw [← h, mul_blendW hK] at h1
+    have h2 : L * sel P j - K * sel P j * Zᵀ = stack J P * ((info K)⁻¹ - (info K)⁻¹ * Zᵀ)
+        - stack J P * ((info K)⁻¹ * (1 - (stack J P)ᵀ * K⁻¹ * L * sel P j)) := by
+      rw [← h1]; abel
+    exact ⟨_, h2.trans (Matrix.mul_sub _ _ _).symm⟩
+  · rintro ⟨C, hC⟩
+    have h2 : K * blendW K j Z - L * sel P j
+        = stack J P * ((info K)⁻¹ - (info K)⁻¹ * Zᵀ) - stack J P * C := by
+      rw [mul_blendW hK, ← hC]; abel
+    exact (eq_blupW_of_mul hK L j (stack_transpose_mul_blendW hK j Z)
+      (h2.trans (Matrix.mul_sub _ _ _).symm))
+
+/-- For a block-diagonal `M`, `MEⱼ = EⱼMⱼⱼ`. -/
+theorem mul_sel_of_blockDiag {M : Matrix (J × P) (J × P) ℝ} (hM : IsCohortBlockDiag M)
+    (j : J) : M * sel P j = sel P j * blk M j := by
+  ext ⟨i, p⟩ q
+  by_cases hij : i = j
+  · subst hij
+    simp [Matrix.mul_apply, sel, blk, Fintype.sum_prod_type, ite_and]
+  · simp [Matrix.mul_apply, sel, blk, Fintype.sum_prod_type, ite_and, hij, hM i j hij]
+
+/-- **Independent cohorts: the matrix blend with `Zⱼ = LⱼⱼKⱼⱼ⁻¹` is the best linear
+unbiased predictor** (multidimensional Bühlmann–Straub: `Λ(Λ + Sⱼ)⁻¹`, Bühlmann & Gisler
+2005, §7.3). -/
+theorem blendW_eq_blupW_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L)
+    (hLb : IsCohortBlockDiag L) (j : J) :
+    blendW K j (blk L j * (blk K j)⁻¹) = blupW K L j := by
+  have hsym : ∀ {M : Matrix P P ℝ}, M.PosDef → Mᵀ = M := fun h => by
+    simpa [conjTranspose_eq_transpose_of_trivial] using h.isHermitian.eq
+  have hLj : (blk L j)ᵀ = blk L j := by
+    ext p q; exact (congrFun (congrFun hL (j, q)) (j, p)).symm
+  have hKj : IsUnit (blk K j).det := isUnit_iff_ne_zero.2 (blk_posDef hK j).det_pos.ne'
+  refine (blendW_eq_blupW_iff hK L j _).mpr ⟨0, ?_⟩
+  rw [mul_sel_of_blockDiag hLb, mul_sel_of_blockDiag hb, transpose_mul, hLj,
+    hsym (blk_posDef hK j).inv, Matrix.mul_assoc (sel P j), ← Matrix.mul_assoc (blk K j),
+    mul_nonsing_inv _ hKj, Matrix.one_mul, sub_self]
+  exact (Matrix.mul_zero _).symm
+
+/-- …so with another cohort the best matrix blend *is* the best linear unbiased predictor:
+for independent cohorts nothing is lost by blending (contrast Finding 22). -/
+theorem blendW_bestZ_eq_blupW_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L)
+    (hLb : IsCohortBlockDiag L) {i j : J} (hij : i ≠ j) :
+    blendW K j (moments K L j).bestZ = blupW K L j := by
+  rw [moments_bestZ_of_blockDiag hK hb hL hLb hij, blendW_eq_blupW_of_blockDiag hK hb hL hLb]
+
+/-- `M` has no covariance between different components (e.g. frequency and severity). -/
+def IsComponentBlockDiag (M : Matrix (J × P) (J × P) ℝ) : Prop :=
+  ∀ i k p q, p ≠ q → M (i, p) (k, q) = 0
+
+/-- **No cross-component covariance: the vector BLUP is the separate BLUPs.** If neither the
+estimates nor the levels are correlated across components, the best linear unbiased
+predictor of the level vector predicts each component by the scalar BLUP
+(`Core.blupWeight`) of that component's data alone: the other components carry no
+information. -/
+theorem blupW_eq_sepW_of_componentBlockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hKc : IsComponentBlockDiag K) {L : Matrix (J × P) (J × P) ℝ}
+    (hL : Lᵀ = L) (hLc : IsComponentBlockDiag L) (j : J) :
+    blupW K L j = sepW fun p => Core.blupWeight (component K p) (component L p) j := by
+  set c : P → ℝ := fun p => (1 - 1 ⬝ᵥ ((component K p)⁻¹ *ᵥ component L p j))
+    * (invTotal (component K p))⁻¹
+  refine (eq_blupW_of_mul hK L j (stack_transpose_mul_sepW fun p =>
+    Core.sum_blupWeight (component_posDef hK p) _ j) (C := diagonal c) ?_).symm
+  ext ⟨i, p⟩ q
+  have hLs : L (i, p) (j, q) = L (j, q) (i, p) := congrFun (congrFun hL (j, q)) (i, p)
+  by_cases hpq : p = q
+  · subst hpq
+    have h := Core.mulVec_blupWeight (component_posDef hK p) (component L p) j i
+    simp only [mulVec, dotProduct, component] at h
+    simp [Matrix.mul_apply, sepW, sel, stack, Fintype.sum_prod_type, ite_and, hLs, c, h,
+      dotProduct, mulVec, component]
+  · simp [Matrix.mul_apply, sepW, sel, stack, Fintype.sum_prod_type, ite_and, hpq,
+      hLc i j p q hpq, hKc i _ p q hpq]
+
+/-! ### Balance (§2.9) for the matrix blend
+
+The matrix blends `μ̂ⱼᵇ = μ̂ + Zⱼ(μ̂ⱼ - μ̂)` with `μ̂ = Σᵢ Bᵢμ̂ᵢ`, `Σᵢ Bᵢ = I`, are balanced
+for matrix weights `Uⱼ` (e.g. `uⱼI` for a volume `uⱼ`) if `Σⱼ Uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` for all
+data. As in `Core.balanced_iff`, pure algebra: it holds exactly when `Uⱼ(I - Zⱼ) = CBⱼ` for
+one matrix `C`. -/
+
+/-- The matrix blends `μ̂ + Zⱼ(μ̂ⱼ - μ̂)`, `μ̂ = Σᵢ Bᵢμ̂ᵢ`, are balanced for the weights `Uⱼ`:
+`Σⱼ Uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` for every data `μ̂ⱼ ∈ ℝᴾ` (matrix version of `Core.Balanced`). -/
+def VecBalanced (U Z B : J → Matrix P P ℝ) : Prop :=
+  ∀ m : J → P → ℝ,
+    ∑ j, U j *ᵥ (m j - (∑ i, B i *ᵥ m i + Z j *ᵥ (m j - ∑ i, B i *ᵥ m i))) = 0
+
+/-- **Balance for any matrix blend** (matrix version of `Core.balanced_iff`): with
+`Σⱼ Bⱼ = I`, the blends are balanced for the weights `Uⱼ` iff `Uⱼ(I - Zⱼ) = CBⱼ` for some
+matrix `C`. -/
+theorem vecBalanced_iff (U Z B : J → Matrix P P ℝ) (hB : ∑ j, B j = 1) :
+    VecBalanced U Z B ↔ ∃ C : Matrix P P ℝ, ∀ j, U j * (1 - Z j) = C * B j := by
+  set A : J → Matrix P P ℝ := fun j => U j * (1 - Z j) with hA
+  -- `Σⱼ Uⱼ(μ̂ⱼ - μ̂ⱼᵇ) = Σⱼ (Aⱼ - (Σᵢ Aᵢ)Bⱼ) μ̂ⱼ`
+  have key : ∀ m : J → P → ℝ,
+      ∑ j, U j *ᵥ (m j - (∑ i, B i *ᵥ m i + Z j *ᵥ (m j - ∑ i, B i *ᵥ m i)))
+        = ∑ j, (A j - (∑ i, A i) * B j) *ᵥ m j := by
+    intro m
+    have h1 : ∀ j, U j *ᵥ (m j - (∑ i, B i *ᵥ m i + Z j *ᵥ (m j - ∑ i, B i *ᵥ m i)))
+        = A j *ᵥ m j - A j *ᵥ ∑ i, B i *ᵥ m i := fun j => by
+      simp only [hA, Matrix.mul_sub, Matrix.mul_one, sub_mulVec, mulVec_sub, mulVec_add,
+        ← mulVec_mulVec]
+      abel
+    have h2 : ∑ j, A j *ᵥ ∑ i, B i *ᵥ m i = ∑ j, ((∑ i, A i) * B j) *ᵥ m j := by
+      rw [← sum_mulVec, mulVec_sum]
+      simp only [mulVec_mulVec]
+    simp only [h1, Finset.sum_sub_distrib, h2, sub_mulVec]
+  have hsingle : ∀ (D : J → Matrix P P ℝ) (k : J) (v : P → ℝ),
+      ∑ j, D j *ᵥ Pi.single (M := fun _ => P → ℝ) k v j = D k *ᵥ v := fun D k v => by
+    rw [Finset.sum_eq_single k (fun j _ hj => by rw [Pi.single_eq_of_ne hj, mulVec_zero])
+      (by simp), Pi.single_eq_same]
+  simp only [VecBalanced, key]
+  constructor
+  · intro h
+    refine ⟨∑ i, A i, fun k => ?_⟩
+    rw [← sub_eq_zero]
+    ext p q
+    have := congrFun (h (Pi.single k (Pi.single q 1))) p
+    rw [hsingle] at this
+    simpa using this
+  · rintro ⟨C, hC⟩ m
+    have hsum : ∑ i, A i = C := by
+      simp only [hA, hC, ← Finset.mul_sum, hB, Matrix.mul_one]
+    rw [hsum]
+    simp [hA, hC]
+
+/-- **Multidimensional Bühlmann–Straub is balanced for the volumes.** Independent cohorts
+with `Var(μ̂ⱼ) = Λ + S₀/wⱼ` (`S₀` the noise covariance per unit volume) and the credibility
+matrices `Zⱼ = Λ(Λ + S₀/wⱼ)⁻¹` (the best ones, `moments_bestZ_buhlmannGisler`) with the GLS
+portfolio are balanced for the volumes: `Σⱼ wⱼ(μ̂ⱼ - μ̂ⱼᵇ) = 0` (vector version of the
+Bühlmann–Straub balance, `Core.balanced_iff_of_diag`). -/
+theorem vecBalanced_buhlmannGisler [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ S₀ : Matrix P P ℝ} {w : J → ℝ}
+    (hw : ∀ j, w j ≠ 0) (hKj : ∀ j, blk K j = Λ + (w j)⁻¹ • S₀) :
+    VecBalanced (fun j => w j • (1 : Matrix P P ℝ)) (fun j => Λ * (Λ + (w j)⁻¹ • S₀)⁻¹)
+      (weight K) := by
+  refine (vecBalanced_iff _ _ _ (sum_weight hK)).mpr ⟨S₀ * ∑ i, (blk K i)⁻¹, fun j => ?_⟩
+  have hu : IsUnit (blk K j).det := isUnit_iff_ne_zero.2 (blk_posDef hK j).det_pos.ne'
+  have hI : IsUnit (∑ i, (blk K i)⁻¹).det := by
+    rw [← info_of_blockDiag hK hb]
+    exact isUnit_iff_ne_zero.2 (info_posDef hK).det_pos.ne'
+  -- `I - Λ(Λ + S)⁻¹ = S(Λ + S)⁻¹`
+  have h1 : 1 - Λ * (blk K j)⁻¹ = (w j)⁻¹ • S₀ * (blk K j)⁻¹ := by
+    rw [← mul_nonsing_inv _ hu]
+    nth_rewrite 1 [hKj j]
+    rw [Matrix.add_mul, add_sub_cancel_left]
+  rw [weight_of_blockDiag hK hb, ← Matrix.mul_assoc, Matrix.mul_assoc S₀,
+    mul_nonsing_inv _ hI, Matrix.mul_one, ← hKj, h1, Matrix.smul_mul, Matrix.smul_mul,
+    Matrix.one_mul, smul_smul, mul_inv_cancel₀ (hw j), one_smul]
+
 end CoreVector
 end Credibility

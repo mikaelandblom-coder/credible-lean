@@ -297,6 +297,10 @@ One chat per step; none needs Lean except step 5.
   the bivariate best predictor `blupW` never does. Show both, or the predictor. Hachemeister
   with correlated cohorts is proved too (`hachemeister_bestZ`): an app step "cohort trend
   lines" (level + slope per cohort, shared year shocks) would show `Z` as a 2 × 2 matrix.
+  Also proved: with independent cohorts the bivariate blend is the best predictor, and with
+  no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
+  bivariate one, so the app's fourth fit only matters when cohorts or components correlate.
+  Balance of the matrix blend (`vecBalanced_iff`) needs no app switch beyond the scalar one.
 - Claim trend (2026-11-19, `Trend.lean`, Finding 21): restating with the true `g` moves no
   weight (`K̃ = (1+g)^(2n)K`, `bestZ_detrend`); with `ĝ ≠ g` relativities move slightly. App:
   switch "claim trend g" (today `growth` is volume growth) and the `ĝ` study of

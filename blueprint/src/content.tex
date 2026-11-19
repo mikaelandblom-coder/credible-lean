@@ -3865,6 +3865,120 @@ severity) are such predictors, and so is the matrix blend.
   the best predictor. With independent cohorts (Bühlmann--Gisler) no such example was found.
 \end{remark}
 
+\section*{When the matrix blend is the best predictor}
+
+\begin{lemma}[Uniqueness of the best predictor]\label{lem:CV_blup_unique}
+  \lean{Credibility.CoreVector.eq_blupW_of_mul, Credibility.CoreVector.mul_blendW}
+  \leanok
+  \uses{def:CV_blup}
+  Let $K \succ 0$. Unbiased weights $A$ with $KA - LE_j = UC$ for some $C$ are $A^\ast$.
+  The blend's weights satisfy $K(W + (E_j - W)Z^\top) = U(I_K^{-1} - I_K^{-1}Z^\top) +
+  KE_jZ^\top$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_foc, lem:CV_glsW}
+  $K(A - A^\ast) = U(C - C^\ast)$, so $A - A^\ast = K^{-1}U(C - C^\ast)$ and
+  $0 = U^\top(A - A^\ast) = I_K(C - C^\ast)$; $I_K$ is invertible. For the blend,
+  $KW = UI_K^{-1}$.
+\end{proof}
+
+\begin{theorem}[When the matrix blend is the best predictor]\label{thm:CV_blend_blup_iff}
+  \lean{Credibility.CoreVector.blendW_eq_blupW_iff}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$, the matrix blend with credibility matrix $Z$ is the best linear unbiased
+  predictor iff $LE_j - KE_jZ^\top = UC$ for some $C$: the block
+  $\cov(\hmu_i, \mu_j) - \cov(\hmu_i, \hmu_j)Z^\top$ is the same for every cohort $i$
+  (matrix version of Theorem~\ref{thm:Core_blend_blup_iff}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_foc, lem:CV_blup_unique, lem:CV_blendW}
+  If the weights agree, subtract the blend's $KA$ from the first-order condition. Conversely
+  $KA - LE_j = U(I_K^{-1} - I_K^{-1}Z^\top - C)$ for the blend's unbiased weights $A$;
+  Lemma~\ref{lem:CV_blup_unique}.
+\end{proof}
+
+\begin{theorem}[Independent cohorts: the matrix blend is the best predictor]\label{thm:CV_blend_blup_blockDiag}
+  \lean{Credibility.CoreVector.mul_sel_of_blockDiag,
+        Credibility.CoreVector.blendW_eq_blupW_of_blockDiag,
+        Credibility.CoreVector.blendW_bestZ_eq_blupW_of_blockDiag}
+  \leanok
+  \uses{def:CV_blockDiag, def:CV_blup}
+  If $K \succ 0$ and $L = L^\top$ are cohort block diagonal, the matrix blend with
+  $Z_j = L_{jj}K_{jj}^{-1}$ is the best linear unbiased predictor; with a second cohort this
+  is the best credibility matrix (Theorem~\ref{thm:CV_bestZ_blockDiag}). So in the
+  multidimensional Bühlmann--Straub model nothing is lost by blending, unlike
+  Remark~\ref{rem:CV_separate}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blockDiag, thm:CV_blend_blup_iff, thm:CV_bestZ_blockDiag}
+  $ME_j = E_jM_{jj}$ for block-diagonal $M$, so
+  $LE_j - KE_jZ_j^\top = E_j(L_{jj} - K_{jj}K_{jj}^{-1}L_{jj}) = 0$;
+  Theorem~\ref{thm:CV_blend_blup_iff} with $C = 0$.
+\end{proof}
+
+\begin{theorem}[No cross-component covariance: separate best predictors]\label{thm:CV_blup_separate}
+  \lean{Credibility.CoreVector.IsComponentBlockDiag,
+        Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag}
+  \leanok
+  \uses{def:CV_sepW, def:Core_blup}
+  If $K \succ 0$ and $L = L^\top$ have no covariance between different components
+  ($M_{(i,p),(k,q)} = 0$ for $p \ne q$), the matrix best linear unbiased predictor predicts
+  each component $p$ by the scalar best predictor $d^\ast$ for $K^{(p)}$, $L^{(p)}$: the
+  other components carry no information.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_unique, lem:CV_sepW, lem:Core_blup_foc}
+  The separate weights are unbiased, and $KA - LE_j = U\operatorname{diag}(c_p)$ with $c_p$
+  the constant of the scalar first-order condition of component $p$;
+  Lemma~\ref{lem:CV_blup_unique}.
+\end{proof}
+
+\section*{Balance (\S2.9) for the matrix blend}
+
+\begin{definition}[Balanced matrix blends]\label{def:CV_balanced}
+  \lean{Credibility.CoreVector.VecBalanced}
+  \leanok
+  The blends $\hmu_j^b = \hmu + Z_j(\hmu_j - \hmu)$, $\hmu = \sum_i B_i\hmu_i$, are
+  \emph{balanced} for the matrix weights $U_j$ if
+  $\sum_j U_j(\hmu_j - \hmu_j^b) = 0$ for all data $\hmu_j \in \mathbb{R}^P$.
+\end{definition}
+
+\begin{theorem}[Balance of any matrix blend]\label{thm:CV_balance}
+  \lean{Credibility.CoreVector.vecBalanced_iff}
+  \leanok
+  \uses{def:CV_balanced}
+  Let $\sum_j B_j = I$. The blends are balanced for the weights $U_j$ iff
+  $U_j(I - Z_j) = CB_j$ for some matrix $C$ (matrix version of
+  Theorem~\ref{thm:Core_balance}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $A_j = U_j(I - Z_j)$,
+  $\sum_j U_j(\hmu_j - \hmu_j^b) = \sum_j (A_j - (\sum_i A_i)B_j)\hmu_j$, zero for all data
+  iff every coefficient is (data $e_q$ in one cohort). Conversely $A_j = CB_j$ gives
+  $\sum_i A_i = C$.
+\end{proof}
+
+\begin{corollary}[Multidimensional Bühlmann--Straub is balanced for the volumes]\label{cor:CV_balance_buhlmannGisler}
+  \lean{Credibility.CoreVector.vecBalanced_buhlmannGisler}
+  \leanok
+  \uses{thm:CV_balance, thm:CV_buhlmannGisler}
+  Independent cohorts with $K_{jj} = \Lambda + S_0/w_j$, the credibility matrices
+  $Z_j = \Lambda(\Lambda + S_0/w_j)^{-1}$ of Theorem~\ref{thm:CV_buhlmannGisler} and the
+  GLS portfolio are balanced for the volumes: $\sum_j w_j(\hmu_j - \hmu_j^b) = 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_balance, lem:CV_weight, lem:CV_blockDiag, lem:CV_glsW}
+  $w_j(I - Z_j) = w_j(S_0/w_j)K_{jj}^{-1} = S_0K_{jj}^{-1} = CB_j$ with
+  $C = S_0\sum_i K_{ii}^{-1}$.
+\end{proof}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean

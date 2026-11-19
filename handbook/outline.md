@@ -24,7 +24,12 @@ voice, then trim towards 8 pages.
   predictor `Credibility.CoreVector.trace_linMse_blupW_le_separate` beats separate blends, the
   matrix blend need not: "watch out"); then one entry with the formula of
   `Credibility.CoreVector.moments_bestZ` and "it is best for every premium `aᵀμⱼ`"
-  (`Credibility.VecBlendMoments.bestZ_optimal_dotProduct`).
+  (`Credibility.VecBlendMoments.bestZ_optimal_dotProduct`). "Use it": with independent cohorts the matrix blend is
+  the best predictor (`Credibility.CoreVector.blendW_eq_blupW_of_blockDiag`); with no
+  frequency–severity covariance separate best predictors are enough
+  (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`). Balance: matrix blends are
+  balanced for `Uⱼ` iff `Uⱼ(I − Zⱼ) = CBⱼ` (`Credibility.CoreVector.vecBalanced_iff`);
+  Bühlmann–Gisler is balanced for the volumes.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
