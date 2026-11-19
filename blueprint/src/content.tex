@@ -3550,6 +3550,105 @@ $\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
   $E_j^\top K\mathcal W = E_j^\top U I_K^{-1} = I_K^{-1}$ by Lemma~\ref{lem:CV_glsW}; substitute.
 \end{proof}
 
+\begin{lemma}[Cohort weights]\label{lem:CV_weight}
+  \lean{Credibility.CoreVector.sum_sel_mul_sel_transpose,
+        Credibility.CoreVector.sel_transpose_mul_mul_sel,
+        Credibility.CoreVector.sel_transpose_mul_sel, Credibility.CoreVector.stack_eq_sum_sel,
+        Credibility.CoreVector.weight, Credibility.CoreVector.glsW_transpose_mulVec,
+        Credibility.CoreVector.sum_weight}
+  \leanok
+  \uses{def:CV_moments}
+  $\sum_j E_jE_j^\top = I$, $E_i^\top E_k = \delta_{ik} I$, $U = \sum_j E_j$. With
+  $B_j = (E_j^\top\mathcal W)^\top$: $\hmu = \mathcal W^\top x = \sum_j B_j\hmu_j$ and
+  $\sum_j B_j = I$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  Entrywise; $\mathcal W^\top = \mathcal W^\top\sum_j E_jE_j^\top$ and
+  $\sum_j B_j = (U^\top\mathcal W)^\top$.
+\end{proof}
+
+\begin{theorem}[When the matrix gap is positive definite]\label{thm:CV_gap_posDef}
+  \lean{Credibility.CoreVector.moments_gap_eq_quadForm,
+        Credibility.CoreVector.moments_gap_posDef_iff}
+  \leanok
+  \uses{def:CV_moments}
+  For $K \succ 0$: $K_{jj} - I_K^{-1} = (E_j - \mathcal W)^\top K (E_j - \mathcal W)$, so it is
+  positive definite iff $E_j - \mathcal W$ has full column rank: no combination $a \ne 0$ has
+  its portfolio weights $\mathcal W a$ all on cohort $j$. This is the matrix version of
+  $b \ne e_j$ (Lemma~\ref{lem:Core_quadForm_gap} in the scalar case).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_bestZ, lem:CV_glsW}
+  $E_j^\top K\mathcal W = \mathcal W^\top K E_j = \mathcal W^\top K\mathcal W = I_K^{-1}$;
+  expand. Then $a^\top G a = 0$ iff $(E_j - \mathcal W)a = 0$.
+\end{proof}
+
+\begin{definition}[Independent cohorts]\label{def:CV_blockDiag}
+  \lean{Credibility.CoreVector.IsCohortBlockDiag, Credibility.CoreVector.blk}
+  \leanok
+  \uses{def:CV_moments}
+  $M$ over cohorts $\times$ components is \emph{cohort block diagonal} if
+  $M_{(i,p),(k,q)} = 0$ for $i \ne k$; $M_{jj}$ is its block of cohort $j$.
+\end{definition}
+
+\begin{lemma}[GLS for independent cohorts]\label{lem:CV_blockDiag}
+  \lean{Credibility.CoreVector.sel_transpose_mul_mul_sel_of_blockDiag,
+        Credibility.CoreVector.blk_posDef,
+        Credibility.CoreVector.sel_transpose_mul_inv_mul_sel_of_blockDiag,
+        Credibility.CoreVector.info_of_blockDiag,
+        Credibility.CoreVector.sel_transpose_mul_glsW_of_blockDiag,
+        Credibility.CoreVector.weight_of_blockDiag}
+  \leanok
+  \uses{def:CV_blockDiag, lem:CV_weight}
+  For $K \succ 0$ cohort block diagonal: $K^{-1}$ is block diagonal with blocks
+  $K_{jj}^{-1}$, $I_K = \sum_j K_{jj}^{-1}$, and
+  $B_j = \bigl(\sum_i K_{ii}^{-1}\bigr)^{-1} K_{jj}^{-1}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_weight, lem:CV_glsW}
+  The blocks of $K \succ 0$ are $\succ 0$; the block-diagonal matrix of the $K_{jj}^{-1}$ is a
+  right inverse of $K$. Then $U = \sum_j E_j$.
+\end{proof}
+
+\begin{theorem}[Independent cohorts: $Z_j = L_{jj}K_{jj}^{-1}$]\label{thm:CV_bestZ_blockDiag}
+  \lean{Credibility.CoreVector.moments_gap_posDef_of_blockDiag,
+        Credibility.CoreVector.moments_bestZ_of_blockDiag}
+  \leanok
+  \uses{thm:CV_bestZ, lem:CV_blockDiag}
+  If $K \succ 0$ and $L = L^\top$ are cohort block diagonal and there is a cohort $i \ne j$,
+  then $K_{jj} - I_K^{-1} \succ 0$ and $Z_j^\ast = L_{jj} K_{jj}^{-1}$: estimating $\hmu$
+  changes nothing, as in the scalar Bühlmann--Straub model.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_gap_posDef, lem:CV_blockDiag, thm:CV_bestZ, lem:CV_weight}
+  $E_i^\top(E_j - \mathcal W) = -K_{ii}^{-1}I_K^{-1}$ is invertible, so
+  Theorem~\ref{thm:CV_gap_posDef} applies. $E_j^\top L\mathcal W = L_{jj}K_{jj}^{-1}I_K^{-1}$,
+  so $L_{jj} - E_j^\top L\mathcal W = L_{jj}K_{jj}^{-1}(K_{jj} - I_K^{-1})$.
+\end{proof}
+
+\begin{theorem}[Multidimensional Bühlmann--Straub]\label{thm:CV_buhlmannGisler}
+  \lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler,
+        Credibility.CoreVector.weight_buhlmannGisler}
+  \leanok
+  \uses{thm:CV_bestZ_blockDiag}
+  Independent cohorts with $K_{jj} = \Lambda + S_j$ (level covariance $\Lambda$, noise
+  covariance $S_j$) and independent levels with $L_{jj} = \Lambda$:
+  $Z_j^\ast = \Lambda(\Lambda + S_j)^{-1}$, and for invertible $\Lambda$ the portfolio is the
+  $Z$-weighted mean, $B_j = \bigl(\sum_i Z_i\bigr)^{-1} Z_j$. These are the formulas of
+  Bühlmann--Gisler (1997), $Z_r = A(A + W_r^{-1})^{-1}$, and of the multidimensional
+  Bühlmann--Straub model (Bühlmann--Gisler 2005, \S7.3).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_bestZ_blockDiag, lem:CV_blockDiag}
+  Substitute; $\bigl(\Lambda\sum_i K_{ii}^{-1}\bigr)^{-1}\Lambda = \bigl(\sum_i K_{ii}^{-1}\bigr)^{-1}$.
+\end{proof}
+
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
 % Schur product theorem. Lean: Credibility/OffDiagonal.lean

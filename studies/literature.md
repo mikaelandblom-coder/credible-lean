@@ -217,7 +217,10 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
 - Taylor (2007), *Credibility, hypothesis testing and regression software*, ASTIN Bull. 37(2),
   517ff (abstract and intro read): matrix credibility via F-statistics; for the estimation step.
 - Bühlmann & Gisler (2005), *A Course in Credibility Theory*, ch. 7 (§7.3 multidimensional
-  Bühlmann–Straub, p. 177) and ch. 8 (§8.3.2 Hachemeister, p. 205): not read (book). Bühlmann,
+  Bühlmann–Straub, p. 177) and ch. 8 (§8.3.2 Hachemeister, p. 205): not read (book). Our
+  `moments_bestZ_buhlmannGisler`/`weight_buhlmannGisler` reproduce the 1997 paper's
+  `Zᵣ = A(A + Wᵣ⁻¹)⁻¹` and the `Z`-weighted collective `(ΣZᵢ)⁻¹ΣZᵢbᵢ` (the form quoted for
+  §7.3); page-level check against the book still open. Bühlmann,
   Gisler & Kollöffel (2003), multidimensional credibility: cited by Englund et al., not read.
 - Frequency–severity with dependent risk profiles, Bayesian: Cheung, Ni, Oh & Woo (2021), IME
   100, 274–295; Q-credibility (ARCH 2025 abstract, Tang): factors chosen to minimise the MSE of

@@ -153,8 +153,11 @@ same machinery. State it as such, don't hide the approximation.
    frequency–severity as its two corollaries.
    *Started 2026-11-19:* matrix eq. (7) (Loewner-optimal, unique for the
    trace, `P = Unit` is the scalar blend), matrix GLS weights (optimal) and
-   matrix eq. (26) are proved. Open: block-diagonal `K` gives Bühlmann–Gisler
-   ch. 7; balance; the moment layer; the two corollaries.
+   matrix eq. (26) are proved. Then (same day): the gap `Kⱼⱼ - (UᵀK⁻¹U)⁻¹ =
+   (Eⱼ - W)ᵀK(Eⱼ - W)` is PD iff `Eⱼ - W` has full column rank (vector `b ≠ eⱼ`);
+   block-diagonal `K`, `L` give `Zⱼ = LⱼⱼKⱼⱼ⁻¹` (PD gap with a second cohort) and, with
+   `Kⱼⱼ = Λ + Sⱼ`, `Lⱼⱼ = Λ`, Bühlmann–Gisler: `Zⱼ = Λ(Λ+Sⱼ)⁻¹`, `Bⱼ = (ΣZᵢ)⁻¹Zⱼ`.
+   Open: Hachemeister with correlated cohorts; frequency–severity; balance; moment layer.
 5. Step 4 (evolving levels) with serial correlation.
 
 ## 4. Literature to build on (see `studies/literature.md` §7)

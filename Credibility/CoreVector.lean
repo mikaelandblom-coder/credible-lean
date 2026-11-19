@@ -308,5 +308,240 @@ theorem moments_bestZ [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.Po
     Matrix.mul_assoc]
   abel
 
+/-! ### The gap and the portfolio weights per cohort -/
+
+/-- `Σⱼ EⱼEⱼᵀ = I`: the cohort blocks partition the stacked vector. -/
+theorem sum_sel_mul_sel_transpose : ∑ j, sel P j * (sel P j)ᵀ = (1 : Matrix (J × P) (J × P) ℝ) := by
+  ext ⟨i, p⟩ ⟨k, q⟩
+  simp only [Matrix.sum_apply, Matrix.mul_apply, transpose_apply, sel, Matrix.one_apply,
+    Prod.mk.injEq]
+  by_cases hik : i = k
+  · subst hik
+    by_cases hpq : p = q <;> simp [hpq, ite_and]
+  · simp [hik, ite_and]
+
+/-- `EᵢᵀMEₖ` is the `(i, k)` block of `M`. -/
+theorem sel_transpose_mul_mul_sel (M : Matrix (J × P) (J × P) ℝ) (i k : J) :
+    (sel P i)ᵀ * M * sel P k = fun p q => M (i, p) (k, q) := by
+  ext p q
+  simp [Matrix.mul_apply, sel, Fintype.sum_prod_type, ite_and, Finset.sum_ite_eq']
+
+/-- `EᵢᵀEₖ = 0` for different cohorts, `I` for the same. -/
+theorem sel_transpose_mul_sel (i k : J) :
+    (sel P i)ᵀ * sel P k = if i = k then 1 else 0 := by
+  have h := sel_transpose_mul_mul_sel (P := P) (1 : Matrix (J × P) (J × P) ℝ) i k
+  rw [Matrix.mul_one] at h
+  rw [h]
+  ext p q
+  split_ifs with hik <;> simp [Matrix.one_apply, hik]
+
+omit [Fintype P] in
+/-- `U = Σⱼ Eⱼ`. -/
+theorem stack_eq_sum_sel : stack J P = ∑ j, sel P j := by
+  ext ⟨i, p⟩ q
+  by_cases hpq : p = q <;> simp [stack, sel, Matrix.sum_apply, hpq]
+
+/-- The weight matrix `Bⱼ = (EⱼᵀW)ᵀ` of cohort `j` in the matrix GLS portfolio estimate. -/
+noncomputable def weight (K : Matrix (J × P) (J × P) ℝ) (j : J) : Matrix P P ℝ :=
+  ((sel P j)ᵀ * glsW K)ᵀ
+
+/-- The portfolio estimate is `μ̂ = Wᵀx = Σⱼ Bⱼ μ̂ⱼ` with `μ̂ⱼ = Eⱼᵀx`. -/
+theorem glsW_transpose_mulVec (K : Matrix (J × P) (J × P) ℝ) (x : J × P → ℝ) :
+    (glsW K)ᵀ *ᵥ x = ∑ j, weight K j *ᵥ ((sel P j)ᵀ *ᵥ x) := by
+  conv_lhs => rw [← Matrix.mul_one (glsW K)ᵀ, ← sum_sel_mul_sel_transpose, Matrix.mul_sum]
+  simp only [weight, transpose_mul, transpose_transpose, Matrix.sum_mulVec, mulVec_mulVec,
+    Matrix.mul_assoc]
+
+/-- …and the weights sum to the identity, `Σⱼ Bⱼ = I`. -/
+theorem sum_weight [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef) :
+    ∑ j, weight K j = 1 := by
+  simp only [weight]
+  rw [← transpose_sum, ← Matrix.sum_mul, ← transpose_sum, ← stack_eq_sum_sel,
+    stack_transpose_mul_glsW hK, transpose_one]
+
+/-- `Var(μ̂ⱼ - μ̂) = (Eⱼ - W)ᵀ K (Eⱼ - W)`: the gap as a quadratic form in the weights of
+`μ̂ⱼ - μ̂` (matrix version of `quadForm_single_sub_glsWeight`). -/
+theorem moments_gap_eq_quadForm [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) :
+    (moments K L j).gap = (sel P j - glsW K)ᵀ * K * (sel P j - glsW K) := by
+  have hKt : Kᵀ = K := by simpa [conjTranspose_eq_transpose_of_trivial] using hK.isHermitian.eq
+  have hS : ((info K)⁻¹)ᵀ = (info K)⁻¹ := by
+    simpa [conjTranspose_eq_transpose_of_trivial] using (info_posDef hK).inv.isHermitian.eq
+  have h1 : (sel P j)ᵀ * K * glsW K = (info K)⁻¹ := moments_covEst hK L j
+  have h2 : (glsW K)ᵀ * K * sel P j = (info K)⁻¹ := by
+    rw [← hS, ← h1]; simp [transpose_mul, hKt, Matrix.mul_assoc]
+  have h3 : (glsW K)ᵀ * K * glsW K = (info K)⁻¹ := by
+    rw [Matrix.mul_assoc, mul_glsW hK, ← Matrix.mul_assoc,
+      show (glsW K)ᵀ * stack J P = ((stack J P)ᵀ * glsW K)ᵀ by
+        rw [transpose_mul, transpose_transpose],
+      stack_transpose_mul_glsW hK, transpose_one, Matrix.one_mul]
+  rw [moments_gap hK]
+  simp only [transpose_sub, Matrix.sub_mul, Matrix.mul_sub, h1, h2, h3]
+  abel
+
+/-- The gap `Kⱼⱼ - (UᵀK⁻¹U)⁻¹` is positive definite exactly when `Eⱼ - W` has full column
+rank: no component combination `a ≠ 0` has its portfolio weights `Wa` all on cohort `j`
+(matrix version of `bⱼ ≠ eⱼ`, the scalar condition for `Var(μ̂ⱼ - μ̂) > 0`). -/
+theorem moments_gap_posDef_iff [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) :
+    (moments K L j).gap.PosDef ↔ Function.Injective (sel P j - glsW K).mulVec := by
+  rw [moments_gap_eq_quadForm hK L j]
+  constructor
+  · intro h a b hab
+    rw [← sub_eq_zero]
+    by_contra hne
+    have hpos := h.dotProduct_mulVec_pos hne
+    have hz : (sel P j - glsW K) *ᵥ (a - b) = 0 := by rw [mulVec_sub, hab, sub_self]
+    simp only [star_trivial, ← mulVec_mulVec, hz, mulVec_zero] at hpos
+    simp at hpos
+  · intro h
+    simpa [conjTranspose_eq_transpose_of_trivial] using hK.conjTranspose_mul_mul_same h
+
+/-! ### Independent cohorts: block-diagonal `K` (Bühlmann & Gisler 2005, ch. 7)
+
+When the cohorts are uncorrelated, `K` is block diagonal with blocks `Kⱼⱼ = EⱼᵀKEⱼ`. Then
+`K⁻¹` is block diagonal with blocks `Kⱼⱼ⁻¹`, `UᵀK⁻¹U = Σⱼ Kⱼⱼ⁻¹`, the portfolio weights are
+`Bⱼ = (Σᵢ Kᵢᵢ⁻¹)⁻¹ Kⱼⱼ⁻¹`, and with block-diagonal `L` the best credibility matrix is
+`Zⱼ = Lⱼⱼ Kⱼⱼ⁻¹`. With `Kⱼⱼ = Λ + Sⱼ` and `Lⱼⱼ = Λ` this is the multidimensional
+Bühlmann–Straub model: `Zⱼ = Λ(Λ + Sⱼ)⁻¹` and `μ̂ = (Σᵢ Zᵢ)⁻¹ Σⱼ Zⱼ μ̂ⱼ`. -/
+
+/-- `M` has no covariance between different cohorts. -/
+def IsCohortBlockDiag (M : Matrix (J × P) (J × P) ℝ) : Prop :=
+  ∀ i k, i ≠ k → ∀ p q, M (i, p) (k, q) = 0
+
+/-- The block of cohort `j`, `Mⱼⱼ = EⱼᵀMEⱼ`. -/
+def blk (M : Matrix (J × P) (J × P) ℝ) (j : J) : Matrix P P ℝ := fun p q => M (j, p) (j, q)
+
+/-- For a block-diagonal `M`, `EᵢᵀMEₖ = 0` off the diagonal and `Mⱼⱼ` on it. -/
+theorem sel_transpose_mul_mul_sel_of_blockDiag {M : Matrix (J × P) (J × P) ℝ}
+    (hM : IsCohortBlockDiag M) (i k : J) :
+    (sel P i)ᵀ * M * sel P k = if i = k then blk M i else 0 := by
+  rw [sel_transpose_mul_mul_sel]
+  split_ifs with h
+  · subst h; rfl
+  · ext p q; exact hM i k h p q
+
+omit [Fintype P] [DecidableEq P] [Fintype J] [DecidableEq J] in
+/-- The blocks of a positive definite matrix are positive definite. -/
+theorem blk_posDef {M : Matrix (J × P) (J × P) ℝ} (hM : M.PosDef) (j : J) : (blk M j).PosDef :=
+  hM.submatrix (e := fun p => (j, p)) fun _ _ h => (Prod.mk.inj h).2
+
+/-- The inverse of a positive definite block-diagonal `K` is block diagonal with blocks
+`Kⱼⱼ⁻¹`. -/
+theorem sel_transpose_mul_inv_mul_sel_of_blockDiag {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) (i k : J) :
+    (sel P i)ᵀ * K⁻¹ * sel P k = if i = k then (blk K i)⁻¹ else 0 := by
+  let M : Matrix (J × P) (J × P) ℝ :=
+    Matrix.of fun x y => if x.1 = y.1 then (blk K x.1)⁻¹ x.2 y.2 else 0
+  have hKM : K * M = 1 := by
+    ext ⟨i, p⟩ ⟨k, q⟩
+    simp only [Matrix.mul_apply, Fintype.sum_prod_type, M, Matrix.of_apply, mul_ite, mul_zero,
+      Matrix.one_apply, Prod.mk.injEq]
+    by_cases hik : i = k
+    · subst hik
+      have := congrFun (congrFun (mul_nonsing_inv (blk K i)
+        (isUnit_iff_ne_zero.2 (blk_posDef hK i).det_pos.ne')) p) q
+      simpa [Matrix.mul_apply, blk, Matrix.one_apply] using this
+    · simp [hb i k hik, hik]
+  rw [inv_eq_right_inv hKM, sel_transpose_mul_mul_sel]
+  split_ifs with h
+  · subst h; ext p q; simp [M]
+  · ext p q; simp [M, h]
+
+/-- `UᵀK⁻¹U = Σⱼ Kⱼⱼ⁻¹`: the information adds up over independent cohorts. -/
+theorem info_of_blockDiag {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (hb : IsCohortBlockDiag K) : info K = ∑ j, (blk K j)⁻¹ := by
+  rw [info, stack_eq_sum_sel, transpose_sum, Matrix.sum_mul, Matrix.sum_mul]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Matrix.mul_sum]
+  simp [sel_transpose_mul_inv_mul_sel_of_blockDiag hK hb]
+
+/-- `EⱼᵀW = Kⱼⱼ⁻¹ (UᵀK⁻¹U)⁻¹` for independent cohorts. -/
+theorem sel_transpose_mul_glsW_of_blockDiag {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (hb : IsCohortBlockDiag K) (j : J) :
+    (sel P j)ᵀ * glsW K = (blk K j)⁻¹ * (info K)⁻¹ := by
+  rw [glsW, stack_eq_sum_sel, Matrix.mul_sum, ← Matrix.mul_assoc, Matrix.mul_sum, Matrix.sum_mul]
+  simp [← Matrix.mul_assoc, sel_transpose_mul_inv_mul_sel_of_blockDiag hK hb]
+
+/-- The portfolio weights of independent cohorts: `Bⱼ = (Σᵢ Kᵢᵢ⁻¹)⁻¹ Kⱼⱼ⁻¹`. -/
+theorem weight_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (hb : IsCohortBlockDiag K) (j : J) :
+    weight K j = (∑ i, (blk K i)⁻¹)⁻¹ * (blk K j)⁻¹ := by
+  have hsym : ∀ {M : Matrix P P ℝ}, M.PosDef → Mᵀ = M := fun h => by
+    simpa [conjTranspose_eq_transpose_of_trivial] using h.isHermitian.eq
+  rw [weight, sel_transpose_mul_glsW_of_blockDiag hK hb, transpose_mul,
+    hsym (info_posDef hK).inv, hsym (blk_posDef hK j).inv, info_of_blockDiag hK hb]
+
+/-- With another cohort, the gap of independent cohorts is positive definite: `Wa` puts
+`Kᵢᵢ⁻¹(UᵀK⁻¹U)⁻¹a ≠ 0` on every cohort `i`. -/
+theorem moments_gap_posDef_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) (L : Matrix (J × P) (J × P) ℝ) {i j : J}
+    (hij : i ≠ j) : (moments K L j).gap.PosDef := by
+  rw [moments_gap_posDef_iff hK L j]
+  refine (injective_iff_map_eq_zero' ((sel P j - glsW K).mulVecLin)).2 fun a => ⟨fun ha => ?_,
+    fun ha => by simp [ha]⟩
+  have h0 : ((sel P i)ᵀ * (sel P j - glsW K)) *ᵥ a = 0 := by
+    rw [← mulVec_mulVec]; simp only [mulVecLin_apply] at ha; rw [ha, mulVec_zero]
+  rw [Matrix.mul_sub, sel_transpose_mul_sel, if_neg hij, zero_sub,
+    sel_transpose_mul_glsW_of_blockDiag hK hb, neg_mulVec, neg_eq_zero] at h0
+  have hdet : ((blk K i)⁻¹ * (info K)⁻¹).det ≠ 0 := by
+    rw [det_mul]
+    exact mul_ne_zero (blk_posDef hK i).inv.det_pos.ne' (info_posDef hK).inv.det_pos.ne'
+  exact eq_zero_of_mulVec_eq_zero hdet h0
+
+/-- The best credibility matrix of independent cohorts with independent levels:
+`Zⱼ = Lⱼⱼ Kⱼⱼ⁻¹` (when there is another cohort). The estimation of `μ̂` changes nothing,
+as in the scalar Bühlmann–Straub model (`Core.bestZ_of_diag`). -/
+theorem moments_bestZ_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L)
+    (hLb : IsCohortBlockDiag L) {i j : J} (hij : i ≠ j) :
+    (moments K L j).bestZ = blk L j * (blk K j)⁻¹ := by
+  have hG := moments_gap_posDef_of_blockDiag hK hb L hij
+  have hGu : IsUnit (moments K L j).gap.det := isUnit_iff_ne_zero.2 hG.det_pos.ne'
+  rw [moments_gap hK] at hGu
+  -- `EⱼᵀLW = Lⱼⱼ Kⱼⱼ⁻¹ (UᵀK⁻¹U)⁻¹`, inserting `Σᵢ EᵢEᵢᵀ = I` between `L` and `W`
+  have hLW : (sel P j)ᵀ * L * glsW K = blk L j * ((blk K j)⁻¹ * (info K)⁻¹) := by
+    rw [← Matrix.mul_one ((sel P j)ᵀ * L), ← sum_sel_mul_sel_transpose, Matrix.mul_sum,
+      Matrix.sum_mul]
+    simp only [← Matrix.mul_assoc]
+    simp only [Matrix.mul_assoc _ (sel P _)ᵀ (glsW K), sel_transpose_mul_glsW_of_blockDiag hK hb,
+      sel_transpose_mul_mul_sel_of_blockDiag hLb, ite_mul, zero_mul, Finset.sum_ite_eq,
+      Finset.mem_univ, ite_true]
+    rw [Matrix.mul_assoc]
+  rw [moments_bestZ hK hL, hLW, sel_transpose_mul_mul_sel_of_blockDiag hLb, if_pos rfl,
+    sel_transpose_mul_mul_sel_of_blockDiag hb, if_pos rfl]
+  -- `(Λ - ΛK⁻¹S)(K - S)⁻¹ = ΛK⁻¹(K - S)(K - S)⁻¹`
+  have hKj : IsUnit (blk K j).det := isUnit_iff_ne_zero.2 (blk_posDef hK j).det_pos.ne'
+  rw [sel_transpose_mul_mul_sel_of_blockDiag hb, if_pos rfl] at hGu
+  have : blk L j - blk L j * ((blk K j)⁻¹ * (info K)⁻¹)
+      = blk L j * (blk K j)⁻¹ * (blk K j - (info K)⁻¹) := by
+    rw [Matrix.mul_assoc, Matrix.mul_sub, nonsing_inv_mul _ hKj, Matrix.mul_sub, Matrix.mul_one]
+  rw [this, Matrix.mul_assoc, mul_nonsing_inv _ hGu, Matrix.mul_one]
+
+/-- **Multidimensional Bühlmann–Straub** (Bühlmann & Gisler 2005, §7.3; Bühlmann & Gisler
+1997, `Zᵣ = A(A + Wᵣ⁻¹)⁻¹`): independent cohorts with `Var(μ̂ⱼ) = Λ + Sⱼ` (`Λ` the level
+covariance, `Sⱼ` the noise covariance) and independent levels with covariance `Λ` give
+`Zⱼ = Λ(Λ + Sⱼ)⁻¹`… -/
+theorem moments_bestZ_buhlmannGisler [Nonempty J] {K L : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) (hL : Lᵀ = L) (hLb : IsCohortBlockDiag L)
+    {Λ : Matrix P P ℝ} {S : J → Matrix P P ℝ} (hKj : ∀ j, blk K j = Λ + S j)
+    (hLj : ∀ j, blk L j = Λ) {i j : J} (hij : i ≠ j) :
+    (moments K L j).bestZ = Λ * (Λ + S j)⁻¹ := by
+  rw [moments_bestZ_of_blockDiag hK hb hL hLb hij, hKj, hLj]
+
+/-- …and the portfolio estimate is the `Zⱼ`-weighted mean `μ̂ = (Σᵢ Zᵢ)⁻¹ Σⱼ Zⱼ μ̂ⱼ`:
+the weight of cohort `j` is `Bⱼ = (Σᵢ Zᵢ)⁻¹ Zⱼ` (when `Λ` is invertible). -/
+theorem weight_buhlmannGisler [Nonempty J] {K : Matrix (J × P) (J × P) ℝ}
+    (hK : K.PosDef) (hb : IsCohortBlockDiag K) {Λ : Matrix P P ℝ} (hΛ : IsUnit Λ.det)
+    {S : J → Matrix P P ℝ} (hKj : ∀ j, blk K j = Λ + S j) (j : J) :
+    weight K j = (∑ i, Λ * (Λ + S i)⁻¹)⁻¹ * (Λ * (Λ + S j)⁻¹) := by
+  have hsum : IsUnit (∑ i, (blk K i)⁻¹).det := by
+    rw [← info_of_blockDiag hK hb]
+    exact isUnit_iff_ne_zero.2 (info_posDef hK).det_pos.ne'
+  rw [weight_of_blockDiag hK hb, ← Finset.mul_sum]
+  simp only [← hKj]
+  rw [Matrix.mul_inv_rev, Matrix.mul_assoc, ← Matrix.mul_assoc Λ⁻¹, nonsing_inv_mul _ hΛ,
+    Matrix.one_mul]
+
 end CoreVector
 end Credibility
