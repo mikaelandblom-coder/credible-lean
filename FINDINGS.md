@@ -366,4 +366,25 @@ Gaps, extra hypotheses and new results found while formalizing.
    of them; with `L = I ⊗ Λ` it is small. As Bühlmann (1974) found for one risk, restricted
    predictors are not ordered: don't claim an order between the vector and separate blends.
 
+23. **A common period shock does not shrink with volume; the thesis's fixed `ρᵢⱼ` makes it
+   shrink (new; modelling remark, no Lean statement affected).** Eq. (16) gives
+   `cov(μᵢₜ, μⱼₜ) = σᵢₜσⱼₜρᵢⱼ` with `ρᵢⱼ` fixed over periods, and §2.8 (eqs. (37)–(41)) takes
+   `σⱼₜ² = σⱼ²/wⱼₜ`. Then the covariance between cohorts falls like `1/√(wᵢₜwⱼₜ)`: doubling
+   both volumes halves it. The motivating shock (travel demand, thesis §2.2) hits a cohort's
+   rate whatever its size, so its covariance should not fall. The natural model is a shock
+   plus process noise, `cov(μᵢₜ, μⱼₛ) = δₜₛ(Cᵢⱼ + δᵢⱼ sᵢ²/wᵢₜ) + τ²δᵢⱼ`, with `C ⪰ 0` (rank one,
+   `λᵢλⱼ`, for one shock with loadings); its correlation *rises* with volume. It equals eq. (16)
+   only if the correlation may depend on the period, `ρᵢⱼₜ = Cᵢⱼ/(σᵢₜσⱼₜ)`, with
+   `σⱼₜ² = Cⱼⱼ + sⱼ²/wⱼₜ`. Counterexample (no fixed `ρ` fits): two cohorts, two periods,
+   `C = 11ᵀ`, `s = 1`, `w₁ = (1, 4)`, `w₂ = (1, 1)`: `σ₁ₜ² = (2, 1.25)`, `σ₂ₜ² = (2, 2)`,
+   implied `ρ₁₂ₜ = (0.5, 0.632)`; and `σ₁₁²/σ₁₂² = 1.6`, not the `w₁₂/w₁₁ = 4` of §2.8.
+   What is unaffected: every result stated for a general positive definite `K` (Core), and
+   the Lean model, whose `σⱼₜ` are free numbers (only `ρᵢⱼ` is period-free). What changes:
+   the §2.8 estimators assume `σⱼ²/wⱼₜ` with a fixed `ρ`, so with growing or shifting volumes
+   they misweight the cross products. Equivalent if each cohort's volume is constant over
+   time. The shock model is a new `obsCov` table: its `K`, positive definiteness
+   (`C ⪰ 0` plus a positive diagonal) and unbiased estimators of `C` and `s²` are the work;
+   the expectation layer (`Ecov`, `UnbiasedCov` for a general table) already applies.
+   Econometrics names it a common factor with loadings (`studies/literature.md` §9).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

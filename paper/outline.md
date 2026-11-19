@@ -78,6 +78,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Finding 23 (2026-11-19, modelling remark): a common period shock does not shrink with
+  volume; eq. (16) with fixed `ρ` makes it shrink. One sentence in the model section and in
+  §13 (Time) next to "period shocks are already in".
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels, credibility matrix, matrix GLS
   with correlated cohorts (Jewell 1973; Bühlmann–Gisler ch. 7 has independent cohorts, and is
   recovered: `Credibility.CoreVector.moments_bestZ_buhlmannGisler`). Hachemeister with correlated

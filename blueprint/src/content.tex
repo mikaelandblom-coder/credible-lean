@@ -154,6 +154,18 @@ quadratic in $z$ whose coefficients are six second moments.
   \eqth{16}.
 \end{definition}
 
+\begin{remark}[Finding 23: a common shock does not shrink with volume]\label{rem:shock_volume}
+  \uses{def:obsCov}
+  With $\rho_{ij}$ fixed over periods and $\sigma_{jt}^2 = \sigma_j^2/w_{jt}$ (as in the
+  estimators), $\cov(\mu_{it}, \mu_{jt})$ falls like $1/\sqrt{w_{it}w_{jt}}$. A shock common to
+  all cohorts in a period does not diversify:
+  $\cov(\mu_{it}, \mu_{js}) = \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it}) + \tau^2\delta_{ij}$
+  with $C \succeq 0$, whose correlation rises with volume. It is the definition above only
+  with a period-dependent $\rho_{ijt}$. For $C = \mathbf 1\mathbf 1^\top$, $s = 1$,
+  $w_1 = (1, 4)$, $w_2 = (1, 1)$ the implied correlations are $0.5$ and $0.632$. Results for a
+  general positive definite $K$ are unaffected.
+\end{remark}
+
 The estimators are weighted averages \eqth{17},
 $\hmu_j = \sum_t a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$, unbiased
 when the weights sum to one. The error variance of $\hmu_j$ is

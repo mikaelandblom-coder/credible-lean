@@ -16,6 +16,8 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Finding 23 (2026-11-19): "watch out" next to the estimators: with volumes that change over
+  time, the thesis's `ρ` assumes the common shock shrinks with volume.
 - Matrix blend (2026-11-19, `CoreVector.lean`): Hachemeister done
   (`Credibility.CoreVector.hachemeister_bestZ`, classical case
   `hachemeister_bestZ_of_blockDiag`); frequency × severity settled (Finding 22: the best
