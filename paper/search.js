@@ -5,11 +5,12 @@
 (function () {
   function init() {
     var main = document.querySelector('.main-text') || document.body;
-    // plasTeX writes a section as an <h1 id=…> followed by its content as
-    // siblings, so a "section" here is a heading plus everything up to the next.
+    // plasTeX writes a section as an <h1 id=…> (a subsection as <h2 id=…>)
+    // followed by its content as siblings, so a "section" here is a heading
+    // plus everything up to the next one: search hides subsections one by one.
     var sections = [], cur = null;
     Array.prototype.forEach.call(main.children, function (el) {
-      if (el.tagName === 'H1' && el.id) { cur = [el]; sections.push(cur); }
+      if ((el.tagName === 'H1' || el.tagName === 'H2') && el.id) { cur = [el]; sections.push(cur); }
       else if (cur) cur.push(el);
     });
     if (!sections.length) return;
@@ -28,7 +29,8 @@
       var a = document.createElement('a');
       a.href = '#' + sec[0].id;
       a.innerHTML = sec[0].innerHTML;
-      a.style.cssText = 'display:block;margin:.15em 0';
+      a.style.cssText = 'display:block;margin:.15em 0' +
+        (sec[0].tagName === 'H2' ? ';padding-left:1.2em;font-size:.9em' : '');
       toc.appendChild(a);
     });
     main.insertBefore(toc, first);

@@ -38,10 +38,10 @@
 % \app{step}: a step or switch of the app.
 \newcommand{\app}[1]{\href{\site/app/}{app: #1}}
 
-% --- The section template (paper/outline.md): a one-sentence summary, the
-% idea in subsections (one per topic), what to watch out for, and a See line.
-\newcommand{\oneline}{\paragraph{In one sentence.}}
-\newcommand{\watch}{\subsection{What to watch out for}}
+% --- The template of a topic (paper/outline.md): an opening sentence, the
+% idea in run-in paragraphs, what to watch out for, and a See line.
+\newcommand{\oneline}{\par}
+\newcommand{\watch}{\paragraph{What to watch out for.}}
 \newcommand{\see}{\paragraph{See.}}
 \newcommand{\notyet}[1]{\par\noindent\textit{Not yet written. Will cover: #1}\par}
 
@@ -67,104 +67,14 @@
 
 \tableofcontents
 
-% Section 0 is "How to read this", so the numbers match paper/outline.md.
-\setcounter{section}{-1}
-
 % ===========================================================================
-\section{How to read this}\label{sec:read}
-
-\oneline This paper explains the ideas; the formulas, the proofs and the
-working tool each live in a document of their own, and the paper points to
-them instead of repeating them.
-
-\subsection{Four documents}
-
-The work comes in four documents, one for each kind of content.
-\begin{itemize}
-  \item \emph{The paper} (this one) explains. It is the up-to-date version of
-    the master thesis it grew out of (Andblom, Stockholm University, 2023:2)
-    and the first thing to read or cite. Each section is one concept: what
-    it is, the idea in plain words, and what to watch out for. It has few
-    formulas and no proofs.
-  \item \emph{The \href{\site/handbook.pdf}{handbook}} holds the formulas:
-    the key results, numbered, each with a short note on how to use it. The
-    paper cites them as ``Handbook~(5)''.
-  \item \emph{The \href{\site/}{blueprint}} is the proof ledger: every
-    statement with its proof and a graph of what depends on what. You reach
-    it by following a link, not by reading it front to back.
-  \item \emph{The \href{\site/app/}{app}} shows the tools at work. You pick a
-    world (cohorts, volumes, correlation, noise), draw data, and compare
-    fitted models with the best blend for the true parameters. The fits see
-    only the data.
-\end{itemize}
-Every section ends with a \emph{See} line: the handbook results, the Lean
-names of the proofs, the app step to try, the findings it explains, and the
-thesis sections it replaces. Appendix~\ref{app:changes} lists what changed
-since the thesis, with a concordance from each thesis equation to its
-handbook number and Lean name; Appendix~\ref{app:notation} has the notation
-and its translation to Bühlmann--Straub.
-
-\subsection{What ``machine-checked'' means}
-
-Every result the paper states is a
-theorem in Lean, a proof assistant: a program that accepts a proof only if
-each step follows from the previous ones and from the axioms of mathematics.
-A Lean name such as \lean{Credibility.Core.bestZ_eq} links to the statement
-and its proof. Continuous integration rebuilds all proofs on every change
-and checks that none of them rests on an unfinished step or on an extra
-axiom. So if the paper says a result is proved, the statement as written in
-Lean is true; you do not need to trust the author, or the AI that wrote most
-of the Lean code with the author, to believe it.
-
-\subsection{What it does not mean}
-
-\begin{itemize}
-  \item \emph{The Lean statement is what is proved, not the paper's
-    paraphrase.} The paper and the handbook state results in words and
-    formulas; the hypotheses in full are in Lean. When the two seem to
-    differ, Lean is right, and the paper has a mistake to fix.
-  \item \emph{A theorem is about the model, not about your data.} That the
-    best $z_j$ is optimal is proved; that your portfolio follows the model
-    is an assumption you have to judge. The paper says where the model is
-    fragile (each ``What to watch out for'').
-  \item \emph{Numbers from simulations are not theorems.} Results from the
-    app's studies hold in the worlds that were simulated; the paper says so
-    and cites the script that produced them. Statements about the best
-    blend with known parameters are exact formulas and need no simulation.
-  \item \emph{Some arguments are on paper only.} Where a result is shown by
-    hand but not in Lean, the paper says so (for example the four-cohort
-    example in Section~\ref{sec:special}).
-\end{itemize}
-
-\subsection{Findings}
-
-Formalizing the thesis turned up gaps (a missing
-hypothesis, a typo) and new results. They are numbered in a dated log,
-\file{FINDINGS.md}, and cited as ``Finding~$n$''. The paper explains each
-one where it belongs; Appendix~\ref{app:changes} collects them by thesis
-section.
-
-\watch
-\begin{itemize}
-  \item \emph{Equation numbers} such as ``eq.~(26)'' refer to the thesis as
-    published; handbook numbers can change between versions, so cite the
-    handbook with its version or, better, the Lean name, which is stable.
-  \item \emph{Only means and covariances are assumed} throughout, unless a
-    result says otherwise in its name (Section~\ref{sec:model}).
-\end{itemize}
-
-\see \hbsec{sec:setting}{1} ·
-\lean{Credibility.Core.bestZ_eq} ·
-\app{World} · \file{FINDINGS.md}, \file{paper/outline.md} · thesis §1.
-
-% ===========================================================================
-\section{What credibility is}\label{sec:credibility}
+\section{Introduction}\label{sec:intro}\label{sec:credibility}
 
 \oneline Credibility is mixing a cohort's own, noisy experience with the
 steadier experience of the whole portfolio, in the proportion that makes the
 mix as accurate as possible.
 
-\subsection{An example}
+\paragraph{An example.}
 
 Say you sell travel insurance through a dozen payment cards, and you
 want the risk premium per cardholder for each card. A small card has three
@@ -183,7 +93,7 @@ experience. At $z_j = 1$ you trust it fully; at $z_j = 0$ you charge the
 portfolio rate. Everything in this paper is about choosing $z_j$, and the two
 estimates it blends, well.
 
-\subsection{The best factor}
+\paragraph{The best factor.}
 
 \emph{Well} means: the blend should miss the card's true risk premium $\mu_j$
 by as little as possible on average. If both estimates are unbiased, missing
@@ -195,7 +105,7 @@ three covariances between them. Nothing else about the data matters, and the
 result holds for any two unbiased estimates, not only the ones built in this
 paper.
 
-\subsection{A regression on the gap}
+\paragraph{A regression on the gap.}
 
 There is a second way to read the best $z_j$, and it is the one to keep in
 mind. Look at the gap $\hmu_j - \hmu$ between the card and the portfolio.
@@ -205,7 +115,7 @@ of the gap you expect to be real (\hb{res:z}{5}). A big card with a
 stable history has a gap that is mostly real, so $z_j$ is near one. A tiny
 card's gap is mostly noise, so $z_j$ is near zero.
 
-\subsection{Three choices}
+\paragraph{Three choices.}
 
 Building the blend takes three choices: how to average a card's years into
 $\hmu_j$, how to average the cards into $\hmu$, and the factor $z_j$. They
@@ -216,7 +126,7 @@ own estimate against portfolio, costs anything against a rule that uses
 every cohort separately is answered there too: nothing for two cohorts or
 without correlation, a little otherwise.
 
-\subsection{What is new}
+\paragraph{What is new.}
 
 This is the oldest idea in actuarial science that still has a name of its
 own. Bühlmann (1967) gave it its modern form and Bühlmann and Straub (1970)
@@ -254,14 +164,102 @@ is zero (Section~\ref{sec:special}).
 \lean{Credibility.Core.Estimates.bestZ_mse_optimal} ·
 \app{One draw} · thesis §1, §2.1.
 
+\subsection{How to read this paper}\label{sec:read}
+
+\oneline This paper explains the ideas; the formulas, the proofs and the
+working tool each live in a document of their own, and the paper points to
+them instead of repeating them.
+
+\paragraph{Four documents.}
+
+The work comes in four documents, one for each kind of content.
+\begin{itemize}
+  \item \emph{The paper} (this one) explains. It is the up-to-date version of
+    the master thesis it grew out of (Andblom, Stockholm University, 2023:2)
+    and the first thing to read or cite. Each topic is one concept: what
+    it is, the idea in plain words, and what to watch out for. It has few
+    formulas and no proofs.
+  \item \emph{The \href{\site/handbook.pdf}{handbook}} holds the formulas:
+    the key results, numbered, each with a short note on how to use it. The
+    paper cites them as ``Handbook~(5)''.
+  \item \emph{The \href{\site/}{blueprint}} is the proof ledger: every
+    statement with its proof and a graph of what depends on what. You reach
+    it by following a link, not by reading it front to back.
+  \item \emph{The \href{\site/app/}{app}} shows the tools at work. You pick a
+    world (cohorts, volumes, correlation, noise), draw data, and compare
+    fitted models with the best blend for the true parameters. The fits see
+    only the data.
+\end{itemize}
+Every topic ends with a \emph{See} line: the handbook results, the Lean
+names of the proofs, the app step to try, the findings it explains, and the
+thesis sections it replaces. Appendix~\ref{app:changes} lists what changed
+since the thesis, with a concordance from each thesis equation to its
+handbook number and Lean name; Appendix~\ref{app:notation} has the notation
+and its translation to Bühlmann--Straub.
+
+\paragraph{What ``machine-checked'' means.}
+
+Every result the paper states is a
+theorem in Lean, a proof assistant: a program that accepts a proof only if
+each step follows from the previous ones and from the axioms of mathematics.
+A Lean name such as \lean{Credibility.Core.bestZ_eq} links to the statement
+and its proof. Continuous integration rebuilds all proofs on every change
+and checks that none of them rests on an unfinished step or on an extra
+axiom. So if the paper says a result is proved, the statement as written in
+Lean is true; you do not need to trust the author, or the AI that wrote most
+of the Lean code with the author, to believe it.
+
+\paragraph{What it does not mean.}
+
+\begin{itemize}
+  \item \emph{The Lean statement is what is proved, not the paper's
+    paraphrase.} The paper and the handbook state results in words and
+    formulas; the hypotheses in full are in Lean. When the two seem to
+    differ, Lean is right, and the paper has a mistake to fix.
+  \item \emph{A theorem is about the model, not about your data.} That the
+    best $z_j$ is optimal is proved; that your portfolio follows the model
+    is an assumption you have to judge. The paper says where the model is
+    fragile (each ``What to watch out for'').
+  \item \emph{Numbers from simulations are not theorems.} Results from the
+    app's studies hold in the worlds that were simulated; the paper says so
+    and cites the script that produced them. Statements about the best
+    blend with known parameters are exact formulas and need no simulation.
+  \item \emph{Some arguments are on paper only.} Where a result is shown by
+    hand but not in Lean, the paper says so (for example the four-cohort
+    example in Section~\ref{sec:special}).
+\end{itemize}
+
+\paragraph{Findings.}
+
+Formalizing the thesis turned up gaps (a missing
+hypothesis, a typo) and new results. They are numbered in a dated log,
+\file{FINDINGS.md}, and cited as ``Finding~$n$''. The paper explains each
+one where it belongs; Appendix~\ref{app:changes} collects them by thesis
+section.
+
+\watch
+\begin{itemize}
+  \item \emph{Equation numbers} such as ``eq.~(26)'' refer to the thesis as
+    published; handbook numbers can change between versions, so cite the
+    handbook with its version or, better, the Lean name, which is stable.
+  \item \emph{Only means and covariances are assumed} throughout, unless a
+    result says otherwise in its name (Section~\ref{sec:model}).
+\end{itemize}
+
+\see \hbsec{sec:setting}{1} ·
+\lean{Credibility.Core.bestZ_eq} ·
+\app{World} · \file{FINDINGS.md}, \file{paper/outline.md} · thesis §1.
+
 % ===========================================================================
-\section{The model}\label{sec:model}
+\section{The model}\label{sec:modelpart}
+
+\subsection{Cohorts, periods and error terms}\label{sec:model}
 
 \oneline Each observation is the overall level, plus a cohort effect that
 never changes, plus one period's noise; cohorts are linked only through the
 noise of the same period, and only means and covariances are assumed.
 
-\subsection{The model, term by term}
+\paragraph{The model, term by term.}
 
 Write $\mu_{jt}$ for what cohort $j$ shows in period $t$: loss cost
 per cardholder in underwriting year $t$, say. The model is
@@ -289,7 +287,7 @@ Read it from left to right.
 Both $\eta_j$ and $\varepsilon_{jt}$ are centred with unit variance, and the
 cohort effects are uncorrelated with each other and with the noise.
 
-\subsection{Why error terms?}
+\paragraph{Why error terms?}
 
 Classical credibility gives each cohort a risk
 parameter $\Theta_j$ and draws them independently. Independence is built
@@ -298,7 +296,7 @@ Written as error terms, the correlation is one line, the covariance above.
 This is the random-effects notation statisticians use, and it reads the same
 whether cohorts are correlated or not.
 
-\subsection{Only means and covariances}
+\paragraph{Only means and covariances.}
 
 The model says nothing about the shape of
 the noise: no normal, no Poisson, no gamma. Everything in this paper, from
@@ -307,7 +305,7 @@ moments, so it holds whatever the claims distribution. Results that do
 assume a noise family will live apart, named as such
 (Section~\ref{sec:open}).
 
-\subsection{Bühlmann--Straub inside}
+\paragraph{Bühlmann--Straub inside.}
 
 In Bühlmann--Straub notation $\mu$ is the
 collective premium $\mu_0$ ($m$ in older texts), $\tau^2$ keeps its name
@@ -318,7 +316,7 @@ cohorts' observations in the same period are uncorrelated. Put
 $\rho_{ij} = 0$ for $i \ne j$ and you are back in Bühlmann--Straub, with its
 credibility factors exactly (\hb{res:bs}{10}).
 
-\subsection{Every cohort, every period}
+\paragraph{Every cohort, every period.}
 
 Here each cohort is observed in the same
 $T$ periods. Section~\ref{sec:unequal} lets cohorts enter and leave; this
@@ -349,14 +347,13 @@ there and read off.
 \lean{Credibility.Model.exists_noise_iff} ·
 \app{World} · thesis §2.3.
 
-% ===========================================================================
-\section{From data to \texorpdfstring{$K$}{K}}\label{sec:K}
+\subsection{From data to \texorpdfstring{$K$}{K}}\label{sec:K}
 
 \oneline Everything the framework gives you (the weights, the portfolio
 estimate, every credibility factor) is read off one matrix $K$, the
 covariance of the cohort estimates, provided $K$ is positive definite.
 
-\subsection{The recipe}
+\paragraph{The recipe.}
 
 Credibility needs second moments, and in this framework they all come
 from one place. Collect the covariances of the cohort estimates in a matrix,
@@ -383,7 +380,7 @@ definite $K$ and $\tau^2$, once; each \emph{model} builds its $K$ and proves
 it positive definite; special cases are one-line corollaries. When a new
 extension arrives, the first question is which $K$ it has.
 
-\subsection{Why positive definite, and not just semidefinite?}
+\paragraph{Why positive definite, and not just semidefinite?}
 
 The thesis says
 that $K$ is a covariance matrix and therefore positive definite
@@ -398,7 +395,7 @@ to every diagonal entry lifts every direction strictly above zero. So the
 two conditions to remember are $\tau^2 > 0$ and a positive semidefinite
 $(\rho_{ij})$.
 
-\subsection{Why at least two cohorts?}
+\paragraph{Why at least two cohorts?}
 
 With one cohort the portfolio \emph{is}
 that cohort: its weight is one, the gap $\hmu_1 - \hmu$ is always zero, and
@@ -406,7 +403,7 @@ the formula for $z_1$ reads $0/0$ (\finding{2}). There is nothing to blend
 with. The thesis never says so, but the reduction to Bühlmann--Straub needs
 it.
 
-\subsection{With estimated parameters}
+\paragraph{With estimated parameters.}
 
 In practice you plug estimates into $K$,
 and then positive definiteness is no longer automatic: the estimate of
@@ -446,7 +443,14 @@ shrinkage.
 \app{Fitting steps} · \finding{1}, \finding{2} · thesis §2.3--2.5.
 
 % ===========================================================================
-\section{The weights}\label{sec:weights}
+\section{The best blend}\label{sec:blend}
+
+Three choices make the blend (Section~\ref{sec:intro}): how to average a
+cohort's periods, how to average the cohorts, and the credibility factor.
+This section makes them in that order and then works through the special
+cases where the answers have a closed form.
+
+\subsection{The weights}\label{sec:weights}
 
 \oneline A cohort's estimate averages its periods by how precise each one
 is, and the portfolio estimate averages the cohorts by the weights that make
@@ -457,7 +461,7 @@ Two averages come before any blending: a cohort's periods into
 $\hmu_j$, and the cohorts into $\hmu$. Any weights that sum to one give an
 unbiased estimate; the question is which give the most precise one.
 
-\subsection{Within a cohort}
+\paragraph{Within a cohort.}
 
 Within a cohort, weigh each period by the inverse of its noise
 variance (\hb{res:invVar}{2}). A year with twice the volume has half the
@@ -467,7 +471,7 @@ between cohorts does not change it: within one cohort the noise of
 different periods is uncorrelated, and how the cohort moves with the others
 only shows up later, in $K$.
 
-\subsection{Across cohorts}
+\paragraph{Across cohorts.}
 
 Across cohorts, the variance of a weighted average
 $\sum_j c_j\hmu_j$ is a quadratic form in $K$, and the weights that make it
@@ -487,7 +491,7 @@ others already say. Weights can even turn negative. A negative weight is
 the portfolio estimate using one cohort to cancel noise it shares with
 another, the way a hedge works.
 
-\subsection{Every cohort covaries equally with the portfolio}
+\paragraph{Every cohort covaries equally with the portfolio.}
 
 One consequence of optimality carries the rest of the theory: every cohort
 covaries with the portfolio estimate by the same amount, $s^2$
@@ -496,7 +500,7 @@ from it would make $\hmu$ more precise, and the weights would not have been
 the best. Section~\ref{sec:z} uses this to make the credibility factor
 simple.
 
-\subsection{The finance connection}
+\paragraph{The finance connection.}
 
 Read the cohorts as assets and $K$ as the
 covariance of their returns: $b$ is then the global minimum-variance
@@ -530,15 +534,14 @@ care about (Section~\ref{sec:estimation}; \file{studies/literature.md}, §1).
 \app{Models} · \file{studies/literature.md} §1 · thesis §2.5,
 eqs.~(23)--(25).
 
-% ===========================================================================
-\section{The credibility factor}\label{sec:z}
+\subsection{The credibility factor}\label{sec:z}
 
 \oneline The best credibility factor is the part of the gap between cohort
 and portfolio that is real, divided by everything the gap varies by; with
 correlation it can exceed one, and in extreme cases turn negative, without
 anything having gone wrong.
 
-\subsection{The share that is real}
+\paragraph{The share that is real.}
 
 Take the regression reading of Section~\ref{sec:credibility}: $z_j$ is
 the share of the gap $\hmu_j - \hmu$ you expect to be real. With $K$ and the
@@ -557,7 +560,7 @@ So the recipe is: compute $K$, invert it once, and every $z_j$ follows.
 Without correlation it collapses to $\tau^2/(\tau^2 + v_j)$, the
 Bühlmann--Straub factor (\hb{res:diag}{6}).
 
-\subsection{How correlation moves it}
+\paragraph{How correlation moves it.}
 
 Two cohorts show it best. Cohort~1's factor
 is Bühlmann--Straub's with its noise variance $\sigma_1^2$ replaced by
@@ -567,7 +570,7 @@ not count against cohort~1. Positive correlation raises $z_1$, negative
 lowers it, and unlike in Bühlmann--Straub, $z_1$ now depends on the other
 cohort's size too.
 
-\subsection{Above one}
+\paragraph{Above one.}
 
 The thesis noticed that $z_j > 1$ can happen and proposed
 clipping it to $[0, 1]$, without saying when it happens. For two cohorts the
@@ -579,7 +582,7 @@ cohort~2's noise with its sign flipped, and the best blend corrects for it
 by moving \emph{past} $\hmu_1$, away from $\hmu$. Clipping throws that
 correction away.
 
-\subsection{The singularity, and below zero}
+\paragraph{The singularity, and below zero.}
 
 Push the correlation further and
 $z_1$ blows up, then comes back negative. In the thesis's example, cohort~1
@@ -598,7 +601,7 @@ is the best blend written in an awkward coordinate, not an error. Reaching
 the singularity at all takes very unequal cohorts and strong correlation
 (\hb{res:z1_range}{15}).
 
-\subsection{Better numbers to report}
+\paragraph{Better numbers to report.}
 
 The awkwardness comes from measuring the
 gap against a portfolio that contains the cohort itself. Two other numbers
@@ -627,7 +630,7 @@ accuracy here. With three or more cohorts $z_j$ is singular only when every
 other weight is zero, so the sign flip is mostly a two-cohort affair, but
 $z_j$ can still be large near it.
 
-\subsection{Is the blend form enough?}
+\paragraph{Is the blend form enough?}
 
 The blend lets a cohort's rate use two
 numbers, its own estimate and the portfolio's. A wider rule lets it use
@@ -688,15 +691,14 @@ S30--S32).
 \finding{18} · \file{studies/literature.md} §3 ·
 thesis §2.5, eq.~(26); §2.7, eqs.~(32)--(34).
 
-% ===========================================================================
-\section{Special cases}\label{sec:special}
+\subsection{Special cases}\label{sec:special}
 
 \oneline When $K$ is simple enough to invert by hand (no correlation, two
 cohorts, or one covariance shared by all pairs), the credibility factors
 have closed forms and the portfolio weights are the factors themselves,
 rescaled to sum to one.
 
-\subsection{Bühlmann--Straub}
+\paragraph{Bühlmann--Straub.}
 
 No correlation, and noise variance
 $\sigma^2$ over volume. Then $z_j = w_{j*}/(w_{j*} + \kappa)$ with
@@ -706,7 +708,7 @@ portfolio weights are $b_j = z_j/z_*$ with $z_*$ the sum of the factors
 at least two cohorts (\finding{2}). It is also balanced, a property
 Section~\ref{sec:balance} takes up.
 
-\subsection{Two cohorts}
+\paragraph{Two cohorts.}
 
 Bühlmann--Straub with $\sigma_1^2 - \sigma_1\sigma_2\rho$
 in place of $\sigma_1^2$, as in Section~\ref{sec:z}, and again
@@ -716,7 +718,7 @@ means that any split of a portfolio in two, such as the two levels of a
 binary rating factor, keeps the classical weight formula under
 correlation.
 
-\subsection{Equal covariances}
+\paragraph{Equal covariances.}
 
 Suppose every pair of cohorts has the same noise
 covariance $c$: a shock that hits all cohorts alike, such as inflation.
@@ -728,7 +730,7 @@ reason in one line: equal covariances add the same amount to every entry of
 $K$, a term that shifts every cohort alike and leaves the direction of the
 best weights unchanged.
 
-\subsection{When do weights follow from factors?}
+\paragraph{When do weights follow from factors?}
 
 In all three cases the
 portfolio weights are the credibility factors rescaled. That is not true in
@@ -743,7 +745,7 @@ cohorts (and no zero weight), equal covariances are also necessary
 (\lean{Credibility.Model.equalCov_of_b_eq_z}); from four cohorts on, other
 structures work too, an example shown on paper (\finding{5}).
 
-\subsection{What ignoring correlation costs}
+\paragraph{What ignoring correlation costs.}
 
 Apply Bühlmann--Straub to cohorts
 that are in fact correlated. That is not just a blend with the wrong
@@ -833,7 +835,7 @@ credibility rates equals total claims (\hb{res:bs}{10}). It is an identity,
 not an expectation, so it holds whether or not the model is right, and it
 survives cohorts observed over different periods (\finding{10}).
 
-\subsection{Why it holds there, and what it is in general}
+\paragraph{Why it holds there, and what it is in general.}
 
 Write the blend as
 $\hmu_j^b = z_j\hmu_j + (1 - z_j)\hmu$. The blended rates are balanced for
@@ -848,8 +850,10 @@ the measure moves. With region-specific noise and no correlation, it is the
 precision $w_{j*}/\sigma_j^2$, not the exposure. With correlation some
 $b_j$ are negative (Section~\ref{sec:weights}), so some balancing volumes
 are negative: no positive volume measure balances the best blend.
+The same holds for vector levels with matrices for numbers
+(Section~\ref{sec:vector}).
 
-\subsection{Off-balance is a property of the optimum, not of the fit}
+\paragraph{Off-balance is a property of the optimum, not of the fit.}
 
 With the
 true parameters the best blend already has a negative weight in every
@@ -859,7 +863,7 @@ than 1\% in half or more of the draws when cohorts differ in noise level
 a few percent is expected under correlation, not a sign that something went
 wrong.
 
-\subsection{The cost of forcing it}
+\paragraph{The cost of forcing it.}
 
 Suppose balance is a business requirement.
 Three ways come to mind, and all of them cost accuracy.
@@ -887,7 +891,7 @@ these corrections is a linear rule, so its mean squared error is a formula
 in the second moments (\file{studies/exact-balance.js}). They do depend on
 the worlds chosen.
 
-\subsection{Why balance costs anything}
+\paragraph{Why balance costs anything.}
 
 The exposure-weighted mean of the cohort
 estimates carries this period's common shock in full. The GLS weights hedge
@@ -895,7 +899,7 @@ that shock away (Section~\ref{sec:weights}); balance puts it back into every
 rate. Without correlation there is no common shock to hedge, and the cost
 vanishes.
 
-\subsection{Is the shift the best balanced correction?}
+\paragraph{Is the shift the best balanced correction?}
 
 Among corrections that add
 a share $c_jD$ of the imbalance $D$ to each blend, the common shift is
@@ -953,7 +957,7 @@ plugged into $K$ they need repair or a better-structured fit, and the
 fitted model's error is larger than its formula says, by a price of
 estimation that can itself be estimated from the data.
 
-\subsection{The unbiased estimators}
+\paragraph{The unbiased estimators.}
 
 The noise covariance of two cohorts
 is estimated from how their deviations from their own means move together
@@ -965,7 +969,7 @@ the part of that spread the noise explains. Both are unbiased with the
 actual expectation, for any random variables with the model's moments
 (Section~\ref{sec:moments}).
 
-\subsection{What they need}
+\paragraph{What they need.}
 
 At least two periods ($T \ge 2$) and two cohorts
 ($J \ge 2$); otherwise a denominator is zero (\finding{7}). The thesis does
@@ -977,7 +981,7 @@ cohorts' $\hat\sigma_j^2$ with $1/T$ where it should be $1/J$
 $T - 2$ in the denominator becomes a volume-weighted count per pair
 (Section~\ref{sec:unequal}).
 
-\subsection{The plug-in \texorpdfstring{$\hat K$}{K-hat}, and damping}
+\paragraph{The plug-in \texorpdfstring{$\hat K$}{K-hat}, and damping.}
 
 Unbiased does not mean usable.
 $\hat\tau^2$ is often negative, and the table of estimated covariances need
@@ -996,7 +1000,7 @@ worst-case price, between none at $\theta = 1$ and the price of ignoring
 correlation at $\theta = 0$ (\hb{res:ignoreCorr}{9};
 Section~\ref{sec:special}).
 
-\subsection{Shrink for the loss you care about}
+\paragraph{Shrink for the loss you care about.}
 
 The obvious way to choose
 $\theta$ is to make $\hat K$ as close as possible to the true $K$. That is
@@ -1011,7 +1015,7 @@ lesson in finance (Ledoit and Wolf 2017; \file{studies/literature.md} §1).
 Leave-one-year-out cross-validation does not help either, for the same
 reason: a held-out year's shock cannot be cancelled (S14).
 
-\subsection{A fit with no tuning}
+\paragraph{A fit with no tuning.}
 
 Damping is a hand-set number, and the project's
 rule is that a fitted model needs none. The fit the app uses instead,
@@ -1039,7 +1043,7 @@ and the blend are proved; the estimators' unbiasedness under this structure
 is not yet in Lean, and the quality of the whole is numerical, as it is for
 the EBLUP in small-area estimation (\file{studies/literature.md} §2).
 
-\subsection{The error of a fitted model}
+\paragraph{The error of a fitted model.}
 
 Plug estimates into the
 known-parameter error formula and you understate the error, by 13--50\% in
@@ -1105,7 +1109,7 @@ covariances, the blend is optimal in actual mean squared error, and such
 random variables exist exactly when the correlation table is positive
 semidefinite.
 
-\subsection{Given numbers versus actual covariances}
+\paragraph{Given numbers versus actual covariances.}
 
 The thesis, like most
 credibility texts, works with second moments as symbols: $K_{ij}$ is
@@ -1119,7 +1123,7 @@ separate layer, and it uses no distribution: any probability space, any
 square-integrable random variables with the stated means and covariances
 (\finding{11}).
 
-\subsection{What the layer proves}
+\paragraph{What the layer proves.}
 
 \begin{itemize}
   \item \emph{The covariances are real.} $K$ is the actual covariance of the
@@ -1139,9 +1143,11 @@ square-integrable random variables with the stated means and covariances
 The layer is proved once, at the level of $K$: any unbiased estimates whose
 covariances with each other and with the true levels are known. The
 correlated cohorts, unequal lengths and group levels only supply those
-covariances, so each is a short corollary.
+covariances, so each is a short corollary. The same layer for vector
+levels (Section~\ref{sec:vector}) shows that the matrix error covariances
+of the matrix blend and of the best predictor are the true ones.
 
-\subsection{The assumptions are consistent exactly when \texorpdfstring{$\rho \succeq 0$}{rho is PSD}}
+\paragraph{The assumptions are consistent exactly when \texorpdfstring{$\rho \succeq 0$}{rho is PSD}.}
 
 Section~\ref{sec:K} needed the correlation table to be positive
 semidefinite for $K$ to be positive definite, a hypothesis the thesis did
@@ -1156,7 +1162,7 @@ periods the condition is weaker and again exactly right: per period, the
 correlations of the cohorts observed then must be semidefinite; two cohorts
 that never share a period can have any correlation (\finding{12}).
 
-\subsection{What ``best'' means}
+\paragraph{What ``best'' means.}
 
 Everything in this section is about the best
 blend with \emph{fixed} weights: $z_j$ and $b_j$ computed from the true
@@ -1196,7 +1202,14 @@ The app therefore calls the floor ``the best fixed blend''.
 \finding{12} · \file{studies/damping-theta.md} (S9).
 
 % ===========================================================================
-\section{Cohorts observed over different periods}\label{sec:unequal}
+\section{Extensions}\label{sec:extensions}
+
+Each extension is a new covariance matrix $K$ (Section~\ref{sec:K}): build it,
+show it is positive definite, and the results of
+Sections~\ref{sec:blend}--\ref{sec:moments} apply unchanged. Only what is
+genuinely new is explained here.
+
+\subsection{Cohorts observed over different periods}\label{sec:unequal}
 
 \oneline When cohorts have histories of different lengths (a region entered
 three years ago, a product discontinued last year), everything carries over
@@ -1204,7 +1217,7 @@ with sums restricted to the periods a cohort, or a pair of cohorts, is
 observed in; the one thing that changes is the unbiased count in the
 covariance estimator, which becomes a volume-weighted count per pair.
 
-\subsection{The model, with holes}
+\paragraph{The model, with holes.}
 
 Cohort $j$ is observed in a set of
 periods $T_j$, its own and not empty. Nothing else changes: the same
@@ -1213,7 +1226,7 @@ none across periods. So two cohorts' noise can only correlate in the
 periods they share, $T_i \cap T_j$. Within a cohort the best weights are
 still inverse-variance weights, now over $T_j$ only.
 
-\subsection{\texorpdfstring{$K$}{K} keeps its shape}
+\paragraph{\texorpdfstring{$K$}{K} keeps its shape.}
 
 The covariance of two cohort estimates is
 still a noise part plus $\tau^2$ on the diagonal, and the noise part is
@@ -1224,7 +1237,7 @@ and~\ref{sec:z} apply word for word: this is the recipe of
 Section~\ref{sec:K} at work, with only step one (build $K$) new. With every
 cohort observed in every period it is the thesis model again.
 
-\subsection{A weaker condition on the correlations}
+\paragraph{A weaker condition on the correlations.}
 
 For $K$ to be positive
 definite the thesis needs the correlation table to be positive
@@ -1241,7 +1254,7 @@ random variables with the model's moments exist exactly when it holds
 overlap, and Lean checks that any way of filling in the others gives the
 same $K$ and the same factors.
 
-\subsection{The per-pair count}
+\paragraph{The per-pair count.}
 
 The estimators of
 Section~\ref{sec:estimation} still work, with one change that is easy to
@@ -1258,7 +1271,7 @@ periods minus the two cohorts' volume shares in the overlap
 the thesis count returns; on the diagonal it is Bühlmann--Straub with the
 cohort's own length.
 
-\subsection{One shared period can be enough}
+\paragraph{One shared period can be enough.}
 
 The thesis needs $T \ge 2$
 (\finding{7}). Here a pair sharing two or more periods is always fine. A
@@ -1268,7 +1281,7 @@ one shared period shows how their deviations move together. Out of reach is
 only a pair where one cohort is observed in the shared period alone. Pairs that
 share nothing need no estimate: their noise covariance is zero.
 
-\subsection{Balance survives}
+\paragraph{Balance survives.}
 
 Without correlation and with a common noise
 level, the Bühlmann--Straub blend is balanced whatever periods each cohort
@@ -1321,8 +1334,7 @@ is observed in, because the thesis argument works cohort by cohort
 \app{World} (soon) · \finding{8}, \finding{9}, \finding{10},
 \finding{12} · \file{notes/unequal-lengths.md} · not in the thesis.
 
-% ===========================================================================
-\section{Groups and shared levels}\label{sec:groups}
+\subsection{Groups and shared levels}\label{sec:groups}
 
 \oneline When cohorts fall into groups (regions of one country, say) whose
 cohorts share part of their level, a level shared by the whole portfolio
@@ -1331,7 +1343,7 @@ the credibility factor gains a term for the group, the weights become
 two-stage, and the thesis $\hat\tau^2$ is biased, but pairs of cohorts
 within and across groups repair it.
 
-\subsection{The model}
+\paragraph{The model.}
 
 The thesis gives every cohort its own level,
 uncorrelated with the others. Here a fraction $\phi$ of the level variance
@@ -1343,7 +1355,7 @@ period's shocks. It is the first step towards hierarchical credibility
 (Jewell 1975; Bühlmann and Gisler 2005, ch.~6), built in this framework
 from second moments and with correlated noise.
 
-\subsection{One shared level drops out}
+\paragraph{One shared level drops out.}
 
 If the whole portfolio is one group, the
 shared part of the level is common to every cohort, to the portfolio
@@ -1357,7 +1369,7 @@ portfolio. In Lean this is a fact about $K$: adding the same amount to
 every entry of $K$ does not move the GLS weights, and shifts all the
 blend's moments together.
 
-\subsection{Several groups: the factor sees the group}
+\paragraph{Several groups: the factor sees the group.}
 
 With several groups the
 shared part no longer cancels. The best factor has one more term: the
@@ -1372,7 +1384,7 @@ the block condition of Section~\ref{sec:unequal} with unequal lengths): the
 group effects add no constraint, and the whole section holds with unequal
 lengths too.
 
-\subsection{Two-stage weights}
+\paragraph{Two-stage weights.}
 
 If the noise is also uncorrelated across groups,
 $K$ is block diagonal by group, and the GLS weights split in two
@@ -1383,7 +1395,7 @@ shared level flattens the group weights: no group can dominate the
 portfolio by volume alone, because its own level is uncertain however much
 data it has. This is the shape of classical hierarchical credibility.
 
-\subsection{What the estimators see}
+\paragraph{What the estimators see.}
 
 The thesis $\hat\tau^2$ compares cohort
 means with the portfolio mean. With several groups it measures something
@@ -1399,7 +1411,7 @@ So one pair of each kind identifies $\phi\tau^2$. As everywhere in this
 paper, ``unbiased'' is the actual expectation for any distribution with the
 model's moments (Section~\ref{sec:moments}).
 
-\subsection{Towards hierarchical credibility}
+\paragraph{Towards hierarchical credibility.}
 
 What is here: the covariance
 $K$ for one level of grouping, its positive definiteness, the best factor
@@ -1454,8 +1466,7 @@ a crossed structure, not a nested one (Section~\ref{sec:open}).
 \app{World} (soon) · \finding{13} · \file{studies/literature.md} §3 ·
 not in the thesis.
 
-% ===========================================================================
-\section{Choosing the cohorts}\label{sec:cohorts}
+\subsection{Choosing the cohorts}\label{sec:cohorts}
 
 \oneline Merging two cohorts pays only when their true levels are closer
 than the noise in their observed gap and the spread of levels together
@@ -1468,7 +1479,7 @@ Everything so far takes the cohorts as given. In practice someone
 chose them: rating classes, regions, cards. This section asks which choice
 is best for the error of the rates.
 
-\subsection{Equal credibility is not grouping}
+\paragraph{Equal credibility is not grouping.}
 
 With equal covariances the
 portfolio weights are the factors rescaled (Section~\ref{sec:special}), so
@@ -1481,7 +1492,7 @@ rates. And putting two cohorts into one risk group means assuming their
 levels are equal. That changes $K$, so it changes every factor and the
 portfolio estimate too.
 
-\subsection{When merging two cohorts pays}
+\paragraph{When merging two cohorts pays.}
 
 Compare two rules for a pair: keep
 them separate, with their own credibility rates, or merge them into one
@@ -1508,7 +1519,7 @@ falls from $1/(2 - z)$ to $(1 + z^2)/2$. In general it has no closed form,
 and for very unequal cohorts with strong positive correlation the order can
 reverse (\file{notes/merging-cohorts.md}, \S3; numerical, not in Lean).
 
-\subsection{Merge and separate are the two ends of one model}
+\paragraph{Merge and separate are the two ends of one model.}
 
 The group model of
 Section~\ref{sec:groups} sits between them: a share $\phi$ of the level is
@@ -1516,7 +1527,7 @@ shared, and the best rule for the true $\phi$ never has to choose. The
 merging rule says which end is closer to it. Choosing only matters when a
 partition is required, as for tariff cells.
 
-\subsection{The right distance between cohorts}
+\paragraph{The right distance between cohorts.}
 
 Replace $d$ by its estimate from
 the data and the rule becomes: merge when the squared observed gap is below
@@ -1527,7 +1538,7 @@ distance for all pairs (for example van Rijn, Weber and Merz 2026,
 arXiv:2611.07110) ignores that
 correlated cohorts have more precisely measured gaps.
 
-\subsection{Optimal cohorts are intervals, for pooling}
+\paragraph{Optimal cohorts are intervals, for pooling.}
 
 Now cut many units, each
 with a true level and an unbiased, uncorrelated estimate, into at most $k$
@@ -1542,7 +1553,7 @@ it. That turns a search over all groupings into a search over cuts of one
 sorted list, which dynamic programming solves exactly in about $kn^2$ steps
 for $n$ units (\file{notes/kmeans-bridge.md}).
 
-\subsection{For the blend with a common noise level, too}
+\paragraph{For the blend with a common noise level, too.}
 
 Predict each unit by
 its cohort's credibility blend towards a known overall level. If all units
@@ -1550,7 +1561,7 @@ are equally noisy, a cohort's loss depends on it only through its size and
 the sum of its levels, and a swap argument shows the best cohorts are again
 intervals (\hb{res:blend_intervals}{32}).
 
-\subsection{But not in general}
+\paragraph{But not in general.}
 
 With unequal noise levels the blend's optimal
 cohorts need not be intervals (\finding{14}). Three units at levels
@@ -1590,112 +1601,81 @@ Pooling with an unweighted loss fails the same way.
 \finding{6}, \finding{14} · \file{notes/merging-cohorts.md},
 \file{notes/kmeans-bridge.md} · not in the thesis.
 
-% ===========================================================================
-\section{Open directions}\label{sec:open}
+\subsection{Several quantities per cohort}\label{sec:vector}
 
-\oneline The framework extends by building new $K$s, so the open
-directions are mostly new $K$s (crossed levels, correlation over time), one
-genuinely new shape (trends, where the factor becomes a matrix), and an
-optional layer for results that need a noise distribution.
+\oneline When each cohort has several levels at once (frequency and
+severity, or the level and slope of a trend line), the credibility factor
+becomes a credibility matrix, and everything carries over except one
+tempting claim: that blending the quantities jointly always beats blending
+them one at a time.
 
-\subsection{Crossed levels}
+\paragraph{The matrix blend.} Stack the cohorts' estimate vectors into one
+long vector. Its covariance $K$ now runs over cohorts and components
+together, so it can say that two cohorts' frequencies move together, or that
+a cohort's frequency and severity do. The portfolio estimate is the
+matrix version of GLS, and the blend is $\hmu + Z_j(\hmu_j - \hmu)$ with a
+matrix $Z_j$ that lets the frequency gap inform the severity estimate. The
+best $Z_j$ is the same formula as the scalar one, with matrices for numbers
+(\hb{res:vector}{33}). It is best in the strongest sense: for every premium
+that is a linear combination of the components, so for a pure premium built
+to first order from frequency and severity as well as for each component on
+its own. With independent cohorts it is the multidimensional
+Bühlmann--Straub of Bühlmann and Gisler (2005, ch.~7), going back to Jewell
+(1973); here cohorts may be correlated. The moment layer
+(Section~\ref{sec:moments}) carries over too: the matrix error covariances
+are the true ones for every distribution with these moments.
 
-Section~\ref{sec:groups} nests cohorts in
-groups. Real tariffs cross them: Swedish and Norwegian sports cars share
-``sports car'', Swedish sports and family cars share ``Sweden''. Then the
-level covariance has one term per grouping, and in a balanced two-by-two
-table the best linear predictor splits into three credibility factors, one
-for the country effect, one for the car-type effect and one for what is
-left in the cell (\file{notes/crossed-2x2.md}). The blend of this paper is
-the same formula with one common factor for all three, so it is covered by
-the core already, but it loses whenever the layers differ. In the note's
-example the best blend reaches a total error of $5.94$ and the full
-predictor $5.13$, while getting the single factor exactly right instead of
-approximately only moves $6.04$ to $5.94$. The full predictor can also rate
-a cell with no data of its own, from its row and column, which a blend
-cannot. In Lean, the best linear unbiased predictor of Section~\ref{sec:z}
-is the first step; the crossed $K$, its positive definiteness, and
-estimators from pairs in the same row, the same column and neither are
-next. Crossed-classification credibility (Dannenburg, Kaas and Goovaerts
-1996) is the actuarial precedent; mixed models with crossed random effects
-the statistical one.
+\paragraph{Trend lines.} Hachemeister's (1975) regression credibility is an
+instance: fit a line per cohort, and the fitted intercepts and slopes are
+the estimate vectors, with a $K$ built from the design and the noise. With
+independent cohorts this gives the classical Hachemeister factor. With
+correlated cohorts it is new: a shock in one year moves every cohort's
+data that year, so it correlates their fitted lines, and the best
+credibility matrix accounts for that.
 
-\subsection{Time}
-
-The model has no correlation across periods. Three steps lead
-out of that, in order of size.
-\begin{itemize}
-  \item \emph{Period shocks are already in.} A random effect common to all
-    cohorts in a period, with cohort-specific loadings, is a particular
-    correlation table; the equal-correlation and rank-one structures the
-    core handles are exactly this. What is missing is a short theorem that
-    says so.
-  \item \emph{Serial correlation.} Replace ``no correlation across
-    periods'' by a general covariance over cells (cohort, period), an
-    autoregressive one for example. That is a new $K$; prove it positive
-    definite and the core applies unchanged. Unequal lengths become a
-    special case.
-  \item \emph{Trends.} A slope per cohort, as in Hachemeister's model,
-    makes the credibility factor a matrix and the target next period's
-    level instead of a constant one. This is the largest step, and the one
-    actuaries would recognise first.
-\end{itemize}
-
-\subsection{Better fits}
-
-Several questions are about fitted models, not about
-the model.
-\begin{itemize}
-  \item The best linear unbiased predictor of Section~\ref{sec:z}
-    survives estimation in simulation on the one-correlation $\hat K$, but
-    that $\hat K$ is wrong when correlation differs between pairs (regions
-    in countries), and there the blend form costs most. Open: a $\hat K$
-    with few parameters that knows the group structure, and the price of
-    estimation in the sense of Kackar and Harville (Section~\ref{sec:related}).
-  \item A fit for the group model that pools the within- and across-group
-    pair estimates into one $\widehat{\phi\tau^2}$ with no hand-set
-    choices, and its behaviour in simulation (Section~\ref{sec:groups}).
-  \item The credibility-weighted variances of
-    Section~\ref{sec:estimation} with unequal lengths, and the
-    unbiasedness of the fitted parameters under that structure in Lean.
-  \item The winner's curse of choosing cohorts from the same data
-    (Section~\ref{sec:cohorts}).
-\end{itemize}
-
-\subsection{The optional distribution layer}
-
-The core assumes only first and
-second moments, and it stays that way. But some questions need more: how
-precise the estimated parameters are depends on fourth moments, and an
-exact estimate of a fitted model's error needs a noise family. Results that
-assume one (normal, Poisson, gamma) are allowed in a separate layer, named
-as such, with nothing in the core depending on them (owner, 2026-11-15).
-Natural first results: Stein's unbiased risk estimate, exact under normal
-noise and its exponential-family analogue (Stein 1981, Hudson 1978); and
-the classical fact that in exponential dispersion families with conjugate
-priors the linear credibility estimator is the Bayes predictor (Jewell
-1974), so the best linear rule is then the best rule.
-
-\subsection{Multiplicative tariffs}
-
-Tariffs usually multiply relativities; the
-model is additive in the key ratio. A multiplicative version is the model on
-the log scale, which neither the thesis nor this paper treats.
+\paragraph{Joint is not always better than separate.} The natural claim is
+that blending frequency and severity jointly beats two separate blends,
+since a separate blend looks like a joint one with a diagonal $Z$. It is
+not, because a separate blend also uses its own portfolio estimate per
+component, not the joint GLS one. With three or more correlated cohorts the
+joint blend can lose; in the counterexample of \finding{22} its frequency
+error is $0.977$ against $0.973$. What is true sits one level up: the
+best linear unbiased predictor of the whole vector (the matrix version of
+the one in Section~\ref{sec:z}) beats both. Two cases bracket the finding.
+With independent cohorts the joint blend \emph{is} that best predictor, so
+it does beat separate blends; and with no covariance between components,
+neither in the noise nor in the levels, the best predictor is just the
+separate best predictors, one per component: the other component carries
+no information. The moral is Bühlmann's (1974) for a single risk:
+restricted predictors are not ordered, so compare each to the best
+predictor, not to each other.
 
 \watch
 \begin{itemize}
-  \item \emph{These are directions, not results.} Nothing in this section
-    is proved; the working notes it cites have the calculations done so
-    far.
-  \item \emph{New extensions start with one question:} which $K$ do they
-    have (Section~\ref{sec:K})? Only what is genuinely new (that $K$, its
-    positive definiteness, its moments) needs proving.
+  \item \emph{Don't sell the matrix blend as ``never worse than separate''.}
+    Only the best predictor has that guarantee; the blend has it with
+    independent cohorts.
+  \item \emph{Balance is a matrix condition.} The blends are balanced for
+    matrix weights $U_j$ exactly when $U_j(I - Z_j)$ is the same matrix
+    times the portfolio weight $B_j$ for every cohort, the matrix version of
+    Section~\ref{sec:balance}; multidimensional Bühlmann--Straub is
+    balanced for the volumes.
 \end{itemize}
 
-\see \lean{Credibility.Core.blupWeight_optimal} · \app{Models} (``BLUP'') ·
-\file{notes/crossed-2x2.md}, \file{notes/roadmap.md},
-\file{studies/PLAN.md} · \file{studies/literature.md} §5.
-
+\see \hb{res:vector}{33} ·
+\lean{Credibility.CoreVector.moments_bestZ},
+\lean{Credibility.VecBlendMoments.bestZ_optimal_dotProduct},
+\lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler},
+\lean{Credibility.CoreVector.hachemeister_bestZ},
+\lean{Credibility.CoreVector.hachemeister_bestZ_of_blockDiag},
+\lean{Credibility.CoreVector.trace_linMse_blupW_le_separate},
+\lean{Credibility.CoreVector.blendW_eq_blupW_of_blockDiag},
+\lean{Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag},
+\lean{Credibility.CoreVector.vecBalanced_iff},
+\lean{Credibility.CoreVector.vecBalanced_buhlmannGisler},
+\lean{Credibility.CoreVector.VecEstimates.mse_blend},
+\lean{Credibility.CoreVector.VecEstimates.blup_mse_optimal} ·
+\finding{22} · \file{notes/time-trends.md} §2--3.
 % ===========================================================================
 \section{Related work}\label{sec:related}
 
@@ -1705,7 +1685,7 @@ portfolios) and combines them on one covariance matrix $K$; what is new is
 mostly the combination, the conditions made exact, and the machine-checked
 proofs.
 
-\subsection{Credibility}
+\paragraph{Credibility.}
 
 The blend and the best factor go back to Bühlmann
 (1967) and Bühlmann and Straub (1970); Bühlmann and Gisler (2005) is the
@@ -1720,7 +1700,11 @@ Section~\ref{sec:estimation}; Yang and Wang (2024) give likelihood-based and
 linear-Bayes ones. Hierarchical credibility (Jewell 1975, Taylor 1979;
 Bühlmann and Gisler 2005, ch.~6) is the target shape of
 Section~\ref{sec:groups}, and crossed classification (Dannenburg, Kaas and
-Goovaerts 1996) of the crossed levels in Section~\ref{sec:open}. The thesis
+Goovaerts 1996) of the crossed levels in Section~\ref{sec:open}. Multidimensional
+credibility (Jewell 1973; Bühlmann and Gisler 2005, ch.~7) and regression
+credibility (Hachemeister 1975) are the independent-cohort cases of
+Section~\ref{sec:vector}, and Bühlmann (1974) compares restricted
+credibility formulas for several quantities as \finding{22} does. The thesis
 also discusses the credibility factor of Parodi and Bonche, which is not
 formalized here. Wen and Wu (2011) allow any covariance matrix between
 the risk levels, with noise still independent across risks: in this
@@ -1751,7 +1735,7 @@ Bühlmann--Straub form, the factor for any positive definite $K$, when it leaves
 report instead (\finding{3}, \finding{17}), and the group model with
 correlated noise and pair estimators (\finding{13}).
 
-\subsection{Best linear unbiased prediction}
+\paragraph{Best linear unbiased prediction.}
 
 Credibility estimators are best
 linear unbiased predictors, and Goldberger (1962) gives the general form:
@@ -1767,7 +1751,7 @@ credibility form, free of $\tau^2$ and the noise variances, and the sharp
 two-sided version for equal correlations and for damping (\finding{19},
 \finding{20}).
 
-\subsection{Small-area estimation}
+\paragraph{Small-area estimation.}
 
 With estimated variance parameters a BLUP
 becomes an EBLUP, and the small-area literature has worked out what that
@@ -1787,7 +1771,7 @@ error, the jackknife, and the common shift as the way to balance.
 close to best under correlation (\finding{16}); the per-pair count for
 cohorts with different histories (\finding{9}).
 
-\subsection{Minimum-variance portfolios}
+\paragraph{Minimum-variance portfolios.}
 
 The portfolio weights $K^{-1}\mathbf 1$,
 normalized, are the global minimum-variance portfolio of finance
@@ -1804,7 +1788,7 @@ of this history's shocks than as an estimate of the population $K$
 (Section~\ref{sec:estimation}). The same weights are the
 minimum-variance distortionless beamformer of array signal processing.
 
-\subsection{Error of a fitted model in reserving}
+\paragraph{Error of a fitted model in reserving.}
 
 Mack (1993) splits the error
 of a chain-ladder reserve into process variance and estimation error,
@@ -1812,7 +1796,7 @@ distribution-free; Gisler and Wüthrich (2008) and Happ, Maier and Merz
 (2011) do the same for credibility and for correlated triangles. They are
 the actuarial counterpart of the small-area decomposition.
 
-\subsection{Grouping on a line}
+\paragraph{Grouping on a line.}
 
 That optimal one-dimensional clusters are
 intervals, and can be found by dynamic programming over the sorted values,
@@ -1833,6 +1817,112 @@ for the blend with a common noise level (\finding{14}).
 \end{itemize}
 
 \see \file{studies/literature.md} §1--5 · thesis §1, references.
+
+% ===========================================================================
+\section{Open directions}\label{sec:open}
+
+\oneline The framework extends by building new $K$s, so the open
+directions are mostly new $K$s (crossed levels, correlation over time) and an
+optional layer for results that need a noise distribution.
+
+\paragraph{Crossed levels.}
+
+Section~\ref{sec:groups} nests cohorts in
+groups. Real tariffs cross them: Swedish and Norwegian sports cars share
+``sports car'', Swedish sports and family cars share ``Sweden''. Then the
+level covariance has one term per grouping, and in a balanced two-by-two
+table the best linear predictor splits into three credibility factors, one
+for the country effect, one for the car-type effect and one for what is
+left in the cell (\file{notes/crossed-2x2.md}). The blend of this paper is
+the same formula with one common factor for all three, so it is covered by
+the core already, but it loses whenever the layers differ. In the note's
+example the best blend reaches a total error of $5.94$ and the full
+predictor $5.13$, while getting the single factor exactly right instead of
+approximately only moves $6.04$ to $5.94$. The full predictor can also rate
+a cell with no data of its own, from its row and column, which a blend
+cannot. In Lean, the best linear unbiased predictor of Section~\ref{sec:z}
+is the first step; the crossed $K$, its positive definiteness, and
+estimators from pairs in the same row, the same column and neither are
+next. Crossed-classification credibility (Dannenburg, Kaas and Goovaerts
+1996) is the actuarial precedent; mixed models with crossed random effects
+the statistical one.
+
+\paragraph{Time.}
+
+The model has no correlation across periods. Three steps lead
+out of that, in order of size.
+\begin{itemize}
+  \item \emph{Period shocks are already in.} A random effect common to all
+    cohorts in a period, with cohort-specific loadings, is a particular
+    correlation table; the equal-correlation and rank-one structures the
+    core handles are exactly this. What is missing is a short theorem that
+    says so.
+  \item \emph{Serial correlation.} Replace ``no correlation across
+    periods'' by a general covariance over cells (cohort, period), an
+    autoregressive one for example. That is a new $K$; prove it positive
+    definite and the core applies unchanged. Unequal lengths become a
+    special case.
+  \item \emph{Trends.} A slope per cohort, as in Hachemeister's model,
+    makes the credibility factor a matrix. That step is done
+    (Section~\ref{sec:vector}), with cohorts correlated through year
+    shocks. Open: the target as next period's level on the line, and
+    estimators for the line model's $K$.
+\end{itemize}
+
+\paragraph{Better fits.}
+
+Several questions are about fitted models, not about
+the model.
+\begin{itemize}
+  \item The best linear unbiased predictor of Section~\ref{sec:z}
+    survives estimation in simulation on the one-correlation $\hat K$, but
+    that $\hat K$ is wrong when correlation differs between pairs (regions
+    in countries), and there the blend form costs most. Open: a $\hat K$
+    with few parameters that knows the group structure, and the price of
+    estimation in the sense of Kackar and Harville (Section~\ref{sec:related}).
+  \item A fit for the group model that pools the within- and across-group
+    pair estimates into one $\widehat{\phi\tau^2}$ with no hand-set
+    choices, and its behaviour in simulation (Section~\ref{sec:groups}).
+  \item The credibility-weighted variances of
+    Section~\ref{sec:estimation} with unequal lengths, and the
+    unbiasedness of the fitted parameters under that structure in Lean.
+  \item The winner's curse of choosing cohorts from the same data
+    (Section~\ref{sec:cohorts}).
+\end{itemize}
+
+\paragraph{The optional distribution layer.}
+
+The core assumes only first and
+second moments, and it stays that way. But some questions need more: how
+precise the estimated parameters are depends on fourth moments, and an
+exact estimate of a fitted model's error needs a noise family. Results that
+assume one (normal, Poisson, gamma) are allowed in a separate layer, named
+as such, with nothing in the core depending on them (owner, 2026-11-15).
+Natural first results: Stein's unbiased risk estimate, exact under normal
+noise and its exponential-family analogue (Stein 1981, Hudson 1978); and
+the classical fact that in exponential dispersion families with conjugate
+priors the linear credibility estimator is the Bayes predictor (Jewell
+1974), so the best linear rule is then the best rule.
+
+\paragraph{Multiplicative tariffs.}
+
+Tariffs usually multiply relativities; the
+model is additive in the key ratio. A multiplicative version is the model on
+the log scale, which neither the thesis nor this paper treats.
+
+\watch
+\begin{itemize}
+  \item \emph{These are directions, not results.} Nothing in this section
+    is proved; the working notes it cites have the calculations done so
+    far.
+  \item \emph{New extensions start with one question:} which $K$ do they
+    have (Section~\ref{sec:K})? Only what is genuinely new (that $K$, its
+    positive definiteness, its moments) needs proving.
+\end{itemize}
+
+\see \lean{Credibility.Core.blupWeight_optimal} · \app{Models} (``BLUP'') ·
+\file{notes/crossed-2x2.md}, \file{notes/roadmap.md},
+\file{studies/PLAN.md} · \file{studies/literature.md} §5.
 
 \appendix
 
@@ -1906,7 +1996,9 @@ levels shared within groups (Section~\ref{sec:groups}; \finding{13});
 what ignoring or damping correlation costs at worst
 (Section~\ref{sec:special}; \finding{19}, \finding{20}); and
 choosing the cohorts: when merging pays, and when optimal cohorts are
-intervals (Section~\ref{sec:cohorts}; \finding{6}, \finding{14}).
+intervals (Section~\ref{sec:cohorts}; \finding{6}, \finding{14}); and
+several quantities per cohort, the matrix blend and Hachemeister's trend
+lines with correlated cohorts (Section~\ref{sec:vector}; \finding{22}).
 
 \subsection*{Concordance}
 

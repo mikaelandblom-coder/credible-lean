@@ -21,22 +21,28 @@ Rules that keep this cheap to maintain:
 - A formula is displayed in the paper only when the explanation cannot be
   read without it (the model, the blend, the credibility factor). Otherwise:
   "Handbook (n)".
-- Sections are concepts, not results. A new result is normally a subsection
-  in an existing section.
+- Sections are concepts, not results. A new result is normally a
+  paragraph in an existing subsection.
 - No proofs. A proof idea in one or two sentences is welcome when it is the
   explanation.
-- Every section ends with a **See** line: handbook numbers, Lean names, app
+- Every topic ends with a **See** line: handbook numbers, Lean names, app
   step, and the working note it came from.
 - Numbers from simulations cite the study script in `studies/` that
   produced them.
 
-## Section template
+## Structure (owner, 2026-11-20)
 
-1. **In one sentence.** What the concept is.
-2. **The idea**, in numbered subsections, one per topic (a short
-   unheaded intro before the first is fine). Plain words, a small example
-   where it helps. A new result is normally a new subsection.
-3. **What to watch out for** (a subsection): when it applies, what can go wrong.
+Laid out like a paper: nine sections, a few subsections each, and the topics
+inside as run-in paragraphs (`\paragraph{…}`), not headings of their own. A new
+result is normally a new paragraph in an existing subsection; a new extension
+is a subsection of §7. Each topic (a subsection, or a section without
+subsections) follows the template:
+
+1. An opening sentence: what the concept is (`\oneline`, no heading).
+2. **The idea**, in run-in paragraphs, one per topic. Plain words, a small
+   example where it helps.
+3. **What to watch out for** (`\watch`, a run-in paragraph): when it
+   applies, what can go wrong.
 4. **See.** Handbook (n) · `Lean.name` · app: step · note.
 
 ## Sections
@@ -45,28 +51,28 @@ Status: `—` not started, `src` source material exists to absorb, `draft`,
 `done`. (2026-11-16: `paper/paper.tex` has every section as a heading with a
 "not yet written" note; §1–6 drafted. Later the same day: §0, A and C
 drafted, then §7–9, then §10–11. 2026-11-17: §12–14 and B drafted, and
-paragraphs for Findings 18–20 in §5–6: the first draft is complete.)
+paragraphs for Findings 18–20 in §5–6: the first draft is complete.
+2026-11-20: the 15 sections (old §0–14) and ~90 subsections regrouped into 9 sections
+with run-in paragraphs; the matrix blend added
+as §7.4.)
 
-| # | Section | Covers | Source material | Status |
+| # | Section (subsections) | Covers | Was (before 2026-11-20) | Status |
 |---|---|---|---|---|
-| 0 | How to read this | the four documents and what each is for; machine-checked means what | this file, README "How it was made" | draft |
-| 1 | What credibility is | blending own experience with the portfolio; what `z` means; best blend | thesis §2.1, handbook 1 | draft |
-| 2 | The model | error terms instead of risk parameters; correlation across cohorts within a period; distribution-free; translation to Bühlmann–Straub notation | thesis §2.3, handbook 0 | draft |
-| 3 | From data to `K` | the recipe: build `K`, check it is positive definite, read off everything; why positive definite and not semidefinite; why two cohorts | Findings 1, 2 | draft |
-| 4 | The weights | inverse-variance within a cohort; GLS across cohorts; the link to the minimum-variance portfolio | thesis §2.5, `studies/literature.md` §1 | draft |
-| 5 | The credibility factor | the proposed `z`; how correlation moves it; `z > 1` and the sign flip; the blend against the BLUP | thesis §2.5, §2.7, Findings 3, 17, 18 | draft |
-| 6 | Special cases | Bühlmann–Straub; two cohorts; equal covariances; weights from credibility factors; what ignoring or damping correlation costs | Findings 4, 5, 19, 20 | draft |
-| 7 | Balance | what it is and why practitioners want it; when it holds for free; the cost of forcing it; how to balance if you must | Findings 10, 15, 16, study findings S27–S29 | draft |
-| 8 | Estimating the parameters | the unbiased estimators and what they need; plug-in `K̂` and damping; a fit with no tuning; the error of a fitted model | thesis §2.8, Finding 7, `studies/damping-theta.md`, `studies/literature.md` §2, §4 | draft |
-| 9 | Why the moments are real | given numbers versus actual covariances; true MSE; the assumptions are consistent exactly when `ρ ⪰ 0` | Findings 11, 12 | draft |
-| 10 | Cohorts observed over different periods | unequal lengths; the per-pair count | `notes/unequal-lengths.md`, Findings 8–10, 12 | draft |
-| 11 | Groups and shared levels | a shared level drops out; several groups; what the estimators see; towards hierarchical credibility | Finding 13, handbook §6, `studies/literature.md` §3 | draft |
-| 12 | Choosing the cohorts | when merging pays off; equal credibility is not grouping; optimal cohorts are intervals; when they are not | `notes/merging-cohorts.md`, `notes/kmeans-bridge.md`, Findings 6, 14 | draft |
-| 13 | Open directions | crossed levels; time trends; the optional distribution layer | `notes/crossed-2x2.md`, `notes/roadmap.md`, `studies/literature.md` §5 | draft |
-| 14 | Related work | credibility with common effects, small-area estimation, covariance shrinkage: what is used from where | `studies/literature.md` | draft |
-| A | Changes from the thesis | corrections and sharpenings, by thesis section; concordance thesis equation ↔ handbook number ↔ Lean name | `FINDINGS.md` | draft |
-| B | Concept index | alphabetical: term → one-line meaning → section | — | draft |
-| C | Notation | symbols, with the Bühlmann–Straub translation | handbook 0 | draft |
+| 1 | Introduction (How to read this paper) | what credibility is, the best factor, what is new; the four documents, machine-checked means what | §1, §0 | draft |
+| 2 | The model (Cohorts, periods and error terms; From data to `K`) | error terms, correlation within a period, distribution-free, Bühlmann–Straub notation; the recipe, PD not PSD, two cohorts | §2, §3 | draft |
+| 3 | The best blend (The weights; The credibility factor; Special cases) | inverse-variance and GLS weights; the proposed `z`, `z > 1`, the sign flip, blend against BLUP; Bühlmann–Straub, two cohorts, equal covariances, ignoring or damping correlation | §4, §5, §6 | draft |
+| 4 | Balance | when it holds for free, the cost of forcing it, how to balance | §7 | draft |
+| 5 | Estimating the parameters | unbiased estimators, plug-in `K̂`, damping, a fit with no tuning, error of a fitted model | §8 | draft |
+| 6 | Why the moments are real | true covariances and MSE; consistent iff `ρ ⪰ 0` | §9 | draft |
+| 7 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; the matrix blend, Hachemeister, Finding 22 | §10, §11, §12, new | draft |
+| 8 | Related work | what is used from where | §14 | draft |
+| 9 | Open directions | crossed levels, time, better fits, the distribution layer | §13 | draft |
+| A | Changes from the thesis | corrections, beyond the thesis, concordance | A | draft |
+| B | Concept index | term → meaning → section | B | draft |
+| C | Notation | symbols, Bühlmann–Straub translation | C | draft |
+
+Old section numbers in dated notes ("Absorbed into paper §n") use the old
+numbering; the "Was" column translates them.
 
 ## Absorbing the notes
 
@@ -83,23 +89,6 @@ may need a paragraph.)
   §13 (Time) next to "period shocks are already in". Now in Lean (`Credibility/Shock.lean`):
   a paragraph on the shock model, and that shock and process noise are told apart only by
   volume variation (`Credibility.Shock.not_unbiased_s2_of_const`).
-- Matrix blend (2026-11-19, `CoreVector.lean`): vector levels, credibility matrix, matrix GLS
-  with correlated cohorts (Jewell 1973; Bühlmann–Gisler ch. 7 has independent cohorts, and is
-  recovered: `Credibility.CoreVector.moments_bestZ_buhlmannGisler`). Hachemeister with correlated
-  cohorts proved (`Credibility.CoreVector.hachemeister_bestZ`): one paragraph in §13 now
-  possible (trend lines per cohort; a year shock correlates the cohorts' lines).
-  Frequency × severity (Finding 22): vector credibility beats separate credibility as a best
-  predictor (`Credibility.CoreVector.trace_linMse_blupW_le_separate`), not as a blend; one
-  paragraph with the counterexample's moral (restricted predictors are not ordered).
-  With independent cohorts the matrix blend *is* the best predictor
-  (`Credibility.CoreVector.blendW_eq_blupW_of_blockDiag`), and without cross-component
-  covariance the vector best predictor is the separate ones
-  (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`): one sentence each, they
-  bracket Finding 22. Balance of the matrix blend (`Credibility.CoreVector.vecBalanced_iff`;
-  Bühlmann–Gisler balanced for the volumes, `vecBalanced_buhlmannGisler`): one sentence in
-  the balance section. Moment layer (`Credibility.CoreVector.VecEstimates.mse_blend`,
-  `Credibility.CoreVector.VecEstimates.blup_mse_optimal`): one sentence, as for the scalar
-  moment layer: the matrix MSEs are true error covariances for every distribution.
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

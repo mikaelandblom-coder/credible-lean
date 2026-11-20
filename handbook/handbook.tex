@@ -846,4 +846,65 @@ and if a cohort straddled another unit, one of the two swaps that would
   depends on the noise of the pair.
 \end{caveat}
 
+\subsection*{Several quantities per cohort: the matrix blend}
+
+Each cohort now has a level vector $\mu_j \in \mathbb{R}^P$: frequency and
+severity, or level and slope of a trend line (Hachemeister). Stack the
+estimates $\hmu_j \in \mathbb{R}^P$ of all cohorts into one vector and let
+$K$ be its covariance over cohorts $\times$ components (positive definite)
+and $L$ that of the stacked levels; the noise is uncorrelated with the
+levels. Cohorts may be correlated with each other and components with each
+other. Write $K_{jj}$, $L_{jj}$ for the $P \times P$ blocks of cohort $j$ and
+$U$ for $J$ stacked identity matrices. The portfolio estimate is matrix GLS,
+$\hmu = W^{\mathsf T}\hat{\boldsymbol\mu}$ with
+$W = K^{-1}U S$, $S = (U^{\mathsf T}K^{-1}U)^{-1} = \Var(\hmu)$, and
+the blend is $\hmu + Z_j(\hmu_j - \hmu)$ with a $P \times P$ credibility
+matrix $Z_j$.
+
+\begin{result}[The best credibility matrix]\label{res:vector}
+  \[
+    Z_j = \bigl(L_{jj} - (LW)_j\bigr)\bigl(K_{jj} - S\bigr)^{-1},
+  \]
+  $(LW)_j$ the rows of $LW$ for cohort $j$ (the matrix version of
+  Result~\ref{res:mse}). It is best for every premium: for every
+  $a \in \mathbb{R}^P$ the blend with $Z_j$ has the smallest mean squared
+  error as an estimate of $a^{\mathsf T}\mu_j$, so also the smallest summed
+  error over the components. With independent cohorts,
+  $K_{jj} = \Lambda + S_j$ and $L_{jj} = \Lambda$, it is the
+  multidimensional Bühlmann--Straub $Z_j = \Lambda(\Lambda + S_j)^{-1}$
+  (Bühlmann \& Gisler, ch.~7).
+  \lean{Credibility.CoreVector.moments_bestZ}
+  \lean{Credibility.VecBlendMoments.bestZ_optimal_dotProduct}
+  \lean{Credibility.VecBlendMoments.bestZ_optimal_trace}
+  \lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler}
+\end{result}
+\use Hachemeister's trend lines are an instance: $K = L + M\Phi M^{\mathsf T}$ for
+the fitted lines, and the same formula holds with correlated cohorts. With
+independent cohorts the matrix blend \emph{is} the best linear unbiased
+predictor; with no covariance between components (frequency and severity
+uncorrelated in both $K$ and $L$), separate best predictors per component
+are enough. The blends are balanced for weights $U_j$ exactly when
+$U_j(I - Z_j) = C B_j$ for one matrix $C$ ($B_j$ the portfolio weight
+blocks); Bühlmann--Gisler is balanced for the volumes.
+\lean{Credibility.CoreVector.hachemeister_bestZ}
+\lean{Credibility.CoreVector.blendW_eq_blupW_of_blockDiag}
+\lean{Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag}
+\lean{Credibility.CoreVector.vecBalanced_iff}
+\lean{Credibility.CoreVector.vecBalanced_buhlmannGisler}
+\why The error covariance is a matrix parabola in $Z$ with its vertex at
+$Z_j$; every other $Z$ adds a positive semidefinite matrix, so no
+premium $a^{\mathsf T}\mu_j$ does better. These are the true error
+covariances for any random vectors with these moments, not just given
+numbers.
+\lean{Credibility.CoreVector.VecEstimates.mse_blend}
+\begin{caveat}
+  Don't claim that the matrix blend beats separate blends per component.
+  With three or more correlated cohorts it can lose: in the counterexample
+  of Finding~22 the frequency error is $0.9768$ against $0.9726$ for
+  separate blends. What does hold is one level up: the matrix best linear
+  unbiased predictor beats separate blends (and the matrix blend) in summed
+  error.
+  \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
+\end{caveat}
+
 \end{document}

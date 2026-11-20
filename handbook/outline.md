@@ -23,20 +23,6 @@ voice, then trim towards 8 pages.
   `Credibility.Shock.hSum_expo_w`): an entry with the shock `K` and the estimators, "watch out":
   shock and process noise separate only with volumes that vary (`T ≥ 3`;
   `Credibility.Shock.not_unbiased_s2_of_const`).
-- Matrix blend (2026-11-19, `CoreVector.lean`): Hachemeister done
-  (`Credibility.CoreVector.hachemeister_bestZ`, classical case
-  `hachemeister_bestZ_of_blockDiag`); frequency × severity settled (Finding 22: the best
-  predictor `Credibility.CoreVector.trace_linMse_blupW_le_separate` beats separate blends, the
-  matrix blend need not: "watch out"); then one entry with the formula of
-  `Credibility.CoreVector.moments_bestZ` and "it is best for every premium `aᵀμⱼ`"
-  (`Credibility.VecBlendMoments.bestZ_optimal_dotProduct`). "Use it": with independent cohorts the matrix blend is
-  the best predictor (`Credibility.CoreVector.blendW_eq_blupW_of_blockDiag`); with no
-  frequency–severity covariance separate best predictors are enough
-  (`Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag`). Balance: matrix blends are
-  balanced for `Uⱼ` iff `Uⱼ(I − Zⱼ) = CBⱼ` (`Credibility.CoreVector.vecBalanced_iff`);
-  Bühlmann–Gisler is balanced for the volumes. The formulas are true error covariances for
-  any distribution (`Credibility.CoreVector.VecEstimates.mse_blend`): add it to the "why" of
-  the matrix entry, no entry of its own.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
@@ -123,6 +109,13 @@ voice, then trim towards 8 pages.
     `thm:pool_mse_eq_kmeansCost`, `cor:pool_optimal_contiguous`,
     `thm:blend_optimal_contiguous`. "Watch out": not for the blend with
     unequal variances (Finding 14).
+
+17. Several quantities per cohort (drafted 2026-11-20): the best credibility matrix
+    `Zⱼ = (Lⱼⱼ − (LW)ⱼ)(Kⱼⱼ − S)⁻¹`, best for every premium `aᵀμⱼ`; Bühlmann–Gisler
+    and Hachemeister as instances; "use it": independent cohorts (blend = best predictor),
+    no cross-component covariance (separate predictors), balance; "why": true MSE for any
+    distribution; "watch out": the blend need not beat separate blends (Finding 22) —
+    `res:vector`.
 
 (Damping is in, as 5a; 1-D k-means intervals are in via item 16.)
 
