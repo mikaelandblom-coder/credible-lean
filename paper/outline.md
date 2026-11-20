@@ -84,13 +84,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Finding 23 (2026-11-19, modelling remark): a common period shock does not shrink with
-  volume; eq. (16) with fixed `ρ` makes it shrink. One sentence in the model section and in
-  §13 (Time) next to "period shocks are already in". Now in Lean (`Credibility/Shock.lean`):
-  a paragraph on the shock model, and that shock and process noise are told apart only by
-  volume variation (`Credibility.Shock.not_unbiased_s2_of_const`), and with three periods
-  any volume variation suffices (`Credibility.Shock.det_expo_neg`). The moment layer holds
-  (`Credibility.Shock.Cells.bestZ_mse_optimal`, `Credibility.Shock.Cells.integral_KHat`).
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

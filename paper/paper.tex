@@ -283,6 +283,9 @@ Read it from left to right.
     period. A surge in travel raises claims on every card in that year, not
     equally. Noise in different periods is uncorrelated
     ($\delta_{ts}$ is 1 when $t = s$ and 0 otherwise).
+    With $\sigma_{jt}^2 = \sigma_j^2/w_{jt}$ and a fixed $\rho_{ij}$ the
+    shared part shrinks as volumes grow, which a real shock does not; the
+    model where it does not is in Section~\ref{sec:open} (\finding{23}).
 \end{itemize}
 Both $\eta_j$ and $\varepsilon_{jt}$ are centred with unit variance, and the
 cohort effects are uncorrelated with each other and with the noise.
@@ -1855,8 +1858,25 @@ out of that, in order of size.
   \item \emph{Period shocks are already in.} A random effect common to all
     cohorts in a period, with cohort-specific loadings, is a particular
     correlation table; the equal-correlation and rank-one structures the
-    core handles are exactly this. What is missing is a short theorem that
-    says so.
+    core handles are exactly this. One catch (\finding{23}): with noise
+    $\sigma_j^2/w_{jt}$ and a fixed $\rho_{ij}$ the shock shrinks as
+    volumes grow, while a storm or a demand swing hits a cohort's rate
+    whatever its size. The fix is a shock $C$ that does not shrink plus
+    process noise $s_j^2/w_{jt}$ that does. It is a new $K$, positive
+    definite for any cell weights, so the core applies, and the correlation
+    between cohorts now rises with volume (\hb{res:shock}{26}). Its
+    parameters have unbiased estimators (\hb{res:shock_est}{27}), with one
+    limit that is the point of the model: a squared residual mixes shock and
+    process noise, and only volume that changes over time tells them apart.
+    At a constant volume the data see only $C_{jj} + s_j^2/w_j$, and no
+    estimator of $s_j^2$ is unbiased
+    (\lean{Credibility.Shock.not_unbiased_s2_of_const}). With three periods
+    or more, any variation in volume is enough: the plain and the
+    volume-weighted sums of squared residuals then always separate the two
+    (\lean{Credibility.Shock.det_expo_neg}). The moment layer holds as
+    before (\lean{Credibility.Shock.Cells.bestZ_mse_optimal},
+    \lean{Credibility.Shock.Cells.integral_KHat}). With little volume
+    variation the split is noisy; how noisy is a question for simulation.
   \item \emph{Serial correlation.} Replace ``no correlation across
     periods'' by a general covariance over cells (cohort, period), an
     autoregressive one for example. That is a new $K$; prove it positive
