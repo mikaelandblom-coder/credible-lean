@@ -42,6 +42,10 @@ via a matrix Blend shared with bivariate frequency–severity credibility).
   table; `K`, positive definiteness (`C ⪰ 0`, `s² > 0`) and unbiased estimators of `C`
   and `s²` (rank-one `C = λλᵀ` as the one-parameter-per-cohort case). Compare with the
   thesis estimators when volumes grow.
+- [ ] **Monthly card data (2026-11-20).** Plan: [`card-data.md`](card-data.md): general
+  target and fixed effects in Core, estimated season, a persistent common factor with
+  loadings and cards entering and leaving, its estimators. Covers the serial-correlation
+  item below.
 - [ ] **Serial correlation.** Replace `δₜₛ` in `cov(εᵢₜ, εⱼₛ)` by a general
   PSD table over cells `(j,t)`, AR(1) as the example. New `K`, prove it PD,
   Core applies unchanged; unequal lengths become a special case.
