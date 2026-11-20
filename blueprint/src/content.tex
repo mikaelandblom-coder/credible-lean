@@ -2765,7 +2765,7 @@ these two covariances.
 
 Extension (\texttt{notes/card-data.md}, Step 1). The data $x$ are indexed by observed
 cells, with $K = \cov(x)$; the target is a random $Y$ with $\ell = \cov(x, Y)$ and
-$v = \var Y$. The means are fixed effects: $E x = X\beta$ and $E Y = x_0^T\beta$ for an
+$v = \operatorname{Var} Y$. The means are fixed effects: $E x = X\beta$ and $E Y = x_0^T\beta$ for an
 unknown $\beta$ (one common mean: $X = 1$; a season: one $\beta$ per calendar month).
 This is universal kriging (Goldberger 1962). The level predictor below ($X = 1$,
 $\ell = L_{j\cdot}$) and the matrix one of the vector Blend ($X = U$) are special cases.
@@ -3049,8 +3049,8 @@ lost by not using the best of them all?
   \leanok
   \uses{def:Blup}
   Square-integrable random cells $x_i$ and a target $Y$ with $E x = X\beta$,
-  $E Y = x_0^T\beta$, $\cov(x_i, x_j) = K_{ij}$, $\cov(x_i, Y) = \ell_i$, $\var Y = v$. Unlike
-  Definition~\ref{def:Core_Estimates}, $\cov(x, Y)$ is not tied to $\var Y$: the noise may be
+  $E Y = x_0^T\beta$, $\cov(x_i, x_j) = K_{ij}$, $\cov(x_i, Y) = \ell_i$, $\operatorname{Var} Y = v$. Unlike
+  Definition~\ref{def:Core_Estimates}, $\cov(x, Y)$ is not tied to $\operatorname{Var} Y$: the noise may be
   correlated with the target.
 \end{definition}
 
