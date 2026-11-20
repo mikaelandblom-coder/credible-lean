@@ -346,6 +346,94 @@ theorem blup_season_optimal (hc : Function.Injective c) {Mo : Type*} [Fintype Mo
   M.blup_optimal hc (Season.design_mulVec_injective hmon) j₀ b _
     (by rw [Season.design_transpose_mulVec]; exact funext hd)
 
+/-! ### Per-card dynamics: a `Γ` block per card
+
+Each card's own deviation evolves over time with autocovariance `Gⱼ ⪰ 0` (e.g. per-card AR(1),
+Rao & Yu 1994; Pinquet 2020), independent across cards: the table gets `δᵢⱼ(Gᵢ)ₜₛ` on top of
+the common factor (`G = 0` is the model above). -/
+
+section PerCard
+
+variable (G : J → Matrix T T ℝ)
+
+/-- `cov(Xᵢₜ, Xⱼₛ)` with per-card dynamics: `obsCov + δᵢⱼ(Gᵢ)ₜₛ`. -/
+noncomputable def obsCovG (i j : J) (t s : T) : ℝ :=
+  M.obsCov i j t s + if i = j then G i t s else 0
+
+variable (c)
+
+/-- `K` with per-card dynamics. -/
+noncomputable def KG : Matrix n n ℝ := of fun p q => M.obsCovG G (c p).1 (c q).1 (c p).2 (c q).2
+
+/-- The per-card part `δᵢⱼ(Gᵢ)ₜₛ` of `K`. -/
+noncomputable def cardPart : Matrix n n ℝ :=
+  of fun p q => if (c p).1 = (c q).1 then G (c p).1 (c p).2 (c q).2 else 0
+
+/-- `ℓ` with per-card dynamics, for the target `Σₜ bₜX_{j₀t}`. -/
+noncomputable def ellG (j₀ : J) (b : T → ℝ) : n → ℝ :=
+  fun p => ∑ t, b t * M.obsCovG G (c p).1 j₀ (c p).2 t
+
+/-- `v` with per-card dynamics. -/
+noncomputable def varG (j₀ : J) (b : T → ℝ) : ℝ :=
+  ∑ t, ∑ s, b t * b s * M.obsCovG G j₀ j₀ t s
+
+omit [Fintype T] [Fintype n] [DecidableEq n] [Fintype J] in
+theorem KG_eq_add : M.KG c G = M.K c + cardPart c G := by
+  ext p q
+  simp [KG, K, cardPart, obsCovG]
+
+omit [Fintype n] [DecidableEq n] [Fintype J] in
+/-- `ℓ` gains card `j₀`'s own dynamics on its own cells: `δ_{ij₀}(G_{j₀}b)ₜ`. -/
+theorem ellG_eq (j₀ : J) (b : T → ℝ) :
+    M.ellG c G j₀ b = M.ell c j₀ b + fun p => if (c p).1 = j₀ then (G j₀ *ᵥ b) (c p).2 else 0 := by
+  funext p
+  simp only [ellG, ell, obsCovG, mul_add, sum_add_distrib, Pi.add_apply]
+  congr 1
+  split_ifs with h
+  · subst h; simp [mulVec, dotProduct, mul_comm]
+  · simp
+
+omit [Fintype J] in
+/-- `v` gains `bᵀG_{j₀}b`. -/
+theorem varG_eq (j₀ : J) (b : T → ℝ) : M.varG G j₀ b = M.var j₀ b + b ⬝ᵥ (G j₀ *ᵥ b) := by
+  simp only [varG, var, obsCovG, ite_true, mul_add, sum_add_distrib, dotProduct, mulVec,
+    mul_sum]
+  congr 1
+  exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+
+omit [DecidableEq T] [Fintype T] [DecidableEq n] in
+/-- The per-card part is a weighted sum of the `Gⱼ`, as in `Shock`: `⪰ 0`. -/
+theorem cardPart_posSemidef (hG : ∀ j, (G j).PosSemidef) :
+    (cardPart c G).PosSemidef := by
+  have h := posSemidef_weightedSum (fun j => (G j).submatrix (fun p : n => (c p).2)
+    (fun p => (c p).2)) (fun j => (hG j).submatrix _) (fun p j => if (c p).1 = j then 1 else 0)
+  convert h using 1
+  ext p q
+  by_cases hpq : (c p).1 = (c q).1
+  · simp [cardPart, hpq, ite_mul]
+  · simp [cardPart, hpq, ite_mul]
+
+variable {c}
+
+/-- **`K ≻ 0` with per-card dynamics**: the per-card part is `⪰ 0`. -/
+theorem KG_posDef (hc : Function.Injective c)
+    {G : J → Matrix T T ℝ} (hG : ∀ j, (G j).PosSemidef) : (M.KG c G).PosDef := by
+  rw [M.KG_eq_add]
+  exact (M.K_posDef hc).add_posSemidef (cardPart_posSemidef c G hG)
+
+/-- **The predictor with per-card dynamics** (`Core.blup_optimal`); per-card AR(1) is
+`Gⱼ = ar1 N γⱼ φⱼ` (`ar1_posSemidef`). -/
+theorem blupG_optimal (hc : Function.Injective c)
+    {G : J → Matrix T T ℝ} (hG : ∀ j, (G j).PosSemidef) {q : Type*} [Fintype q]
+    [DecidableEq q] {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (j₀ : J)
+    (b : T → ℝ) (x₀ : q → ℝ) {d : n → ℝ} (hd : Xᵀ *ᵥ d = x₀) :
+    Core.predMse (M.KG c G) (M.ellG c G j₀ b) (M.varG G j₀ b)
+        (Core.blup (M.KG c G) X (M.ellG c G j₀ b) x₀)
+      ≤ Core.predMse (M.KG c G) (M.ellG c G j₀ b) (M.varG G j₀ b) d :=
+  Core.blup_optimal (M.KG_posDef hc hG) hX _ _ x₀ hd
+
+end PerCard
+
 /-! ### Finding 25: negative weights under AR(1) -/
 
 /-- The example of Finding 25: two cards, months `0, 1, 2`, an AR(1) factor with `γ = 1`,

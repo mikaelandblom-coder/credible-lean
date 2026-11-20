@@ -4184,6 +4184,64 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
   change from month $0$ to $1$ tracks the factor, which persists into month $2$.
 \end{remark}
 
+\begin{definition}[Per-card dynamics]\label{def:Factor_card}
+  \lean{Credibility.Factor.obsCovG, Credibility.Factor.KG, Credibility.Factor.cardPart,
+        Credibility.Factor.ellG, Credibility.Factor.varG}
+  \leanok
+  \uses{def:Factor_target}
+  Each card's own deviation evolves with autocovariance $G_j \succeq 0$ (e.g.\ per-card
+  AR(1), $G_j = \gamma_j\varphi_j^{|t-s|}$), independent across cards: the table gains
+  $\delta_{ij}(G_i)_{ts}$. $K$, $\ell$, $v$ as before for this table.
+\end{definition}
+
+\begin{theorem}[Per-card dynamics: $K \succ 0$ and the predictor]\label{thm:Factor_card}
+  \lean{Credibility.Factor.KG_eq_add, Credibility.Factor.ellG_eq, Credibility.Factor.varG_eq,
+        Credibility.Factor.cardPart_posSemidef, Credibility.Factor.KG_posDef,
+        Credibility.Factor.blupG_optimal}
+  \leanok
+  \uses{def:Factor_card}
+  $K$ gains $\delta_{ij}(G_i)_{ts} \succeq 0$, so $K \succ 0$; $\ell$ gains
+  $\delta_{ij_0}(G_{j_0}b)_t$ and $v$ gains $b^\top G_{j_0}b$. Theorem~\ref{thm:Blup_optimal}
+  holds for this $K$, $\ell$, $v$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum, thm:Factor_K, thm:Blup_optimal}
+  The per-card part is a weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}) with
+  $a_{(i,t),j} = [i = j]$; add it to $K \succ 0$ (Theorem~\ref{thm:Factor_K}).
+\end{proof}
+
+\section*{The moment layer: real random cells}
+
+\begin{definition}[Random cells with a covariance table]\label{def:Factor_Cells}
+  \lean{Credibility.Factor.Cells, Credibility.Factor.targetMean, Credibility.Factor.Cells.target,
+        Credibility.Factor.Cells.toTarget}
+  \leanok
+  \uses{def:Blup_Target}
+  Square-integrable random cells $X_{(j,t)}$ over all months, past and future, with means
+  $\mathbb E X = D\beta$ and $\cov(X_{it}, X_{js})$ given by a table. For observed cells and
+  the target $Y = \sum_t b_tX_{j_0t}$ they are data and a target in the sense of
+  Definition~\ref{def:Blup_Target}, with $K$, $\ell$, $v$ read off the table and
+  $x_0 = \sum_t b_tD_{(j_0,t)}$.
+\end{definition}
+
+\begin{theorem}[The factor model's predictor in true MSE]\label{thm:Factor_mse_true}
+  \lean{Credibility.Factor.Cells.blup_mse_optimal, Credibility.Factor.Cells.mse_blup,
+        Credibility.Factor.Cells.blupG_mse_optimal}
+  \leanok
+  \uses{def:Factor_Cells, def:Factor_card}
+  For any random cells with the table of Definition~\ref{def:Factor} (or with per-card
+  dynamics), the predictor of Corollary~\ref{cor:Factor_blup} minimises the true mean squared
+  error among unbiased linear predictors, and its true error is that of
+  Theorem~\ref{thm:Blup_mse}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_mse_true, thm:Factor_K, thm:Factor_card}
+  Theorem~\ref{thm:Blup_mse_true}, with $K \succ 0$ from Theorems~\ref{thm:Factor_K}
+  and~\ref{thm:Factor_card}.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

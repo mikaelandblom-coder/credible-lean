@@ -50,7 +50,10 @@ tactics.
   → `Credibility/Trend.lean`
 - extension: the common factor model (`notes/card-data.md` Step 3, Finding 25): a factor
   `λᵢλⱼΓₜₛ` over all months on top of `Shock` (`Γ = 0`), `K ≻ 0` for any observed cells, AR(1)
-  and block `Γ`, `ℓ`, `v` for the 12-month target, Step 1/2 as corollaries → `Credibility/Factor.lean`
+  and block `Γ`, per-card dynamics `δᵢⱼGᵢ` (`KG`), `ℓ`, `v` for the 12-month target, Step 1/2 as
+  corollaries → `Credibility/Factor.lean`; its moment layer (`Factor.Cells`: random cells over
+  all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE)
+  → `Credibility/FactorMoments.lean`
 - extension: shock plus process noise (Finding 23): `cov = δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, its `K`
   for any cohort weights, `K ≻ 0`, unbiased `Ĉ`, `ŝ²` (identified only through volume variation)
   → `Credibility/Shock.lean`; its moment layer (`Shock.Cells`, random cells with the table `obsCov`,
@@ -76,7 +79,7 @@ estimation / EBLUP, portfolio and covariance shrinkage) for work to build on, an
 used in `studies/literature.md`: combine the best existing pieces in this framework rather than
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
-Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
+Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `FactorMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second

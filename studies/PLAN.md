@@ -290,7 +290,8 @@ One chat per step; none needs Lean except step 5.
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true
   `Γ`; estimated `Γ`, `λ` after Step 4). The app should show negative cell weights as normal
-  (`Factor.blup_neg_of_ar1`), not flag them as an error.
+  (`Factor.blup_neg_of_ar1`), not flag them as an error. Also "per-card AR(1)" (`Factor.KG`,
+  `ellG`, `varG`); the world can simulate any cells with these moments (`Factor.Cells`).
 - Season (2026-11-20, `Season.lean`, Finding 24): a fit switch "season: none / estimated
   (one fixed effect per month) / known index". Ignoring a real season biases the forecast by
   `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per card; the
