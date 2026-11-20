@@ -346,5 +346,52 @@ theorem blup_season_optimal (hc : Function.Injective c) {Mo : Type*} [Fintype Mo
   M.blup_optimal hc (Season.design_mulVec_injective hmon) j₀ b _
     (by rw [Season.design_transpose_mulVec]; exact funext hd)
 
+/-! ### Finding 25: negative weights under AR(1) -/
+
+/-- The example of Finding 25: two cards, months `0, 1, 2`, an AR(1) factor with `γ = 1`,
+`φ = 1/2` and loadings `1`, no shock, process noise `1/2` and `τ² = 1`. -/
+noncomputable def exAR1 : Factor (Fin 2) (Fin 3) where
+  τ2 := 1
+  C := 0
+  s2 := fun _ => 1 / 2
+  w := fun _ _ => 1
+  load := fun _ => 1
+  Γ := ar1 3 1 (1 / 2)
+  τ2_pos := one_pos
+  C_posSemidef := PosSemidef.zero
+  s2_pos := fun _ => by norm_num
+  w_pos := fun _ _ => one_pos
+  Γ_posSemidef := ar1_posSemidef 3 zero_le_one (by rw [abs_of_pos (by norm_num)]; norm_num)
+
+/-- Both cards observed in months `0` and `1`. -/
+def exCells : Fin 4 → Fin 2 × Fin 3 := ![(0, 0), (0, 1), (1, 0), (1, 1)]
+
+/-- The predictor of card `0` in month `2` (one common mean) has the weights
+`(11/30, 8/15, -1/30, 2/15)` on the cells `(0,0), (0,1), (1,0), (1,1)`. -/
+theorem blup_exAR1 :
+    Core.blup (exAR1.K exCells) (replicateCol Unit 1) (exAR1.ell exCells 0 (Pi.single 2 1))
+      (fun _ => 1) = ![11 / 30, 8 / 15, -1 / 30, 2 / 15] := by
+  have hc : Function.Injective exCells := by decide
+  refine (Core.eq_blup_of_normal (exAR1.K_posDef hc) Core.replicateCol_one_mulVec_injective _ _
+    (c := fun _ => 1 / 2) ?_ ?_).symm
+  · funext p
+    fin_cases p <;>
+      simp [mulVec, dotProduct, Fin.sum_univ_three, K, ell, obsCov, exAR1,
+        exCells, Shock.obsCov, toShock, ar1, replicateCol, Pi.single_apply, vecHead, vecTail]
+      <;> norm_num
+  · funext u
+    rw [Core.replicateCol_one_transpose_mulVec]
+    simp [Fin.sum_univ_four]
+    norm_num
+
+/-- **Negative weights under AR(1)** (Finding 25): a balanced panel, positive autocorrelation,
+and still the predictor of card `0`'s next month puts weight `-1/30` on card `1`'s first month.
+Card `1`'s change from month `0` to `1` tracks the factor, which persists into month `2`. -/
+theorem blup_neg_of_ar1 :
+    Core.blup (exAR1.K exCells) (replicateCol Unit 1) (exAR1.ell exCells 0 (Pi.single 2 1))
+      (fun _ => 1) 2 < 0 := by
+  rw [blup_exAR1]
+  norm_num
+
 end Factor
 end Credibility
