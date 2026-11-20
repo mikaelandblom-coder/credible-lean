@@ -70,7 +70,7 @@ Record the results in `studies/literature.md` (new section). Search:
   Harville 1976; universal kriging.
 - **Dynamic factor models:** Stock & Watson; common factor with loadings, §9 of the literature file.
 - **Evolutionary and state-space credibility:** Gerber & Jones 1975, Sundt 1981,
-  Bühlmann & Gisler ch. 10.
+  Bühlmann & Gisler ch. 9.
 - **Seasonality in credibility and ratemaking.**
 - **Regression credibility with a covariate, and random-coefficient models:**
   Hachemeister 1975, Swamy 1970. Also look for public travel demand indices.
@@ -78,6 +78,12 @@ Record the results in `studies/literature.md` (new section). Search:
 
 Question: is credibility with a common AR(1) factor, or with estimated seasonal
 effects, already done?
+
+**Done (2026-11-20), `studies/literature.md` §10.** Credibility with a common AR(1)
+factor: not found (dynamic models evolve each risk's own level; common-effect models have one
+permanent effect). Seasonal credibility: Ledolter, Klugman & Lee (1991), independent groups,
+log scale, heuristic shrinkage. Step 1 is Goldberger (1962) / Harville (1976) / universal
+kriging. Step 3b is mostly in the repo already (see there).
 
 ### Step 1. Core: general target and fixed effects (Lean, Core level)
 **Status (2026-11-20):** done in `Credibility/Blup.lean`: `Core.unbiased_iff`,
@@ -94,7 +100,9 @@ indexed by observed cells.
   `Xᵀd = x₀`.
 - **Optimal weights:** `d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ − XᵀK⁻¹ℓ)`, the
   universal-kriging / Goldberger weights. `MSE(d) = MSE(d*) + (d − d*)ᵀK(d − d*)`.
-  The error from estimating `β` is included.
+  The error from estimating `β` is included. The main theorem is Goldberger's (1962) and
+  Harville's (1976) predictor of `x₀ᵀβ + random part`; the formula for `d*` is theirs, the
+  MSE identity in this form and the corollaries are ours to prove.
 - **Corollaries:** `X = 1`, `x₀ = 1`, `ℓ = Lⱼ`, `v = Lⱼⱼ` gives
   `Core.blupWeight_optimal`. `CoreVector.blupW_optimal` should be the case
   `X = stack`. Rule of three: scalar, vector and seasonal designs.
@@ -110,10 +118,15 @@ indexed by observed cells.
 Mean `E Xⱼₜ = β_{m(t)}`, or multiplicative on exposure, with the effective
 volume `wⱼₜ` times the season. Settle the form in the chat: additive on the
 rate is linear; multiplicative needs a plug-in or a log scale, so say which.
-- **Expected:** for a 12-month target and cards observed in whole years, the
-  season drops out of the predictor (`x₀` is the all-months vector). Only
-  months missing for some cards (Q5) make it matter. Prove it, or find the
-  counterexample.
+- **Expected:** the predictor never depends on the value of `β`, but the season design can
+  change the *weights*. With one column per calendar month, unbiasedness asks each month's
+  weights to sum to 1. The seasonal and one-mean predictors coincide iff the one-mean `d*`
+  already satisfies these month-wise constraints (a Kruskal-type condition). Sufficient: cards
+  observed in whole years with `K` and `ℓ` invariant under shifting the calendar. That is rare:
+  the noise `sᵢ²/wᵢₜ` changes with seasonal volume, and an AR(1) factor favours recent months.
+  So prove the iff, and expect an easy counterexample to "the season drops out".
+- **Form:** Lean takes the season additive on the rate (linear). Ledolter, Klugman & Lee
+  (1991) use a multiplicative season on the log scale; that is an app option.
 - **Known index `cₜ`:** a corollary of `Unequal` (divide by `cₜ`). This is the
   oracle fit for the app. Under Poisson-type variance the weight is expected
   claims `cₜwⱼₜ`, not cards in force.
@@ -136,6 +149,14 @@ To prove:
 - **`ℓ` and `v` for the 12-month target:** they involve `Γ` between past and
   future months. That is the reason for Step 1's general target.
 - **Step 1 applied:** the predictor and its MSE as one-line corollaries.
+- **Expected finding:** per-month weights can be negative with an AR(1) `Γ` (Pinquet 2020 for
+  per-risk AR effects: nonnegative partial autocorrelations suffice to avoid it).
+- **For the app:** the predictor has a Kalman-filter form (Zehnwirth 1985, valid without
+  normality), so the app need not invert `K` over all cells. The Lean statement stays the
+  closed form.
+- **Per-card AR(1)** (Rao & Yu 1994; Pinquet): each card's own deviation evolves, cards
+  independent in it. A further value of the "latent factor over time" switch: a `Γ` block per
+  card instead of `λλᵀ ⊗ Γ`; the same `K ⪰ 0` pattern covers it.
 
 Cell-level data `xⱼₜ` are rates `Nⱼₜ/wⱼₜ` (or `Sⱼₜ/wⱼₜ`).
 
@@ -150,8 +171,11 @@ volumes by year from official statistics. Model:
 - **Random effects:** the card's deviations `(μⱼ − μ, λⱼ − λ̄)` have a 2 × 2
   covariance. They give `K` the term `Dₜ Dₛ cov(λᵢ, λⱼ)` and the cross terms.
   This is Hachemeister's regression credibility with `Dₜ` as the covariate
-  instead of `t`; with correlated cohorts it is `CoreVector.hachemeister_bestZ`.
-  First check whether that already covers it.
+  instead of `t`. **Already covered** for any noise `Φ ≻ 0` over cards × months:
+  `CoreVector.hachemeister_bestZ` with design `Yⱼ = [1, Dₜ]`, and
+  `CoreVector.blupW_optimal_dotProduct` with `a = (1, D_{T+1})` for the target
+  `μⱼ + λⱼD_{T+1}`. New are only the common season columns and a latent factor that also
+  enters the target (both via Step 1). Estimator of `cov(λᵢ, λⱼ)`: Swamy (1970), as in Step 5.
 - **Combination:** the signal and a latent factor (Step 3) can be combined. A
   signal never captures the whole shock. Either part can be switched off.
 - **Expected finding:** conditional on `Dₜ`, the remaining cross-card
@@ -184,6 +208,11 @@ the table of Step 3.
   only `Γ` matters; `λ` and the scale of `Γ` are confounded. Expect findings.
 - **Season `β̂`:** comes from Step 1's GLS (feasible GLS with plug-in `K̂`).
   Its extra cost is for the app.
+- **Exited cards (Q5):** keep all their past cells in the fit; they inform the mean, the
+  season, `K̂` and, through `K`, the other cards, and only lack a target. The exact
+  guarantees treat `obs j` as fixed, so they assume the exit date is independent of the
+  claims. Exit driven by results (an optional stopping time) makes them approximate (Frees
+  2004). State it as an assumption.
 
 ### Step 6. Frequency × severity (Lean, corollary of `CoreVector`)
 - **Two tables:** the Step 3 table per component, frequency weighted by
@@ -204,7 +233,7 @@ amounts. It has:
 - an AR(1) demand factor with an optional break, and an observed demand index `Dₜ` (a noisy
   view of the factor) with card-specific sensitivities,
 - equal or unequal loadings,
-- cards entering and leaving.
+- cards entering and leaving, with an option for exit driven by results.
 
 The fits are every switch in the toolbox table. They are fitted from
 simulated data only, never true parameters; the oracle uses the true ones.
