@@ -18,6 +18,9 @@ tactics.
   and aggregated data as restricted predictors) → `Credibility/Blup.lean`; its moment layer
   (`Core.Target`: any random cells and target, `cov(x, Y)` free; `Core.Estimates` via `toTarget`)
   → `Credibility/BlupMoments.lean`
+- extension: the season and the 12-month target (`notes/card-data.md` Step 2): season design,
+  when it drops out (`Season.blup_eq_iff`, interchangeable months), it does not in general
+  (Finding 24), the bias of ignoring it, a known index via `Unequal` → `Credibility/Season.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
   §2.9 balance → `Credibility/Balance.lean`

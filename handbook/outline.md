@@ -16,6 +16,11 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Season (2026-11-20, `Season.lean`, Finding 24): "whole years do not make the season drop
+  out: with seasonal volume the one-mean predictor leans on busy months and is biased by
+  `Σₘ (Sₘ - cₘ)βₘ`; fit the season or divide by a known index and weight by expected claims"
+  (`Credibility.Season.blup_eq_iff`, `Credibility.Core.Target.integral_bias`,
+  `Credibility.Unequal.a_eq_of_volume`).
 - General target with fixed effects (2026-11-20, `Blup.lean`, card-data Step 1): the best
   linear unbiased predictor `d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ - XᵀK⁻¹ℓ)` for any target `Y`
   (`Credibility.Core.blup_optimal`), its error `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` with the price of

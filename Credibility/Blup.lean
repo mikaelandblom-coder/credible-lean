@@ -130,6 +130,39 @@ theorem eq_blup_of_normal {K : Matrix n n ℝ} (hK : K.PosDef) {X : Matrix n q �
   simp only [star_trivial] at this
   linarith
 
+omit [DecidableEq n] [DecidableEq q] in
+/-- Relabelling the cells by `σ` does not change the error when `K` and `ℓ` are unchanged
+by it. -/
+theorem predMse_comp_equiv {K : Matrix n n ℝ} {ℓ : n → ℝ} (v : ℝ) (σ : n ≃ n)
+    (hKσ : ∀ i j, K (σ i) (σ j) = K i j) (hℓσ : ∀ i, ℓ (σ i) = ℓ i) (d : n → ℝ) :
+    predMse K ℓ v (d ∘ σ) = predMse K ℓ v d := by
+  have h1 : (d ∘ σ) ⬝ᵥ (K *ᵥ (d ∘ σ)) = d ⬝ᵥ (K *ᵥ d) := by
+    simp only [dotProduct, mulVec, Function.comp]
+    rw [← Equiv.sum_comp σ (fun i => d i * ∑ j, K i j * d j)]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Equiv.sum_comp σ (fun j => K (σ i) j * d j)]
+    simp only [hKσ]
+  have h2 : (d ∘ σ) ⬝ᵥ ℓ = d ⬝ᵥ ℓ := by
+    simp only [dotProduct, Function.comp]
+    rw [← Equiv.sum_comp σ (fun i => d i * ℓ i)]
+    simp only [hℓσ]
+  rw [predMse, predMse, h1, h2]
+
+/-- **Symmetry is inherited**: if relabelling the cells by `σ` leaves `K`, `ℓ` and the rows
+of the design unchanged, it leaves the best weights unchanged: `d*(σ i) = d*(i)`. -/
+theorem blup_comp_equiv {K : Matrix n n ℝ} (hK : K.PosDef) {X : Matrix n q ℝ}
+    (hX : Function.Injective X.mulVec) (ℓ : n → ℝ) (x₀ : q → ℝ) (σ : n ≃ n)
+    (hKσ : ∀ i j, K (σ i) (σ j) = K i j) (hℓσ : ∀ i, ℓ (σ i) = ℓ i)
+    (hXσ : ∀ i, X (σ i) = X i) :
+    blup K X ℓ x₀ ∘ σ = blup K X ℓ x₀ := by
+  have hu : Xᵀ *ᵥ (blup K X ℓ x₀ ∘ σ) = x₀ := by
+    refine Eq.trans ?_ (transpose_mulVec_blup hK hX ℓ x₀)
+    funext k
+    simp only [mulVec, dotProduct, transpose_apply, Function.comp]
+    rw [← Equiv.sum_comp σ (fun i => X i k * blup K X ℓ x₀ i)]
+    simp only [hXσ]
+  exact blup_unique hK hX ℓ 0 x₀ hu (predMse_comp_equiv 0 σ hKσ hℓσ _).le
+
 /-- **Its error**: `MSE(d*) = v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` with `r = x₀ - XᵀK⁻¹ℓ`. The first
 two terms are the error of the best linear predictor when `β` is known; the last is the
 price of estimating `β`. -/

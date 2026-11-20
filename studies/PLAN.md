@@ -286,6 +286,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Season (2026-11-20, `Season.lean`, Finding 24): a fit switch "season: none / estimated
+  (one fixed effect per month) / known index". Ignoring a real season biases the forecast by
+  `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per card; the
+  known-index oracle weights cells by expected claims `cₜwⱼₜ` (`Unequal.a_eq_of_volume`).
 - General best predictor (2026-11-20, `Blup.lean`): any target (e.g. a 12-month total)
   and fixed effects (a season) via `Core.blup`; its error shows the price of estimating the
   season (`Core.predMse_blup`). For Step 7 of `notes/card-data.md`. With known covariances,

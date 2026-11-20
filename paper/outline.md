@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Season (2026-11-20, `Season.lean`, Finding 24): when an estimated season drops out of the
+  12-month predictor (interchangeable months) and why it usually does not (seasonal volume);
+  a known index is a change of units plus weights by expected claims.
 - General target with fixed effects (2026-11-20, `Blup.lean`): the level and matrix best
   predictors are one result, universal kriging (`Core.blup_optimal`), with the error split
   into "known β" plus "price of estimating β" (`Core.predMse_blup`). A paragraph when the

@@ -120,6 +120,12 @@ indexed by observed cells.
   with these moments.
 
 ### Step 2. The season and the 12-month target (Lean)
+**Status (2026-11-20): done** in `Credibility/Season.lean`, additive season on the rate.
+`Season.blup_eq_iff` (the iff), `Season.blup_eq_of_interchangeable` (sufficient: months
+interchangeable, via `Core.blup_comp_equiv`), `Season.blup_ne_of_volume` (Finding 24: whole
+years and independent noise, but seasonal volume; the season matters),
+`Core.Target.integral_bias` (bias `Σₘ (Sₘ(d) - cₘ)βₘ` of ignoring it), `Unequal.a_eq_of_volume`
+(known index, Poisson-type: weights `cₜwⱼₜ`).
 Mean `E Xⱼₜ = β_{m(t)}`, or multiplicative on exposure, with the effective
 volume `wⱼₜ` times the season. Settle the form in the chat: additive on the
 rate is linear; multiplicative needs a plug-in or a log scale, so say which.

@@ -403,4 +403,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    the actual covariance, `zⱼ` minimises the true MSE and `E K̂ = K` (`Shock.Cells.toEstimates`,
    `Shock.Cells.bestZ_mse_optimal`, `Shock.Cells.integral_KHat`).
 
+24. **The season does not drop out of the 12-month predictor, even with whole years (new;
+   `notes/card-data.md` Step 2).** Expected at first: for a 12-month target and cards observed
+   in whole years, an estimated additive season (one fixed effect per calendar month) leaves
+   the predictor unchanged. False. The seasonal predictor equals the one-mean predictor iff the
+   one-mean `d*` already puts weight `cₘ` (here `1`) on each month (`Season.blup_eq_iff`, from
+   `Core.blup_eq_blup_iff_of_nested`). Counterexample (`Season.blup_ne_of_volume`): one card,
+   two years of two months, independent noise with twice the volume in the first month,
+   `K = diag(1, 2, 1, 2)`, `ℓ = 0`: the one-mean `d* = (2/3, 1/3, 2/3, 1/3)` puts `4/3` on the
+   first month. With a real season `β` it is biased by `Σₘ (Sₘ(d*) - cₘ)βₘ = (β₁ - β₂)/3`
+   (`Core.Target.integral_bias`). What holds: the season drops out when the months are
+   interchangeable, some relabelling of the cells maps any month onto any other and leaves `K`
+   and `ℓ` unchanged (`Season.blup_eq_of_interchangeable`); seasonal volume, an AR(1) factor
+   that favours recent months, or a card entering mid-year all break that. So with a season,
+   fit it (or a known index, `Unequal.a_eq_of_volume`); the one-mean predictor leans on the
+   high-volume months.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
