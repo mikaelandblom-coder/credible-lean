@@ -3569,8 +3569,8 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
   With $T = 2$ the residuals of a cohort are proportional,
   $r_{j1} = a_{j2}(\mu_{j1} - \mu_{j2})$ and $r_{j2} = -a_{j1}(\mu_{j1} - \mu_{j2})$, so every
   $Q_j(u)$ is a multiple of one square and $\Delta_j = 0$. With exposure weights,
-  $u = 1$ and $v = w$, numerically $\Delta_j < 0$ once $T \ge 3$ and the volumes vary
-  (not proved).
+  $u = 1$ and $v = w$, three periods and varying volumes suffice
+  (Theorem~\ref{thm:Shock_det_expo_neg}).
 \end{remark}
 
 \begin{corollary}[Exposure weights]\label{cor:Shock_expo}
@@ -3588,6 +3588,38 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
 \begin{proof}
   \leanok
   Algebra in $\alpha_j$, $\beta_j$ of Definition~\ref{def:Shock_estimators}.
+\end{proof}
+
+\begin{lemma}[A volume inequality]\label{lem:detGap}
+  \lean{Credibility.two_mul_detGap_eq, Credibility.detGap_pos}
+  \leanok
+  For $w_t > 0$, $t \in T$, with $W = \sum_t w_t$, $Q = \sum_t w_t^2$, $R = \sum_t 1/w_t$,
+  $n = |T|$, let $F = (W^2 - Q)(WR - n^2) - 2(n-1)(nQ - W^2)$. Then
+  \[
+    2F = \sum_{i,k} \frac{(w_i - w_k)^2}{w_i w_k}
+      \Bigl((W - w_i - w_k)^2 + (Q - w_i^2 - w_k^2)\Bigr),
+  \]
+  and $F > 0$ if $n \ge 3$ and the $w_t$ are not all equal.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The identity: write $(w_i-w_k)^2/(w_iw_k) = w_i/w_k + w_k/w_i - 2$, expand, and sum each
+  monomial into $W$, $Q$, $R$, $n$. Every term is $\ge 0$ (for $i = k$ it is $0$). For
+  $w_t \ne w_{t'}$ a third period $m$ gives $Q - w_t^2 - w_{t'}^2 \ge w_m^2 > 0$.
+\end{proof}
+
+\begin{theorem}[The determinant is negative]\label{thm:Shock_det_expo_neg}
+  \lean{Credibility.Shock.det_expo_neg}
+  \leanok
+  \uses{cor:Shock_expo, lem:detGap}
+  With exposure weights, $u = 1$ and $v = w$: if $T \ge 3$ and the volumes $w_{jt}$ of
+  cohort $j$ are not all equal, then $\Delta_j < 0$. So $\hat C_{jj}$ and $\hat s_j^2$ are
+  defined and unbiased.
+\end{theorem}
+\begin{proof}
+  \leanok
+  By Corollary~\ref{cor:Shock_expo}, $\Delta_j w_{j*}^2 = -F$ for the volumes of cohort $j$
+  (Lemma~\ref{lem:detGap}). At $T = 2$, $F = 0$.
 \end{proof}
 
 \begin{definition}[Between-cohort spread, $\hat\Sigma$, $\hat\tau^2$, $\hat K$]\label{def:Shock_tauHat}

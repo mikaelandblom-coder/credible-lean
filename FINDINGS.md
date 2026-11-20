@@ -395,7 +395,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    2×2 determinant is nonzero. That needs volume variation: with a constant volume no
    estimator is unbiased for `sⱼ²` (`Shock.not_unbiased_s2_of_const`), and with `T = 2` the
    residuals of a cohort are proportional, so the determinant is `0` for any weightings.
-   Numerically (exposure weights, weightings `1` and `w`), the determinant is negative once
-   `T ≥ 3` and the volumes vary; not proved.
+   With exposure weights and weightings `1` and `w`, the determinant is negative once
+   `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`, 2026-11-20): `Δⱼwⱼ*² = -F`, and
+   `2F = Σᵢₖ (wᵢ-wₖ)²/(wᵢwₖ)((W-wᵢ-wₖ)² + Q-wᵢ²-wₖ²)` is a sum of nonnegative terms
+   (`two_mul_detGap_eq`, `detGap_pos`); comparing pair by pair fails, the identity does not.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

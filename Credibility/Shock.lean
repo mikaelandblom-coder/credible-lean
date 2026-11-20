@@ -22,7 +22,8 @@ One shock with loadings `λⱼ` is `C = λλᵀ` (`posSemidef_loadings`).
   the squared residuals separate them when a 2×2 determinant is nonzero
   (`CdiagHat_unbiased`, `s2Hat_unbiased`). With a constant volume no estimator can
   separate them (`not_unbiased_s2_of_const`): `sⱼ²` is identified only through volume
-  variation.
+  variation. With exposure weights, weightings `1` and `w`, `|T| ≥ 3` and varying volumes
+  suffice: the determinant is negative (`det_expo_neg`).
 * Between cohorts: for portfolio weights `x` summing to one,
   `E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)² = τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` (`between_unbiased`). With
   `Σ̂` built from `Ĉ`, `ŝ²` this gives an unbiased `τ̂²` (`tauHat_unbiased`) and `K̂ = Σ̂ + τ̂²I`
@@ -60,6 +61,64 @@ theorem posSemidef_weightedSum {J T : Type*} [Fintype J] [Fintype T]
 theorem posSemidef_loadings {J : Type*} [Fintype J] (l : J → ℝ) :
     (vecMulVec l l).PosSemidef := by
   simpa using posSemidef_vecMulVec_self_star l
+
+/-- The volume identity behind `Shock.det_expo_neg`. With `W = Σₜwₜ`, `Q = Σₜwₜ²`,
+`R = Σₜ1/wₜ` and `n = |T|`,
+`2((W² - Q)(WR - n²) - 2(n-1)(nQ - W²)) = Σᵢₖ (wᵢ-wₖ)²/(wᵢwₖ)·((W - wᵢ - wₖ)² + (Q - wᵢ² - wₖ²))`. -/
+theorem two_mul_detGap_eq {T : Type*} [Fintype T] (w : T → ℝ) (hw : ∀ t, 0 < w t) :
+    2 * (((∑ t, w t) ^ 2 - ∑ t, w t ^ 2) * ((∑ t, w t) * ∑ t, (w t)⁻¹ - (Fintype.card T : ℝ) ^ 2)
+      - 2 * ((Fintype.card T : ℝ) - 1) * (Fintype.card T * ∑ t, w t ^ 2 - (∑ t, w t) ^ 2))
+      = ∑ i, ∑ k, (w i - w k) ^ 2 / (w i * w k)
+          * ((∑ t, w t - w i - w k) ^ 2 + (∑ t, w t ^ 2 - w i ^ 2 - w k ^ 2)) := by
+  set W := ∑ t, w t
+  set Q := ∑ t, w t ^ 2
+  set R := ∑ t, (w t)⁻¹
+  have hpt : ∀ i k, (w i - w k) ^ 2 / (w i * w k) * ((W - w i - w k) ^ 2 + (Q - w i ^ 2 - w k ^ 2))
+      = (W ^ 2 + Q) * (w i * (w k)⁻¹) + (W ^ 2 + Q) * (w k * (w i)⁻¹) - 2 * (W ^ 2 + Q)
+        - 2 * W * (w i ^ 2 * (w k)⁻¹) - 2 * W * (w k ^ 2 * (w i)⁻¹) + 2 * W * w i + 2 * W * w k
+        + 2 * w i ^ 2 + 2 * w k ^ 2 - 4 * (w i * w k) := fun i k => by
+    have := (hw i).ne'; have := (hw k).ne'
+    field_simp; ring
+  simp only [hpt, sum_add_distrib, sum_sub_distrib, ← mul_sum, sum_const, card_univ,
+    nsmul_eq_mul]
+  simp only [← sum_mul, ← mul_sum]
+  rw [show ∑ i, w i = W from rfl, show ∑ i, w i ^ 2 = Q from rfl, show ∑ i, (w i)⁻¹ = R from rfl]
+  ring
+
+/-- The right side of `two_mul_detGap_eq` is positive once there are three periods and the
+volumes vary: every term is `≥ 0`, and for `wₜ ≠ wₜ'` a third period makes
+`Q - wₜ² - wₜ'² > 0`. -/
+theorem detGap_pos {T : Type*} [Fintype T] [DecidableEq T] (w : T → ℝ) (hw : ∀ t, 0 < w t)
+    (hT : 3 ≤ Fintype.card T) {t t' : T} (htt : w t ≠ w t') :
+    0 < ((∑ t, w t) ^ 2 - ∑ t, w t ^ 2) * ((∑ t, w t) * ∑ t, (w t)⁻¹ - (Fintype.card T : ℝ) ^ 2)
+      - 2 * ((Fintype.card T : ℝ) - 1) * (Fintype.card T * ∑ t, w t ^ 2 - (∑ t, w t) ^ 2) := by
+  refine pos_of_mul_pos_right (a := 2) ?_ zero_le_two
+  rw [two_mul_detGap_eq w hw]
+  -- `Σₜ wₜ² ≥ wᵢ² + wₖ²` for `i ≠ k`, strictly when a third index exists.
+  have hpair : ∀ i k, i ≠ k → ∑ s ∈ {i, k}, w s ^ 2 = w i ^ 2 + w k ^ 2 :=
+    fun i k h => sum_pair h
+  have hQ : ∀ i k, i ≠ k → 0 ≤ ∑ s, w s ^ 2 - w i ^ 2 - w k ^ 2 := fun i k h => by
+    have := sum_le_sum_of_subset_of_nonneg (f := fun s => w s ^ 2) (subset_univ {i, k})
+      fun s _ _ => sq_nonneg (w s)
+    rw [hpair i k h] at this; linarith
+  have hD : ∀ i k, 0 ≤ (w i - w k) ^ 2 / (w i * w k) :=
+    fun i k => div_nonneg (sq_nonneg _) (mul_pos (hw i) (hw k)).le
+  have hterm : ∀ i k, 0 ≤ (w i - w k) ^ 2 / (w i * w k)
+      * ((∑ t, w t - w i - w k) ^ 2 + (∑ t, w t ^ 2 - w i ^ 2 - w k ^ 2)) := fun i k => by
+    by_cases h : i = k
+    · subst h; simp
+    · exact mul_nonneg (hD i k) (add_nonneg (sq_nonneg _) (hQ i k h))
+  have hne : t ≠ t' := fun h => htt (h ▸ rfl)
+  obtain ⟨m, -, hm⟩ := exists_mem_notMem_of_card_lt_card (s := {t, t'}) (t := univ)
+    (by rw [card_univ, card_pair hne]; exact lt_of_lt_of_le (by norm_num) hT)
+  have hQs : 0 < ∑ s, w s ^ 2 - w t ^ 2 - w t' ^ 2 := by
+    have := sum_lt_sum_of_subset (f := fun s => w s ^ 2) (subset_univ {t, t'})
+      (mem_univ m) hm (pow_pos (hw m) 2) fun s _ _ => sq_nonneg (w s)
+    rw [hpair t t' hne] at this; linarith
+  refine sum_pos' (fun i _ => sum_nonneg fun k _ => hterm i k) ⟨t, mem_univ _, ?_⟩
+  refine sum_pos' (fun k _ => hterm t k) ⟨t', mem_univ _, ?_⟩
+  exact mul_pos (div_pos ((pow_pos (abs_pos.mpr (sub_ne_zero.mpr htt)) 2).trans_eq (sq_abs _)) (mul_pos (hw t) (hw t')))
+    (add_pos_of_nonneg_of_pos (sq_nonneg _) hQs)
 
 /-- Shock plus process noise: per period a shock with covariance `C ⪰ 0` across cohorts,
 process noise `sⱼ²/wⱼₜ` shrinking with the volume `wⱼₜ`, and cohort levels with
@@ -476,6 +535,31 @@ theorem hSum_expo_one [Nonempty T] (j : J) :
     rw [h, hs]; simp only [expo]; field_simp; ring
   simp only [hSum, one_mul, hterm, sum_sub_distrib, sum_const, card_univ, nsmul_eq_mul]
   ring
+
+omit [Fintype J] [DecidableEq J] in
+/-- **The determinant is negative** for exposure weights and the weightings `1` and `w`, once
+`|T| ≥ 3` and the volumes of cohort `j` vary: `Δⱼ = -F/wⱼ*²` with `F > 0` (`detGap_pos`).
+So `Ĉⱼⱼ` and `ŝⱼ²` exist (`CdiagHat_unbiased`, `s2Hat_unbiased`). At `|T| = 2`, `F = 0`. -/
+theorem det_expo_neg (hT : 3 ≤ Fintype.card T) (j : J) {t t' : T} (htt : M.w j t ≠ M.w j t') :
+    M.det M.expo (fun _ _ => 1) M.w j < 0 := by
+  have : Nonempty T := ⟨t⟩
+  have hW := M.wtot_pos j
+  have he : ∑ s, M.expo j s ^ 2 = (∑ s, M.w j s ^ 2) / M.wtot j ^ 2 := by
+    simp only [expo, div_pow, ← sum_div]
+  have hF := detGap_pos (M.w j) (M.w_pos j) hT htt
+  rw [det, M.dSum_expo_one, M.hSum_expo_w, M.dSum_expo_w, M.hSum_expo_one, he]
+  rw [show ∑ s, M.w j s = M.wtot j from rfl] at hF
+  have key : ((Fintype.card T : ℝ) - 2 + Fintype.card T * ((∑ s, M.w j s ^ 2) / M.wtot j ^ 2))
+        * ((Fintype.card T : ℝ) - 1)
+      - (M.wtot j - (∑ s, M.w j s ^ 2) / M.wtot j)
+        * (∑ s, (M.w j s)⁻¹ - Fintype.card T / M.wtot j)
+      = -((M.wtot j ^ 2 - ∑ s, M.w j s ^ 2)
+            * (M.wtot j * ∑ s, (M.w j s)⁻¹ - (Fintype.card T : ℝ) ^ 2)
+          - 2 * ((Fintype.card T : ℝ) - 1)
+            * (Fintype.card T * ∑ s, M.w j s ^ 2 - M.wtot j ^ 2)) / M.wtot j ^ 2 := by
+    field_simp; ring
+  rw [key]
+  exact div_neg_of_neg_of_pos (neg_neg_of_pos hF) (pow_pos hW 2)
 
 /-! #### Between cohorts: `τ̂²` and `K̂`
 
