@@ -3590,6 +3590,39 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
   Algebra in $\alpha_j$, $\beta_j$ of Definition~\ref{def:Shock_estimators}.
 \end{proof}
 
+\begin{definition}[Between-cohort spread, $\hat\Sigma$, $\hat\tau^2$, $\hat K$]\label{def:Shock_tauHat}
+  \lean{Credibility.Shock.muHat, Credibility.Shock.between, Credibility.Shock.errCovHat,
+        Credibility.Shock.tauHat, Credibility.Shock.KHat}
+  \leanok
+  \uses{def:Shock_estimators}
+  For portfolio weights $x_j$ summing to one, $B = \sum_j x_j(\hmu_j - \sum_i x_i\hmu_i)^2$,
+  $\hat\Sigma_{ij} = (\sum_t a_{it}a_{jt})\hat C_{ij} + \delta_{ij}\hat s_i^2\sum_t a_{it}^2/w_{it}$,
+  \[
+    \hat\tau^2 = \frac{B - \sum_j x_j\hat\Sigma_{jj} + x^\top\hat\Sigma x}{1 - \sum_j x_j^2},
+    \qquad \hat K = \hat\Sigma + \hat\tau^2 I.
+  \]
+\end{definition}
+
+\begin{theorem}[Unbiased $\hat\tau^2$ and $\hat K$]\label{thm:Shock_tauHat}
+  \lean{Credibility.Shock.unbiased_contrast, Credibility.Shock.errCov_apply,
+        Credibility.Shock.between_unbiased, Credibility.Shock.errCovHat_unbiased,
+        Credibility.Shock.tauHat_unbiased, Credibility.Shock.sum_sq_lt_one,
+        Credibility.Shock.KHat_unbiased}
+  \leanok
+  \uses{def:Shock_tauHat, thm:Shock_K}
+  If each cohort's weights sum to one and $\sum_j x_j = 1$,
+  $\mathbb E B = \tau^2(1 - \sum_j x_j^2) + \sum_j x_j\Sigma_{jj} - x^\top\Sigma x$. Under the
+  conditions of Theorem~\ref{thm:Shock_unbiased} and $\sum_j x_j^2 \ne 1$ (e.g.\ positive $x$
+  and $J \ge 2$), $\hat\Sigma$, $\hat\tau^2$ and every entry of $\hat K$ are unbiased.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Shock_unbiased, lem:unbiased_linear}
+  For contrasts $\sum_j c_j = 0$, $\mathbb E[(c^\top\hmu)(c'^\top\hmu)] = c^\top K c'$
+  (Lemma~\ref{lem:unbiased_linear}); so $\mathbb E B = \sum_j x_jK_{jj} - x^\top Kx$ with
+  $K = \Sigma + \tau^2 I$. The rest is linearity.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

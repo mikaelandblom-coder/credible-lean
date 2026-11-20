@@ -23,6 +23,10 @@ One shock with loadings `λⱼ` is `C = λλᵀ` (`posSemidef_loadings`).
   (`CdiagHat_unbiased`, `s2Hat_unbiased`). With a constant volume no estimator can
   separate them (`not_unbiased_s2_of_const`): `sⱼ²` is identified only through volume
   variation.
+* Between cohorts: for portfolio weights `x` summing to one,
+  `E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)² = τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` (`between_unbiased`). With
+  `Σ̂` built from `Ĉ`, `ŝ²` this gives an unbiased `τ̂²` (`tauHat_unbiased`) and `K̂ = Σ̂ + τ̂²I`
+  (`KHat_unbiased`).
 -/
 
 open Finset Matrix
@@ -472,6 +476,157 @@ theorem hSum_expo_one [Nonempty T] (j : J) :
     rw [h, hs]; simp only [expo]; field_simp; ring
   simp only [hSum, one_mul, hterm, sum_sub_distrib, sum_const, card_univ, nsmul_eq_mul]
   ring
+
+/-! #### Between cohorts: `τ̂²` and `K̂`
+
+With cohort estimates `μ̂ⱼ = Σₜ aⱼₜμⱼₜ` and portfolio weights `xⱼ` summing to one, the spread
+`Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²` has expectation `Σⱼ xⱼKⱼⱼ - xᵀKx = τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx`.
+Subtracting the error part estimated from `Ĉ`, `ŝ²` gives `τ̂²`, and then `K̂ = Σ̂ + τ̂²I`. -/
+
+variable (a) in
+/-- The cohort estimate `μ̂ⱼ = Σₜ aⱼₜμⱼₜ`. -/
+def muHat (X : J × T → ℝ) (j : J) : ℝ := ∑ t, a j t * X (j, t)
+
+/-- Products of contrasts of the cohort estimates: if `Σⱼ cⱼ = 0`, then
+`E[(Σⱼ cⱼμ̂ⱼ)(Σⱼ c'ⱼμ̂ⱼ)] = Σᵢⱼ cᵢc'ⱼKᵢⱼ`. -/
+theorem unbiased_contrast (ha : ∀ j, ∑ t, a j t = 1) (c c' : J → ℝ) (hc : ∑ j, c j = 0) :
+    Model.UnbiasedCov M.cov (fun X => (∑ j, c j * muHat a X j) * (∑ j, c' j * muHat a X j))
+      (∑ i, ∑ j, c i * c' j * M.K a i j) := by
+  have hlin : ∀ (e : J → ℝ) (X : J × T → ℝ),
+      ∑ p : J × T, e p.1 * a p.1 p.2 * X p = ∑ j, e j * muHat a X j := fun e X => by
+    simp only [Fintype.sum_prod_type, muHat, mul_sum, mul_assoc]
+  have hsum : ∑ p : J × T, c p.1 * a p.1 p.2 = 0 := by
+    simp only [Fintype.sum_prod_type, ← mul_sum, ha, mul_one, hc]
+  refine (Model.unbiasedCov_mul M.cov (fun p => c p.1 * a p.1 p.2) (fun p => c' p.1 * a p.1 p.2)
+    hsum).congr (fun X => by rw [hlin, hlin]) ?_
+  simp only [Fintype.sum_prod_type, K, of_apply, cov, mul_sum]
+  refine sum_congr rfl fun i _ => ?_
+  rw [sum_comm]
+  exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+
+variable (a) in
+/-- The spread between cohorts `Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²`. -/
+def between (x : J → ℝ) (X : J × T → ℝ) : ℝ :=
+  ∑ j, x j * (muHat a X j - ∑ i, x i * muHat a X i) ^ 2
+
+omit [Fintype J] [DecidableEq T] in
+/-- `Σᵢⱼ = (Σₜ aᵢₜaⱼₜ)Cᵢⱼ + δᵢⱼ sᵢ²Σₜ aᵢₜ²/wᵢₜ`. -/
+theorem errCov_apply (i j : J) :
+    M.errCov a i j = (∑ t, a i t * a j t) * M.C i j
+      + (if i = j then M.s2 i * ∑ t, a i t ^ 2 / M.w i t else 0) := by
+  simp only [errCov, noise_apply, of_apply, mul_add, sum_add_distrib, ← sum_mul]
+  split_ifs with h
+  · subst h
+    rw [mul_sum]
+    exact congrArg _ (sum_congr rfl fun t _ => by ring)
+  · simp
+
+/-- **The between-cohort spread.** For weights `x` summing to one,
+`E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)² = τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx`. -/
+theorem between_unbiased (ha : ∀ j, ∑ t, a j t = 1) {x : J → ℝ} (hx : ∑ j, x j = 1) :
+    Model.UnbiasedCov M.cov (fun X => between a x X)
+      (M.τ2 * (1 - ∑ j, x j ^ 2) + ∑ j, x j * M.errCov a j j
+        - ∑ i, ∑ j, x i * x j * M.errCov a i j) := by
+  let c : J → J → ℝ := fun j k => (if k = j then 1 else 0) - x k
+  have hc : ∀ j, ∑ k, c j k = 0 := fun j => by simp [c, sum_sub_distrib, hx]
+  have hlin : ∀ j X, ∑ k, c j k * muHat a X k = muHat a X j - ∑ i, x i * muHat a X i :=
+    fun j X => by simp [c, sub_mul, sum_sub_distrib]
+  refine (Model.UnbiasedCov.sum univ fun j _ =>
+    (M.unbiased_contrast ha (c j) (c j) (hc j)).const_mul (x j)).congr
+    (fun X => by simp only [between, hlin, sq]) ?_
+  -- `Σⱼ xⱼ Σₖₗ cⱼₖcⱼₗKₖₗ = Σⱼ xⱼKⱼⱼ - xᵀKx`, then `K = Σ + τ²I`.
+  have pull : ∀ (j : J) (g : J → J → ℝ),
+      ∑ k, ∑ l, (if k = j then g k l else 0) = ∑ l, g j l := fun j g => by
+    rw [sum_comm]; simp [sum_ite_eq']
+  have hK : ∀ k l, M.K a k l = M.errCov a k l + M.τ2 * (if k = l then 1 else 0) := fun k l => by
+    rw [M.K_eq_errCov ha, Matrix.add_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
+  simp only [c, hK, sub_mul, mul_sub, ite_mul, one_mul, zero_mul, mul_ite, mul_one, mul_zero,
+    sum_sub_distrib, sum_ite_eq', sum_ite_eq, mem_univ, ite_true, mul_add, sum_add_distrib, pull]
+  simp only [← sum_mul, hx, mul_sum, one_mul]
+  have h3 : ∑ m, ∑ k, ∑ l, x m * (x k * x l * M.errCov a k l)
+      = ∑ k, ∑ l, x k * (x l * M.errCov a k l) := by
+    simp only [mul_assoc, ← mul_sum]; rw [← sum_mul, hx, one_mul]
+  have hB : ∑ k, ∑ i, x k * (x i * M.errCov a i k) = ∑ i, ∑ k, x i * (x k * M.errCov a i k) := by
+    rw [sum_comm]; exact sum_congr rfl fun i _ => sum_congr rfl fun k _ => by ring
+  have hτ : ∀ y : ℝ, ∑ k, x k * (x k * y) = (∑ k, x k ^ 2) * y := fun y => by
+    rw [sum_mul]; exact sum_congr rfl fun k _ => by ring
+  have hτ' : ∑ k, M.τ2 * x k ^ 2 = (∑ k, x k ^ 2) * M.τ2 := by
+    rw [sum_mul]; exact sum_congr rfl fun k _ => by ring
+  have hxx : ∑ i, x i * x i = ∑ k, x k ^ 2 := sum_congr rfl fun k _ => by ring
+  have hE : ∑ i, ∑ j, x i * x j * M.errCov a i j = ∑ i, ∑ k, x i * (x k * M.errCov a i k) :=
+    sum_congr rfl fun i _ => sum_congr rfl fun k _ => by ring
+  rw [h3, hB, hτ, hτ', hxx, hE]
+  ring
+
+variable (a u v) in
+/-- `Σ̂ᵢⱼ = (Σₜ aᵢₜaⱼₜ)Ĉᵢⱼ + δᵢⱼ ŝᵢ²Σₜ aᵢₜ²/wᵢₜ`, the estimated error covariance. -/
+noncomputable def errCovHat (X : J × T → ℝ) (i j : J) : ℝ :=
+  (∑ t, a i t * a j t) * M.CHat a u v X i j
+    + (if i = j then M.s2Hat a u v X i * ∑ t, a i t ^ 2 / M.w i t else 0)
+
+/-- Every entry of `Σ̂` is unbiased for `Σ`. -/
+theorem errCovHat_unbiased (ha : ∀ j, ∑ t, a j t = 1)
+    (hd : ∀ i j, i ≠ j → ∑ t, d a i j t ≠ 0) (hdet : ∀ j, M.det a u v j ≠ 0) (i j : J) :
+    Model.UnbiasedCov M.cov (fun X => M.errCovHat a u v X i j) (M.errCov a i j) := by
+  rw [M.errCov_apply]
+  by_cases hij : i = j
+  · subst hij
+    refine (((M.CHat_unbiased ha hd hdet i i).const_mul (∑ t, a i t * a i t)).add
+      ((M.s2Hat_unbiased ha (hdet i)).const_mul (∑ t, a i t ^ 2 / M.w i t))).congr
+      (fun X => by simp only [errCovHat, ite_true]; ring) (by simp only [ite_true]; ring)
+  · simpa [errCovHat, hij] using (M.CHat_unbiased ha hd hdet i j).const_mul (∑ t, a i t * a j t)
+
+variable (a u v) in
+/-- `τ̂² = (Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)² - Σⱼ xⱼΣ̂ⱼⱼ + xᵀΣ̂x) / (1 - Σⱼ xⱼ²)`. -/
+noncomputable def tauHat (x : J → ℝ) (X : J × T → ℝ) : ℝ :=
+  (between a x X - ∑ j, x j * M.errCovHat a u v X j j
+    + ∑ i, ∑ j, x i * x j * M.errCovHat a u v X i j) / (1 - ∑ j, x j ^ 2)
+
+/-- **`τ̂²` is unbiased** when `Σⱼ xⱼ = 1` and `Σⱼ xⱼ² ≠ 1` (`sum_sq_lt_one`). -/
+theorem tauHat_unbiased (ha : ∀ j, ∑ t, a j t = 1)
+    (hd : ∀ i j, i ≠ j → ∑ t, d a i j t ≠ 0) (hdet : ∀ j, M.det a u v j ≠ 0)
+    {x : J → ℝ} (hx : ∑ j, x j = 1) (hx2 : ∑ j, x j ^ 2 ≠ 1) :
+    Model.UnbiasedCov M.cov (fun X => M.tauHat a u v x X) M.τ2 := by
+  have hne : 1 - ∑ j, x j ^ 2 ≠ 0 := sub_ne_zero.mpr (Ne.symm hx2)
+  refine (Model.UnbiasedCov.const_mul (1 - ∑ j, x j ^ 2)⁻¹
+    (((M.between_unbiased ha hx).add ((Model.UnbiasedCov.sum univ fun j _ =>
+      (M.errCovHat_unbiased ha hd hdet j j).const_mul (x j)).const_mul (-1))).add
+      (Model.UnbiasedCov.sum univ fun i _ => Model.UnbiasedCov.sum univ fun j _ =>
+        (M.errCovHat_unbiased ha hd hdet i j).const_mul (x i * x j)))).congr
+    (fun X => by rw [tauHat, div_eq_inv_mul]; ring) ?_
+  rw [inv_mul_eq_iff_eq_mul₀ hne]
+  ring
+
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+/-- Positive weights summing to one over at least two cohorts have `Σⱼ xⱼ² < 1`. -/
+theorem sum_sq_lt_one [Fintype J] {x : J → ℝ} (hx : ∑ j, x j = 1) (hpos : ∀ j, 0 < x j)
+    (hJ : 2 ≤ Fintype.card J) : ∑ j, x j ^ 2 < 1 := by
+  classical
+  have hx1 : ∀ k, x k < 1 := fun k => by
+    obtain ⟨l, hl⟩ := Fintype.exists_ne_of_one_lt_card (by omega) k
+    rw [← hx, ← add_sum_erase _ _ (mem_univ k)]
+    have : 0 < ∑ m ∈ univ.erase k, x m :=
+      sum_pos (fun m _ => hpos m) ⟨l, mem_erase.mpr ⟨hl, mem_univ _⟩⟩
+    linarith
+  rw [← hx]
+  exact sum_lt_sum_of_nonempty (univ_nonempty_iff.mpr (Fintype.card_pos_iff.mp (by omega)))
+    fun k _ => by nlinarith [hpos k, hx1 k]
+
+variable (a u v) in
+/-- `K̂ = Σ̂ + τ̂²I`. -/
+noncomputable def KHat (x : J → ℝ) (X : J × T → ℝ) (i j : J) : ℝ :=
+  M.errCovHat a u v X i j + (if i = j then M.tauHat a u v x X else 0)
+
+/-- **Every entry of `K̂` is unbiased for `K`.** -/
+theorem KHat_unbiased (ha : ∀ j, ∑ t, a j t = 1)
+    (hd : ∀ i j, i ≠ j → ∑ t, d a i j t ≠ 0) (hdet : ∀ j, M.det a u v j ≠ 0)
+    {x : J → ℝ} (hx : ∑ j, x j = 1) (hx2 : ∑ j, x j ^ 2 ≠ 1) (i j : J) :
+    Model.UnbiasedCov M.cov (fun X => M.KHat a u v x X i j) (M.K a i j) := by
+  rw [M.K_eq_errCov ha, Matrix.add_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
+  by_cases hij : i = j
+  · subst hij
+    simpa [KHat] using (M.errCovHat_unbiased ha hd hdet i i).add (M.tauHat_unbiased ha hd hdet hx hx2)
+  · simpa [KHat, hij] using M.errCovHat_unbiased ha hd hdet i j
 
 end Shock
 

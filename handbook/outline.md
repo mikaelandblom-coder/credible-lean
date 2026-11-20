@@ -22,7 +22,8 @@ voice, then trim towards 8 pages.
   `Credibility.Shock.s2Hat_unbiased`, closed forms `Credibility.Shock.dSum_expo_w`,
   `Credibility.Shock.hSum_expo_w`): an entry with the shock `K` and the estimators, "watch out":
   shock and process noise separate only with volumes that vary (`T ≥ 3`;
-  `Credibility.Shock.not_unbiased_s2_of_const`).
+  `Credibility.Shock.not_unbiased_s2_of_const`). Also `τ̂²` and `K̂ = Σ̂ + τ̂²I`
+  (`Credibility.Shock.tauHat_unbiased`, `Credibility.Shock.KHat_unbiased`), 2026-11-20.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
