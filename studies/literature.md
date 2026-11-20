@@ -505,9 +505,10 @@ same-period cross-product estimators is new here, as in §8.
    with a seasonal design differ from those with one mean unless the one-mean `d*` already
    satisfies the month-wise constraints `Σ_{cells in month m} dᵢ = 1`. Restate the expected
    result as a Kruskal-type condition: the two predictors coincide iff `Xᵀd*₁ = x₀`; sufficient
-   if all cards are observed in whole years and `K` is invariant under shifting the calendar
-   (e.g. `Γ` independent months or periodic); with an AR(1) factor the edge months break the
-   symmetry, so expect a counterexample there. Also: Ledolter et al. use a multiplicative
+   if all cards are observed in whole years and `K` and `ℓ` are invariant under shifting the
+   calendar. That is rare: the noise `sᵢ²/wᵢₜ` changes with seasonal volume, and an AR(1)
+   factor favours recent months. So expect the season to change the weights in general, and
+   the counterexample to be easy. Also: Ledolter et al. use a multiplicative
    season on the log scale; the additive-on-rate form is the linear one, so say Lean takes the
    additive form and the log scale is an app option.
 4. Step 3: add "expected finding: per-month weights can be negative with an AR(1) `Γ`" (Pinquet
