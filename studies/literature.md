@@ -367,3 +367,159 @@ not re-checked online.
   to be identified.
 Used: the interpretation (thesis model = SUR error structure inside a credibility model) and
 the warning on full `K̂`. New here: the combination with random levels and the blend.
+
+## 10. Monthly card data: Step 0 of `notes/card-data.md` (2026-11-20)
+Web search (abstracts and listings) unless marked "read". Two papers read in full from
+casact.org: Ledolter, Klugman & Lee (1991) and Zehnwirth (1985).
+
+**Answer to the note's question.** A *seasonal* credibility model exists (Ledolter, Klugman &
+Lee 1991, below), but with seasons estimated per group on a log scale, groups independent, and
+shrinkage added heuristically at the last period. Credibility with a *common* AR(1) factor
+across risks was not found: the dynamic actuarial models (Gerber & Jones, Sundt, Pinquet) make
+each risk's own level evolve and keep risks independent; the common-effect models (Yeo & Valdez
+2006, Wen, Wu & Zhou 2009, §8) have one permanent common effect, not one per period that
+evolves. Ledolter et al. name the common-trend model as future work (Lee 1991, an Iowa thesis;
+not found online). The pieces exist separately in small-area estimation (Rao & Yu 1994) and
+econometrics (dynamic factor models); their combination with the blend, GLS weights and
+same-period cross-product estimators is new here, as in §8.
+
+### 10a. BLUP with fixed effects and a general target (Step 1)
+- Goldberger (1962), *Best linear unbiased prediction in the generalized linear regression
+  model*, JASA 57, 369–375. Predict `Y` from `x` with `E x = Xβ`, `E Y = x₀ᵀβ`, `Cov x = K`,
+  `Cov(x, Y) = ℓ`: `Ŷ = x₀ᵀβ̂ + ℓᵀK⁻¹(x − Xβ̂)`, `β̂` the GLS estimate. Expanded, its weights are
+  Step 1's `d*`. Cressie (1990, *The origins of kriging*, Math. Geol. 22) credits Goldberger
+  with this and notes he did not apply it spatially. Used: Step 1's main theorem is
+  Goldberger's predictor plus the MSE decomposition `MSE(d) = MSE(d*) + (d − d*)ᵀK(d − d*)`.
+- Harville (1976), Ann. Stat. 4(2), 384–395 (§8): target `λ₁ᵀα + λ₂ᵀb`, a fixed plus a random
+  part, among linear predictors unbiased for every `α`. Exactly Step 1's general target with
+  `x₀ = λ₁` and `ℓ = Cov(x, λ₂ᵀb)`. Henderson's mixed-model equations compute the same.
+- Universal kriging (Matheron 1969) and kriging with external drift: the same predictor,
+  derived with Lagrange multipliers for `Xᵀd = x₀`. External drift = a known covariate column in
+  `X` (Step 3b's `Dₜ`). Software notes warn that external drifts can make the system
+  ill-conditioned; relevant when `Dₜ` is nearly collinear with the season columns.
+- Wen & Wu (2011), Lemma 2.1 (§8): the one-column case `X = μ_X`.
+- Kruskal (1968), *When are Gauss–Markov and least squares estimators identical?*, Ann. Math.
+  Stat. 39, 70–75 (from memory): OLS = GLS iff the column space of `X` is `K`-invariant. The
+  same kind of condition decides when a richer design leaves the BLUP unchanged (Step 2).
+
+### 10b. Seasonality (Steps 1–2)
+- **Ledolter, Klugman & Lee (1991)**, *Credibility models with time-varying trend components*,
+  ASTIN Bull. 21(1), 73–91 (**read**). US bodily-injury loss/exposure by state, quarterly,
+  31 states, 22 quarters. Model per state on the *log* scale: structural time series
+  (Harvey) with level, slope and three additive quarterly seasonal factors, noise `σ²/Pₜ`
+  (checked on the data: residual variance linear in 1/exposure). Kalman filter per state, then
+  the end-of-sample states are shrunk towards a common value with Bühlmann–Straub-type
+  `Z = B(B + V)⁻¹` (De Vylder's iterative estimates). States independent; they say a
+  cross-correlation structure is possible in theory but "quite difficult to identify ... for
+  short time series", and call their shrinkage step heuristic. Seasonal indices were estimated
+  per state and averaged per quarter (fourth quarter highest). Also cited: Meyers & Schenker
+  (1983), workers' comp loss ratios "vary independently from year to year around a common
+  mean", i.e. a common year effect. Used: precedent for estimated seasons in credibility; their
+  log/multiplicative choice is the alternative Step 2 must settle; the missing cross-sectional
+  correlation is what Step 3 adds.
+- *Notiz zu einem saisonalen Kredibilitätsmodell*, Blätter DGVFM (Springer, doi
+  10.1007/BF02809439; author and year not shown in the listing): a credibility model with
+  seasonal effects in the net premium. Not read; owner could check the DGVFM archive.
+- Nothing found on seasonality in ratemaking credibility beyond these; Werner & Modlin
+  (*Basic Ratemaking*) treat seasonality by annual aggregation and trend factors (from memory).
+
+### 10c. Evolutionary and state-space credibility (Step 3, time dimension)
+- Gerber & Jones (1975), *Credibility formulas of the updating type*, TSA 27 (also in Kahn,
+  ed., *Credibility*): recursive (exponential-smoothing) credibility holds iff the covariances
+  have a specific form. Sundt (1981, Scand. Act. J.; 1983) generalizes; Jewell (1975) names the
+  class "evolutionary"; Kremer (1982) links to exponential smoothing.
+- Zehnwirth (1985), *Linear filtering and recursive credibility estimation*, ASTIN Bull.
+  15(1), 19–36 (**read**, intro): projection/innovation proof, Kalman-type filters valid
+  without normality (linear least squares only). De Jong & Zehnwirth (1983): credibility as a
+  Kalman filter. Used: a common AR(1) factor has a state-space form, so the app can compute the
+  Step 3 predictor by a Kalman filter instead of inverting `K` over all cells; the Lean
+  statement stays the closed form.
+- Bühlmann & Gisler (2005): evolutionary models are **chapter 9** ("Evolutionary credibility
+  models and recursive calculation", §9.5 Kalman filter), not chapter 10 (table of contents).
+- Pinquet, Guillén & Bolancé (2001), ASTIN Bull. 31(2), 337–348; Bolancé, Guillén & Pinquet
+  (2003), IME; Pinquet (2020), *Poisson models with dynamic random effects and nonnegative
+  credibilities per period*, ASTIN Bull. 50(2), 585–618; Ahn et al. (arXiv 2109.07956). Per-risk
+  stationary random effects; the weight on old claims falls with their age. Pinquet (2020): an
+  AR(p) autocovariance can give *negative* weights per period unless constrained (nonnegative
+  partial autocorrelations suffice; ARFIMA(0,d,0) is safe). Used: expect negative per-month
+  weights with an AR(1) common factor too; a likely finding for Step 3, and a display issue for
+  the app.
+- Chen, Cheung, Choi & Yam (2020), *Evolutionary credibility risk premium*, IME 93, 216–229:
+  Bühlmann's evolutionary model with general (e.g. ARMA) dependence, recursive computation.
+  Evolutionary hierarchical credibility (ASTIN Bull., 2017). Not read.
+- Englund, Gustafsson, Nielsen & Thuring (2009), *Multidimensional credibility with time
+  effects*, J. Risk Insur. 76(2), 443–453: age-dependent weights in multivariate credibility,
+  Danish commercial lines. Not read.
+
+### 10d. Common factors (Step 3, cross-section)
+- Stock & Watson (2002), JASA 97, 1167–1179 and JBES 20, 147–162: approximate dynamic factor
+  model `Xᵢₜ = λᵢ(L)fₜ + uᵢₜ`, factors by principal components, consistent for many series.
+  Asymptotics need many series and periods; our card count is small, so PCA estimates of `λ`
+  are noisy. Used: the model form of Step 3 (`λᵢλⱼΓₜₛ`); §9's Pesaran (2006) and Bai (2009)
+  are the panel-econometrics versions.
+- Rao & Yu (1994), *Small area estimation by combining time series and cross-sectional data*,
+  Can. J. Stat. 22, 511–528: area level `vᵢ` plus area-by-time AR(1) `uᵢₜ`, sampling errors with
+  known covariance; EBLUP (R package `sae2`, also a "dynamic" variant without stationarity).
+  The AR(1) is *per area*, areas independent. Datta, Lahiri, Maiti & Lu (1999), JASA 94,
+  1074–1082: random-walk area effects (hierarchical Bayes). Pfeffermann & Burck (1990), Survey
+  Methodology 16; Pfeffermann & Tiller (2006), JASA: state-space SAE with benchmarking. A Census
+  working paper (2024, RRS2024-08) finds AR(1), random-walk and Rao–Yu models often beaten in
+  short series. Used: Rao–Yu's per-unit AR(1) is the Pinquet-type alternative to a common
+  factor (a `diag` block in time per card); worth a switch value "per-card AR(1)" if the
+  student finds the common factor too strong.
+
+### 10e. Regression credibility and random coefficients (Step 3b)
+- Hachemeister (1975), Bühlmann & Gisler (1997): §7, §7a. In the repo,
+  `CoreVector.hachemeister_bestZ` takes any design `Yⱼ` (`T × P`) and any noise `Φ ≻ 0` over
+  cohorts × periods. With `Yⱼ = [1, Dₜ]` the random line `(μⱼ, λⱼ)` with covariance `L` is
+  Step 3b's random effects, and `CoreVector.blupW_optimal_dotProduct` with `a = (1, D_{T+1})`
+  gives the best predictor of `μⱼ + λⱼD_{T+1}`. So Step 3b's "known signal, unknown
+  sensitivities" with correlated cards is already proved, for a `Φ` that contains the shock
+  terms. What it does not cover: (i) a persistent latent factor in `Φ` that also enters the
+  target (needs Step 1's general `ℓ`), (ii) season columns common to all cards.
+- Swamy (1970), *Efficient inference in a random coefficient regression model*,
+  Econometrica 38(2), 311–323: the same model in econometrics, GLS for the mean coefficient,
+  unbiased moment estimator of `Cov(βᵢ)` (may be non-PSD, as Ledolter et al. note for `B̂`).
+  Used: the estimation step of Step 5 for `cov(λᵢ, λⱼ)`.
+- Public demand signal (Sweden): Trafikanalys, *Luftfart* (official, annual; monthly series
+  on trafa.se/luftfart), Transportstyrelsen monthly flight statistics (not official
+  statistics), Swedavia monthly passengers per airport, Eurostat `avia_pa` (monthly, about four
+  months' lag). Note the lag: `Dₜ` for recent months arrives late, like reporting delay.
+
+### 10f. Panels with entry and exit (Q5)
+- Frees, Young & Luo (1999), IME 24, 229–247; Frees, Young & Luo (2001), NAAJ 5(4), 24–42
+  (case studies); Frees (2004), *Longitudinal and Panel Data*, CUP: unbalanced panels are
+  handled by the mixed model directly (each unit its own `Tᵢ`), as our `Unequal` (`obs j`).
+  Attrition is ignorable for likelihood/BLUP only if exit does not depend on the outcome
+  (missing at random); Frees ch. 7 and Raknerud (2002, Statistics Norway DP 330) treat
+  non-ignorable exit. Used: a card withdrawn *because* it ran badly breaks the moment model
+  (the observed cells no longer have the assumed means); state it as an assumption, not a
+  theorem. Left to the student, with a test in the app world (exit driven by results).
+
+### 10g. Suggested edits to `notes/card-data.md`
+1. Step 0: Bühlmann & Gisler ch. 9 (not 10) for evolutionary credibility.
+2. Step 1: name the main theorem as Goldberger's/Harville's predictor (target
+   `x₀ᵀβ + random part`); the formula for `d*` is theirs, the MSE identity and the corollaries
+   are ours to prove.
+3. Step 2, "Expected: the season drops out": the BLUP never depends on `β`, but the *weights*
+   with a seasonal design differ from those with one mean unless the one-mean `d*` already
+   satisfies the month-wise constraints `Σ_{cells in month m} dᵢ = 1`. Restate the expected
+   result as a Kruskal-type condition: the two predictors coincide iff `Xᵀd*₁ = x₀`; sufficient
+   if all cards are observed in whole years and `K` is invariant under shifting the calendar
+   (e.g. `Γ` independent months or periodic); with an AR(1) factor the edge months break the
+   symmetry, so expect a counterexample there. Also: Ledolter et al. use a multiplicative
+   season on the log scale; the additive-on-rate form is the linear one, so say Lean takes the
+   additive form and the log scale is an app option.
+4. Step 3: add "expected finding: per-month weights can be negative with an AR(1) `Γ`" (Pinquet
+   2020), and that the predictor has a Kalman-filter form for the app (Zehnwirth 1985). Consider
+   a per-card AR(1) (Rao–Yu, Pinquet) as a further value of the "latent factor over time"
+   switch: it is `Γ` per card instead of `λλᵀ ⊗ Γ`.
+5. Step 3b: replace "First check whether that already covers it" by: covered by
+   `CoreVector.hachemeister_bestZ` + `blupW_optimal_dotProduct` with `Yⱼ = [1, Dₜ]` and
+   `a = (1, D_{T+1})`, for any noise `Φ`; new are only the common season columns and a latent
+   factor that also enters the target (both via Step 1). Swamy (1970) for the estimator of
+   `cov(λᵢ, λⱼ)`.
+6. Step 5 / Q5: add the assumption that exit is unrelated to the card's results (missing at
+   random, Frees 2004); otherwise the observed cells are a biased sample.
+7. Literature status line: "credibility with a common AR(1) factor: not found; seasonal
+   credibility: Ledolter, Klugman & Lee (1991), independent groups, heuristic shrinkage".
