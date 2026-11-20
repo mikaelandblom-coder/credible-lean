@@ -288,7 +288,10 @@ One chat per step; none needs Lean except step 5.
 (Results or findings that may need a switch, step or message in the app.)
 - General best predictor (2026-11-20, `Blup.lean`): any target (e.g. a 12-month total)
   and fixed effects (a season) via `Core.blup`; its error shows the price of estimating the
-  season (`Core.predMse_blup`). For Step 7 of `notes/card-data.md`.
+  season (`Core.predMse_blup`). For Step 7 of `notes/card-data.md`. With known covariances,
+  annual totals lose exactly `(Ac - d*)ᵀK(Ac - d*)` (`Core.predMse_aggregate_eq_blup_add`) and
+  an unneeded season costs `(d₂* - d₁*)ᵀK(d₂* - d₁*)` (`Core.predMse_blup_nested`): the oracle
+  side of the Q3 study (monthly against annual), against which the estimated fits are compared.
 - Finding 23 (2026-11-19): the world model's period shock should be `C + s²/w` (does not
   shrink with volume), not `σ²ρ/w`. Check what `engine.js` simulates; with growing volumes
   the thesis fit is then misspecified, which the app could show. Now proved

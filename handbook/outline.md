@@ -20,7 +20,9 @@ voice, then trim towards 8 pages.
   linear unbiased predictor `d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ - XᵀK⁻¹ℓ)` for any target `Y`
   (`Credibility.Core.blup_optimal`), its error `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` with the price of
   estimating `β` as the last term (`Credibility.Core.predMse_blup`). Entry once the season
-  (Step 2) gives it a practical use; the level BLUP entry can then cite it as `X = 1`.
+  (Step 2) gives it a practical use; the level BLUP entry can then cite it as `X = 1`. With it:
+  "annual totals never beat monthly data with known covariances" (`Core.predMse_blup_le_aggregate`)
+  and "an unneeded season has a price" (`Core.predMse_blup_nested`).
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one

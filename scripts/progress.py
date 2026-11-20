@@ -130,6 +130,7 @@ EXEMPT = {
     "toUnequal_portEst": "the bridges `Model.Noise.toUnequal_portEst` and `Model.NoiseG.toUnequal_portEst` to `Tⱼ = T` are for different random variables (without and with group effects)",
     "K_eq_errCov": "`Unequal.K_eq_errCov` and `Shock.K_eq_errCov` split two different models' `K` (period-fixed correlations against shock plus process noise); neither table is a case of the other",
     "cov_symm": "`Model.cov_symm` and `Shock.cov_symm` are the symmetry of two different covariance tables (eq. (16) against shock plus process noise); neither is a case of the other",
+    "variance_portLin": "`Core.Estimates.variance_portLin` needs no target cohort, while `Core.Target` (via `Estimates.toTarget j`) needs one; each is one line from its own covariance expansion",
     "toUnequal_trueMean": "the bridges `Model.Noise.toUnequal_trueMean` and `Model.NoiseG.toUnequal_trueMean` to `Tⱼ = T` are for different random variables (without and with group effects)",
 }
 

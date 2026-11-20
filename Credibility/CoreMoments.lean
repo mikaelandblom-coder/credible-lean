@@ -1,4 +1,5 @@
 import Credibility.Core
+import Credibility.BlupMoments
 
 /-!
 # The moment layer at the level of `K` and `L` (extension, distribution-free)
@@ -86,11 +87,6 @@ theorem BlendMoments.integral_sq_blend_sub {P : Measure Ω} [IsProbabilityMeasur
 namespace Core
 
 variable {J : Type*}
-
-/-- A linear portfolio estimate `Σⱼ dⱼ μ̂ⱼ` of cohort estimates `est`, with
-arbitrary weights `d`. -/
-noncomputable def portLin [Fintype J] (est : J → Ω → ℝ) (d : J → ℝ) : Ω → ℝ :=
-  fun ω => ∑ j, d j * est j ω
 
 /-- The portfolio estimate `μ̂ = Σⱼ bⱼ μ̂ⱼ` with the GLS weights of `K`. -/
 noncomputable def portEst [Fintype J] [DecidableEq J] (K : Matrix J J ℝ) (est : J → Ω → ℝ) :
@@ -438,23 +434,28 @@ theorem commonShift_mse_optimal_of_diag {τ2 : ℝ} {v : J → ℝ} (E : Estimat
 /-! ### The best linear unbiased predictor in true MSE (Finding 18) -/
 
 omit [DecidableEq J] in
+/-- The estimates and the level `μⱼ` as data and target with one common mean (`X = 1`,
+`x₀ = 1`, `β = μ`, `ℓ = Lⱼ`, `v = Lⱼⱼ`). -/
+noncomputable def toTarget (j : J) :
+    Target K (L j) (L j j) (replicateCol Unit (1 : J → ℝ)) 1 (fun _ => μ) P where
+  x := E.est
+  Y := E.level j
+  x_memLp := E.est_memLp
+  Y_memLp := E.level_memLp j
+  x_mean i := by simp [mulVec, dotProduct, replicateCol, E.est_mean]
+  Y_mean := by simp [E.level_mean]
+  cov_x := E.cov_est
+  cov_x_Y i := by rw [covariance_comm, E.cov_level_est]
+  var_Y := by
+    rw [← covariance_self (E.level_memLp j).aestronglyMeasurable.aemeasurable, E.cov_level]
+
+omit [DecidableEq J] in
 /-- The actual mean squared error of an unbiased linear predictor `Σᵢ dᵢ μ̂ᵢ`
-(`Σᵢ dᵢ = 1`) of `μⱼ` is `linMse`: `dᵀKd - 2 dᵀLⱼ + Lⱼⱼ`. -/
+(`Σᵢ dᵢ = 1`) of `μⱼ` is `linMse`: `dᵀKd - 2 dᵀLⱼ + Lⱼⱼ`. A corollary of
+`Target.mse_portLin` (`X = 1`). -/
 theorem mse_portLin (j : J) (d : J → ℝ) (hd : ∑ i, d i = 1) :
-    P[fun ω => (E.portLin d ω - E.level j ω) ^ 2] = linMse K L j d := by
-  have hp := E.memLp_portLin d
-  have hl := E.level_memLp j
-  have hX : MemLp (fun ω => E.portLin d ω - E.level j ω) 2 P := hp.sub hl
-  have hXm : P[fun ω => E.portLin d ω - E.level j ω] = 0 := by
-    rw [integral_sub (hp.integrable (by norm_num)) (hl.integrable (by norm_num)),
-      integral_portLin, hd, E.level_mean]
-    ring
-  have hvar : ∀ X, MemLp X 2 P → Var[X; P] = cov[X, X; P] := fun X hX =>
-    (covariance_self hX.aestronglyMeasurable.aemeasurable).symm
-  rw [← variance_of_integral_eq_zero hX.aestronglyMeasurable.aemeasurable hXm,
-    variance_fun_sub hp hl, variance_portLin, hvar _ hl, E.cov_level, covariance_comm,
-    cov_level_portLin, linMse]
-  simp only [mulVec, dotProduct_comm]
+    P[fun ω => (E.portLin d ω - E.level j ω) ^ 2] = linMse K L j d :=
+  (E.toTarget j).mse_portLin (by rw [replicateCol_one_transpose_mulVec, hd]; rfl)
 
 omit [IsProbabilityMeasure P] in
 /-- The blend is the linear predictor with weights `z eⱼ + (1 - z) b`. -/

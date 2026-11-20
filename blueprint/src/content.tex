@@ -2858,6 +2858,52 @@ $\ell = L_{j\cdot}$) and the matrix one of the vector Blend ($X = U$) are specia
   - g^TX^TK^{-1}\ell + v$.
 \end{proof}
 
+\begin{lemma}[Aggregated data are restricted weights]\label{lem:Blup_aggregate}
+  \lean{Credibility.Core.predMse_mulVec, Credibility.Core.transpose_mul_mulVec}
+  \leanok
+  \uses{def:Blup}
+  A predictor $c^T(A^Tx)$ from aggregated data (e.g.\ annual totals) has the error of the
+  weights $Ac$ on $x$: $\mathrm{mse}_{A^TKA,\,A^T\ell}(c) = \mathrm{mse}_{K,\ell}(Ac)$, and
+  $(A^TX)^Tc = X^T(Ac)$, so it is unbiased iff $Ac$ is.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $c^TA^Tw = (Ac)^Tw$.
+\end{proof}
+
+\begin{theorem}[Aggregation never helps with known covariances]\label{thm:Blup_aggregate}
+  \lean{Credibility.Core.predMse_blup_le_aggregate,
+        Credibility.Core.predMse_aggregate_eq_blup_add}
+  \leanok
+  \uses{def:Blup}
+  Any unbiased predictor from aggregated data $A^Tx$ loses exactly
+  $(Ac - d^*)^TK(Ac - d^*) \ge 0$ against $d^*$; it is as good only when $d^* = Ac$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_aggregate, thm:Blup_optimal}
+  Theorem~\ref{thm:Blup_optimal} with $d = Ac$ (Lemma~\ref{lem:Blup_aggregate}).
+\end{proof}
+
+\begin{theorem}[Nested designs]\label{thm:Blup_nested}
+  \lean{Credibility.Core.blup_eq_blup_iff_of_nested, Credibility.Core.predMse_blup_nested}
+  \leanok
+  \uses{def:Blup}
+  Let a coarse design be $X_1 = X_2M$ with $x_{01} = M^Tx_{02}$ (e.g.\ one common mean inside
+  one mean per calendar month), both of full column rank, and $K \succ 0$. The fine predictor
+  $d_2^*$ equals the coarse one $d_1^*$ iff $X_2^Td_1^* = x_{02}$. In any case
+  $\mathrm{mse}(d_2^*) = \mathrm{mse}(d_1^*) + (d_2^* - d_1^*)^TK(d_2^* - d_1^*)$: when the
+  coarse model is right, a finer design (an estimated season that is not there) costs this much.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:Blup_foc, lem:Blup_pythagoras}
+  $Kd_1^* - \ell = X_1g = X_2(Mg)$ (Lemma~\ref{lem:Blup_foc}). If $X_2^Td_1^* = x_{02}$,
+  Corollary~\ref{cor:Blup_eq_of_normal} for $X_2$. For the error,
+  Lemma~\ref{lem:Blup_pythagoras} for $X_1$ around $d_1^*$, as
+  $X_1^Td_2^* = M^Tx_{02} = X_1^Td_1^*$.
+\end{proof}
+
 \subsection*{The best linear unbiased predictor}
 
 The blend $z\hmu_j + (1-z)\hmu$ is one linear combination $\sum_i d_i\hmu_i$
@@ -2998,6 +3044,52 @@ lost by not using the best of them all?
   diagonal and $\tau^2 = z(K_{jj} - c)$; $z = 0$ would need $\tau^2 = 0$.
 \end{proof}
 
+\begin{definition}[Data and a general target]\label{def:Blup_Target}
+  \lean{Credibility.Core.Target}
+  \leanok
+  \uses{def:Blup}
+  Square-integrable random cells $x_i$ and a target $Y$ with $E x = X\beta$,
+  $E Y = x_0^T\beta$, $\cov(x_i, x_j) = K_{ij}$, $\cov(x_i, Y) = \ell_i$, $\var Y = v$. Unlike
+  Definition~\ref{def:Core_Estimates}, $\cov(x, Y)$ is not tied to $\var Y$: the noise may be
+  correlated with the target.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions for a general target]\label{lem:Blup_moments_lin}
+  \lean{Credibility.Core.Target.memLp_portLin, Credibility.Core.Target.integral_portLin,
+        Credibility.Core.Target.variance_portLin, Credibility.Core.Target.cov_portLin_Y}
+  \leanok
+  \uses{def:Blup_Target}
+  $E(d^Tx) = (X^Td)^T\beta$, $\var(d^Tx) = d^TKd$, $\cov(d^Tx, Y) = d^T\ell$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[The general best predictor in true MSE]\label{thm:Blup_mse_true}
+  \lean{Credibility.Core.Target.mse_portLin, Credibility.Core.Target.blup_mse_optimal,
+        Credibility.Core.Target.mse_blup}
+  \leanok
+  \uses{def:Blup_Target}
+  If $X^Td = x_0$ then $\mathbb E(d^Tx - Y)^2 = \mathrm{mse}(d)$. So $d^*$ minimises the true
+  mean squared error among unbiased linear predictors, for every distribution with these
+  moments, and its true error is that of Theorem~\ref{thm:Blup_mse}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_moments_lin, thm:Blup_optimal, thm:Blup_mse, lem:Blup_foc}
+  The error has mean $(X^Td - x_0)^T\beta = 0$, so its mean square is its variance
+  $d^TKd - 2d^T\ell + v$.
+\end{proof}
+
+\begin{definition}[Estimates and a level as data and target]\label{def:Core_toTarget}
+  \lean{Credibility.Core.Estimates.toTarget}
+  \leanok
+  \uses{def:Core_Estimates, def:Blup_Target}
+  The estimates $\hmu_i$ and the level $\mu_j$ of Definition~\ref{def:Core_Estimates} are data
+  and target with $X = 1$, $x_0 = 1$, $\beta = \mu$, $\ell = L_{j\cdot}$, $v = L_{jj}$.
+\end{definition}
+
 \begin{theorem}[The best linear unbiased predictor in true MSE]\label{thm:Core_blup_mse}
   \lean{Credibility.Core.Estimates.blup_mse_optimal, Credibility.Core.Estimates.mse_portLin,
         Credibility.Core.Estimates.blend_eq_portLin,
@@ -3014,9 +3106,10 @@ lost by not using the best of them all?
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:Core_moments_lin, thm:Core_blup_optimal, thm:Core_blend_price, thm:Core_bestZ_mse}
-  The error has mean zero, so its mean square is its variance,
-  $d^TKd - 2(Ld)_j + L_{jj}$. Then Theorems~\ref{thm:Core_blup_optimal}
+  \uses{thm:Core_blup_optimal, thm:Core_blend_price, thm:Core_bestZ_mse,
+    thm:Blup_mse_true, def:Core_toTarget}
+  Theorem~\ref{thm:Blup_mse_true} with Definition~\ref{def:Core_toTarget}: the mean square
+  error is $d^TKd - 2(Ld)_j + L_{jj}$. Then Theorems~\ref{thm:Core_blup_optimal}
   and~\ref{thm:Core_blend_price}.
 \end{proof}
 

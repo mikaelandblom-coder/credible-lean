@@ -89,8 +89,13 @@ kriging. Step 3b is mostly in the repo already (see there).
 **Status (2026-11-20):** done in `Credibility/Blup.lean`: `Core.unbiased_iff`,
 `Core.blup_optimal` (with `predMse_eq_blup_add`, `blup_unique`), `Core.predMse_blup`;
 `Core.blupWeight_optimal` and `CoreVector.blupW_optimal` are now corollaries
-(`blupWeight_eq_blup`, `blupW_mulVec_eq_blup`). Open: restricted predictors (annual
-aggregation, the blend as a restricted form) and the moment layer.
+(`blupWeight_eq_blup`, `blupW_mulVec_eq_blup`). Restricted predictors: aggregated data
+(`predMse_blup_le_aggregate`, exact loss `predMse_aggregate_eq_blup_add`), nested designs
+(`blup_eq_blup_iff_of_nested`: the Kruskal-type iff for Step 2; `predMse_blup_nested`: the
+price of a finer design when the coarse one is right); the thesis blend was already
+`Core.errVar_eq_blupWeight_add`. Moment layer: `Credibility/BlupMoments.lean`
+(`Core.Target`, `Target.mse_portLin`, `blup_mse_optimal`, `mse_blup`); `Core.Estimates` is its
+case `X = 1` (`Estimates.toTarget`). **Step 1 done.**
 A generalization of `Core.linMse` and `Core.blupWeight`, with the data
 indexed by observed cells.
 - **General target:** predict a random `Y`, given `K = Cov(x)`, `ℓ = Cov(x, Y)`
@@ -124,7 +129,9 @@ rate is linear; multiplicative needs a plug-in or a log scale, so say which.
   already satisfies these month-wise constraints (a Kruskal-type condition). Sufficient: cards
   observed in whole years with `K` and `ℓ` invariant under shifting the calendar. That is rare:
   the noise `sᵢ²/wᵢₜ` changes with seasonal volume, and an AR(1) factor favours recent months.
-  So prove the iff, and expect an easy counterexample to "the season drops out".
+  So prove the iff, and expect an easy counterexample to "the season drops out". The iff
+  in general form is `Core.blup_eq_blup_iff_of_nested` (`X₁ = X₂M`, here `M` = column of
+  ones over months); Step 2 only instantiates it and gives the counterexample.
 - **Form:** Lean takes the season additive on the rate (linear). Ledolter, Klugman & Lee
   (1991) use a multiplicative season on the log scale; that is an app option.
 - **Known index `cₜ`:** a corollary of `Unequal` (divide by `cₜ`). This is the

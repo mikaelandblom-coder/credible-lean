@@ -159,5 +159,77 @@ theorem predMse_blup {K : Matrix n n ℝ} (hK : K.PosDef) {X : Matrix n q ℝ}
   simp only [r, sub_dotProduct, dotProduct_comm g] at hr ⊢
   linarith
 
+/-! ### Restricted predictors: nested designs and aggregated data
+
+A finer design (`X₂`, e.g. one mean per calendar month) has more unbiasedness constraints
+than a coarser one (`X₁ = X₂M`, e.g. one common mean). The fine predictor is the coarse one
+iff the coarse `d*` already meets the fine constraints; otherwise it costs more when the
+coarse model holds. A predictor from aggregated data `Aᵀx` (e.g. annual totals) is the
+predictor with weights `Ac` on `x`: it is never better than `d*`, and as good only when
+`d*` has that form. -/
+
+omit [DecidableEq n] [DecidableEq q] in
+/-- **Aggregated data**: the predictor `cᵀ(Aᵀx)` from aggregated data has the mean squared
+error of the weights `Ac` on `x`: `mse_{AᵀKA, Aᵀℓ}(c) = mse_{K, ℓ}(Ac)`. It is unbiased for
+the aggregated design `AᵀX` iff `Ac` is unbiased for `X`. -/
+theorem predMse_mulVec {m : Type*} [Fintype m] (K : Matrix n n ℝ) (ℓ : n → ℝ) (v : ℝ)
+    (A : Matrix n m ℝ) (c : m → ℝ) :
+    predMse (Aᵀ * K * A) (Aᵀ *ᵥ ℓ) v c = predMse K ℓ v (A *ᵥ c) := by
+  have hT : ∀ w : n → ℝ, c ⬝ᵥ (Aᵀ *ᵥ w) = (A *ᵥ c) ⬝ᵥ w := fun w => by
+    rw [dotProduct_mulVec, vecMul_transpose]
+  simp only [predMse, ← mulVec_mulVec, hT]
+
+omit [Fintype q] [DecidableEq n] [DecidableEq q] in
+/-- `(AᵀX)ᵀc = Xᵀ(Ac)`: the aggregated predictor is unbiased iff its weights on `x` are. -/
+theorem transpose_mul_mulVec {m : Type*} [Fintype m] (X : Matrix n q ℝ) (A : Matrix n m ℝ)
+    (c : m → ℝ) : (Aᵀ * X)ᵀ *ᵥ c = Xᵀ *ᵥ (A *ᵥ c) := by
+  rw [transpose_mul, transpose_transpose, mulVec_mulVec]
+
+/-- **Aggregation never helps with known covariances**: any unbiased predictor from
+aggregated data `Aᵀx` has at least the mean squared error of the best predictor from `x`. -/
+theorem predMse_blup_le_aggregate {m : Type*} [Fintype m] {K : Matrix n n ℝ} (hK : K.PosDef)
+    {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (ℓ : n → ℝ) (v : ℝ) (x₀ : q → ℝ)
+    (A : Matrix n m ℝ) {c : m → ℝ} (hc : (Aᵀ * X)ᵀ *ᵥ c = x₀) :
+    predMse K ℓ v (blup K X ℓ x₀) ≤ predMse (Aᵀ * K * A) (Aᵀ *ᵥ ℓ) v c := by
+  rw [predMse_mulVec]
+  exact blup_optimal hK hX ℓ v x₀ (by rw [← transpose_mul_mulVec]; exact hc)
+
+/-- …and it is as good only when `d* = Ac`: the aggregated predictor loses exactly
+`(Ac - d*)ᵀK(Ac - d*)`. -/
+theorem predMse_aggregate_eq_blup_add {m : Type*} [Fintype m] {K : Matrix n n ℝ}
+    (hK : K.PosDef) {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (ℓ : n → ℝ) (v : ℝ)
+    (x₀ : q → ℝ) (A : Matrix n m ℝ) {c : m → ℝ} (hc : (Aᵀ * X)ᵀ *ᵥ c = x₀) :
+    predMse (Aᵀ * K * A) (Aᵀ *ᵥ ℓ) v c = predMse K ℓ v (blup K X ℓ x₀)
+      + (A *ᵥ c - blup K X ℓ x₀) ⬝ᵥ (K *ᵥ (A *ᵥ c - blup K X ℓ x₀)) := by
+  rw [predMse_mulVec]
+  exact predMse_eq_blup_add hK hX ℓ v x₀ (by rw [← transpose_mul_mulVec]; exact hc)
+
+/-- **Nested designs** (a Kruskal-type condition): if the coarse design is `X₁ = X₂M` with
+`x₀₁ = Mᵀx₀₂`, the fine predictor equals the coarse one iff the coarse `d*` meets the fine
+constraints `X₂ᵀd = x₀₂`. -/
+theorem blup_eq_blup_iff_of_nested {r : Type*} [Fintype r] [DecidableEq r] {K : Matrix n n ℝ}
+    (hK : K.PosDef) {X₂ : Matrix n q ℝ} (hX₂ : Function.Injective X₂.mulVec)
+    (M : Matrix q r ℝ) (ℓ : n → ℝ) (x₀₂ : q → ℝ) :
+    blup K X₂ ℓ x₀₂ = blup K (X₂ * M) ℓ (Mᵀ *ᵥ x₀₂)
+      ↔ X₂ᵀ *ᵥ blup K (X₂ * M) ℓ (Mᵀ *ᵥ x₀₂) = x₀₂ := by
+  refine ⟨fun h => h ▸ transpose_mulVec_blup hK hX₂ ℓ x₀₂, fun h => ?_⟩
+  refine (eq_blup_of_normal hK hX₂ ℓ x₀₂ (c := M *ᵥ
+    (((X₂ * M)ᵀ * K⁻¹ * (X₂ * M))⁻¹ *ᵥ (Mᵀ *ᵥ x₀₂ - (X₂ * M)ᵀ *ᵥ (K⁻¹ *ᵥ ℓ)))) ?_ h).symm
+  rw [mulVec_blup hK, ← mulVec_mulVec]
+
+/-- **The price of a finer design**: when the coarse design `X₁ = X₂M` is right, the fine
+predictor (e.g. with an estimated season that is not there) has at least the coarse one's
+error; the excess is `(d₂* - d₁*)ᵀK(d₂* - d₁*)`. -/
+theorem predMse_blup_nested {r : Type*} [Fintype r] [DecidableEq r] {K : Matrix n n ℝ}
+    (hK : K.PosDef) {X₂ : Matrix n q ℝ} (hX₂ : Function.Injective X₂.mulVec)
+    {M : Matrix q r ℝ} (hM : Function.Injective (X₂ * M).mulVec) (ℓ : n → ℝ) (v : ℝ)
+    (x₀₂ : q → ℝ) :
+    predMse K ℓ v (blup K X₂ ℓ x₀₂) = predMse K ℓ v (blup K (X₂ * M) ℓ (Mᵀ *ᵥ x₀₂))
+      + (blup K X₂ ℓ x₀₂ - blup K (X₂ * M) ℓ (Mᵀ *ᵥ x₀₂))
+        ⬝ᵥ (K *ᵥ (blup K X₂ ℓ x₀₂ - blup K (X₂ * M) ℓ (Mᵀ *ᵥ x₀₂))) := by
+  refine predMse_eq_add_of_normal hK.isHermitian ℓ v (X₂ * M) (mulVec_blup hK _ ℓ _) ?_
+  rw [transpose_mulVec_blup hK hM, transpose_mul, ← mulVec_mulVec,
+    transpose_mulVec_blup hK hX₂]
+
 end Core
 end Credibility

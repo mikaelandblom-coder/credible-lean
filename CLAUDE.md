@@ -14,7 +14,10 @@ tactics.
   balanced blend (PLAN G7) → `Credibility/Core.lean`
 - extension: best linear unbiased predictor of a general target `Y` (`ℓ = Cov(x, Y)`,
   `v = Var Y`) with fixed effects `Xᵀd = x₀` (universal kriging, `notes/card-data.md` Step 1;
-  `Core.blupWeight_optimal` is `X = 1`, `CoreVector.blupW_optimal` is `X = U`) → `Credibility/Blup.lean`
+  `Core.blupWeight_optimal` is `X = 1`, `CoreVector.blupW_optimal` is `X = U`; nested designs
+  and aggregated data as restricted predictors) → `Credibility/Blup.lean`; its moment layer
+  (`Core.Target`: any random cells and target, `cov(x, Y)` free; `Core.Estimates` via `toTarget`)
+  → `Credibility/BlupMoments.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
   §2.9 balance → `Credibility/Balance.lean`
@@ -67,7 +70,7 @@ estimation / EBLUP, portfolio and covariance shrinkage) for work to build on, an
 used in `studies/literature.md`: combine the best existing pieces in this framework rather than
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
-Second moments are taken as given numbers, except in the moment layer (`CoreMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
+Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second
