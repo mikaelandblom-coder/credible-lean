@@ -286,6 +286,12 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
+  the factor fit is the year-on-year lagged cross-product per card pair and lag
+  (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card
+  calendar season). Report loadings normalised to exposure-weighted mean `1` (`blup_rescale`:
+  presentation only); with a stationary `Γ` the app need not split lag-0 covariance between
+  shock and factor (`blup_eq_of_lag0`), so show `C + γλλᵀ` as one matrix.
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): the fit switch "latent factor over
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true

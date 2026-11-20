@@ -230,6 +230,12 @@ year-on-year lag moments and Henderson III / MINQUE given `φ` (Lean, after exte
 to means `Dβ`); `φ̂`, `λ̂` and Kalman quasi-ML only consistent (app); statements I1–I5.
 Distribution-free, unbiased where possible, via `Expectation.UnbiasedCov` for
 the table of Step 3.
+**Done (2026-11-20, `FactorEstimation.lean`):** `Model.UnbiasedMean` (means `Dβ`;
+`ecovMean_eq_iff`: unbiased for all `β` iff `Σ QC = θ` and `Dᵀ(Q + Qᵀ)D = 0`), I1
+(`blup_rescale`), I2 (`blup_eq_of_lag0`), I3 (`obsCovG_of_ne`, `factor_eq_of_obsCovG_eq`), and
+the year-on-year cross-product (`yoy_unbiased_factor`, pooled `yoyPooled_unbiased`, true
+expectation `Cells.integral_yoy`) under a per-card calendar-month season. Next: I4, I5,
+Henderson III given `φ`, the shock estimators' bias under a factor (plan items 2–3).
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

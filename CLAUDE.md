@@ -27,7 +27,8 @@ tactics.
 - §2.7 two cohorts, eq. (32) → `Credibility/TwoCohorts.lean`
 - §2.8 expectation of quadratic estimators → `Credibility/Expectation.lean` (proved once for a
   symmetric covariance table `C`: `Ecov`, `UnbiasedCov`; the thesis `E`, `Unbiased` are `C = obsCov`;
-  `integral_quad_of_cov`: `Ecov` is the true expectation for any random variables with table `C`)
+  `integral_quad_of_cov`: `Ecov` is the true expectation for any random variables with table `C`;
+  means from a design `Dβ`: `EcovMean`, `UnbiasedMean`, `integral_quad_of_mean`)
 - §2.8 parameter estimation, eqs. (37)–(41) → `Credibility/Estimation.lean` (corollaries of `UnequalEstimation` via `Model.toUnequal`)
 - extension: merging two cohorts (Result A of `notes/merging-cohorts.md`) → `Credibility/Merging.lean`
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
@@ -54,6 +55,10 @@ tactics.
   corollaries → `Credibility/Factor.lean`; its moment layer (`Factor.Cells`: random cells over
   all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE)
   → `Credibility/FactorMoments.lean`
+- extension: estimating the factor model, part 1 (`notes/card-data.md` Step 5, literature §10h):
+  `Expectation.UnbiasedMean` (means `Dβ`: unbiased for all `β` iff the form annihilates `D`), (I1)
+  scale `(λ, Γ) ↦ (aλ, a⁻²Γ)`, (I2) lag 0 only through `C + γλλᵀ`, (I3) lag ≥ 1 cross-card
+  entries are `λᵢλⱼΓₜₛ`, the year-on-year lagged cross-product → `Credibility/FactorEstimation.lean`
 - extension: shock plus process noise (Finding 23): `cov = δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, its `K`
   for any cohort weights, `K ≻ 0`, unbiased `Ĉ`, `ŝ²` (identified only through volume variation)
   → `Credibility/Shock.lean`; its moment layer (`Shock.Cells`, random cells with the table `obsCov`,

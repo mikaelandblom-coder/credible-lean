@@ -717,3 +717,5 @@ spending abroad (Riksbank/SCB) not verified.
 - (I5) AR(1) given its cross-moments: `φ ≠ 0` and `λᵢλⱼγ ≠ 0` determine `φ`, `γλᵢλⱼ` and then
   `Cᵢⱼ`; `φ = 0` refutes separability (factor = shock with `C + γλλᵀ`, `obsCov_eq_shock`
   pattern).
+- *Status (2026-11-20):* I1–I3 and plan item 1 proved in `Credibility/FactorEstimation.lean`
+  (`Model.UnbiasedMean` in `Expectation.lean`); I4, I5 and items 2–3 open.

@@ -1270,7 +1270,7 @@ proved once for any symmetric $C$.
 \end{definition}
 
 \begin{lemma}[The expectation is well defined]\label{lem:E_congr}
-  \lean{Credibility.Model.Ecov_congr, Credibility.Model.UnbiasedCov.unique,
+  \lean{Credibility.Model.Ecov_congr,
         Credibility.Model.cov_symm, Credibility.Model.E_eq_sum_mom2, Credibility.Model.E_congr}
   \leanok
   \uses{def:unbiased}
@@ -1284,20 +1284,63 @@ proved once for any symmetric $C$.
   and $C_{pq} + \mu^2$ is symmetric.
 \end{proof}
 
+\begin{definition}[Means from a design]\label{def:unbiased_mean}
+  \lean{Credibility.Model.EcovMean, Credibility.Model.UnbiasedMean}
+  \leanok
+  \uses{def:unbiased}
+  With fixed effects the mean is $m = D\beta$ for a design $D$ and unknown $\beta$:
+  $\mathbb{E}^{C}_{m}\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + m_pm_q)$,
+  and $f$ is unbiased for $\theta$ under $C$ and $D$ if it is a quadratic form with this
+  expectation $\theta$ for every $\beta$.
+\end{definition}
+
+\begin{theorem}[Unbiased for every $\beta$]\label{thm:unbiased_mean}
+  \lean{Credibility.Model.EcovMean_eq, Credibility.Model.Ecov_eq_EcovMean,
+        Credibility.Model.quad_mulVec, Credibility.Model.dotProduct_mulVec_self_eq_zero_iff,
+        Credibility.Model.ecovMean_eq_iff, Credibility.Model.unbiasedCov_iff_unbiasedMean,
+        Credibility.Model.UnbiasedMean.unique, Credibility.Model.UnbiasedMean.congr,
+        Credibility.Model.UnbiasedMean.add, Credibility.Model.UnbiasedMean.const_mul,
+        Credibility.Model.UnbiasedMean.sum, Credibility.Model.UnbiasedMean.of_mul,
+        Credibility.Model.unbiasedMean_mul, Credibility.Model.unbiasedMean_diff_mul}
+  \leanok
+  \uses{def:unbiased_mean, lem:E_congr}
+  A form $Q$ has expectation $\theta$ for all means $D\beta$ iff
+  $\sum_{p,q}Q_{pq}C_{pq} = \theta$ and $D^\top(Q + Q^\top)D = 0$: the form vanishes on the
+  column space of $D$. One mean $\mu$ is the design with one column of ones. Unbiasedness
+  under a design is well defined for a symmetric $C$, linear, and survives passing to a
+  design $DE$ with columns in that of $D$. If $D^\top\ell = 0$, then $(\ell^\top\mu)(m^\top\mu)$
+  is unbiased for $\sum_{p,q}\ell_pm_qC_{pq}$; in particular, if rows $p$, $p'$ of $D$ agree,
+  $(\mu_p - \mu_{p'})(\mu_q - \mu_{q'})$ is unbiased for
+  $C_{pq} - C_{pq'} - C_{p'q} + C_{p'q'}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:E_congr}
+  The expectation is $\sum Q_{pq}C_{pq} + \beta^\top D^\top QD\beta$; take $\beta = 0$, then
+  polarize with unit vectors: $\beta^\top A\beta = 0$ for all $\beta$ iff $A + A^\top = 0$.
+  Uniqueness is Lemma~\ref{lem:E_congr} at $\beta = 0$; the rest as in
+  Lemma~\ref{lem:unbiased_linear}.
+\end{proof}
+
 \begin{lemma}[Linearity]\label{lem:unbiased_linear}
-  \lean{Credibility.Model.UnbiasedCov.congr, Credibility.Model.UnbiasedCov.add,
+  \lean{Credibility.Model.UnbiasedCov.unique,
+        Credibility.Model.UnbiasedCov.congr, Credibility.Model.UnbiasedCov.add,
         Credibility.Model.UnbiasedCov.const_mul, Credibility.Model.UnbiasedCov.sum,
         Credibility.Model.unbiasedCov_mul, Credibility.Model.unbiased_mul}
   \leanok
   \uses{def:unbiased}
-  Unbiasedness is preserved by sums and scalar multiples. If $\sum_p \ell_p = 0$,
+  For a symmetric table unbiasedness fixes the value; it is preserved by sums and scalar
+  multiples. If $\sum_p \ell_p = 0$,
   then $(\ell^\top\mu)(m^\top\mu)$ is unbiased for $\sum_{p,q}\ell_p m_q C_{pq}$:
   the mean drops out.
 \end{lemma}
 \begin{proof}
   \leanok
-  Add or scale the matrices; for the product take $Q_{pq} = \ell_p m_q$.
+  \uses{thm:unbiased_mean}
+  The one-mean case of Theorem~\ref{thm:unbiased_mean}; for the product take
+  $Q_{pq} = \ell_p m_q$.
 \end{proof}
+
 
 \begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
   \lean{Credibility.Model.wtot, Credibility.Model.wall, Credibility.Model.sqrtSum,
@@ -3557,6 +3600,23 @@ example ignoring the correlation between cohorts. How much can that cost?
   inequality is Kantorovich's, used for OLS against GLS by Bloomfield and Watson (1975).
 \end{remark}
 
+\begin{theorem}[The expectation of a quadratic form, means from a design]\label{thm:integral_quad_mean}
+  \lean{Credibility.Model.integral_quad_of_mean, Credibility.Model.UnbiasedMean.integral_eq}
+  \leanok
+  \uses{def:unbiased_mean}
+  Let $Z_p$ be random variables and $Q$ a quadratic form reading only a set $S$ of cells. If
+  on $S$ the $Z_p$ are square integrable with means $m_p$ and $\cov(Z_p,Z_q) = C_{pq}$, then
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}Z_pZ_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + m_pm_q)$. So an
+  estimator unbiased for $\theta$ under $C$ and $D$ (Definition~\ref{def:unbiased_mean}) has
+  true expectation $\theta$ for any square-integrable cells with means $D\beta$ and
+  covariances $C$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are in $S$, so
+  $\mathbb E[Z_pZ_q] = C_{pq} + m_pm_q$ and the product is integrable.
+\end{proof}
+
 \begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}
   \lean{Credibility.Model.integral_quad_of_cov}
   \leanok
@@ -3571,8 +3631,8 @@ example ignoring the correlation between cohorts. How much can that cost?
 \end{theorem}
 \begin{proof}
   \leanok
-  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are in $S$, so
-  $\mathbb E[Z_pZ_q] = C_{pq} + \mu^2$ and the product is integrable.
+  \uses{thm:integral_quad_mean}
+  Theorem~\ref{thm:integral_quad_mean} with the constant mean $m_p = \mu$.
 \end{proof}
 
 \begin{lemma}[A common component]\label{lem:Core_addCommon}
@@ -3887,9 +3947,9 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:E_congr}
+  \uses{lem:unbiased_linear}
   Moving $s_j^2/(2w_j)$ from the process noise into $C_{jj}$ leaves the table unchanged but
-  halves $s_j^2$; an estimator has one expectation (Lemma~\ref{lem:E_congr}).
+  halves $s_j^2$; an estimator has one expectation (Lemma~\ref{lem:unbiased_linear}).
 \end{proof}
 
 \begin{remark}[Two periods never separate them]\label{rem:Shock_two_periods}
@@ -4240,6 +4300,111 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
   \uses{thm:Blup_mse_true, thm:Factor_K, thm:Factor_card}
   Theorem~\ref{thm:Blup_mse_true}, with $K \succ 0$ from Theorems~\ref{thm:Factor_K}
   and~\ref{thm:Factor_card}.
+\end{proof}
+
+\section*{Estimation, part 1: what the data identify}
+
+Write $\Sigma_h(i,j)$ for the covariance of cards $i$, $j$ at months $t$, $t + h$. Across
+cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the shock add up.
+
+\begin{theorem}[Equal tables, equal predictors]\label{thm:Factor_congr}
+  \lean{Credibility.Factor.K_congr, Credibility.Factor.ell_congr, Credibility.Factor.var_congr,
+        Credibility.Factor.blup_congr}
+  \leanok
+  \uses{cor:Factor_blup}
+  Two factor models with the same table have the same $K$, $\ell$, $v$, hence the same
+  predictor and the same error for every weight vector.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $K$, $\ell$, $v$ are read off the table.
+\end{proof}
+
+\begin{theorem}[(I1) The scale of loadings and factor]\label{thm:Factor_rescale}
+  \lean{Credibility.Factor.rescale, Credibility.Factor.obsCov_rescale,
+        Credibility.Factor.obsCovG_rescale, Credibility.Factor.blup_rescale}
+  \leanok
+  \uses{def:Factor, def:Factor_card}
+  $(\lambda, \Gamma) \mapsto (a\lambda, a^{-2}\Gamma)$, $a \ne 0$ (a sign flip included), leaves
+  the table (with or without per-card dynamics) and the predictor unchanged. So the
+  normalisation (exposure-weighted mean loading $1$) is a presentation choice.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_congr}
+  $a\lambda_i\,a\lambda_j\,a^{-2}\Gamma_{ts} = \lambda_i\lambda_j\Gamma_{ts}$; then
+  Theorem~\ref{thm:Factor_congr}.
+\end{proof}
+
+\begin{theorem}[(I2) Lag $0$ sees only $C + \gamma\lambda\lambda^\top$]\label{thm:Factor_lag0}
+  \lean{Credibility.Factor.obsCov_eq_of_lag0, Credibility.Factor.blup_eq_of_lag0}
+  \leanok
+  \uses{def:Factor}
+  Let two factor models have the same $\tau^2$, $s^2$, volumes and lagged factor part
+  $\lambda_i\lambda_j\Gamma_{ts}$ ($t \ne s$), constant factor variances $\Gamma_{tt} = \gamma$,
+  $\Gamma'_{tt} = \gamma'$, and $C + \gamma\lambda\lambda^\top = C' + \gamma'\lambda'\lambda'^\top$.
+  Then they have the same table, so the same $K$, $\ell$, $v$, predictor and errors. With a
+  stationary $\Gamma$ the split of the lag-$0$ covariance between shock and factor is not
+  identified, and the predictor does not need it.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_congr}
+  At $t = s$ the table is $C_{ij} + \gamma\lambda_i\lambda_j$ plus terms that agree; at
+  $t \ne s$ only the lagged factor part and $\tau^2\delta_{ij}$. Then
+  Theorem~\ref{thm:Factor_congr}.
+\end{proof}
+
+\begin{theorem}[(I3) Lags $\ge 1$ across cards see only the factor]\label{thm:Factor_lagged}
+  \lean{Credibility.Factor.obsCovG_of_ne, Credibility.Factor.obsCovG_self_of_ne,
+        Credibility.Factor.factor_eq_of_obsCovG_eq}
+  \leanok
+  \uses{def:Factor_card}
+  For $i \ne j$ and $t \ne s$ the table with per-card dynamics is
+  $\lambda_i\lambda_j\Gamma_{ts}$: no $C$, $s^2/w$, $\tau^2$ or $G$. For $i = j$, $t \ne s$ it is
+  $\lambda_i^2\Gamma_{ts} + \tau^2 + (G_i)_{ts}$. So two models with the same table have the
+  same lagged cross-card factor part, whatever their $C$, $s^2$, $\tau^2$, $G$: a common
+  factor and per-card dynamics only are told apart by the lagged cross-moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Read off the table; for the last claim apply the first to both models.
+\end{proof}
+
+\begin{definition}[The year-on-year lagged cross-product]\label{def:Factor_yoy}
+  \lean{Credibility.Factor.covG, Credibility.Factor.cardSeason,
+        Credibility.Factor.yoy}
+  \leanok
+  \uses{def:Factor_card, def:unbiased_mean}
+  For cards $i$, $j$ and months $t$, $u = t - 12$, $s$, $v = s - 12$:
+  $(X_{it} - X_{iu})(X_{js} - X_{jv})$. The means follow a season per card and calendar month,
+  $\mathbb E X_{jt} = \beta_{j,\mathrm{mon}(t)}$ (it contains a card mean and a common
+  season); months with the same calendar month have the same design row.
+\end{definition}
+
+\begin{theorem}[The year-on-year cross-product is unbiased]\label{thm:Factor_yoy}
+  \lean{Credibility.Factor.cardSeason_row, Credibility.Factor.yoy_unbiased,
+        Credibility.Factor.yoy_unbiased_factor,
+        Credibility.Factor.yoyPooled_unbiased, Credibility.Factor.Cells.integral_yoy}
+  \leanok
+  \uses{def:Factor_yoy, thm:Factor_lagged, thm:integral_quad_mean}
+  For any design whose rows agree for card $i$ in months $t$, $u$, the year-on-year
+  cross-product is unbiased for every $\beta$, with expectation
+  $\Sigma(i,j,t,s) - \Sigma(i,j,t,v) - \Sigma(i,j,u,s) + \Sigma(i,j,u,v)$ in the table.
+  For $i \ne j$ and months distinct across the two cards this is
+  $\lambda_i\lambda_j(\Gamma_{ts} - \Gamma_{tv} - \Gamma_{us} + \Gamma_{uv})$; with
+  $s = t + h$ and a stationary $\Gamma$, $\lambda_i\lambda_j(2\Gamma(h) - \Gamma(h-12) -
+  \Gamma(h+12))$ for $h \ge 1$, $h \ne 12$. A weighted sum over month quadruples is unbiased
+  for the weighted sum, and for random cells with means $D\beta$ and this table the true
+  expectation is that value.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean, thm:Factor_lagged, thm:integral_quad_mean}
+  Differences of cells with the same design row annihilate the design
+  (Theorem~\ref{thm:unbiased_mean}); the four table entries are lagged cross-card entries
+  (Theorem~\ref{thm:Factor_lagged}); linearity for the pooled sum;
+  Theorem~\ref{thm:integral_quad_mean} for the true expectation.
 \end{proof}
 
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}

@@ -84,6 +84,11 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): unbiasedness under fixed
+  effects `Dβ` (a form must vanish on the design, `Model.ecovMean_eq_iff`); what the factor
+  table identifies (scale, lag 0 only `C + γλλᵀ`, lagged cross-card moments only the factor:
+  `Factor.blup_rescale`, `blup_eq_of_lag0`, `factor_eq_of_obsCovG_eq`); the year-on-year
+  estimator (`Factor.yoy_unbiased_factor`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing

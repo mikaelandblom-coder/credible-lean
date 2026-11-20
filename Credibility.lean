@@ -6,6 +6,7 @@ import Credibility.BlupMoments
 import Credibility.Season
 import Credibility.Factor
 import Credibility.FactorMoments
+import Credibility.FactorEstimation
 import Credibility.Core
 import Credibility.CoreMoments
 import Credibility.Model
