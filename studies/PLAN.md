@@ -291,7 +291,7 @@ One chat per step; none needs Lean except step 5.
   the thesis fit is then misspecified, which the app could show. Now proved
   (`Credibility/Shock.lean`): a fit switch "shock + process noise" with `K` from
   `Shock.K_apply` and `Ĉ`, `ŝ²` from `Shock.CHat`, `Shock.s2Hat` (exposure weights, weightings
-  `1` and `w`; needs `T ≥ 3` and varying volumes, else fall back to the thesis fit), and `τ̂²`, `K̂` from `Shock.tauHat`,
+  `1` and `w`; works whenever `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`), else fall back to the thesis fit), and `τ̂²`, `K̂` from `Shock.tauHat`,
   `Shock.KHat` (portfolio weights `x = w_{j*}/w_{**}`; proved 2026-11-20).
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
   matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the

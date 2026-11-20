@@ -399,5 +399,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`, 2026-11-20): `Δⱼwⱼ*² = -F`, and
    `2F = Σᵢₖ (wᵢ-wₖ)²/(wᵢwₖ)((W-wᵢ-wₖ)² + Q-wᵢ²-wₖ²)` is a sum of nonnegative terms
    (`two_mul_detGap_eq`, `detGap_pos`); comparing pair by pair fails, the identity does not.
+   Moment layer (`Credibility/ShockMoments.lean`): for any random cells with this table, `K` is
+   the actual covariance, `zⱼ` minimises the true MSE and `E K̂ = K` (`Shock.Cells.toEstimates`,
+   `Shock.Cells.bestZ_mse_optimal`, `Shock.Cells.integral_KHat`).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

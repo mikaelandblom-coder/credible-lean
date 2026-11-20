@@ -24,3 +24,4 @@ import Credibility.Trend
 import Credibility.CoreVector
 import Credibility.CoreVectorMoments
 import Credibility.Shock
+import Credibility.ShockMoments

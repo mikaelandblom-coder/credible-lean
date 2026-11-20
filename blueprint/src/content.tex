@@ -3655,6 +3655,62 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
   $K = \Sigma + \tau^2 I$. The rest is linearity.
 \end{proof}
 
+\section*{The moment layer: real random cells}
+% Lean: Credibility/ShockMoments.lean
+
+\begin{definition}[Random cells with the shock table]\label{def:Shock_Cells}
+  \lean{Credibility.Shock.Cells, Credibility.Shock.Cells.data, Credibility.Shock.Cells.est,
+        Credibility.Shock.Cells.blend}
+  \leanok
+  \uses{def:Shock}
+  On any probability space: square-integrable cells $\mu_{jt}$ and levels $\mu_j$ of mean
+  $\mu$, with $\cov(\mu_{it},\mu_{js}) = \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it})
+  + \tau^2\delta_{ij}$ and $\cov(\mu_i,\mu_{js}) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$.
+  No distribution is assumed. $\hmu_j = \sum_t a_{jt}\mu_{jt}$.
+\end{definition}
+
+\begin{theorem}[$K$ is the actual covariance]\label{thm:Shock_Cells_toEstimates}
+  \lean{Credibility.Shock.Cells.est_def, Credibility.Shock.Cells.memLp_est,
+        Credibility.Shock.Cells.integral_est, Credibility.Shock.Cells.cov_est,
+        Credibility.Shock.Cells.cov_level_est, Credibility.Shock.Cells.toEstimates,
+        Credibility.Shock.moments_eq_levelMoments}
+  \leanok
+  \uses{def:Shock_Cells, thm:Shock_K, def:Core_Estimates}
+  If each cohort's weights sum to one, $\cov(\hmu_i,\hmu_j) = K_{ij}$ and
+  $\cov(\mu_i,\hmu_j) = \tau^2\delta_{ij}$: the $(\hmu_j)$, $(\mu_j)$ are estimates and levels
+  in the sense of Definition~\ref{def:Core_Estimates} with this $K$ and $L = \tau^2 I$, and
+  the blend moments are those of Definition~\ref{def:Core.levelMoments} with $d = K_{jj}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE]\label{thm:Shock_Cells_bestZ_mse}
+  \lean{Credibility.Shock.Cells.mse_blend, Credibility.Shock.Cells.bestZ_mse_optimal}
+  \leanok
+  \uses{thm:Shock_Cells_toEstimates, thm:Core_bestZ_mse}
+  The actual mean squared error of the blend is $\mathrm{errVar}(z)$, eq.~(6), and
+  $z_j$ of Corollary~\ref{cor:Shock_bestZ} minimises it.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates of
+  Theorem~\ref{thm:Shock_Cells_toEstimates}; $K \succ 0$ by Theorem~\ref{thm:Shock_K}.
+\end{proof}
+
+\begin{theorem}[The estimators are unbiased in true expectation]\label{thm:Shock_Cells_integral}
+  \lean{Credibility.Shock.Cells.integral_of_unbiasedCov, Credibility.Shock.Cells.integral_KHat}
+  \leanok
+  \uses{def:Shock_Cells, thm:integral_quad_cov, thm:Shock_tauHat}
+  An estimator unbiased under the shock table has that expectation for any random cells of
+  Definition~\ref{def:Shock_Cells}; in particular $\mathbb E\hat K_{ij} = K_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Theorem~\ref{thm:integral_quad_cov} with every cell observed.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 
