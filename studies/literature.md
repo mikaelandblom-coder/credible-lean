@@ -531,3 +531,189 @@ same-period cross-product estimators is new here, as in §8.
    App world: an option for exit driven by results, to measure the effect.
 7. Literature status line: "credibility with a common AR(1) factor: not found; seasonal
    credibility: Ledolter, Klugman & Lee (1991), independent groups, heuristic shrinkage".
+
+### 10h. Estimating the factor model (card-data Steps 4–5, 2026-11-20)
+For the table of `Credibility/Factor.lean`,
+`cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛCᵢⱼ + δₜₛδᵢⱼsᵢ²/wᵢₜ + τ²δᵢⱼ` (+ `δᵢⱼGᵢ,ₜₛ` per-card dynamics),
+`Γ` AR(1) `γφ^|t−s|` or a block per regime, cards entering and leaving, monthly rates, and no
+hand-set hyperparameters (`studies/PLAN.md` §1). Web search (abstracts, listings, package
+manuals) on 2026-11-20; nothing read in full. "From memory" marks what was not re-checked.
+(Numbering: the request said "Step 4"; in `notes/card-data.md` estimation is Step 5, and
+Step 4 is "when does the factor cancel"; the normalisation result below serves both.)
+
+**Dynamic factor models (econometrics).**
+- Stock & Watson (2002, JASA 97; JBES 20): principal components on a balanced panel; for missing
+  cells an EM that alternates PCA and filling in. Consistency needs many series *and* many
+  periods. Normalisation `ΛᵀΛ/N = I` (from memory). Used: only as a cross-check; with a
+  handful of cards the factor path is not consistently estimable (fixed `J`), but its
+  *covariance parameters* are as `T` grows, and that is all the predictor needs.
+- Bai & Ng (2002), *Determining the number of factors in approximate factor models*,
+  Econometrica 70(1), 191–221: information criteria for the number of factors, large `N` and
+  `T`; reported to overestimate in small samples. Bai (2003), Econometrica 71 (from memory):
+  inferential theory for PCA factors. Used: the student's "one factor or several" question;
+  with few cards prefer the lag-moment checks below.
+- Forni, Hallin, Lippi & Reichlin (2000, REStat) generalized dynamic factor model and Doz,
+  Giannone & Reichlin (2011, J. Econometrics; 2012, REStat): PCA first, then a Kalman
+  smoother; Gaussian quasi-ML is consistent under misspecification and non-normality for
+  large `N` (from memory; not found in this search). Used: the two-step idea (moments, then
+  filter) for the app.
+- Bańbura & Modugno (2014), *Maximum likelihood estimation of factor models on datasets with
+  arbitrary pattern of missing data*, J. Appl. Econometrics 29(1), 133–160 (ECB WP 1189,
+  2010): Watson & Engle's (1983) EM with a Kalman smoother in the E-step and two regressions in
+  the M-step, any missing pattern, serially correlated idiosyncratic parts (= our per-card
+  `Gᵢ`). R package `dfms` ("BM" option). Used: the app's likelihood-based fit for an
+  unbalanced card panel (cards entering and leaving = missing cells).
+- Lam, Yao & Bathia (2011, Biometrika per the arXiv listing, arXiv 1004.2138) and Lam & Yao
+  (2012), Ann. Stat. 40(2): the loading space from the **lagged** autocovariance matrices
+  `Σ_h, h ≥ 1` only, because idiosyncratic noise that is white in time does not enter them;
+  the number of factors from ratios of their singular values. A 2026 preprint
+  (arXiv 2610.00766) adds the lag-0 covariance back. Used: the same idea answers our lag-0
+  confounding (below): lagged cross-moments contain no `C`, no `s²/w`, and for `i ≠ j` no
+  `τ²` and no `Gᵢ`.
+- Identification and normalisation. Bai & Wang (2015, JBES; Columbia discussion paper):
+  identification of dynamic factor models with lower-triangular loadings (positive diagonal)
+  or unit factor-innovation variance; treating a dynamic model as static needs more
+  restrictions than necessary. A scalar normalisation (arXiv 2412.01367) identifies loadings
+  and factor up to one common constant. Classical factor analysis (Anderson & Rubin 1956,
+  from memory): one factor is identified from the off-diagonal covariances when at least three
+  loadings are non-zero; fixes `Var f = 1`. Used: normalisation choice below.
+- Short panels: Fortin, Gagliardini & Scaillet (arXiv 2306.14004), large `N`, fixed `T`,
+  pseudo-ML without Gaussianity. Opposite of our case (few cards, many months).
+- Fasen-Hartmann & Mayer (arXiv 2002.09426): the Whittle estimator is consistent and
+  asymptotically normal for stationary state-space models with finite second moments; its
+  limit covariance differs from the Gaussian one. Used: Gaussian likelihood / Whittle is a
+  distribution-free *estimating equation* (consistent), not an assumption on the data; the
+  standard errors must not be the Gaussian ones.
+
+**Variance components with time correlation.**
+- Henderson (1953) method III: equate quadratic forms (sums of squares) to their expectations
+  and solve the linear system; unbiased, no optimality for unbalanced data (Searle). Rao
+  (1970, JASA; 1971, J. Multivar. Anal. 1, 257–275; 1972) MINQUE: for `Cov = Σₖ θₖVₖ` the
+  minimum-norm unbiased invariant quadratic estimators; one MINQUE iteration from a prior
+  guess, iterated it is REML (Patterson & Thompson 1971, from memory). LaMotte (1973, from
+  memory): unbiased and non-negative are generally incompatible. Used: given `φ` (or a block
+  shape) our table is **linear** in the remaining parameters, so this is exactly the route to
+  unbiased estimators; the repo's `Expectation.UnbiasedCov` is the Henderson-III criterion and
+  `Shock.CHat`, `s2Hat`, `tauHat` are instances.
+- Swamy (1970), Econometrica 38, 311–323: unbiased estimator of the coefficient covariance;
+  may be non-PSD in finite samples, Swamy sets it to zero then (Poi, Stata J.; Monash WP).
+  Used: the same fix-up for `γλλᵀ`, `C` (or damping, `OffDiagonal.lean`), which breaks
+  unbiasedness: report the raw estimate as the unbiased one, the truncated one as the fit.
+- Rao & Yu (1994), Can. J. Stat. 22: area effect + AR(1) per area + known sampling variance;
+  they give a method-of-moments estimator for the variances and `ρ` (Rao 2003, *Small Area
+  Estimation*, §10.9, not read); `sae2` uses ML/REML with `ρ` estimated (default start
+  `0.9`). Datta, Lahiri, Maiti & Lu (1999), JASA 94, 1074–1082: hierarchical Bayes (Gibbs) for
+  state unemployment rates, random-walk version. Used: Rao–Yu's MoM is the per-card (`Gᵢ`)
+  half of our problem; their experience (Census RRS2024-08) that `ρ` is poorly determined in
+  short series carries over.
+- Pinquet, Guillén & Bolancé (2001), ASTIN Bull. 31(2): Poisson regression by ML, then the
+  autocovariances of the stationary random effects **per lag** by second-order moments; the
+  estimated autocorrelations decrease with the lag. Pinquet (2020): nonnegative credibilities
+  need constraints on the autocovariance (§10c). Used: the two-stage recipe "unstructured lag
+  moments, then fit a decaying shape" is what we propose, and it is actuarial precedent.
+
+**Credibility with common or evolving effects.**
+- Gerber & Jones (1975), Sundt (1981, 1983), Jewell (1975): recursive formulas with the
+  structural parameters taken as known; no estimation found. Kremer (1983), *A remark on
+  parameter-estimation of autoregressive credibility-models*, Blätter DGVFM: the only
+  estimation paper found in this line; not read.
+- Bühlmann & Gisler (2005): ch. 9 evolutionary models and the Kalman filter, ch. 10
+  multidimensional evolutionary models (from memory); structural parameters treated as known
+  there as far as recalled; not checked.
+- Wen, Wu & Zhou (2009), IME 44: common effect across risks, structural parameters by
+  moment estimators (from memory; not checked). Permanent effect, so no lag structure.
+- Mehra (1975, *Credibility theory and the Kalman filter*), De Jong & Zehnwirth (1983),
+  Zehnwirth (1985): the Kalman filter is the best *linear* predictor without normality.
+  Shumway & Stoffer (1982), *An approach to time series smoothing and forecasting using the
+  EM algorithm*, J. Time Ser. Anal. 3(4), 253–264: EM with Kalman smoothing, missing
+  observations. Used: with Gaussian working likelihood these give Gaussian quasi-ML: a
+  consistent, hyperparameter-free fit (for the app), not a moment-unbiased one. MARSS (R)
+  documents the EM.
+
+**Identification (our model; worked out here from the table, no source has this exact model).**
+Write `Σ_h(i, j)` for the covariance of cards `i, j` at months `t, t + h`.
+1. *Lag ≥ 1, `i ≠ j`:* `Σ_h(i, j) = λᵢλⱼΓ_{t,t+h}`. No `C`, no `s²/w`, no `τ²`, no `Gᵢ`.
+2. *Lag ≥ 1, `i = j`:* `λᵢ²Γ_{t,t+h} + τ² + Gᵢ(h)`.
+3. *Lag 0:* `λᵢλⱼΓₜₜ + Cᵢⱼ + δᵢⱼ(sᵢ²/wᵢₜ + τ² + Gᵢ(0))`.
+- **Q: do lagged covariances identify `λ` and `Γ` once `C` is month-independent?** Yes, up to
+  the scale below, under conditions: (a) AR(1): `Σ₂/Σ₁ = φ` for any pair with `λᵢλⱼ ≠ 0`,
+  then `γλᵢλⱼ = Σ₁(i, j)/φ` (needs `φ ≠ 0`), then `Cᵢⱼ = Σ₀(i, j) − γλᵢλⱼ`. (b) Individual
+  loadings need **three** cards with non-zero loadings (`λᵢ² = Σ(i,j)Σ(i,k)/Σ(j,k)`,
+  Anderson–Rubin); with two cards only `λ₁λ₂` is identified from cross-moments and `λᵢ²` must
+  come from (2), which `τ²` and `Gᵢ` confound. (c) With a stationary `Γ` (`Γₜₜ = γ`), `C` and
+  `γλλᵀ` are confounded at lag 0 *only*; a block `Γ` with different regime variances
+  separates them at lag 0 as well.
+- **But the predictor does not need the split.** `K` uses lag 0 only through
+  `C + γλλᵀ` (plus the diagonal noise), and `ℓ`, `v` use only lags `≥ 1` (past × future
+  months). So with a stationary `Γ` the BLUP depends on `(C + γλλᵀ, (λλᵀΓ(h))_{h ≥ 1}, s², τ²)`;
+  the confounding is harmless. The factor structure matters for *extrapolation*: the
+  12-month target needs `Γ(h)` at lags longer than any pair of months observed together, so a
+  parametric `Γ` (AR(1), block) is required there, and the rank-one form `λλᵀ` reduces noise.
+- **Scale shared between `λ` and `γ`:** `(cλ, Γ/c²)` gives the same table, and `λ ↦ −λ` too.
+  Sources fix `Var f = 1` (factor analysis), `ΛᵀΛ/N = I` (PCA), or one loading `= 1` /
+  lower-triangular (Bai & Wang). Recommendation: **exposure-weighted mean loading `= 1`**
+  (`Σᵢ wᵢλᵢ = Σᵢ wᵢ`), so `γ` is the portfolio's factor variance, equal loadings is
+  `λ = 1`, and `λᵢ` reads as "card `i` moves `λᵢ` times the portfolio". Statement to prove:
+  `Factor.obsCov`, `K`, `ell`, `var` and hence `Core.blup` are invariant under
+  `(λ, Γ) ↦ (cλ, c⁻²Γ)`, `c ≠ 0` (trivial; it makes the normalisation a presentation choice).
+- **`φ` against a per-card AR(1):** separable. Cross-card lagged moments (1) contain the common
+  factor only; a per-card `Gᵢ` shows up only on the diagonal (2). So "common factor or only
+  per-card dynamics" is the question "are the lagged cross-moments zero?", testable with two
+  cards. Both together: `Gᵢ(h) = Σ_h(i, i) − τ² − λᵢ²Γ(h)`, with `λᵢ²Γ(h)` from three cards;
+  with `Gᵢ` AR(1) at `ψᵢ`, `τ²` is the long-lag limit of (2) (needs `φ, ψᵢ < 1` and many
+  lags; weak in practice). `τ²` itself is `Γ` with `φ = 1` restricted to the diagonal.
+- **How many months and cards:** cards: `J ≥ 2` for the common/per-card test, `J ≥ 3` for
+  individual loadings; more cards do not make the factor path consistent (fixed `J`), only
+  the parameters sharper. Months: AR(1) by lag ratios has the usual small-sample bias
+  `E φ̂ − φ ≈ −(1 + 3φ)/T` (Kendall/Marriott–Pope, from memory, for a demeaned series), so
+  `T = 60`, `φ = 0.9`: about `−0.06`, and sd about `√((1 − φ²)/T) ≈ 0.06`; with an estimated
+  monthly season (12 means) a 5-year window is the practical minimum, and a pandemic break
+  (block `Γ`) spends one regime's months on its own variance. This is the student's
+  simulation question; the app world can answer it.
+
+**Public travel demand signals (Step 3b)**, adding to §10e: Tillväxtverket/SCB accommodation
+statistics (`NV1701`, PxWeb), monthly guest nights since 1978 by type and guest residence,
+preliminary figures revised until the annual release, "read with caution" from March 2020.
+It measures travel *into and within* Sweden, so for outbound travel insurance Swedavia's
+international passengers (§10e) remain the closer signal. Eurostat `tour_occ_nim` and card
+spending abroad (Riksbank/SCB) not verified.
+
+**Recommended estimation plan (Step 5 of `notes/card-data.md`).**
+*Unbiased (Lean, via `Expectation.UnbiasedCov` and `integral_quad_of_cov`):*
+1. **Lagged cross-moments of year-on-year differences.** For `i ≠ j`, `h ≥ 1`, cells in the
+   overlap `obs i ∩ (obs j − h)`: `Δᵢₜ = Xᵢₜ − Xᵢ,ₜ₋₁₂` removes the card mean and any
+   calendar-month season exactly; `E[ΔᵢₜΔⱼ,ₜ₊ₕ] = λᵢλⱼ(2Γ(h) − Γ(h−12) − Γ(h+12))` plus `C`
+   terms only at `h = 12` (months coincide); no `τ²`, `s²/w` or `Gᵢ`. Unbiased for that combination for *every* `β`. Needs the
+   generalisation of `Ecov` from one mean `μ` to means `Dβ` (an estimator is unbiased for all
+   `β` iff its quadratic form annihilates `D`): a small `Expectation` lemma, then each
+   estimator is one `UnbiasedCov` proof.
+2. **Given `φ` (or a block shape), Henderson III / MINQUE in the linear parameters**
+   `A = γλλᵀ` (relaxed to any symmetric `A`), `C`, `s²`, `τ²`: the table is
+   `Σ Aᵢⱼ(Eᵢⱼ ⊗ R_φ) + Σ Cᵢⱼ(Eᵢⱼ ⊗ I) + diag(s²/w) + τ²(I ⊗ 11ᵀ)`. Generalizes
+   `Shock.CHat`/`s2Hat`/`tauHat` (the case `A = 0`).
+3. **Shock estimators under the factor model** (statements to prove, expected findings):
+   `E Shock.crossHat = Cᵢⱼ + λᵢλⱼ·Σₜ dₜ-weighted Γ terms` (within-card demeaning removes only
+   part of a persistent factor), so `Shock.CHat` is biased for `C` *and* for `C + γλλᵀ`
+   whenever `φ > 0`; and `Shock.tauHat` picks up `(λᵢ − λ̄)²`-weighted factor variance unless
+   loadings are equal. Exact bias terms = "what the shock fit costs when a factor is present".
+*Only consistent (app):*
+4. `φ̂` (ratio of pooled lag-2 and lag-1 cross-moments, or profile over `φ` of the MoM fit of
+   2), then `λ̂` from the leading eigenvector of `Â`, normalised to mean loading `1`;
+   truncation of non-PSD `Â`, `Ĉ` (Swamy) or damping (`OffDiagonal`).
+5. Gaussian quasi-ML by Kalman filter + EM (Shumway & Stoffer; Bańbura & Modugno for missing
+   cells), started from 4: consistent without normality, no hyperparameters; sandwich, not
+   Gaussian, standard errors. Also gives the Kalman form of the predictor (§10c).
+6. Feasible GLS for the season `β̂` with `K̂` (Step 1), as before.
+*Identification statements (prove or refute in Lean):*
+- (I1) Scale invariance: `(λ, Γ) ↦ (cλ, c⁻²Γ)` leaves `obsCov` and `Core.blup` unchanged.
+- (I2) Lag-0 sufficiency: with `Γₜₜ` constant, `K`, `ell`, `var` depend on `C` and `γλλᵀ`
+  only through `C + γλλᵀ`: two parameter sets with equal sums give the same BLUP and MSE.
+- (I3) Separation at lag ≥ 1: for `i ≠ j`, `t ≠ s`, `obsCovG` does not depend on `C`, `s²`,
+  `τ²`, `G`; so the common factor and per-card dynamics are distinguishable (two models with
+  `λλᵀΓ ≠ λ'λ'ᵀΓ'` off the diagonal give different tables).
+- (I4) Rank one from three cards: if `λⱼ, λₖ ≠ 0` then `λᵢ²Γ(h) = Σ_h(i,j)Σ_h(i,k)/Σ_h(j,k)`;
+  counterexample for two cards: two parameter sets (trading `λ₁²` against `G₁` or `τ²`) with
+  the same table.
+- (I5) AR(1) given its cross-moments: `φ ≠ 0` and `λᵢλⱼγ ≠ 0` determine `φ`, `γλᵢλⱼ` and then
+  `Cᵢⱼ`; `φ = 0` refutes separability (factor = shock with `C + γλλᵀ`, `obsCov_eq_shock`
+  pattern).

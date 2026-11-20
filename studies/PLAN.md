@@ -292,6 +292,9 @@ One chat per step; none needs Lean except step 5.
   `Γ`; estimated `Γ`, `λ` after Step 4). The app should show negative cell weights as normal
   (`Factor.blup_neg_of_ar1`), not flag them as an error. Also "per-card AR(1)" (`Factor.KG`,
   `ellG`, `varG`); the world can simulate any cells with these moments (`Factor.Cells`).
+  Estimation (literature §10h): fit `φ̂` from lag ratios, `λ̂`, `Ĉ` by moments given `φ̂`,
+  then Gaussian quasi-ML by Kalman EM (missing cells for cards entering and leaving);
+  sandwich standard errors, no hyperparameters.
 - Season (2026-11-20, `Season.lean`, Finding 24): a fit switch "season: none / estimated
   (one fixed effect per month) / known index". Ignoring a real season biases the forecast by
   `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per card; the

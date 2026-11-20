@@ -222,6 +222,12 @@ Otherwise there is an exact extra error term.
   forecast for the portfolio level".
 
 ### Step 5. Estimators (Lean)
+**Literature (2026-11-20):** `studies/literature.md` §10h. Lagged cross-moments (`i ≠ j`,
+lag ≥ 1) contain only `λᵢλⱼΓ`, so they separate the factor from `C`, `s²`, `τ²` and a per-card
+AR(1); lag 0 confounds `C` with `γλλᵀ`, harmlessly for the BLUP when `Γₜₜ` is constant;
+individual loadings need three cards; normalise the mean loading to 1. Plan there: unbiased
+year-on-year lag moments and Henderson III / MINQUE given `φ` (Lean, after extending `Ecov`
+to means `Dβ`); `φ̂`, `λ̂` and Kalman quasi-ML only consistent (app); statements I1–I5.
 Distribution-free, unbiased where possible, via `Expectation.UnbiasedCov` for
 the table of Step 3.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
