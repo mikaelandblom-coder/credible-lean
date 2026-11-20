@@ -674,6 +674,87 @@ $(1+g)^{2n}$ and cancels in every weight.
   Result~\ref{res:unequal}.
 \end{caveat}
 
+\subsection*{A common shock that does not shrink with volume}
+
+The model of Section~1 with $\sigma_{jt}^2 = \sigma_j^2/w_{jt}$ and a fixed
+$\rho_{ij}$ makes the covariance between cohorts fall like
+$1/\sqrt{w_{it}w_{jt}}$: double the volumes and the shared shock halves. A
+real shock (a storm, a demand swing) hits a cohort's rate whatever its size.
+Model it as a period shock with covariance $C \succeq 0$ across cohorts plus
+process noise that does shrink:
+\[
+  \cov(\mu_{it}, \mu_{js}) = \delta_{ts}\Bigl(C_{ij} + \delta_{ij}\frac{s_i^2}{w_{it}}\Bigr) + \tau^2\delta_{ij}.
+\]
+
+\begin{result}[Shock plus process noise]\label{res:shock}
+  For any cell weights $a_{jt}$ with $\sum_t a_{jt} = 1$ and
+  $\hmu_j = \sum_t a_{jt}\mu_{jt}$,
+  \[
+    K_{ij} = \Bigl(\sum_t a_{it}a_{jt}\Bigr) C_{ij}
+      + \delta_{ij}\Bigl(s_i^2\sum_t \frac{a_{it}^2}{w_{it}} + \tau^2\Bigr),
+  \]
+  and $K$ is positive definite, so Results~\ref{res:gls}--\ref{res:z} apply.
+  \lean{Credibility.Shock.K_apply}
+  \lean{Credibility.Shock.K_posDef}
+  \lean{Credibility.Shock.bestZ_eq}
+\end{result}
+\use Take $C = \lambda\lambda^\top$ for one shock with loadings $\lambda_j$. The
+correlation between cohorts now \emph{rises} with volume, as the process noise
+fades and the shock remains. If each cohort's volume is constant over time, this
+is the model of Section~1; with growing or shifting volumes it is not.
+
+\begin{result}[Estimating shock and process noise]\label{res:shock_est}
+  With residuals $r_{jt} = \mu_{jt} - \hmu_j$ and
+  $d_{ijt} = 1 - a_{it} - a_{jt} + \sum_s a_{is}a_{js}$:
+  \begin{itemize}
+    \item off the diagonal, $\hat C_{ij} = \sum_t r_{it}r_{jt}/\sum_t d_{ijt}$
+      is unbiased for $C_{ij}$ (the denominator is positive for $T \ge 2$
+      and positive weights);
+    \item on the diagonal, $E\sum_t u_t r_{jt}^2 = D_u C_{jj} + H_u s_j^2$
+      with known coefficients; two weightings $u$, $v$ give a $2\times2$
+      system, solved for unbiased $\hat C_{jj}$, $\hat s_j^2$ when its
+      determinant is nonzero;
+    \item then $\hat\Sigma_{ij} = (\sum_t a_{it}a_{jt})\hat C_{ij}
+      + \delta_{ij}\hat s_i^2\sum_t a_{it}^2/w_{it}$, the spread of the
+      $\hmu_j$ minus $\hat\Sigma$ gives $\widehat{\tau^2}$ (any portfolio weights,
+      $J \ge 2$), and $\hat K = \hat\Sigma + \widehat{\tau^2}I$ is unbiased.
+  \end{itemize}
+  With exposure weights $a_{jt} = w_{jt}/w_{j*}$ and the weightings $1$ and $w$,
+  the determinant is negative, so the system is always solvable, as soon as
+  $T \ge 3$ and the volumes of cohort $j$ vary.
+  \lean{Credibility.Shock.CHat_unbiased}
+  \lean{Credibility.Shock.s2Hat_unbiased}
+  \lean{Credibility.Shock.tauHat_unbiased}
+  \lean{Credibility.Shock.KHat_unbiased}
+  \lean{Credibility.Shock.det_expo_neg}
+\end{result}
+\use Fit $C$ and $s^2$ from the plain and the volume-weighted sums of squared
+residuals,
+\begin{align*}
+  E\sum_t r_{jt}^2 &= \Bigl(T - 2 + T\sum_t \tfrac{w_{jt}^2}{w_{j*}^2}\Bigr)C_{jj}
+    + \Bigl(\sum_t \tfrac{1}{w_{jt}} - \tfrac{T}{w_{j*}}\Bigr)s_j^2, \\
+  E\sum_t w_{jt}r_{jt}^2 &= \Bigl(w_{j*} - \sum_t \tfrac{w_{jt}^2}{w_{j*}}\Bigr)C_{jj}
+    + (T-1)\,s_j^2,
+\end{align*}
+the second being the Bühlmann--Straub sum.
+\lean{Credibility.Shock.dSum_expo_one}
+\lean{Credibility.Shock.hSum_expo_one}
+\lean{Credibility.Shock.dSum_expo_w}
+\lean{Credibility.Shock.hSum_expo_w}
+\why A big period hurts the shock and the process noise differently: the
+shock part of a residual does not depend on volume, the noise part does. Two
+weightings read the two parts off with different mixes.
+\begin{caveat}
+  Shock and process noise are told apart \emph{only} by volume that changes over
+  time. At a constant volume the data see only $C_{jj} + s_j^2/w_j$ and no
+  estimator of $s_j^2$ is unbiased; with $T = 2$ a cohort's two residuals are
+  proportional and every determinant is $0$. You need $T \ge 3$ and some
+  variation; with little variation the system is nearly singular and the
+  split is noisy. Like $\widehat{\tau^2}$, $\hat C$ and $\hat s^2$ can come
+  out negative: truncate and damp (Result~\ref{res:damped}).
+  \lean{Credibility.Shock.not_unbiased_s2_of_const}
+\end{caveat}
+
 \subsection*{When to merge two cohorts}
 
 Two cohorts on their own, with error variances $v_1, v_2$, error covariance

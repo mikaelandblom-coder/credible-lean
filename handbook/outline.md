@@ -16,15 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Finding 23 (2026-11-19): "watch out" next to the estimators: with volumes that change over
-  time, the thesis's `ρ` assumes the common shock shrinks with volume. Now proved
-  (`Credibility.Shock.K_apply`, `Credibility.Shock.CHat_unbiased`,
-  `Credibility.Shock.s2Hat_unbiased`, closed forms `Credibility.Shock.dSum_expo_w`,
-  `Credibility.Shock.hSum_expo_w`): an entry with the shock `K` and the estimators, "watch out":
-  shock and process noise separate only with volumes that vary (`T ≥ 3`;
-  `Credibility.Shock.not_unbiased_s2_of_const`), and then always do with weightings `1`, `w`
-  (`Credibility.Shock.det_expo_neg`). Also `τ̂²` and `K̂ = Σ̂ + τ̂²I`
-  (`Credibility.Shock.tauHat_unbiased`, `Credibility.Shock.KHat_unbiased`), 2026-11-20.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
@@ -97,6 +88,11 @@ voice, then trim towards 8 pages.
     `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, relativities trend-free;
     "watch out": only for the true `g` (Finding 21) — `thm:U_detrend`,
     `thm:U_detrend_obs`, `thm:U_relativity`.
+13b. Shock plus process noise (drafted, Finding 23): `K` for any cell weights, `K ≻ 0`;
+    unbiased `Ĉ`, `ŝ²`, `τ̂²`, `K̂`; "watch out": shock and process noise separate only with
+    volumes that vary over `T ≥ 3` periods, and then always with weightings `1`, `w` —
+    `Shock.K_apply`, `Shock.KHat_unbiased`, `Shock.det_expo_neg`,
+    `Shock.not_unbiased_s2_of_const`.
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
 15. A shared level drops out (one group); several groups: `z` with `B_g`,
     true MSE, consistency; two-stage GLS; estimation biased with several
