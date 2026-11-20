@@ -501,7 +501,7 @@ same-period cross-product estimators is new here, as in §8.
   approximate. State it as an assumption, not a theorem. Left to the student, with a test in
   the app world (exit driven by results).
 
-### 10g. Suggested edits to `notes/card-data.md`
+### 10g. Edits to `notes/card-data.md` (applied 2026-11-20)
 1. Step 0: Bühlmann & Gisler ch. 9 (not 10) for evolutionary credibility.
 2. Step 1: name the main theorem as Goldberger's/Harville's predictor (target
    `x₀ᵀβ + random part`); the formula for `d*` is theirs, the MSE identity and the corollaries
