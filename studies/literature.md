@@ -490,11 +490,16 @@ same-period cross-product estimators is new here, as in §8.
 - Frees, Young & Luo (1999), IME 24, 229–247; Frees, Young & Luo (2001), NAAJ 5(4), 24–42
   (case studies); Frees (2004), *Longitudinal and Panel Data*, CUP: unbalanced panels are
   handled by the mixed model directly (each unit its own `Tᵢ`), as our `Unequal` (`obs j`).
-  Attrition is ignorable for likelihood/BLUP only if exit does not depend on the outcome
-  (missing at random); Frees ch. 7 and Raknerud (2002, Statistics Norway DP 330) treat
-  non-ignorable exit. Used: a card withdrawn *because* it ran badly breaks the moment model
-  (the observed cells no longer have the assumed means); state it as an assumption, not a
-  theorem. Left to the student, with a test in the app world (exit driven by results).
+  Exited units stay in the data: their past cells inform the collective mean, the season,
+  the estimates of `K` (same-month cross products) and, through `K`, the other units'
+  predictors; they just get no target. Under a likelihood, exit that depends only on the
+  observed past (missing at random) is ignorable; Frees ch. 7 and Raknerud (2002, Statistics
+  Norway DP 330) treat non-ignorable exit. Our layer is distribution-free and treats `obs j`
+  as fixed, so its guarantees (unbiasedness, MSE) need exit independent of the claims. If a
+  card is withdrawn *because* it ran badly, its data are still used, but the exit time acts
+  like an optional stopping time and the cell means can be biased; the guarantees are then
+  approximate. State it as an assumption, not a theorem. Left to the student, with a test in
+  the app world (exit driven by results).
 
 ### 10g. Suggested edits to `notes/card-data.md`
 1. Step 0: Bühlmann & Gisler ch. 9 (not 10) for evolutionary credibility.
@@ -520,7 +525,9 @@ same-period cross-product estimators is new here, as in §8.
    `a = (1, D_{T+1})`, for any noise `Φ`; new are only the common season columns and a latent
    factor that also enters the target (both via Step 1). Swamy (1970) for the estimator of
    `cov(λᵢ, λⱼ)`.
-6. Step 5 / Q5: add the assumption that exit is unrelated to the card's results (missing at
-   random, Frees 2004); otherwise the observed cells are a biased sample.
+6. Step 5 / Q5: exited cards keep all their past cells in the fit (they inform the mean,
+   season, `K̂` and, through `K`, the other cards). The exact guarantees assume the exit time
+   is independent of the claims; results-driven exit makes them approximate (Frees 2004).
+   App world: an option for exit driven by results, to measure the effect.
 7. Literature status line: "credibility with a common AR(1) factor: not found; seasonal
    credibility: Ledolter, Klugman & Lee (1991), independent groups, heuristic shrinkage".
