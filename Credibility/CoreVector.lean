@@ -212,11 +212,10 @@ theorem stack_mulVec_injective [Nonempty J] : Function.Injective (stack J P).mul
   have := congrFun h (Classical.arbitrary J, q)
   simpa [stack, mulVec, dotProduct] using this
 
-/-- The information matrix is positive definite. -/
+/-- The information matrix is positive definite (`Core.info_posDef` with `X = U`). -/
 theorem info_posDef [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef) :
-    (info K).PosDef := by
-  simpa [info, conjTranspose_eq_transpose_of_trivial] using
-    hK.inv.conjTranspose_mul_mul_same (stack_mulVec_injective (J := J) (P := P))
+    (info K).PosDef :=
+  Core.info_posDef hK (stack_mulVec_injective (J := J) (P := P))
 
 /-- The weights sum to the identity, `Σⱼ Bⱼ = UᵀW = I`: the portfolio estimate is unbiased. -/
 theorem stack_transpose_mul_glsW [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef) :
@@ -810,15 +809,54 @@ theorem linMse_eq_blupW_add [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK 
   linMse_eq_add_of_mul (by simpa [conjTranspose_eq_transpose_of_trivial] using hK.isHermitian.eq)
     hL j (mul_blupW hK L j) A (hA.trans (stack_transpose_mul_blupW hK L j).symm)
 
+/-- The error covariance is symmetric. -/
+theorem linMse_transpose {K L : Matrix (J × P) (J × P) ℝ} (hKt : Kᵀ = K) (hL : Lᵀ = L) (j : J)
+    (A : Matrix (J × P) P ℝ) : (linMse K L j A)ᵀ = linMse K L j A := by
+  simp only [linMse, transpose_add, transpose_sub, transpose_mul, transpose_transpose, hKt, hL,
+    Matrix.mul_assoc]
+  abel
+
+/-- For a premium `aᵀμⱼ`, the error of `aᵀAᵀx` is the scalar one (`Core.predMse`) of the
+weights `Aa`, with target covariances `ℓ = LEⱼa` and target variance `(Eⱼa)ᵀL(Eⱼa)`. -/
+theorem dotProduct_linMse_mulVec {K L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J)
+    (A : Matrix (J × P) P ℝ) (a : P → ℝ) :
+    a ⬝ᵥ (linMse K L j A *ᵥ a)
+      = Core.predMse K (L *ᵥ (sel P j *ᵥ a)) ((sel P j *ᵥ a) ⬝ᵥ (L *ᵥ (sel P j *ᵥ a)))
+          (A *ᵥ a) := by
+  -- `aᵀBᵀw = (Ba)ᵀw`.
+  have hT : ∀ (B : Matrix (J × P) P ℝ) (w : J × P → ℝ), a ⬝ᵥ (Bᵀ *ᵥ w) = (B *ᵥ a) ⬝ᵥ w :=
+    fun B w => by rw [dotProduct_mulVec, vecMul_transpose]
+  have hLs : (sel P j *ᵥ a) ⬝ᵥ (L *ᵥ (A *ᵥ a)) = (A *ᵥ a) ⬝ᵥ (L *ᵥ (sel P j *ᵥ a)) := by
+    rw [dotProduct_mulVec, ← mulVec_transpose, hL, dotProduct_comm]
+  simp only [linMse, Core.predMse, sub_mulVec, add_mulVec, dotProduct_add, dotProduct_sub,
+    ← mulVec_mulVec, hT, hLs]
+  ring
+
+/-- For every premium `aᵀμⱼ`, the matrix best predictor is the general best predictor
+(`Core.blup` with the design `X = U`, one mean per component, and `x₀ = a`). -/
+theorem blupW_mulVec_eq_blup [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
+    (L : Matrix (J × P) (J × P) ℝ) (j : J) (a : P → ℝ) :
+    blupW K L j *ᵥ a = Core.blup K (stack J P) (L *ᵥ (sel P j *ᵥ a)) a := by
+  refine Core.eq_blup_of_normal hK stack_mulVec_injective _ a
+    (c := ((info K)⁻¹ * (1 - (stack J P)ᵀ * K⁻¹ * L * sel P j)) *ᵥ a) ?_ ?_
+  · rw [mulVec_mulVec, mulVec_mulVec, ← sub_mulVec, mul_blupW hK, mulVec_mulVec]
+  · rw [mulVec_mulVec, stack_transpose_mul_blupW hK, one_mulVec]
+
 /-- **The best linear unbiased predictor** (matrix version of `Core.blupWeight_optimal`):
-`A*` is optimal in the Loewner order among all weights with `Σⱼ Aⱼ = I`. -/
+`A*` is optimal in the Loewner order among all weights with `Σⱼ Aⱼ = I`. A corollary of
+`Core.blup_optimal`, applied to every premium `aᵀμⱼ`. -/
 theorem blupW_optimal [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)
     {L : Matrix (J × P) (J × P) ℝ} (hL : Lᵀ = L) (j : J) {A : Matrix (J × P) P ℝ}
     (hA : (stack J P)ᵀ * A = 1) :
     (linMse K L j A - linMse K L j (blupW K L j)).PosSemidef := by
-  rw [linMse_eq_blupW_add hK hL j hA, add_sub_cancel_left]
-  simpa [conjTranspose_eq_transpose_of_trivial] using
-    hK.posSemidef.conjTranspose_mul_mul_same (A - blupW K L j)
+  have hKt : Kᵀ = K := by simpa [conjTranspose_eq_transpose_of_trivial] using hK.isHermitian.eq
+  refine PosSemidef.of_dotProduct_mulVec_nonneg ?_ fun a => ?_
+  · simp only [IsHermitian, conjTranspose_eq_transpose_of_trivial, transpose_sub,
+      linMse_transpose hKt hL]
+  · rw [star_trivial, sub_mulVec, dotProduct_sub, dotProduct_linMse_mulVec hL,
+      dotProduct_linMse_mulVec hL, blupW_mulVec_eq_blup hK, sub_nonneg]
+    exact Core.blup_optimal hK stack_mulVec_injective _ _ a
+      (by rw [mulVec_mulVec, hA, one_mulVec])
 
 /-- …so it is best for every premium `aᵀμⱼ`… -/
 theorem blupW_optimal_dotProduct [Nonempty J] {K : Matrix (J × P) (J × P) ℝ} (hK : K.PosDef)

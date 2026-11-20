@@ -2761,6 +2761,103 @@ these two covariances.
   $\kappa = 0$ by Lemma~\ref{lem:Core_imbalanceCov_diag}.
 \end{proof}
 
+\subsection*{A general target with fixed effects}
+
+Extension (\texttt{notes/card-data.md}, Step 1). The data $x$ are indexed by observed
+cells, with $K = \cov(x)$; the target is a random $Y$ with $\ell = \cov(x, Y)$ and
+$v = \var Y$. The means are fixed effects: $E x = X\beta$ and $E Y = x_0^T\beta$ for an
+unknown $\beta$ (one common mean: $X = 1$; a season: one $\beta$ per calendar month).
+This is universal kriging (Goldberger 1962). The level predictor below ($X = 1$,
+$\ell = L_{j\cdot}$) and the matrix one of the vector Blend ($X = U$) are special cases.
+
+\begin{definition}[Linear predictors of a general target]\label{def:Blup}
+  \lean{Credibility.Core.predMse, Credibility.Core.blup}
+  \leanok
+  For weights $d$: $\mathrm{mse}(d) = d^TKd - 2d^T\ell + v$. The best linear unbiased
+  predictor has weights
+  $d^* = K^{-1}\ell + K^{-1}X(X^TK^{-1}X)^{-1}(x_0 - X^TK^{-1}\ell)$.
+\end{definition}
+
+\begin{lemma}[Unbiasedness with fixed effects]\label{lem:Blup_unbiased}
+  \lean{Credibility.Core.unbiased_iff}
+  \leanok
+  $d^T X\beta = x_0^T\beta$ for every $\beta$ iff $X^Td = x_0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $d^TX\beta = (X^Td)^T\beta$; take $\beta$ a unit vector.
+\end{proof}
+
+\begin{lemma}[Pythagoras for linear predictors]\label{lem:Blup_pythagoras}
+  \lean{Credibility.Core.predMse_eq_add_of_normal}
+  \leanok
+  \uses{def:Blup}
+  Let $K$ be symmetric and $Ke - \ell = Xc$ for some $c$. If $X^Td = X^Te$ then
+  $\mathrm{mse}(d) = \mathrm{mse}(e) + (d-e)^TK(d-e)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The cross term is $2(d-e)^T(Ke - \ell) = 2(X^T(d-e))^Tc = 0$.
+\end{proof}
+
+\begin{lemma}[First-order condition]\label{lem:Blup_foc}
+  \lean{Credibility.Core.info_posDef, Credibility.Core.mulVec_blup,
+        Credibility.Core.transpose_mulVec_blup}
+  \leanok
+  \uses{def:Blup}
+  Let $K \succ 0$ and $X$ of full column rank. Then $X^TK^{-1}X \succ 0$,
+  $Kd^* - \ell = X(X^TK^{-1}X)^{-1}(x_0 - X^TK^{-1}\ell)$ and $X^Td^* = x_0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+\begin{theorem}[The best linear unbiased predictor of a general target]\label{thm:Blup_optimal}
+  \lean{Credibility.Core.predMse_eq_blup_add, Credibility.Core.blup_optimal,
+        Credibility.Core.blup_unique}
+  \leanok
+  \uses{def:Blup}
+  Let $K \succ 0$ and $X$ of full column rank. If $X^Td = x_0$ then
+  $\mathrm{mse}(d) = \mathrm{mse}(d^*) + (d-d^*)^TK(d-d^*)$. So $d^*$ is the unique
+  minimiser of $\mathrm{mse}$ among unbiased weights.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_pythagoras, lem:Blup_foc}
+  Lemma~\ref{lem:Blup_pythagoras} with $e = d^*$ (Lemma~\ref{lem:Blup_foc}).
+\end{proof}
+
+\begin{corollary}[The first-order condition characterises $d^*$]\label{cor:Blup_eq_of_normal}
+  \lean{Credibility.Core.eq_blup_of_normal}
+  \leanok
+  \uses{def:Blup}
+  If $K \succ 0$, $X$ has full column rank, $Ke - \ell = Xc$ and $X^Te = x_0$, then
+  $e = d^*$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_optimal, lem:Blup_pythagoras, lem:Blup_foc}
+  By Lemma~\ref{lem:Blup_pythagoras} around $e$, $\mathrm{mse}(d^*) \ge \mathrm{mse}(e)$;
+  uniqueness in Theorem~\ref{thm:Blup_optimal}.
+\end{proof}
+
+\begin{theorem}[The error of the best predictor]\label{thm:Blup_mse}
+  \lean{Credibility.Core.predMse_blup}
+  \leanok
+  \uses{def:Blup}
+  With $r = x_0 - X^TK^{-1}\ell$:
+  $\mathrm{mse}(d^*) = v - \ell^TK^{-1}\ell + r^T(X^TK^{-1}X)^{-1}r$. The first two terms
+  are the error when $\beta$ is known; the last is the price of estimating $\beta$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_foc}
+  With $g = (X^TK^{-1}X)^{-1}r$: $Kd^* = \ell + Xg$ and $X^Td^* = x_0$, so
+  $\mathrm{mse}(d^*) = d^{*T}Xg - d^{*T}\ell + v = x_0^Tg - \ell^TK^{-1}\ell
+  - g^TX^TK^{-1}\ell + v$.
+\end{proof}
+
 \subsection*{The best linear unbiased predictor}
 
 The blend $z\hmu_j + (1-z)\hmu$ is one linear combination $\sum_i d_i\hmu_i$
@@ -2805,6 +2902,22 @@ lost by not using the best of them all?
   $\sum_i (d_i - e_i) = 0$.
 \end{proof}
 
+\begin{lemma}[One common mean is the case $X = 1$]\label{lem:Core_blupWeight_eq_blup}
+  \lean{Credibility.Core.blupWeight_eq_blup,
+        Credibility.Core.replicateCol_one_mulVec_injective,
+        Credibility.Core.replicateCol_one_transpose_mulVec}
+  \leanok
+  \uses{def:Core_blup, def:Blup}
+  If $K \succ 0$, the weights $d^*$ for $\mu_j$ are those of
+  Definition~\ref{def:Blup} with $X = 1$, $x_0 = 1$, $\ell = L_{j\cdot}$, $v = L_{jj}$
+  (so $\mathrm{mse}_j$ is $\mathrm{mse}$ and $X^Td = \sum_i d_i$).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:Core_blup_foc}
+  Corollary~\ref{cor:Blup_eq_of_normal} with Lemma~\ref{lem:Core_blup_foc}.
+\end{proof}
+
 \begin{theorem}[The best linear unbiased predictor]\label{thm:Core_blup_optimal}
   \lean{Credibility.Core.blupWeight_optimal, Credibility.Core.blupWeight_unique,
         Credibility.Core.linMse_eq_blupWeight_add}
@@ -2816,9 +2929,11 @@ lost by not using the best of them all?
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:Core_blup_foc, lem:Core_linMse_pythagoras}
+  \uses{lem:Core_blup_foc, lem:Core_linMse_pythagoras, thm:Blup_optimal,
+    lem:Core_blupWeight_eq_blup}
   Lemma~\ref{lem:Core_linMse_pythagoras} with $e = d^*$
-  (Lemma~\ref{lem:Core_blup_foc}); $x^TKx > 0$ for $x \ne 0$.
+  (Lemma~\ref{lem:Core_blup_foc}); $x^TKx > 0$ for $x \ne 0$. Optimality is also
+  Theorem~\ref{thm:Blup_optimal} with $X = 1$ (Lemma~\ref{lem:Core_blupWeight_eq_blup}).
 \end{proof}
 
 \begin{lemma}[The blend as a linear predictor]\label{lem:Core_blendWeight}
@@ -3802,7 +3917,8 @@ $\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
 \end{lemma}
 \begin{proof}
   \leanok
-  $U$ has full column rank, so $U^\top K^{-1} U \succ 0$; the rest is
+  \uses{lem:Blup_foc}
+  $U$ has full column rank, so $U^\top K^{-1} U \succ 0$ (Lemma~\ref{lem:Blup_foc}); the rest is
   $K K^{-1} = I$ and $I_K I_K^{-1} = I$.
 \end{proof}
 
@@ -4057,6 +4173,24 @@ severity) are such predictors, and so is the matrix blend.
   $U^\top W = I$ and $KW = U(U^\top K^{-1}U)^{-1}$.
 \end{proof}
 
+\begin{lemma}[Every premium is a scalar target]\label{lem:CV_blupW_eq_blup}
+  \lean{Credibility.CoreVector.linMse_transpose,
+        Credibility.CoreVector.dotProduct_linMse_mulVec,
+        Credibility.CoreVector.blupW_mulVec_eq_blup}
+  \leanok
+  \uses{def:CV_blup, def:Blup}
+  For $K$, $L$ symmetric, $\mathrm{mse}_j(A)$ is symmetric and
+  $a^T\mathrm{mse}_j(A)a$ is $\mathrm{mse}(Aa)$ of Definition~\ref{def:Blup} for the
+  target $a^T\mu_j$ ($\ell = LE_ja$, $v = (E_ja)^TL(E_ja)$). If $K \succ 0$ then
+  $A^\ast a$ is the $d^*$ of Definition~\ref{def:Blup} with $X = U$, $x_0 = a$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:CV_blup_foc, lem:CV_glsW}
+  Expand; Corollary~\ref{cor:Blup_eq_of_normal} with Lemma~\ref{lem:CV_blup_foc}
+  ($U$ has full column rank, Lemma~\ref{lem:CV_glsW}).
+\end{proof}
+
 \begin{theorem}[The matrix best linear unbiased predictor]\label{thm:CV_blup_optimal}
   \lean{Credibility.CoreVector.linMse_eq_blupW_add, Credibility.CoreVector.blupW_optimal,
         Credibility.CoreVector.blupW_optimal_dotProduct,
@@ -4069,8 +4203,10 @@ severity) are such predictors, and so is the matrix blend.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:CV_linMse_pythagoras, lem:CV_blup_foc}
+  \uses{lem:CV_linMse_pythagoras, lem:CV_blup_foc, thm:Blup_optimal, lem:CV_blupW_eq_blup}
   Lemma~\ref{lem:CV_linMse_pythagoras} with $E = A^\ast$ (Lemma~\ref{lem:CV_blup_foc}).
+  The Loewner order: for every $a$, Theorem~\ref{thm:Blup_optimal} with $X = U$,
+  $x_0 = a$ (Lemma~\ref{lem:CV_blupW_eq_blup}).
 \end{proof}
 
 \begin{lemma}[The matrix blend as a linear predictor]\label{lem:CV_blendW}

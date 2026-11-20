@@ -84,6 +84,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- General target with fixed effects (2026-11-20, `Blup.lean`): the level and matrix best
+  predictors are one result, universal kriging (`Core.blup_optimal`), with the error split
+  into "known β" plus "price of estimating β" (`Core.predMse_blup`). A paragraph when the
+  card-data season (Step 2) is written up.
 - Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
   weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
   (time trends), citing handbook `res:trend`.

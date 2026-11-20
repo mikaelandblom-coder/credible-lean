@@ -80,6 +80,11 @@ Question: is credibility with a common AR(1) factor, or with estimated seasonal
 effects, already done?
 
 ### Step 1. Core: general target and fixed effects (Lean, Core level)
+**Status (2026-11-20):** done in `Credibility/Blup.lean`: `Core.unbiased_iff`,
+`Core.blup_optimal` (with `predMse_eq_blup_add`, `blup_unique`), `Core.predMse_blup`;
+`Core.blupWeight_optimal` and `CoreVector.blupW_optimal` are now corollaries
+(`blupWeight_eq_blup`, `blupW_mulVec_eq_blup`). Open: restricted predictors (annual
+aggregation, the blend as a restricted form) and the moment layer.
 A generalization of `Core.linMse` and `Core.blupWeight`, with the data
 indexed by observed cells.
 - **General target:** predict a random `Y`, given `K = Cov(x)`, `ℓ = Cov(x, Y)`

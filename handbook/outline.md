@@ -16,6 +16,11 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- General target with fixed effects (2026-11-20, `Blup.lean`, card-data Step 1): the best
+  linear unbiased predictor `d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ - XᵀK⁻¹ℓ)` for any target `Y`
+  (`Credibility.Core.blup_optimal`), its error `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` with the price of
+  estimating `β` as the last term (`Credibility.Core.predMse_blup`). Entry once the season
+  (Step 2) gives it a practical use; the level BLUP entry can then cite it as `X = 1`.
 - Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
   matrix keeps it positive (semi)definite and keeps the variances
   (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one

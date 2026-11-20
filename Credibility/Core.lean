@@ -2,6 +2,7 @@ import Mathlib
 import Credibility.Blend
 import Credibility.Weights
 import Credibility.OffDiagonal
+import Credibility.Blup
 
 /-!
 # The credibility factor at the level of `K` (thesis §2.5, eqs. (24)–(26))
@@ -912,15 +913,41 @@ theorem linMse_eq_blupWeight_add [Nonempty J] (hK : K.PosDef) (L : Matrix J J �
   linMse_eq_add_of_mulVec hK.isHermitian L j (mulVec_blupWeight hK L j) d
     (hd.trans (sum_blupWeight hK L j).symm)
 
+omit [Fintype J] [DecidableEq J] in
+/-- The column of ones has full column rank (when there is a cohort). -/
+lemma replicateCol_one_mulVec_injective [Nonempty J] :
+    Function.Injective (replicateCol Unit (1 : J → ℝ)).mulVec := by
+  intro x y h
+  funext u
+  simpa [mulVec, dotProduct, replicateCol] using congrFun h (Classical.arbitrary J)
+
+omit [DecidableEq J] in
+/-- `1ᵀd = Σᵢ dᵢ`. -/
+lemma replicateCol_one_transpose_mulVec (d : J → ℝ) :
+    (replicateCol Unit (1 : J → ℝ))ᵀ *ᵥ d = fun _ => ∑ i, d i := by
+  funext u
+  simp [mulVec, dotProduct, replicateCol]
+
+/-- The best predictor of the level `μⱼ` is the general one (`Core.blup`) with one common
+mean: `X = 1`, `x₀ = 1`, target covariances `ℓ = Lⱼ`. -/
+theorem blupWeight_eq_blup (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) :
+    blupWeight K L j = blup K (replicateCol Unit (1 : J → ℝ)) (L j) 1 := by
+  have : Nonempty J := ⟨j⟩
+  refine eq_blup_of_normal hK replicateCol_one_mulVec_injective (L j) 1
+    (c := fun _ => (1 - 1 ⬝ᵥ (K⁻¹ *ᵥ L j)) * (invTotal K)⁻¹) ?_ ?_
+  · funext i
+    simpa [mulVec, dotProduct, replicateCol] using mulVec_blupWeight hK L j i
+  · rw [replicateCol_one_transpose_mulVec, sum_blupWeight hK]
+    rfl
+
 /-- **The best linear unbiased predictor**: `d*` has the smallest mean squared error
-among all weights with `Σᵢ dᵢ = 1`. -/
+among all weights with `Σᵢ dᵢ = 1`. A corollary of `blup_optimal` (`X = 1`). -/
 theorem blupWeight_optimal (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) (d : J → ℝ)
     (hd : ∑ i, d i = 1) : linMse K L j (blupWeight K L j) ≤ linMse K L j d := by
   have : Nonempty J := ⟨j⟩
-  rw [linMse_eq_blupWeight_add hK L j d hd]
-  have := hK.posSemidef.dotProduct_mulVec_nonneg (d - blupWeight K L j)
-  simp only [star_trivial] at this
-  linarith
+  rw [blupWeight_eq_blup hK]
+  exact blup_optimal hK replicateCol_one_mulVec_injective (L j) (L j j) 1
+    (by rw [replicateCol_one_transpose_mulVec, hd]; rfl)
 
 /-- …and it is the only one. -/
 theorem blupWeight_unique (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) {d : J → ℝ}

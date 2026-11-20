@@ -12,6 +12,9 @@ tactics.
 - §2.5 K-level Core: moments for a level covariance `L`, eq. (26), `K⁻¹1` from `Kw = c·1`, diagonal,
   equal-covariance, rank-one and block-diagonal `K`, balance of any blend (§2.9) and the best
   balanced blend (PLAN G7) → `Credibility/Core.lean`
+- extension: best linear unbiased predictor of a general target `Y` (`ℓ = Cov(x, Y)`,
+  `v = Var Y`) with fixed effects `Xᵀd = x₀` (universal kriging, `notes/card-data.md` Step 1;
+  `Core.blupWeight_optimal` is `X = 1`, `CoreVector.blupW_optimal` is `X = U`) → `Credibility/Blup.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
   §2.9 balance → `Credibility/Balance.lean`
