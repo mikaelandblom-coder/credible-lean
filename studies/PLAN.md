@@ -294,7 +294,8 @@ One chat per step; none needs Lean except step 5.
   `1` and `w`; works whenever `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`), else fall back to the thesis fit), and `τ̂²`, `K̂` from `Shock.tauHat`,
   `Shock.KHat` (portfolio weights `x = w_{j*}/w_{**}`; proved 2026-11-20).
 - Monthly card data (2026-11-20, `notes/card-data.md` Step 7): a world with a monthly season,
-  an AR(1) demand factor (optional break), equal or unequal loadings and cards entering and
+  an AR(1) demand factor (optional break) seen through a noisy observed index, equal or unequal
+  loadings and cards entering and
   leaving; every switch of the note's toolbox table as a fit. After its Lean Step 3.
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
   matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the

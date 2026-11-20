@@ -32,7 +32,8 @@ next 12 months.
 | Switch | Alternatives | Theory step |
 |---|---|---|
 | Correlation form | thesis `σσρ`, shock + process noise, common factor | 3 (thesis: `Unequal`; shock: `Shock`) |
-| Factor over time | independent months, AR(1), break at known dates, general `Γ ⪰ 0` | 3 (general `Γ`, others are instances) |
+| Demand | latent factor; known signal `Dₜ` with card-specific sensitivity `λⱼ`; both; known signal with equal sensitivity (an exposure adjustment) | 3b (signal), 3 (latent) |
+| Latent factor over time | independent months, AR(1) (mean-reverting: no long-term trend), random walk, break at known dates, level + season, general `Γ ⪰ 0` | 3 (general `Γ`, others are instances) |
 | Loadings | equal, card-specific `λⱼ` | 3, 4 |
 | Season | none, known index, estimated fixed effects | 1 |
 | Aggregation | monthly, annual totals | 1 (annual = restricted weights) |
@@ -71,6 +72,8 @@ Record the results in `studies/literature.md` (new section). Search:
 - **Evolutionary and state-space credibility:** Gerber & Jones 1975, Sundt 1981,
   Bühlmann & Gisler ch. 10.
 - **Seasonality in credibility and ratemaking.**
+- **Regression credibility with a covariate, and random-coefficient models:**
+  Hachemeister 1975, Swamy 1970. Also look for public travel demand indices.
 - **Panels with entry and exit:** Frees.
 
 Question: is credibility with a common AR(1) factor, or with estimated seasonal
@@ -131,6 +134,31 @@ To prove:
 
 Cell-level data `xⱼₜ` are rates `Nⱼₜ/wⱼₜ` (or `Sⱼₜ/wⱼₜ`).
 
+### Step 3b. A known demand signal with unknown sensitivities (Lean)
+The actuary observes overall travel demand `Dₜ`, for example passenger
+volumes by year from official statistics. Model:
+
+`E[Xⱼₜ | card] = μⱼ + λⱼ Dₜ`, with `λⱼ = λ̄ + (λⱼ − λ̄)`.
+
+- **Fixed effects:** the portfolio sensitivity `λ̄` and the mean are in
+  Step 1's design (`X` gets a `Dₜ` column next to the season).
+- **Random effects:** the card's deviations `(μⱼ − μ, λⱼ − λ̄)` have a 2 × 2
+  covariance. They give `K` the term `Dₜ Dₛ cov(λᵢ, λⱼ)` and the cross terms.
+  This is Hachemeister's regression credibility with `Dₜ` as the covariate
+  instead of `t`; with correlated cohorts it is `CoreVector.hachemeister_bestZ`.
+  First check whether that already covers it.
+- **Combination:** the signal and a latent factor (Step 3) can be combined. A
+  signal never captures the whole shock. Either part can be switched off.
+- **Expected finding:** conditional on `Dₜ`, the remaining cross-card
+  correlation may be small. That is the data question for the student.
+- **Forecast:** the 12-month target needs `D_{T+1}`, so `x₀` contains `D_{T+1}`.
+  Price as a function of the demand assumption (scenarios), or plug in a
+  forecast and add its variance, which is common to all cards. State which.
+- **Equal sensitivity** (`λⱼ = λ̄`, known): `Dₜ` is an exposure adjustment, as
+  in the known season index of Step 2.
+- **Time resolution:** with annual `Dₜ` and monthly data, `Dₜ` is constant
+  within a year, so the season carries the within-year shape.
+
 ### Step 4. When does the factor cancel? (Lean; Q2, loadings)
 Expected: with **equal loadings** and cards observed in the same months, the
 factor drops out of card relativities, so ranking cards needs no trend model.
@@ -168,7 +196,8 @@ the table of Step 3.
 The world uses the optional distribution layer: Poisson counts, gamma
 amounts. It has:
 - a monthly season,
-- an AR(1) demand factor with an optional break,
+- an AR(1) demand factor with an optional break, and an observed demand index `Dₜ` (a noisy
+  view of the factor) with card-specific sensitivities,
 - equal or unequal loadings,
 - cards entering and leaving.
 
@@ -205,9 +234,12 @@ line, as usual. Then rewrite `studies/thesis-topics/` as one topic,
    known dates; the data decide.
 4. **Seasonality:** estimated, not given.
 5. **Tools for all alternatives:** the student explores which works best.
+6. **Demand:** a known demand signal with unknown card sensitivities is a
+   switch next to the latent factor (Step 3b). AR(1) is kept as the
+   mean-reverting latent option.
 
 ## Order of chats
 - Step 0 (Default).
-- Then, in **lean**, one chat per step: 1, 2, 3 (maybe two chats), 4, 5, 6.
+- Then, in **lean**, one chat per step: 1, 2, 3 (maybe two chats), 3b, 4, 5, 6.
 - Step 7 (Default) can start after Step 3.
 - Step 8 comes last.
