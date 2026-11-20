@@ -145,6 +145,14 @@ rate is linear; multiplicative needs a plug-in or a log scale, so say which.
   claims `cₜwⱼₜ`, not cards in force.
 
 ### Step 3. The common factor model (Lean, main step; maybe two chats)
+**Status (2026-11-20): done** in `Credibility/Factor.lean` (cells: any injective
+`c : n → J × T`). `Factor.K_posDef`; instances `obsCov_eq_shock` (`Γ = 0`),
+`obsCov_eq_shock_loadings` (`C = 0`, `Γ = I`), `ar1_posSemidef` (via `Γ = LDLᵀ`),
+`block_posSemidef`, `regime_posSemidef`; target `ell`, `var` with `ell_apply_of_future`,
+`var_eq`; Step 1/2 as corollaries `blup_optimal`, `predMse_blup`, `blup_season_optimal`.
+Finding 25 (`blup_neg_of_ar1`): a negative weight with `φ = 1/2`, balanced panel. Open: the
+moment layer (`Core.Target` for random cells with this table), the Kalman form, per-card AR(1),
+and the estimation of `Γ`, `λ` (Step 4).
 One table that generalizes `Shock` and covers the factor-over-time switch:
 
 `cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼ Γₜₛ + δₜₛ Cᵢⱼ + δₜₛ δᵢⱼ sᵢ²/wᵢₜ + τ²δᵢⱼ`,

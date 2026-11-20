@@ -48,6 +48,9 @@ tactics.
 - extension: a known common trend `g` (`notes/time-trends.md` §1 steps 1–2): `Unequal.scale`/`detrend`,
   `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, trend-free relativities (Finding 21)
   → `Credibility/Trend.lean`
+- extension: the common factor model (`notes/card-data.md` Step 3, Finding 25): a factor
+  `λᵢλⱼΓₜₛ` over all months on top of `Shock` (`Γ = 0`), `K ≻ 0` for any observed cells, AR(1)
+  and block `Γ`, `ℓ`, `v` for the 12-month target, Step 1/2 as corollaries → `Credibility/Factor.lean`
 - extension: shock plus process noise (Finding 23): `cov = δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, its `K`
   for any cohort weights, `K ≻ 0`, unbiased `Ĉ`, `ŝ²` (identified only through volume variation)
   → `Credibility/Shock.lean`; its moment layer (`Shock.Cells`, random cells with the table `obsCov`,

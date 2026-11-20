@@ -1,0 +1,350 @@
+import Credibility.Season
+import Credibility.Shock
+
+/-!
+# The common factor model (extension, `notes/card-data.md` Step 3)
+
+Monthly cells `Xⱼₜ` (card `j`, month `t`) share a latent demand factor `Fₜ` with loadings `λⱼ`
+and an autocovariance `Γ ⪰ 0` over all months, past and future. On top of it sit the period
+shock and process noise of `Shock` and the card level with variance `τ²`:
+
+`cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛCᵢⱼ + δₜₛδᵢⱼsᵢ²/wᵢₜ + τ²δᵢⱼ`  (`obsCov`).
+
+Distribution-free: only these second moments are assumed. The data are the observed cells, any
+injective map `c : n → J × T` (cards enter and leave: `n = {(j, t) | t ∈ obs j}`).
+
+* **`K ≻ 0`** for any observed cells (`K_posDef`): the factor part is `BᵀΓB`, the shock part a
+  weighted sum as in `Shock`, the level part `τ²` times a same-card indicator, and the process
+  noise a positive diagonal.
+* **Instances of `Γ`**: `Γ = 0` is `Shock` (`obsCov_eq_shock`); `C = 0`, `Γ = I` is `Shock` with
+  the rank-one shock `C = λλᵀ` (`obsCov_eq_shock_loadings`); AR(1) `Γₜₛ = γφ^|t-s|` with
+  `|φ| ≤ 1` (`ar1_posSemidef`); a break at known dates, a block `Γ` with no correlation across
+  regimes (`block_posSemidef`, a constant level per regime: `regime_posSemidef`).
+* **The target** `Y = Σₜ bₜX_{j₀t}` (`bₜ = 1` on the next 12 months): `ℓ = Cov(x, Y)` (`ell`) and
+  `v = Var Y` (`var`). For months not yet observed, `ℓ` only sees the factor and the card level:
+  `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` (`ell_apply_of_future`); `v` in `var_eq`.
+* **The predictor** is Step 1's best linear unbiased predictor for this `K`, `ℓ`, `v`
+  (`blup_optimal`, `predMse_blup`), with the season design of Step 2 (`blup_season_optimal`).
+* **Negative weights** (Finding 25, `blup_neg_of_ar1`): two cards, two months, AR(1) with
+  `φ = 1/2`; the predictor of card 0's next month puts `-1/30` on card 1's first month.
+-/
+
+open Finset Matrix
+
+namespace Credibility
+
+/-- The common factor model: a latent factor with loadings `λⱼ` and autocovariance `Γ ⪰ 0`
+over all months, past and future, on top of the shock and process noise of `Shock` and card
+levels with variance `τ²`. Distribution-free: only these second moments are assumed. -/
+structure Factor (J T : Type*) where
+  /-- Heterogeneity between cards. -/
+  τ2 : ℝ
+  /-- Covariance of the period shock across cards (independent between months). -/
+  C : Matrix J J ℝ
+  /-- Process noise per unit of volume. -/
+  s2 : J → ℝ
+  /-- Volume of card `j` in month `t`. -/
+  w : J → T → ℝ
+  /-- Loadings `λⱼ` on the common factor. -/
+  load : J → ℝ
+  /-- Autocovariance of the common factor over all months. -/
+  Γ : Matrix T T ℝ
+  τ2_pos : 0 < τ2
+  C_posSemidef : C.PosSemidef
+  s2_pos : ∀ j, 0 < s2 j
+  w_pos : ∀ j t, 0 < w j t
+  Γ_posSemidef : Γ.PosSemidef
+
+namespace Factor
+
+variable {J T n : Type*} (M : Factor J T)
+
+/-- The shock and process noise without the factor. -/
+def toShock : Shock J T :=
+  ⟨M.τ2, M.C, M.s2, M.w, M.τ2_pos, M.C_posSemidef, M.s2_pos, M.w_pos⟩
+
+variable [DecidableEq J] [DecidableEq T]
+
+/-- `cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`: the factor on top of `Shock`. -/
+noncomputable def obsCov (i j : J) (t s : T) : ℝ :=
+  M.load i * M.load j * M.Γ t s + M.toShock.obsCov i j t s
+
+/-! ### Instances: `Shock` -/
+
+/-- **`Γ = 0` is `Shock`**. -/
+theorem obsCov_eq_shock (hΓ : M.Γ = 0) (i j : J) (t s : T) :
+    M.obsCov i j t s = M.toShock.obsCov i j t s := by
+  simp [obsCov, hΓ]
+
+/-- **One factor, independent months, no shock, is `Shock` with the rank-one shock
+`C = λλᵀ`**: `C = 0` and `Γ = I`. -/
+theorem obsCov_eq_shock_loadings [Fintype J] (hC : M.C = 0) (hΓ : M.Γ = 1) (i j : J) (t s : T) :
+    M.obsCov i j t s
+      = (⟨M.τ2, vecMulVec M.load M.load, M.s2, M.w, M.τ2_pos, posSemidef_loadings M.load,
+          M.s2_pos, M.w_pos⟩ : Shock J T).obsCov i j t s := by
+  simp only [obsCov, Shock.obsCov, toShock, hC, hΓ, vecMulVec_apply]
+  by_cases ht : t = s
+  · subst ht; by_cases hij : i = j <;> simp [hij]
+    ring
+  · by_cases hij : i = j <;> simp [ht, hij]
+
+/-! ### The covariance of the observed cells and its positive definiteness -/
+
+variable (c : n → J × T)
+
+/-- `K = Cov(x)` for the observed cells `c : n → J × T`. -/
+noncomputable def K : Matrix n n ℝ := of fun p q => M.obsCov (c p).1 (c q).1 (c p).2 (c q).2
+
+/-- The factor part `λᵢλⱼΓₜₛ` of `K`. -/
+noncomputable def factorPart : Matrix n n ℝ :=
+  of fun p q => M.load (c p).1 * M.load (c q).1 * M.Γ (c p).2 (c q).2
+
+/-- The shock part `δₜₛCᵢⱼ` of `K`. -/
+noncomputable def shockPart : Matrix n n ℝ :=
+  of fun p q => if (c p).2 = (c q).2 then M.C (c p).1 (c q).1 else 0
+
+/-- The level part `τ²δᵢⱼ` of `K`. -/
+noncomputable def levelPart : Matrix n n ℝ :=
+  of fun p q => M.τ2 * if (c p).1 = (c q).1 then 1 else 0
+
+/-- The process noise `sᵢ²/wᵢₜ` of each cell. -/
+noncomputable def cellNoise (p : n) : ℝ := M.s2 (c p).1 / M.w (c p).1 (c p).2
+
+variable {c}
+
+/-- `K` splits into the factor, the shock, the level and the process noise. -/
+theorem K_eq_parts [DecidableEq n] (hc : Function.Injective c) :
+    M.K c = diagonal (M.cellNoise c) + (M.factorPart c + M.shockPart c + M.levelPart c) := by
+  ext p q
+  simp only [K, factorPart, shockPart, levelPart, obsCov, Shock.obsCov, toShock, of_apply]
+  by_cases hpq : p = q
+  · subst hpq; simp [cellNoise]; ring
+  · have : ¬((c p).2 = (c q).2 ∧ (c p).1 = (c q).1) := fun h =>
+      hpq (hc (Prod.ext h.2 h.1))
+    by_cases ht : (c p).2 = (c q).2
+    · have hj : (c p).1 ≠ (c q).1 := fun h => this ⟨ht, h⟩
+      simp [hpq, ht, hj]
+    · simp [hpq, ht]
+
+variable (c)
+
+omit [DecidableEq J] in
+/-- The factor part is `BᵀΓB` with `B_{t,(j,s)} = δₜₛλⱼ`, so it is `⪰ 0`. -/
+theorem factorPart_posSemidef [Fintype n] [Fintype T] : (M.factorPart c).PosSemidef := by
+  set B : Matrix T n ℝ := of fun t p => if (c p).2 = t then M.load (c p).1 else 0
+  have h : M.factorPart c = Bᴴ * M.Γ * B := by
+    ext p q
+    simp [factorPart, B, Matrix.mul_apply, ite_mul, mul_ite]
+    ring
+  rw [h]
+  exact M.Γ_posSemidef.conjTranspose_mul_mul_same B
+
+omit [DecidableEq J] in
+/-- The shock part is a weighted sum of `C` over months, as in `Shock`: `⪰ 0`. -/
+theorem shockPart_posSemidef [Fintype n] [Fintype T] : (M.shockPart c).PosSemidef := by
+  have h := posSemidef_weightedSum (fun _ : T => M.C.submatrix (fun p => (c p).1)
+    (fun p => (c p).1)) (fun _ => M.C_posSemidef.submatrix _)
+    (fun p t => if (c p).2 = t then 1 else 0)
+  convert h using 1
+  ext p q
+  simp [shockPart, ite_mul]
+
+omit [DecidableEq T] in
+/-- The level part is `τ²` times a same-card indicator: `⪰ 0`. -/
+theorem levelPart_posSemidef [Fintype n] [Fintype J] : (M.levelPart c).PosSemidef := by
+  have h := ((PosSemidef.one (n := J) (R := ℝ)).submatrix (fun p : n => (c p).1)).smul
+    M.τ2_pos.le
+  convert h using 1
+  ext p q
+  by_cases h : (c p).1 = (c q).1 <;> simp [levelPart, h, Matrix.one_apply]
+
+/-- **`K ≻ 0`** for any observed cells: the process noise is a positive diagonal, the rest
+is `⪰ 0` (from `Γ ⪰ 0`, `C ⪰ 0`, `τ² > 0`). -/
+theorem K_posDef [Fintype n] [DecidableEq n] [Fintype J] [Fintype T] {c : n → J × T}
+    (hc : Function.Injective c) : (M.K c).PosDef := by
+  rw [M.K_eq_parts hc]
+  exact (PosDef.diagonal fun p => div_pos (M.s2_pos _) (M.w_pos _ _)).add_posSemidef
+    (((M.factorPart_posSemidef c).add (M.shockPart_posSemidef c)).add
+      (M.levelPart_posSemidef c))
+
+/-! ### Instances of `Γ`: AR(1) and a break at known dates -/
+
+/-- The AR(1) autocovariance `Γₜₛ = γφ^|t-s|` over months `0, …, N-1`. -/
+def ar1 (N : ℕ) (γ φ : ℝ) : Matrix (Fin N) (Fin N) ℝ :=
+  of fun t s => γ * φ ^ (if (t : ℕ) ≤ s then (s : ℕ) - t else (t : ℕ) - s)
+
+/-- `Σ_{k≤t} (φ^{t-k})²dₖ = 1` with `d₀ = 1`, `dₖ = 1 - φ²`: an AR(1) started in its stationary
+law, `Fₜ = φF_{t-1} + eₜ`, has variance `1` at every `t`. -/
+lemma ar1_sum_sq (φ : ℝ) (t : ℕ) :
+    ∑ k ∈ range (t + 1), φ ^ (t - k) * φ ^ (t - k) * (if k = 0 then 1 else 1 - φ ^ 2) = 1 := by
+  induction t with
+  | zero => simp
+  | succ t ih =>
+    rw [sum_range_succ, Nat.sub_self]
+    have h : ∑ k ∈ range (t + 1),
+        φ ^ (t + 1 - k) * φ ^ (t + 1 - k) * (if k = 0 then 1 else 1 - φ ^ 2)
+        = φ ^ 2 * ∑ k ∈ range (t + 1),
+          φ ^ (t - k) * φ ^ (t - k) * (if k = 0 then 1 else 1 - φ ^ 2) := by
+      rw [mul_sum]
+      refine sum_congr rfl fun k hk => ?_
+      rw [Nat.sub_add_comm (Nat.lt_succ_iff.mp (mem_range.mp hk)), pow_succ]
+      ring
+    rw [h, ih]
+    simp
+
+/-- The entries of `LDLᵀ` with `L_{tk} = φ^{t-k}` (`k ≤ t`): `φ^{s-t}` for `t ≤ s`. -/
+lemma ar1_sum_eq (φ : ℝ) {N t s : ℕ} (hts : t ≤ s) (hs : s < N) :
+    ∑ k ∈ range N, (if k ≤ t then φ ^ (t - k) else 0) * (if k = 0 then 1 else 1 - φ ^ 2)
+      * (if k ≤ s then φ ^ (s - k) else 0) = φ ^ (s - t) := by
+  rw [← sum_range_add_sum_Ico _ (show t + 1 ≤ N by omega)]
+  have h2 : ∑ k ∈ Ico (t + 1) N, (if k ≤ t then φ ^ (t - k) else 0)
+      * (if k = 0 then 1 else 1 - φ ^ 2) * (if k ≤ s then φ ^ (s - k) else 0) = 0 :=
+    sum_eq_zero fun k hk => by
+      have : ¬k ≤ t := by have := (mem_Ico.mp hk).1; omega
+      simp [this]
+  rw [h2, add_zero]
+  trans φ ^ (s - t)
+    * ∑ k ∈ range (t + 1), φ ^ (t - k) * φ ^ (t - k) * (if k = 0 then 1 else 1 - φ ^ 2)
+  · rw [mul_sum]
+    refine sum_congr rfl fun k hk => ?_
+    have hk : k ≤ t := Nat.lt_succ_iff.mp (mem_range.mp hk)
+    simp only [hk, hk.trans hts, ite_true, show s - k = (s - t) + (t - k) by omega, pow_add]
+    ring
+  · rw [ar1_sum_sq, mul_one]
+
+/-- The innovation loadings `L_{tk} = φ^{t-k}` for `k ≤ t`. -/
+def ar1L (N : ℕ) (φ : ℝ) : Matrix (Fin N) (Fin N) ℝ :=
+  of fun t k => if (k : ℕ) ≤ t then φ ^ ((t : ℕ) - k) else 0
+
+/-- The innovation variances `1, 1 - φ², 1 - φ², …`. -/
+def ar1D (N : ℕ) (φ : ℝ) : Fin N → ℝ := fun k => if (k : ℕ) = 0 then 1 else 1 - φ ^ 2
+
+/-- `ar1 N 1 φ = LDLᵀ`: the AR(1) factor written in its innovations. -/
+theorem ar1_eq (N : ℕ) (φ : ℝ) : ar1 N 1 φ = ar1L N φ * diagonal (ar1D N φ) * (ar1L N φ)ᵀ := by
+  refine Matrix.ext fun t s => ?_
+  rw [Matrix.mul_apply]
+  simp only [mul_diagonal, ar1L, ar1D, ar1, of_apply, transpose_apply, one_mul]
+  rw [Fin.sum_univ_eq_sum_range (fun k => (if k ≤ (t : ℕ) then φ ^ ((t : ℕ) - k) else 0)
+    * (if k = 0 then 1 else 1 - φ ^ 2) * (if k ≤ (s : ℕ) then φ ^ ((s : ℕ) - k) else 0)) N]
+  split_ifs with h
+  · exact (ar1_sum_eq φ h s.2).symm
+  · rw [← ar1_sum_eq φ (le_of_not_ge h) t.2]
+    exact sum_congr rfl fun k _ => by ring
+
+/-- **AR(1) is a valid `Γ`**: `γφ^|t-s| ⪰ 0` for `γ ≥ 0` and `|φ| ≤ 1`. -/
+theorem ar1_posSemidef (N : ℕ) {γ φ : ℝ} (hγ : 0 ≤ γ) (hφ : |φ| ≤ 1) :
+    (ar1 N γ φ).PosSemidef := by
+  have h1 : (ar1 N 1 φ).PosSemidef := by
+    rw [ar1_eq, ← conjTranspose_eq_transpose_of_trivial]
+    refine PosSemidef.mul_mul_conjTranspose_same (PosSemidef.diagonal fun k => ?_) _
+    simp only [ar1D]
+    split_ifs
+    · exact zero_le_one
+    · have := (sq_le_one_iff_abs_le_one φ).mpr hφ
+      simp only [Pi.zero_apply]; linarith
+  have h : ar1 N γ φ = γ • ar1 N 1 φ := by ext t s; simp [ar1]
+  rw [h]
+  exact h1.smul hγ
+
+/-- A break at known dates: months in regime `r t`, a block `G_r` within each regime and no
+correlation across regimes. -/
+def block {B : Type*} [DecidableEq B] (r : T → B) (G : B → Matrix T T ℝ) : Matrix T T ℝ :=
+  of fun t s => if r t = r s then G (r t) t s else 0
+
+omit [DecidableEq T] in
+/-- **A block `Γ` is valid** when every block is: `G_r ⪰ 0` gives `Γ ⪰ 0`, a weighted sum as
+in `Shock`. -/
+theorem block_posSemidef [Fintype T] {B : Type*} [Fintype B] [DecidableEq B] (r : T → B)
+    {G : B → Matrix T T ℝ} (hG : ∀ b, (G b).PosSemidef) : (block r G).PosSemidef := by
+  convert posSemidef_weightedSum G hG (fun t b => if r t = b then 1 else 0) using 1
+  ext t s
+  by_cases h : r t = r s
+  · simp [block, h, ite_mul]
+  · simp [block, h, ite_mul]
+
+omit [DecidableEq T] in
+/-- **A level per regime**: `Γₜₛ = γ_r` when `t`, `s` lie in the same regime `r`, else `0`
+(the factor is constant within a regime, independent across). -/
+theorem regime_posSemidef [Fintype T] {B : Type*} [Fintype B] [DecidableEq B] (r : T → B)
+    {γ : B → ℝ} (hγ : ∀ b, 0 ≤ γ b) :
+    (of fun t s => if r t = r s then γ (r t) else 0 : Matrix T T ℝ).PosSemidef := by
+  convert block_posSemidef r (G := fun b => γ b • vecMulVec (1 : T → ℝ) 1)
+    fun b => (posSemidef_loadings 1).smul (hγ b) using 1
+  ext t s
+  simp [block]
+
+/-! ### The target: the next 12 months of card `j₀` -/
+
+variable [Fintype T]
+
+/-- `ℓ = Cov(x, Y)` for the target `Y = Σₜ bₜX_{j₀t}` (`bₜ = 1` on the next 12 months). -/
+noncomputable def ell (j₀ : J) (b : T → ℝ) : n → ℝ :=
+  fun p => ∑ t, b t * M.obsCov (c p).1 j₀ (c p).2 t
+
+/-- `v = Var Y` for the target `Y = Σₜ bₜX_{j₀t}`. -/
+noncomputable def var (j₀ : J) (b : T → ℝ) : ℝ :=
+  ∑ t, ∑ s, b t * b s * M.obsCov j₀ j₀ t s
+
+/-- **`ℓ` for months not yet observed** (`b = 0` on the cell's month): only the factor and the
+card level link the data to the target, `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ`. -/
+theorem ell_apply_of_future (j₀ : J) {b : T → ℝ} {p : n} (hb : b (c p).2 = 0) :
+    M.ell c j₀ b p = M.load (c p).1 * M.load j₀ * (M.Γ *ᵥ b) (c p).2
+      + M.τ2 * (if (c p).1 = j₀ then 1 else 0) * ∑ t, b t := by
+  simp only [ell, obsCov, Shock.obsCov, toShock, mul_add, sum_add_distrib, mulVec, dotProduct,
+    mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true, hb, zero_mul, zero_add, mul_sum]
+  congr 1
+  · exact sum_congr rfl fun t _ => by ring
+  · by_cases h : (c p).1 = j₀ <;> simp [h, mul_comm]
+
+/-- **`v` for the target**: `v = λ_{j₀}²bᵀΓb + Σₜbₜ²(C_{j₀j₀} + s_{j₀}²/w_{j₀t}) + τ²(Σₜbₜ)²`. -/
+theorem var_eq (j₀ : J) (b : T → ℝ) :
+    M.var j₀ b = M.load j₀ ^ 2 * (b ⬝ᵥ (M.Γ *ᵥ b))
+      + ∑ t, b t ^ 2 * (M.C j₀ j₀ + M.s2 j₀ / M.w j₀ t) + M.τ2 * (∑ t, b t) ^ 2 := by
+  have h : ∀ t s, M.obsCov j₀ j₀ t s = M.load j₀ ^ 2 * M.Γ t s
+      + (if t = s then M.C j₀ j₀ + M.s2 j₀ / M.w j₀ t else 0) + M.τ2 := fun t s => by
+    simp [obsCov, Shock.obsCov, toShock, sq]; ring
+  simp only [var, h, mul_add, sum_add_distrib, mul_ite, mul_zero, sum_ite_eq, mem_univ,
+    ite_true, dotProduct, mulVec, mul_sum, sq, sum_mul]
+  congr 1
+  · congr 1
+    exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+  · exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+
+/-! ### The predictor: Step 1 and Step 2 for this `K`, `ℓ`, `v` -/
+
+variable [Fintype n] [DecidableEq n] [Fintype J] {c}
+
+/-- **The best linear unbiased predictor** of card `j₀`'s next 12 months under the common
+factor model, for any design `X` of fixed effects (`Core.blup_optimal`). -/
+theorem blup_optimal (hc : Function.Injective c) {q : Type*} [Fintype q] [DecidableEq q]
+    {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (j₀ : J) (b : T → ℝ) (x₀ : q → ℝ)
+    {d : n → ℝ} (hd : Xᵀ *ᵥ d = x₀) :
+    Core.predMse (M.K c) (M.ell c j₀ b) (M.var j₀ b) (Core.blup (M.K c) X (M.ell c j₀ b) x₀)
+      ≤ Core.predMse (M.K c) (M.ell c j₀ b) (M.var j₀ b) d :=
+  Core.blup_optimal (M.K_posDef hc) hX _ _ x₀ hd
+
+/-- **Its error** `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r`, `r = x₀ - XᵀK⁻¹ℓ` (`Core.predMse_blup`). -/
+theorem predMse_blup (hc : Function.Injective c) {q : Type*} [Fintype q] [DecidableEq q]
+    {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (j₀ : J) (b : T → ℝ) (x₀ : q → ℝ) :
+    Core.predMse (M.K c) (M.ell c j₀ b) (M.var j₀ b) (Core.blup (M.K c) X (M.ell c j₀ b) x₀)
+      = M.var j₀ b - M.ell c j₀ b ⬝ᵥ ((M.K c)⁻¹ *ᵥ M.ell c j₀ b)
+        + (x₀ - Xᵀ *ᵥ ((M.K c)⁻¹ *ᵥ M.ell c j₀ b))
+          ⬝ᵥ ((Xᵀ * (M.K c)⁻¹ * X)⁻¹ *ᵥ (x₀ - Xᵀ *ᵥ ((M.K c)⁻¹ *ᵥ M.ell c j₀ b))) :=
+  Core.predMse_blup (M.K_posDef hc) hX _ _ x₀
+
+/-- **With an estimated season** (Step 2): the season design on the cells' calendar months;
+the target `Σₜ bₜX_{j₀t}` has mean `Σₘ Sₘ(b)βₘ`, so the predictor is unbiased iff its month
+sums are those of `b`. -/
+theorem blup_season_optimal (hc : Function.Injective c) {Mo : Type*} [Fintype Mo]
+    [DecidableEq Mo] {mon : T → Mo} (hmon : Function.Surjective fun p => mon (c p).2) (j₀ : J)
+    (b : T → ℝ) {d : n → ℝ}
+    (hd : ∀ m, Season.monthSum (fun p => mon (c p).2) d m = Season.monthSum mon b m) :
+    Core.predMse (M.K c) (M.ell c j₀ b) (M.var j₀ b)
+        (Core.blup (M.K c) (Season.design fun p => mon (c p).2) (M.ell c j₀ b)
+          (Season.monthSum mon b))
+      ≤ Core.predMse (M.K c) (M.ell c j₀ b) (M.var j₀ b) d :=
+  M.blup_optimal hc (Season.design_mulVec_injective hmon) j₀ b _
+    (by rw [Season.design_transpose_mulVec]; exact funext hd)
+
+end Factor
+end Credibility

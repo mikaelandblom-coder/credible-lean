@@ -419,4 +419,21 @@ Gaps, extra hypotheses and new results found while formalizing.
    fit it (or a known index, `Unequal.a_eq_of_volume`); the one-mean predictor leans on the
    high-volume months.
 
+25. **Positive autocorrelation does not keep the weights positive (new; `notes/card-data.md`
+   Step 3).** Common factor model `cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛCᵢⱼ + δₜₛδᵢⱼsᵢ²/wᵢₜ + τ²δᵢⱼ`
+   (`Credibility/Factor.lean`, `K ≻ 0` for any observed cells: `Factor.K_posDef`). Expected:
+   per-month weights can be negative under an AR(1) factor. True, and already with positive
+   autocorrelation and a balanced panel (`Factor.blup_neg_of_ar1`): two cards observed in
+   months `0, 1`, AR(1) `Γₜₛ = φ^|t-s|` with `φ = 1/2`, loadings `1`, `C = 0`, `s²/w = 1/2`,
+   `τ² = 1`, one common mean. The best predictor of card 0 in month 2 has weights
+   `(11/30, 8/15, -1/30, 2/15)` on `(0,0), (0,1), (1,0), (1,1)` (`Factor.blup_exAR1`). Why:
+   card 1's change `X₁₁ - X₁₀` tracks the factor's latest value, which persists into month 2,
+   without card 1's own level. With one card the weights stayed positive in our numerical
+   checks (AR(1) plus noise, `φ = ±1/2`), so the negative weight comes from borrowing the
+   factor from other cards. Pinquet (2020) gives nonnegative partial autocorrelations as
+   sufficient for nonnegative weights for per-risk AR effects; with a common factor across
+   cards that condition does not carry over. Practice: negative weights are a feature of the
+   best predictor here, not a fitting error; a predictor restricted to nonnegative weights
+   (like the thesis blend) gives this up.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

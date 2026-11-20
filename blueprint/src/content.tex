@@ -4038,6 +4038,152 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
   Theorem~\ref{thm:integral_quad_cov} with every cell observed.
 \end{proof}
 
+\chapter{Extension: a common factor over months}\label{ch:factor}
+% Not in the thesis. Lean: Credibility/Factor.lean (notes/card-data.md Step 3, Finding 25)
+
+Monthly cells $X_{jt}$ (card $j$, month $t$) share a latent demand factor $F_t$ with loadings
+$\lambda_j$ and autocovariance $\Gamma \succeq 0$ over all months, past and future, on top of
+the shock and process noise of Chapter~\ref{ch:shock}. Only second moments are assumed. The data
+are the observed cells, any injective map $c : n \to J \times T$ (cards enter and leave).
+
+\begin{definition}[The common factor model]\label{def:Factor}
+  \lean{Credibility.Factor, Credibility.Factor.toShock, Credibility.Factor.obsCov,
+        Credibility.Factor.K, Credibility.Factor.factorPart, Credibility.Factor.shockPart,
+        Credibility.Factor.levelPart, Credibility.Factor.cellNoise}
+  \leanok
+  \uses{def:Shock}
+  $\tau^2 > 0$, $C \succeq 0$, $s_j^2 > 0$, $w_{jt} > 0$, loadings $\lambda_j$, $\Gamma \succeq 0$,
+  and
+  \[
+    \cov(X_{it}, X_{js}) = \lambda_i\lambda_j\Gamma_{ts} + \delta_{ts}C_{ij}
+      + \delta_{ts}\delta_{ij}s_i^2/w_{it} + \tau^2\delta_{ij}.
+  \]
+  $K$ is this table on the observed cells.
+\end{definition}
+
+\begin{theorem}[$K \succ 0$]\label{thm:Factor_K}
+  \lean{Credibility.Factor.K_eq_parts, Credibility.Factor.factorPart_posSemidef,
+        Credibility.Factor.shockPart_posSemidef, Credibility.Factor.levelPart_posSemidef,
+        Credibility.Factor.K_posDef}
+  \leanok
+  \uses{def:Factor}
+  For any observed cells, $K \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum}
+  $K = \mathrm{diag}(s^2/w) + B^\top\Gamma B + \bigl(\delta_{ts}C_{ij}\bigr) + \tau^2(\delta_{ij})$
+  with $B_{t,(j,s)} = \delta_{ts}\lambda_j$. The diagonal is positive; the shock part is a
+  weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}); the rest is PSD.
+\end{proof}
+
+\begin{lemma}[Shock as a special case]\label{lem:Factor_shock}
+  \lean{Credibility.Factor.obsCov_eq_shock, Credibility.Factor.obsCov_eq_shock_loadings}
+  \leanok
+  \uses{def:Factor}
+  $\Gamma = 0$ gives the table of Definition~\ref{def:Shock}. $C = 0$, $\Gamma = I$ gives it
+  with the rank-one shock $C = \lambda\lambda^\top$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct.
+\end{proof}
+
+\begin{definition}[AR(1) and block factors]\label{def:Factor_ar1}
+  \lean{Credibility.Factor.ar1, Credibility.Factor.ar1L, Credibility.Factor.ar1D,
+        Credibility.Factor.block}
+  \leanok
+  AR(1): $\Gamma_{ts} = \gamma\varphi^{|t-s|}$. A break at known dates: months in regimes
+  $r(t)$, $\Gamma_{ts} = (G_{r(t)})_{ts}$ if $r(t) = r(s)$, else $0$.
+\end{definition}
+
+\begin{theorem}[AR(1) is a valid $\Gamma$]\label{thm:Factor_ar1}
+  \lean{Credibility.Factor.ar1_sum_sq, Credibility.Factor.ar1_sum_eq, Credibility.Factor.ar1_eq,
+        Credibility.Factor.ar1_posSemidef}
+  \leanok
+  \uses{def:Factor_ar1}
+  $\gamma\varphi^{|t-s|} \succeq 0$ for $\gamma \ge 0$ and $|\varphi| \le 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\varphi^{|t-s|} = (LDL^\top)_{ts}$ with $L_{tk} = \varphi^{t-k}$ ($k \le t$) and
+  $D = \mathrm{diag}(1, 1-\varphi^2, \dots)$: the factor in its innovations, started in its
+  stationary law, so $\sum_{k \le t}\varphi^{2(t-k)}D_k = 1$.
+\end{proof}
+
+\begin{theorem}[A break at known dates]\label{thm:Factor_block}
+  \lean{Credibility.Factor.block_posSemidef, Credibility.Factor.regime_posSemidef}
+  \leanok
+  \uses{def:Factor_ar1}
+  If every block $G_r \succeq 0$, the block $\Gamma \succeq 0$. In particular a constant level
+  per regime, $\Gamma_{ts} = \gamma_{r(t)}$ within a regime, with $\gamma_r \ge 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum}
+  Lemma~\ref{lem:posSemidef_weightedSum} with $a_{tr} = [r(t) = r]$.
+\end{proof}
+
+\begin{definition}[The 12-month target]\label{def:Factor_target}
+  \lean{Credibility.Factor.ell, Credibility.Factor.var}
+  \leanok
+  \uses{def:Factor, def:Blup}
+  $Y = \sum_t b_tX_{j_0t}$ ($b_t = 1$ on the next 12 months),
+  $\ell_i = \cov(X_i, Y)$, $v = \mathrm{Var}\,Y$.
+\end{definition}
+
+\begin{lemma}[$\ell$ and $v$]\label{lem:Factor_target}
+  \lean{Credibility.Factor.ell_apply_of_future, Credibility.Factor.var_eq}
+  \leanok
+  \uses{def:Factor_target}
+  If $b$ vanishes on the month of cell $(i,t)$,
+  $\ell_{(i,t)} = \lambda_i\lambda_{j_0}(\Gamma b)_t + \tau^2\delta_{ij_0}\sum_s b_s$: only the
+  factor and the card level link the past to the target. And
+  $v = \lambda_{j_0}^2 b^\top\Gamma b + \sum_t b_t^2(C_{j_0j_0} + s_{j_0}^2/w_{j_0t})
+    + \tau^2(\sum_t b_t)^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct.
+\end{proof}
+
+\begin{corollary}[The predictor]\label{cor:Factor_blup}
+  \lean{Credibility.Factor.blup_optimal, Credibility.Factor.predMse_blup,
+        Credibility.Factor.blup_season_optimal}
+  \leanok
+  \uses{def:Factor_target, def:Season}
+  For any design of fixed effects, Theorem~\ref{thm:Blup_optimal} and
+  Theorem~\ref{thm:Blup_mse} hold for this $K$, $\ell$, $v$; with an estimated season, the
+  design of Definition~\ref{def:Season} and $x_0 = S(b)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_K, thm:Blup_optimal, thm:Blup_mse, lem:Season_design}
+  $K \succ 0$ (Theorem~\ref{thm:Factor_K}).
+\end{proof}
+
+\begin{theorem}[Finding 25: negative weights under AR(1)]\label{thm:Factor_neg}
+  \lean{Credibility.Factor.exAR1, Credibility.Factor.exCells, Credibility.Factor.blup_exAR1,
+        Credibility.Factor.blup_neg_of_ar1}
+  \leanok
+  \uses{def:Factor_target, def:Factor_ar1}
+  Two cards observed in months $0, 1$; AR(1) with $\gamma = 1$, $\varphi = 1/2$, loadings $1$,
+  $C = 0$, $s^2/w = 1/2$, $\tau^2 = 1$; one common mean. The predictor of card $0$ in month
+  $2$ has weights $(11/30, 8/15, -1/30, 2/15)$ on cells $(0,0), (0,1), (1,0), (1,1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, thm:Factor_K, thm:Factor_ar1}
+  $Kd - \ell = \tfrac12\mathbf 1$ and $\sum_i d_i = 1$
+  (Corollary~\ref{cor:Blup_eq_of_normal}).
+\end{proof}
+
+\begin{remark}[Finding 25]\label{rem:factor_neg}
+  \uses{thm:Factor_neg}
+  Positive autocorrelation and a balanced panel do not keep the weights positive: card $1$'s
+  change from month $0$ to $1$ tracks the factor, which persists into month $2$.
+\end{remark}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

@@ -84,6 +84,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
+  switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
+  is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing
+  the factor from other cards (`Factor.blup_neg_of_ar1`).
 - Season (2026-11-20, `Season.lean`, Finding 24): when an estimated season drops out of the
   12-month predictor (interchangeable months) and why it usually does not (seasonal volume);
   a known index is a change of units plus weights by expected claims.

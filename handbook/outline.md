@@ -16,6 +16,13 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
+  (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
+  observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch
+  out: the best weights can be negative even with positive autocorrelation"
+  (`Credibility.Factor.K_posDef`, `Credibility.Factor.ell_apply_of_future`,
+  `Credibility.Factor.blup_neg_of_ar1`). Entry together with the season once Step 4
+  (estimating `Γ`, `λ`) gives a usable fit.
 - Season (2026-11-20, `Season.lean`, Finding 24): "whole years do not make the season drop
   out: with seasonal volume the one-mean predictor leans on busy months and is biased by
   `Σₘ (Sₘ - cₘ)βₘ`; fit the season or divide by a known index and weight by expected claims"
