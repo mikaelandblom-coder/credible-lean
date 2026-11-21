@@ -135,3 +135,42 @@ test('fit: profile by default, moment on request, oracle φ when given; one year
   const f1 = M.fit(M.draw(M.makeWorld({ Y: 1 }), M.rng(12)));
   assert.ok(f1.singular && f1.warnings.some((x) => x.code === 'oneYear'));
 });
+
+test('the drawn cells have the table covariance, and the index follows the same factor path', () => {
+  const w = M.makeWorld({ J: 2, Y: 2, indexYears: 1, indexNoise: 0.5 }), V = M.covTable(w), r = M.rng(13), N = 4000, T = 24;
+  // cells (cohort 0, month 3) with (cohort 1, month 4), (0, 5) with itself; index month 12 + 4 with cell (1, 4)
+  const pairs = [[0 * T + 3, 1 * T + 4], [5, 5]], sx = pairs.map(() => [0, 0, 0]);
+  const lam = w.truth.load[1], target = lam * w.truth.gamma; // cov(I at data month 4, X(1, 4)) = λ₁γ
+  let a = 0, b = 0, ab = 0;
+  for (let n = 0; n < N; n++) {
+    const d = M.draw(w, r), x = d.X.flat();
+    pairs.forEach(([p, q], k) => { sx[k][0] += x[p]; sx[k][1] += x[q]; sx[k][2] += x[p] * x[q]; });
+    const i = d.index[12 + 4], c = d.X[1][4]; a += i; b += c; ab += i * c;
+  }
+  pairs.forEach(([p, q], k) => {
+    const cov = sx[k][2] / N - (sx[k][0] / N) * (sx[k][1] / N);
+    assert.ok(Math.abs(cov - V[p][q]) < 0.1 * V[p][q] + 0.002, `cell cov ${cov} vs ${V[p][q]}`);
+  });
+  const ci = ab / N - (a / N) * (b / N);
+  assert.ok(Math.abs(ci - target) < 0.25 * target + 0.003, `index cov ${ci} vs ${target}`);
+});
+
+test('φ̂ from a long index recovers φ; the fit uses it on request and falls back without one', () => {
+  const w = M.makeWorld({ indexYears: 30, indexNoise: 0.5 }), r = M.rng(14), est = [];
+  for (let n = 0; n < 80; n++) est.push(M.phiIndex(M.draw(w, r)).phi);
+  est.sort((x, y) => x - y);
+  assert.ok(Math.abs(est[40] - w.truth.phi) < 0.05, `median ${est[40]}`);
+  const d = M.draw(w, r), f = M.fit(d, { phiMethod: 'index' });
+  assert.equal(f.phiMethod, 'index'); assert.equal(f.phi, M.phiIndex(d).phi);
+  const g = M.fit(M.draw(M.makeWorld({}), r), { phiMethod: 'index' });
+  assert.equal(g.phiMethod, 'profile'); assert.ok(g.warnings.some((x) => x.code === 'noIndex'));
+});
+
+test('toCSV appends the index with years before the data numbered 0, −1, …', () => {
+  const d = M.draw(M.makeWorld({ J: 2, Y: 2, indexYears: 3 }), M.rng(15)), lines = M.toCSV(d).trim().split('\n');
+  assert.equal(lines.length, 1 + 2 * 24 + 12 * 5);
+  const first = lines[1 + 48].split(','), last = lines[lines.length - 1].split(',');
+  assert.deepEqual(first.slice(0, 4), ['index', '-2', '1', '']);
+  assert.deepEqual(last.slice(0, 3), ['index', '2', '12']);
+  assert.ok(Math.abs(+last[4] - d.index[d.index.length - 1]) < 1e-9);
+});

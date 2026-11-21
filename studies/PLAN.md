@@ -330,8 +330,23 @@ One chat per step; none needs Lean except step 5.
   explode. **Information limit:** REML on the factor path itself, observed without noise, with
   12 month means: RMSE 0.26 (`Y = 2`), 0.17 (`Y = 3`), 0.12 (`Y = 5`) at `φ = 0.6`. So the
   noise is mostly the data (one common series, about 12 year-on-year differences), not the
-  estimator; more cohorts do not help. Next: `φ` from a longer external index, or shrink `φ̂`
-  away from the edges; a constrained (PSD) fit if the tables' sign errors matter.
+  estimator; more cohorts do not help.
+  *External index (2026-11-21):* world switches "index years before the data" (0–20) and
+  "index noise" (× γ); the draw now builds the cells from an explicit factor path (same table,
+  tested by simulation), and the index `I_t = season + f_t + noise` follows the same path.
+  `phiIndex`: Gaussian quasi-likelihood of AR(1) + noise by Kalman filter (month means removed,
+  γ concentrated out), consistent for any distribution (an estimating equation, not a model
+  assumption); not proved. The lag-ratio fit of the index autocovariances was worse (RMSE 0.25
+  against 0.19 at 10 years). **Seen** (150 draws, `J = 4`, `Y = 2`, `φ = 0.6`): index φ̂ RMSE 0.23 /
+  0.19 / 0.15 for 5 / 10 / 20 index years (0.31 with index noise ×4); median relative error of
+  γλλᵀ given φ̂: profile 4–7, index 1.3–1.5, oracle 1.1. So the index nearly removes the price of
+  φ, and what is left is the two-year data itself (the oracle's error is over 100%). CSV download
+  appends the index as rows `cohort = index` (years ≤ 0 before the data).
+  *Shrinking φ̂ away from 0 and 1: not built.* No hyperparameter-free rule found: Andrews (1993)
+  median-unbiased and Sørbye et al. bias correction assume normal errors (distribution layer) and
+  simulate inside each fit (literature §10h). Next, if wanted: a joint fit of φ from data and
+  index (profile + index quasi-likelihood, weighted by their information), or a constrained (PSD)
+  MINQUE if the tables' sign errors matter.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort

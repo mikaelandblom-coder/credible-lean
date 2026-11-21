@@ -671,6 +671,19 @@ Write `Σ_h(i, j)` for the covariance of cards `i, j` at months `t, t + h`.
   (block `Γ`) spends one regime's months on its own variance. This is the student's
   simulation question; the app world can answer it.
 
+**Estimating φ in short series (app, 2026-11-21).** Web search (abstracts); nothing read in full.
+- Andrews (1993), *Exactly median-unbiased estimation of first order autoregressive/unit root
+  models*, Econometrica 61(1), 139–165: median-unbiased AR(1) by inverting the median of the LS
+  estimator, by simulation, under i.i.d. normal errors. Sørbye, Nicolau & Rue (2022), Stat.
+  Inference Stoch. Process. (arXiv 2010.05870): model-based bias correction for AR(1)/AR(2)
+  with 10–50 points. Krone, Albers & Timmerman (2017, PMC5227053): short-series AR(1) estimators
+  compared; exact ML usually best. Not used yet: both corrections need a distribution (optional
+  layer) and simulation in every fit.
+- Used: Gaussian quasi-likelihood (Kalman filter) for an AR(1) observed with noise, as an
+  estimating equation (consistent for second-moment parameters under any distribution): the
+  app's φ̂ from an external index (`phiIndex`), better than lag-ratio moments when the index is
+  noisy (the noise dilutes the low-lag autocorrelations).
+
 **Public travel demand signals (Step 3b)**, adding to §10e: Tillväxtverket/SCB accommodation
 statistics (`NV1701`, PxWeb), monthly guest nights since 1978 by type and guest residence,
 preliminary figures revised until the annual release, "read with caution" from March 2020.

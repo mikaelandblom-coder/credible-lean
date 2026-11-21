@@ -125,6 +125,8 @@
     volume: 'seasonal', // 'seasonal' | 'yearOnly' | 'flat'
     w0: 1000,
     skew: 4,
+    indexYears: 0,   // years of an external index of the factor before the data (0 = no index)
+    indexNoise: 1,   // the index's own noise variance, as a multiple of γ
   };
 
   function makeWorld(params) {
@@ -141,7 +143,10 @@
     }));
     const season = Array.from({ length: J }, (_, j) => Array.from({ length: 12 }, (_, m) => 1 + 0.2 * Math.cos(2 * Math.PI * (m - j) / 12)));
     const A = load.map((li) => load.map((lj) => p.gamma * li * lj));
-    return { J, Y, w, truth: { phi: p.phi, gamma: p.gamma, load, A, C, s2, tau2: p.tau2, season }, skew: p.skew };
+    const index = p.indexYears > 0
+      ? { years: p.indexYears, noise: p.indexNoise * p.gamma, season: Array.from({ length: 12 }, (_, m) => 1 + 0.3 * Math.cos(2 * Math.PI * (m - 6) / 12)) }
+      : null;
+    return { J, Y, w, truth: { phi: p.phi, gamma: p.gamma, load, A, C, s2, tau2: p.tau2, season }, index, skew: p.skew };
   }
 
   /** The covariance table over the cells (Lean `Factor.shapeTable` with Γ₀ = `Factor.ar1Cal`). */
@@ -158,21 +163,40 @@
   }
 
   /** One data set: season mean plus noise with the table's covariance (skewed innovations). */
+  /**
+   * One data set: season mean plus noise with the table's covariance, built from its parts
+   * (skewed innovations: the model fixes only two moments): the factor path f with
+   * cov(f_t, f_s) = γφ^|t−s| (stationary AR(1)), λᵢf_t, the month's shock with covariance C,
+   * process noise s²ᵢ/wᵢₜ and the cohort level τ². With an index (world.index), also
+   * I_t = season + f_t + noise over indexYears + Y years ending with the data, the same path f:
+   * an external series that follows the factor (e.g. travel demand), longer than the data.
+   */
   const cholCache = new WeakMap();
   function draw(world, r) {
-    const { J, Y, w } = world, T = 12 * Y;
-    let L = cholCache.get(world);
-    if (!L) { L = cholesky(covTable(world)); if (L) cholCache.set(world, L); }
-    if (!L) throw new Error('table not positive definite');
-    const e = L.map(() => r.skewed(world.skew)), X = Array.from({ length: J }, () => new Array(T));
-    for (let i = 0; i < J; i++) for (let t = 0; t < T; t++) {
-      const p = i * T + t;
-      let x = world.truth.season[i][t % 12];
-      for (let k = 0; k <= p; k++) x += L[p][k] * e[k];
-      X[i][t] = x;
+    const { J, Y, w, truth, index } = world, T = 12 * Y, k = world.skew;
+    let LC = cholCache.get(world);
+    if (!LC) { LC = cholesky(truth.C); if (LC) cholCache.set(world, LC); }
+    if (!LC) throw new Error('C not positive definite');
+    const pre = index ? 12 * index.years : 0, n = pre + T, g = Math.sqrt(truth.gamma), phi = truth.phi;
+    const f = new Array(n);
+    f[0] = g * r.skewed(k);
+    for (let t = 1; t < n; t++) f[t] = phi * f[t - 1] + g * Math.sqrt(1 - phi * phi) * r.skewed(k);
+    const level = truth.season.map(() => Math.sqrt(truth.tau2) * r.skewed(k));
+    const X = Array.from({ length: J }, () => new Array(T));
+    for (let t = 0; t < T; t++) {
+      const e = LC.map(() => r.skewed(k));
+      for (let i = 0; i < J; i++) {
+        let shock = 0;
+        for (let m = 0; m <= i; m++) shock += LC[i][m] * e[m];
+        X[i][t] = truth.season[i][t % 12] + truth.load[i] * f[pre + t] + shock
+          + Math.sqrt(truth.s2[i] / w[i][t]) * r.skewed(k) + level[i];
+      }
     }
-    return { J, Y, w: w.map((row) => row.slice()), X };
+    const data = { J, Y, w: w.map((row) => row.slice()), X };
+    if (index) data.index = f.map((x, t) => index.season[t % 12] + x + Math.sqrt(index.noise) * r.skewed(k));
+    return data;
   }
+
 
   // ---------------------------------------------------------------- fit
 
@@ -367,11 +391,45 @@
     return { phi: best.phi, share: best.share, curve };
   }
 
-  /** The data as CSV: one row per cohort and month, the columns the fit sees. */
+  /**
+   * φ̂ from the external index alone. Remove its calendar-month means, then fit I_t = f_t + e_t
+   * (f AR(1) with variance γ, e white noise with variance qγ) by the Gaussian quasi-likelihood
+   * (Kalman filter, γ concentrated out, grid over φ and q). Gaussian only as an estimating
+   * equation: it uses second moments and stays consistent for φ whatever the distribution, so
+   * the model keeps its two-moment assumption. Not proved. Tried first: the least-squares fit
+   * of the autocovariances S(h) ≈ γφʰ (the idea of `Factor.ar1_identified`); with index noise
+   * the lag ratio is noisy (RMSE 0.25 against 0.19 here at 10 years, φ = 0.6).
+   */
+  function phiIndex(data) {
+    const x = data.index, n = x.length, mean = new Array(12).fill(0), cnt = new Array(12).fill(0);
+    x.forEach((v, t) => { mean[t % 12] += v; cnt[t % 12]++; });
+    const d = x.map((v, t) => v - mean[t % 12] / cnt[t % 12]);
+    const ll = (phi, q) => {
+      let a = 0, P = 1, ss = 0, ldet = 0;
+      for (let t = 0; t < n; t++) {
+        const F = P + q, v = d[t] - a, K = P / F;
+        ss += v * v / F; ldet += Math.log(F);
+        a = phi * (a + K * v); P = phi * phi * P * (1 - K) + 1 - phi * phi;
+      }
+      return -0.5 * (n * Math.log(ss / n) + ldet);
+    };
+    let best = { phi: NaN, q: NaN, ll: -Infinity };
+    for (let k = 1; k < 100; k++) for (let j = -12; j <= 12; j++) {
+      const phi = k / 100, q = Math.pow(2, j / 2), v = ll(phi, q);
+      if (v > best.ll) best = { phi, q, ll: v };
+    }
+    return best;
+  }
+
+  /** The data as CSV: one row per cohort and month (then the index, if any), the columns the fit sees. */
   function toCSV(data) {
     const { J, Y, w, X } = data, lines = ['cohort,year,month,volume,ratio'];
     for (let j = 0; j < J; j++) for (let t = 0; t < 12 * Y; t++)
       lines.push(`${j + 1},${Math.floor(t / 12) + 1},${(t % 12) + 1},${+w[j][t].toPrecision(10)},${+X[j][t].toPrecision(10)}`);
+    if (data.index) { // the external index: rows with cohort "index", no volume; years ≤ 0 precede the data
+      const pre = data.index.length - 12 * Y;
+      data.index.forEach((x, t) => lines.push(`index,${Math.floor((t - pre) / 12) + 1},${(t % 12) + 1},,${+x.toPrecision(10)}`));
+    }
     return lines.join('\n') + '\n';
   }
 
@@ -390,13 +448,18 @@
 
   /**
    * The fit: φ̂ from the data, then MINQUE given φ̂. Gets the data table and nothing else.
-   * opts.phiMethod: 'profile' (default) or 'moment' (year-on-year cross-products); opts.phi fixes φ
-   * (the oracle, for comparison only).
+   * opts.phiMethod: 'profile' (default), 'moment' (year-on-year cross-products) or 'index' (the
+   * external index, when the data carry one); opts.phi fixes φ (the oracle, for comparison only).
    */
   function fit(data, opts) {
-    const o = opts || {}, method = o.phi !== undefined ? 'given' : o.phiMethod || 'profile';
-    const ph = method === 'given' ? { phi: o.phi } : method === 'moment' ? phiHat(data) : phiProfile(data);
+    const o = opts || {};
+    let method = o.phi !== undefined ? 'given' : o.phiMethod || 'profile';
+    const noIndex = method === 'index' && !data.index;
+    if (noIndex) method = 'profile';
+    const ph = method === 'given' ? { phi: o.phi } : method === 'moment' ? phiHat(data)
+      : method === 'index' ? phiIndex(data) : phiProfile(data);
     const warnings = diagnose(data, ph.phi);
+    if (noIndex) warnings.unshift({ code: 'noIndex', text: 'No index in the data: φ̂ by profiling instead.' });
     const mq = Number.isFinite(ph.phi) ? minque(data, ph.phi) : { singular: true, cond: NaN };
     const J = data.J, A = J ? Array.from({ length: J }, () => new Array(J).fill(NaN)) : [];
     const C = A.map((row) => row.slice()), s2 = new Array(J).fill(NaN);
@@ -408,6 +471,8 @@
     });
     const phiStep = method === 'given'
       ? { name: 'φ given (oracle: the true value, not a fit)', value: ph.phi, badge: 'not proved yet' }
+      : method === 'index'
+        ? { name: `φ̂ from the external index (${data.index.length} months)`, value: ph.phi, badge: 'not proved yet' }
       : method === 'moment'
         ? { name: 'φ̂ from year-on-year cross-products', value: ph.phi, badge: 'not proved yet', lean: 'Factor.yoy_unbiased_factor' }
         : { name: 'φ̂ by profiling the MINQUE fit (least squares over φ)', value: ph.phi, badge: 'not proved yet' };
@@ -418,5 +483,5 @@
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, toCSV, diagnose, fit };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit };
 });
