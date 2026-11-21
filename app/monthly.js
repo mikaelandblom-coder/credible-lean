@@ -590,6 +590,15 @@
     return { weights, mse, predict };
   }
 
+  /**
+   * Cohorts whose fitted ŝⱼ² is 0 (clipped by `constrainPSD`). With every ŝⱼ² > 0 the fitted
+   * table K̂ is positive definite for any valid Â, Ĉ (`Factor.tableK_posDef`); with some ŝⱼ² = 0
+   * that guarantee is gone (Finding 30), and K̂ is singular for sure when also Âⱼⱼ = Ĉⱼⱼ = 0
+   * (`Factor.tableK_not_posDef`: a cell of variance zero). Data side: uses the fit only.
+   */
+  function sZeroCohorts(f) { return f.s2.map((x, j) => (x === 0 ? j : -1)).filter((j) => j >= 0); }
+  function zeroVarianceCohorts(f) { return sZeroCohorts(f).filter((j) => f.A[j][j] === 0 && f.C[j][j] === 0); }
+
   /** The naive premium: each cohort's mean over its last 12 months (the season is then whole). */
   const lastYear = (data) => data.X.map((row) => row.slice(-12).reduce((a, x) => a + x, 0) / 12);
 
@@ -652,5 +661,5 @@
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps, minq };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck, sZeroCohorts, zeroVarianceCohorts };
 });

@@ -277,3 +277,30 @@ test('H-norm check: the projection is never further from the truth (ConeProjecti
   }
   assert.ok(n > 250 && moved > 100, `checked ${n} draws, ${moved} moved by the projection; worst relative slack ${worst}`);
 });
+
+test('Finding 30: valid tables with every ŝ² > 0 give a premium (tableK_posDef); a cohort with Â, Ĉ, ŝ² all 0 does not (tableK_not_posDef)', () => {
+  // tableK_not_posDef: cohort 0 with zero variances makes K̂ singular, so no predictor.
+  const w = M.makeWorld({ J: 3 }), t = w.truth;
+  const zero = (X) => X.map((row, i) => row.map((x, j) => (i === 0 || j === 0 ? 0 : x)));
+  const tab = { phi: t.phi, A: zero(t.A), C: zero(t.C), s2: t.s2.map((x, j) => (j === 0 ? 0 : x)) };
+  assert.equal(M.predictor(3, 2, w.w, tab), null, 'singular K̂');
+  assert.deepEqual(M.zeroVarianceCohorts({ s2: tab.s2, A: tab.A, C: tab.C }), [0]);
+  // tableK_posDef: any PSD Â (here full rank, not γλλᵀ), Ĉ ⪰ 0 and every ŝ² > 0.
+  const Afull = [[0.03, 0.01, 0], [0.01, 0.02, 0.005], [0, 0.005, 0.01]];
+  assert.ok(M.predictor(3, 2, w.w, { phi: 0.6, A: Afull, C: t.C, s2: t.s2 }), 'positive definite');
+  // Over draws: a missing premium always comes with some ŝⱼ² = 0 (the contrapositive of tableK_posDef).
+  const r = M.rng(20); let n = 0, sz = 0;
+  for (const par of [{}, { s2: 4 }, { J: 5 }]) {
+    const ww = M.makeWorld(par);
+    for (let k = 0; k < 25; k++) {
+      const f = M.fit(M.draw(ww, r), { psd: true });
+      if (f.singular) continue;
+      const z = M.sZeroCohorts(f).length > 0, P = M.predictor(ww.J, ww.Y, ww.w, { phi: f.phi, A: f.A, C: f.C, s2: f.s2 });
+      if (!P) assert.ok(z, 'no premium only with some ŝⱼ² = 0');
+      if (M.zeroVarianceCohorts(f).length) assert.equal(P, null, 'a zero-variance cohort means no premium');
+      f.s2.forEach((x) => assert.ok(x >= 0));
+      if (z) sz++; n++;
+    }
+  }
+  assert.ok(n > 60 && sz > 0, `${sz} of ${n} fits with some ŝⱼ² = 0`);
+});

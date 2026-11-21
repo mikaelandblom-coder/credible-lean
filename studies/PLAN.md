@@ -381,8 +381,14 @@ One chat per step; none needs Lean except step 5.
   tables"). *Proved* (2026-11-21): valid tables give `K̂ ≻ 0` when every `ŝⱼ² > 0`
   (`Factor.tableK_posDef`, `tableK_ar1_posDef`; any `Â ⪰ 0`, not only rank one, no `τ²`), but
   not with `ŝ² ≥ 0` alone (Finding 30, `tableK_not_posDef`); the valid set is closed and convex
-  (`ConeProjection.isClosed_setOf_posSemidef`). App: nothing to change (Cholesky failure already
-  gives no premium); could count draws with some `ŝⱼ² = 0`. Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
+  (`ConeProjection.isClosed_setOf_posSemidef`). App (2026-11-21): `sZeroCohorts`,
+  `zeroVarianceCohorts`; the many-draws premium table shows, per valid row, "no premium in x%"
+  next to "some ŝⱼ² = 0 in y%", and the one-draw premium names the clipped cohorts. Test: no
+  premium only with some ŝⱼ² = 0, a zero-variance cohort means no premium, a full-rank Â with
+  ŝ² > 0 gives one. **Seen** (150 draws per world, valid tables): some ŝⱼ² = 0 in 81–100% of
+  fits (defaults 89%, `J = 6` 100%, `s² = 4` 98%), yet no premium failed and no cohort had
+  Â = Ĉ = ŝ² = 0: Âⱼⱼ or Ĉⱼⱼ always stayed positive. So the guarantee is often lost but has not
+  bitten; s² is seen only through volume variation (Finding 23), so the projection clips it. Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
   the rolling-origin comparison on data (card-data Step 7b).
   *H-norm check (2026-11-21):* `fit` returns θ̂, the projection p and H (`minq`); the world-side
   `hNormCheck` computes ‖θ̂ − θ‖²_H, ‖p − θ‖²_H, ‖θ̂ − p‖²_H and the slack of

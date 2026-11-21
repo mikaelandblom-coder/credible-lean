@@ -772,7 +772,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       `<table><thead><tr><th>Cohort</th><th>Next 12 months</th><th>Fit</th><th>Floor</th><th>Last year</th><th>Floor typ. err.</th></tr></thead><tbody>` +
       drawn.target.map((y, j) => `<tr><td>${j + 1}</td><td>${y.toFixed(3)}</td><td>${pr ? pr[j].toFixed(3) : '–'}</td><td>${fl[j].toFixed(3)}</td><td>${last[j].toFixed(3)}</td><td>${pct(Math.sqrt(mFloor.mse[j]), 1)}</td></tr>`).join('') +
       `<tr><td>Error</td><td></td><td>${err(pr)}</td><td>${err(fl)}</td><td>${err(last)}</td><td></td></tr></tbody></table>` +
-      `<p class="sub" style="margin:6px 0 0">${P ? '' : '<b>No fitted premium:</b> the fitted table K̂ is not positive definite (unbiased tables usually are not; choose valid tables). '}Floor: the same predictor with the true tables, a benchmark, never a fit; its typical error √(dᵀKd − 2dᵀℓ + v) is exact (${lean('Factor.predMse_blup')}). Last year: each cohort's mean over its last 12 months, also unbiased, so never better than the floor in expectation. Error row: this draw, root of the volume-weighted mean square, in % of the rate.</p>`;
+      `<p class="sub" style="margin:6px 0 0">${P ? '' : '<b>No fitted premium:</b> the fitted table K̂ is not positive definite (unbiased tables usually are not; choose valid tables). '}${ms.psd && !f.singular && MO.sZeroCohorts(f).length ? `ŝⱼ² clipped to 0 for cohort ${MO.sZeroCohorts(f).map((j) => j + 1).join(', ')}: K̂ ≻ 0 is then not guaranteed (Finding 30)${P ? ', but here it is positive definite' : ''}. ` : ''}Floor: the same predictor with the true tables, a benchmark, never a fit; its typical error √(dᵀKd − 2dᵀℓ + v) is exact (${lean('Factor.predMse_blup')}). Last year: each cohort's mean over its last 12 months, also unbiased, so never better than the floor in expectation. Error row: this draw, root of the volume-weighted mean square, in % of the rate.</p>`;
   }
 
   // many draws: φ̂ by both methods, and the fitted tables with φ̂ against the oracle φ
@@ -780,7 +780,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   let mJob = 0;
   function mRenderMany() {
     const my = ++mJob, w = mWorld, r = MO.rng((ms.seed * 7919 + 17) >>> 0);
-    const acc = { prof: [], mom: [], idx: [], err: {}, prem: {}, notPD: {}, hc: {} };
+    const acc = { prof: [], mom: [], idx: [], err: {}, prem: {}, notPD: {}, hc: {}, sZero: {} };
     const wt = futW(w), W = wt.reduce((a, x) => a + x, 0);
     const score = (key, pr, tg) => { (acc.prem[key] = acc.prem[key] || []).push(pr ? pr.reduce((a, x, j) => a + wt[j] * (x - tg[j]) ** 2, 0) / W : NaN); };
     const push = (key, f) => { if (!f.singular) (acc.err[key] = acc.err[key] || []).push(relErr(f)); };
@@ -815,6 +815,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
             push(key + suf, f);
             if (psd) { const c = MO.hNormCheck(w, f); if (c) (acc.hc[key] = acc.hc[key] || []).push(c); }
             if (!P) acc.notPD[key + suf] = (acc.notPD[key + suf] || 0) + 1;
+            if (psd && !f.singular && MO.sZeroCohorts(f).length) acc.sZero[key] = (acc.sZero[key] || 0) + 1;
             score(key + suf, P ? P.predict(d.X) : null, drawn.target);
           }
         }
@@ -888,14 +889,20 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       return `${md >= 0 ? '+' : ''}${pct(md / mf, 1)} ± ${pct(2 * se / mf, 1)}`;
     };
     const row = (lab, key, note) => { const t = typ(key); return `<tr><td>${lab}</td><td>${Number.isFinite(t.r) ? pct(t.r, 2) : '–'}</td><td>${key === 'floor' ? '—' : excess(key)}</td><td>${note || ''}</td></tr>`; };
-    const na = (key) => (acc.notPD[key] ? `K̂ not PD in ${pct(acc.notPD[key] / MN, 0)}` : '');
+    const na = (key) => {
+      const parts = [];
+      if (acc.notPD[key]) parts.push(`no premium (K̂ not PD) in ${pct(acc.notPD[key] / MN, 0)}`);
+      else if (key.endsWith('P')) parts.push('no premium in 0%');
+      if (key.endsWith('P')) parts.push(`some ŝⱼ² = 0 in ${pct((acc.sZero[key.slice(0, -1)] || 0) / MN, 0)}`);
+      return parts.join('; ');
+    };
     $('m-prem-many').innerHTML = `<p class="sub" style="margin:14px 0 4px"><b>Premium over many draws</b>: typical error of the predicted next-12-month mean against the world's outcome (root of the volume-weighted mean square, % of the rate), ${MN} draws, and its mean squared error above the floor's on the same draws (paired, ±2 SE). A row with K̂ not positive definite scores only its other draws.</p>` +
       `<table><thead><tr><th>Predictor</th><th>Typ. error</th><th>MSE above floor</th><th></th></tr></thead><tbody>` +
       row('Floor (true tables)', 'floor', `theory ${pct(theory, 2)} (±${pct(2 * typ('floor').e, 2)})`) +
       [['Profile φ̂', 'prof']].concat(acc.idx.length ? [['Index φ̂', 'idx']] : []).concat([['True φ, fitted tables', 'oracle']]).flatMap(([lab, key]) =>
         [row(lab + ', valid', key + 'P', na(key + 'P')), row(lab + ', unbiased', key + 'U', na(key + 'U'))]).join('') +
       row('Last-year mean', 'last') +
-      `</tbody></table><p class="sub" style="margin:6px 0 0">Most of the error is next year's own noise, which no premium removes; compare the rows with the floor. Unbiased tables rarely give a positive definite K̂, so the premium needs valid tables. With them, the price of estimation is almost all in φ: given the true φ (or φ̂ from a 10-year index) the fitted tables lose only 1–2% MSE to the floor, while the profile φ̂ from two years loses about as much as the last-year mean (+20–50%). Switch the index on to see it.</p>`;
+      `</tbody></table><p class="sub" style="margin:6px 0 0">Most of the error is next year's own noise, which no premium removes; compare the rows with the floor. Unbiased tables rarely give a positive definite K̂, so the premium needs valid tables. Valid tables give K̂ ≻ 0 when every ŝⱼ² > 0 (<span class="badge proved">proved</span> ${lean('Factor.tableK_posDef')}); the projection often clips some ŝⱼ² to 0 (s² is seen only through volume variation), and then K̂ ≻ 0 is no longer guaranteed, singular for sure only if that cohort's Âⱼⱼ and Ĉⱼⱼ are 0 too (Finding 30, ${lean('Factor.tableK_not_posDef')}). The two counts show how often that bites. With them, the price of estimation is almost all in φ: given the true φ (or φ̂ from a 10-year index) the fitted tables lose only 1–2% MSE to the floor, while the profile φ̂ from two years loses about as much as the last-year mean (+20–50%). Switch the index on to see it.</p>`;
   }
 
   let mPending = null;
