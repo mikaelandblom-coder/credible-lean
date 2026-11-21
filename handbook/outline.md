@@ -16,12 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Valid tables by projection (2026-11-21, `ConeProjection.lean`): "project the unbiased fit onto
-  the valid tables in the fit's own metric `H`: never further from the truth, in every draw, so
-  never a worse H-weighted MSE; the price is bias" (`Credibility.ConeProjection.hsq_proj_le`,
-  `Credibility.ConeProjection.integral_hsq_proj_le`). Goes with the factor estimation entry: move
-  this line into that entry when it is written. The app shows it as a check per draw (2026-11-21:
-  never violated; median ‖p − θ‖²_H / ‖θ̂ − θ‖²_H ≈ 0.7).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"
@@ -160,6 +154,12 @@ voice, then trim towards 8 pages.
     no cross-component covariance (separate predictors), balance; "why": true MSE for any
     distribution; "watch out": the blend need not beat separate blends (Finding 22) —
     `res:vector`.
+18. Monthly data with a common factor, constrained tables (drafted 2026-11-21, placed after
+    shock and process noise): project the unbiased fit onto valid tables in its own metric `H`
+    (exists, unique, closer to the truth in every draw; the app's check: never violated, median
+    `‖p − θ‖²_H / ‖θ̂ − θ‖²_H ≈ 0.7`), valid tables give `K̂ ≻ 0` when every
+    `ŝⱼ² > 0`; "use it": constrain the tables, take `φ` from a long index; "watch out":
+    `ŝ² ≥ 0` alone is not enough (Finding 30) — `res:valid_tables`.
 
 (Damping is in, as 5a; 1-D k-means intervals are in via item 16.)
 

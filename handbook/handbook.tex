@@ -755,6 +755,44 @@ weightings read the two parts off with different mixes.
   \lean{Credibility.Shock.not_unbiased_s2_of_const}
 \end{caveat}
 
+\subsection*{Monthly data with a common factor: valid tables}
+
+Monthly cells $X_{jt}$ share a factor with covariance $A_{ij}\Phi_{ts}$ on top of the
+shock and process noise; for AR(1), $\Phi_{ts} = \phi^{|t-s|}$. Given $\phi$, the
+unbiased fit (MINQUE) of $A$, $C$, $s^2$ is least squares with Hessian $H$.
+
+\begin{result}[Constrained tables]\label{res:valid_tables}
+  Project the unbiased fit $\hat\theta$ onto the valid tables
+  $\{A \succeq 0,\ C \succeq 0,\ s^2 \ge 0\}$ in the norm $\|v\|_H^2 = v^\top H v$. Then:
+  \begin{itemize}
+    \item the projection $p$ exists and is unique ($H \succ 0$);
+    \item in every draw, $\|p - \theta\|_H^2 + \|\hat\theta - p\|_H^2
+      \le \|\hat\theta - \theta\|_H^2$, so its $H$-weighted MSE is at most the
+      unbiased fit's;
+    \item if every $\hat s_j^2 > 0$, the fitted
+      $\hat K = \hat A_{ij}\Phi_{ts} + \delta_{ts}\hat C_{ij} + \delta\,\hat s_i^2/w_{it}$
+      is positive definite (no $\tau^2$ needed, $\hat A$ need not be rank one).
+  \end{itemize}
+  \lean{Credibility.ConeProjection.exists_hsq_proj}
+  \lean{Credibility.ConeProjection.hsq_proj_unique}
+  \lean{Credibility.ConeProjection.hsq_proj_add_le}
+  \lean{Credibility.ConeProjection.integral_hsq_proj_le}
+  \lean{Credibility.Factor.tableK_ar1_posDef}
+\end{result}
+\use Constrain the tables; take $\phi$ from a long index. The unbiased tables are
+almost never a valid $\hat K$, so they give no premium at all; the constrained ones
+do whenever every $\hat s_j^2 > 0$, and estimating $A$, $C$, $s^2$ then costs only 1--2\% of MSE. The
+real price of the plug-in is $\phi$: estimated from the data alone it adds about
+20\%, taken from an external index of ten years about 2\% (simulation in the app).
+\why The valid tables form a convex set that contains the truth, so moving the
+estimate onto it can only bring it closer, in the metric of the fit. The price is
+bias: the projection is not unbiased.
+\begin{caveat}
+  $\hat s^2 \ge 0$ is not enough: a cohort with $\hat A_{jj} = \hat C_{jj} = \hat s_j^2 = 0$
+  has cells of variance zero, and $\hat K$ is singular.
+  \lean{Credibility.Factor.tableK_not_posDef}
+\end{caveat}
+
 \subsection*{When to merge two cohorts}
 
 Two cohorts on their own, with error variances $v_1, v_2$, error covariance

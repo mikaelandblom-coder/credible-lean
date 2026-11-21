@@ -1365,7 +1365,7 @@ shared part of the level is common to every cohort, to the portfolio
 estimate and to the target alike, and cancels in every blend's error. The
 best factor is the thesis one with $\tau^2$ replaced by the non-shared part
 $(1-\phi)\tau^2$, and the thesis estimators estimate exactly that part
-(\hb{res:phi}{29}). So the thesis procedure is right as it stands. The
+(\hb{res:phi}{30}). So the thesis procedure is right as it stands. The
 other side of the coin: like the overall mean $\mu$, a level shared by all
 is invisible to the data, and $\phi$ cannot be estimated from one
 portfolio. In Lean this is a fact about $K$: adding the same amount to
@@ -1378,7 +1378,7 @@ With several groups the
 shared part no longer cancels. The best factor has one more term: the
 shared part $\phi\tau^2$ is discounted by $1 - B_g$, where $B_g$ is the
 total weight the portfolio estimate puts on cohort $j$'s whole group
-(\hb{res:groups}{30}). The intuition: the portfolio estimate already
+(\hb{res:groups}{31}). The intuition: the portfolio estimate already
 contains the group's shared level to the extent $B_g$, so a cohort in a
 heavy group needs less of its own data to get it, and one in a small group
 more. With one group $B_g = 1$, and the term vanishes. The assumptions are
@@ -1391,7 +1391,7 @@ lengths too.
 
 If the noise is also uncorrelated across groups,
 $K$ is block diagonal by group, and the GLS weights split in two
-(\hb{res:twostage}{31}): GLS within each group, which is the thesis with the
+(\hb{res:twostage}{32}): GLS within each group, which is the thesis with the
 non-shared $(1-\phi)\tau^2$; then inverse-variance weights across the group
 estimates, each group's variance including the shared $\phi\tau^2$. The
 shared level flattens the group weights: no group can dominate the
@@ -1404,7 +1404,7 @@ The thesis $\hat\tau^2$ compares cohort
 means with the portfolio mean. With several groups it measures something
 between the non-shared part and the full $\tau^2$: $\tau^2$ minus
 $\phi\tau^2$ times the volume-weighted share of same-group pairs
-(\lean{Credibility.Model.tauHat_unbiasedG}; \finding{13}; \hb{res:est_groups}{32}). So with one group it is exactly
+(\lean{Credibility.Model.tauHat_unbiasedG}; \finding{13}; \hb{res:est_groups}{33}). So with one group it is exactly
 what the blend needs (above); with singleton groups it is $\tau^2$, also
 right; in between it fits neither the within-group nor the across-group
 part of $K$. Pairs separate them. The squared difference of two cohort
@@ -1443,8 +1443,8 @@ a crossed structure, not a nested one (Section~\ref{sec:open}).
     levels'', marked ``soon'').
 \end{itemize}
 
-\see \hbsec{sec:beyond}{6}, \hb{res:phi}{29}, \hb{res:groups}{30},
-\hb{res:twostage}{31}, \hb{res:est_groups}{32} ·
+\see \hbsec{sec:beyond}{6}, \hb{res:phi}{30}, \hb{res:groups}{31},
+\hb{res:twostage}{32}, \hb{res:est_groups}{33} ·
 \lean{Credibility.Model.Kφ_eq},
 \lean{Credibility.Model.Kφ_posDef},
 \lean{Credibility.Model.bestZ_φ_eq},
@@ -1499,7 +1499,7 @@ portfolio estimate too.
 
 Compare two rules for a pair: keep
 them separate, with their own credibility rates, or merge them into one
-level. Two numbers decide (\hb{res:merge}{28}): how far apart the true
+level. Two numbers decide (\hb{res:merge}{29}): how far apart the true
 levels typically are, $d$, the expected squared gap; and how precisely the
 data measure that gap, $V$, the variance of the difference of the two
 estimates. For a pair on its own, merge exactly when the reciprocal of $d$
@@ -1548,7 +1548,7 @@ with a true level and an unbiased, uncorrelated estimate, into at most $k$
 cohorts, and charge each unit its cohort's pooled estimate. Measured by the
 exposure-weighted mean squared error, the loss is \emph{exactly} the
 weighted $k$-means cost of the levels plus the number of cohorts
-(\hb{res:pool_intervals}{33}, \finding{14}): the noise part contributes one
+(\hb{res:pool_intervals}{34}, \finding{14}): the noise part contributes one
 unit per cohort whoever its members are. On a line the best $k$-means
 clusters are intervals, so the best cohorts are intervals of the sorted
 levels: a unit whose level lies between two members of a cohort belongs to
@@ -1562,7 +1562,7 @@ Predict each unit by
 its cohort's credibility blend towards a known overall level. If all units
 are equally noisy, a cohort's loss depends on it only through its size and
 the sum of its levels, and a swap argument shows the best cohorts are again
-intervals (\hb{res:blend_intervals}{34}).
+intervals (\hb{res:blend_intervals}{35}).
 
 \paragraph{But not in general.}
 
@@ -1594,8 +1594,8 @@ Pooling with an unweighted loss fails the same way.
   \item \emph{The app has no step for choosing cohorts yet.}
 \end{itemize}
 
-\see \hb{res:merge}{28}, \hb{res:pool_intervals}{33},
-\hb{res:blend_intervals}{34} ·
+\see \hb{res:merge}{29}, \hb{res:pool_intervals}{34},
+\hb{res:blend_intervals}{35} ·
 \lean{Credibility.Merging.merge_iff},
 \lean{Credibility.kmeans_contiguous},
 \lean{Credibility.pool_mse_eq_kmeansCost},
@@ -1619,7 +1619,7 @@ a cohort's frequency and severity do. The portfolio estimate is the
 matrix version of GLS, and the blend is $\hmu + Z_j(\hmu_j - \hmu)$ with a
 matrix $Z_j$ that lets the frequency gap inform the severity estimate. The
 best $Z_j$ is the same formula as the scalar one, with matrices for numbers
-(\hb{res:vector}{35}). It is best in the strongest sense: for every premium
+(\hb{res:vector}{36}). It is best in the strongest sense: for every premium
 that is a linear combination of the components, so for a pure premium built
 to first order from frequency and severity as well as for each component on
 its own. With independent cohorts it is the multidimensional
@@ -1665,7 +1665,7 @@ predictor, not to each other.
     balanced for the volumes.
 \end{itemize}
 
-\see \hb{res:vector}{35} ·
+\see \hb{res:vector}{36} ·
 \lean{Credibility.CoreVector.moments_bestZ},
 \lean{Credibility.VecBlendMoments.bestZ_optimal_dotProduct},
 \lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler},

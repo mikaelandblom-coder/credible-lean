@@ -511,5 +511,15 @@ Gaps, extra hypotheses and new results found while formalizing.
    costs nothing: the estimators stay unbiased whatever `τ²` (`Factor.henderson_season_unbiased`,
    `Model.UnbiasedMean.add_design`). Practice: with two years, check that each cohort's volume
    has a within-year pattern; otherwise report `Cⱼⱼ + sⱼ²h/2` for that cohort.
+30. **Valid fitted tables need `ŝ² > 0` for `K̂ ≻ 0`, and are not a factor model (new;
+   `studies/PLAN.md`, valid tables).** Expected: the app's constrained tables (`Â ⪰ 0`, `Ĉ ⪰ 0`,
+   `ŝ² ≥ 0`) give `K̂ ≻ 0` by `Factor.K_posDef`. Found: that theorem does not apply, for two
+   reasons. The projection of `γλλᵀ` onto the positive semidefinite cone need not be rank one,
+   and the premium leaves `τ²` out. The general table `Aᵢⱼ Φₜₛ + δₜₛCᵢⱼ + δ sᵢ²/wᵢₜ` is positive
+   definite for any `A ⪰ 0`, `Φ ⪰ 0`, `C ⪰ 0` and every `sⱼ² > 0`, without `τ²`
+   (`Factor.tableK_posDef`, AR(1): `tableK_ar1_posDef`); `Factor.K_posDef` is now its corollary.
+   But the projection only gives `ŝ² ≥ 0`: a cohort whose `Âⱼⱼ`, `Ĉⱼⱼ`, `ŝⱼ²` are all clipped to
+   `0` has cells of variance zero and `K̂` is singular (`Factor.tableK_not_posDef`). Practice:
+   check `ŝⱼ² > 0` after the projection (the app's Cholesky fails otherwise and gives no premium).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -4121,6 +4121,49 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   $K$ is this table on the observed cells.
 \end{definition}
 
+\begin{definition}[Fitted table]\label{def:Factor_tableK}
+  \lean{Credibility.Factor.tableK}
+  \leanok
+  For a factor table $A$ (any $J\times J$ matrix), a correlation $\Phi$ over months, $C$,
+  $s^2$, volumes $w$ and observed cells $p = (i,t)$, $q = (j,s)$:
+  $\hat K_{pq} = A_{ij}\Phi_{ts} + \delta_{ts}C_{ij} + \delta_{pq}s_i^2/w_{it}$. No level
+  $\tau^2$; $A = \lambda\lambda^\top$, $\Phi = \Gamma$ is the factor part of $K$.
+\end{definition}
+
+\begin{theorem}[Valid fitted tables give $\hat K \succ 0$]\label{thm:Factor_tableK}
+  \lean{Credibility.Factor.tableK_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  If $A \succeq 0$, $\Phi \succeq 0$, $C \succeq 0$, $s_j^2 > 0$ and $w > 0$, then
+  $\hat K \succ 0$ for any observed cells.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\hat K = \mathrm{diag}(s^2/w) + A^{c}\odot\Phi^{c} + C^{c}\odot I^{c}$, with $M^c$ the
+  matrix $M$ read at the cells' cohorts or months. Both Hadamard products are $\succeq 0$
+  (Schur product theorem), the diagonal is positive.
+\end{proof}
+
+\begin{lemma}[$\hat s^2 \ge 0$ is not enough]\label{lem:Factor_tableK_singular}
+  \lean{Credibility.Factor.tableK_not_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  If a cohort $j$ observed in some cell has $A_{jj} = C_{jj} = s_j^2 = 0$, then $\hat K$ is
+  not positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  That cell's diagonal entry is $0$.
+\end{proof}
+
+\begin{remark}[Finding 30]
+  Clipping the fit to valid tables gives $\hat s^2 \ge 0$, not $> 0$. Theorem~\ref{thm:Factor_tableK}
+  needs $\hat s_j^2 > 0$; if all three variances of a cohort are clipped to $0$, $\hat K$ is
+  singular (Lemma~\ref{lem:Factor_tableK_singular}). The projection of $\gamma\lambda\lambda^\top$
+  need not be rank one, so the fitted $\hat K$ is a $\hat K$ of Definition~\ref{def:Factor_tableK},
+  not of a factor model, and Theorem~\ref{thm:Factor_K} does not apply to it directly.
+\end{remark}
+
 \begin{theorem}[$K \succ 0$]\label{thm:Factor_K}
   \lean{Credibility.Factor.K_eq_parts, Credibility.Factor.factorPart_posSemidef,
         Credibility.Factor.shockPart_posSemidef, Credibility.Factor.levelPart_posSemidef,
@@ -4131,10 +4174,12 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:posSemidef_weightedSum}
-  $K = \mathrm{diag}(s^2/w) + B^\top\Gamma B + \bigl(\delta_{ts}C_{ij}\bigr) + \tau^2(\delta_{ij})$
-  with $B_{t,(j,s)} = \delta_{ts}\lambda_j$. The diagonal is positive; the shock part is a
-  weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}); the rest is PSD.
+  \uses{thm:Factor_tableK, lem:posSemidef_weightedSum}
+  $K = \hat K + \tau^2(\delta_{ij})$ with $\hat K$ of Definition~\ref{def:Factor_tableK} at
+  $A = \lambda\lambda^\top \succeq 0$, $\Phi = \Gamma$: positive definite by
+  Theorem~\ref{thm:Factor_tableK}, plus a PSD level part. (The parts lemmas split $K$ as
+  $\mathrm{diag}(s^2/w) + B^\top\Gamma B + (\delta_{ts}C_{ij}) + \tau^2(\delta_{ij})$, the shock
+  part a weighted sum, Lemma~\ref{lem:posSemidef_weightedSum}.)
 \end{proof}
 
 \begin{lemma}[Shock as a special case]\label{lem:Factor_shock}
@@ -4169,6 +4214,20 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   $\varphi^{|t-s|} = (LDL^\top)_{ts}$ with $L_{tk} = \varphi^{t-k}$ ($k \le t$) and
   $D = \mathrm{diag}(1, 1-\varphi^2, \dots)$: the factor in its innovations, started in its
   stationary law, so $\sum_{k \le t}\varphi^{2(t-k)}D_k = 1$.
+\end{proof}
+
+\begin{corollary}[The app's fitted table]\label{cor:Factor_tableK_ar1}
+  \lean{Credibility.Factor.tableK_ar1_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  With $\Phi_{ts} = \varphi^{|t-s|}$, $|\varphi| \le 1$, $A \succeq 0$, $C \succeq 0$ and every
+  $s_j^2 > 0$: $\hat K \succ 0$. This is the table the app builds from the projection of the
+  unbiased fit onto valid tables (Chapter~\ref{ch:coneproj}) when every $\hat s_j^2 > 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_tableK, thm:Factor_ar1}
+  Theorem~\ref{thm:Factor_tableK} with $\Phi \succeq 0$ from Theorem~\ref{thm:Factor_ar1}.
 \end{proof}
 
 \begin{theorem}[A break at known dates]\label{thm:Factor_block}
@@ -5873,6 +5932,22 @@ criterion, so the constrained fit is this projection.
   \leanok
   Sums and nonnegative multiples of positive semidefinite matrices are
   positive semidefinite.
+\end{proof}
+
+\begin{lemma}[Valid tables form a closed set]\label{lem:isClosed_setOf_posSemidef}
+  \lean{Credibility.ConeProjection.isClosed_setOf_posSemidef}
+  \leanok
+  For finitely many parameters and linear maps $A_k$,
+  $\{\theta : A_k\theta \succeq 0 \text{ for all } k\}$ is closed. With
+  Lemma~\ref{lem:convex_setOf_posSemidef} and Theorem~\ref{thm:hsq_proj_exists_unique}, the
+  projection onto valid tables exists, is unique, and is closer to the truth
+  (Theorem~\ref{thm:hsq_proj_le}); with every $\hat s_j^2 > 0$ it gives
+  $\hat K \succ 0$ (Corollary~\ref{cor:Factor_tableK_ar1}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  An intersection of preimages of the closed positive semidefinite cone under continuous
+  (finite-dimensional) linear maps.
 \end{proof}
 
 \chapter{Extension: a shared group level}\label{ch:hierarchical}

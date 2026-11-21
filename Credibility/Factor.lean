@@ -158,14 +158,71 @@ theorem levelPart_posSemidef [Fintype n] [Fintype J] : (M.levelPart c).PosSemide
   ext p q
   by_cases h : (c p).1 = (c q).1 <;> simp [levelPart, h, Matrix.one_apply]
 
-/-- **`K ≻ 0`** for any observed cells: the process noise is a positive diagonal, the rest
-is `⪰ 0` (from `Γ ⪰ 0`, `C ⪰ 0`, `τ² > 0`). -/
+/-! ### Fitted tables: any factor table `A ⪰ 0`, no level -/
+
+omit [DecidableEq J] in
+/-- The covariance table the app builds from fitted parameters, at the observed cells
+`c : n → J × T`: `Aᵢⱼ Φₜₛ + δₜₛ Cᵢⱼ + δ_{pq} sᵢ²/wᵢₜ`. The factor table `A` is any matrix (a
+projection of `γλλᵀ` onto the positive semidefinite cone need not be rank one) and the level
+`τ²` is left out. -/
+noncomputable def tableK [DecidableEq n] (A : Matrix J J ℝ) (Φ : Matrix T T ℝ) (C : Matrix J J ℝ)
+    (s2 : J → ℝ) (w : J → T → ℝ) (c : n → J × T) : Matrix n n ℝ :=
+  of fun p q => A (c p).1 (c q).1 * Φ (c p).2 (c q).2
+    + (if (c p).2 = (c q).2 then C (c p).1 (c q).1 else 0)
+    + (if p = q then s2 (c p).1 / w (c p).1 (c p).2 else 0)
+
+omit [DecidableEq J] in
+/-- **Valid fitted tables give `K̂ ≻ 0`.** If `A ⪰ 0`, `Φ ⪰ 0`, `C ⪰ 0` and every `sⱼ² > 0`
+(volumes `w > 0`), the fitted table is positive definite, for any observed cells and without
+the level `τ²`: the factor and shock parts are Hadamard products of positive semidefinite
+matrices (Schur), the process noise a positive diagonal. -/
+theorem tableK_posDef [Fintype n] [DecidableEq n] {A : Matrix J J ℝ} {Φ : Matrix T T ℝ}
+    {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} (hA : A.PosSemidef) (hΦ : Φ.PosSemidef)
+    (hC : C.PosSemidef) (hs : ∀ j, 0 < s2 j) (hw : ∀ j t, 0 < w j t) (c : n → J × T) :
+    (tableK A Φ C s2 w c).PosDef := by
+  have h : tableK A Φ C s2 w c = diagonal (fun p => s2 (c p).1 / w (c p).1 (c p).2)
+      + (A.submatrix (fun p => (c p).1) (fun p => (c p).1) ⊙
+          Φ.submatrix (fun p => (c p).2) (fun p => (c p).2)
+        + C.submatrix (fun p => (c p).1) (fun p => (c p).1) ⊙
+          (1 : Matrix T T ℝ).submatrix (fun p => (c p).2) (fun p => (c p).2)) := by
+    ext p q
+    by_cases ht : (c p).2 = (c q).2 <;> by_cases hpq : p = q <;>
+      simp [tableK, hadamard, Matrix.one_apply, ht, hpq] <;> ring
+  rw [h]
+  exact (PosDef.diagonal fun p => div_pos (hs _) (hw _ _)).add_posSemidef
+    (((hA.submatrix _).hadamard (hΦ.submatrix _)).add
+      ((hC.submatrix _).hadamard (PosSemidef.one.submatrix _)))
+
+omit [DecidableEq J] in
+/-- **`ŝ² ≥ 0` is not enough.** If a cohort `j` has `Aⱼⱼ = Cⱼⱼ = sⱼ² = 0` (all three of its
+variances clipped to zero) and is observed in some cell, the fitted table is singular: that
+cell has variance zero. So `tableK_posDef` needs `sⱼ² > 0`, not just `≥ 0`. -/
+theorem tableK_not_posDef [Fintype n] [DecidableEq n] {A : Matrix J J ℝ} {Φ : Matrix T T ℝ}
+    {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} {c : n → J × T} {p : n}
+    (hA : A (c p).1 (c p).1 = 0) (hC : C (c p).1 (c p).1 = 0) (hs : s2 (c p).1 = 0) :
+    ¬(tableK A Φ C s2 w c).PosDef := fun h => by
+  have := h.diag_pos (i := p)
+  simp [tableK, hA, hC, hs] at this
+
+/-- **`K ≻ 0`** for any observed cells: the fitted-table case (`tableK_posDef`) with
+`A = λλᵀ`, `Φ = Γ`, plus the level part `τ²δᵢⱼ ⪰ 0`. -/
 theorem K_posDef [Fintype n] [DecidableEq n] [Fintype J] [Fintype T] {c : n → J × T}
     (hc : Function.Injective c) : (M.K c).PosDef := by
-  rw [M.K_eq_parts hc]
-  exact (PosDef.diagonal fun p => div_pos (M.s2_pos _) (M.w_pos _ _)).add_posSemidef
-    (((M.factorPart_posSemidef c).add (M.shockPart_posSemidef c)).add
-      (M.levelPart_posSemidef c))
+  have h : M.K c = tableK (vecMulVec M.load M.load) M.Γ M.C M.s2 M.w c + M.levelPart c := by
+    ext p q
+    simp only [K, tableK, levelPart, obsCov, Shock.obsCov, toShock, of_apply,
+      vecMulVec_apply]
+    by_cases hpq : p = q
+    · subst hpq; simp; ring
+    · have : ¬((c p).2 = (c q).2 ∧ (c p).1 = (c q).1) := fun h =>
+        hpq (hc (Prod.ext h.2 h.1))
+      by_cases ht : (c p).2 = (c q).2
+      · have hj : (c p).1 ≠ (c q).1 := fun h => this ⟨ht, h⟩
+        simp [hpq, ht, hj]
+      · simp [hpq, ht]
+  rw [h]
+  exact (tableK_posDef (posSemidef_loadings M.load) M.Γ_posSemidef M.C_posSemidef M.s2_pos
+    M.w_pos c).add_posSemidef (M.levelPart_posSemidef c)
 
 /-! ### Instances of `Γ`: AR(1) and a break at known dates -/
 
@@ -245,6 +302,16 @@ theorem ar1_posSemidef (N : ℕ) {γ φ : ℝ} (hγ : 0 ≤ γ) (hφ : |φ| ≤ 
   have h : ar1 N γ φ = γ • ar1 N 1 φ := by ext t s; simp [ar1]
   rw [h]
   exact h1.smul hγ
+
+omit [DecidableEq J] [DecidableEq T] in
+/-- **The app's fitted table is positive definite**: AR(1) correlation `Φₜₛ = φ^|t-s|` with
+`|φ| ≤ 1`, a factor table `A ⪰ 0`, `C ⪰ 0` and every `sⱼ² > 0`, as the projection of the
+unbiased fit onto valid tables (`ConeProjection`) gives when `ŝ² > 0`. -/
+theorem tableK_ar1_posDef {N : ℕ} [Fintype n] [DecidableEq n] {A C : Matrix J J ℝ} {φ : ℝ}
+    {s2 : J → ℝ} {w : J → Fin N → ℝ} (hA : A.PosSemidef) (hφ : |φ| ≤ 1) (hC : C.PosSemidef)
+    (hs : ∀ j, 0 < s2 j) (hw : ∀ j t, 0 < w j t) (c : n → J × Fin N) :
+    (tableK A (ar1 N 1 φ) C s2 w c).PosDef :=
+  tableK_posDef hA (ar1_posSemidef N zero_le_one hφ) hC hs hw c
 
 /-- A break at known dates: months in regime `r t`, a block `G_r` within each regime and no
 correlation across regimes. -/

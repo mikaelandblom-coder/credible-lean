@@ -193,4 +193,18 @@ theorem convex_setOf_posSemidef {κ : Type*} {m : κ → Type*} [∀ k, Fintype 
   simp only [map_add, map_smul]
   exact ((hx k).smul ha).add ((hy k).smul hb)
 
+omit [Fintype ι] in
+/-- The valid parameters form a closed set (finitely many parameters): each
+`{θ | A k θ ⪰ 0}` is the preimage of the closed positive semidefinite cone under a
+continuous linear map. With `convex_setOf_posSemidef` and `exists_hsq_proj`, the projection
+onto valid tables exists and is unique. -/
+theorem isClosed_setOf_posSemidef [Finite ι] {κ : Type*} {m : κ → Type*} [∀ k, Fintype (m k)]
+    (A : ∀ k, (ι → ℝ) →ₗ[ℝ] Matrix (m k) (m k) ℝ) :
+    IsClosed {θ : ι → ℝ | ∀ k, (A k θ).PosSemidef} := by
+  have : {θ : ι → ℝ | ∀ k, (A k θ).PosSemidef} = ⋂ k, A k ⁻¹' {M | M.PosSemidef} := by
+    ext θ; simp
+  rw [this]
+  exact isClosed_iInter fun k =>
+    (isClosed_setOfPred_posSemidef (n := m k) (R := ℝ)).preimage (A k).continuous_of_finiteDimensional
+
 end Credibility.ConeProjection

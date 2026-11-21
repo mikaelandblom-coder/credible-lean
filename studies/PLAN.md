@@ -377,9 +377,12 @@ One chat per step; none needs Lean except step 5.
   +2.0 ± 3.1%, true φ +1.4%; `Y = 3`: profile +8.5 ± 9%; `φ = 0.9`: index +8 ± 6%, true φ +6 ± 5%.
   Unbiased tables: K̂ not positive definite in ~100% of draws, so no premium at all. So given a
   good φ, estimating γλλᵀ, C, s² costs 1–2%; the plug-in price is φ, and an external index pays
-  it. Candidates: handbook note ("take φ from a long index; constrain the tables") once the
-  steps are proved; a Lean result that the PSD projection keeps K̂ ≻ 0 (C ⪰ 0, s² > 0 suffice,
-  via `Factor.K_posDef`). Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
+  it. Handbook note "constrain the tables; take φ from a long index" done (Result "Constrained
+  tables"). *Proved* (2026-11-21): valid tables give `K̂ ≻ 0` when every `ŝⱼ² > 0`
+  (`Factor.tableK_posDef`, `tableK_ar1_posDef`; any `Â ⪰ 0`, not only rank one, no `τ²`), but
+  not with `ŝ² ≥ 0` alone (Finding 30, `tableK_not_posDef`); the valid set is closed and convex
+  (`ConeProjection.isClosed_setOf_posSemidef`). App: nothing to change (Cholesky failure already
+  gives no premium); could count draws with some `ŝⱼ² = 0`. Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
   the rolling-origin comparison on data (card-data Step 7b).
   *H-norm check (2026-11-21):* `fit` returns θ̂, the projection p and H (`minq`); the world-side
   `hNormCheck` computes ‖θ̂ − θ‖²_H, ‖p − θ‖²_H, ‖θ̂ − p‖²_H and the slack of
