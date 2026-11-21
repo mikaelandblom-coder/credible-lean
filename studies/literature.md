@@ -777,7 +777,12 @@ Web search (abstracts and listings); nothing read in full.
   and `t(T−1)` critical values (statsmodels `diebold_mariano_test`). Harvey, Leybourne &
   Whitehouse (2017, IJF 33(4)): the long-run variance can be negative in small samples at
   multi-step horizons; Coroneo & Iacone's weighted-periodogram version sizes best. Used: paired
-  comparison with lag 11 for 12-month targets at monthly origins.
+  comparison with lag 11 for 12-month targets at monthly origins. Seen in the app (2026-11-21, `dmSize`):
+  on loss differentials with the 11-month overlap and mean 0, DM–HLN at 5% rejects in 25% at 25
+  origins, 17% at 49, 10% at 97; the weighted periodogram (`m = ⌊n^(1/3)⌋`, `t(2m)`) is no
+  better at these sizes. With 12-month targets the effective sample is about `n/12` years, so
+  both are shown with their false-alarm rate next to the power (Coroneo & Iacone 2020, JAE,
+  from memory: `√n·d̄/σ̂_WPE` against `t(2m)`).
 - Bergmeir, Hyndman & Koo (2018), *A note on the validity of cross-validation for evaluating
   autoregressive time series prediction*, CSDA 120, 70–83: K-fold CV is valid for purely
   autoregressive models with uncorrelated errors, fails when errors are correlated

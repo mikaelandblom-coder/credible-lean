@@ -304,3 +304,86 @@ test('Finding 30: valid tables with every ŝ² > 0 give a premium (tableK_posDef
   }
   assert.ok(n > 60 && sz > 0, `${sz} of ${n} fits with some ŝⱼ² = 0`);
 });
+
+// ---------------------------------------------------------------- comparing fits (card-data Step 7b)
+
+test('Student t CDF and the incomplete beta behind it', () => {
+  close(M.tCdf(0, 5), 0.5, 1e-12, 't(5) at 0');
+  close(M.tCdf(1, 1), 0.75, 1e-10, 'Cauchy at 1');
+  close(M.tCdf(2, 10), 0.963306, 1e-6, 't(10) at 2');
+  close(M.tCdf(-2.0423, 30), 0.025, 1e-4, 't(30) lower 2.5%');
+  close(M.betaInc(0.3, 2, 3), 0.3483, 1e-4, 'I_0.3(2, 3)');
+});
+
+test('a fit with T not a multiple of 12: the centring still annihilates the season, Kronecker MINQUE = dense', () => {
+  const w = M.makeWorld({ J: 2, Y: 3 }), d = M.truncate(M.draw(w, M.rng(30)), 30);
+  assert.equal(d.X[0].length, 30);
+  const pure = { J: 2, Y: d.Y, w: d.w, X: d.w.map((row, j) => row.map((_, t) => 3 + j + Math.cos(t % 12))) };
+  M.minque(pure, 0.6).q.forEach((x) => close(x, 0, 1e-12, 'q'));
+  const a = M.minque(d, 0.6), b = M.minqueDense(d, 0.6);
+  a.H.forEach((row, k) => row.forEach((x, l) => close(x, b.H[k][l], 1e-9, 'H')));
+  a.q.forEach((x, k) => close(x, b.q[k], 1e-9, 'q'));
+});
+
+test('rolling origin: no look-ahead, and the exposure-weighted loss', () => {
+  const w = M.makeWorld({ J: 3, Y: 4 }), d = M.draw(w, M.rng(31)), burn = 24, T = 48;
+  const ro = M.rollingOrigin(d, { fits: ['last', 'moment', 'oracle'], burn, world: w });
+  assert.deepEqual(ro.origins, Array.from({ length: T - 12 - burn + 1 }, (_, k) => burn + k));
+  // The first origin's loss uses months < burn + 12 only: change every later month, nothing moves.
+  const d2 = { J: d.J, Y: d.Y, w: d.w, X: d.X.map((row) => row.map((x, t) => (t >= burn + 12 ? x + 100 : x))) };
+  const ro2 = M.rollingOrigin(d2, { fits: ['last', 'moment', 'oracle'], burn, world: w });
+  for (const k of ['last', 'moment', 'oracle']) assert.equal(ro2.loss[k][0], ro.loss[k][0], `${k}: origin ${burn}`);
+  // The loss is Σ Wⱼ eⱼ² / Σ Wⱼ over the 12 target months.
+  const t0 = ro.origins[3], pred = M.lastYear(M.truncate(d, t0));
+  const Yt = d.X.map((row) => row.slice(t0, t0 + 12).reduce((a, x) => a + x, 0) / 12);
+  const Wt = d.w.map((row) => row.slice(t0, t0 + 12).reduce((a, x) => a + x, 0));
+  const L = pred.reduce((a, y, j) => a + Wt[j] * (y - Yt[j]) ** 2, 0) / Wt.reduce((a, x) => a + x, 0);
+  close(ro.loss.last[3], L, 1e-12, 'weighted loss');
+  ro.card.last[3].forEach((e, j) => close(e, (pred[j] - Yt[j]) ** 2, 1e-12, 'per card'));
+});
+
+test('a singular valid table is caught before the Cholesky (degenerateTable, Finding 30)', () => {
+  const A = [[0.02, 0.02], [0.02, 0.02]], C = [[0.01, 0.01], [0.01, 0.01]];
+  assert.ok(M.degenerateTable({ A, C, s2: [0, 0] }), 'rank one A + C on Z = {1, 2}');
+  assert.ok(!M.degenerateTable({ A, C, s2: [0, 5] }), 'Z = {1}: A₁₁ + C₁₁ > 0');
+  assert.ok(!M.degenerateTable({ A, C: [[0.01, 0], [0, 0.01]], s2: [0, 0] }), 'A + C ≻ 0');
+  assert.ok(M.degenerateTable({ A: [[0, 0], [0, 0.02]], C: [[0, 0], [0, 0.01]], s2: [0, 5] }), 'tableK_not_posDef: one cohort');
+  // Agrees with the exact Cholesky on a short table where rounding does not interfere.
+  const w = M.makeWorld({ J: 2, Y: 2 });
+  assert.equal(M.predictor(2, 2, w.w, { phi: 0.6, A, C, s2: [0, 0] }), null);
+  assert.ok(M.predictor(2, 2, w.w, { phi: 0.6, A, C, s2: [0, 5] }));
+});
+
+test('Diebold–Mariano with the HLN correction: the formula, and null with too few origins', () => {
+  const r = M.rng(32), d = Array.from({ length: 40 }, () => 0.1 + r.normal());
+  const x = M.dmTest(d, 12), n = 40, mean = d.reduce((a, v) => a + v, 0) / n;
+  const g = (k) => { let s = 0; for (let t = k; t < n; t++) s += (d[t] - mean) * (d[t - k] - mean); return s / n; };
+  let V = g(0); for (let k = 1; k < 12; k++) V += 2 * g(k);
+  if (!x.bartlett) close(x.V, V, 1e-12, 'uniform long-run variance');
+  close(x.stat, x.dm * Math.sqrt((n + 1 - 24 + 132 / n) / n), 1e-12, 'HLN factor');
+  close(x.p, 2 * (1 - M.tCdf(Math.abs(x.stat), n - 1)), 1e-12, 'p against t(n − 1)');
+  assert.equal(M.dmTest(d.slice(0, 24), 12), null, 'n ≤ 2h');
+});
+
+test('size: on equally good fits (MA(11) differentials) both tests over-reject with few origins, less with more', () => {
+  // The protocol's warning (card-data Step 7b; Harvey, Leybourne & Whitehouse 2017): with n monthly
+  // origins and 12-month targets there are about n/12 independent comparisons.
+  const few = M.dmSize(37, 1500, M.rng(33)), many = M.dmSize(145, 1500, M.rng(34));
+  assert.ok(few.dm > 0.1, `DM–HLN at 37 origins: ${few.dm}`);
+  assert.ok(many.dm < few.dm && many.dm < 0.1, `DM–HLN at 145 origins: ${many.dm}`);
+  assert.ok(many.wpe < 0.1, `WPE at 145 origins: ${many.wpe}`);
+});
+
+test('power: the oracle beats the last-year mean on average, and the test sees it in some draws', () => {
+  const w = M.makeWorld({ J: 3, Y: 6 }), r = M.rng(35);
+  let s = 0, picksOracle = 0, picksLast = 0;
+  const N = 12;
+  for (let k = 0; k < N; k++) {
+    const c = M.compareFits(M.rollingOrigin(M.draw(w, r), { fits: ['oracle', 'last'], burn: 36, world: w }), 'oracle', 'last');
+    s += c.meanA - c.meanB;
+    if (c.verdict === 'A') picksOracle++;
+    if (c.verdict === 'B') picksLast++;
+  }
+  assert.ok(s < 0, `mean difference ${s / N}`);
+  assert.ok(picksOracle >= 1 && picksLast <= 1, `oracle picked ${picksOracle}, last picked ${picksLast} of ${N}`);
+});

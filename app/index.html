@@ -261,6 +261,21 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <svg class="chart" id="m-hist" role="img" aria-label="Distribution of φ̂ over many draws, by method"></svg>
     <div class="tablewrap" id="m-many"></div>
     <div class="tablewrap" id="m-prem-many"></div>
+    <h3 id="h-roll">Comparing fits on data <span class="sub">(rolling origin)</span></h3>
+    <p class="sub" style="margin:0 0 6px">How a student would choose between two fits on the real data, checked here where the truth is known. At every month <i>t</i>₀ after a burn-in, each fit is refitted on the months before <i>t</i>₀ only (φ̂, tables, season), predicts each cohort's mean over the next 12 months, and is scored by the squared error, volume-weighted over cohorts. The two fits are compared by the <i>difference</i> of their losses on the same targets (the target year's shock hits both alike). Consecutive origins share 11 of their 12 target months, so the differences are autocorrelated: Diebold–Mariano with a long-run variance up to lag 11 and the Harvey–Leybourne–Newbold correction against <i>t</i>(<i>n</i>−1); also the weighted-periodogram version (Coroneo &amp; Iacone). Same world as above (cohorts, φ, volumes, index), with a longer history. Not K-fold: the common factor ties held-out months to training months.</p>
+    <div id="r-sliders"></div>
+    <div class="grid2">
+      <div><label for="r-a">Fit A</label><select id="r-a"></select></div>
+      <div><label for="r-b">Fit B</label><select id="r-b"></select></div>
+      <div><label for="r-n">Draws for the power study</label><select id="r-n">
+        <option value="20">20</option><option value="40" selected>40</option><option value="100">100</option></select></div>
+    </div>
+    <div class="flexhead" style="margin-top:10px"><span class="sub" id="r-cost"></span>
+      <span class="btnrow"><button id="r-one">One data set</button><button id="r-many" class="primary">Power over many draws</button></span></div>
+    <div id="r-one-out"></div>
+    <div class="legend" id="r-legend"></div>
+    <svg class="chart" id="r-chart" role="img" aria-label="Loss of fit A and fit B at each rolling origin, one data set"></svg>
+    <div class="tablewrap" id="r-many-out"></div>
   </section>
 
   <footer>
@@ -905,6 +920,114 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       `</tbody></table><p class="sub" style="margin:6px 0 0">Most of the error is next year's own noise, which no premium removes; compare the rows with the floor. Unbiased tables rarely give a positive definite K̂, so the premium needs valid tables. Valid tables give K̂ ≻ 0 when every ŝⱼ² > 0 (<span class="badge proved">proved</span> ${lean('Factor.tableK_posDef')}); the projection often clips some ŝⱼ² to 0 (s² is seen only through volume variation), and then K̂ ≻ 0 is no longer guaranteed, singular for sure only if that cohort's Âⱼⱼ and Ĉⱼⱼ are 0 too (Finding 30, ${lean('Factor.tableK_not_posDef')}). The two counts show how often that bites. With them, the price of estimation is almost all in φ: given the true φ (or φ̂ from a 10-year index) the fitted tables lose only 1–2% MSE to the floor, while the profile φ̂ from two years loses about as much as the last-year mean (+20–50%). Switch the index on to see it.</p>`;
   }
 
+  // ---------- comparing fits on data: rolling origin, Diebold–Mariano (card-data Step 7b)
+  const rs = { Y: 8, burn: 3, a: 'moment', b: 'last' };
+  const R_SLIDERS = [
+    { key: 'Y', label: 'Years of monthly history', min: 5, max: 12, step: 1, fmt: (v) => v },
+    { key: 'burn', label: 'Burn-in <span class="sub">(years before the first origin)</span>', min: 2, max: 5, step: 1, fmt: (v) => v },
+  ];
+  for (const s of R_SLIDERS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const id = 'rs-' + s.key;
+    row.innerHTML = `<label for="${id}">${s.label}</label><input type="range" id="${id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${rs[s.key]}"><output></output>`;
+    $('r-sliders').appendChild(row);
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const show = () => { out.textContent = s.fmt(+inp.value); };
+    show();
+    inp.addEventListener('input', () => { rs[s.key] = +inp.value; show(); rReset(); });
+  }
+  for (const id of ['r-a', 'r-b']) {
+    $(id).innerHTML = Object.entries(MO.ROLL_FITS).map(([k, lab]) => `<option value="${k}">${esc(lab)}</option>`).join('');
+    $(id).value = id === 'r-a' ? rs.a : rs.b;
+    $(id).addEventListener('change', (e) => { rs[id === 'r-a' ? 'a' : 'b'] = e.target.value; rReset(); });
+  }
+  const rWorld = () => MO.makeWorld({ J: ms.J, Y: rs.Y, phi: ms.phi, volume: ms.volume, indexYears: ms.indexYears, indexNoise: ms.indexNoise });
+  const rOrigins = () => 12 * (rs.Y - rs.burn) - 11;
+  const rLab = (k) => MO.ROLL_FITS[k];
+  let rJob = 0;
+  function rReset() {
+    rJob++;
+    const on = ms.indexYears > 0;
+    for (const id of ['r-a', 'r-b']) {
+      const opt = $(id).querySelector('option[value="index"]'); opt.disabled = !on;
+      if (!on && $(id).value === 'index') { $(id).value = id === 'r-a' ? 'moment' : 'last'; rs[id === 'r-a' ? 'a' : 'b'] = $(id).value; }
+    }
+    const n = rOrigins(), slow = rs.a === 'profile' || rs.b === 'profile';
+    $('r-cost').innerHTML = `${n} origins per data set, ${ms.J} cohorts.${n <= 24 ? ' <b>Too few origins for the test</b> (needs more than 24): add years or shorten the burn-in.' : ''}${slow ? ' The profile φ̂ is slow (about 70 MINQUE fits per origin).' : ''}${rs.a === rs.b ? ' Choose two different fits.' : ''}`;
+    $('r-one-out').innerHTML = ''; $('r-many-out').innerHTML = ''; $('r-legend').innerHTML = '';
+    $('r-chart').innerHTML = ''; $('r-chart').setAttribute('height', 0);
+  }
+  const rVerdict = (v) => (v === 'A' ? `A (${esc(rLab(rs.a))}) is better` : v === 'B' ? `B (${esc(rLab(rs.b))}) is better` : 'no evidence of a difference');
+  const pv = (x) => (x && Number.isFinite(x.p) ? (x.p < 0.001 ? '< 0.001' : x.p.toFixed(3)) : '–');
+
+  $('r-one').addEventListener('click', () => {
+    if (rs.a === rs.b) return;
+    const my = ++rJob;
+    $('r-one-out').innerHTML = '<p class="sub">Computing…</p>';
+    setTimeout(() => {
+      if (my !== rJob) return;
+      const w = rWorld(), d = MO.draw(w, MO.rng(ms.seed));
+      const ro = MO.rollingOrigin(d, { fits: [rs.a, rs.b], burn: 12 * rs.burn, world: w }), c = MO.compareFits(ro, rs.a, rs.b);
+      const fb = [rs.a, rs.b].filter((k) => ro.fallback[k]).map((k) => `${esc(rLab(k))}: fell back to the last-12-month mean at ${ro.fallback[k]} origins (fit singular or K̂ not positive definite)`).join('; ');
+      const rel = c.meanB > 0 ? pct((c.meanA - c.meanB) / c.meanB, 1) : '–';
+      $('r-one-out').innerHTML = `<p class="sub" style="margin:8px 0 4px"><b>Data set with seed ${ms.seed}</b>: mean loss A ${c.meanA.toPrecision(3)}, B ${c.meanB.toPrecision(3)} (A − B ${rel} of B) over ${ro.origins.length} origins. ` +
+        `DM–HLN statistic ${c.dm ? c.dm.stat.toFixed(2) : '–'}, p = ${pv(c.dm)}${c.dm && c.dm.bartlett ? ' (Bartlett weights: the uniform long-run variance was not positive)' : ''}: <b>${rVerdict(c.verdict)}</b>. Weighted periodogram p = ${pv(c.wpe)}: ${rVerdict(c.verdictWpe)}.${fb ? ' ' + fb + '.' : ''}</p>`;
+      rChart(ro);
+    }, 0);
+  });
+  function rChart(ro) {
+    const C = { a: cssVar('--fit'), b: cssVar('--ref') }, svg = $('r-chart'); svg.innerHTML = '';
+    legend($('r-legend'), [['A: ' + rLab(rs.a), C.a], ['B: ' + rLab(rs.b), C.b]]);
+    const W = svg.clientWidth || 360, H = 160, left = 48, right = 10, top = 10, bot = 22;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H);
+    const la = ro.loss[rs.a], lb = ro.loss[rs.b], o = ro.origins, hi = Math.max(...la, ...lb) * 1.05 || 1;
+    const x = (t) => left + (t - o[0]) / Math.max(o[o.length - 1] - o[0], 1) * (W - left - right), y = (v) => top + (hi - v) / hi * (H - top - bot);
+    for (const t of niceTicks(0, hi, 3)) {
+      el('line', { x1: left, x2: W - right, y1: y(t), y2: y(t), class: 'gridline' }, svg);
+      const tx = el('text', { x: left - 4, y: y(t) + 4, 'text-anchor': 'end' }, svg); tx.textContent = t.toPrecision(2);
+    }
+    for (let yr = Math.ceil(o[0] / 12); yr * 12 <= o[o.length - 1]; yr++) { const tx = el('text', { x: x(12 * yr), y: H - 6, 'text-anchor': 'middle' }, svg); tx.textContent = 'yr ' + (yr + 1); }
+    for (const [L, col] of [[lb, C.b], [la, C.a]]) el('path', { d: L.map((v, k) => `${k ? 'L' : 'M'}${x(o[k]).toFixed(1)},${y(v).toFixed(1)}`).join(''), fill: 'none', stroke: col, 'stroke-width': 2 }, svg);
+  }
+
+  $('r-many').addEventListener('click', () => {
+    if (rs.a === rs.b || rOrigins() <= 24) return;
+    const my = ++rJob, w = rWorld(), r = MO.rng((ms.seed * 104729 + 3) >>> 0), N = +$('r-n').value, out = [];
+    const t0 = Date.now();
+    const step = () => {
+      if (my !== rJob) return;
+      const d = MO.draw(w, r);
+      out.push(MO.compareFits(MO.rollingOrigin(d, { fits: [rs.a, rs.b], burn: 12 * rs.burn, world: w }), rs.a, rs.b));
+      const per = (Date.now() - t0) / out.length;
+      $('r-many-out').innerHTML = `<p class="sub">Draw ${out.length} / ${N}, about ${Math.ceil(per * (N - out.length) / 1000)} s left…</p>`;
+      if (out.length < N) { setTimeout(step, 0); return; }
+      rMany(out, w);
+    };
+    $('r-many-out').innerHTML = '<p class="sub">Computing…</p>';
+    setTimeout(step, 0);
+  });
+  function rMany(out, w) {
+    const N = out.length, n = out[0].d.length;
+    // The truth, estimated: the mean loss difference over all draws (each draw's mean over its origins), with its SE.
+    const dm = out.map((c) => c.meanA - c.meanB), m = dm.reduce((a, x) => a + x, 0) / N;
+    const se = Math.sqrt(dm.reduce((a, x) => a + (x - m) ** 2, 0) / (N - 1) / N), mB = out.reduce((a, c) => a + c.meanB, 0) / N;
+    const clear = Math.abs(m) > 2 * se, better = m < 0 ? 'A' : 'B';
+    const share = (f) => pct(out.filter(f).length / N, 0);
+    const size = MO.dmSize(n, 2000, MO.rng(7));
+    const right = (v) => (clear ? v === better : false);
+    const row = (lab, key) => `<tr><td>${lab}</td><td>${share((c) => c[key] === 'A')}</td><td>${share((c) => c[key] === 'none')}</td><td>${share((c) => c[key] === 'B')}</td><td>${clear ? share((c) => right(c[key])) : '–'}</td></tr>`;
+    const raw = (c) => (c.meanA < c.meanB ? 'A' : 'B');
+    $('r-many-out').innerHTML =
+      `<p class="sub" style="margin:10px 0 4px"><b>${N} draws</b> of ${rs.Y} years, ${n} origins each. <b>Truth</b> (uses the world: the mean loss difference over all ${N} draws): ` +
+      (clear ? `<b>${better} (${esc(rLab(better === 'A' ? rs.a : rs.b))})</b> is better, A − B = ${pct(m / mB, 1)} ± ${pct(2 * se / mB, 1)} of B's loss.`
+        : `no clear difference at this many draws (A − B = ${pct(m / mB, 1)} ± ${pct(2 * se / mB, 1)} of B's loss): any pick below is noise.`) + '</p>' +
+      `<table><thead><tr><th>Test (5%)</th><th>Picks A</th><th>No evidence</th><th>Picks B</th><th>Picks the better</th></tr></thead><tbody>` +
+      row('DM–HLN, lag 11', 'verdict') + row('Weighted periodogram', 'verdictWpe') +
+      `<tr><td>Lower mean loss, no test</td><td>${share((c) => raw(c) === 'A')}</td><td>—</td><td>${share((c) => raw(c) === 'B')}</td><td>${clear ? share((c) => raw(c) === better) : '–'}</td></tr>` +
+      `</tbody></table><div class="expect"><b>False alarms</b> when two fits are equally good, at ${n} origins (synthetic loss differences with the 11-month overlap, 2000 series): DM–HLN rejects in ${pct(size.dm, 0)}, the weighted periodogram in ${pct(size.wpe, 0)}, at a nominal 5%. ` +
+      `Overlapping 12-month targets leave about ${(n / 12).toFixed(1)} independent comparisons, so the long-run variance is poorly estimated and both tests over-reject with few years (Harvey, Leybourne &amp; Whitehouse 2017). Read a rejection with a size this far above 5% as weak evidence, and "no evidence of a difference" as the usual answer with a few years of data.</div>`;
+  }
+
   let mPending = null;
   function mUpdate() {
     mWorld = MO.makeWorld({ J: ms.J, Y: ms.Y, phi: ms.phi, volume: ms.volume, indexYears: ms.indexYears, indexNoise: ms.indexNoise });
@@ -915,6 +1038,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       ms.method = on ? 'index' : ms.method === 'index' ? 'profile' : ms.method; $('m-method').value = ms.method;
     }
     $('ms-indexNoise').closest('.row').hidden = !on;
+    rReset();
     mRenderDraw();
     clearTimeout(mPending); mPending = setTimeout(mRenderMany, 150);
   }

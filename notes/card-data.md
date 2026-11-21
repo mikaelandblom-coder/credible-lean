@@ -338,6 +338,23 @@ error (S19–S23). Neither is a protocol for *choosing between* switches. Propos
   known, so the app can show how often the rolling-origin comparison picks the truly better
   fit at the student's sample size (power), before it is trusted on the real data.
 
+**Built (2026-11-21), app.** `app/monthly.js`: `truncate`, `rollingOrigin` (every month after
+the burn-in; each fit refitted on months `< t₀`; exposure-weighted squared error of each cohort's
+next-12-month mean), `dmTest` (DM, uniform HAC to lag 11, Bartlett if not positive, HLN factor,
+`t(n−1)`), `wpeTest` (Coroneo–Iacone weighted periodogram), `dmSize` (false alarms on MA(11)
+differentials), `compareFits`. Fits: last-12-month mean, BLUP with φ by year-on-year / profile /
+index, oracle. The fit code now accepts any number of months (`prepare` centres each calendar
+month on its own count). Page: "Comparing fits on data" under Monthly cohorts: one data set (loss
+per origin, both tests) and power over many draws (share picking A / none / B, share picking the
+truly better, false-alarm rate at the same `n`). **Seen** (4 cohorts, φ = 0.6, burn-in 3 years, 40
+draws, BLUP year-on-year against last-year mean, truth −29% to −31% MSE): 6 years (25 origins)
+DM–HLN picks the BLUP in 15% and the last-year mean in 7.5%, false alarms 25%; 8 years (49 origins)
+picks the BLUP in 22.5%, never the other, false alarms 16%; the plain lower mean loss is right in
+85–88%. So with a few years the test says "no evidence" even for a 30% gap, and its rejections are
+inflated: report the paired mean difference with the false-alarm rate, not a ranking. Dropped: a
+"no factor" fit (Â = 0) whose BLUP, with a rank-one Ĉ and some ŝⱼ² = 0, regresses one cohort on
+another with coefficients near 700 and explodes.
+
 ### Step 8. Documents, then the proposal
 **Status (2026-11-21):** proposal written (`studies/thesis-topics/make_pdf.py`, draft v2): the
 student's main document, with extensions A–H to test on data and a guide to the repo. Steps 4, 6

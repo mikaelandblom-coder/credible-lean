@@ -394,7 +394,11 @@ One chat per step; none needs Lean except step 5.
   fits (defaults 89%, `J = 6` 100%, `s² = 4` 98%), yet no premium failed and no cohort had
   Â = Ĉ = ŝ² = 0: Âⱼⱼ or Ĉⱼⱼ always stayed positive. So the guarantee is often lost but has not
   bitten; s² is seen only through volume variation (Finding 23), so the projection clips it. Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
-  the rolling-origin comparison on data (card-data Step 7b).
+  the rolling-origin comparison on data (card-data Step 7b): *built 2026-11-21* (page section
+  "Comparing fits on data"; status and what was seen in `notes/card-data.md` Step 7b). Candidate
+  for Lean (argued in `degenerateTable`, not proved): for valid tables, `K̂ ≻ 0` iff
+  `Â_ZZ + Ĉ_ZZ ≻ 0`, `Z` the cohorts with `ŝⱼ² = 0` (contains `Factor.tableK_posDef`, `Z = ∅`, and
+  `tableK_not_posDef`).
   *H-norm check (2026-11-21):* `fit` returns θ̂, the projection p and H (`minq`); the world-side
   `hNormCheck` computes ‖θ̂ − θ‖²_H, ‖p − θ‖²_H, ‖θ̂ − p‖²_H and the slack of
   `ConeProjection.hsq_proj_add_le`. Page: per draw under the tables (valid tables only) and over

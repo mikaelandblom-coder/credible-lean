@@ -89,6 +89,9 @@ may need a paragraph.)
   and equal month weights (`Factor.relCoef_factor_free`), Finding 31 (same months not enough). With
   the factor section. Frequency × severity with a factor table per component (`FreqSev.lean`,
   `FreqSev.blupW_eq_separate`) and Finding 32 (`CoreVector.blupW_kronecker`), with the vector section.
+- Choosing between fits on data (2026-11-21, app; card-data Step 7b): rolling origin, paired
+  losses, Diebold–Mariano with HLN; with a few years of monthly data the test has low power and
+  inflated size (16–25% at 5%). A paragraph on model choice, pointing to the app.
 - Valid tables by projection (2026-11-21): the H-projection of an unbiased estimate onto a convex
   set containing the truth is closer to it in every draw and in H-weighted MSE; exists and unique
   for `H ≻ 0` (`ConeProjection.hsq_proj_add_le`, `integral_hsq_proj_le`, `exists_hsq_proj`,

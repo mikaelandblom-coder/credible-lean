@@ -248,7 +248,7 @@
 
   /** The basis tables of `Factor.seasonBasis` (τ² dropped, Finding 27): A_{ij}, C_{ij} (i ≤ j), s²_j. */
   function basis(J, Y, w, phi) {
-    const T = 12 * Y, out = [];
+    const T = w[0].length, out = [];
     for (let i = 0; i < J; i++) for (let j = i; j < J; j++) out.push({ kind: 'A', i, j });
     for (let i = 0; i < J; i++) for (let j = i; j < J; j++) out.push({ kind: 'C', i, j });
     for (let j = 0; j < J; j++) out.push({ kind: 's', i: j, j });
@@ -272,12 +272,15 @@
    * Same numbers as `minqueDense`, at T × T cost; `prepare` caches the φ-free part for the profile.
    */
   function prepare(data) {
-    const { J, Y, w, X } = data, T = 12 * Y;
-    const P = Array.from({ length: T }, (_, t) => Array.from({ length: T }, (_, s) => (t === s ? 1 : 0) - (t % 12 === s % 12 ? 1 / Y : 0)));
+    // T need not be a multiple of 12 (a rolling origin cuts the data at any month): each calendar
+    // month m is centred on its own count of months.
+    const { J, Y, w, X } = data, T = X[0].length, cnt = new Array(12).fill(0);
+    for (let t = 0; t < T; t++) cnt[t % 12]++;
+    const P = Array.from({ length: T }, (_, t) => Array.from({ length: T }, (_, s) => (t === s ? 1 : 0) - (t % 12 === s % 12 ? 1 / cnt[t % 12] : 0)));
     const r = X.map((row) => {
       const s = new Array(12).fill(0);
       row.forEach((x, t) => { s[t % 12] += x; });
-      return row.map((x, t) => x - s[t % 12] / Y);
+      return row.map((x, t) => x - s[t % 12] / cnt[t % 12]);
     });
     // Diagonal factors (I for C, diag(1/w_j) for s²_j): tr(P D_a P D_b) = Σ_tv P_tv² a_v b_t.
     const diag = [new Array(T).fill(1)].concat(w.map((row) => row.map((x) => 1 / x)));
@@ -405,7 +408,7 @@
 
   /** Pooled year-on-year cross-products at lag h over cohort pairs i ≠ j (Lean `Factor.yoy_unbiased_factor`). */
   function yoyPooled(data, h) {
-    const { J, Y, X } = data, T = 12 * Y;
+    const { J, X } = data, T = X[0].length;
     let s = 0, n = 0;
     for (let i = 0; i < J; i++) for (let j = 0; j < J; j++) if (i !== j)
       for (let t = 12; t + h < T; t++) {
@@ -550,26 +553,36 @@
    * positive definite (possible for unbiased tables).
    */
   function predictor(J, Y, w, tab, wFuture) {
-    const T = 12 * Y, n = J * T, q = 12 * J, { phi, A, C, s2 } = tab;
+    const T = w[0].length, n = J * T, q = 12 * J, { phi, A, C, s2 } = tab;
+    const pw = Array.from({ length: T + 12 }, (_, k) => Math.pow(phi, k));
+    const cl = Int32Array.from({ length: n }, (_, p) => Math.floor(p / T) * 12 + ((p % T) % 12)); // season column of cell p
     const K = Array.from({ length: n }, () => new Array(n).fill(0));
     for (let i = 0; i < J; i++) for (let t = 0; t < T; t++) for (let j = 0; j < J; j++) for (let s = 0; s < T; s++) {
-      let v = A[i][j] * Math.pow(phi, Math.abs(t - s));
+      let v = A[i][j] * pw[Math.abs(t - s)];
       if (t === s) v += C[i][j] + (i === j ? s2[i] / w[i][t] : 0);
       K[i * T + t][j * T + s] = v;
     }
-    const L = cholesky(K);
-    if (!L) return null;
+    // Cholesky K = LLᵀ, L stored by rows in one flat array (speed: the rolling origin calls this often).
+    const L = new Float64Array(n * n);
+    for (let i = 0; i < n; i++) {
+      const Ki = K[i], ri = i * n;
+      for (let j = 0; j <= i; j++) {
+        let sum = Ki[j];
+        const rj = j * n;
+        for (let k = 0; k < j; k++) sum -= L[ri + k] * L[rj + k];
+        if (i === j) { if (!(sum > 0)) return null; L[ri + i] = Math.sqrt(sum); } else L[ri + j] = sum / L[rj + j];
+      }
+    }
     const sol = (b) => { // K⁻¹b by the Cholesky factor
-      const y = b.slice();
-      for (let i = 0; i < n; i++) { for (let k = 0; k < i; k++) y[i] -= L[i][k] * y[k]; y[i] /= L[i][i]; }
-      for (let i = n - 1; i >= 0; i--) { for (let k = i + 1; k < n; k++) y[i] -= L[k][i] * y[k]; y[i] /= L[i][i]; }
+      const y = Float64Array.from(b);
+      for (let i = 0; i < n; i++) { const ri = i * n; let v = y[i]; for (let k = 0; k < i; k++) v -= L[ri + k] * y[k]; y[i] = v / L[ri + i]; }
+      for (let i = n - 1; i >= 0; i--) { let v = y[i]; for (let k = i + 1; k < n; k++) v -= L[k * n + i] * y[k]; y[i] = v / L[i * n + i]; }
       return y;
     };
-    const col = (c) => Array.from({ length: n }, (_, p) => (Math.floor(p / T) * 12 + ((p % T) % 12) === c ? 1 : 0));
-    const KiX = Array.from({ length: q }, (_, c) => sol(col(c))); // columns of K⁻¹X
-    const G = KiX.map((a, c) => KiX.map((_, e) => a.reduce((s, x, p) => s + (Math.floor(p / T) * 12 + ((p % T) % 12) === e ? x : 0), 0))); // XᵀK⁻¹X
-    const Xt = (v) => { const out = new Array(q).fill(0); v.forEach((x, p) => { out[Math.floor(p / T) * 12 + ((p % T) % 12)] += x; }); return out; };
-    const futB = (t) => { let s = 0; for (let u = T; u < T + 12; u++) s += Math.pow(phi, u - t) / 12; return s; };
+    const Xt = (v) => { const out = new Array(q).fill(0); for (let p = 0; p < n; p++) out[cl[p]] += v[p]; return out; };
+    const KiX = Array.from({ length: q }, (_, c) => sol(Array.from({ length: n }, (__, p) => (cl[p] === c ? 1 : 0)))); // columns of K⁻¹X
+    const G = KiX.map(Xt); // XᵀK⁻¹X
+    const futB = (t) => { let s = 0; for (let u = T; u < T + 12; u++) s += pw[u - t] / 12; return s; };
     const weights = [], mse = [];
     for (let j0 = 0; j0 < J; j0++) {
       const ell = Array.from({ length: n }, (_, p) => A[Math.floor(p / T)][j0] * futB(p % T));
@@ -661,5 +674,214 @@
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps, minq };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck, sZeroCohorts, zeroVarianceCohorts };
+
+  // ---------------------------------------------------------------- comparing fits on data (card-data Step 7b)
+
+  /** The data up to month t0 (exclusive): what a fit made at origin t0 may see. Index cut at the same month. */
+  function truncate(data, t0) {
+    const T = data.X[0].length, out = { J: data.J, Y: t0 / 12, w: data.w.map((row) => row.slice(0, t0)), X: data.X.map((row) => row.slice(0, t0)) };
+    if (data.index) out.index = data.index.slice(0, data.index.length - (T - t0));
+    return out;
+  }
+
+  /**
+   * The fits a rolling origin can compare (each gets the truncated data only, except the oracle):
+   *   last     — each cohort's mean over its last 12 months (no model);
+   *   moment   — φ̂ from year-on-year cross-products, valid MINQUE tables, the BLUP (`predictor`);
+   *   profile  — the same with φ̂ by profiling (slow: about 70 MINQUE solves per origin);
+   *   index    — φ̂ from the external index (needs one);
+   *   oracle   — the BLUP with the true tables (a reference, not a fit: it uses the truth).
+   */
+  const ROLL_FITS = {
+    last: 'Last-12-month mean',
+    moment: 'BLUP, φ by year-on-year',
+    profile: 'BLUP, φ by profile',
+    index: 'BLUP, φ from the index',
+    oracle: 'BLUP, true tables (oracle)',
+  };
+
+  /**
+   * Whether a valid fitted table (Â, Ĉ ⪰ 0, ŝ² ≥ 0) gives a singular K̂ = Â⊗Φ + Ĉ⊗I + diag(ŝ²/w).
+   * With Z the cohorts whose ŝⱼ² = 0: a combination of cells with variance zero lives on Z, and
+   * each month's slice lies in null(Â_ZZ) ∩ null(Ĉ_ZZ) (Φ ≻ 0), so K̂ is singular iff Â_ZZ + Ĉ_ZZ
+   * is (argued here, not proved in Lean; `Factor.tableK_posDef` is Z = ∅, `Factor.tableK_not_posDef`
+   * a one-cohort Z with Âⱼⱼ = Ĉⱼⱼ = 0; Finding 30). Rounding can let the Cholesky of a singular
+   * K̂ pass, and the BLUP then explodes, so the rolling origin checks this first (relative
+   * tolerance 1e-10 on the eigenvalues of Â_ZZ + Ĉ_ZZ: a numerical zero, not a tuning knob).
+   */
+  function degenerateTable(tab) {
+    const Z = tab.s2.map((x, j) => (x === 0 ? j : -1)).filter((j) => j >= 0);
+    if (!Z.length) return false;
+    const M = Z.map((i) => Z.map((j) => tab.A[i][j] + tab.C[i][j]));
+    const ev = eigSym(M), top = Math.max(...tab.A.map((row, j) => row[j] + tab.C[j][j]), 0);
+    return !(ev[0] > 1e-10 * top);
+  }
+
+  /**
+   * One fit's predictions of every cohort's next-12-month mean from `sub`; falls back to `last`
+   * (flagged) when the fit is singular, some ŝⱼ² is clipped to 0, or K̂ is not positive definite.
+   */
+  function rollPredict(key, sub, world) {
+    const last = () => ({ pred: lastYear(sub), fallback: key !== 'last' });
+    if (key === 'last') return { pred: lastYear(sub), fallback: false };
+    let tab;
+    if (key === 'oracle') {
+      const t = world.truth;
+      tab = { phi: t.phi, A: t.A, C: t.C, s2: t.s2 };
+    } else {
+      const f = fit(sub, { phiMethod: key, psd: true });
+      if (f.singular || f.phiMethod !== key) return last();
+      tab = { phi: f.phi, A: f.A, C: f.C, s2: f.s2 };
+      if (degenerateTable(tab)) return last();
+    }
+    const P = predictor(sub.J, sub.Y, sub.w, tab);
+    return P ? { pred: P.predict(sub.X), fallback: false } : last();
+  }
+
+  /**
+   * Rolling origin, no look-ahead (card-data Step 7b; Tashman 2000). For every origin t0 = burn,
+   * burn + step, …, T − 12, each fit sees months < t0 only (parameters, φ, season and K̂ refitted),
+   * predicts each cohort's mean over months t0, …, t0 + 11, and is scored by the squared error,
+   * exposure-weighted over cohorts: L(t0) = Σⱼ Wⱼ (Ŷⱼ − Yⱼ)² / Σⱼ Wⱼ, Wⱼ the cohort's volume over
+   * the 12 target months (squared error is consistent for the mean, Gneiting 2011).
+   * opts: { fits: keys of ROLL_FITS, burn (months, default 60), step (default 1), world (oracle only) }.
+   * Returns the origins, the pooled loss per fit and origin, per-cohort squared errors and the
+   * number of fallbacks per fit.
+   */
+  function rollingOrigin(data, opts) {
+    const o = opts || {}, T = data.X[0].length, J = data.J, burn = o.burn || 60, step = o.step || 1, keys = o.fits || ['last', 'moment'];
+    const origins = [];
+    for (let t0 = burn; t0 + 12 <= T; t0 += step) origins.push(t0);
+    const loss = {}, card = {}, fallback = {};
+    keys.forEach((k) => { loss[k] = []; card[k] = []; fallback[k] = 0; });
+    for (const t0 of origins) {
+      const sub = truncate(data, t0);
+      const Yt = data.X.map((row) => row.slice(t0, t0 + 12).reduce((a, x) => a + x, 0) / 12);
+      const Wt = data.w.map((row) => row.slice(t0, t0 + 12).reduce((a, x) => a + x, 0)), WS = Wt.reduce((a, x) => a + x, 0);
+      for (const k of keys) {
+        const r = rollPredict(k, sub, o.world);
+        if (r.fallback) fallback[k]++;
+        const e2 = r.pred.map((y, j) => (y - Yt[j]) ** 2);
+        card[k].push(e2);
+        loss[k].push(e2.reduce((a, x, j) => a + Wt[j] * x, 0) / WS);
+      }
+    }
+    return { origins, loss, card, fallback, J };
+  }
+
+  /** Regularized incomplete beta I_x(a, b) (continued fraction, Numerical Recipes betacf). */
+  function betaInc(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const lnBeta = lgamma(a + b) - lgamma(a) - lgamma(b);
+    const front = Math.exp(lnBeta + a * Math.log(x) + b * Math.log(1 - x));
+    const cf = (x2, a2, b2) => {
+      let c = 1, d = 1 - (a2 + b2) * x2 / (a2 + 1);
+      if (Math.abs(d) < 1e-300) d = 1e-300;
+      d = 1 / d;
+      let h = d;
+      for (let m = 1; m <= 300; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b2 - m) * x2 / ((a2 + m2 - 1) * (a2 + m2));
+        d = 1 + aa * d; if (Math.abs(d) < 1e-300) d = 1e-300; c = 1 + aa / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; h *= d * c;
+        aa = -(a2 + m) * (a2 + b2 + m) * x2 / ((a2 + m2) * (a2 + m2 + 1));
+        d = 1 + aa * d; if (Math.abs(d) < 1e-300) d = 1e-300; c = 1 + aa / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d;
+        const del = d * c; h *= del;
+        if (Math.abs(del - 1) < 1e-14) break;
+      }
+      return h;
+    };
+    return x < (a + 1) / (a + b + 2) ? front * cf(x, a, b) / a : 1 - front * cf(1 - x, b, a) / b;
+  }
+  function lgamma(z) { // Lanczos, z > 0
+    const g = 7, c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059,
+      12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (z < 0.5) return Math.log(Math.PI / Math.abs(Math.sin(Math.PI * z))) - lgamma(1 - z);
+    z -= 1;
+    let x = c[0];
+    for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+    const t = z + g + 0.5;
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+  }
+  /** P(T ≤ t) for Student's t with df degrees of freedom. */
+  function tCdf(t, df) {
+    const x = df / (df + t * t), tail = 0.5 * betaInc(x, df / 2, 0.5);
+    return t >= 0 ? 1 - tail : tail;
+  }
+
+  /**
+   * Diebold–Mariano test of equal expected loss from the loss differentials d (fit A − fit B, same
+   * targets), for h-step targets (h = 12 here: the 12-month targets of consecutive monthly origins
+   * overlap, so d is autocorrelated up to lag h − 1). Long-run variance with uniform weights up to
+   * lag h − 1 (Diebold & Mariano 1995); if that is not positive (possible in small samples, Harvey,
+   * Leybourne & Whitehouse 2017), Bartlett weights (Newey–West), flagged. Harvey, Leybourne & Newbold
+   * (1997): DM* = DM·√((n + 1 − 2h + h(h − 1)/n)/n) against t(n − 1). Two-sided p-value.
+   * Returns null when n ≤ 2h (the correction is not positive for n ∈ {h − 1, h}; too few origins).
+   */
+  function dmTest(d, h) {
+    const H = h || 12, n = d.length;
+    if (n <= 2 * H) return null;
+    const mean = d.reduce((a, x) => a + x, 0) / n;
+    const gam = (k) => { let s = 0; for (let t = k; t < n; t++) s += (d[t] - mean) * (d[t - k] - mean); return s / n; };
+    const g = Array.from({ length: H }, (_, k) => gam(k));
+    let V = g[0] + 2 * g.slice(1).reduce((a, x) => a + x, 0), bartlett = false;
+    if (!(V > 0)) { bartlett = true; V = g[0] + 2 * g.slice(1).reduce((a, x, k) => a + (1 - (k + 1) / H) * x, 0); }
+    if (!(V > 0)) return { n, mean, V, dm: NaN, stat: NaN, p: NaN, bartlett };
+    const dm = mean / Math.sqrt(V / n), stat = dm * Math.sqrt((n + 1 - 2 * H + H * (H - 1) / n) / n);
+    const p = 2 * (1 - tCdf(Math.abs(stat), n - 1));
+    return { n, mean, V, dm, stat, p, df: n - 1, bartlett };
+  }
+
+  /**
+   * The weighted-periodogram version of the test (Coroneo & Iacone 2020, fixed-smoothing
+   * asymptotics): long-run variance σ̂² = (2π/m) Σ_{k=1..m} I(2πk/n), I the periodogram of d,
+   * m = ⌊n^(1/3)⌋, and √n·d̄/σ̂ against t(2m). Better sized than DM–HLN in small samples at
+   * multi-step horizons, at the price of power. Two-sided p-value.
+   */
+  function wpeTest(d, m0) {
+    const n = d.length, m = m0 || Math.floor(Math.cbrt(n));
+    if (m < 1 || n < 4) return null;
+    const mean = d.reduce((a, x) => a + x, 0) / n;
+    let S = 0;
+    for (let k = 1; k <= m; k++) {
+      let re = 0, im = 0;
+      for (let t = 0; t < n; t++) { const a = 2 * Math.PI * k * t / n; re += (d[t] - mean) * Math.cos(a); im -= (d[t] - mean) * Math.sin(a); }
+      S += (re * re + im * im) / n; // 2π·I(λ_k)
+    }
+    const V = S / m, stat = mean / Math.sqrt(V / n), df = 2 * m;
+    return { n, m, mean, V, stat, df, p: 2 * (1 - tCdf(Math.abs(stat), df)) };
+  }
+
+  /**
+   * False alarms of both tests when the two fits are equally good: loss differentials d an MA(h − 1)
+   * of standard normals (the overlap of h-month targets) with mean 0, n origins, `reps` series.
+   * Returns the rejection rates at `alpha` (nominal size). Synthetic: no world, no fit.
+   */
+  function dmSize(n, reps, r, alpha, h) {
+    const H = h || 12, al = alpha || 0.05;
+    let dm = 0, wpe = 0, nd = 0;
+    for (let k = 0; k < reps; k++) {
+      const e = Array.from({ length: n + H - 1 }, () => r.normal());
+      const d = Array.from({ length: n }, (_, t) => { let s = 0; for (let i = 0; i < H; i++) s += e[t + i]; return s; });
+      const a = dmTest(d, H), b = wpeTest(d);
+      if (a) { nd++; if (a.p < al) dm++; }
+      if (b && b.p < al) wpe++;
+    }
+    return { dm: nd ? dm / nd : NaN, wpe: wpe / reps };
+  }
+
+  /**
+   * The verdict of a paired comparison at level alpha: 'A' (A has lower loss), 'B', or 'none'
+   * ("no evidence of a difference", not a ranking) for a rolling-origin result and two fit keys:
+   * `verdict` by DM–HLN (the protocol), `verdictWpe` by the weighted-periodogram test.
+   */
+  function compareFits(roll, a, b, alpha) {
+    const d = roll.loss[a].map((x, k) => x - roll.loss[b][k]), dm = dmTest(d, 12), wpe = wpeTest(d), al = alpha || 0.05;
+    const call = (x) => (!x || !(x.p < al) ? 'none' : x.mean < 0 ? 'A' : 'B');
+    const verdict = call(dm), verdictWpe = call(wpe);
+    const meanA = roll.loss[a].reduce((s, x) => s + x, 0) / d.length, meanB = roll.loss[b].reduce((s, x) => s + x, 0) / d.length;
+    return { d, dm, wpe, verdict, verdictWpe, meanA, meanB };
+  }
+
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck, sZeroCohorts, zeroVarianceCohorts, truncate, ROLL_FITS, degenerateTable, rollPredict, rollingOrigin, betaInc, tCdf, dmTest, wpeTest, dmSize, compareFits };
 });

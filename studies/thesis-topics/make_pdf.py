@@ -152,9 +152,10 @@ ext = [
      "each card's next 12 months, and score the squared error. Compare alternatives by <i>paired</i> loss "
      "differences (the target year's shock cancels), with a Diebold&ndash;Mariano test, HAC lag 11 and the "
      "Harvey&ndash;Leybourne&ndash;Newbold correction. Not shuffled K-fold: the common factor makes held-out "
-     "months correlated with the training months. Proposal in the repository; not built yet. "
+     "months correlated with the training months. Built in the app (\u201cComparing fits on data\u201d). "
      "<b>Also:</b> use the app's simulated world, where the true error is known, to measure how often this "
-     "comparison picks the better fit at the real sample size.",
+     "comparison picks the better fit at the real sample size. First result: with 6&ndash;8 years the test "
+     "finds a 30% gap in only 15&ndash;23% of draws, and rejects in 16&ndash;25% when two fits are equally good.",
      "notes/card-data.md Step 7b, studies/literature.md &sect;10i"),
     ("D. Equal or card-specific loadings (Q2)",
      "Loadings are identified only with three or more cards; two cards give the product only. Proved: "
