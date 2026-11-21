@@ -2964,7 +2964,7 @@ $\ell = L_{j\cdot}$) and the matrix one of the vector Blend ($X = U$) are specia
 \subsection*{The season and the 12-month target}
 
 Extension (\texttt{notes/card-data.md}, Step 2). The season is additive on the rate: a cell
-$i$ (card $\times$ month) has mean $\beta_{m(i)}$, one fixed effect per calendar month, and the
+$i$ (cohort $\times$ month) has mean $\beta_{m(i)}$, one fixed effect per calendar month, and the
 target has mean $\sum_m c_m\beta_m$ ($c_m = 1$: the total over the next 12 months).
 
 \begin{definition}[Season design]\label{def:Season}
@@ -3022,7 +3022,7 @@ target has mean $\sum_m c_m\beta_m$ ($c_m = 1$: the total over the next 12 month
   \lean{Credibility.Season.blup_ne_of_volume}
   \leanok
   \uses{def:Season}
-  One card, two years of two months, $K = \mathrm{diag}(1, 2, 1, 2)$ (twice the volume in the
+  One cohort, two years of two months, $K = \mathrm{diag}(1, 2, 1, 2)$ (twice the volume in the
   first month), $\ell = 0$, $c = (1, 1)$: the seasonal and the one-mean predictors differ.
 \end{theorem}
 \begin{proof}
@@ -4101,10 +4101,10 @@ $h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
 \chapter{Extension: a common factor over months}\label{ch:factor}
 % Not in the thesis. Lean: Credibility/Factor.lean (notes/card-data.md Step 3, Finding 25)
 
-Monthly cells $X_{jt}$ (card $j$, month $t$) share a latent demand factor $F_t$ with loadings
+Monthly cells $X_{jt}$ (cohort $j$, month $t$) share a latent demand factor $F_t$ with loadings
 $\lambda_j$ and autocovariance $\Gamma \succeq 0$ over all months, past and future, on top of
 the shock and process noise of Chapter~\ref{ch:shock}. Only second moments are assumed. The data
-are the observed cells, any injective map $c : n \to J \times T$ (cards enter and leave).
+are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter and leave).
 
 \begin{definition}[The common factor model]\label{def:Factor}
   \lean{Credibility.Factor, Credibility.Factor.toShock, Credibility.Factor.obsCov,
@@ -4198,7 +4198,7 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
   \uses{def:Factor_target}
   If $b$ vanishes on the month of cell $(i,t)$,
   $\ell_{(i,t)} = \lambda_i\lambda_{j_0}(\Gamma b)_t + \tau^2\delta_{ij_0}\sum_s b_s$: only the
-  factor and the card level link the past to the target. And
+  factor and the cohort level link the past to the target. And
   $v = \lambda_{j_0}^2 b^\top\Gamma b + \sum_t b_t^2(C_{j_0j_0} + s_{j_0}^2/w_{j_0t})
     + \tau^2(\sum_t b_t)^2$.
 \end{lemma}
@@ -4227,8 +4227,8 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
         Credibility.Factor.blup_neg_of_ar1}
   \leanok
   \uses{def:Factor_target, def:Factor_ar1}
-  Two cards observed in months $0, 1$; AR(1) with $\gamma = 1$, $\varphi = 1/2$, loadings $1$,
-  $C = 0$, $s^2/w = 1/2$, $\tau^2 = 1$; one common mean. The predictor of card $0$ in month
+  Two cohorts observed in months $0, 1$; AR(1) with $\gamma = 1$, $\varphi = 1/2$, loadings $1$,
+  $C = 0$, $s^2/w = 1/2$, $\tau^2 = 1$; one common mean. The predictor of cohort $0$ in month
   $2$ has weights $(11/30, 8/15, -1/30, 2/15)$ on cells $(0,0), (0,1), (1,0), (1,1)$.
 \end{theorem}
 \begin{proof}
@@ -4240,23 +4240,23 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
 
 \begin{remark}[Finding 25]\label{rem:factor_neg}
   \uses{thm:Factor_neg}
-  Positive autocorrelation and a balanced panel do not keep the weights positive: card $1$'s
+  Positive autocorrelation and a balanced panel do not keep the weights positive: cohort $1$'s
   change from month $0$ to $1$ tracks the factor, which persists into month $2$.
 \end{remark}
 
 \begin{definition}[Per-card dynamics]\label{def:Factor_card}
-  \lean{Credibility.Factor.obsCovG, Credibility.Factor.KG, Credibility.Factor.cardPart,
+  \lean{Credibility.Factor.obsCovG, Credibility.Factor.KG, Credibility.Factor.cohortPart,
         Credibility.Factor.ellG, Credibility.Factor.varG}
   \leanok
   \uses{def:Factor_target}
-  Each card's own deviation evolves with autocovariance $G_j \succeq 0$ (e.g.\ per-card
-  AR(1), $G_j = \gamma_j\varphi_j^{|t-s|}$), independent across cards: the table gains
+  Each cohort's own deviation evolves with autocovariance $G_j \succeq 0$ (e.g.\ per-cohort
+  AR(1), $G_j = \gamma_j\varphi_j^{|t-s|}$), independent across cohorts: the table gains
   $\delta_{ij}(G_i)_{ts}$. $K$, $\ell$, $v$ as before for this table.
 \end{definition}
 
 \begin{theorem}[Per-card dynamics: $K \succ 0$ and the predictor]\label{thm:Factor_card}
   \lean{Credibility.Factor.KG_eq_add, Credibility.Factor.ellG_eq, Credibility.Factor.varG_eq,
-        Credibility.Factor.cardPart_posSemidef, Credibility.Factor.KG_posDef,
+        Credibility.Factor.cohortPart_posSemidef, Credibility.Factor.KG_posDef,
         Credibility.Factor.blupG_optimal}
   \leanok
   \uses{def:Factor_card}
@@ -4267,7 +4267,7 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
 \begin{proof}
   \leanok
   \uses{lem:posSemidef_weightedSum, thm:Factor_K, thm:Blup_optimal}
-  The per-card part is a weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}) with
+  The per-cohort part is a weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}) with
   $a_{(i,t),j} = [i = j]$; add it to $K \succ 0$ (Theorem~\ref{thm:Factor_K}).
 \end{proof}
 
@@ -4290,7 +4290,7 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
         Credibility.Factor.Cells.blupG_mse_optimal}
   \leanok
   \uses{def:Factor_Cells, def:Factor_card}
-  For any random cells with the table of Definition~\ref{def:Factor} (or with per-card
+  For any random cells with the table of Definition~\ref{def:Factor} (or with per-cohort
   dynamics), the predictor of Corollary~\ref{cor:Factor_blup} minimises the true mean squared
   error among unbiased linear predictors, and its true error is that of
   Theorem~\ref{thm:Blup_mse}.
@@ -4304,8 +4304,8 @@ are the observed cells, any injective map $c : n \to J \times T$ (cards enter an
 
 \section*{Estimation, part 1: what the data identify}
 
-Write $\Sigma_h(i,j)$ for the covariance of cards $i$, $j$ at months $t$, $t + h$. Across
-cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the shock add up.
+Write $\Sigma_h(i,j)$ for the covariance of cohorts $i$, $j$ at months $t$, $t + h$. Across
+cohorts at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the shock add up.
 
 \begin{theorem}[Equal tables, equal predictors]\label{thm:Factor_congr}
   \lean{Credibility.Factor.K_congr, Credibility.Factor.ell_congr, Credibility.Factor.var_congr,
@@ -4326,7 +4326,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   \leanok
   \uses{def:Factor, def:Factor_card}
   $(\lambda, \Gamma) \mapsto (a\lambda, a^{-2}\Gamma)$, $a \ne 0$ (a sign flip included), leaves
-  the table (with or without per-card dynamics) and the predictor unchanged. So the
+  the table (with or without per-cohort dynamics) and the predictor unchanged. So the
   normalisation (exposure-weighted mean loading $1$) is a presentation choice.
 \end{theorem}
 \begin{proof}
@@ -4355,16 +4355,16 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Theorem~\ref{thm:Factor_congr}.
 \end{proof}
 
-\begin{theorem}[(I3) Lags $\ge 1$ across cards see only the factor]\label{thm:Factor_lagged}
+\begin{theorem}[(I3) Lags $\ge 1$ across cohorts see only the factor]\label{thm:Factor_lagged}
   \lean{Credibility.Factor.obsCovG_of_ne, Credibility.Factor.obsCovG_self_of_ne,
         Credibility.Factor.factor_eq_of_obsCovG_eq}
   \leanok
   \uses{def:Factor_card}
-  For $i \ne j$ and $t \ne s$ the table with per-card dynamics is
+  For $i \ne j$ and $t \ne s$ the table with per-cohort dynamics is
   $\lambda_i\lambda_j\Gamma_{ts}$: no $C$, $s^2/w$, $\tau^2$ or $G$. For $i = j$, $t \ne s$ it is
   $\lambda_i^2\Gamma_{ts} + \tau^2 + (G_i)_{ts}$. So two models with the same table have the
   same lagged cross-card factor part, whatever their $C$, $s^2$, $\tau^2$, $G$: a common
-  factor and per-card dynamics only are told apart by the lagged cross-moments.
+  factor and per-cohort dynamics only are told apart by the lagged cross-moments.
 \end{theorem}
 \begin{proof}
   \leanok
@@ -4372,26 +4372,26 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
 \end{proof}
 
 \begin{definition}[The year-on-year lagged cross-product]\label{def:Factor_yoy}
-  \lean{Credibility.Factor.covG, Credibility.Factor.cardSeason,
+  \lean{Credibility.Factor.covG, Credibility.Factor.cohortSeason,
         Credibility.Factor.yoy}
   \leanok
   \uses{def:Factor_card, def:unbiased_mean}
-  For cards $i$, $j$ and months $t$, $u = t - 12$, $s$, $v = s - 12$:
-  $(X_{it} - X_{iu})(X_{js} - X_{jv})$. The means follow a season per card and calendar month,
-  $\mathbb E X_{jt} = \beta_{j,\mathrm{mon}(t)}$ (it contains a card mean and a common
+  For cohorts $i$, $j$ and months $t$, $u = t - 12$, $s$, $v = s - 12$:
+  $(X_{it} - X_{iu})(X_{js} - X_{jv})$. The means follow a season per cohort and calendar month,
+  $\mathbb E X_{jt} = \beta_{j,\mathrm{mon}(t)}$ (it contains a cohort mean and a common
   season); months with the same calendar month have the same design row.
 \end{definition}
 
 \begin{theorem}[The year-on-year cross-product is unbiased]\label{thm:Factor_yoy}
-  \lean{Credibility.Factor.cardSeason_row, Credibility.Factor.yoy_unbiased,
+  \lean{Credibility.Factor.cohortSeason_row, Credibility.Factor.yoy_unbiased,
         Credibility.Factor.yoy_unbiased_factor,
         Credibility.Factor.yoyPooled_unbiased, Credibility.Factor.Cells.integral_yoy}
   \leanok
   \uses{def:Factor_yoy, thm:Factor_lagged, thm:integral_quad_mean}
-  For any design whose rows agree for card $i$ in months $t$, $u$, the year-on-year
+  For any design whose rows agree for cohort $i$ in months $t$, $u$, the year-on-year
   cross-product is unbiased for every $\beta$, with expectation
   $\Sigma(i,j,t,s) - \Sigma(i,j,t,v) - \Sigma(i,j,u,s) + \Sigma(i,j,u,v)$ in the table.
-  For $i \ne j$ and months distinct across the two cards this is
+  For $i \ne j$ and months distinct across the two cohorts this is
   $\lambda_i\lambda_j(\Gamma_{ts} - \Gamma_{tv} - \Gamma_{us} + \Gamma_{uv})$; with
   $s = t + h$ and a stationary $\Gamma$, $\lambda_i\lambda_j(2\Gamma(h) - \Gamma(h-12) -
   \Gamma(h+12))$ for $h \ge 1$, $h \ne 12$. A weighted sum over month quadruples is unbiased
@@ -4407,14 +4407,14 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Theorem~\ref{thm:integral_quad_mean} for the true expectation.
 \end{proof}
 
-\begin{theorem}[(I4) Loadings from three cards, not from two]\label{thm:Factor_three}
+\begin{theorem}[(I4) Loadings from three cohorts, not from two]\label{thm:Factor_three}
   \lean{Credibility.Factor.load_sq_of_three, Credibility.Factor.obsCovG_eq_of_trade,
-        Credibility.Factor.exTwo, Credibility.Factor.two_cards_not_identified}
+        Credibility.Factor.exTwo, Credibility.Factor.two_cohorts_not_identified}
   \leanok
   \uses{thm:Factor_lagged}
-  For distinct cards $i, j, k$ with $\lambda_j, \lambda_k \ne 0$ and $t \ne s$,
+  For distinct cohorts $i, j, k$ with $\lambda_j, \lambda_k \ne 0$ and $t \ne s$,
   $\Sigma(i,j)\Sigma(i,k)/\Sigma(j,k) = \lambda_i^2\Gamma_{ts}$ (Anderson--Rubin). With two
-  cards this fails: models that agree in $\lambda_i\lambda_j$ ($i \ne j$) and in
+  cohorts this fails: models that agree in $\lambda_i\lambda_j$ ($i \ne j$) and in
   $G_i + \lambda_i^2\Gamma$ have the same table; loadings $(2, \tfrac12)$ with $G = (0, \tfrac34 I)$
   and loadings $(1, 1)$ with $G = (3I, 0)$, $\Gamma = I$, are an example.
 \end{theorem}
@@ -4461,7 +4461,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
 \begin{proof}
   \leanok
   \uses{lem:Shock_unbiased_res, lem:unbiased_linear}
-  Split the table into factor, shock and per-card parts. The shock part of the expectation
+  Split the table into factor, shock and per-cohort parts. The shock part of the expectation
   is the value of Lemma~\ref{lem:Shock_unbiased_res}, since an estimator has one expectation
   (Lemma~\ref{lem:unbiased_linear}); the other parts are the quadratic forms in
   $e_t - a_i$, $e_t - a_j$. Then sum over $t$.
@@ -4483,7 +4483,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
 \begin{remark}[Finding 26]\label{rem:factor_shock_bias}
   For $0 < \varphi < 1$ and $\gamma\lambda_i\lambda_j \ne 0$, the shock fit's $\hat C_{ij}$ is
   unbiased neither for $C_{ij}$ nor for the lag-$0$ covariance $C_{ij} + \gamma\lambda_i\lambda_j$:
-  demeaning each card removes the part of the factor its months share. The ends are
+  demeaning each cohort removes the part of the factor its months share. The ends are
   $\varphi = 0$ (a rank-one shock, $C + \gamma\lambda\lambda^\top$) and a constant factor ($C$).
 \end{remark}
 
@@ -4510,7 +4510,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   $v_j = \lambda_ja_j - \sum_i x_i\lambda_ia_i$, plus $\sum_k x_k(1-x_k)a_k^\top G_ka_k$. With
   equal weights $a_j = \alpha$ the factor term is
   $\sum_j x_j(\lambda_j - \bar\lambda)^2\,\alpha^\top\Gamma\alpha$, $\bar\lambda = \sum_i x_i\lambda_i$:
-  a shock fit reads loading dispersion, and per-card dynamics, as heterogeneity $\tau^2$.
+  a shock fit reads loading dispersion, and per-cohort dynamics, as heterogeneity $\tau^2$.
 \end{theorem}
 \begin{proof}
   \leanok
@@ -4610,7 +4610,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   \leanok
   \uses{thm:henderson_unbiased, def:Factor_yoy}
   Given the factor's shape $\Gamma = \gamma\Gamma_0$ (e.g.\ AR(1) with a known $\varphi$), and
-  without per-card dynamics, the table is linear in a symmetric $A$, a symmetric $C$, $s^2$
+  without per-cohort dynamics, the table is linear in a symmetric $A$, a symmetric $C$, $s^2$
   and $\tau^2$:
   $A_{ij}(\Gamma_0)_{ts} + \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it}) + \tau^2\delta_{ij}$,
   with $A = \gamma\lambda\lambda^\top$. So Henderson III (MINQUE included) with invariant forms
@@ -4698,7 +4698,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
         Credibility.Factor.not_unbiased_shape_one, Credibility.Factor.not_unbiased_factor_of_indep}
   \leanok
   \uses{thm:Factor_henderson, lem:henderson_singular, thm:unbiased_mean, thm:Factor_ar1_id}
-  (1) If card $j$ has a constant volume $w_j$, its process-noise table is $1/w_j$ times its
+  (1) If cohort $j$ has a constant volume $w_j$, its process-noise table is $1/w_j$ times its
   shock variance table, so the system of the shock part ($A = 0$), and of the full shape, is
   singular for every choice of forms: $s_j^2$ needs volume variation
   (cf.\ Theorem~\ref{thm:Shock_not_unbiased}).
@@ -4716,16 +4716,16 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   into the shock) give the same symmetric table, and an estimator has one expectation under it.
 \end{proof}
 
-\begin{theorem}[Card-specific means hide the card level]\label{thm:Factor_card_level}
-  \lean{Credibility.Factor.cardSeason_apply_eq, Credibility.Factor.classTable_eq_cardSeason,
-        Credibility.Factor.shapeBasis_tau_eq_cardSeason,
-        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero,
+\begin{theorem}[Cohort-specific means hide the cohort level]\label{thm:Factor_card_level}
+  \lean{Credibility.Factor.cohortSeason_apply_eq, Credibility.Factor.classTable_eq_cohortSeason,
+        Credibility.Factor.shapeBasis_tau_eq_cohortSeason,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero,
         Credibility.Factor.exists_independent_singular}
   \leanok
   \uses{lem:henderson_singular, thm:Factor_henderson, def:Factor_yoy}
-  The card-level table $I\otimes\mathbf 1\mathbf 1^\top$ is $DED^\top$ for the card season $D$
-  ($E_{(j,m),(j',m')} = \delta_{jj'}$), so every invariant shape system is singular under a card
-  season, and $\tau^2$ must be left out. Minimal case: one card, two months, a common mean,
+  The cohort-level table $I\otimes\mathbf 1\mathbf 1^\top$ is $DED^\top$ for the cohort season $D$
+  ($E_{(j,m),(j',m')} = \delta_{jj'}$), so every invariant shape system is singular under a cohort
+  season, and $\tau^2$ must be left out. Minimal case: one cohort, two months, a common mean,
   tables $I$ and $\mathbf 1\mathbf 1^\top$: independent, $D^\top D = 2$, every invariant
   system singular.
 \end{theorem}
@@ -4735,35 +4735,35 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Each cell has one nonzero entry in $D$; then Lemma~\ref{lem:henderson_singular}.
 \end{proof}
 
-\begin{theorem}[What else the card season hides]\label{thm:Factor_season_collapse}
-  \lean{Credibility.Factor.cardSeason_col, Credibility.Factor.unbiasedMean_cardSeason_eq_zero,
-        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shape,
-        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shapeG}
+\begin{theorem}[What else the cohort season hides]\label{thm:Factor_season_collapse}
+  \lean{Credibility.Factor.cohortSeason_col, Credibility.Factor.unbiasedMean_cohortSeason_eq_zero,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shapeG}
   \leanok
   \uses{thm:Factor_card_level, thm:unbiased_cells, thm:Factor_hendersonG}
-  Under a card season: with one cell per card and calendar month (one year of data) nothing
+  Under a cohort season: with one cell per cohort and calendar month (one year of data) nothing
   is estimable. If $\Gamma_0 = aI + g(\mathrm{mon}\,t, \mathrm{mon}\,s)$ (AR(1) at $\varphi = 0$
   or $1$, or any calendar pattern), $A_z - aC_z$ lies in the span of the design; likewise $g_j$
-  against $aC_{jj}$ for per-card dynamics $G_0$ of that form. In both cases every invariant
+  against $aC_{jj}$ for per-cohort dynamics $G_0$ of that form. In both cases every invariant
   system is singular.
 \end{theorem}
 \begin{proof}
   \leanok
   \uses{thm:unbiased_cells, lem:henderson_singular, thm:Factor_card_level}
   One year: each cell is alone in its column; Theorem~\ref{thm:unbiased_cells}. The shapes:
-  the combination is a table that sees only card and calendar month, hence $DFD^\top$;
+  the combination is a table that sees only cohort and calendar month, hence $DFD^\top$;
   Lemma~\ref{lem:henderson_singular}.
 \end{proof}
 
 \begin{remark}[Finding 27]
-  Under card-specific fixed means, Henderson III / MINQUE (Theorems~\ref{thm:Factor_henderson},
+  Under cohort-specific fixed means, Henderson III / MINQUE (Theorems~\ref{thm:Factor_henderson},
   \ref{thm:Factor_hendersonG}) never has a nonsingular system with $\tau^2$ among the
-  parameters: the card level is what the design already fits.
+  parameters: the cohort level is what the design already fits.
 \end{remark}
 
 \begin{remark}[Finding 28]
-  Under a card season the data see the covariance only through within-calendar-month
-  contrasts across years: one year identifies nothing, and a factor (or per-card dynamics)
+  Under a cohort season the data see the covariance only through within-calendar-month
+  contrasts across years: one year identifies nothing, and a factor (or per-cohort dynamics)
   that repeats with the calendar, the constant factor $\varphi = 1$ included, is absorbed by
   the season. A sufficient condition for the rest: Theorem~\ref{thm:Factor_season_nonsingular}.
 \end{remark}
@@ -4804,19 +4804,19 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   = \operatorname{tr}(D^\top(Q + Q^\top)DN) = 0$.
 \end{proof}
 
-\begin{theorem}[Nonsingular under the card season]\label{thm:Factor_season_nonsingular}
+\begin{theorem}[Nonsingular under the cohort season]\label{thm:Factor_season_nonsingular}
   \lean{Credibility.Factor.SeasonPar, Credibility.Factor.seasonBasis,
         Credibility.Factor.seasonBasis_transpose, Credibility.Factor.sum_smul_seasonBasis_apply,
-        Credibility.Factor.minque_cardSeason_det_ne_zero,
-        Credibility.Factor.minque_cardSeason_det_eq_zero_of_volume,
-        Credibility.Factor.cardSeason_mulVec_injective, Credibility.Factor.cardSeason_det_isUnit}
+        Credibility.Factor.minque_cohortSeason_det_ne_zero,
+        Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume,
+        Credibility.Factor.cohortSeason_mulVec_injective, Credibility.Factor.cohortSeason_det_isUnit}
   \leanok
   \uses{lem:minque_contrasts, def:Factor_yoy, thm:Factor_card_level}
-  Under a card season, with the parameters $(A, C, s^2)$ ($\tau^2$ dropped), any number of cards
+  Under a cohort season, with the parameters $(A, C, s^2)$ ($\tau^2$ dropped), any number of cohorts
   and any prior $W \succ 0$, the MINQUE system is nonsingular if (i) $\Gamma_0$ has a nonzero
   double difference $\Gamma_0(t_1,t_2) - \Gamma_0(t_1,u_2) - \Gamma_0(u_1,t_2) + \Gamma_0(u_1,u_2)$
   for same-calendar-month pairs $(t_1, u_1)$, $(t_2, u_2)$ with no month in common, and (ii) each
-  card has two same-calendar-month pairs with different $1/w_{jt} + 1/w_{ju}$. With two years,
+  cohort has two same-calendar-month pairs with different $1/w_{jt} + 1/w_{ju}$. With two years,
   (ii) is needed: if $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$ is the same for every $m$, the system is
   singular for every prior and shape. $D^\top W^{-1}D$ is nonsingular when every calendar month
   occurs.
@@ -4838,7 +4838,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   \leanok
   \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
         thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
-  Under a card season, Henderson III / MINQUE without $\tau^2$ is unbiased for $A_{ij}$,
+  Under a cohort season, Henderson III / MINQUE without $\tau^2$ is unbiased for $A_{ij}$,
   $C_{ij}$, $s_j^2$ whatever $\tau^2$. Two years of calendar months, $\Gamma = \gamma\Gamma_0$
   with $\Gamma_0$ AR(1), $0 < \varphi < 1$, and volumes as in (ii): for every prior
   $W \succ 0$ MINQUE is nonsingular and unbiased for $\gamma\lambda_i\lambda_j$, $C_{ij}$ and
@@ -4848,20 +4848,20 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   \leanok
   \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
         thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
-  The card level is $DED^\top$ (Theorem~\ref{thm:Factor_card_level}), so
+  The cohort level is $DED^\top$ (Theorem~\ref{thm:Factor_card_level}), so
   Theorem~\ref{thm:unbiased_add_design} adds it to Theorem~\ref{thm:henderson_unbiased}. For
   AR(1), January and February give $2\varphi - \varphi^{11} - \varphi^{13} > 0$; then
   Theorem~\ref{thm:Factor_season_nonsingular}.
 \end{proof}
 
 \begin{remark}[Finding 29]
-  With two years under a card season, $s_j^2$ is separated from $C_{jj}$ only by volumes that
+  With two years under a cohort season, $s_j^2$ is separated from $C_{jj}$ only by volumes that
   vary over the calendar: a volume that changes only from one year to the next leaves the
   MINQUE system singular. The year-on-year differences see the process noise only through
   $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$.
 \end{remark}
 
-\begin{theorem}[Henderson III with per-card dynamics of known shape]\label{thm:Factor_hendersonG}
+\begin{theorem}[Henderson III with per-cohort dynamics of known shape]\label{thm:Factor_hendersonG}
   \lean{Credibility.Factor.ParG, Credibility.Factor.shapeTableG, Credibility.Factor.shapeBasisG,
         Credibility.Factor.shapeParG, Credibility.Factor.shapeTableG_eq_linTable,
         Credibility.Factor.henderson_shapeG_unbiased, Credibility.Factor.covG_eq_shapeTableG,
@@ -4869,8 +4869,8 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
         Credibility.Factor.hendersonMat_shapeG_one_det_eq_zero}
   \leanok
   \uses{thm:Factor_henderson, lem:henderson_singular}
-  With per-card dynamics $G_j = g_jG_0$ of known shape $G_0$ and $\Gamma = \gamma\Gamma_0$, the
-  table adds $\delta_{ij}g_i(G_0)_{ts}$, one basis table $E_{jj}\otimes G_0$ per card. Henderson
+  With per-cohort dynamics $G_j = g_jG_0$ of known shape $G_0$ and $\Gamma = \gamma\Gamma_0$, the
+  table adds $\delta_{ij}g_i(G_0)_{ts}$, one basis table $E_{jj}\otimes G_0$ per cohort. Henderson
   III with invariant forms and a nonsingular system is unbiased for $\gamma\lambda_i\lambda_j$,
   $C_{ij}$, $s_j^2$, $\tau^2$ and $g_j$ whatever the fixed effects. White noise $G_0 = I$ is the
   shock variance table again: the system is singular.
@@ -4879,7 +4879,7 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   \leanok
   \uses{thm:Factor_henderson, thm:henderson_unbiased, lem:henderson_singular}
   Split the sum over the parameters into the shape part (Theorem~\ref{thm:Factor_henderson}) and
-  the per-card part; then Theorem~\ref{thm:henderson_unbiased}. For $G_0 = I$,
+  the per-cohort part; then Theorem~\ref{thm:henderson_unbiased}. For $G_0 = I$,
   Lemma~\ref{lem:henderson_singular}.
 \end{proof}
 

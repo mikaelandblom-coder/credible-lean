@@ -92,7 +92,7 @@ lemma unbiasedCov_mul (C : J × T → J × T → ℝ) (ℓ m : J × T → ℝ) (
 
 /-! ### Means from a design: `E X = Dβ`
 
-The mean need not be one number `μ`: with fixed effects (a card mean, a season) it is
+The mean need not be one number `μ`: with fixed effects (a cohort mean, a season) it is
 `E X = Dβ` for a design `D` and unknown `β`. Then `E[XₚX_q] = Cₚq + mₚm_q` with `m = Dβ`
 (`EcovMean`), and an estimator is unbiased if this holds for every `β` (`UnbiasedMean`).
 The one-mean case `UnbiasedCov` is the design with one column of ones
@@ -348,7 +348,7 @@ theorem integral_quad_of_cov {Ω : Type*} [MeasurableSpace Ω] {P : MeasureTheor
 
 omit [DecidableEq J] [DecidableEq T] in
 /-- **A smaller design**: unbiased for every `β` under `D` stays so under any design `DE`
-whose columns lie in the column space of `D` (e.g. a common season from a per-card one). -/
+whose columns lie in the column space of `D` (e.g. a common season from a per-cohort one). -/
 lemma UnbiasedMean.of_mul {B' : Type*} [Fintype B'] {D : Matrix (J × T) B ℝ}
     {f : (J × T → ℝ) → ℝ} {θ : ℝ} (h : UnbiasedMean C D f θ) (E : Matrix B B' ℝ) :
     UnbiasedMean C (D * E) f θ := by

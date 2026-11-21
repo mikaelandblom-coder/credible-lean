@@ -404,18 +404,18 @@ Gaps, extra hypotheses and new results found while formalizing.
    `Shock.Cells.bestZ_mse_optimal`, `Shock.Cells.integral_KHat`).
 
 24. **The season does not drop out of the 12-month predictor, even with whole years (new;
-   `notes/card-data.md` Step 2).** Expected at first: for a 12-month target and cards observed
+   `notes/card-data.md` Step 2).** Expected at first: for a 12-month target and cohorts observed
    in whole years, an estimated additive season (one fixed effect per calendar month) leaves
    the predictor unchanged. False. The seasonal predictor equals the one-mean predictor iff the
    one-mean `d*` already puts weight `cₘ` (here `1`) on each month (`Season.blup_eq_iff`, from
-   `Core.blup_eq_blup_iff_of_nested`). Counterexample (`Season.blup_ne_of_volume`): one card,
+   `Core.blup_eq_blup_iff_of_nested`). Counterexample (`Season.blup_ne_of_volume`): one cohort,
    two years of two months, independent noise with twice the volume in the first month,
    `K = diag(1, 2, 1, 2)`, `ℓ = 0`: the one-mean `d* = (2/3, 1/3, 2/3, 1/3)` puts `4/3` on the
    first month. With a real season `β` it is biased by `Σₘ (Sₘ(d*) - cₘ)βₘ = (β₁ - β₂)/3`
    (`Core.Target.integral_bias`). What holds: the season drops out when the months are
    interchangeable, some relabelling of the cells maps any month onto any other and leaves `K`
    and `ℓ` unchanged (`Season.blup_eq_of_interchangeable`); seasonal volume, an AR(1) factor
-   that favours recent months, or a card entering mid-year all break that. So with a season,
+   that favours recent months, or a cohort entering mid-year all break that. So with a season,
    fit it (or a known index, `Unequal.a_eq_of_volume`); the one-mean predictor leans on the
    high-volume months.
 
@@ -423,16 +423,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    Step 3).** Common factor model `cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛCᵢⱼ + δₜₛδᵢⱼsᵢ²/wᵢₜ + τ²δᵢⱼ`
    (`Credibility/Factor.lean`, `K ≻ 0` for any observed cells: `Factor.K_posDef`). Expected:
    per-month weights can be negative under an AR(1) factor. True, and already with positive
-   autocorrelation and a balanced panel (`Factor.blup_neg_of_ar1`): two cards observed in
+   autocorrelation and a balanced panel (`Factor.blup_neg_of_ar1`): two cohorts observed in
    months `0, 1`, AR(1) `Γₜₛ = φ^|t-s|` with `φ = 1/2`, loadings `1`, `C = 0`, `s²/w = 1/2`,
-   `τ² = 1`, one common mean. The best predictor of card 0 in month 2 has weights
+   `τ² = 1`, one common mean. The best predictor of cohort 0 in month 2 has weights
    `(11/30, 8/15, -1/30, 2/15)` on `(0,0), (0,1), (1,0), (1,1)` (`Factor.blup_exAR1`). Why:
-   card 1's change `X₁₁ - X₁₀` tracks the factor's latest value, which persists into month 2,
-   without card 1's own level. With one card the weights stayed positive in our numerical
+   cohort 1's change `X₁₁ - X₁₀` tracks the factor's latest value, which persists into month 2,
+   without cohort 1's own level. With one cohort the weights stayed positive in our numerical
    checks (AR(1) plus noise, `φ = ±1/2`), so the negative weight comes from borrowing the
-   factor from other cards. Pinquet (2020) gives nonnegative partial autocorrelations as
+   factor from other cohorts. Pinquet (2020) gives nonnegative partial autocorrelations as
    sufficient for nonnegative weights for per-risk AR effects; with a common factor across
-   cards that condition does not carry over. Practice: negative weights are a feature of the
+   cohorts that condition does not carry over. Practice: negative weights are a feature of the
    best predictor here, not a fitting error; a predictor restricted to nonnegative weights
    (like the thesis blend) gives this up.
 
@@ -445,7 +445,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    whenever the factor persists. Two months, equal weights, AR(1) `γφ^|t-s|`: `Ĉᵢⱼ`
    estimates `Cᵢⱼ + (1 - φ)γλᵢλⱼ` (`Factor.crossHat_ar1_two`). The two ends: `φ = 0` gives
    `C + γλλᵀ` (the factor is a rank-one shock, as in `obsCov_eq_shock_loadings`), and a
-   constant factor (`φ = 1`) gives `C` (demeaning removes it). Why: subtracting each card's
+   constant factor (`φ = 1`) gives `C` (demeaning removes it). Why: subtracting each cohort's
    own mean removes the part of the factor shared by all its months. Practice: a shock fit
    on data with a persistent demand factor gives a `K̂` that is neither the shock nor the
    lag-0 covariance, and its lagged covariances (`ℓ` for the next year) are `0` where the
@@ -453,7 +453,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    rather than reading it off the shock. The level estimate is affected too: the
    between-cohort spread gains `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, which with equal weights
    `aⱼ = α` is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`Factor.between_factor_equal_weights`): unequal loadings
-   look like heterogeneity `τ²`, as do per-card dynamics (`Σₖxₖ(1 - xₖ)αᵀGₖα`).
+   look like heterogeneity `τ²`, as do per-cohort dynamics (`Σₖxₖ(1 - xₖ)αᵀGₖα`).
    The diagonal (2026-11-21): each `Σₜuⱼₜrⱼₜ²` gains
    `Fⱼ(u) = Σₜuⱼₜ(λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ))`, so `Ĉⱼⱼ` and `ŝⱼ²` are off by
    the Cramer combinations of `Fⱼ(u)`, `Fⱼ(v)` (`Factor.CdiagHat_factor_unbiased`,
@@ -463,53 +463,53 @@ Gaps, extra hypotheses and new results found while formalizing.
    volume pattern, which the factor does not follow). With independent months the factor is
    a rank-one shock: `Ĉⱼⱼ` reads `Cⱼⱼ + γλⱼ²`, `ŝⱼ²` stays unbiased (`Factor.CdiagHat_s2Hat_indep`).
 
-27. **Card-specific means hide the card level from invariant estimators (new; `notes/card-data.md`
+27. **Cohort-specific means hide the cohort level from invariant estimators (new; `notes/card-data.md`
    Step 5).** Expected: Henderson III / MINQUE given the shape (`Factor.henderson_factor_unbiased`)
    estimates `τ²` with the other parameters whenever the basis tables are independent and the
-   design has full rank. Found: no. The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season
-   `D` (`Factor.shapeBasis_tau_eq_cardSeason`), and a table in the span of the design gets weight
+   design has full rank. Found: no. The cohort-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the cohort season
+   `D` (`Factor.shapeBasis_tau_eq_cohortSeason`), and a table in the span of the design gets weight
    `0` from every form with `QD = 0` (`Model.hendersonMat_det_eq_zero_of_design`), so every
-   invariant system is singular (`Factor.hendersonMat_cardSeason_det_eq_zero`). The right
+   invariant system is singular (`Factor.hendersonMat_cohortSeason_det_eq_zero`). The right
    condition for MINQUE is independence of the projected tables `RVₖR`
-   (`Model.minque_det_ne_zero_iff`); minimal counterexample: one card, two months, a common mean,
-   tables `I` and `11ᵀ` (`Factor.exists_independent_singular`). Practice: under card-specific
+   (`Model.minque_det_ne_zero_iff`); minimal counterexample: one cohort, two months, a common mean,
+   tables `I` and `11ᵀ` (`Factor.exists_independent_singular`). Practice: under cohort-specific
    means fit `(A, C, s², g)` without `τ²`; `τ²` is the spread of what the design already
    estimates, so it is not needed for prediction with those fixed effects.
 
-28. **Under a card season the covariance is seen only through repeated calendar months (new;
+28. **Under a cohort season the covariance is seen only through repeated calendar months (new;
    `notes/card-data.md` Step 5).** Expected: dropping `τ²` (Finding 27) leaves a nonsingular
    Henderson III / MINQUE system for `(A, C, s², g)` given volume variation and `Γ₀ ≠ I`.
    Found: further collapses. Invariant forms see tables only modulo `{YDᵀ}`
-   (`Model.hendersonMat_det_eq_zero_of_mod_design`), and under the card season the tables that
-   see only card and calendar month are `DFDᵀ` (`Factor.classTable_eq_cardSeason`). (a) One
-   year of data (one cell per card and calendar month): every unbiased quadratic estimator has
-   expectation `0`, nothing is estimable (`Factor.unbiasedMean_cardSeason_eq_zero`). (b) A
+   (`Model.hendersonMat_det_eq_zero_of_mod_design`), and under the cohort season the tables that
+   see only cohort and calendar month are `DFDᵀ` (`Factor.classTable_eq_cohortSeason`). (a) One
+   year of data (one cell per cohort and calendar month): every unbiased quadratic estimator has
+   expectation `0`, nothing is estimable (`Factor.unbiasedMean_cohortSeason_eq_zero`). (b) A
    factor shape `Γ₀ = aI + g(mon t, mon s)`, e.g. AR(1) at `φ = 1` (a constant factor, which
    demeaning removes, as in Finding 26) or at `φ = 0` (against `C`, as before), or any shape
    that repeats with the calendar: `A_z - aC_z` is invisible, singular for every invariant form
-   (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`). (c) Per-card dynamics `G₀` of that
-   form: `gⱼ` against `aCⱼⱼ` (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shapeG`). Practice:
-   fit second moments under a card season only with at least two years per card, and with
+   (`Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape`). (c) Per-card dynamics `G₀` of that
+   form: `gⱼ` against `aCⱼⱼ` (`Factor.hendersonMat_cohortSeason_det_eq_zero_of_shapeG`). Practice:
+   fit second moments under a cohort season only with at least two years per cohort, and with
    factor shapes that decay within the year; check the rank of the projected tables
    (`Model.minque_det_ne_zero_iff`) rather than hoping for a general condition. A general
    sufficient condition for nonsingularity: see Finding 29.
 
 29. **With two years, `s²` needs volumes that vary over the calendar, not only across years
-   (new; `notes/card-data.md` Step 5).** Expected: under a card season, two years, AR(1) with
+   (new; `notes/card-data.md` Step 5).** Expected: under a cohort season, two years, AR(1) with
    `0 < φ < 1` and volume variation make MINQUE for `(A, C, s²)` nonsingular. Found: true with
-   the right kind of volume variation. Sufficient (`Factor.minque_cardSeason_det_ne_zero`, any
-   number of cards, any prior `W ≻ 0`): one nonzero year-on-year double difference of `Γ₀`
+   the right kind of volume variation. Sufficient (`Factor.minque_cohortSeason_det_ne_zero`, any
+   number of cohorts, any prior `W ≻ 0`): one nonzero year-on-year double difference of `Γ₀`
    (for AR(1): `2φ - φ¹¹ - φ¹³ > 0`, `Factor.minque_ar1_two_years_det_ne_zero`), and for every
-   card `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` not constant over the calendar month `m`. The second condition
-   is needed: if it is constant for one card (e.g. its volume changes only from one year to
+   cohort `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` not constant over the calendar month `m`. The second condition
+   is needed: if it is constant for one cohort (e.g. its volume changes only from one year to
    the next, or is the same each year in every month), `2Vₛⱼ - hV_Cⱼⱼ` is `YDᵀ + DYᵀ`, within
    each calendar month `diag(x, -x)`, and MINQUE is singular for every prior and every shape
-   (`Factor.minque_cardSeason_det_eq_zero_of_volume`). The reason: with two years the only
+   (`Factor.minque_cohortSeason_det_eq_zero_of_volume`). The reason: with two years the only
    contrasts are the year-on-year differences, which see the process noise only through
    `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎`. With three or more years the diagonal `diag(1/wⱼ)` within a
    calendar month is no longer of the form `u1ᵀ + 1uᵀ` (argued, not formalized). Dropping `τ²`
    costs nothing: the estimators stay unbiased whatever `τ²` (`Factor.henderson_season_unbiased`,
-   `Model.UnbiasedMean.add_design`). Practice: with two years, check that each card's volume
-   has a within-year pattern; otherwise report `Cⱼⱼ + sⱼ²h/2` for that card.
+   `Model.UnbiasedMean.add_design`). Practice: with two years, check that each cohort's volume
+   has a within-year pattern; otherwise report `Cⱼⱼ + sⱼ²h/2` for that cohort.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -51,14 +51,14 @@ tactics.
   → `Credibility/Trend.lean`
 - extension: the common factor model (`notes/card-data.md` Step 3, Finding 25): a factor
   `λᵢλⱼΓₜₛ` over all months on top of `Shock` (`Γ = 0`), `K ≻ 0` for any observed cells, AR(1)
-  and block `Γ`, per-card dynamics `δᵢⱼGᵢ` (`KG`), `ℓ`, `v` for the 12-month target, Step 1/2 as
+  and block `Γ`, per-cohort dynamics `δᵢⱼGᵢ` (`KG`), `ℓ`, `v` for the 12-month target, Step 1/2 as
   corollaries → `Credibility/Factor.lean`; its moment layer (`Factor.Cells`: random cells over
   all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE)
   → `Credibility/FactorMoments.lean`
 - extension: estimating the factor model, part 1 (`notes/card-data.md` Step 5, literature §10h):
   `Expectation.UnbiasedMean` (means `Dβ`: unbiased for all `β` iff the form annihilates `D`), (I1)
   scale `(λ, Γ) ↦ (aλ, a⁻²Γ)`, (I2) lag 0 only through `C + γλλᵀ`, (I3) lag ≥ 1 cross-card
-  entries are `λᵢλⱼΓₜₛ`, the year-on-year lagged cross-product, (I4) loadings need three cards,
+  entries are `λᵢλⱼΓₜₛ`, the year-on-year lagged cross-product, (I4) loadings need three cohorts,
   (I5) AR(1) from cross-moments, the shock estimators' bias under a factor (Finding 26: `Ĉ`, the
   between-cohort spread)
   → `Credibility/FactorEstimation.lean`

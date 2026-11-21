@@ -17,29 +17,29 @@ voice, then trim towards 8 pages.
 ## Pending
 (Results proved since the last handbook update that may belong here.)
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
-  of two cards at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
-  card means and seasons; the shock and the factor's lag-0 share need not be split"
+  of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
+  cohort means and seasons; the shock and the factor's lag-0 share need not be split"
   (`Credibility.Factor.yoy_unbiased_factor`, `Credibility.Factor.blup_eq_of_lag0`). Goes with
   the factor entry once the fit is complete. Also "watch out: a shock-only fit on data with a
   persistent factor estimates `C + (1 - φ)γλλᵀ`" (Finding 26, `Credibility.Factor.crossHat_ar1_two`)
-  and "loadings need three cards" (`Credibility.Factor.load_sq_of_three`). Given `φ`, "equate
+  and "loadings need three cohorts" (`Credibility.Factor.load_sq_of_three`). Given `φ`, "equate
   invariant forms to their expectations and solve (Henderson III; MINQUE with a prior guess)"
   (`Credibility.Factor.henderson_factor_unbiased`, `Credibility.Model.minque_unbiased`).
-  Watch out (2026-11-21): "the system is singular, whatever the forms, if a card has constant
+  Watch out (2026-11-21): "the system is singular, whatever the forms, if a cohort has constant
   volume (`s²` against `C`) or months are independent (`Γ₀ = I`: factor against shock)"
   (`Credibility.Factor.hendersonMat_shock_det_eq_zero`,
-  `Credibility.Factor.hendersonMat_shape_one_det_eq_zero`); per-card dynamics of known shape
-  add one parameter per card (`Credibility.Factor.henderson_factorG_unbiased`); "with
-  card-specific means, leave `τ²` out" (Finding 27,
-  `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero`); "with a card season, one year
+  `Credibility.Factor.hendersonMat_shape_one_det_eq_zero`); per-cohort dynamics of known shape
+  add one parameter per cohort (`Credibility.Factor.henderson_factorG_unbiased`); "with
+  cohort-specific means, leave `τ²` out" (Finding 27,
+  `Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero`); "with a cohort season, one year
   estimates no second moment, and a factor that repeats with the calendar is absorbed" (Finding
-  28, `Credibility.Factor.unbiasedMean_cardSeason_eq_zero`); "two years and AR(1) suffice for
-  MINQUE, but with two years each card's volume needs a within-year pattern" (Finding 29,
+  28, `Credibility.Factor.unbiasedMean_cohortSeason_eq_zero`); "two years and AR(1) suffice for
+  MINQUE, but with two years each cohort's volume needs a within-year pattern" (Finding 29,
   `Credibility.Factor.minque_ar1_two_years_unbiased`,
-  `Credibility.Factor.minque_cardSeason_det_eq_zero_of_volume`).
+  `Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
-  observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch
+  observed cells, `ℓ` for the next 12 months only sees the factor and the cohort level; watch
   out: the best weights can be negative even with positive autocorrelation"
   (`Credibility.Factor.K_posDef`, `Credibility.Factor.ell_apply_of_future`,
   `Credibility.Factor.blup_neg_of_ar1`). Entry together with the season once Step 4

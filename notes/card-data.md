@@ -12,6 +12,9 @@ three-topic draft, to be replaced).
 
 ## The data and the questions
 
+In the Lean files and the docs a card product is a **cohort** `j` (renamed 2026-11-21):
+nothing in the results is specific to cards, e.g. `Factor.cohortSeason`, per-cohort dynamics.
+
 Monthly aggregates per card product `j` and month `t`: cards in force `wⱼₜ`,
 claim counts `Nⱼₜ`, paid amounts `Sⱼₜ`, claim type, reporting dates. Cards
 start and stop within the window. Travel demand varies strongly from year to
@@ -142,7 +145,7 @@ rate is linear; multiplicative needs a plug-in or a log scale, so say which.
   (1991) use a multiplicative season on the log scale; that is an app option.
 - **Known index `cₜ`:** a corollary of `Unequal` (divide by `cₜ`). This is the
   oracle fit for the app. Under Poisson-type variance the weight is expected
-  claims `cₜwⱼₜ`, not cards in force.
+  claims `cₜwⱼₜ`, not exposures.
 
 ### Step 3. The common factor model (Lean, main step; maybe two chats)
 **Status (2026-11-20): done** in `Credibility/Factor.lean` (cells: any injective
@@ -235,7 +238,7 @@ the table of Step 3.
 (`blup_rescale`), I2 (`blup_eq_of_lag0`), I3 (`obsCovG_of_ne`, `factor_eq_of_obsCovG_eq`), and
 the year-on-year cross-product (`yoy_unbiased_factor`, pooled `yoyPooled_unbiased`, true
 expectation `Cells.integral_yoy`) under a per-card calendar-month season. 2026-11-21: I4
-(`load_sq_of_three`, `two_cards_not_identified`), I5 (`ar1_identified`, `ar1_zero_eq_shock`),
+(`load_sq_of_three`, `two_cohorts_not_identified`), I5 (`ar1_identified`, `ar1_zero_eq_shock`),
 the shock fit's `Ĉ` under a factor (Finding 26, `crossHat_factor_unbiased`). Next: Henderson III
 given `φ`, the bias of `tauHat` and the diagonal estimators under a factor. 2026-11-21 (later):
 the between-cohort spread under a factor (`between_factor_unbiased`, `between_factor_equal_weights`);
@@ -249,15 +252,15 @@ separates `A` from `C` (`Factor.not_unbiased_factor_of_indep`); per-card dynamic
 `Gⱼ = gⱼG₀` (`Factor.henderson_factorG_unbiased`; `G₀ = I` singular). MINQUE is nonsingular
 iff the projected tables `RVₖR` are independent (`Model.minque_det_ne_zero_iff`); an independent
 basis with a full-rank design is not enough: under a card season `τ²` is never estimable
-(Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`). Without `τ²`, further collapses
+(Finding 27, `Factor.hendersonMat_cohortSeason_det_eq_zero`). Without `τ²`, further collapses
 under a card season (Finding 28): one year identifies nothing
-(`Factor.unbiasedMean_cardSeason_eq_zero`); shapes `Γ₀` or `G₀` of the form `aI + g(mon, mon)`
+(`Factor.unbiasedMean_cohortSeason_eq_zero`); shapes `Γ₀` or `G₀` of the form `aI + g(mon, mon)`
 (AR(1) at `φ ∈ {0, 1}`) are singular. Sufficient condition (2026-11-21,
-`Factor.minque_cardSeason_det_ne_zero`): one nonzero year-on-year double difference of `Γ₀` and,
+`Factor.minque_cohortSeason_det_ne_zero`): one nonzero year-on-year double difference of `Γ₀` and,
 per card, `1/wⱼₜ + 1/wⱼᵤ` varying over same-calendar-month pairs; two years, AR(1),
 `0 < φ < 1`: nonsingular and unbiased for `(γλλᵀ, C, s²)` whatever `τ²`
 (`Factor.minque_ar1_two_years_unbiased`). With two years the volume condition is needed
-(Finding 29, `Factor.minque_cardSeason_det_eq_zero_of_volume`). Profiling over `φ` is only
+(Finding 29, `Factor.minque_cohortSeason_det_eq_zero_of_volume`). Profiling over `φ` is only
 consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.

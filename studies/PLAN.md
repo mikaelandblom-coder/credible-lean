@@ -252,7 +252,7 @@ One chat per step; none needs Lean except step 5.
   corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
   when ρ̂ > 0 (off-balance also when β² > 0); `simulate` reports their share as `expected`. Tests:
   the floor's b < 0, z < 1 and balance in bⱼ/(1 − zⱼ); notes ↔ expected flags; balancing costs > 5%.
-- [x] 3c. Findings 17–20 in the app (2026-11-17). Card "Is correlation worth modelling?":
+- [x] 3c. Findings 17–20 in the app (2026-11-17). Cohort "Is correlation worth modelling?":
   from the draw, `δ̂₋`, `δ̂₊` (eigenvalues of corrBS's noise correlation, one `ρ̂`) and the
   bound `(a + A)²/(4aA)` for ignoring it and for each model's `θ` (BS 0, corr `θ̂`, corrBS and
   BLUP 1; `Engine.correlationIndicator`, `dampedBound`); in the world, exact MSE of the BLUP,
@@ -288,27 +288,27 @@ One chat per step; none needs Lean except step 5.
 (Results or findings that may need a switch, step or message in the app.)
 - Henderson III fit (2026-11-21, `FactorEstimation.lean`): before solving, check that the basis
   tables are independent (`Model.exists_hendersonMat_det_ne_zero_iff`); drop `sⱼ²` (report
-  `Cⱼⱼ + sⱼ²/wⱼ`) for a card with constant volume (`Factor.hendersonMat_shock_det_eq_zero`), and
-  the factor when `φ = 0` (`Factor.not_unbiased_factor_of_indep`); a per-card AR(1) shape adds
-  one scale per card (`Factor.henderson_factorG_unbiased`), but per-card white noise is the shock.
-  Message in the app when the fit hits one of these. With a card season as fixed effects,
+  `Cⱼⱼ + sⱼ²/wⱼ`) for a cohort with constant volume (`Factor.hendersonMat_shock_det_eq_zero`), and
+  the factor when `φ = 0` (`Factor.not_unbiased_factor_of_indep`); a per-cohort AR(1) shape adds
+  one scale per cohort (`Factor.henderson_factorG_unbiased`), but per-cohort white noise is the shock.
+  Message in the app when the fit hits one of these. With a cohort season as fixed effects,
   leave `τ²` out of the Henderson / MINQUE parameters (Finding 27,
-  `Factor.hendersonMat_cardSeason_det_eq_zero`); test MINQUE nonsingularity by the rank of the
-  `RVₖR` (`Model.minque_det_ne_zero_iff`). Under a card season (Finding 28): require at least
-  two years per card for the second-moment fit (`Factor.unbiasedMean_cardSeason_eq_zero`), and
-  warn when `φ̂` is near `0` or `1` (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`).
-  Finding 29: with two years, warn for a card whose `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` is flat over the
-  months (`Factor.minque_cardSeason_det_eq_zero_of_volume`) and report `Cⱼⱼ + sⱼ²h/2` there;
+  `Factor.hendersonMat_cohortSeason_det_eq_zero`); test MINQUE nonsingularity by the rank of the
+  `RVₖR` (`Model.minque_det_ne_zero_iff`). Under a cohort season (Finding 28): require at least
+  two years per cohort for the second-moment fit (`Factor.unbiasedMean_cohortSeason_eq_zero`), and
+  warn when `φ̂` is near `0` or `1` (`Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape`).
+  Finding 29: with two years, warn for a cohort whose `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` is flat over the
+  months (`Factor.minque_cohortSeason_det_eq_zero_of_volume`) and report `Cⱼⱼ + sⱼ²h/2` there;
   otherwise the AR(1) fit is nonsingular for any prior (`Factor.minque_ar1_two_years_unbiased`),
   so the world can default to two years with seasonal volumes.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
-  the factor fit is the year-on-year lagged cross-product per card pair and lag
-  (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card
+  the factor fit is the year-on-year lagged cross-product per cohort pair and lag
+  (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort
   calendar season). Report loadings normalised to exposure-weighted mean `1` (`blup_rescale`:
   presentation only); with a stationary `Γ` the app need not split lag-0 covariance between
   shock and factor (`blup_eq_of_lag0`), so show `C + γλλᵀ` as one matrix.
-  2026-11-21: individual loadings need three cards (`load_sq_of_three`); with two the app
-  should report only `λ₁λ₂` (`two_cards_not_identified`). `φ̂ = Σ₂/Σ₁` from pooled
+  2026-11-21: individual loadings need three cohorts (`load_sq_of_three`); with two the app
+  should report only `λ₁λ₂` (`two_cohorts_not_identified`). `φ̂ = Σ₂/Σ₁` from pooled
   cross-moments (`ar1_identified`). Finding 26: the world-vs-fit comparison should show that
   a shock-only fit on factor data misreads `C` (`crossHat_ar1_two`: `C + (1 - φ)γλλᵀ`).
   Its `ŝ²` and `τ̂²` too (`tauHat_factor_unbiased`): show the shock fit's `τ̂²` against the
@@ -320,14 +320,14 @@ One chat per step; none needs Lean except step 5.
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true
   `Γ`; estimated `Γ`, `λ` after Step 4). The app should show negative cell weights as normal
-  (`Factor.blup_neg_of_ar1`), not flag them as an error. Also "per-card AR(1)" (`Factor.KG`,
+  (`Factor.blup_neg_of_ar1`), not flag them as an error. Also "per-cohort AR(1)" (`Factor.KG`,
   `ellG`, `varG`); the world can simulate any cells with these moments (`Factor.Cells`).
   Estimation (literature §10h): fit `φ̂` from lag ratios, `λ̂`, `Ĉ` by moments given `φ̂`,
-  then Gaussian quasi-ML by Kalman EM (missing cells for cards entering and leaving);
+  then Gaussian quasi-ML by Kalman EM (missing cells for cohorts entering and leaving);
   sandwich standard errors, no hyperparameters.
 - Season (2026-11-20, `Season.lean`, Finding 24): a fit switch "season: none / estimated
   (one fixed effect per month) / known index". Ignoring a real season biases the forecast by
-  `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per card; the
+  `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per cohort; the
   known-index oracle weights cells by expected claims `cₜwⱼₜ` (`Unequal.a_eq_of_volume`).
 - General best predictor (2026-11-20, `Blup.lean`): any target (e.g. a 12-month total)
   and fixed effects (a season) via `Core.blup`; its error shows the price of estimating the
@@ -342,9 +342,9 @@ One chat per step; none needs Lean except step 5.
   `Shock.K_apply` and `Ĉ`, `ŝ²` from `Shock.CHat`, `Shock.s2Hat` (exposure weights, weightings
   `1` and `w`; works whenever `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`), else fall back to the thesis fit), and `τ̂²`, `K̂` from `Shock.tauHat`,
   `Shock.KHat` (portfolio weights `x = w_{j*}/w_{**}`; proved 2026-11-20).
-- Monthly card data (2026-11-20, `notes/card-data.md` Step 7): a world with a monthly season,
+- Monthly cohort data (2026-11-20, `notes/card-data.md` Step 7): a world with a monthly season,
   an AR(1) demand factor (optional break) seen through a noisy observed index, equal or unequal
-  loadings and cards entering and
+  loadings and cohorts entering and
   leaving; every switch of the note's toolbox table as a fit. After its Lean Step 3.
 - Matrix blend (2026-11-19, `CoreVector.lean`): vector levels with a credibility matrix `Z`,
   matrix GLS and matrix eq. (26) `Zⱼ = (Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹` are proved. App: the

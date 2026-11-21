@@ -4,7 +4,7 @@ import Credibility.FactorMoments
 /-!
 # Estimating the common factor model, part 1 (extension, `notes/card-data.md` Step 5)
 
-What the table `Factor.obsCov` (with per-card dynamics `obsCovG`) lets the data identify, and
+What the table `Factor.obsCov` (with per-cohort dynamics `obsCovG`) lets the data identify, and
 the first unbiased estimator (`studies/literature.md` §10h). Distribution-free throughout.
 
 * **(I1) Scale** (`obsCov_rescale`, `blup_rescale`): `(λ, Γ) ↦ (aλ, a⁻²Γ)`, `a ≠ 0` (a sign
@@ -14,21 +14,21 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   `Γₜₜ = γ`, the table, hence `K`, `ℓ`, `v` and the predictor, depend on `C` and `γλλᵀ` only
   through `C + γλλᵀ` (plus the lagged factor part `λλᵀΓₜₛ`, `t ≠ s`). The split is not needed
   for prediction.
-* **(I3) Lag ≥ 1** (`obsCovG_of_ne`, `factor_eq_of_obsCovG_eq`): for two different cards in
-  two different months the table is `λᵢλⱼΓₜₛ`, free of `C`, `s²`, `τ²` and the per-card
+* **(I3) Lag ≥ 1** (`obsCovG_of_ne`, `factor_eq_of_obsCovG_eq`): for two different cohorts in
+  two different months the table is `λᵢλⱼΓₜₛ`, free of `C`, `s²`, `τ²` and the per-cohort
   dynamics `G`. So tables that agree there agree on the lagged factor part: a common factor
-  and per-card dynamics are distinguishable.
+  and per-cohort dynamics are distinguishable.
 * **The year-on-year lagged cross-product** (`yoy_unbiased`, `yoy_unbiased_factor`): with
-  means `Dβ` for any design whose rows agree for the same card in two months (a card-specific
-  calendar-month season, `cardSeason`), `(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)` with `mon t = mon u` is
+  means `Dβ` for any design whose rows agree for the same cohort in two months (a cohort-specific
+  calendar-month season, `cohortSeason`), `(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)` with `mon t = mon u` is
   unbiased for every `β` (`Model.UnbiasedMean`); for `i ≠ j` and months distinct across the
-  two cards its expectation is `λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`. With `u = t - 12`,
+  two cohorts its expectation is `λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`. With `u = t - 12`,
   `s = t + h`, `v = s - 12` and a stationary `Γ` this is `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))`
   for `h ≥ 1`, `h ≠ 12`. Pooled over months: `yoyPooled_unbiased`; the true expectation for
   random cells (`Cells.integral_yoy`).
-* **(I4) Three cards** (`load_sq_of_three`): `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ`; with two cards a
-  loading trades against per-card dynamics (`obsCovG_eq_of_trade`, `two_cards_not_identified`).
-* **(I5) AR(1)** (`ar1_identified`): `Σ₂ = φΣ₁` across cards, so `φ`, `γλᵢλⱼ` and `Cᵢⱼ` are read off
+* **(I4) Three cohorts** (`load_sq_of_three`): `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ`; with two cohorts a
+  loading trades against per-cohort dynamics (`obsCovG_eq_of_trade`, `two_cohorts_not_identified`).
+* **(I5) AR(1)** (`ar1_identified`): `Σ₂ = φΣ₁` across cohorts, so `φ`, `γλᵢλⱼ` and `Cᵢⱼ` are read off
   when `φ ≠ 0`; `φ = 0` is the shock `C + γλλᵀ` (`ar1_zero_eq_shock`).
 * **The shock fit under a factor** (Finding 26, `res_unbiased`, `crossHat_factor_unbiased`,
   `crossHat_ar1_two`): within-card residuals keep `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)`; with two months
@@ -36,7 +36,7 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
 * **The between-cohort spread under a factor** (`between_factor_unbiased`): it gains
   `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, and `Σₖxₖ(1 - xₖ)aₖᵀGₖaₖ`; with equal weights the factor
   term is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`between_factor_equal_weights`), so `Shock.tauHat` reads loading
-  dispersion and per-card dynamics as heterogeneity.
+  dispersion and per-cohort dynamics as heterogeneity.
 * **The diagonal and `τ̂²` under a factor** (`CdiagHat_factor_unbiased`, `s2Hat_factor_unbiased`,
   `errCovHat_factor_unbiased`, `tauHat_factor_unbiased`): each weighted sum of squared
   residuals gains `Fⱼ(u) = Σₜuⱼₜ(λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ))`; Cramer's rule
@@ -52,37 +52,37 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   yet derived from `Model.henderson_unbiased` (owner, 2026-11-21: at a third instance).
 * **When the system is nonsingular** (`Model.exists_hendersonMat_det_ne_zero_iff`): some forms
   give `det H ≠ 0` iff the basis tables are linearly independent; a dependent basis is singular
-  for every choice of forms (`Model.hendersonMat_det_eq_zero`). So: a card with constant volume
+  for every choice of forms (`Model.hendersonMat_det_eq_zero`). So: a cohort with constant volume
   makes the shock part singular, `sⱼ²` against `Cⱼⱼ` (`hendersonMat_shock_det_eq_zero`, cf.
   `Shock.not_unbiased_s2_of_const`); independent months `Γ₀ = I` make `A` and `C` one table
   (`hendersonMat_shape_one_det_eq_zero`), and no estimator separates them
   (`not_unbiased_shape_one`, `not_unbiased_factor_of_indep`; cf. `CdiagHat_s2Hat_indep`).
 * **Per-card dynamics of known shape** `Gⱼ = gⱼG₀` (`covG_eq_shapeTableG`,
-  `henderson_factorG_unbiased`): one more basis table `Eⱼⱼ ⊗ G₀` per card; Henderson III is
+  `henderson_factorG_unbiased`): one more basis table `Eⱼⱼ ⊗ G₀` per cohort; Henderson III is
   unbiased for `gⱼ` too. White noise `G₀ = I` is the shock variance again
   (`hendersonMat_shapeG_one_det_eq_zero`).
 * **When MINQUE is nonsingular** (`Model.minque_det_ne_zero_iff`): for `W ≻ 0` and symmetric
   tables, iff the projected tables `RVₖR` are independent. An independent basis and a
   full-rank design are not enough (`exists_independent_singular`): a table `DNDᵀ` in the span
   of the design is invisible to every invariant form (`Model.hendersonMat_det_eq_zero_of_design`).
-  So with a card season the card level `τ²` cannot be estimated (Finding 27,
-  `hendersonMat_cardSeason_det_eq_zero`).
-* **What else the card season hides** (Finding 28): invariant forms see the tables only modulo
-  `{YDᵀ}` (`Model.hendersonMat_det_eq_zero_of_mod_design`); under a card season these are the
-  tables that see only card and calendar month (`classTable_eq_cardSeason`). One year of data:
-  nothing is estimable (`unbiasedMean_cardSeason_eq_zero`). A factor shape `Γ₀ = aI + g(mon, mon)`
-  (AR(1) at `φ = 0` or `1`, any calendar pattern) or per-card dynamics `G₀` of that form: singular
-  (`hendersonMat_cardSeason_det_eq_zero_of_shape`, `hendersonMat_cardSeason_det_eq_zero_of_shapeG`).
-* **A sufficient condition under the card season** (`Model.minque_det_ne_zero_of_diff`,
-  `minque_cardSeason_det_ne_zero`): `RSR = 0` forces every within-calendar-month double
+  So with a cohort season the cohort level `τ²` cannot be estimated (Finding 27,
+  `hendersonMat_cohortSeason_det_eq_zero`).
+* **What else the cohort season hides** (Finding 28): invariant forms see the tables only modulo
+  `{YDᵀ}` (`Model.hendersonMat_det_eq_zero_of_mod_design`); under a cohort season these are the
+  tables that see only cohort and calendar month (`classTable_eq_cohortSeason`). One year of data:
+  nothing is estimable (`unbiasedMean_cohortSeason_eq_zero`). A factor shape `Γ₀ = aI + g(mon, mon)`
+  (AR(1) at `φ = 0` or `1`, any calendar pattern) or per-cohort dynamics `G₀` of that form: singular
+  (`hendersonMat_cohortSeason_det_eq_zero_of_shape`, `hendersonMat_cohortSeason_det_eq_zero_of_shapeG`).
+* **A sufficient condition under the cohort season** (`Model.minque_det_ne_zero_of_diff`,
+  `minque_cohortSeason_det_ne_zero`): `RSR = 0` forces every within-calendar-month double
   difference of `S` to vanish, so for `(A, C, s²)` (`seasonBasis`, `τ²` dropped) MINQUE is
-  nonsingular, for any number of cards and any prior, if the shape has one nonzero
-  year-on-year double difference (pairs with no month in common) and each card's
+  nonsingular, for any number of cohorts and any prior, if the shape has one nonzero
+  year-on-year double difference (pairs with no month in common) and each cohort's
   `1/wⱼₜ + 1/wⱼᵤ` differs between two same-calendar-month pairs. Two years, AR(1) with
   `0 < φ < 1` (`minque_ar1_two_years_det_ne_zero`, `minque_ar1_two_years_unbiased`):
-  `2φ - φ¹¹ - φ¹³ > 0`. The card level does not move the result (`Model.UnbiasedMean.add_design`,
+  `2φ - φ¹¹ - φ¹³ > 0`. The cohort level does not move the result (`Model.UnbiasedMean.add_design`,
   `henderson_season_unbiased`). With two years the volume condition is needed (Finding 29,
-  `minque_cardSeason_det_eq_zero_of_volume`): a volume that changes only between years makes
+  `minque_cohortSeason_det_eq_zero_of_volume`): a volume that changes only between years makes
   `sⱼ²` trade against `Cⱼⱼ`.
 -/
 
@@ -142,7 +142,7 @@ theorem obsCov_rescale {a : ℝ} (ha : a ≠ 0) (i j : J) (t s : T) :
   congr 1
   field_simp
 
-/-- With per-card dynamics too. -/
+/-- With per-cohort dynamics too. -/
 theorem obsCovG_rescale {a : ℝ} (ha : a ≠ 0) (G : J → Matrix T T ℝ) (i j : J) (t s : T) :
     (M.rescale a).obsCovG G i j t s = M.obsCovG G i j t s := by
   simp only [obsCovG, M.obsCov_rescale ha]
@@ -194,19 +194,19 @@ theorem blup_eq_of_lag0 [Fintype T] [Fintype n] [DecidableEq n] {q : Type*} [Fin
         = Core.predMse (M'.K c) (M'.ell c j₀ b) (M'.var j₀ b) d :=
   blup_congr (M.obsCov_eq_of_lag0 hτ hs hw hΓ hΓ' hsum hlag) c X j₀ b x₀
 
-/-! ### (I3) Lags `≥ 1` across cards see only the factor -/
+/-! ### (I3) Lags `≥ 1` across cohorts see only the factor -/
 
 section Lagged
 
 variable (G : J → Matrix T T ℝ)
 
-/-- **(I3) Separation**: two different cards in two different months have covariance
-`λᵢλⱼΓₜₛ`: no `C`, no `s²/w`, no `τ²`, no per-card dynamics `G`. -/
+/-- **(I3) Separation**: two different cohorts in two different months have covariance
+`λᵢλⱼΓₜₛ`: no `C`, no `s²/w`, no `τ²`, no per-cohort dynamics `G`. -/
 theorem obsCovG_of_ne {i j : J} {t s : T} (hij : i ≠ j) (hts : t ≠ s) :
     M.obsCovG G i j t s = M.load i * M.load j * M.Γ t s := by
   simp [obsCovG, obsCov, Shock.obsCov, toShock, hij, hts]
 
-/-- The same card in two different months: `λᵢ²Γₜₛ + τ² + (Gᵢ)ₜₛ`; here the factor is
+/-- The same cohort in two different months: `λᵢ²Γₜₛ + τ² + (Gᵢ)ₜₛ`; here the factor is
 confounded with `τ²` and `G`. -/
 theorem obsCovG_self_of_ne (i : J) {t s : T} (hts : t ≠ s) :
     M.obsCovG G i i t s = M.load i ^ 2 * M.Γ t s + M.τ2 + G i t s := by
@@ -214,7 +214,7 @@ theorem obsCovG_self_of_ne (i : J) {t s : T} (hts : t ≠ s) :
 
 /-- **(I3) Distinguishable**: tables that agree (whatever their `C`, `s²`, `τ²`, `G`) have the
 same lagged cross-card factor part. So `λλᵀΓ ≠ λ'λ'ᵀΓ'` there means different tables: a common
-factor and per-card dynamics only are told apart by the lagged cross-moments. -/
+factor and per-cohort dynamics only are told apart by the lagged cross-moments. -/
 theorem factor_eq_of_obsCovG_eq {M' : Factor J T} {G' : J → Matrix T T ℝ}
     (h : ∀ i j t s, M.obsCovG G i j t s = M'.obsCovG G' i j t s) {i j : J} {t s : T}
     (hij : i ≠ j) (hts : t ≠ s) :
@@ -226,30 +226,30 @@ theorem factor_eq_of_obsCovG_eq {M' : Factor J T} {G' : J → Matrix T T ℝ}
 /-- The table `obsCovG` indexed by cells `p = (j, t)`. -/
 noncomputable def covG (p q : J × T) : ℝ := M.obsCovG G p.1 q.1 p.2 q.2
 
-/-- A season per card and calendar month: `E Xⱼₜ = β_{j, mon t}`. It contains the card mean and
-a season common to all cards (`Model.UnbiasedMean.of_mul`). -/
-def cardSeason {Mo : Type*} [DecidableEq Mo] (mon : T → Mo) : Matrix (J × T) (J × Mo) ℝ :=
+/-- A season per cohort and calendar month: `E Xⱼₜ = β_{j, mon t}`. It contains the cohort mean and
+a season common to all cohorts (`Model.UnbiasedMean.of_mul`). -/
+def cohortSeason {Mo : Type*} [DecidableEq Mo] (mon : T → Mo) : Matrix (J × T) (J × Mo) ℝ :=
   of fun p k => if p.1 = k.1 ∧ mon p.2 = k.2 then 1 else 0
 
 omit [DecidableEq T] in
 /-- Months with the same calendar month have the same row in the season design. -/
-theorem cardSeason_row {Mo : Type*} [DecidableEq Mo] {mon : T → Mo} (i : J) {t u : T}
-    (h : mon t = mon u) : cardSeason (J := J) mon (i, t) = cardSeason mon (i, u) := by
-  funext k; simp [cardSeason, h]
+theorem cohortSeason_row {Mo : Type*} [DecidableEq Mo] {mon : T → Mo} (i : J) {t u : T}
+    (h : mon t = mon u) : cohortSeason (J := J) mon (i, t) = cohortSeason mon (i, u) := by
+  funext k; simp [cohortSeason, h]
 
 /-- The year-on-year lagged cross-product `(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)` (`u = t - 12`,
 `v = s - 12`). -/
 def yoy (i j : J) (t u s v : T) (X : J × T → ℝ) : ℝ := (X (i, t) - X (i, u)) * (X (j, s) - X (j, v))
 
 /-- **The year-on-year cross-product is unbiased for every `β`** under any design whose rows
-agree for card `i` in months `t`, `u` (e.g. `cardSeason` with `mon t = mon u`). -/
+agree for cohort `i` in months `t`, `u` (e.g. `cohortSeason` with `mon t = mon u`). -/
 theorem yoy_unbiased [Fintype J] [Fintype T] {B : Type*} [Fintype B] (D : Matrix (J × T) B ℝ)
     (i j : J) {t u : T} (s v : T) (hD : D (i, t) = D (i, u)) :
     Model.UnbiasedMean (M.covG G) D (yoy i j t u s v)
       (M.obsCovG G i j t s - M.obsCovG G i j t v - M.obsCovG G i j u s + M.obsCovG G i j u v) :=
   Model.unbiasedMean_diff_mul (M.covG G) D hD
 
-/-- **Its expectation across cards**: for `i ≠ j` and months distinct across the two cards,
+/-- **Its expectation across cohorts**: for `i ≠ j` and months distinct across the two cohorts,
 `λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`: no `C`, `s²`, `τ²` or `G`. With `u = t - 12`, `s = t + h`,
 `v = s - 12` and a stationary `Γ`: `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))`, `h ≥ 1`, `h ≠ 12`. -/
 theorem yoy_unbiased_factor [Fintype J] [Fintype T] {B : Type*} [Fintype B]
@@ -263,7 +263,7 @@ theorem yoy_unbiased_factor [Fintype J] [Fintype T] {B : Type*} [Fintype B]
     ring)
 
 /-- **Pooled over months**: a weighted sum `Σₖ aₖ(Xᵢₜₖ - Xᵢᵤₖ)(Xⱼₛₖ - Xⱼᵥₖ)` over month
-quadruples `k = (tₖ, uₖ, sₖ, vₖ)` (e.g. all pairs at lag `h` in the overlap of the two cards'
+quadruples `k = (tₖ, uₖ, sₖ, vₖ)` (e.g. all pairs at lag `h` in the overlap of the two cohorts'
 months) is unbiased for `λᵢλⱼΣₖ aₖ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`. -/
 theorem yoyPooled_unbiased [Fintype J] [Fintype T] {B : Type*} [Fintype B]
     (D : Matrix (J × T) B ℝ) {i j : J} (hij : i ≠ j) (S : Finset (T × T × T × T))
@@ -295,7 +295,7 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : MeasureTheory.Measure Ω}
 /-- **For random cells with the factor table**: any square-integrable cells with means `Dβ` and
 covariances `obsCovG` (`Factor.Cells`) have
 `E[(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)] = λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)` for `i ≠ j`, months distinct across
-the cards and `D` equal in rows `(i, t)`, `(i, u)`. No distribution is assumed. -/
+the cohorts and `D` equal in rows `(i, t)`, `(i, u)`. No distribution is assumed. -/
 theorem integral_yoy [Fintype J] [Fintype T] (X : Cells (M.obsCovG G) D β P) {i j : J}
     (hij : i ≠ j) {t u s v : T} (hD : D (i, t) = D (i, u)) (hts : t ≠ s) (htv : t ≠ v)
     (hus : u ≠ s) (huv : u ≠ v) :
@@ -306,13 +306,13 @@ theorem integral_yoy [Fintype J] [Fintype T] (X : Cells (M.obsCovG G) D β P) {i
 
 end Cells
 
-/-! ### (I4) Individual loadings need three cards -/
+/-! ### (I4) Individual loadings need three cohorts -/
 
 section Loadings
 
 variable (G : J → Matrix T T ℝ)
 
-/-- **(I4) Three cards identify a loading**: for distinct cards `i, j, k` with `λⱼ, λₖ ≠ 0` and
+/-- **(I4) Three cohorts identify a loading**: for distinct cohorts `i, j, k` with `λⱼ, λₖ ≠ 0` and
 months `t ≠ s`, `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ` (Anderson–Rubin), whatever `C`, `s²`, `τ²`, `G`. -/
 theorem load_sq_of_three {i j k : J} (hij : i ≠ j) (hik : i ≠ k) (hjk : j ≠ k)
     (hj : M.load j ≠ 0) (hk : M.load k ≠ 0) {t s : T} (hts : t ≠ s) :
@@ -323,9 +323,9 @@ theorem load_sq_of_three {i j k : J} (hij : i ≠ j) (hik : i ≠ k) (hjk : j �
   · simp [hΓ]
   · field_simp
 
-/-- **Trading a loading against per-card dynamics**: two models that differ only in their
-loadings and per-card dynamics have the same table if the cross products `λᵢλⱼ` (`i ≠ j`) agree
-and `Gᵢ + λᵢ²Γ` agrees for every card. -/
+/-- **Trading a loading against per-cohort dynamics**: two models that differ only in their
+loadings and per-cohort dynamics have the same table if the cross products `λᵢλⱼ` (`i ≠ j`) agree
+and `Gᵢ + λᵢ²Γ` agrees for every cohort. -/
 theorem obsCovG_eq_of_trade {M' : Factor J T} {G' : J → Matrix T T ℝ} (hτ : M'.τ2 = M.τ2)
     (hC : M'.C = M.C) (hs : M'.s2 = M.s2) (hw : M'.w = M.w) (hΓ : M'.Γ = M.Γ)
     (hcross : ∀ i j, i ≠ j → M'.load i * M'.load j = M.load i * M.load j)
@@ -339,7 +339,7 @@ theorem obsCovG_eq_of_trade {M' : Factor J T} {G' : J → Matrix T T ℝ} (hτ :
     nlinarith [this]
   · simp only [hij, ite_false, hcross i j hij]
 
-/-- Two cards, two months, `Γ = I`, no shock, unit noise and `τ² = 1`; loadings `l`. -/
+/-- Two cohorts, two months, `Γ = I`, no shock, unit noise and `τ² = 1`; loadings `l`. -/
 noncomputable def exTwo (l : Fin 2 → ℝ) : Factor (Fin 2) (Fin 2) where
   τ2 := 1
   C := 0
@@ -353,10 +353,10 @@ noncomputable def exTwo (l : Fin 2 → ℝ) : Factor (Fin 2) (Fin 2) where
   w_pos := fun _ _ => one_pos
   Γ_posSemidef := PosSemidef.one
 
-/-- **(I4) Two cards do not identify the loadings**: loadings `(2, 1/2)` with per-card dynamics
+/-- **(I4) Two cohorts do not identify the loadings**: loadings `(2, 1/2)` with per-cohort dynamics
 `(0, (3/4)I)` and loadings `(1, 1)` with `(3I, 0)` (all `⪰ 0`) give the same table, but
 `λ₀² = 4` against `1`. -/
-theorem two_cards_not_identified :
+theorem two_cohorts_not_identified :
     (∀ j, (![0, (3 / 4 : ℝ) • 1] : Fin 2 → Matrix (Fin 2) (Fin 2) ℝ) j |>.PosSemidef) ∧
     (∀ j, (![(3 : ℝ) • 1, 0] : Fin 2 → Matrix (Fin 2) (Fin 2) ℝ) j |>.PosSemidef) ∧
     (∀ i j t s, (exTwo ![1, 1]).obsCovG ![(3 : ℝ) • 1, 0] i j t s
@@ -383,7 +383,7 @@ section AR1
 
 variable {N : ℕ} (M : Factor J (Fin N)) (G : J → Matrix (Fin N) (Fin N) ℝ) {γ φ : ℝ}
 
-/-- Under an AR(1) factor, two different cards at lag `h = s - t ≥ 1` have covariance
+/-- Under an AR(1) factor, two different cohorts at lag `h = s - t ≥ 1` have covariance
 `λᵢλⱼγφʰ`. -/
 theorem obsCovG_ar1 (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) {t s : Fin N}
     (hts : t < s) : M.obsCovG G i j t s = M.load i * M.load j * γ * φ ^ ((s : ℕ) - t) := by
@@ -391,13 +391,13 @@ theorem obsCovG_ar1 (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) {t s : 
   simp only [show (t : ℕ) ≤ s from Fin.le_def.mp hts.le, ite_true]
   ring
 
-/-- At lag `0`, two different cards have covariance `γλᵢλⱼ + Cᵢⱼ`. -/
+/-- At lag `0`, two different cohorts have covariance `γλᵢλⱼ + Cᵢⱼ`. -/
 theorem obsCovG_ar1_lag0 (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) (t : Fin N) :
     M.obsCovG G i j t t = M.load i * M.load j * γ + M.C i j := by
   simp [obsCovG, obsCov, Shock.obsCov, toShock, hΓ, ar1, hij]
 
 /-- **(I5) `φ`, `γλᵢλⱼ` and `Cᵢⱼ` from the cross-moments**: with `N ≥ 3` months and two
-different cards, `S₂ = φS₁` (lags `2` and `1` from month `0`); if `φ ≠ 0` and `γλᵢλⱼ ≠ 0`,
+different cohorts, `S₂ = φS₁` (lags `2` and `1` from month `0`); if `φ ≠ 0` and `γλᵢλⱼ ≠ 0`,
 then `φ = S₂/S₁`, `γλᵢλⱼ = S₁²/S₂` and `Cᵢⱼ = S₀ - S₁²/S₂`. -/
 theorem ar1_identified (hN : 3 ≤ N) (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) :
     let S₀ := M.obsCovG G i j ⟨0, by omega⟩ ⟨0, by omega⟩
@@ -459,7 +459,7 @@ def resQuad (A : Matrix T T ℝ) (i j : J) (t : T) : ℝ :=
   ∑ t', ∑ s', ((if t' = t then 1 else 0) - a i t') * ((if s' = t then 1 else 0) - a j s') * A t' s'
 
 /-- **Residual products under a factor**: `E[rᵢₜrⱼₜ]` is the `Shock` value
-`dᵢⱼₜCᵢⱼ + δᵢⱼhᵢₜsᵢ²` plus `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` plus, on one card, `(eₜ - aᵢ)ᵀGᵢ(eₜ - aᵢ)`:
+`dᵢⱼₜCᵢⱼ + δᵢⱼhᵢₜsᵢ²` plus `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` plus, on one cohort, `(eₜ - aᵢ)ᵀGᵢ(eₜ - aᵢ)`:
 within-card demeaning removes only the part of the factor that is constant over the months. -/
 theorem res_unbiased (ha : ∀ j, ∑ t, a j t = 1) (i j : J) (t : T) :
     Model.UnbiasedCov (M.covG G) (fun X => Shock.res a X i t * Shock.res a X j t)
@@ -604,7 +604,7 @@ theorem contrast_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) (c c' : J → �
 
 /-- **The between-cohort spread under a factor.** For weights `x` summing to one,
 `E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²` is the `Shock` value `τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` plus the
-factor term `Σⱼ xⱼ vⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢ xᵢλᵢaᵢ`, plus `Σₖ xₖ(1 - xₖ)aₖᵀGₖaₖ`: per-card
+factor term `Σⱼ xⱼ vⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢ xᵢλᵢaᵢ`, plus `Σₖ xₖ(1 - xₖ)aₖᵀGₖaₖ`: per-cohort
 dynamics look like extra heterogeneity `τ²`. -/
 theorem between_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {x : J → ℝ} (hx : ∑ j, x j = 1) :
     Model.UnbiasedCov (M.covG G) (fun X => Shock.between a x X)
@@ -652,7 +652,7 @@ theorem between_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {x : J → ℝ} (
           sum_congr rfl fun k _ => sum_congr rfl fun l _ => by ring
       _ = _ := sum_mul_sum_bilin _ _ a a M.Γ
       _ = _ := sum_congr rfl fun t _ => sum_congr rfl fun s _ => by rw [hv t, hv s]
-  -- The per-card part: `Σⱼ xⱼcⱼₖ² = xₖ(1 - xₖ)`.
+  -- The per-cohort part: `Σⱼ xⱼcⱼₖ² = xₖ(1 - xₖ)`.
   have hq : ∀ k, ∑ j, x j * (c j k * c j k) = x k * (1 - x k) := fun k => by
     simp only [c, sub_mul, mul_sub, ite_mul, one_mul, zero_mul, mul_ite, mul_one, mul_zero,
       sum_sub_distrib, mem_univ, ite_true, sum_ite_eq]
@@ -705,7 +705,7 @@ section ShockDiag
 
 variable [Fintype J] [Fintype T] (G : J → Matrix T T ℝ) (a u v : J → T → ℝ)
 
-/-- What the factor and the per-card dynamics add to `E[rⱼₜ²]`:
+/-- What the factor and the per-cohort dynamics add to `E[rⱼₜ²]`:
 `λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ)`. -/
 noncomputable def resExtra (j : J) (t : T) : ℝ :=
   M.load j ^ 2 * resQuad a M.Γ j j t + resQuad a (G j) j j t
@@ -731,7 +731,7 @@ noncomputable def errCovBias (i j : J) : ℝ :=
   else (∑ t, a i t * a j t)
       * (M.load i * M.load j * (∑ t, resQuad a M.Γ i j t) / ∑ t, Shock.d a i j t)
 
-/-- What the factor and the per-card dynamics add to the between-cohort spread
+/-- What the factor and the per-cohort dynamics add to the between-cohort spread
 (`between_factor_unbiased`). -/
 noncomputable def betweenBias (x : J → ℝ) : ℝ :=
   ∑ j, x j * ∑ t, ∑ s, (M.load j * a j t - ∑ i, x i * M.load i * a i t)
@@ -807,7 +807,7 @@ theorem errCovHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1)
     simp only [toShock]
     ring
 
-/-- **`τ̂²` under a factor** is unbiased for `τ² + tauBias`: the factor and the per-card
+/-- **`τ̂²` under a factor** is unbiased for `τ² + tauBias`: the factor and the per-cohort
 dynamics enter both through the spread and through the plugged-in `Σ̂`. -/
 theorem tauHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1)
     (hd : ∀ i j, i ≠ j → ∑ t, Shock.d a i j t ≠ 0) (hdet : ∀ j, M.toShock.det a u v j ≠ 0)
@@ -844,7 +844,7 @@ theorem resQuad_smul_one (γ : ℝ) (i j : J) (t : T) :
     sum_sub_distrib, sum_ite_eq', mem_univ, ite_true]
   ring
 
-/-- **Independent months: the factor is a rank-one shock.** With `Γ = γI` and no per-card
+/-- **Independent months: the factor is a rank-one shock.** With `Γ = γI` and no per-cohort
 dynamics, `Ĉⱼⱼ` is unbiased for `Cⱼⱼ + γλⱼ²` and `ŝⱼ²` stays unbiased for `sⱼ²`, as the
 off-diagonal `Shock.crossHat` reads `Cᵢⱼ + γλᵢλⱼ` (`crossHat_factor_unbiased`). -/
 theorem CdiagHat_s2Hat_indep (ha : ∀ j, ∑ t, a j t = 1) {γ : ℝ}
@@ -1072,7 +1072,7 @@ theorem hendersonMat_det_eq_zero_of_mod_design {Q V : L → Matrix (J × T) (J �
 /-- **A basis table in the span of the design is lost to invariant forms**: if
 `V l = DNDᵀ`, then `Σₚq (Qₖ)ₚq(V l)ₚq = tr(QₖᵀDNDᵀ) = 0` whenever `QₖD = 0`, so the column `l`
 of `H` vanishes and the system is singular, however independent the basis. Such a component
-is confounded with the fixed effects (e.g. the card level `τ²` under card-specific means). -/
+is confounded with the fixed effects (e.g. the cohort level `τ²` under cohort-specific means). -/
 theorem hendersonMat_det_eq_zero_of_design {Q V : L → Matrix (J × T) (J × T) ℝ}
     {D : Matrix (J × T) B ℝ} (hQ : ∀ k, Q k * D = 0) {l : L} (N : Matrix B B ℝ)
     (hV : V l = D * N * Dᵀ) : (hendersonMat Q V).det = 0 := by
@@ -1252,7 +1252,7 @@ omit [Fintype L] [DecidableEq L] [DecidableEq J] [DecidableEq T] in
 /-- **A table in the span of the design does not move an unbiased estimator**: if `f` is
 unbiased for `θ` under `C` for every `β`, it is unbiased for `θ` under `C + DNDᵀ` for any
 symmetric `N`, since `Dᵀ(Q + Qᵀ)D = 0` makes `Σₚq Qₚq(DNDᵀ)ₚq = 0`. Such a component (e.g. the
-card level under a card season) need not be modelled. -/
+cohort level under a cohort season) need not be modelled. -/
 theorem UnbiasedMean.add_design {C : J × T → J × T → ℝ} {D : Matrix (J × T) B ℝ}
     {f : (J × T → ℝ) → ℝ} {θ : ℝ} (h : UnbiasedMean C D f θ) {N : Matrix B B ℝ} (hN : Nᵀ = N) :
     UnbiasedMean (fun p q => C p q + (D * N * Dᵀ) p q) D f θ := by
@@ -1401,7 +1401,7 @@ section GivenShape
 variable {J T B : Type*} [DecidableEq J] [DecidableEq T] (M : Factor J T) [Fintype J] [Fintype T]
 
 /-- The parameters of the factor table given the factor's shape `Γ₀`: a symmetric `A`
-(`γλλᵀ`), a symmetric `C` (both indexed by unordered pairs), `s²` per card, and `τ²`. -/
+(`γλλᵀ`), a symmetric `C` (both indexed by unordered pairs), `s²` per cohort, and `τ²`. -/
 abbrev Par (J : Type*) := Sym2 J ⊕ Sym2 J ⊕ J ⊕ Unit
 
 /-- The table given the shape `Γ₀` and volumes `w`:
@@ -1453,7 +1453,7 @@ theorem henderson_shape_unbiased (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) 
 
 omit [Fintype J] [Fintype T] in
 /-- **The factor model given its shape** `Γ = γΓ₀` (e.g. `ar1 N 1 φ` for a known `φ`), without
-per-card dynamics: its table is `shapeTable` with `A = γλλᵀ`. So Henderson III / MINQUE
+per-cohort dynamics: its table is `shapeTable` with `A = γλλᵀ`. So Henderson III / MINQUE
 (`henderson_shape_unbiased`) is unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²` and `τ²`. -/
 theorem covG_zero_eq_shapeTable {Γ₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀) :
     M.covG 0 = shapeTable Γ₀ M.w
@@ -1500,7 +1500,7 @@ noncomputable def shockBasis (w : J → T → ℝ) : ShockPar J → Matrix (J ×
   fun l => shapeBasis 0 w (.inr l)
 
 omit [Fintype J] [Fintype T] in
-/-- At a constant volume `wⱼ`, the process-noise table of card `j` is `1/wⱼ` times its shock
+/-- At a constant volume `wⱼ`, the process-noise table of cohort `j` is `1/wⱼ` times its shock
 variance table: `Eⱼⱼ ⊗ diag(1/wⱼ) = (1/wⱼ)(Eⱼⱼ ⊗ I)`. -/
 theorem shapeBasis_s2_eq_smul (Γ₀ : Matrix T T ℝ) {w : J → T → ℝ} {j : J} {c : ℝ}
     (hw : ∀ t, w j t = c) :
@@ -1511,7 +1511,7 @@ theorem shapeBasis_s2_eq_smul (Γ₀ : Matrix T T ℝ) {w : J → T → ℝ} {j 
   by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> by_cases ht : p.2 = q.2 <;>
     simp [hp, hq, ht, hw]
 
-/-- **The shock part needs volume variation** (cf. `Shock.not_unbiased_s2_of_const`): if card
+/-- **The shock part needs volume variation** (cf. `Shock.not_unbiased_s2_of_const`): if cohort
 `j` has the same volume in every month, the Henderson III system of the shock part (`A = 0`)
 is singular for every choice of forms, since `sⱼ²` and `Cⱼⱼ` enter the table only through
 `Cⱼⱼ + sⱼ²/wⱼ`. -/
@@ -1522,7 +1522,7 @@ theorem hendersonMat_shock_det_eq_zero [Nonempty T] (w : J → T → ℝ) {j : J
   exact Model.hendersonMat_det_eq_zero_of_smul (l := .inl s(j, j)) (l' := .inr (.inl j))
     (by simp) _ (shapeBasis_s2_eq_smul 0 fun t => hw t t₀)
 
-/-- With the factor too: a constant volume of one card makes the full shape system singular,
+/-- With the factor too: a constant volume of one cohort makes the full shape system singular,
 whatever `Γ₀` and the forms. -/
 theorem hendersonMat_shape_det_eq_zero_of_const [Nonempty T] (Γ₀ : Matrix T T ℝ)
     (w : J → T → ℝ) {j : J} (hw : ∀ t t', w j t = w j t') (Q : Par J → Matrix (J × T) (J × T) ℝ) :
@@ -1626,81 +1626,81 @@ theorem not_unbiased_factor_of_indep (M : Factor J T) [Nonempty T] {γ : ℝ}
   exact hne this
 
 omit [Fintype T] [DecidableEq T] [Fintype J] in
-/-- The card season's column for card `j` and calendar month `m` is the indicator of the cells
+/-- The cohort season's column for cohort `j` and calendar month `m` is the indicator of the cells
 `(j, t)` with `mon t = m`. -/
-lemma cardSeason_apply_eq {Mo : Type*} [DecidableEq Mo] (mon : T → Mo) (p : J × T) (k : J × Mo) :
-    (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) p k = if (p.1, mon p.2) = k then 1 else 0 := by
-  simp [cardSeason, Prod.ext_iff]
+lemma cohortSeason_apply_eq {Mo : Type*} [DecidableEq Mo] (mon : T → Mo) (p : J × T) (k : J × Mo) :
+    (cohortSeason mon : Matrix (J × T) (J × Mo) ℝ) p k = if (p.1, mon p.2) = k then 1 else 0 := by
+  simp [cohortSeason, Prod.ext_iff]
 
 omit [Fintype T] [DecidableEq T] in
-/-- **Tables that see only card and calendar month are `DFDᵀ`** for the card season `D`:
+/-- **Tables that see only cohort and calendar month are `DFDᵀ`** for the cohort season `D`:
 `F((p.1, mon p.2), (q.1, mon q.2)) = (D F Dᵀ)ₚq`. -/
-theorem classTable_eq_cardSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (mon : T → Mo)
+theorem classTable_eq_cohortSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (mon : T → Mo)
     (F : J × Mo → J × Mo → ℝ) :
     (of fun p q : J × T => F (p.1, mon p.2) (q.1, mon q.2))
-      = cardSeason (J := J) mon * of F * (cardSeason (J := J) mon)ᵀ := by
+      = cohortSeason (J := J) mon * of F * (cohortSeason (J := J) mon)ᵀ := by
   funext p q
-  simp only [of_apply, Matrix.mul_apply, transpose_apply, cardSeason_apply_eq, ite_mul, one_mul,
+  simp only [of_apply, Matrix.mul_apply, transpose_apply, cohortSeason_apply_eq, ite_mul, one_mul,
     zero_mul, sum_ite_eq, mem_univ, ite_true, mul_ite, mul_one, mul_zero]
 
 omit [Fintype T] in
-/-- The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season `D = cardSeason mon`, with
-`E_{(j,m),(j',m')} = δⱼⱼ'`: the card level lies in the span of card-specific means. -/
-theorem shapeBasis_tau_eq_cardSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (Γ₀ : Matrix T T ℝ)
+/-- The cohort-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the cohort season `D = cohortSeason mon`, with
+`E_{(j,m),(j',m')} = δⱼⱼ'`: the cohort level lies in the span of cohort-specific means. -/
+theorem shapeBasis_tau_eq_cohortSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (Γ₀ : Matrix T T ℝ)
     (w : J → T → ℝ) (mon : T → Mo) :
-    shapeBasis Γ₀ w (.inr (.inr (.inr ()))) = cardSeason (J := J) mon
-      * (of fun k k' : J × Mo => if k.1 = k'.1 then (1 : ℝ) else 0) * (cardSeason (J := J) mon)ᵀ := by
-  rw [← classTable_eq_cardSeason]
+    shapeBasis Γ₀ w (.inr (.inr (.inr ()))) = cohortSeason (J := J) mon
+      * (of fun k k' : J × Mo => if k.1 = k'.1 then (1 : ℝ) else 0) * (cohortSeason (J := J) mon)ᵀ := by
+  rw [← classTable_eq_cohortSeason]
   rfl
 
-/-- **Card-specific means hide the card level** (Finding 27): with the card season as fixed
-effects (it contains the card means), every invariant system of the shape is singular, so
+/-- **Cohort-specific means hide the cohort level** (Finding 27): with the cohort season as fixed
+effects (it contains the cohort means), every invariant system of the shape is singular, so
 Henderson III / MINQUE never applies as stated; drop `τ²` from the parameters (`τ²` is the
 spread of what the design already fits). -/
-theorem hendersonMat_cardSeason_det_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+theorem hendersonMat_cohortSeason_det_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (mon : T → Mo) {Q : Par J → Matrix (J × T) (J × T) ℝ}
-    (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    (hQ : ∀ k, Q k * cohortSeason (J := J) mon = 0) :
     (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 :=
-  Model.hendersonMat_det_eq_zero_of_design hQ _ (shapeBasis_tau_eq_cardSeason Γ₀ w mon)
+  Model.hendersonMat_det_eq_zero_of_design hQ _ (shapeBasis_tau_eq_cohortSeason Γ₀ w mon)
 
 omit [Fintype T] [Fintype J] in
-/-- With one cell per calendar month and card (`mon` injective, e.g. one year of data), each
-cell is alone in its column of the card season. -/
-lemma cardSeason_col {Mo : Type*} [DecidableEq Mo] {mon : T → Mo} (hmon : Function.Injective mon)
+/-- With one cell per calendar month and cohort (`mon` injective, e.g. one year of data), each
+cell is alone in its column of the cohort season. -/
+lemma cohortSeason_col {Mo : Type*} [DecidableEq Mo] {mon : T → Mo} (hmon : Function.Injective mon)
     (p : J × T) (q : J × T) :
-    (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) q (p.1, mon p.2) = if q = p then 1 else 0 := by
-  rw [cardSeason_apply_eq]
+    (cohortSeason mon : Matrix (J × T) (J × Mo) ℝ) q (p.1, mon p.2) = if q = p then 1 else 0 := by
+  rw [cohortSeason_apply_eq]
   simp [Prod.ext_iff, hmon.eq_iff]
 
-/-- **One year with a card season: nothing is estimable** (Finding 28): if every card has at
-most one cell per calendar month, every quadratic estimator unbiased under the card season has
+/-- **One year with a cohort season: nothing is estimable** (Finding 28): if every cohort has at
+most one cell per calendar month, every quadratic estimator unbiased under the cohort season has
 expectation `0` under any symmetric table. Second moments need repeated calendar months. -/
-theorem unbiasedMean_cardSeason_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+theorem unbiasedMean_cohortSeason_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     {mon : T → Mo} (hmon : Function.Injective mon) {C : J × T → J × T → ℝ}
     (hC : ∀ p q, C q p = C p q) {f : (J × T → ℝ) → ℝ} {θ : ℝ}
-    (h : Model.UnbiasedMean C (cardSeason mon) f θ) : θ = 0 :=
-  Model.unbiasedMean_eq_zero_of_cells hC (fun p => ⟨(p.1, mon p.2), cardSeason_col hmon p⟩) h
+    (h : Model.UnbiasedMean C (cohortSeason mon) f θ) : θ = 0 :=
+  Model.unbiasedMean_eq_zero_of_cells hC (fun p => ⟨(p.1, mon p.2), cohortSeason_col hmon p⟩) h
 
-/-- **A factor shape that repeats with the calendar is lost to the card season** (Finding 28):
+/-- **A factor shape that repeats with the calendar is lost to the cohort season** (Finding 28):
 if `Γ₀ = aI + g(mon t, mon s)` (e.g. AR(1) at `φ = 0` or `φ = 1`, or any calendar pattern),
 then `A_z - aC_z` lies in the span of the design and every invariant system is singular. -/
-theorem hendersonMat_cardSeason_det_eq_zero_of_shape {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+theorem hendersonMat_cohortSeason_det_eq_zero_of_shape {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     {Γ₀ : Matrix T T ℝ} (w : J → T → ℝ) {mon : T → Mo} {a : ℝ} {g : Mo → Mo → ℝ}
     (hΓ : ∀ t s, Γ₀ t s = a * (if t = s then 1 else 0) + g (mon t) (mon s)) (z : Sym2 J)
-    {Q : Par J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    {Q : Par J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cohortSeason (J := J) mon = 0) :
     (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 := by
   refine Model.hendersonMat_det_eq_zero_of_mod_design hQ
     (Model.single_sub_single_ne_zero (l := .inr (.inl z)) (l' := .inl z) (by simp) a)
-    (cardSeason mon * of fun k k' : J × Mo => if s(k.1, k'.1) = z then g k.2 k'.2 else 0) ?_
-  refine Eq.trans ?_ (classTable_eq_cardSeason (J := J) mon _)
+    (cohortSeason mon * of fun k k' : J × Mo => if s(k.1, k'.1) = z then g k.2 k'.2 else 0) ?_
+  refine Eq.trans ?_ (classTable_eq_cohortSeason (J := J) mon _)
   funext p q
   rw [Model.linTable_single_sub]
   simp only [shapeBasis, hΓ, of_apply]
   split_ifs <;> ring
 
 /-- **An independent basis and a full-rank design are not enough** for MINQUE (or any
-invariant forms): one card, two months, a common mean (`D = 1`), and the tables `I` (shock)
-and `11ᵀ` (card level). The tables are independent and `DᵀD = 2`, but `11ᵀ = DDᵀ`, so every
+invariant forms): one cohort, two months, a common mean (`D = 1`), and the tables `I` (shock)
+and `11ᵀ` (cohort level). The tables are independent and `DᵀD = 2`, but `11ᵀ = DDᵀ`, so every
 invariant system is singular (`Model.hendersonMat_det_eq_zero_of_design`). -/
 theorem exists_independent_singular :
     ∃ (V : Bool → Matrix (Unit × Fin 2) (Unit × Fin 2) ℝ) (D : Matrix (Unit × Fin 2) Unit ℝ),
@@ -1720,13 +1720,13 @@ theorem exists_independent_singular :
   · funext p q
     simp [Matrix.mul_apply]
 
-/-! #### A sufficient condition under the card season -/
+/-! #### A sufficient condition under the cohort season -/
 
-/-- The parameters under a card season: `A`, `C`, `s²`, with the card level `τ²` dropped
+/-- The parameters under a cohort season: `A`, `C`, `s²`, with the cohort level `τ²` dropped
 (Finding 27). -/
 abbrev SeasonPar (J : Type*) := Sym2 J ⊕ Sym2 J ⊕ J
 
-/-- The basis tables under a card season: those of `shapeBasis` without the card level. -/
+/-- The basis tables under a cohort season: those of `shapeBasis` without the cohort level. -/
 noncomputable def seasonBasis (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) :
     SeasonPar J → Matrix (J × T) (J × T) ℝ
   | .inl z => shapeBasis Γ₀ w (.inl z)
@@ -1759,34 +1759,34 @@ lemma sum_smul_seasonBasis_apply (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) 
   by_cases ht : p.2 = q.2 <;> by_cases hj : p.1 = q.1 <;> simp [ht, hj, div_eq_mul_inv]
   exact fun h => absurd h.symm hj
 
-/-- **Two years under a card season: MINQUE is nonsingular** (sufficient condition). For a
-symmetric shape `Γ₀`, a positive definite prior `W` and the card season `D` (`DᵀW⁻¹D`
+/-- **Two years under a cohort season: MINQUE is nonsingular** (sufficient condition). For a
+symmetric shape `Γ₀`, a positive definite prior `W` and the cohort season `D` (`DᵀW⁻¹D`
 nonsingular), the system for `(A, C, s²)` is nonsingular if
 * the shape has a year-on-year double difference `Γ₀(t₁,t₂) - Γ₀(t₁,u₂) - Γ₀(u₁,t₂) + Γ₀(u₁,u₂)`
   that is nonzero, for pairs `mon t₁ = mon u₁`, `mon t₂ = mon u₂` with no month in common
   (it separates `A` from `C`; a shape `aI + g(mon, mon)` has none,
-  `hendersonMat_cardSeason_det_eq_zero_of_shape`), and
-* every card has two same-calendar-month pairs with different `1/wⱼₜ + 1/wⱼᵤ` (it separates
+  `hendersonMat_cohortSeason_det_eq_zero_of_shape`), and
+* every cohort has two same-calendar-month pairs with different `1/wⱼₜ + 1/wⱼᵤ` (it separates
   `sⱼ²` from `Cⱼⱼ`).
-Any number of cards. With two years these pairs are all the contrasts, and the condition on
-the volumes is needed too (`minque_cardSeason_det_eq_zero_of_volume`). -/
-theorem minque_cardSeason_det_ne_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+Any number of cohorts. With two years these pairs are all the contrasts, and the condition on
+the volumes is needed too (`minque_cohortSeason_det_eq_zero_of_volume`). -/
+theorem minque_cohortSeason_det_ne_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     {Γ₀ : Matrix T T ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s) (w : J → T → ℝ) {mon : T → Mo}
     {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef)
-    (hD : IsUnit ((cardSeason (J := J) mon)ᵀ * W⁻¹ * cardSeason mon).det)
+    (hD : IsUnit ((cohortSeason (J := J) mon)ᵀ * W⁻¹ * cohortSeason mon).det)
     {t₁ u₁ t₂ u₂ : T} (h₁ : mon t₁ = mon u₁) (h₂ : mon t₂ = mon u₂) (htt : t₁ ≠ t₂)
     (htu : t₁ ≠ u₂) (hut : u₁ ≠ t₂) (huu : u₁ ≠ u₂)
     (hΓ : Γ₀ t₁ t₂ - Γ₀ t₁ u₂ - Γ₀ u₁ t₂ + Γ₀ u₁ u₂ ≠ 0)
     (hw : ∀ j, ∃ t u t' u', mon t = mon u ∧ t ≠ u ∧ mon t' = mon u' ∧ t' ≠ u' ∧
       1 / w j t + 1 / w j u ≠ 1 / w j t' + 1 / w j u') :
-    (Model.hendersonMat (Model.minqueForms W (cardSeason mon) (seasonBasis Γ₀ w))
+    (Model.hendersonMat (Model.minqueForms W (cohortSeason mon) (seasonBasis Γ₀ w))
       (seasonBasis Γ₀ w)).det ≠ 0 := by
   refine Model.minque_det_ne_zero_of_diff hW hD (seasonBasis_transpose hΓ₀ w) fun c hc => ?_
   have F : ∀ i j : J, ∀ {t u s v : T}, mon t = mon u → mon s = mon v →
       (∑ k, c k • seasonBasis Γ₀ w k) (i, t) (j, s) - (∑ k, c k • seasonBasis Γ₀ w k) (i, t) (j, v)
         - (∑ k, c k • seasonBasis Γ₀ w k) (i, u) (j, s)
         + (∑ k, c k • seasonBasis Γ₀ w k) (i, u) (j, v) = 0 :=
-    fun i j _ _ _ _ h h' => hc _ _ _ _ (cardSeason_row i h) (cardSeason_row j h')
+    fun i j _ _ _ _ h h' => hc _ _ _ _ (cohortSeason_row i h) (cohortSeason_row j h')
   simp only [sum_smul_seasonBasis_apply] at F
   -- `A`: the double difference of the shape.
   have hA : ∀ z, c (.inl z) = 0 := fun z => by
@@ -1831,22 +1831,22 @@ theorem minque_cardSeason_det_ne_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
 
 
 omit [Fintype T] [DecidableEq T] in
-/-- The card season has full column rank when every calendar month occurs. -/
-lemma cardSeason_mulVec_injective {Mo : Type*} [Fintype Mo] [DecidableEq Mo] {mon : T → Mo}
-    (hmon : Function.Surjective mon) : Function.Injective (cardSeason (J := J) mon).mulVec := by
+/-- The cohort season has full column rank when every calendar month occurs. -/
+lemma cohortSeason_mulVec_injective {Mo : Type*} [Fintype Mo] [DecidableEq Mo] {mon : T → Mo}
+    (hmon : Function.Surjective mon) : Function.Injective (cohortSeason (J := J) mon).mulVec := by
   intro β β' h
   funext k
   obtain ⟨t, ht⟩ := hmon k.2
   have := congrFun h (k.1, t)
-  simpa [mulVec, dotProduct, cardSeason_apply_eq, ht] using this
+  simpa [mulVec, dotProduct, cohortSeason_apply_eq, ht] using this
 
 omit [Fintype T] in
-/-- `DᵀW⁻¹D` is nonsingular for the card season `D` and any `W ≻ 0`, when every calendar month
+/-- `DᵀW⁻¹D` is nonsingular for the cohort season `D` and any `W ≻ 0`, when every calendar month
 occurs. -/
-theorem cardSeason_det_isUnit {Mo : Type*} [Fintype Mo] [DecidableEq Mo] [Fintype T]
+theorem cohortSeason_det_isUnit {Mo : Type*} [Fintype Mo] [DecidableEq Mo] [Fintype T]
     {mon : T → Mo} (hmon : Function.Surjective mon) {W : Matrix (J × T) (J × T) ℝ}
-    (hW : W.PosDef) : IsUnit ((cardSeason (J := J) mon)ᵀ * W⁻¹ * cardSeason mon).det := by
-  have := hW.inv.conjTranspose_mul_mul_same (cardSeason_mulVec_injective (J := J) hmon)
+    (hW : W.PosDef) : IsUnit ((cohortSeason (J := J) mon)ᵀ * W⁻¹ * cohortSeason mon).det := by
+  have := hW.inv.conjTranspose_mul_mul_same (cohortSeason_mulVec_injective (J := J) hmon)
   rw [conjTranspose_eq_transpose_of_trivial] at this
   exact isUnit_iff_ne_zero.mpr this.det_pos.ne'
 
@@ -1861,10 +1861,10 @@ lemma ar1Cal_symm (Y : ℕ) (φ : ℝ) (t s : Fin Y × Fin 12) : ar1Cal Y φ s t
   congr 1
   split_ifs <;> omega
 
-/-- **Two years, AR(1): MINQUE is nonsingular** (card-data Step 5): for any number of cards,
-two years of calendar months, a card season as fixed effects (`τ²` dropped, Finding 27),
+/-- **Two years, AR(1): MINQUE is nonsingular** (card-data Step 5): for any number of cohorts,
+two years of calendar months, a cohort season as fixed effects (`τ²` dropped, Finding 27),
 an AR(1) shape with `0 < φ < 1`, any prior `W ≻ 0`, and volumes with `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎`
-not constant over the calendar month for each card, the MINQUE system for `(A, C, s²)` is
+not constant over the calendar month for each cohort, the MINQUE system for `(A, C, s²)` is
 nonsingular, so MINQUE is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`. The factor is seen through
 the January–February year-on-year double difference `2φ - φ¹¹ - φ¹³ > 0`. -/
 theorem minque_ar1_two_years_det_ne_zero {φ : ℝ} (hφ0 : 0 < φ) (hφ1 : φ < 1)
@@ -1872,10 +1872,10 @@ theorem minque_ar1_two_years_det_ne_zero {φ : ℝ} (hφ0 : 0 < φ) (hφ1 : φ <
     (hW : W.PosDef)
     (hw : ∀ j, ∃ m m', 1 / w j (0, m) + 1 / w j (1, m) ≠ 1 / w j (0, m') + 1 / w j (1, m')) :
     (Model.hendersonMat
-      (Model.minqueForms W (cardSeason (J := J) Prod.snd) (seasonBasis (ar1Cal 2 φ) w))
+      (Model.minqueForms W (cohortSeason (J := J) Prod.snd) (seasonBasis (ar1Cal 2 φ) w))
       (seasonBasis (ar1Cal 2 φ) w)).det ≠ 0 := by
-  refine minque_cardSeason_det_ne_zero (ar1Cal_symm 2 φ) w hW
-    (cardSeason_det_isUnit Prod.snd_surjective hW) (t₁ := (1, 0)) (u₁ := (0, 0)) (t₂ := (1, 1))
+  refine minque_cohortSeason_det_ne_zero (ar1Cal_symm 2 φ) w hW
+    (cohortSeason_det_isUnit Prod.snd_surjective hW) (t₁ := (1, 0)) (u₁ := (0, 0)) (t₂ := (1, 1))
     (u₂ := (0, 1)) rfl rfl (by decide) (by decide) (by decide) (by decide) ?_ fun j => ?_
   · have h11 : φ ^ 11 < φ := pow_lt_self_of_lt_one₀ hφ0 hφ1 (by norm_num)
     have h13 : φ ^ 13 < φ := pow_lt_self_of_lt_one₀ hφ0 hφ1 (by norm_num)
@@ -1885,19 +1885,19 @@ theorem minque_ar1_two_years_det_ne_zero {φ : ℝ} (hφ0 : 0 < φ) (hφ1 : φ <
     exact ⟨(0, m), (1, m), (0, m'), (1, m'), rfl, by simp, rfl, by simp, h⟩
 
 /-- **Two years: `sⱼ²` needs volumes that vary over the calendar** (Finding 29). With two
-years and a card season, if `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎ = h` for every calendar month `m` (e.g. a
+years and a cohort season, if `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎ = h` for every calendar month `m` (e.g. a
 volume that changes only from one year to the next), the table `2Vₛⱼ - hV_Cⱼⱼ` is `YDᵀ + DYᵀ`:
 within each calendar month it is `diag(x, -x)`. So MINQUE is singular for every prior and every
 shape: `sⱼ²` trades against `Cⱼⱼ`. -/
-theorem minque_cardSeason_det_eq_zero_of_volume {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+theorem minque_cohortSeason_det_eq_zero_of_volume {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     {Γ₀ : Matrix (Fin 2 × Mo) (Fin 2 × Mo) ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s)
     (w : J → Fin 2 × Mo → ℝ) {W : Matrix (J × (Fin 2 × Mo)) (J × (Fin 2 × Mo)) ℝ}
     (hW : W.PosDef) (j : J) {h : ℝ} (hh : ∀ m, 1 / w j (0, m) + 1 / w j (1, m) = h) :
     (Model.hendersonMat
-      (Model.minqueForms W (cardSeason (J := J) Prod.snd) (seasonBasis Γ₀ w))
+      (Model.minqueForms W (cohortSeason (J := J) Prod.snd) (seasonBasis Γ₀ w))
       (seasonBasis Γ₀ w)).det = 0 := by
   refine Model.minque_det_eq_zero_of_mod_design hW
-    (cardSeason_det_isUnit Prod.snd_surjective hW) (seasonBasis_transpose hΓ₀ w)
+    (cohortSeason_det_isUnit Prod.snd_surjective hW) (seasonBasis_transpose hΓ₀ w)
     (c := Pi.single (.inr (.inr j)) 2 - Pi.single (.inr (.inl s(j, j))) h) ?_
     (of fun p k => if k = (j, p.2.2) then (if p.1 = j then (2 / w j p.2 - h) / 2 else 0) else 0) ?_
   · intro h0
@@ -1908,7 +1908,7 @@ theorem minque_cardSeason_det_eq_zero_of_volume {Mo : Type*} [Fintype Mo] [Decid
     rcases p with ⟨i, y, m⟩
     rcases q with ⟨i', y', m'⟩
     have hy := hh m
-    simp only [Matrix.add_apply, Matrix.mul_apply, transpose_apply, of_apply, cardSeason_apply_eq,
+    simp only [Matrix.add_apply, Matrix.mul_apply, transpose_apply, of_apply, cohortSeason_apply_eq,
       ite_mul, mul_ite, zero_mul, mul_zero, one_mul, mul_one, sum_ite_eq, sum_ite_eq', mem_univ,
       ite_true]
     by_cases hi : i = j <;> by_cases hi' : i' = j <;> by_cases hm : m = m'
@@ -1919,17 +1919,17 @@ theorem minque_cardSeason_det_eq_zero_of_volume {Mo : Type*} [Fintype Mo] [Decid
     · exact fun h => absurd h.symm hm
     · exact fun _ h => absurd h.symm hi'
 
-/-- **Under a card season, Henderson III / MINQUE without `τ²` is unbiased for the full
+/-- **Under a cohort season, Henderson III / MINQUE without `τ²` is unbiased for the full
 table**: for invariant forms and a nonsingular season system, `θ̂` is unbiased for every
-`Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, whatever `τ²` and the fixed effects. The card level lies in the span of
-the design (`shapeBasis_tau_eq_cardSeason`), so it does not move the expectation
+`Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, whatever `τ²` and the fixed effects. The cohort level lies in the span of
+the design (`shapeBasis_tau_eq_cohortSeason`), so it does not move the expectation
 (`Model.UnbiasedMean.add_design`). -/
 theorem henderson_season_unbiased {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (mon : T → Mo)
-    {Q : SeasonPar J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0)
+    {Q : SeasonPar J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cohortSeason (J := J) mon = 0)
     (hH : IsUnit (Model.hendersonMat Q (seasonBasis Γ₀ w)).det) (A C : Sym2 J → ℝ)
     (s2 : J → ℝ) (τ2 : ℝ) (l : SeasonPar J) :
-    Model.UnbiasedMean (shapeTable Γ₀ w A C s2 τ2) (cardSeason mon)
+    Model.UnbiasedMean (shapeTable Γ₀ w A C s2 τ2) (cohortSeason mon)
       (fun X => Model.henderson Q (seasonBasis Γ₀ w) X l) (Sum.elim A (Sum.elim C s2) l) := by
   set E : Matrix (J × Mo) (J × Mo) ℝ := of fun k k' => if k.1 = k'.1 then (1 : ℝ) else 0
   have hE : (τ2 • E)ᵀ = τ2 • E := by
@@ -1937,8 +1937,8 @@ theorem henderson_season_unbiased {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     simp [E, eq_comm]
   have e : shapeTable Γ₀ w A C s2 τ2 = fun p q =>
       Model.linTable (seasonBasis Γ₀ w) (Sum.elim A (Sum.elim C s2)) p q
-        + (cardSeason (J := J) mon * (τ2 • E) * (cardSeason (J := J) mon)ᵀ) p q := by
-    rw [Matrix.mul_smul, Matrix.smul_mul, ← shapeBasis_tau_eq_cardSeason Γ₀ w mon]
+        + (cohortSeason (J := J) mon * (τ2 • E) * (cohortSeason (J := J) mon)ᵀ) p q := by
+    rw [Matrix.mul_smul, Matrix.smul_mul, ← shapeBasis_tau_eq_cohortSeason Γ₀ w mon]
     funext p q
     have hl : Model.linTable (seasonBasis Γ₀ w) (Sum.elim A (Sum.elim C s2)) p q
         = (∑ k, Sum.elim A (Sum.elim C s2) k • seasonBasis Γ₀ w k) p q := by
@@ -1952,30 +1952,30 @@ theorem henderson_season_unbiased {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
 
 /-- **Two years, AR(1): MINQUE estimates the factor model** (card-data Step 5): for a factor
 model over two years of calendar months with `Γ = γΓ₀`, `Γ₀` the AR(1) shape with
-`0 < φ < 1`, a card season as fixed effects and volumes as in
+`0 < φ < 1`, a cohort season as fixed effects and volumes as in
 `minque_ar1_two_years_det_ne_zero`, MINQUE without `τ²` for any prior `W ≻ 0` is unbiased for
 `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`, whatever the season `β` and `τ²`. -/
 theorem minque_ar1_two_years_unbiased (M : Factor J (Fin 2 × Fin 12)) {γ φ : ℝ}
     (hΓ : M.Γ = γ • ar1Cal 2 φ) (hφ0 : 0 < φ) (hφ1 : φ < 1)
     {W : Matrix (J × (Fin 2 × Fin 12)) (J × (Fin 2 × Fin 12)) ℝ} (hW : W.PosDef)
     (hw : ∀ j, ∃ m m', 1 / M.w j (0, m) + 1 / M.w j (1, m) ≠ 1 / M.w j (0, m') + 1 / M.w j (1, m')) :
-    (∀ i j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
-        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+    (∀ i j, Model.UnbiasedMean (M.covG 0) (cohortSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cohortSeason Prod.snd)
           (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inl s(i, j)))
         (γ * (M.load i * M.load j)))
-      ∧ (∀ i j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
-        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+      ∧ (∀ i j, Model.UnbiasedMean (M.covG 0) (cohortSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cohortSeason Prod.snd)
           (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inr (.inl s(i, j))))
         (M.C i j))
-      ∧ (∀ j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
-        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+      ∧ (∀ j, Model.UnbiasedMean (M.covG 0) (cohortSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cohortSeason Prod.snd)
           (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inr (.inr j)))
         (M.s2 j)) := by
-  have hD := cardSeason_det_isUnit (J := J)
+  have hD := cohortSeason_det_isUnit (J := J)
     (Prod.snd_surjective : Function.Surjective (Prod.snd : Fin 2 × Fin 12 → Fin 12)) hW
   have hH := isUnit_iff_ne_zero.mpr (minque_ar1_two_years_det_ne_zero hφ0 hφ1 M.w hW hw)
-  have hQ : ∀ k, Model.minqueForms W (cardSeason (J := J) Prod.snd)
-      (seasonBasis (ar1Cal 2 φ) M.w) k * cardSeason (J := J) (Prod.snd : Fin 2 × Fin 12 → Fin 12)
+  have hQ : ∀ k, Model.minqueForms W (cohortSeason (J := J) Prod.snd)
+      (seasonBasis (ar1Cal 2 φ) M.w) k * cohortSeason (J := J) (Prod.snd : Fin 2 × Fin 12 → Fin 12)
         = 0 := fun k => by
     rw [Model.minqueForms, Matrix.mul_assoc, Model.minqueR_mul W hD, Matrix.mul_zero]
   rw [M.covG_zero_eq_shapeTable hΓ]
@@ -1991,8 +1991,8 @@ section GivenShapeG
 
 variable {J T B : Type*} [DecidableEq J] [DecidableEq T] (M : Factor J T) [Fintype J] [Fintype T]
 
-/-- The parameters given the shapes `Γ₀` of the factor and `G₀` of the per-card dynamics
-(`Gⱼ = gⱼG₀`): those of `Par` and one scale `gⱼ` per card. -/
+/-- The parameters given the shapes `Γ₀` of the factor and `G₀` of the per-cohort dynamics
+(`Gⱼ = gⱼG₀`): those of `Par` and one scale `gⱼ` per cohort. -/
 abbrev ParG (J : Type*) := Par J ⊕ J
 
 /-- The table given both shapes: `shapeTable` plus `δᵢⱼgᵢ(G₀)ₜₛ`. -/
@@ -2000,7 +2000,7 @@ noncomputable def shapeTableG (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ
     (s2 : J → ℝ) (τ2 : ℝ) (g : J → ℝ) : J × T → J × T → ℝ := fun p q =>
   shapeTable Γ₀ w A C s2 τ2 p q + if p.1 = q.1 then g p.1 * G₀ p.2 q.2 else 0
 
-/-- The basis tables: those of `shapeBasis` and `Eⱼⱼ ⊗ G₀` per card. -/
+/-- The basis tables: those of `shapeBasis` and `Eⱼⱼ ⊗ G₀` per cohort. -/
 noncomputable def shapeBasisG (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ) :
     ParG J → Matrix (J × T) (J × T) ℝ :=
   Sum.elim (shapeBasis Γ₀ w) fun j p q => if p.1 = j ∧ q.1 = j then G₀ p.2 q.2 else 0
@@ -2033,7 +2033,7 @@ theorem shapeTableG_eq_linTable (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → �
 variable [Fintype B]
 
 /-- **Henderson III / MINQUE given both shapes**: for invariant forms with a nonsingular system,
-`θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and per-card scale `gⱼ`, whatever `β`. -/
+`θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and per-cohort scale `gⱼ`, whatever `β`. -/
 theorem henderson_shapeG_unbiased (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ)
     {D : Matrix (J × T) B ℝ} {Q : ParG J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * D = 0)
     (hH : IsUnit (Model.hendersonMat Q (shapeBasisG Γ₀ G₀ w)).det) (A C : Sym2 J → ℝ)
@@ -2044,7 +2044,7 @@ theorem henderson_shapeG_unbiased (Γ₀ G₀ : Matrix T T ℝ) (w : J → T →
   exact Model.henderson_unbiased hQ hH _ l
 
 omit [Fintype J] [Fintype T] in
-/-- **The factor model with per-card dynamics of known shape** `Gⱼ = gⱼG₀` and `Γ = γΓ₀` is
+/-- **The factor model with per-cohort dynamics of known shape** `Gⱼ = gⱼG₀` and `Γ = γΓ₀` is
 `shapeTableG` with `A = γλλᵀ`. -/
 theorem covG_eq_shapeTableG {Γ₀ G₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀)
     {G : J → Matrix T T ℝ} {g : J → ℝ} (hG : ∀ j, G j = g j • G₀) :
@@ -2057,7 +2057,7 @@ theorem covG_eq_shapeTableG {Γ₀ G₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ
   simp only [covG, obsCovG, hG, Pi.zero_apply, Matrix.zero_apply, Matrix.smul_apply,
     smul_eq_mul, ite_self, add_zero]
 
-/-- **Henderson III / MINQUE for the factor model with per-card dynamics** of known shapes
+/-- **Henderson III / MINQUE for the factor model with per-cohort dynamics** of known shapes
 `Γ = γΓ₀`, `Gⱼ = gⱼG₀`: unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and `gⱼ`, whatever the fixed
 effects. The system is singular, for instance, when `G₀ = I` (`hendersonMat_shapeG_one_det_eq_zero`:
 `gⱼ` against `Cⱼⱼ`). -/
@@ -2084,8 +2084,8 @@ theorem henderson_factorG_unbiased {Γ₀ G₀ : Matrix T T ℝ} {γ : ℝ} (hΓ
     exact (henderson_shapeG_unbiased Γ₀ G₀ M.w hQ hH _ _ _ _ _ _).congr (fun _ => rfl)
       (by simp [shapeParG, shapePar])
 
-/-- **White-noise per-card dynamics are not separable from the shock**: with `G₀ = I` the
-per-card table `Eⱼⱼ ⊗ I` is the shock variance table of card `j`, so the system is singular
+/-- **White-noise per-cohort dynamics are not separable from the shock**: with `G₀ = I` the
+per-cohort table `Eⱼⱼ ⊗ I` is the shock variance table of cohort `j`, so the system is singular
 for every choice of forms. -/
 theorem hendersonMat_shapeG_one_det_eq_zero [Nonempty J] (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ)
     (Q : ParG J → Matrix (J × T) (J × T) ℝ) :
@@ -2100,19 +2100,19 @@ theorem hendersonMat_shapeG_one_det_eq_zero [Nonempty J] (Γ₀ : Matrix T T ℝ
   simp only [shapeBasis, Matrix.one_apply, Sym2.eq_iff]
   by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> simp [hp, hq]
 
-/-- **Per-card dynamics that repeat with the calendar are lost to the card season**: if
+/-- **Per-card dynamics that repeat with the calendar are lost to the cohort season**: if
 `G₀ = aI + g(mon t, mon s)`, then `gⱼ` against `aCⱼⱼ` lies in the span of the design, and every
 invariant system is singular. -/
-theorem hendersonMat_cardSeason_det_eq_zero_of_shapeG {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+theorem hendersonMat_cohortSeason_det_eq_zero_of_shapeG {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
     (Γ₀ : Matrix T T ℝ) {G₀ : Matrix T T ℝ} (w : J → T → ℝ) {mon : T → Mo} {a : ℝ}
     {g : Mo → Mo → ℝ} (hG : ∀ t s, G₀ t s = a * (if t = s then 1 else 0) + g (mon t) (mon s))
     (j : J) {Q : ParG J → Matrix (J × T) (J × T) ℝ}
-    (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    (hQ : ∀ k, Q k * cohortSeason (J := J) mon = 0) :
     (Model.hendersonMat Q (shapeBasisG Γ₀ G₀ w)).det = 0 := by
   refine Model.hendersonMat_det_eq_zero_of_mod_design hQ
     (Model.single_sub_single_ne_zero (l := .inl (.inr (.inl s(j, j)))) (l' := .inr j) (by simp) a)
-    (cardSeason mon * of fun k k' : J × Mo => if k.1 = j ∧ k'.1 = j then g k.2 k'.2 else 0) ?_
-  refine Eq.trans ?_ (classTable_eq_cardSeason (J := J) mon _)
+    (cohortSeason mon * of fun k k' : J × Mo => if k.1 = j ∧ k'.1 = j then g k.2 k'.2 else 0) ?_
+  refine Eq.trans ?_ (classTable_eq_cohortSeason (J := J) mon _)
   funext p q
   rw [Model.linTable_single_sub]
   change (if p.1 = j ∧ q.1 = j then G₀ p.2 q.2 else 0)

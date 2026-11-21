@@ -5,7 +5,7 @@ import Credibility.Unequal
 /-!
 # The season and the 12-month target (extension, `notes/card-data.md` Step 2)
 
-The season is additive on the rate: a cell `i` (card × month) has mean `β_{m(i)}`, one fixed
+The season is additive on the rate: a cell `i` (cohort × month) has mean `β_{m(i)}`, one fixed
 effect per calendar month `m`, and the target has mean `Σₘ cₘβₘ` (`cₘ = 1`: the total over
 the next 12 months). This is `Core.blup` with the season design `X = design mon` (cell ↦ its
 month). An unbiased predictor needs each month's weights to sum to `cₘ` (`monthSum`).
@@ -14,12 +14,12 @@ month). An unbiased predictor needs each month's weights to sum to `cₘ` (`mont
   predictor iff the one-mean `d*` already has month sums `cₘ`; the general form is
   `Core.blup_eq_blup_iff_of_nested`. Sufficient: the months are interchangeable
   (`blup_eq_of_interchangeable`), e.g. whole years and a model unchanged by a calendar shift.
-* **It does not in general** (`blup_ne_of_volume`, Finding 24): whole years of one card and
+* **It does not in general** (`blup_ne_of_volume`, Finding 24): whole years of one cohort and
   independent noise, but more volume in one month. The one-mean predictor overweights that month,
   so it is biased whenever the season is real (`Target.integral_bias`).
 * **A known index `cₜ`** (multiplicative) is not a fixed effect: divide the data by `cₜ` and the
   thesis model `Unequal` applies. Under Poisson-type variance the cell weights are expected
-  claims `cₜwⱼₜ`, not cards in force (`Unequal.a_eq_of_volume`).
+  claims `cₜwⱼₜ`, not exposures (`Unequal.a_eq_of_volume`).
 -/
 
 open Finset Matrix MeasureTheory ProbabilityTheory Credibility.Core
@@ -110,7 +110,7 @@ theorem blup_eq_of_interchangeable [Nonempty n] {K : Matrix n n ℝ} (hK : K.Pos
   simp only [hS m, htot, sum_const, card_univ, nsmul_eq_mul] at h
   exact mul_left_cancel₀ (Nat.cast_ne_zero.mpr hm) h
 
-/-- **The season does not drop out** (Finding 24). One card, two years of two months, whole
+/-- **The season does not drop out** (Finding 24). One cohort, two years of two months, whole
 years, independent noise; the first month has twice the volume (variance `1` against `2`). The
 target is next year's total (`c = 1`), with no random effect (`ℓ = 0`). The one-mean
 predictor puts `4/3` on the first month and `2/3` on the second, so it differs from the seasonal

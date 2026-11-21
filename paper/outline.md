@@ -88,27 +88,27 @@ may need a paragraph.)
   effects `Dβ` (a form must vanish on the design, `Model.ecovMean_eq_iff`); what the factor
   table identifies (scale, lag 0 only `C + γλλᵀ`, lagged cross-card moments only the factor:
   `Factor.blup_rescale`, `blup_eq_of_lag0`, `factor_eq_of_obsCovG_eq`); the year-on-year
-  estimator (`Factor.yoy_unbiased_factor`). 2026-11-21: three cards for loadings
+  estimator (`Factor.yoy_unbiased_factor`). 2026-11-21: three cohorts for loadings
   (`Factor.load_sq_of_three`), AR(1) from cross-moments (`Factor.ar1_identified`), and Finding 26
   (`Factor.crossHat_ar1_two`): what a shock-only fit does with a persistent factor; its `τ̂²`
   and diagonal `Ĉ`, `ŝ²` too (`Factor.tauHat_factor_unbiased`). Henderson III / MINQUE given
   the factor's shape (`Model.henderson_unbiased`, `Factor.henderson_factor_unbiased`). When
   its system is nonsingular: iff the basis tables are independent
   (`Model.exists_hendersonMat_det_ne_zero_iff`); constant volumes and independent months fail
-  (`Factor.hendersonMat_shock_det_eq_zero`, `Factor.not_unbiased_factor_of_indep`); per-card
+  (`Factor.hendersonMat_shock_det_eq_zero`, `Factor.not_unbiased_factor_of_indep`); per-cohort
   dynamics of known shape (`Factor.henderson_factorG_unbiased`); MINQUE nonsingular iff the
-  projected tables are independent (`Model.minque_det_ne_zero_iff`), so card-specific means
-  hide `τ²` (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`); a card season sees
+  projected tables are independent (`Model.minque_det_ne_zero_iff`), so cohort-specific means
+  hide `τ²` (Finding 27, `Factor.hendersonMat_cohortSeason_det_eq_zero`); a cohort season sees
   covariances only through repeated calendar months (Finding 28,
-  `Factor.unbiasedMean_cardSeason_eq_zero`, `Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`);
+  `Factor.unbiasedMean_cohortSeason_eq_zero`, `Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape`);
   a sufficient condition by within-calendar-month contrasts, two years and AR(1) suffice
-  (`Factor.minque_cardSeason_det_ne_zero`, `Factor.minque_ar1_two_years_unbiased`), and with
+  (`Factor.minque_cohortSeason_det_ne_zero`, `Factor.minque_ar1_two_years_unbiased`), and with
   two years the volumes must vary over the calendar (Finding 29,
-  `Factor.minque_cardSeason_det_eq_zero_of_volume`).
+  `Factor.minque_cohortSeason_det_eq_zero_of_volume`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing
-  the factor from other cards (`Factor.blup_neg_of_ar1`).
+  the factor from other cohorts (`Factor.blup_neg_of_ar1`).
 - Season (2026-11-20, `Season.lean`, Finding 24): when an estimated season drops out of the
   12-month predictor (interchangeable months) and why it usually does not (seasonal volume);
   a known index is a change of units plus weights by expected claims.

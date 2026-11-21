@@ -82,7 +82,7 @@ main results: mostly thesis-facing statements proved from a general result
 - `thm:Factor_mse_true` (1 lines): The factor model's predictor in true MSE
 - `thm:Factor_congr` (2 lines): Equal tables, equal predictors
 - `thm:Factor_rescale` (3 lines): (I1) The scale of loadings and factor
-- `thm:Factor_lagged` (1 lines): (I3) Lags $\ge 1$ across cards see only the factor
+- `thm:Factor_lagged` (1 lines): (I3) Lags $\ge 1$ across cohorts see only the factor
 - `thm:CV_hachemeister` (2 lines): Hachemeister with correlated cohorts
 - `thm:CV_blend_price` (2 lines): The price of the matrix blend
 - `thm:hadamard_corr` (2 lines): Tapering keeps a covariance matrix
@@ -499,7 +499,7 @@ main results: mostly thesis-facing statements proved from a general result
 | ✅ | `Credibility.Model.unbiasedMean_diff_mul` |  | **Differences of cells with the same design row annihilate the design**: if `Dₚ = D_{p'}` and `D_q = D_{q'}`, then `(Xₚ - X_{p'})(X_q - X_{q'})` is unbiased for `Cₚq - C_{pq'} - C_{p'q} + C_{p'q'}` whatever `β` |
 | ✅ | `Credibility.Model.integral_quad_of_mean` |  | `EcovMean` is the actual expectation: for random variables `Zₚ` and a quadratic form reading only cells in `S`, if on `S` the `Zₚ` are square integrable with means `mₚ` and `cov(Zₚ, Z_q) = C p q`, then `E[Σₚ,q Qₚq Zₚ Z_q] = EcovMean C m Q` |
 | ✅ | `Credibility.Model.integral_quad_of_cov` |  | `Ecov` is the actual expectation: for random variables `Zₚ` and a quadratic form reading only cells in `S` (`Qₚq ≠ 0` only if `p, q ∈ S`), if on `S` the `Zₚ` are square integrable with mean `μ` and `cov(Zₚ, Z_q) = C p q`, then `E[Σₚ,q Qₚq Zₚ Z_q] = Ecov C μ Q` |
-| ✅ | `Credibility.Model.UnbiasedMean.of_mul` |  | **A smaller design**: unbiased for every `β` under `D` stays so under any design `DE` whose columns lie in the column space of `D` (e.g. a common season from a per-card one) |
+| ✅ | `Credibility.Model.UnbiasedMean.of_mul` |  | **A smaller design**: unbiased for every `β` under `D` stays so under any design `DE` whose columns lie in the column space of `D` (e.g. a common season from a per-cohort one) |
 | ✅ | `Credibility.Model.UnbiasedMean.integral_eq` |  | **Unbiased is about the true expectation**: if `f` is unbiased for `θ` under `C` and `D`, then for any square-integrable random cells with means `Dβ` and covariances `C`, `E f(Z) = θ` |
 | ✅ | `Credibility.Model.UnbiasedCov.unique` |  | An estimator has one expectation: for a symmetric table, unbiasedness fixes the value |
 | ✅ | `Credibility.Model.UnbiasedCov.congr` |  | Unbiasedness is about the function and the value, not their presentation |
@@ -528,19 +528,19 @@ main results: mostly thesis-facing statements proved from a general result
 | ✅ | `Credibility.Factor.ar1_posSemidef` | (1) | **AR(1) is a valid `Γ`**: `γφ^\|t-s\| ⪰ 0` for `γ ≥ 0` and `\|φ\| ≤ 1` |
 | ✅ | `Credibility.Factor.block_posSemidef` |  | **A block `Γ` is valid** when every block is: `G_r ⪰ 0` gives `Γ ⪰ 0`, a weighted sum as in `Shock` |
 | ✅ | `Credibility.Factor.regime_posSemidef` |  | **A level per regime**: `Γₜₛ = γ_r` when `t`, `s` lie in the same regime `r`, else `0` (the factor is constant within a regime, independent across) |
-| ✅ | `Credibility.Factor.ell_apply_of_future` |  | **`ℓ` for months not yet observed** (`b = 0` on the cell's month): only the factor and the card level link the data to the target, `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` |
+| ✅ | `Credibility.Factor.ell_apply_of_future` |  | **`ℓ` for months not yet observed** (`b = 0` on the cell's month): only the factor and the cohort level link the data to the target, `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` |
 | ✅ | `Credibility.Factor.var_eq` |  | **`v` for the target**: `v = λ_{j₀}²bᵀΓb + Σₜbₜ²(C_{j₀j₀} + s_{j₀}²/w_{j₀t}) + τ²(Σₜbₜ)²` |
-| ✅ | `Credibility.Factor.blup_optimal` |  | **The best linear unbiased predictor** of card `j₀`'s next 12 months under the common factor model, for any design `X` of fixed effects (`Core.blup_optimal`) |
+| ✅ | `Credibility.Factor.blup_optimal` |  | **The best linear unbiased predictor** of cohort `j₀`'s next 12 months under the common factor model, for any design `X` of fixed effects (`Core.blup_optimal`) |
 | ✅ | `Credibility.Factor.predMse_blup` |  | **Its error** `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r`, `r = x₀ - XᵀK⁻¹ℓ` (`Core.predMse_blup`) |
 | ✅ | `Credibility.Factor.blup_season_optimal` |  | **With an estimated season** (Step 2): the season design on the cells' calendar months; the target `Σₜ bₜX_{j₀t}` has mean `Σₘ Sₘ(b)βₘ`, so the predictor is unbiased iff its month sums are those of `b` |
 | ✅ | `Credibility.Factor.KG_eq_add` |  |  |
-| ✅ | `Credibility.Factor.ellG_eq` |  | `ℓ` gains card `j₀`'s own dynamics on its own cells: `δ_{ij₀}(G_{j₀}b)ₜ` |
+| ✅ | `Credibility.Factor.ellG_eq` |  | `ℓ` gains cohort `j₀`'s own dynamics on its own cells: `δ_{ij₀}(G_{j₀}b)ₜ` |
 | ✅ | `Credibility.Factor.varG_eq` |  | `v` gains `bᵀG_{j₀}b` |
-| ✅ | `Credibility.Factor.cardPart_posSemidef` |  | The per-card part is a weighted sum of the `Gⱼ`, as in `Shock`: `⪰ 0` |
-| ✅ | `Credibility.Factor.KG_posDef` |  | **`K ≻ 0` with per-card dynamics**: the per-card part is `⪰ 0` |
-| ✅ | `Credibility.Factor.blupG_optimal` | (1) | **The predictor with per-card dynamics** (`Core.blup_optimal`); per-card AR(1) is `Gⱼ = ar1 N γⱼ φⱼ` (`ar1_posSemidef`) |
-| ✅ | `Credibility.Factor.blup_exAR1` |  | The predictor of card `0` in month `2` (one common mean) has the weights `(11/30, 8/15, -1/30, 2/15)` on the cells `(0,0), (0,1), (1,0), (1,1)` |
-| ✅ | `Credibility.Factor.blup_neg_of_ar1` | (1) | **Negative weights under AR(1)** (Finding 25): a balanced panel, positive autocorrelation, and still the predictor of card `0`'s next month puts weight `-1/30` on card `1`'s first month |
+| ✅ | `Credibility.Factor.cohortPart_posSemidef` |  | The per-cohort part is a weighted sum of the `Gⱼ`, as in `Shock`: `⪰ 0` |
+| ✅ | `Credibility.Factor.KG_posDef` |  | **`K ≻ 0` with per-cohort dynamics**: the per-cohort part is `⪰ 0` |
+| ✅ | `Credibility.Factor.blupG_optimal` | (1) | **The predictor with per-cohort dynamics** (`Core.blup_optimal`); per-cohort AR(1) is `Gⱼ = ar1 N γⱼ φⱼ` (`ar1_posSemidef`) |
+| ✅ | `Credibility.Factor.blup_exAR1` |  | The predictor of cohort `0` in month `2` (one common mean) has the weights `(11/30, 8/15, -1/30, 2/15)` on the cells `(0,0), (0,1), (1,0), (1,1)` |
+| ✅ | `Credibility.Factor.blup_neg_of_ar1` | (1) | **Negative weights under AR(1)** (Finding 25): a balanced panel, positive autocorrelation, and still the predictor of cohort `0`'s next month puts weight `-1/30` on cohort `1`'s first month |
 
 ## `FactorEstimation` — Estimating the common factor model, part 1 (extension, `notes/card-data.md` Step 5)
 
@@ -551,40 +551,40 @@ main results: mostly thesis-facing statements proved from a general result
 | ✅ | `Credibility.Factor.var_congr` |  | Equal tables give the same `v` |
 | ✅ | `Credibility.Factor.blup_congr` |  | **Equal tables give the same predictor and the same error for every weight vector `d`.** |
 | ✅ | `Credibility.Factor.obsCov_rescale` |  | **(I1) Scale invariance**: `(λ, Γ) ↦ (aλ, a⁻²Γ)`, `a ≠ 0`, leaves the table unchanged |
-| ✅ | `Credibility.Factor.obsCovG_rescale` |  | With per-card dynamics too |
+| ✅ | `Credibility.Factor.obsCovG_rescale` |  | With per-cohort dynamics too |
 | ✅ | `Credibility.Factor.blup_rescale` |  | **(I1) for the predictor**: rescaling gives the same `K`, `ℓ`, `v`, so the same best linear unbiased predictor and the same error for every weight vector |
 | ✅ | `Credibility.Factor.obsCov_eq_of_lag0` |  | **(I2) Lag-0 sufficiency**: two models with the same `τ²`, `s²`, volumes and lagged factor part `λᵢλⱼΓₜₛ` (`t ≠ s`), constant factor variances `Γₜₜ = γ`, `Γ'ₜₜ = γ'`, and equal `C + γλλᵀ = C' + γ'λ'λ'ᵀ` have the same table |
 | ✅ | `Credibility.Factor.blup_eq_of_lag0` |  | **(I2) for the predictor**: the same `K`, `ℓ`, `v`, so the same predictor and errors; trading `C` against `γλλᵀ` at lag 0 does not change the prediction |
-| ✅ | `Credibility.Factor.obsCovG_of_ne` |  | **(I3) Separation**: two different cards in two different months have covariance `λᵢλⱼΓₜₛ`: no `C`, no `s²/w`, no `τ²`, no per-card dynamics `G` |
-| ✅ | `Credibility.Factor.obsCovG_self_of_ne` |  | The same card in two different months: `λᵢ²Γₜₛ + τ² + (Gᵢ)ₜₛ`; here the factor is confounded with `τ²` and `G` |
+| ✅ | `Credibility.Factor.obsCovG_of_ne` |  | **(I3) Separation**: two different cohorts in two different months have covariance `λᵢλⱼΓₜₛ`: no `C`, no `s²/w`, no `τ²`, no per-cohort dynamics `G` |
+| ✅ | `Credibility.Factor.obsCovG_self_of_ne` |  | The same cohort in two different months: `λᵢ²Γₜₛ + τ² + (Gᵢ)ₜₛ`; here the factor is confounded with `τ²` and `G` |
 | ✅ | `Credibility.Factor.factor_eq_of_obsCovG_eq` |  | **(I3) Distinguishable**: tables that agree (whatever their `C`, `s²`, `τ²`, `G`) have the same lagged cross-card factor part |
-| ✅ | `Credibility.Factor.cardSeason_row` |  | Months with the same calendar month have the same row in the season design |
-| ✅ | `Credibility.Factor.yoy_unbiased` |  | **The year-on-year cross-product is unbiased for every `β`** under any design whose rows agree for card `i` in months `t`, `u` (e.g. `cardSeason` with `mon t = mon u`) |
-| ✅ | `Credibility.Factor.yoy_unbiased_factor` |  | **Its expectation across cards**: for `i ≠ j` and months distinct across the two cards, `λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`: no `C`, `s²`, `τ²` or `G` |
-| ✅ | `Credibility.Factor.yoyPooled_unbiased` |  | **Pooled over months**: a weighted sum `Σₖ aₖ(Xᵢₜₖ - Xᵢᵤₖ)(Xⱼₛₖ - Xⱼᵥₖ)` over month quadruples `k = (tₖ, uₖ, sₖ, vₖ)` (e.g. all pairs at lag `h` in the overlap of the two cards' months) is unbiased for `λᵢλⱼΣₖ aₖ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)` |
-| ✅ | `Credibility.Factor.Cells.integral_yoy` |  | **For random cells with the factor table**: any square-integrable cells with means `Dβ` and covariances `obsCovG` (`Factor.Cells`) have `E[(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)] = λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)` for `i ≠ j`, months distinct across the cards and `D` equal in rows `(i, t)`, `(i, u)` |
-| ✅ | `Credibility.Factor.load_sq_of_three` |  | **(I4) Three cards identify a loading**: for distinct cards `i, j, k` with `λⱼ, λₖ ≠ 0` and months `t ≠ s`, `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ` (Anderson–Rubin), whatever `C`, `s²`, `τ²`, `G` |
-| ✅ | `Credibility.Factor.obsCovG_eq_of_trade` |  | **Trading a loading against per-card dynamics**: two models that differ only in their loadings and per-card dynamics have the same table if the cross products `λᵢλⱼ` (`i ≠ j`) agree and `Gᵢ + λᵢ²Γ` agrees for every card |
-| ✅ | `Credibility.Factor.two_cards_not_identified` |  | **(I4) Two cards do not identify the loadings**: loadings `(2, 1/2)` with per-card dynamics `(0, (3/4)I)` and loadings `(1, 1)` with `(3I, 0)` (all `⪰ 0`) give the same table, but `λ₀² = 4` against `1` |
-| ✅ | `Credibility.Factor.obsCovG_ar1` | (1) | Under an AR(1) factor, two different cards at lag `h = s - t ≥ 1` have covariance `λᵢλⱼγφʰ` |
-| ✅ | `Credibility.Factor.obsCovG_ar1_lag0` |  | At lag `0`, two different cards have covariance `γλᵢλⱼ + Cᵢⱼ` |
-| ✅ | `Credibility.Factor.ar1_identified` |  | **(I5) `φ`, `γλᵢλⱼ` and `Cᵢⱼ` from the cross-moments**: with `N ≥ 3` months and two different cards, `S₂ = φS₁` (lags `2` and `1` from month `0`); if `φ ≠ 0` and `γλᵢλⱼ ≠ 0`, then `φ = S₂/S₁`, `γλᵢλⱼ = S₁²/S₂` and `Cᵢⱼ = S₀ - S₁²/S₂` |
+| ✅ | `Credibility.Factor.cohortSeason_row` |  | Months with the same calendar month have the same row in the season design |
+| ✅ | `Credibility.Factor.yoy_unbiased` |  | **The year-on-year cross-product is unbiased for every `β`** under any design whose rows agree for cohort `i` in months `t`, `u` (e.g. `cohortSeason` with `mon t = mon u`) |
+| ✅ | `Credibility.Factor.yoy_unbiased_factor` |  | **Its expectation across cohorts**: for `i ≠ j` and months distinct across the two cohorts, `λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)`: no `C`, `s²`, `τ²` or `G` |
+| ✅ | `Credibility.Factor.yoyPooled_unbiased` |  | **Pooled over months**: a weighted sum `Σₖ aₖ(Xᵢₜₖ - Xᵢᵤₖ)(Xⱼₛₖ - Xⱼᵥₖ)` over month quadruples `k = (tₖ, uₖ, sₖ, vₖ)` (e.g. all pairs at lag `h` in the overlap of the two cohorts' months) is unbiased for `λᵢλⱼΣₖ aₖ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)` |
+| ✅ | `Credibility.Factor.Cells.integral_yoy` |  | **For random cells with the factor table**: any square-integrable cells with means `Dβ` and covariances `obsCovG` (`Factor.Cells`) have `E[(Xᵢₜ - Xᵢᵤ)(Xⱼₛ - Xⱼᵥ)] = λᵢλⱼ(Γₜₛ - Γₜᵥ - Γᵤₛ + Γᵤᵥ)` for `i ≠ j`, months distinct across the cohorts and `D` equal in rows `(i, t)`, `(i, u)` |
+| ✅ | `Credibility.Factor.load_sq_of_three` |  | **(I4) Three cohorts identify a loading**: for distinct cohorts `i, j, k` with `λⱼ, λₖ ≠ 0` and months `t ≠ s`, `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ` (Anderson–Rubin), whatever `C`, `s²`, `τ²`, `G` |
+| ✅ | `Credibility.Factor.obsCovG_eq_of_trade` |  | **Trading a loading against per-cohort dynamics**: two models that differ only in their loadings and per-cohort dynamics have the same table if the cross products `λᵢλⱼ` (`i ≠ j`) agree and `Gᵢ + λᵢ²Γ` agrees for every cohort |
+| ✅ | `Credibility.Factor.two_cohorts_not_identified` |  | **(I4) Two cohorts do not identify the loadings**: loadings `(2, 1/2)` with per-cohort dynamics `(0, (3/4)I)` and loadings `(1, 1)` with `(3I, 0)` (all `⪰ 0`) give the same table, but `λ₀² = 4` against `1` |
+| ✅ | `Credibility.Factor.obsCovG_ar1` | (1) | Under an AR(1) factor, two different cohorts at lag `h = s - t ≥ 1` have covariance `λᵢλⱼγφʰ` |
+| ✅ | `Credibility.Factor.obsCovG_ar1_lag0` |  | At lag `0`, two different cohorts have covariance `γλᵢλⱼ + Cᵢⱼ` |
+| ✅ | `Credibility.Factor.ar1_identified` |  | **(I5) `φ`, `γλᵢλⱼ` and `Cᵢⱼ` from the cross-moments**: with `N ≥ 3` months and two different cohorts, `S₂ = φS₁` (lags `2` and `1` from month `0`); if `φ ≠ 0` and `γλᵢλⱼ ≠ 0`, then `φ = S₂/S₁`, `γλᵢλⱼ = S₁²/S₂` and `Cᵢⱼ = S₀ - S₁²/S₂` |
 | ✅ | `Credibility.Factor.ar1_zero_eq_shock` | (1) | **(I5) `φ = 0` does not separate**: an AR(1) factor with `φ = 0` is independent months, and the table is that of the same model with shock `C + γλλᵀ` and no factor (`obsCov_eq_of_lag0`) |
-| ✅ | `Credibility.Factor.res_unbiased` |  | **Residual products under a factor**: `E[rᵢₜrⱼₜ]` is the `Shock` value `dᵢⱼₜCᵢⱼ + δᵢⱼhᵢₜsᵢ²` plus `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` plus, on one card, `(eₜ - aᵢ)ᵀGᵢ(eₜ - aᵢ)`: within-card demeaning removes only the part of the factor that is constant over the months |
+| ✅ | `Credibility.Factor.res_unbiased` |  | **Residual products under a factor**: `E[rᵢₜrⱼₜ]` is the `Shock` value `dᵢⱼₜCᵢⱼ + δᵢⱼhᵢₜsᵢ²` plus `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` plus, on one cohort, `(eₜ - aᵢ)ᵀGᵢ(eₜ - aᵢ)`: within-card demeaning removes only the part of the factor that is constant over the months |
 | ✅ | `Credibility.Factor.crossHat_factor_unbiased` |  | **`Shock.crossHat` under a factor** (`i ≠ j`): unbiased for `Cᵢⱼ + λᵢλⱼ Σₜ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ) / Σₜdᵢⱼₜ` |
 | ✅ | `Credibility.Factor.crossHat_ar1_two` | (1) | **Finding 26: the shock fit absorbs only part of the factor.** Two months, equal weights `aⱼₜ = 1/2`, an AR(1) factor `γφ^\|t-s\|`: `Shock.crossHat` is unbiased for `Cᵢⱼ + (1 - φ)γλᵢλⱼ`, so for `0 < φ < 1` (and `γλᵢλⱼ ≠ 0`) neither for `Cᵢⱼ` nor for the lag-0 covariance `Cᵢⱼ + γλᵢλⱼ` |
 | ✅ | `Credibility.Factor.sum_mul_sum_bilin` |  | Regrouping a double sum of a bilinear form: `Σₖₗ fₖgₗ(pₖᵀΓqₗ) = (Σₖ fₖpₖ)ᵀΓ(Σₗ gₗqₗ)` |
 | ✅ | `Credibility.Factor.portCovG_eq` |  | `P` is the `Shock` matrix `K` plus `λᵢλⱼaᵢᵀΓaⱼ` plus, on the diagonal, `aᵢᵀGᵢaᵢ` |
 | ✅ | `Credibility.Factor.contrast_factor_unbiased` |  | Products of contrasts of the cohort estimates under the factor table: if `Σⱼ cⱼ = 0`, then `E[(Σⱼ cⱼμ̂ⱼ)(Σⱼ c'ⱼμ̂ⱼ)] = Σᵢⱼ cᵢc'ⱼPᵢⱼ` |
-| ✅ | `Credibility.Factor.between_factor_unbiased` |  | **The between-cohort spread under a factor.** For weights `x` summing to one, `E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²` is the `Shock` value `τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` plus the factor term `Σⱼ xⱼ vⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢ xᵢλᵢaᵢ`, plus `Σₖ xₖ(1 - xₖ)aₖᵀGₖaₖ`: per-card dynamics look like extra heterogeneity `τ²` |
+| ✅ | `Credibility.Factor.between_factor_unbiased` |  | **The between-cohort spread under a factor.** For weights `x` summing to one, `E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²` is the `Shock` value `τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` plus the factor term `Σⱼ xⱼ vⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢ xᵢλᵢaᵢ`, plus `Σₖ xₖ(1 - xₖ)aₖᵀGₖaₖ`: per-cohort dynamics look like extra heterogeneity `τ²` |
 | ✅ | `Credibility.Factor.between_factor_equal_weights` |  | **Equal weights**: with the same weights `aⱼₜ = αₜ` for every cohort, the factor term is `Σⱼ xⱼ(λⱼ - λ̄)² · αᵀΓα`, `λ̄ = Σᵢ xᵢλᵢ`: zero exactly when the loadings are equal (or `αᵀΓα = 0`) |
 | ✅ | `Credibility.Factor.sqSum_factor_unbiased` |  | `E Σₜ uⱼₜrⱼₜ² = dⱼ(u)Cⱼⱼ + hⱼ(u)sⱼ² + Fⱼ(u)` under a factor |
 | ✅ | `Credibility.Factor.CdiagHat_factor_unbiased` |  | **`Ĉⱼⱼ` under a factor** is unbiased for `Cⱼⱼ + CdiagBias` |
 | ✅ | `Credibility.Factor.s2Hat_factor_unbiased` |  | **`ŝⱼ²` under a factor** is unbiased for `sⱼ² + s2Bias` |
 | ✅ | `Credibility.Factor.errCovHat_factor_unbiased` |  | **`Σ̂` under a factor**: every entry is unbiased for `Σᵢⱼ + errCovBias` |
-| ✅ | `Credibility.Factor.tauHat_factor_unbiased` |  | **`τ̂²` under a factor** is unbiased for `τ² + tauBias`: the factor and the per-card dynamics enter both through the spread and through the plugged-in `Σ̂` |
+| ✅ | `Credibility.Factor.tauHat_factor_unbiased` |  | **`τ̂²` under a factor** is unbiased for `τ² + tauBias`: the factor and the per-cohort dynamics enter both through the spread and through the plugged-in `Σ̂` |
 | ✅ | `Credibility.Factor.resQuad_smul_one` |  | With independent months `Γ = γI` the factor part of a residual product is `γ dᵢⱼₜ`: the same coefficient as the shock |
-| ✅ | `Credibility.Factor.CdiagHat_s2Hat_indep` |  | **Independent months: the factor is a rank-one shock.** With `Γ = γI` and no per-card dynamics, `Ĉⱼⱼ` is unbiased for `Cⱼⱼ + γλⱼ²` and `ŝⱼ²` stays unbiased for `sⱼ²`, as the off-diagonal `Shock.crossHat` reads `Cᵢⱼ + γλᵢλⱼ` (`crossHat_factor_unbiased`) |
+| ✅ | `Credibility.Factor.CdiagHat_s2Hat_indep` |  | **Independent months: the factor is a rank-one shock.** With `Γ = γI` and no per-cohort dynamics, `Ĉⱼⱼ` is unbiased for `Cⱼⱼ + γλⱼ²` and `ŝⱼ²` stays unbiased for `sⱼ²`, as the off-diagonal `Shock.crossHat` reads `Cᵢⱼ + γλᵢλⱼ` (`crossHat_factor_unbiased`) |
 | ✅ | `Credibility.Model.quad_sum` |  | A form is linear in its matrix: `quad (Σₖ cₖQₖ) = Σₖ cₖ quad Qₖ` |
 | ✅ | `Credibility.Model.sum_lin_mul_lin` |  | Regrouping `Σₚq (Σₖ cₖFₖ)ₚq (Σₘ bₘGₘ)ₚq` as `Σₖₘ cₖbₘ Σₚq (Fₖ)ₚq(Gₘ)ₚq` |
 | ✅ | `Credibility.Model.quad_eq_dotProduct` |  | `quad Q x = xᵀQx` |
@@ -620,41 +620,41 @@ main results: mostly thesis-facing statements proved from a general result
 | ✅ | `Credibility.Model.unbiasedMean_eq_zero_of_cells` |  | **No fixed-effect-free contrast, nothing estimable**: if every cell is alone in some column of the design (`D` has a column `e_p` for each cell `p`), every quadratic estimator unbiased for all `β` has expectation `0` under any symmetric table: `Dᵀ(Q + Qᵀ)D = 0` forces `Q` antisymmetric |
 | ✅ | `Credibility.Factor.shapeTable_eq_linTable` |  | **The table given the shape is linear in its parameters**: `Σₗ θₗVₗ` |
 | ✅ | `Credibility.Factor.henderson_shape_unbiased` |  | **Henderson III / MINQUE given the factor's shape** (literature §10h, plan item 2): for any invariant forms (`QₖD = 0`, e.g. `minqueForms`) with a nonsingular system, `θ̂` is unbiased, whatever the fixed effects `β`, for every parameter of the table: `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` |
-| ✅ | `Credibility.Factor.covG_zero_eq_shapeTable` |  | **The factor model given its shape** `Γ = γΓ₀` (e.g. `ar1 N 1 φ` for a known `φ`), without per-card dynamics: its table is `shapeTable` with `A = γλλᵀ` |
+| ✅ | `Credibility.Factor.covG_zero_eq_shapeTable` |  | **The factor model given its shape** `Γ = γΓ₀` (e.g. `ar1 N 1 φ` for a known `φ`), without per-cohort dynamics: its table is `shapeTable` with `A = γλλᵀ` |
 | ✅ | `Credibility.Factor.henderson_factor_unbiased` |  | **Henderson III / MINQUE for the factor model given its shape** `Γ = γΓ₀`: unbiased for `γλᵢλⱼ` (on `s(i, j)`), `Cᵢⱼ`, `sⱼ²` and `τ²`, whatever the fixed effects |
-| ✅ | `Credibility.Factor.shapeBasis_s2_eq_smul` |  | At a constant volume `wⱼ`, the process-noise table of card `j` is `1/wⱼ` times its shock variance table: `Eⱼⱼ ⊗ diag(1/wⱼ) = (1/wⱼ)(Eⱼⱼ ⊗ I)` |
-| ✅ | `Credibility.Factor.hendersonMat_shock_det_eq_zero` |  | **The shock part needs volume variation** (cf. `Shock.not_unbiased_s2_of_const`): if card `j` has the same volume in every month, the Henderson III system of the shock part (`A = 0`) is singular for every choice of forms, since `sⱼ²` and `Cⱼⱼ` enter the table only through `Cⱼⱼ + sⱼ²/wⱼ` |
-| ✅ | `Credibility.Factor.hendersonMat_shape_det_eq_zero_of_const` |  | With the factor too: a constant volume of one card makes the full shape system singular, whatever `Γ₀` and the forms |
+| ✅ | `Credibility.Factor.shapeBasis_s2_eq_smul` |  | At a constant volume `wⱼ`, the process-noise table of cohort `j` is `1/wⱼ` times its shock variance table: `Eⱼⱼ ⊗ diag(1/wⱼ) = (1/wⱼ)(Eⱼⱼ ⊗ I)` |
+| ✅ | `Credibility.Factor.hendersonMat_shock_det_eq_zero` |  | **The shock part needs volume variation** (cf. `Shock.not_unbiased_s2_of_const`): if cohort `j` has the same volume in every month, the Henderson III system of the shock part (`A = 0`) is singular for every choice of forms, since `sⱼ²` and `Cⱼⱼ` enter the table only through `Cⱼⱼ + sⱼ²/wⱼ` |
+| ✅ | `Credibility.Factor.hendersonMat_shape_det_eq_zero_of_const` |  | With the factor too: a constant volume of one cohort makes the full shape system singular, whatever `Γ₀` and the forms |
 | ✅ | `Credibility.Factor.shapeBasis_one_inl` |  | With independent months `Γ₀ = I` the factor table of a pair is its shock table: `Eᵢⱼ ⊗ I` twice |
 | ✅ | `Credibility.Factor.hendersonMat_shape_one_det_eq_zero` |  | **Independent months: `A` and `C` are not separable by Henderson III** (the rank-one shock, cf. `CdiagHat_s2Hat_indep`): with `Γ₀ = I` the system is singular for every choice of forms |
 | ✅ | `Credibility.Factor.shapeTable_one_eq` |  | With `Γ₀ = I` the table depends on `A` and `C` only through `A + C` |
 | ✅ | `Credibility.Factor.shapeTable_symm` |  | The shape table is symmetric when `Γ₀` is |
 | ✅ | `Credibility.Factor.not_unbiased_shape_one` |  | **Independent months: no estimator separates `A` from `C`.** With `Γ₀ = I`, no function of the data is unbiased for `A_z` for every parameter set (whatever the design): `(A, C)` and `(A + 1, C - 1)` give the same table |
 | ✅ | `Credibility.Factor.not_unbiased_factor_of_indep` |  | **Independent months: the factor is not identified from the shock** (the factor-model form of `not_unbiased_shape_one`): if `M` has `Γ = γI` and `γλᵢλⱼ ≠ 0`, no function of the data is unbiased for `γ'λ'ᵢλ'ⱼ` in every model `M'` with `Γ' = γ'I`, whatever the design: moving the factor into the shock (`factorToShock`) keeps the table and gives `0` |
-| ✅ | `Credibility.Factor.cardSeason_apply_eq` |  | The card season's column for card `j` and calendar month `m` is the indicator of the cells `(j, t)` with `mon t = m` |
-| ✅ | `Credibility.Factor.classTable_eq_cardSeason` |  | **Tables that see only card and calendar month are `DFDᵀ`** for the card season `D`: `F((p.1, mon p.2), (q.1, mon q.2)) = (D F Dᵀ)ₚq` |
-| ✅ | `Credibility.Factor.shapeBasis_tau_eq_cardSeason` |  | The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season `D = cardSeason mon`, with `E_{(j,m),(j',m')} = δⱼⱼ'`: the card level lies in the span of card-specific means |
-| ✅ | `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero` |  | **Card-specific means hide the card level** (Finding 27): with the card season as fixed effects (it contains the card means), every invariant system of the shape is singular, so Henderson III / MINQUE never applies as stated; drop `τ²` from the parameters (`τ²` is the spread of what the design already fits) |
-| ✅ | `Credibility.Factor.cardSeason_col` |  | With one cell per calendar month and card (`mon` injective, e.g. one year of data), each cell is alone in its column of the card season |
-| ✅ | `Credibility.Factor.unbiasedMean_cardSeason_eq_zero` |  | **One year with a card season: nothing is estimable** (Finding 28): if every card has at most one cell per calendar month, every quadratic estimator unbiased under the card season has expectation `0` under any symmetric table |
-| ✅ | `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shape` | (1) | **A factor shape that repeats with the calendar is lost to the card season** (Finding 28): if `Γ₀ = aI + g(mon t, mon s)` (e.g |
-| ✅ | `Credibility.Factor.exists_independent_singular` |  | **An independent basis and a full-rank design are not enough** for MINQUE (or any invariant forms): one card, two months, a common mean (`D = 1`), and the tables `I` (shock) and `11ᵀ` (card level) |
+| ✅ | `Credibility.Factor.cohortSeason_apply_eq` |  | The cohort season's column for cohort `j` and calendar month `m` is the indicator of the cells `(j, t)` with `mon t = m` |
+| ✅ | `Credibility.Factor.classTable_eq_cohortSeason` |  | **Tables that see only cohort and calendar month are `DFDᵀ`** for the cohort season `D`: `F((p.1, mon p.2), (q.1, mon q.2)) = (D F Dᵀ)ₚq` |
+| ✅ | `Credibility.Factor.shapeBasis_tau_eq_cohortSeason` |  | The cohort-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the cohort season `D = cohortSeason mon`, with `E_{(j,m),(j',m')} = δⱼⱼ'`: the cohort level lies in the span of cohort-specific means |
+| ✅ | `Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero` |  | **Cohort-specific means hide the cohort level** (Finding 27): with the cohort season as fixed effects (it contains the cohort means), every invariant system of the shape is singular, so Henderson III / MINQUE never applies as stated; drop `τ²` from the parameters (`τ²` is the spread of what the design already fits) |
+| ✅ | `Credibility.Factor.cohortSeason_col` |  | With one cell per calendar month and cohort (`mon` injective, e.g. one year of data), each cell is alone in its column of the cohort season |
+| ✅ | `Credibility.Factor.unbiasedMean_cohortSeason_eq_zero` |  | **One year with a cohort season: nothing is estimable** (Finding 28): if every cohort has at most one cell per calendar month, every quadratic estimator unbiased under the cohort season has expectation `0` under any symmetric table |
+| ✅ | `Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape` | (1) | **A factor shape that repeats with the calendar is lost to the cohort season** (Finding 28): if `Γ₀ = aI + g(mon t, mon s)` (e.g |
+| ✅ | `Credibility.Factor.exists_independent_singular` |  | **An independent basis and a full-rank design are not enough** for MINQUE (or any invariant forms): one cohort, two months, a common mean (`D = 1`), and the tables `I` (shock) and `11ᵀ` (cohort level) |
 | ✅ | `Credibility.Factor.seasonBasis_transpose` |  | The basis tables are symmetric when `Γ₀` is |
 | ✅ | `Credibility.Factor.sum_smul_seasonBasis_apply` |  | The combination `Σₗ cₗVₗ` of the season basis, entry by entry |
-| ✅ | `Credibility.Factor.minque_cardSeason_det_ne_zero` |  | **Two years under a card season: MINQUE is nonsingular** (sufficient condition) |
-| ✅ | `Credibility.Factor.cardSeason_mulVec_injective` |  | The card season has full column rank when every calendar month occurs |
-| ✅ | `Credibility.Factor.cardSeason_det_isUnit` |  | `DᵀW⁻¹D` is nonsingular for the card season `D` and any `W ≻ 0`, when every calendar month occurs |
+| ✅ | `Credibility.Factor.minque_cohortSeason_det_ne_zero` |  | **Two years under a cohort season: MINQUE is nonsingular** (sufficient condition) |
+| ✅ | `Credibility.Factor.cohortSeason_mulVec_injective` |  | The cohort season has full column rank when every calendar month occurs |
+| ✅ | `Credibility.Factor.cohortSeason_det_isUnit` |  | `DᵀW⁻¹D` is nonsingular for the cohort season `D` and any `W ≻ 0`, when every calendar month occurs |
 | ✅ | `Credibility.Factor.ar1Cal_symm` | (1) | The calendar AR(1) shape is symmetric |
-| ✅ | `Credibility.Factor.minque_ar1_two_years_det_ne_zero` | (1) | **Two years, AR(1): MINQUE is nonsingular** (card-data Step 5): for any number of cards, two years of calendar months, a card season as fixed effects (`τ²` dropped, Finding 27), an AR(1) shape with `0 < φ < 1`, any prior `W ≻ 0`, and volumes with `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` not constant over the calendar month for each card, the MINQUE system for `(A, C, s²)` is nonsingular, so MINQUE is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²` |
-| ✅ | `Credibility.Factor.minque_cardSeason_det_eq_zero_of_volume` |  | **Two years: `sⱼ²` needs volumes that vary over the calendar** (Finding 29) |
-| ✅ | `Credibility.Factor.henderson_season_unbiased` |  | **Under a card season, Henderson III / MINQUE without `τ²` is unbiased for the full table**: for invariant forms and a nonsingular season system, `θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, whatever `τ²` and the fixed effects |
-| ✅ | `Credibility.Factor.minque_ar1_two_years_unbiased` | (1) | **Two years, AR(1): MINQUE estimates the factor model** (card-data Step 5): for a factor model over two years of calendar months with `Γ = γΓ₀`, `Γ₀` the AR(1) shape with `0 < φ < 1`, a card season as fixed effects and volumes as in `minque_ar1_two_years_det_ne_zero`, MINQUE without `τ²` for any prior `W ≻ 0` is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`, whatever the season `β` and `τ²` |
+| ✅ | `Credibility.Factor.minque_ar1_two_years_det_ne_zero` | (1) | **Two years, AR(1): MINQUE is nonsingular** (card-data Step 5): for any number of cohorts, two years of calendar months, a cohort season as fixed effects (`τ²` dropped, Finding 27), an AR(1) shape with `0 < φ < 1`, any prior `W ≻ 0`, and volumes with `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` not constant over the calendar month for each cohort, the MINQUE system for `(A, C, s²)` is nonsingular, so MINQUE is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²` |
+| ✅ | `Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume` |  | **Two years: `sⱼ²` needs volumes that vary over the calendar** (Finding 29) |
+| ✅ | `Credibility.Factor.henderson_season_unbiased` |  | **Under a cohort season, Henderson III / MINQUE without `τ²` is unbiased for the full table**: for invariant forms and a nonsingular season system, `θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, whatever `τ²` and the fixed effects |
+| ✅ | `Credibility.Factor.minque_ar1_two_years_unbiased` | (1) | **Two years, AR(1): MINQUE estimates the factor model** (card-data Step 5): for a factor model over two years of calendar months with `Γ = γΓ₀`, `Γ₀` the AR(1) shape with `0 < φ < 1`, a cohort season as fixed effects and volumes as in `minque_ar1_two_years_det_ne_zero`, MINQUE without `τ²` for any prior `W ≻ 0` is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`, whatever the season `β` and `τ²` |
 | ✅ | `Credibility.Factor.shapeTableG_eq_linTable` |  | **The table given both shapes is linear in its parameters** |
-| ✅ | `Credibility.Factor.henderson_shapeG_unbiased` |  | **Henderson III / MINQUE given both shapes**: for invariant forms with a nonsingular system, `θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and per-card scale `gⱼ`, whatever `β` |
-| ✅ | `Credibility.Factor.covG_eq_shapeTableG` |  | **The factor model with per-card dynamics of known shape** `Gⱼ = gⱼG₀` and `Γ = γΓ₀` is `shapeTableG` with `A = γλλᵀ` |
-| ✅ | `Credibility.Factor.henderson_factorG_unbiased` |  | **Henderson III / MINQUE for the factor model with per-card dynamics** of known shapes `Γ = γΓ₀`, `Gⱼ = gⱼG₀`: unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and `gⱼ`, whatever the fixed effects |
-| ✅ | `Credibility.Factor.hendersonMat_shapeG_one_det_eq_zero` |  | **White-noise per-card dynamics are not separable from the shock**: with `G₀ = I` the per-card table `Eⱼⱼ ⊗ I` is the shock variance table of card `j`, so the system is singular for every choice of forms |
-| ✅ | `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shapeG` |  | **Per-card dynamics that repeat with the calendar are lost to the card season**: if `G₀ = aI + g(mon t, mon s)`, then `gⱼ` against `aCⱼⱼ` lies in the span of the design, and every invariant system is singular |
+| ✅ | `Credibility.Factor.henderson_shapeG_unbiased` |  | **Henderson III / MINQUE given both shapes**: for invariant forms with a nonsingular system, `θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and per-cohort scale `gⱼ`, whatever `β` |
+| ✅ | `Credibility.Factor.covG_eq_shapeTableG` |  | **The factor model with per-cohort dynamics of known shape** `Gⱼ = gⱼG₀` and `Γ = γΓ₀` is `shapeTableG` with `A = γλλᵀ` |
+| ✅ | `Credibility.Factor.henderson_factorG_unbiased` |  | **Henderson III / MINQUE for the factor model with per-cohort dynamics** of known shapes `Γ = γΓ₀`, `Gⱼ = gⱼG₀`: unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and `gⱼ`, whatever the fixed effects |
+| ✅ | `Credibility.Factor.hendersonMat_shapeG_one_det_eq_zero` |  | **White-noise per-cohort dynamics are not separable from the shock**: with `G₀ = I` the per-cohort table `Eⱼⱼ ⊗ I` is the shock variance table of cohort `j`, so the system is singular for every choice of forms |
+| ✅ | `Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shapeG` |  | **Per-card dynamics that repeat with the calendar are lost to the cohort season**: if `G₀ = aI + g(mon t, mon s)`, then `gⱼ` against `aCⱼⱼ` lies in the span of the design, and every invariant system is singular |
 
 ## `FactorMoments` — The moment layer for the common factor model (extension, distribution-free)
 
@@ -662,7 +662,7 @@ main results: mostly thesis-facing statements proved from a general result
 |---|---|---|---|
 | ✅ | `Credibility.Factor.Cells.blup_mse_optimal` |  | **The best linear unbiased predictor in true MSE** under the common factor model: `Core.blup` for `Factor.K`, `Factor.ell` minimises `E(dᵀx - Y)²` among all `d` unbiased for the design (`(D on the cells)ᵀd = Σₜ bₜD_{(j₀,t)}`), for every distribution with these moments |
 | ✅ | `Credibility.Factor.Cells.mse_blup` |  | **Its true error** `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` for `Factor.K`, `Factor.ell`, `Factor.var` |
-| ✅ | `Credibility.Factor.Cells.blupG_mse_optimal` | (1) | **With per-card dynamics** (`Factor.obsCovG`, e.g. per-card AR(1)): `Core.blup` for `Factor.KG`, `Factor.ellG` minimises the true mean squared error |
+| ✅ | `Credibility.Factor.Cells.blupG_mse_optimal` | (1) | **With per-cohort dynamics** (`Factor.obsCovG`, e.g. per-cohort AR(1)): `Core.blup` for `Factor.KG`, `Factor.ellG` minimises the true mean squared error |
 
 ## `GroupWeights` — Weights of groups and the share of same-group pairs (extension)
 

@@ -4,14 +4,14 @@ import Credibility.Shock
 /-!
 # The common factor model (extension, `notes/card-data.md` Step 3)
 
-Monthly cells `Xⱼₜ` (card `j`, month `t`) share a latent demand factor `Fₜ` with loadings `λⱼ`
+Monthly cells `Xⱼₜ` (cohort `j`, month `t`) share a latent demand factor `Fₜ` with loadings `λⱼ`
 and an autocovariance `Γ ⪰ 0` over all months, past and future. On top of it sit the period
-shock and process noise of `Shock` and the card level with variance `τ²`:
+shock and process noise of `Shock` and the cohort level with variance `τ²`:
 
 `cov(Xᵢₜ, Xⱼₛ) = λᵢλⱼΓₜₛ + δₜₛCᵢⱼ + δₜₛδᵢⱼsᵢ²/wᵢₜ + τ²δᵢⱼ`  (`obsCov`).
 
 Distribution-free: only these second moments are assumed. The data are the observed cells, any
-injective map `c : n → J × T` (cards enter and leave: `n = {(j, t) | t ∈ obs j}`).
+injective map `c : n → J × T` (cohorts enter and leave: `n = {(j, t) | t ∈ obs j}`).
 
 * **`K ≻ 0`** for any observed cells (`K_posDef`): the factor part is `BᵀΓB`, the shock part a
   weighted sum as in `Shock`, the level part `τ²` times a same-card indicator, and the process
@@ -21,12 +21,12 @@ injective map `c : n → J × T` (cards enter and leave: `n = {(j, t) | t ∈ ob
   `|φ| ≤ 1` (`ar1_posSemidef`); a break at known dates, a block `Γ` with no correlation across
   regimes (`block_posSemidef`, a constant level per regime: `regime_posSemidef`).
 * **The target** `Y = Σₜ bₜX_{j₀t}` (`bₜ = 1` on the next 12 months): `ℓ = Cov(x, Y)` (`ell`) and
-  `v = Var Y` (`var`). For months not yet observed, `ℓ` only sees the factor and the card level:
+  `v = Var Y` (`var`). For months not yet observed, `ℓ` only sees the factor and the cohort level:
   `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` (`ell_apply_of_future`); `v` in `var_eq`.
 * **The predictor** is Step 1's best linear unbiased predictor for this `K`, `ℓ`, `v`
   (`blup_optimal`, `predMse_blup`), with the season design of Step 2 (`blup_season_optimal`).
-* **Negative weights** (Finding 25, `blup_neg_of_ar1`): two cards, two months, AR(1) with
-  `φ = 1/2`; the predictor of card 0's next month puts `-1/30` on card 1's first month.
+* **Negative weights** (Finding 25, `blup_neg_of_ar1`): two cohorts, two months, AR(1) with
+  `φ = 1/2`; the predictor of cohort 0's next month puts `-1/30` on cohort 1's first month.
 -/
 
 open Finset Matrix
@@ -34,16 +34,16 @@ open Finset Matrix
 namespace Credibility
 
 /-- The common factor model: a latent factor with loadings `λⱼ` and autocovariance `Γ ⪰ 0`
-over all months, past and future, on top of the shock and process noise of `Shock` and card
+over all months, past and future, on top of the shock and process noise of `Shock` and cohort
 levels with variance `τ²`. Distribution-free: only these second moments are assumed. -/
 structure Factor (J T : Type*) where
-  /-- Heterogeneity between cards. -/
+  /-- Heterogeneity between cohorts. -/
   τ2 : ℝ
-  /-- Covariance of the period shock across cards (independent between months). -/
+  /-- Covariance of the period shock across cohorts (independent between months). -/
   C : Matrix J J ℝ
   /-- Process noise per unit of volume. -/
   s2 : J → ℝ
-  /-- Volume of card `j` in month `t`. -/
+  /-- Volume of cohort `j` in month `t`. -/
   w : J → T → ℝ
   /-- Loadings `λⱼ` on the common factor. -/
   load : J → ℝ
@@ -273,7 +273,7 @@ theorem regime_posSemidef [Fintype T] {B : Type*} [Fintype B] [DecidableEq B] (r
   ext t s
   simp [block]
 
-/-! ### The target: the next 12 months of card `j₀` -/
+/-! ### The target: the next 12 months of cohort `j₀` -/
 
 variable [Fintype T]
 
@@ -286,7 +286,7 @@ noncomputable def var (j₀ : J) (b : T → ℝ) : ℝ :=
   ∑ t, ∑ s, b t * b s * M.obsCov j₀ j₀ t s
 
 /-- **`ℓ` for months not yet observed** (`b = 0` on the cell's month): only the factor and the
-card level link the data to the target, `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ`. -/
+cohort level link the data to the target, `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ`. -/
 theorem ell_apply_of_future (j₀ : J) {b : T → ℝ} {p : n} (hb : b (c p).2 = 0) :
     M.ell c j₀ b p = M.load (c p).1 * M.load j₀ * (M.Γ *ᵥ b) (c p).2
       + M.τ2 * (if (c p).1 = j₀ then 1 else 0) * ∑ t, b t := by
@@ -314,7 +314,7 @@ theorem var_eq (j₀ : J) (b : T → ℝ) :
 
 variable [Fintype n] [DecidableEq n] [Fintype J] {c}
 
-/-- **The best linear unbiased predictor** of card `j₀`'s next 12 months under the common
+/-- **The best linear unbiased predictor** of cohort `j₀`'s next 12 months under the common
 factor model, for any design `X` of fixed effects (`Core.blup_optimal`). -/
 theorem blup_optimal (hc : Function.Injective c) {q : Type*} [Fintype q] [DecidableEq q]
     {X : Matrix n q ℝ} (hX : Function.Injective X.mulVec) (j₀ : J) (b : T → ℝ) (x₀ : q → ℝ)
@@ -346,44 +346,44 @@ theorem blup_season_optimal (hc : Function.Injective c) {Mo : Type*} [Fintype Mo
   M.blup_optimal hc (Season.design_mulVec_injective hmon) j₀ b _
     (by rw [Season.design_transpose_mulVec]; exact funext hd)
 
-/-! ### Per-card dynamics: a `Γ` block per card
+/-! ### Per-card dynamics: a `Γ` block per cohort
 
-Each card's own deviation evolves over time with autocovariance `Gⱼ ⪰ 0` (e.g. per-card AR(1),
-Rao & Yu 1994; Pinquet 2020), independent across cards: the table gets `δᵢⱼ(Gᵢ)ₜₛ` on top of
+Each cohort's own deviation evolves over time with autocovariance `Gⱼ ⪰ 0` (e.g. per-cohort AR(1),
+Rao & Yu 1994; Pinquet 2020), independent across cohorts: the table gets `δᵢⱼ(Gᵢ)ₜₛ` on top of
 the common factor (`G = 0` is the model above). -/
 
-section PerCard
+section PerCohort
 
 variable (G : J → Matrix T T ℝ)
 
-/-- `cov(Xᵢₜ, Xⱼₛ)` with per-card dynamics: `obsCov + δᵢⱼ(Gᵢ)ₜₛ`. -/
+/-- `cov(Xᵢₜ, Xⱼₛ)` with per-cohort dynamics: `obsCov + δᵢⱼ(Gᵢ)ₜₛ`. -/
 noncomputable def obsCovG (i j : J) (t s : T) : ℝ :=
   M.obsCov i j t s + if i = j then G i t s else 0
 
 variable (c)
 
-/-- `K` with per-card dynamics. -/
+/-- `K` with per-cohort dynamics. -/
 noncomputable def KG : Matrix n n ℝ := of fun p q => M.obsCovG G (c p).1 (c q).1 (c p).2 (c q).2
 
-/-- The per-card part `δᵢⱼ(Gᵢ)ₜₛ` of `K`. -/
-noncomputable def cardPart : Matrix n n ℝ :=
+/-- The per-cohort part `δᵢⱼ(Gᵢ)ₜₛ` of `K`. -/
+noncomputable def cohortPart : Matrix n n ℝ :=
   of fun p q => if (c p).1 = (c q).1 then G (c p).1 (c p).2 (c q).2 else 0
 
-/-- `ℓ` with per-card dynamics, for the target `Σₜ bₜX_{j₀t}`. -/
+/-- `ℓ` with per-cohort dynamics, for the target `Σₜ bₜX_{j₀t}`. -/
 noncomputable def ellG (j₀ : J) (b : T → ℝ) : n → ℝ :=
   fun p => ∑ t, b t * M.obsCovG G (c p).1 j₀ (c p).2 t
 
-/-- `v` with per-card dynamics. -/
+/-- `v` with per-cohort dynamics. -/
 noncomputable def varG (j₀ : J) (b : T → ℝ) : ℝ :=
   ∑ t, ∑ s, b t * b s * M.obsCovG G j₀ j₀ t s
 
 omit [Fintype T] [Fintype n] [DecidableEq n] [Fintype J] in
-theorem KG_eq_add : M.KG c G = M.K c + cardPart c G := by
+theorem KG_eq_add : M.KG c G = M.K c + cohortPart c G := by
   ext p q
-  simp [KG, K, cardPart, obsCovG]
+  simp [KG, K, cohortPart, obsCovG]
 
 omit [Fintype n] [DecidableEq n] [Fintype J] in
-/-- `ℓ` gains card `j₀`'s own dynamics on its own cells: `δ_{ij₀}(G_{j₀}b)ₜ`. -/
+/-- `ℓ` gains cohort `j₀`'s own dynamics on its own cells: `δ_{ij₀}(G_{j₀}b)ₜ`. -/
 theorem ellG_eq (j₀ : J) (b : T → ℝ) :
     M.ellG c G j₀ b = M.ell c j₀ b + fun p => if (c p).1 = j₀ then (G j₀ *ᵥ b) (c p).2 else 0 := by
   funext p
@@ -402,26 +402,26 @@ theorem varG_eq (j₀ : J) (b : T → ℝ) : M.varG G j₀ b = M.var j₀ b + b 
   exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
 
 omit [DecidableEq T] [Fintype T] [DecidableEq n] in
-/-- The per-card part is a weighted sum of the `Gⱼ`, as in `Shock`: `⪰ 0`. -/
-theorem cardPart_posSemidef (hG : ∀ j, (G j).PosSemidef) :
-    (cardPart c G).PosSemidef := by
+/-- The per-cohort part is a weighted sum of the `Gⱼ`, as in `Shock`: `⪰ 0`. -/
+theorem cohortPart_posSemidef (hG : ∀ j, (G j).PosSemidef) :
+    (cohortPart c G).PosSemidef := by
   have h := posSemidef_weightedSum (fun j => (G j).submatrix (fun p : n => (c p).2)
     (fun p => (c p).2)) (fun j => (hG j).submatrix _) (fun p j => if (c p).1 = j then 1 else 0)
   convert h using 1
   ext p q
   by_cases hpq : (c p).1 = (c q).1
-  · simp [cardPart, hpq, ite_mul]
-  · simp [cardPart, hpq, ite_mul]
+  · simp [cohortPart, hpq, ite_mul]
+  · simp [cohortPart, hpq, ite_mul]
 
 variable {c}
 
-/-- **`K ≻ 0` with per-card dynamics**: the per-card part is `⪰ 0`. -/
+/-- **`K ≻ 0` with per-cohort dynamics**: the per-cohort part is `⪰ 0`. -/
 theorem KG_posDef (hc : Function.Injective c)
     {G : J → Matrix T T ℝ} (hG : ∀ j, (G j).PosSemidef) : (M.KG c G).PosDef := by
   rw [M.KG_eq_add]
-  exact (M.K_posDef hc).add_posSemidef (cardPart_posSemidef c G hG)
+  exact (M.K_posDef hc).add_posSemidef (cohortPart_posSemidef c G hG)
 
-/-- **The predictor with per-card dynamics** (`Core.blup_optimal`); per-card AR(1) is
+/-- **The predictor with per-cohort dynamics** (`Core.blup_optimal`); per-cohort AR(1) is
 `Gⱼ = ar1 N γⱼ φⱼ` (`ar1_posSemidef`). -/
 theorem blupG_optimal (hc : Function.Injective c)
     {G : J → Matrix T T ℝ} (hG : ∀ j, (G j).PosSemidef) {q : Type*} [Fintype q]
@@ -432,11 +432,11 @@ theorem blupG_optimal (hc : Function.Injective c)
       ≤ Core.predMse (M.KG c G) (M.ellG c G j₀ b) (M.varG G j₀ b) d :=
   Core.blup_optimal (M.KG_posDef hc hG) hX _ _ x₀ hd
 
-end PerCard
+end PerCohort
 
 /-! ### Finding 25: negative weights under AR(1) -/
 
-/-- The example of Finding 25: two cards, months `0, 1, 2`, an AR(1) factor with `γ = 1`,
+/-- The example of Finding 25: two cohorts, months `0, 1, 2`, an AR(1) factor with `γ = 1`,
 `φ = 1/2` and loadings `1`, no shock, process noise `1/2` and `τ² = 1`. -/
 noncomputable def exAR1 : Factor (Fin 2) (Fin 3) where
   τ2 := 1
@@ -451,10 +451,10 @@ noncomputable def exAR1 : Factor (Fin 2) (Fin 3) where
   w_pos := fun _ _ => one_pos
   Γ_posSemidef := ar1_posSemidef 3 zero_le_one (by rw [abs_of_pos (by norm_num)]; norm_num)
 
-/-- Both cards observed in months `0` and `1`. -/
+/-- Both cohorts observed in months `0` and `1`. -/
 def exCells : Fin 4 → Fin 2 × Fin 3 := ![(0, 0), (0, 1), (1, 0), (1, 1)]
 
-/-- The predictor of card `0` in month `2` (one common mean) has the weights
+/-- The predictor of cohort `0` in month `2` (one common mean) has the weights
 `(11/30, 8/15, -1/30, 2/15)` on the cells `(0,0), (0,1), (1,0), (1,1)`. -/
 theorem blup_exAR1 :
     Core.blup (exAR1.K exCells) (replicateCol Unit 1) (exAR1.ell exCells 0 (Pi.single 2 1))
@@ -473,8 +473,8 @@ theorem blup_exAR1 :
     norm_num
 
 /-- **Negative weights under AR(1)** (Finding 25): a balanced panel, positive autocorrelation,
-and still the predictor of card `0`'s next month puts weight `-1/30` on card `1`'s first month.
-Card `1`'s change from month `0` to `1` tracks the factor, which persists into month `2`. -/
+and still the predictor of cohort `0`'s next month puts weight `-1/30` on cohort `1`'s first month.
+Cohort `1`'s change from month `0` to `1` tracks the factor, which persists into month `2`. -/
 theorem blup_neg_of_ar1 :
     Core.blup (exAR1.K exCells) (replicateCol Unit 1) (exAR1.ell exCells 0 (Pi.single 2 1))
       (fun _ => 1) 2 < 0 := by

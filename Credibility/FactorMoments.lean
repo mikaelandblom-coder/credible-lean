@@ -13,7 +13,7 @@ actual moments, and the target mean is `x₀ = Σₜ bₜD_{(j₀,t)}` (`targetM
 
 So for the common factor model (`Factor.obsCov`) `Factor.K`, `Factor.ell`, `Factor.var` are
 the actual covariances, and `Core.blup` minimises the true mean squared error
-(`Cells.blup_mse_optimal`, `Cells.mse_blup`); likewise with per-card dynamics
+(`Cells.blup_mse_optimal`, `Cells.mse_blup`); likewise with per-cohort dynamics
 (`Factor.obsCovG`: `Cells.blupG_mse_optimal`). No distribution is assumed.
 -/
 
@@ -120,7 +120,7 @@ theorem mse_blup (C : Cells M.obsCov D β P) {c : n → J × T} (hc : Function.I
             *ᵥ (targetMean D j₀ b - (D.submatrix c id)ᵀ *ᵥ ((M.K c)⁻¹ *ᵥ M.ell c j₀ b))) :=
   (C.toTarget c j₀ b).mse_blup (M.K_posDef hc) hX
 
-/-- **With per-card dynamics** (`Factor.obsCovG`, e.g. per-card AR(1)): `Core.blup` for
+/-- **With per-cohort dynamics** (`Factor.obsCovG`, e.g. per-cohort AR(1)): `Core.blup` for
 `Factor.KG`, `Factor.ellG` minimises the true mean squared error. -/
 theorem blupG_mse_optimal {G : J → Matrix T T ℝ} (hG : ∀ j, (G j).PosSemidef)
     (C : Cells (M.obsCovG G) D β P) {c : n → J × T} (hc : Function.Injective c)
