@@ -476,4 +476,22 @@ Gaps, extra hypotheses and new results found while formalizing.
    means fit `(A, C, s², g)` without `τ²`; `τ²` is the spread of what the design already
    estimates, so it is not needed for prediction with those fixed effects.
 
+28. **Under a card season the covariance is seen only through repeated calendar months (new;
+   `notes/card-data.md` Step 5).** Expected: dropping `τ²` (Finding 27) leaves a nonsingular
+   Henderson III / MINQUE system for `(A, C, s², g)` given volume variation and `Γ₀ ≠ I`.
+   Found: further collapses. Invariant forms see tables only modulo `{YDᵀ}`
+   (`Model.hendersonMat_det_eq_zero_of_mod_design`), and under the card season the tables that
+   see only card and calendar month are `DFDᵀ` (`Factor.classTable_eq_cardSeason`). (a) One
+   year of data (one cell per card and calendar month): every unbiased quadratic estimator has
+   expectation `0`, nothing is estimable (`Factor.unbiasedMean_cardSeason_eq_zero`). (b) A
+   factor shape `Γ₀ = aI + g(mon t, mon s)`, e.g. AR(1) at `φ = 1` (a constant factor, which
+   demeaning removes, as in Finding 26) or at `φ = 0` (against `C`, as before), or any shape
+   that repeats with the calendar: `A_z - aC_z` is invisible, singular for every invariant form
+   (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`). (c) Per-card dynamics `G₀` of that
+   form: `gⱼ` against `aCⱼⱼ` (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shapeG`). Practice:
+   fit second moments under a card season only with at least two years per card, and with
+   factor shapes that decay within the year; check the rank of the projected tables
+   (`Model.minque_det_ne_zero_iff`) rather than hoping for a general condition. A general
+   sufficient condition for nonsingularity is still open.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

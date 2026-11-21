@@ -249,8 +249,11 @@ separates `A` from `C` (`Factor.not_unbiased_factor_of_indep`); per-card dynamic
 `Gⱼ = gⱼG₀` (`Factor.henderson_factorG_unbiased`; `G₀ = I` singular). MINQUE is nonsingular
 iff the projected tables `RVₖR` are independent (`Model.minque_det_ne_zero_iff`); an independent
 basis with a full-rank design is not enough: under a card season `τ²` is never estimable
-(Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`). Open: profiling over `φ` is only
-consistent.
+(Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`). Without `τ²`, further collapses
+under a card season (Finding 28): one year identifies nothing
+(`Factor.unbiasedMean_cardSeason_eq_zero`); shapes `Γ₀` or `G₀` of the form `aI + g(mon, mon)`
+(AR(1) at `φ ∈ {0, 1}`) are singular. Open: a general sufficient condition for nonsingularity
+(the app checks the rank of `RVₖR`); profiling over `φ` is only consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

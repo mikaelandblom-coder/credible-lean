@@ -98,7 +98,9 @@ may need a paragraph.)
   (`Factor.hendersonMat_shock_det_eq_zero`, `Factor.not_unbiased_factor_of_indep`); per-card
   dynamics of known shape (`Factor.henderson_factorG_unbiased`); MINQUE nonsingular iff the
   projected tables are independent (`Model.minque_det_ne_zero_iff`), so card-specific means
-  hide `τ²` (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`).
+  hide `τ²` (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`); a card season sees
+  covariances only through repeated calendar months (Finding 28,
+  `Factor.unbiasedMean_cardSeason_eq_zero`, `Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing

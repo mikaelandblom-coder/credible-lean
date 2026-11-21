@@ -67,6 +67,12 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   of the design is invisible to every invariant form (`Model.hendersonMat_det_eq_zero_of_design`).
   So with a card season the card level `τ²` cannot be estimated (Finding 27,
   `hendersonMat_cardSeason_det_eq_zero`).
+* **What else the card season hides** (Finding 28): invariant forms see the tables only modulo
+  `{YDᵀ}` (`Model.hendersonMat_det_eq_zero_of_mod_design`); under a card season these are the
+  tables that see only card and calendar month (`classTable_eq_cardSeason`). One year of data:
+  nothing is estimable (`unbiasedMean_cardSeason_eq_zero`). A factor shape `Γ₀ = aI + g(mon, mon)`
+  (AR(1) at `φ = 0` or `1`, any calendar pattern) or per-card dynamics `G₀` of that form: singular
+  (`hendersonMat_cardSeason_det_eq_zero_of_shape`, `hendersonMat_cardSeason_det_eq_zero_of_shapeG`).
 -/
 
 open Finset Matrix
@@ -959,17 +965,28 @@ theorem hendersonMat_det_eq_zero {Q V : L → Matrix (J × T) (J × T) ℝ} {c :
   exists_mulVec_eq_zero_iff.mp ⟨c, hc, by
     rw [hendersonMat_mulVec, h]; funext k; simp⟩
 
+omit [Fintype L] in
+/-- The parameter vector `eₗ' - a eₗ` (`l ≠ l'`) is nonzero. -/
+lemma single_sub_single_ne_zero {l l' : L} (hl : l ≠ l') (a : ℝ) :
+    (Pi.single l' 1 - Pi.single l a : L → ℝ) ≠ 0 := by
+  intro h0
+  have := congrFun h0 l'
+  simp [hl.symm] at this
+
+omit [Fintype J] [Fintype T] in
+/-- `Σₖ (eₗ' - a eₗ)ₖVₖ = Vₗ' - aVₗ`, entry by entry. -/
+lemma linTable_single_sub (V : L → Matrix (J × T) (J × T) ℝ) (l l' : L) (a : ℝ) (p q : J × T) :
+    linTable V (Pi.single l' 1 - Pi.single l a) p q = V l' p q - a * V l p q := by
+  simp only [linTable, Pi.sub_apply, sub_mul, sum_sub_distrib, Pi.single_apply, ite_mul,
+    one_mul, zero_mul, sum_ite_eq', mem_univ, ite_true]
+
 /-- **Two proportional basis tables make the system singular**: `V l' = a • V l`, `l ≠ l'`. -/
 theorem hendersonMat_det_eq_zero_of_smul {Q V : L → Matrix (J × T) (J × T) ℝ} {l l' : L}
     (hl : l ≠ l') (a : ℝ) (h : V l' = a • V l) : (hendersonMat Q V).det = 0 := by
-  refine hendersonMat_det_eq_zero (c := Pi.single l' 1 - Pi.single l a) ?_ ?_
-  · intro h0
-    have := congrFun h0 l'
-    simp [hl.symm] at this
-  · funext p q
-    simp only [linTable, Pi.sub_apply, sub_mul, sum_sub_distrib, Pi.single_apply, ite_mul,
-      one_mul, zero_mul, sum_ite_eq', mem_univ, ite_true, h, Matrix.smul_apply, smul_eq_mul]
-    simp
+  refine hendersonMat_det_eq_zero (single_sub_single_ne_zero hl a) ?_
+  funext p q
+  rw [linTable_single_sub, h, Matrix.smul_apply, smul_eq_mul, sub_self]
+  rfl
 
 omit [DecidableEq L] in
 /-- `cᵀ H c = Σₚq (Σₖ cₖQₖ)ₚq (Σₗ cₗVₗ)ₚq`. -/
@@ -1022,6 +1039,25 @@ lemma sum_mul_eq_trace (Q Y : Matrix (J × T) (J × T) ℝ) :
   simp only [trace, Matrix.diag_apply]
   exact sum_comm
 
+/-- **An invariant form does not see tables `YDᵀ`**: `Σₚq Qₚq(YDᵀ)ₚq = tr(DᵀQᵀY) = 0` when
+`QD = 0`. -/
+lemma sum_mul_mul_transpose_eq_zero {Q : Matrix (J × T) (J × T) ℝ} {D : Matrix (J × T) B ℝ}
+    (hQ : Q * D = 0) (Y : Matrix (J × T) B ℝ) : ∑ p, ∑ q, Q p q * (Y * Dᵀ) p q = 0 := by
+  have h0 : Dᵀ * Qᵀ = 0 := by rw [← transpose_mul, hQ, transpose_zero]
+  rw [sum_mul_eq_trace, ← Matrix.mul_assoc, trace_mul_comm, ← Matrix.mul_assoc, h0,
+    Matrix.zero_mul, trace_zero]
+
+/-- **Dependent modulo the design makes every invariant system singular**: if
+`Σₗ cₗVₗ = YDᵀ` for some `c ≠ 0`, then `Hc = 0` whenever `QₖD = 0`. The tables are seen only
+modulo `{YDᵀ}`, whatever their independence. -/
+theorem hendersonMat_det_eq_zero_of_mod_design {Q V : L → Matrix (J × T) (J × T) ℝ}
+    {D : Matrix (J × T) B ℝ} (hQ : ∀ k, Q k * D = 0) {c : L → ℝ} (hc : c ≠ 0)
+    (Y : Matrix (J × T) B ℝ) (h : linTable V c = Y * Dᵀ) : (hendersonMat Q V).det = 0 :=
+  exists_mulVec_eq_zero_iff.mp ⟨c, hc, by
+    rw [hendersonMat_mulVec, h]
+    funext k
+    exact sum_mul_mul_transpose_eq_zero (hQ k) Y⟩
+
 /-- **A basis table in the span of the design is lost to invariant forms**: if
 `V l = DNDᵀ`, then `Σₚq (Qₖ)ₚq(V l)ₚq = tr(QₖᵀDNDᵀ) = 0` whenever `QₖD = 0`, so the column `l`
 of `H` vanishes and the system is singular, however independent the basis. Such a component
@@ -1030,10 +1066,9 @@ theorem hendersonMat_det_eq_zero_of_design {Q V : L → Matrix (J × T) (J × T)
     {D : Matrix (J × T) B ℝ} (hQ : ∀ k, Q k * D = 0) {l : L} (N : Matrix B B ℝ)
     (hV : V l = D * N * Dᵀ) : (hendersonMat Q V).det = 0 := by
   refine det_eq_zero_of_column_eq_zero l fun k => ?_
-  have h0 : Dᵀ * (Q k)ᵀ = 0 := by rw [← transpose_mul, hQ k, transpose_zero]
   simp only [hendersonMat, of_apply]
-  rw [sum_mul_eq_trace, hV, ← Matrix.mul_assoc, ← Matrix.mul_assoc, trace_mul_comm,
-    ← Matrix.mul_assoc, ← Matrix.mul_assoc, h0, Matrix.zero_mul, Matrix.zero_mul, trace_zero]
+  rw [hV]
+  exact sum_mul_mul_transpose_eq_zero (hQ k) _
 
 variable [DecidableEq J] [DecidableEq T] [DecidableEq B]
 
@@ -1200,6 +1235,33 @@ theorem minque_det_ne_zero_iff {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef
           simp only [← Matrix.mul_assoc, hWi, Matrix.one_mul]
           rw [Matrix.mul_assoc, hWi', Matrix.mul_one]
       _ = 0 := by rw [hWNW, Matrix.mul_zero, Matrix.zero_mul]
+
+
+omit [Fintype L] [DecidableEq L] in
+/-- **No fixed-effect-free contrast, nothing estimable**: if every cell is alone in some
+column of the design (`D` has a column `e_p` for each cell `p`), every quadratic estimator
+unbiased for all `β` has expectation `0` under any symmetric table: `Dᵀ(Q + Qᵀ)D = 0` forces
+`Q` antisymmetric. -/
+theorem unbiasedMean_eq_zero_of_cells {C : J × T → J × T → ℝ} (hC : ∀ p q, C q p = C p q)
+    {D : Matrix (J × T) B ℝ} (hD : ∀ p, ∃ b, ∀ q, D q b = if q = p then 1 else 0)
+    {f : (J × T → ℝ) → ℝ} {θ : ℝ} (h : UnbiasedMean C D f θ) : θ = 0 := by
+  obtain ⟨Q, -, hE⟩ := h
+  obtain ⟨hθ, h0⟩ := (ecovMean_eq_iff D Q θ).mp hE
+  have hanti : ∀ p q, Q q p = -Q p q := fun p q => by
+    obtain ⟨b, hb⟩ := hD p
+    obtain ⟨b', hb'⟩ := hD q
+    have := congrFun (congrFun h0 b) b'
+    simp only [Matrix.mul_apply, transpose_apply, hb, hb', Matrix.add_apply, of_apply,
+      ite_mul, one_mul, zero_mul, mul_ite, mul_one, mul_zero, sum_ite_eq',
+      mem_univ, ite_true, Matrix.zero_apply] at this
+    linarith
+  have hs : ∑ p, ∑ q, Q p q * C p q = -∑ p, ∑ q, Q p q * C p q := by
+    conv_lhs => rw [sum_comm]
+    rw [← sum_neg_distrib]
+    exact sum_congr rfl fun p _ => by
+      rw [← sum_neg_distrib]
+      exact sum_congr rfl fun q _ => by rw [hanti, hC]; ring
+  linarith
 
 end Henderson
 
@@ -1438,6 +1500,24 @@ theorem not_unbiased_factor_of_indep (M : Factor J T) [Nonempty T] {γ : ℝ}
   simp only [zero_mul] at this
   exact hne this
 
+omit [Fintype T] [DecidableEq T] [Fintype J] in
+/-- The card season's column for card `j` and calendar month `m` is the indicator of the cells
+`(j, t)` with `mon t = m`. -/
+lemma cardSeason_apply_eq {Mo : Type*} [DecidableEq Mo] (mon : T → Mo) (p : J × T) (k : J × Mo) :
+    (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) p k = if (p.1, mon p.2) = k then 1 else 0 := by
+  simp [cardSeason, Prod.ext_iff]
+
+omit [Fintype T] [DecidableEq T] in
+/-- **Tables that see only card and calendar month are `DFDᵀ`** for the card season `D`:
+`F((p.1, mon p.2), (q.1, mon q.2)) = (D F Dᵀ)ₚq`. -/
+theorem classTable_eq_cardSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (mon : T → Mo)
+    (F : J × Mo → J × Mo → ℝ) :
+    (of fun p q : J × T => F (p.1, mon p.2) (q.1, mon q.2))
+      = cardSeason (J := J) mon * of F * (cardSeason (J := J) mon)ᵀ := by
+  funext p q
+  simp only [of_apply, Matrix.mul_apply, transpose_apply, cardSeason_apply_eq, ite_mul, one_mul,
+    zero_mul, sum_ite_eq, mem_univ, ite_true, mul_ite, mul_one, mul_zero]
+
 omit [Fintype T] in
 /-- The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season `D = cardSeason mon`, with
 `E_{(j,m),(j',m')} = δⱼⱼ'`: the card level lies in the span of card-specific means. -/
@@ -1445,14 +1525,8 @@ theorem shapeBasis_tau_eq_cardSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] 
     (w : J → T → ℝ) (mon : T → Mo) :
     shapeBasis Γ₀ w (.inr (.inr (.inr ()))) = cardSeason (J := J) mon
       * (of fun k k' : J × Mo => if k.1 = k'.1 then (1 : ℝ) else 0) * (cardSeason (J := J) mon)ᵀ := by
-  have hD : ∀ (p : J × T) (k : J × Mo),
-      (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) p k = if (p.1, mon p.2) = k then 1 else 0 :=
-    fun p k => by simp [cardSeason, Prod.ext_iff]
-  funext p q
-  simp [shapeBasis, Matrix.mul_apply, hD]
-  rw [Fintype.sum_eq_single (p.1, mon p.2) (fun x hx => by simp [Ne.symm hx])]
-  simp
-
+  rw [← classTable_eq_cardSeason]
+  rfl
 
 /-- **Card-specific means hide the card level** (Finding 27): with the card season as fixed
 effects (it contains the card means), every invariant system of the shape is singular, so
@@ -1463,6 +1537,41 @@ theorem hendersonMat_cardSeason_det_eq_zero {Mo : Type*} [Fintype Mo] [Decidable
     (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
     (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 :=
   Model.hendersonMat_det_eq_zero_of_design hQ _ (shapeBasis_tau_eq_cardSeason Γ₀ w mon)
+
+omit [Fintype T] [Fintype J] in
+/-- With one cell per calendar month and card (`mon` injective, e.g. one year of data), each
+cell is alone in its column of the card season. -/
+lemma cardSeason_col {Mo : Type*} [DecidableEq Mo] {mon : T → Mo} (hmon : Function.Injective mon)
+    (p : J × T) (q : J × T) :
+    (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) q (p.1, mon p.2) = if q = p then 1 else 0 := by
+  rw [cardSeason_apply_eq]
+  simp [Prod.ext_iff, hmon.eq_iff]
+
+/-- **One year with a card season: nothing is estimable** (Finding 28): if every card has at
+most one cell per calendar month, every quadratic estimator unbiased under the card season has
+expectation `0` under any symmetric table. Second moments need repeated calendar months. -/
+theorem unbiasedMean_cardSeason_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    {mon : T → Mo} (hmon : Function.Injective mon) {C : J × T → J × T → ℝ}
+    (hC : ∀ p q, C q p = C p q) {f : (J × T → ℝ) → ℝ} {θ : ℝ}
+    (h : Model.UnbiasedMean C (cardSeason mon) f θ) : θ = 0 :=
+  Model.unbiasedMean_eq_zero_of_cells hC (fun p => ⟨(p.1, mon p.2), cardSeason_col hmon p⟩) h
+
+/-- **A factor shape that repeats with the calendar is lost to the card season** (Finding 28):
+if `Γ₀ = aI + g(mon t, mon s)` (e.g. AR(1) at `φ = 0` or `φ = 1`, or any calendar pattern),
+then `A_z - aC_z` lies in the span of the design and every invariant system is singular. -/
+theorem hendersonMat_cardSeason_det_eq_zero_of_shape {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    {Γ₀ : Matrix T T ℝ} (w : J → T → ℝ) {mon : T → Mo} {a : ℝ} {g : Mo → Mo → ℝ}
+    (hΓ : ∀ t s, Γ₀ t s = a * (if t = s then 1 else 0) + g (mon t) (mon s)) (z : Sym2 J)
+    {Q : Par J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 := by
+  refine Model.hendersonMat_det_eq_zero_of_mod_design hQ
+    (Model.single_sub_single_ne_zero (l := .inr (.inl z)) (l' := .inl z) (by simp) a)
+    (cardSeason mon * of fun k k' : J × Mo => if s(k.1, k'.1) = z then g k.2 k'.2 else 0) ?_
+  refine Eq.trans ?_ (classTable_eq_cardSeason (J := J) mon _)
+  funext p q
+  rw [Model.linTable_single_sub]
+  simp only [shapeBasis, hΓ, of_apply]
+  split_ifs <;> ring
 
 /-- **An independent basis and a full-rank design are not enough** for MINQUE (or any
 invariant forms): one card, two months, a common mean (`D = 1`), and the tables `I` (shock)
@@ -1602,6 +1711,28 @@ theorem hendersonMat_shapeG_one_det_eq_zero [Nonempty J] (Γ₀ : Matrix T T ℝ
     = shapeBasis Γ₀ w (.inr (.inl s(j, j))) p q
   simp only [shapeBasis, Matrix.one_apply, Sym2.eq_iff]
   by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> simp [hp, hq]
+
+/-- **Per-card dynamics that repeat with the calendar are lost to the card season**: if
+`G₀ = aI + g(mon t, mon s)`, then `gⱼ` against `aCⱼⱼ` lies in the span of the design, and every
+invariant system is singular. -/
+theorem hendersonMat_cardSeason_det_eq_zero_of_shapeG {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    (Γ₀ : Matrix T T ℝ) {G₀ : Matrix T T ℝ} (w : J → T → ℝ) {mon : T → Mo} {a : ℝ}
+    {g : Mo → Mo → ℝ} (hG : ∀ t s, G₀ t s = a * (if t = s then 1 else 0) + g (mon t) (mon s))
+    (j : J) {Q : ParG J → Matrix (J × T) (J × T) ℝ}
+    (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    (Model.hendersonMat Q (shapeBasisG Γ₀ G₀ w)).det = 0 := by
+  refine Model.hendersonMat_det_eq_zero_of_mod_design hQ
+    (Model.single_sub_single_ne_zero (l := .inl (.inr (.inl s(j, j)))) (l' := .inr j) (by simp) a)
+    (cardSeason mon * of fun k k' : J × Mo => if k.1 = j ∧ k'.1 = j then g k.2 k'.2 else 0) ?_
+  refine Eq.trans ?_ (classTable_eq_cardSeason (J := J) mon _)
+  funext p q
+  rw [Model.linTable_single_sub]
+  change (if p.1 = j ∧ q.1 = j then G₀ p.2 q.2 else 0)
+      - a * shapeBasis Γ₀ w (.inr (.inl s(j, j))) p q
+    = if p.1 = j ∧ q.1 = j then g (mon p.2) (mon q.2) else 0
+  simp only [shapeBasis, hG, Sym2.eq_iff]
+  by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> by_cases ht : p.2 = q.2 <;>
+    simp [hp, hq, ht]
 
 end GivenShapeG
 

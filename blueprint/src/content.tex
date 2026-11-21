@@ -4632,7 +4632,10 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
         Credibility.Model.hendersonMat_self_det_ne_zero,
         Credibility.Model.exists_hendersonMat_det_ne_zero_iff,
         Credibility.Model.dotProduct_hendersonMat, Credibility.Model.sum_mul_eq_trace,
-        Credibility.Model.hendersonMat_det_eq_zero_of_design}
+        Credibility.Model.hendersonMat_det_eq_zero_of_design,
+        Credibility.Model.single_sub_single_ne_zero, Credibility.Model.linTable_single_sub,
+        Credibility.Model.sum_mul_mul_transpose_eq_zero,
+        Credibility.Model.hendersonMat_det_eq_zero_of_mod_design}
   \leanok
   \uses{def:henderson}
   If $\sum_lc_lV_l = 0$ for some $c \ne 0$ (in particular if two basis tables are
@@ -4640,13 +4643,29 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   linearly independent, the forms $Q_k = V_k$ give a nonsingular $H$ (the Gram matrix of the
   tables). So some system is nonsingular iff the table determines $\theta$; invariance
   $Q_kD = 0$ can only lose rank on top of this, and does for a table $V_l = DND^\top$ in the
-  span of the design: its column of $H$ is $\operatorname{tr}(Q_k^\top DND^\top) = 0$.
+  span of the design: its column of $H$ is $\operatorname{tr}(Q_k^\top DND^\top) = 0$. In
+  general invariant forms see the tables only modulo $\{YD^\top\}$: if
+  $\sum_lc_lV_l = YD^\top$ with $c \ne 0$, $H$ is singular.
 \end{lemma}
 \begin{proof}
   \leanok
   $(Hc)_k = \sum_{p,q}(Q_k)_{pq}(\sum_lc_lV_l)_{pq}$. With $Q = V$,
   $c^\top Hc = \sum_{p,q}(\sum_lc_lV_l)_{pq}^2$, which vanishes only if $\sum_lc_lV_l = 0$.
   For the design, cycle the trace: $\operatorname{tr}(D^\top Q_k^\top DN) = 0$ since $Q_kD = 0$.
+\end{proof}
+
+\begin{theorem}[No contrast free of the fixed effects, nothing estimable]\label{thm:unbiased_cells}
+  \lean{Credibility.Model.unbiasedMean_eq_zero_of_cells}
+  \leanok
+  \uses{thm:unbiased_mean}
+  If every cell is alone in some column of the design, every quadratic estimator unbiased for
+  all $\beta$ has expectation $0$ under any symmetric table.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean}
+  $D^\top(Q + Q^\top)D = 0$ reads $Q_{pq} + Q_{qp} = 0$ entry by entry, so
+  $\sum_{p,q}Q_{pq}C_{pq} = 0$ for symmetric $C$.
 \end{proof}
 
 \begin{theorem}[When the MINQUE system is nonsingular]\label{thm:minque_nonsingular}
@@ -4698,7 +4717,8 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
 \end{proof}
 
 \begin{theorem}[Card-specific means hide the card level]\label{thm:Factor_card_level}
-  \lean{Credibility.Factor.shapeBasis_tau_eq_cardSeason,
+  \lean{Credibility.Factor.cardSeason_apply_eq, Credibility.Factor.classTable_eq_cardSeason,
+        Credibility.Factor.shapeBasis_tau_eq_cardSeason,
         Credibility.Factor.hendersonMat_cardSeason_det_eq_zero,
         Credibility.Factor.exists_independent_singular}
   \leanok
@@ -4715,10 +4735,37 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Each cell has one nonzero entry in $D$; then Lemma~\ref{lem:henderson_singular}.
 \end{proof}
 
+\begin{theorem}[What else the card season hides]\label{thm:Factor_season_collapse}
+  \lean{Credibility.Factor.cardSeason_col, Credibility.Factor.unbiasedMean_cardSeason_eq_zero,
+        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shape,
+        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero_of_shapeG}
+  \leanok
+  \uses{thm:Factor_card_level, thm:unbiased_cells, thm:Factor_hendersonG}
+  Under a card season: with one cell per card and calendar month (one year of data) nothing
+  is estimable. If $\Gamma_0 = aI + g(\mathrm{mon}\,t, \mathrm{mon}\,s)$ (AR(1) at $\varphi = 0$
+  or $1$, or any calendar pattern), $A_z - aC_z$ lies in the span of the design; likewise $g_j$
+  against $aC_{jj}$ for per-card dynamics $G_0$ of that form. In both cases every invariant
+  system is singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_cells, lem:henderson_singular, thm:Factor_card_level}
+  One year: each cell is alone in its column; Theorem~\ref{thm:unbiased_cells}. The shapes:
+  the combination is a table that sees only card and calendar month, hence $DFD^\top$;
+  Lemma~\ref{lem:henderson_singular}.
+\end{proof}
+
 \begin{remark}[Finding 27]
   Under card-specific fixed means, Henderson III / MINQUE (Theorems~\ref{thm:Factor_henderson},
   \ref{thm:Factor_hendersonG}) never has a nonsingular system with $\tau^2$ among the
   parameters: the card level is what the design already fits.
+\end{remark}
+
+\begin{remark}[Finding 28]
+  Under a card season the data see the covariance only through within-calendar-month
+  contrasts across years: one year identifies nothing, and a factor (or per-card dynamics)
+  that repeats with the calendar, the constant factor $\varphi = 1$ included, is absorbed by
+  the season.
 \end{remark}
 
 \begin{theorem}[Henderson III with per-card dynamics of known shape]\label{thm:Factor_hendersonG}

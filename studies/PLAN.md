@@ -294,7 +294,9 @@ One chat per step; none needs Lean except step 5.
   Message in the app when the fit hits one of these. With a card season as fixed effects,
   leave `τ²` out of the Henderson / MINQUE parameters (Finding 27,
   `Factor.hendersonMat_cardSeason_det_eq_zero`); test MINQUE nonsingularity by the rank of the
-  `RVₖR` (`Model.minque_det_ne_zero_iff`).
+  `RVₖR` (`Model.minque_det_ne_zero_iff`). Under a card season (Finding 28): require at least
+  two years per card for the second-moment fit (`Factor.unbiasedMean_cardSeason_eq_zero`), and
+  warn when `φ̂` is near `0` or `1` (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per card pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card
