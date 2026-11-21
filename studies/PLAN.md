@@ -355,8 +355,12 @@ One chat per step; none needs Lean except step 5.
   projection of the unbiased θ̂ onto that cone in the H-metric (Pukelsheim 1981, Hartung 1981).
   Each block's Hessian is a constant times the Frobenius weights, so block coordinate descent
   with eigenvalue clipping solves it exactly (about 30 sweeps; up to 5000 when φ̂ is at an edge,
-  ≤ 70 ms). Biased; not proved (a Lean candidate: the projection is unique and its MSE is at most
-  the unbiased one's in the H-norm, since the cone is convex and contains the truth). **Seen**
+  ≤ 70 ms). Biased. *Proved* (2026-11-21, `ConeProjection.lean`): for any convex set containing the truth
+  the H-projection is no further from it in every draw, `‖p-θ‖²_H + ‖θ̂-p‖²_H ≤ ‖θ̂-θ‖²_H`
+  (`hsq_proj_add_le`), so its H-weighted MSE is at most the unbiased one's (`integral_hsq_proj_le`);
+  it exists and is unique for `H ≻ 0` (`exists_hsq_proj`, `hsq_proj_unique`); valid tables are
+  convex (`convex_setOf_posSemidef`). No app change needed (the switch exists); the page could
+  show `‖θ̂-θ‖²_H` against `‖p-θ‖²_H` per draw (never negative) as a check. **Seen**
   (100 draws, median relative error γλλᵀ / C / s²): defaults, profile φ̂: unbiased 10.5 / 7.6 /
   2.2, valid 1.2 / 2.1 / 0.9; true φ: unbiased 1.1 / 5.8 / 2.2, valid 0.9 / 2.3 / 0.9. With
   `Y = 4`: valid 0.6 / 1.5 / 0.8. So the constraint removes most of the price of φ̂ and most of

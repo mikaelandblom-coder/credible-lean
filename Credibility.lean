@@ -21,6 +21,7 @@ import Credibility.UnequalEstimation
 import Credibility.Moments
 import Credibility.UnequalMoments
 import Credibility.OffDiagonal
+import Credibility.ConeProjection
 import Credibility.GroupWeights
 import Credibility.Hierarchical
 import Credibility.HierarchicalMoments

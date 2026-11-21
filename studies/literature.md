@@ -689,7 +689,10 @@ Write `Σ_h(i, j)` for the covariance of cards `i, j` at months `t, t + h`.
   minimum-bias requirement is a projection in parameter space; LaMotte (1973) and Pukelsheim
   (1981, Ann. Statist.): unbiased nonnegative estimators do not exist in general. Used: the
   app's `constrainPSD`, the projection of the unbiased MINQUE onto {γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0} in
-  the MINQUE metric (matrix cones instead of one sign per component).
+  the MINQUE metric (matrix cones instead of one sign per component). Its error bound is the
+  standard obtuse-angle property of the projection onto a closed convex set (Mathlib's
+  `norm_eq_iInf_iff_real_inner_le_zero` in an inner product space); `ConeProjection.lean` states
+  it in the matrix metric `vᵀHv` with `H ⪰ 0` and proves it directly.
 
 **Public travel demand signals (Step 3b)**, adding to §10e: Tillväxtverket/SCB accommodation
 statistics (`NV1701`, PxWeb), monthly guest nights since 1978 by type and guest residence,

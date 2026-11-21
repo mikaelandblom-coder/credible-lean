@@ -16,6 +16,10 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Valid tables by projection (2026-11-21, `ConeProjection.lean`): "project the unbiased fit onto
+  the valid tables in the fit's own metric `H`: never further from the truth, in every draw, so
+  never a worse H-weighted MSE; the price is bias" (`Credibility.ConeProjection.hsq_proj_le`,
+  `Credibility.ConeProjection.integral_hsq_proj_le`). Goes with the factor estimation entry.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"

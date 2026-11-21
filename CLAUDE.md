@@ -70,6 +70,9 @@ tactics.
   cohorts × components, matrix GLS, matrix eq. (26); `notes/time-trends.md` §3 item 4)
   → `Credibility/CoreVector.lean`; its moment layer (`CoreVector.VecEstimates`, centred to a
   `Core.Estimates` over `J × P`) → `Credibility/CoreVectorMoments.lean`
+- extension: valid estimates by projection: the `H`-projection of an estimate onto a convex set
+  containing the truth (PSD tables) has `H`-norm error ≤ the estimate's, in every draw and in mean;
+  exists and is unique for `H ≻ 0` (`studies/PLAN.md`, `constrainPSD`) → `Credibility/ConeProjection.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
