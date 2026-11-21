@@ -47,7 +47,9 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   `Model.minque_unbiased`, `henderson_factor_unbiased`): for a table `ΣₗθₗVₗ`, invariant forms
   (`QₖD = 0`) and a nonsingular system `Hₖₗ = Σ QₖVₗ`, `θ̂ = H⁻¹(quad Qₖ X)ₖ` is unbiased for every
   `θ` and `β`; MINQUE's `RVₖR` are such forms. Given `Γ = γΓ₀` the factor table is linear in a
-  symmetric `A = γλλᵀ`, `C`, `s²`, `τ²` (`covG_zero_eq_shapeTable`).
+  symmetric `A = γλλᵀ`, `C`, `s²`, `τ²` (`covG_zero_eq_shapeTable`). The shock fit's closed forms
+  `Shock.CdiagHat`, `Shock.s2Hat` are Henderson III with particular forms (`A = 0`); they are not
+  yet derived from `Model.henderson_unbiased` (owner, 2026-11-21: at a third instance).
 * **When the system is nonsingular** (`Model.exists_hendersonMat_det_ne_zero_iff`): some forms
   give `det H ≠ 0` iff the basis tables are linearly independent; a dependent basis is singular
   for every choice of forms (`Model.hendersonMat_det_eq_zero`). So: a card with constant volume
