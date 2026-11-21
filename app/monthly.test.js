@@ -201,3 +201,60 @@ test('fit with psd: valid tables and the extra step, badge not proved yet', () =
   assert.ok(Math.min(...M.eigSymVec(f.A).values) > -1e-10 && Math.min(...M.eigSymVec(f.C).values) > -1e-10 && f.s2.every((x) => x >= 0));
   assert.ok(f.steps.some((s) => s.badge === 'not proved yet' && /valid tables/.test(s.name)));
 });
+
+// The premium: the next-12-month mean of each cohort (Factor.blup_season_optimal).
+const trueTab = (w) => ({ phi: w.truth.phi, A: w.truth.A, C: w.truth.C, s2: w.truth.s2 });
+const monthSums = (d, J, T) => { const s = new Array(12 * J).fill(0); d.forEach((x, p) => { s[Math.floor(p / T) * 12 + ((p % T) % 12)] += x; }); return s; };
+
+test('the predictor is unbiased: its month sums are 1/12 on the target cohort, 0 elsewhere (Core.blup_unbiased)', () => {
+  const w = M.makeWorld({ J: 3 }), P = M.predictor(3, 2, w.w, trueTab(w), w.wFuture);
+  P.weights.forEach((d, j0) => monthSums(d, 3, 24).forEach((x, c) => close(x, Math.floor(c / 12) === j0 ? 1 / 12 : 0, 1e-9, `sum ${j0} ${c}`)));
+});
+
+test('τ² does not change the predictor: the cohort level is in the span of the season', () => {
+  const w = M.makeWorld({ J: 2, tau2: 0.3 }), J = 2, T = 24, n = J * T, V = M.covTable(w), P = M.predictor(J, 2, w.w, trueTab(w));
+  const { phi, A, tau2 } = w.truth, q = 12 * J;
+  const Xd = Array.from({ length: n }, (_, p) => Array.from({ length: q }, (_, c) => (Math.floor(p / T) * 12 + ((p % T) % 12) === c ? 1 : 0)));
+  const Kinv = (b) => M.solve(V, b);
+  for (let j0 = 0; j0 < J; j0++) {
+    const ell = Array.from({ length: n }, (_, p) => {
+      const i = Math.floor(p / T), t = p % T; let s = 0;
+      for (let u = T; u < T + 12; u++) s += A[i][j0] * Math.pow(phi, u - t) / 12;
+      return s + (i === j0 ? tau2 : 0); // ℓ with the level (Factor.ell_apply_of_future)
+    });
+    const Kl = Kinv(ell), KiX = Xd[0].map((_, c) => Kinv(Xd.map((row) => row[c])));
+    const G = KiX.map((a) => KiX.map((_, e) => a.reduce((s, x, p) => s + x * Xd[p][e], 0)));
+    const x0 = Array.from({ length: q }, (_, c) => (Math.floor(c / 12) === j0 ? 1 / 12 : 0));
+    const r = x0.map((x, c) => x - Kl.reduce((s, y, p) => s + y * Xd[p][c], 0)), g = M.solve(G, r);
+    const d = Kl.map((x, p) => x + KiX.reduce((s, a, c) => s + a[p] * g[c], 0));
+    d.forEach((x, p) => close(x, P.weights[j0][p], 1e-7, `weight ${j0} ${p}`));
+  }
+});
+
+test('the floor: simulated MSE of the true-table predictor matches dᵀKd − 2dᵀℓ + v (Factor.predMse_blup)', () => {
+  const w = M.makeWorld({ J: 3, tau2: 0.05 }), P = M.predictor(3, 2, w.w, trueTab(w), w.wFuture), r = M.rng(18), N = 1500;
+  const s = [0, 0, 0], ss = [0, 0, 0];
+  for (let n = 0; n < N; n++) {
+    const { data, target } = M.drawFuture(w, r), pr = P.predict(data.X);
+    pr.forEach((x, j) => { const e = (x - target[j]) ** 2; s[j] += e; ss[j] += e * e; });
+  }
+  s.forEach((x, j) => {
+    const mean = x / N, se = Math.sqrt((ss[j] / N - mean * mean) / N);
+    assert.ok(Math.abs(mean - P.mse[j]) < 4 * se, `cohort ${j}: ${mean} vs ${P.mse[j]} (se ${se})`);
+  });
+});
+
+test('the floor beats the last-year mean, which is unbiased too (Factor.blup_season_optimal)', () => {
+  for (const par of [{}, { phi: 0.9, Y: 3 }, { volume: 'flat' }]) {
+    const w = M.makeWorld(par), J = w.J, T = 12 * w.Y, V = M.covTable(w), P = M.predictor(J, w.Y, w.w, trueTab(w), w.wFuture);
+    for (let j0 = 0; j0 < J; j0++) {
+      const d = Array.from({ length: J * T }, (_, p) => (Math.floor(p / T) === j0 && p % T >= T - 12 ? 1 / 12 : 0));
+      const ell = Array.from({ length: J * T }, (_, p) => { let s = 0; for (let u = T; u < T + 12; u++) s += w.truth.A[Math.floor(p / T)][j0] * Math.pow(w.truth.phi, u - p % T) / 12; return s; });
+      const Kn = V.map((row, p) => row.map((x, p2) => x - (Math.floor(p / T) === Math.floor(p2 / T) ? w.truth.tau2 : 0)));
+      const dKd = d.reduce((a, x, p) => a + x * Kn[p].reduce((b, y, p2) => b + y * d[p2], 0), 0);
+      const vMinusFloor = P.mse[j0] - (P.weights[j0].reduce((a, x, p) => a + x * Kn[p].reduce((b, y, p2) => b + y * P.weights[j0][p2], 0), 0) - 2 * P.weights[j0].reduce((a, x, p) => a + x * ell[p], 0));
+      const mseLast = dKd - 2 * d.reduce((a, x, p) => a + x * ell[p], 0) + vMinusFloor;
+      assert.ok(P.mse[j0] <= mseLast + 1e-12, `${JSON.stringify(par)} cohort ${j0}: ${P.mse[j0]} vs ${mseLast}`);
+    }
+  }
+});

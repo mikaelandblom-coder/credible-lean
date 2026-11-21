@@ -165,18 +165,20 @@
     const load = Array.from({ length: J }, (_, j) => 1 + p.loadSpread * (J > 1 ? 2 * j / (J - 1) - 1 : 0));
     const C = Array.from({ length: J }, (_, i) => Array.from({ length: J }, (_, j) => (i === j ? p.c : p.c * p.cRho)));
     const s2 = Array.from({ length: J }, (_, j) => p.s2 * (1 + 0.5 * (j % 2)));
-    const w = Array.from({ length: J }, (_, j) => Array.from({ length: T }, (_, t) => {
+    // Volumes over the data and the 12 months after (the target's months, unseen by the fit).
+    const wAll = Array.from({ length: J }, (_, j) => Array.from({ length: T + 12 }, (_, t) => {
       const m = t % 12, y = Math.floor(t / 12), size = p.w0 * (1 + j);
       if (p.volume === 'flat') return size;
       if (p.volume === 'yearOnly') return size * Math.pow(1.3, y);
       return size * (1 + 0.6 * Math.sin(2 * Math.PI * (m + 3 * j) / 12)) * Math.pow(1.1, y);
     }));
+    const w = wAll.map((row) => row.slice(0, T)), wFuture = wAll.map((row) => row.slice(T));
     const season = Array.from({ length: J }, (_, j) => Array.from({ length: 12 }, (_, m) => 1 + 0.2 * Math.cos(2 * Math.PI * (m - j) / 12)));
     const A = load.map((li) => load.map((lj) => p.gamma * li * lj));
     const index = p.indexYears > 0
       ? { years: p.indexYears, noise: p.indexNoise * p.gamma, season: Array.from({ length: 12 }, (_, m) => 1 + 0.3 * Math.cos(2 * Math.PI * (m - 6) / 12)) }
       : null;
-    return { J, Y, w, truth: { phi: p.phi, gamma: p.gamma, load, A, C, s2, tau2: p.tau2, season }, index, skew: p.skew };
+    return { J, Y, w, wFuture, truth: { phi: p.phi, gamma: p.gamma, load, A, C, s2, tau2: p.tau2, season }, index, skew: p.skew };
   }
 
   /** The covariance table over the cells (Lean `Factor.shapeTable` with Γ₀ = `Factor.ar1Cal`). */
@@ -202,18 +204,32 @@
    * an external series that follows the factor (e.g. travel demand), longer than the data.
    */
   const cholCache = new WeakMap();
-  function draw(world, r) {
-    const { J, Y, w, truth, index } = world, T = 12 * Y, k = world.skew;
+  function draw(world, r) { return drawCells(world, r, 0).data; }
+
+  /**
+   * One data set and what the fit must predict: the next 12 months of every cohort (same factor
+   * path, shock, noise and level), with their volumes `world.wFuture`. The target of cohort j is
+   * Y_j = Σₜ bₜX_{jt}, bₜ = 1/12 on those months (Lean `Factor.ell`, `Factor.var`). The fit
+   * gets `data` only.
+   */
+  function drawFuture(world, r) {
+    const { data, future } = drawCells(world, r, 12);
+    return { data, future, target: future.map((row) => row.reduce((a, x) => a + x, 0) / 12) };
+  }
+
+  function drawCells(world, r, h) {
+    const { J, Y, truth, index } = world, T = 12 * Y, k = world.skew;
+    const w = world.w.map((row, j) => row.concat(world.wFuture[j].slice(0, h)));
     let LC = cholCache.get(world);
     if (!LC) { LC = cholesky(truth.C); if (LC) cholCache.set(world, LC); }
     if (!LC) throw new Error('C not positive definite');
-    const pre = index ? 12 * index.years : 0, n = pre + T, g = Math.sqrt(truth.gamma), phi = truth.phi;
+    const pre = index ? 12 * index.years : 0, n = pre + T + h, g = Math.sqrt(truth.gamma), phi = truth.phi;
     const f = new Array(n);
     f[0] = g * r.skewed(k);
     for (let t = 1; t < n; t++) f[t] = phi * f[t - 1] + g * Math.sqrt(1 - phi * phi) * r.skewed(k);
     const level = truth.season.map(() => Math.sqrt(truth.tau2) * r.skewed(k));
-    const X = Array.from({ length: J }, () => new Array(T));
-    for (let t = 0; t < T; t++) {
+    const X = Array.from({ length: J }, () => new Array(T + h));
+    for (let t = 0; t < T + h; t++) {
       const e = LC.map(() => r.skewed(k));
       for (let i = 0; i < J; i++) {
         let shock = 0;
@@ -222,9 +238,9 @@
           + Math.sqrt(truth.s2[i] / w[i][t]) * r.skewed(k) + level[i];
       }
     }
-    const data = { J, Y, w: w.map((row) => row.slice()), X };
-    if (index) data.index = f.map((x, t) => index.season[t % 12] + x + Math.sqrt(index.noise) * r.skewed(k));
-    return data;
+    const data = { J, Y, w: world.w.map((row) => row.slice()), X: X.map((row) => row.slice(0, T)) };
+    if (index) data.index = f.slice(0, pre + T).map((x, t) => index.season[t % 12] + x + Math.sqrt(index.noise) * r.skewed(k));
+    return { data, future: X.map((row) => row.slice(T)) };
   }
 
 
@@ -496,6 +512,63 @@
     return lines.join('\n') + '\n';
   }
 
+  // ---------------------------------------------------------------- the premium: next 12 months
+
+  /**
+   * The best linear unbiased predictor of every cohort's next-12-month mean, Y_j = Σₜ bₜX_{jt}
+   * with bₜ = 1/12 (Lean `Factor.blup_season_optimal`, `Core.blup`), for the tables
+   * { phi, A, C, s2 } (fitted or true) and the cohort × calendar month season as fixed effects:
+   *   d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ − XᵀK⁻¹ℓ),  x₀ = 1/12 on cohort j's twelve month columns,
+   *   ℓ_(i,t) = A_ij Σ_{t'} b_{t'} φ^(t'−t) over the future months (`Factor.ell_apply_of_future`).
+   * τ² is left out: the cohort level lies in the span of the season columns, so the predictor
+   * does not depend on it (tested). With `wFuture` it also returns the exact MSE of each weight
+   * vector under these tables, dᵀKd − 2dᵀℓ + v (`Factor.predMse_blup`). Returns null when K is not
+   * positive definite (possible for unbiased tables).
+   */
+  function predictor(J, Y, w, tab, wFuture) {
+    const T = 12 * Y, n = J * T, q = 12 * J, { phi, A, C, s2 } = tab;
+    const K = Array.from({ length: n }, () => new Array(n).fill(0));
+    for (let i = 0; i < J; i++) for (let t = 0; t < T; t++) for (let j = 0; j < J; j++) for (let s = 0; s < T; s++) {
+      let v = A[i][j] * Math.pow(phi, Math.abs(t - s));
+      if (t === s) v += C[i][j] + (i === j ? s2[i] / w[i][t] : 0);
+      K[i * T + t][j * T + s] = v;
+    }
+    const L = cholesky(K);
+    if (!L) return null;
+    const sol = (b) => { // K⁻¹b by the Cholesky factor
+      const y = b.slice();
+      for (let i = 0; i < n; i++) { for (let k = 0; k < i; k++) y[i] -= L[i][k] * y[k]; y[i] /= L[i][i]; }
+      for (let i = n - 1; i >= 0; i--) { for (let k = i + 1; k < n; k++) y[i] -= L[k][i] * y[k]; y[i] /= L[i][i]; }
+      return y;
+    };
+    const col = (c) => Array.from({ length: n }, (_, p) => (Math.floor(p / T) * 12 + ((p % T) % 12) === c ? 1 : 0));
+    const KiX = Array.from({ length: q }, (_, c) => sol(col(c))); // columns of K⁻¹X
+    const G = KiX.map((a, c) => KiX.map((_, e) => a.reduce((s, x, p) => s + (Math.floor(p / T) * 12 + ((p % T) % 12) === e ? x : 0), 0))); // XᵀK⁻¹X
+    const Xt = (v) => { const out = new Array(q).fill(0); v.forEach((x, p) => { out[Math.floor(p / T) * 12 + ((p % T) % 12)] += x; }); return out; };
+    const futB = (t) => { let s = 0; for (let u = T; u < T + 12; u++) s += Math.pow(phi, u - t) / 12; return s; };
+    const weights = [], mse = [];
+    for (let j0 = 0; j0 < J; j0++) {
+      const ell = Array.from({ length: n }, (_, p) => A[Math.floor(p / T)][j0] * futB(p % T));
+      const Kl = sol(ell), x0 = Array.from({ length: q }, (_, c) => (Math.floor(c / 12) === j0 ? 1 / 12 : 0));
+      const rv = Xt(Kl).map((x, c) => x0[c] - x), g = solve(G, rv);
+      const d = Kl.map((x, p) => x + KiX.reduce((s, a, c) => s + a[p] * g[c], 0));
+      weights.push(d);
+      if (wFuture) {
+        let v = 0;
+        for (let u = 0; u < 12; u++) for (let u2 = 0; u2 < 12; u2++) v += A[j0][j0] * Math.pow(phi, Math.abs(u - u2)) / 144;
+        for (let u = 0; u < 12; u++) v += (C[j0][j0] + s2[j0] / wFuture[j0][u]) / 144;
+        let dKd = 0;
+        for (let p = 0; p < n; p++) { let s = 0; for (let p2 = 0; p2 < n; p2++) s += K[p][p2] * d[p2]; dKd += d[p] * s; }
+        mse.push(dKd - 2 * d.reduce((s, x, p) => s + x * ell[p], 0) + v);
+      }
+    }
+    const predict = (X) => weights.map((d) => { let s = 0; for (let p = 0; p < n; p++) s += d[p] * X[Math.floor(p / T)][p % T]; return s; });
+    return { weights, mse, predict };
+  }
+
+  /** The naive premium: each cohort's mean over its last 12 months (the season is then whole). */
+  const lastYear = (data) => data.X.map((row) => row.slice(-12).reduce((a, x) => a + x, 0) / 12);
+
   /** Data-side checks named after the Lean results (warnings before solving). */
   function diagnose(data, phi) {
     const { J, Y, w } = data, out = [];
@@ -551,5 +624,5 @@
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear };
 });

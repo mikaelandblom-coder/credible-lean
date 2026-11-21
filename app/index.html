@@ -254,11 +254,13 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div id="m-warn"></div>
     <div id="m-tables"></div>
     <div id="m-steps"></div>
+    <div id="m-prem"></div>
     <h3>Many draws: φ̂ against the true φ</h3>
     <p class="sub" style="margin:0" id="m-many-sub"></p>
     <div class="legend" id="m-legend-hist"></div>
     <svg class="chart" id="m-hist" role="img" aria-label="Distribution of φ̂ over many draws, by method"></svg>
     <div class="tablewrap" id="m-many"></div>
+    <div class="tablewrap" id="m-prem-many"></div>
   </section>
 
   <footer>
@@ -687,14 +689,17 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const v = Math.floor(+mSeed.value);
     ms.seed = Number.isFinite(v) && v >= 0 ? v : 1; mSeed.value = ms.seed; mRenderDraw();
   });
-  let mWorld = null, mData = null;
+  let mWorld = null, mData = null, mFloor = null;
+  const trueTab = (w) => ({ phi: w.truth.phi, A: w.truth.A, C: w.truth.C, s2: w.truth.s2 });
+  const fitTab = (w, f) => (f.singular ? null : MO.predictor(w.J, w.Y, w.w, { phi: f.phi, A: f.A, C: f.C, s2: f.s2 }));
+  const futW = (w) => w.wFuture.map((row) => row.reduce((a, x) => a + x, 0));
   $('m-csv').addEventListener('click', () => { if (mData) download(`credibility-monthly-seed${ms.seed}.csv`, MO.toCSV(mData)); });
   const mOpts = (w) => Object.assign(ms.method === 'given' ? { phi: w.truth.phi } : { phiMethod: ms.method }, { psd: ms.psd });
   const f3 = (x) => (Number.isFinite(x) ? (Math.abs(x) >= 1 ? x.toFixed(1) : x.toPrecision(2)) : '–');
   const leanLink = (name) => (name ? lean(name) : '');
 
   function mRenderDraw() {
-    const w = mWorld, d = MO.draw(w, MO.rng(ms.seed)), J = w.J;
+    const w = mWorld, drawn = MO.drawFuture(w, MO.rng(ms.seed)), d = drawn.data, J = w.J;
     mData = d;
     const f = MO.fit(d, mOpts(w));
     const prof = ms.method === 'profile' ? { phi: f.phi, curve: f.curve } : (w.Y > 1 ? MO.phiProfile(d) : { phi: NaN, curve: [] });
@@ -753,6 +758,19 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       const badge = s.badge === 'proved' ? '<span class="badge proved">proved</span>' : '<span class="badge open">not proved yet</span>';
       return `<div class="step"><div class="step-head"><span class="step-name">${esc(s.name)}${s.value !== undefined && Number.isFinite(s.value) ? ': ' + s.value.toFixed(2) : ''}</span>${badge}</div>${s.lean ? `<div class="sub">${leanLink(s.lean)}</div>` : ''}</div>`;
     }).join('') + '<p class="sub" style="margin:4px 0 0">The MINQUE step is proved unbiased for the true φ; with φ̂ plugged in it is not (φ̂ is a nonlinear function of the data).</p>';
+    mRenderPremium(w, drawn, f);
+  }
+
+  // premium for the next 12 months: the best linear unbiased predictor with the fitted tables
+  function mRenderPremium(w, drawn, f) {
+    if (w.Y < 2) { $('m-prem').innerHTML = ''; return; }
+    const P = fitTab(w, f), pr = P ? P.predict(drawn.data.X) : null, fl = mFloor.predict(drawn.data.X), last = MO.lastYear(drawn.data);
+    const wt = futW(w), W = wt.reduce((a, x) => a + x, 0), err = (v) => (v ? pct(Math.sqrt(v.reduce((a, x, j) => a + wt[j] * (x - drawn.target[j]) ** 2, 0) / W), 1) : '–');
+    $('m-prem').innerHTML = `<p class="sub" style="margin:14px 0 4px"><b>Premium: the next 12 months</b> <span class="badge proved">proved</span> ${lean('Factor.blup_season_optimal')}: the best linear unbiased predictor of each cohort's mean over the next 12 months, with the season as fixed effects, for the fitted tables (τ² drops out: the cohort level is part of the season). The world then draws those months.</p>` +
+      `<table><thead><tr><th>Cohort</th><th>Next 12 months</th><th>Fit</th><th>Floor</th><th>Last year</th><th>Floor typ. err.</th></tr></thead><tbody>` +
+      drawn.target.map((y, j) => `<tr><td>${j + 1}</td><td>${y.toFixed(3)}</td><td>${pr ? pr[j].toFixed(3) : '–'}</td><td>${fl[j].toFixed(3)}</td><td>${last[j].toFixed(3)}</td><td>${pct(Math.sqrt(mFloor.mse[j]), 1)}</td></tr>`).join('') +
+      `<tr><td>Error</td><td></td><td>${err(pr)}</td><td>${err(fl)}</td><td>${err(last)}</td><td></td></tr></tbody></table>` +
+      `<p class="sub" style="margin:6px 0 0">${P ? '' : '<b>No fitted premium:</b> the fitted table K̂ is not positive definite (unbiased tables usually are not; choose valid tables). '}Floor: the same predictor with the true tables, a benchmark, never a fit; its typical error √(dᵀKd − 2dᵀℓ + v) is exact (${lean('Factor.predMse_blup')}). Last year: each cohort's mean over its last 12 months, also unbiased, so never better than the floor in expectation. Error row: this draw, root of the volume-weighted mean square, in % of the rate.</p>`;
   }
 
   // many draws: φ̂ by both methods, and the fitted tables with φ̂ against the oracle φ
@@ -760,12 +778,14 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   let mJob = 0;
   function mRenderMany() {
     const my = ++mJob, w = mWorld, r = MO.rng((ms.seed * 7919 + 17) >>> 0);
-    const acc = { prof: [], mom: [], idx: [], err: {} };
+    const acc = { prof: [], mom: [], idx: [], err: {}, prem: {}, notPD: {} };
+    const wt = futW(w), W = wt.reduce((a, x) => a + x, 0);
+    const score = (key, pr, tg) => { (acc.prem[key] = acc.prem[key] || []).push(pr ? pr.reduce((a, x, j) => a + wt[j] * (x - tg[j]) ** 2, 0) / W : NaN); };
     const push = (key, f) => { if (!f.singular) (acc.err[key] = acc.err[key] || []).push(relErr(f)); };
     if (w.Y < 2) {
       $('m-hist').innerHTML = ''; $('m-hist').setAttribute('height', 0); $('m-legend-hist').innerHTML = '';
       $('m-many-sub').textContent = 'With one year no second moment is estimable under a cohort season (Finding 28): add a year.';
-      $('m-many').innerHTML = ''; return;
+      $('m-many').innerHTML = ''; $('m-prem-many').innerHTML = ''; return;
     }
     const relErr = (f) => { // relative RMS error of γλλᵀ, C and s² in one draw (entries on and above the diagonal)
       const out = {};
@@ -782,12 +802,18 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const step = () => {
       if (my !== mJob) return;
       for (let k = 0; k < MCHUNK && done < MN; k++, done++) {
-        const d = MO.draw(w, r), fp = MO.fit(d);
+        const drawn = MO.drawFuture(w, r), d = drawn.data, fp = MO.fit(d);
+        score('floor', mFloor.predict(d.X), drawn.target); score('last', MO.lastYear(d), drawn.target);
         acc.prof.push(fp.phi); acc.mom.push(MO.phiHat(d).phi);
         const phis = [['prof', fp.phi], ['oracle', w.truth.phi]];
         if (d.index) { const pi = MO.phiIndex(d).phi; acc.idx.push(pi); phis.splice(1, 0, ['idx', pi]); }
         for (const [key, phi] of phis) if (Number.isFinite(phi)) {
-          push(key + 'U', MO.fit(d, { phi })); push(key + 'P', MO.fit(d, { phi, psd: true }));
+          for (const [suf, psd] of [['U', false], ['P', true]]) {
+            const f = MO.fit(d, { phi, psd }), P = fitTab(w, f);
+            push(key + suf, f);
+            if (!P) acc.notPD[key + suf] = (acc.notPD[key + suf] || 0) + 1;
+            score(key + suf, P ? P.predict(d.X) : null, drawn.target);
+          }
         }
       }
       $('m-many-sub').textContent = `Computing ${done} / ${MN} draws…`;
@@ -835,11 +861,38 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       [['Profile φ̂', 'prof']].concat(acc.idx.length ? [['Index φ̂', 'idx']] : []).concat([['True φ (oracle)', 'oracle']]).flatMap(([lab, key]) =>
         [['unbiased', key + 'U'], ['valid', key + 'P']].map(([t, k], n) => { const l = acc.err[k] || []; return `<tr><td>${n ? '' : lab}</td><td>${t}</td><td>${mErr(l, 'A')}</td><td>${mErr(l, 'C')}</td><td>${mErr(l, 's')}</td></tr>`; })).join('') +
       `</tbody></table><p class="sub" style="margin:6px 0 0">Why φ̂ is so noisy with two years: the factor is one series shared by all cohorts, and the season takes one mean per calendar month, so two years leave about 12 year-on-year differences of that one series. Even with the factor path observed without noise, φ̂ then has RMSE about 0.26 at φ = 0.6 (0.17 with three years, 0.12 with five). More cohorts do not help; more years, or φ from a longer external index, do: with a 10-year index (noise ×1) φ̂ has RMSE about 0.19 and the error of γλλᵀ comes close to the oracle's.</p>`;
+    // premium over many draws: typical error against the world's next 12 months
+    const typ = (key) => {
+      const v = (acc.prem[key] || []).filter(Number.isFinite);
+      if (!v.length) return { r: NaN, e: NaN, n: 0 };
+      const m = v.reduce((a, x) => a + x, 0) / v.length, sd = Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / v.length) / Math.sqrt(v.length);
+      return { r: Math.sqrt(m), e: sd / Math.sqrt(m), n: v.length }; // ±1 SE of the root (delta method)
+    };
+    const wt = futW(w), WT = wt.reduce((a, x) => a + x, 0);
+    const theory = Math.sqrt(mFloor.mse.reduce((a, x, j) => a + wt[j] * x, 0) / WT);
+    const excess = (key) => { // paired: mean of (MSE − floor MSE) over the same draws, relative to the floor's MSE
+      const a = acc.prem[key] || [], f = acc.prem.floor, dd = [], ff = [];
+      a.forEach((x, k) => { if (Number.isFinite(x)) { dd.push(x - f[k]); ff.push(f[k]); } });
+      if (!dd.length) return '';
+      const mf = ff.reduce((s, x) => s + x, 0) / ff.length, md = dd.reduce((s, x) => s + x, 0) / dd.length;
+      const se = Math.sqrt(dd.reduce((s, x) => s + (x - md) ** 2, 0) / dd.length / dd.length);
+      return `${md >= 0 ? '+' : ''}${pct(md / mf, 1)} ± ${pct(2 * se / mf, 1)}`;
+    };
+    const row = (lab, key, note) => { const t = typ(key); return `<tr><td>${lab}</td><td>${Number.isFinite(t.r) ? pct(t.r, 2) : '–'}</td><td>${key === 'floor' ? '—' : excess(key)}</td><td>${note || ''}</td></tr>`; };
+    const na = (key) => (acc.notPD[key] ? `K̂ not PD in ${pct(acc.notPD[key] / MN, 0)}` : '');
+    $('m-prem-many').innerHTML = `<p class="sub" style="margin:14px 0 4px"><b>Premium over many draws</b>: typical error of the predicted next-12-month mean against the world's outcome (root of the volume-weighted mean square, % of the rate), ${MN} draws, and its mean squared error above the floor's on the same draws (paired, ±2 SE). A row with K̂ not positive definite scores only its other draws.</p>` +
+      `<table><thead><tr><th>Predictor</th><th>Typ. error</th><th>MSE above floor</th><th></th></tr></thead><tbody>` +
+      row('Floor (true tables)', 'floor', `theory ${pct(theory, 2)} (±${pct(2 * typ('floor').e, 2)})`) +
+      [['Profile φ̂', 'prof']].concat(acc.idx.length ? [['Index φ̂', 'idx']] : []).concat([['True φ, fitted tables', 'oracle']]).flatMap(([lab, key]) =>
+        [row(lab + ', valid', key + 'P', na(key + 'P')), row(lab + ', unbiased', key + 'U', na(key + 'U'))]).join('') +
+      row('Last-year mean', 'last') +
+      `</tbody></table><p class="sub" style="margin:6px 0 0">Most of the error is next year's own noise, which no premium removes; compare the rows with the floor. Unbiased tables rarely give a positive definite K̂, so the premium needs valid tables. With them, the price of estimation is almost all in φ: given the true φ (or φ̂ from a 10-year index) the fitted tables lose only 1–2% MSE to the floor, while the profile φ̂ from two years loses about as much as the last-year mean (+20–50%). Switch the index on to see it.</p>`;
   }
 
   let mPending = null;
   function mUpdate() {
     mWorld = MO.makeWorld({ J: ms.J, Y: ms.Y, phi: ms.phi, volume: ms.volume, indexYears: ms.indexYears, indexNoise: ms.indexNoise });
+    mFloor = mWorld.Y > 1 ? MO.predictor(mWorld.J, mWorld.Y, mWorld.w, trueTab(mWorld), mWorld.wFuture) : null;
     const opt = $('m-opt-index'), on = ms.indexYears > 0;
     if (opt.disabled === on) { // switching the index on selects it; off falls back to the profile
       opt.disabled = !on; opt.textContent = on ? 'External index (quasi-likelihood)' : 'External index (switch it on above)';

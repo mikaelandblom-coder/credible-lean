@@ -360,8 +360,23 @@ One chat per step; none needs Lean except step 5.
   (100 draws, median relative error γλλᵀ / C / s²): defaults, profile φ̂: unbiased 10.5 / 7.6 /
   2.2, valid 1.2 / 2.1 / 0.9; true φ: unbiased 1.1 / 5.8 / 2.2, valid 0.9 / 2.3 / 0.9. With
   `Y = 4`: valid 0.6 / 1.5 / 0.8. So the constraint removes most of the price of φ̂ and most of
-  the noise of C; never γλλᵀ = 0 in these draws. Next: the premium step with the fitted tables
-  (the 12-month target, `Factor` ℓ and v), so the app compares predictions, not only tables.
+  the noise of C; never γλλᵀ = 0 in these draws.
+  *Premium (2026-11-21):* `drawFuture` draws the 12 months after the data (unseen by the fit);
+  `predictor` is `Core.blup` for the target `Σₜ bₜX_{jt}`, `bₜ = 1/12` (`Factor.blup_season_optimal`,
+  `ℓ` from `Factor.ell_apply_of_future`), season as fixed effects, τ² left out (tested: the
+  weights do not change with τ², the level is in the season's span), exact MSE
+  `dᵀKd − 2dᵀℓ + v` (`Factor.predMse_blup`; tested against simulation). Page: one-draw premium
+  table (fit, floor, last-year mean, the world's outcome) and many draws with the MSE above the
+  floor, paired over the same draws (Diebold–Mariano style, literature §10i). **Seen** (300
+  draws, valid tables, MSE above the floor ±2 SE): defaults: last-year mean +30 ± 11%, profile φ̂
+  +21 ± 10%, true φ +1.6 ± 1.7%; 10-year index: last +45%, profile +50 ± 19%, index φ̂
+  +2.0 ± 3.1%, true φ +1.4%; `Y = 3`: profile +8.5 ± 9%; `φ = 0.9`: index +8 ± 6%, true φ +6 ± 5%.
+  Unbiased tables: K̂ not positive definite in ~100% of draws, so no premium at all. So given a
+  good φ, estimating γλλᵀ, C, s² costs 1–2%; the plug-in price is φ, and an external index pays
+  it. Candidates: handbook note ("take φ from a long index; constrain the tables") once the
+  steps are proved; a Lean result that the PSD projection keeps K̂ ≻ 0 (C ⪰ 0, s² > 0 suffice,
+  via `Factor.K_posDef`). Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
+  the rolling-origin comparison on data (card-data Step 7b).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort
