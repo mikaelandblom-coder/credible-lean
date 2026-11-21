@@ -20,6 +20,9 @@ setting. So all of `CoreVector` applies; what is new here is only:
   general `CoreVector.posDef_of_componentBlockDiag`), and **joint = separate**: the vector
   BLUP is the scalar BLUP of each component on its own data (`blupW_eq_separate`, from
   `CoreVector.blupW_eq_sepW_of_componentBlockDiag`);
+* the bias of the product of two predictions (the pure premium `φ̂ψ̂`) is exact, no delta method:
+  `(AᵀKA)_FY - T_FY` (`CoreVector.VecEstimates.integral_mul_pred_sub`), `0` for separate weights
+  when separate (`prodBias_sepW_eq_zero`; Finding 33);
 * the converse fails (Finding 32): with a Kronecker structure `K = K_c ⊗ S`, `L = L_c ⊗ S`
   (the same cohort structure in both components, any cross-component covariance `S`) joint is
   still separate (`CoreVector.blupW_kronecker`, Zellner's seemingly unrelated regressions with
@@ -97,6 +100,26 @@ theorem blupW_kronecker [Nonempty J] {Kc Lc : Matrix J J ℝ} {S : Matrix P P �
   rw [e]
   simp [ite_and, hLs]
   rw [← h']; ring
+
+
+omit [DecidableEq J] in
+/-- **Separate weights see no cross-component covariance**: if `M` has none, the
+predictions of two different components by separate weights are uncorrelated,
+`(sepW a)ᵀM(sepW a)ₚᵣ = 0` for `p ≠ r`. -/
+theorem sepW_transpose_mul_mul_sepW_of_ne {M : Matrix (J × P) (J × P) ℝ}
+    (hM : IsComponentBlockDiag M) (a : P → J → ℝ) {p r : P} (hpr : p ≠ r) :
+    ((sepW a)ᵀ * M * sepW a) p r = 0 := by
+  simp only [Matrix.mul_apply, transpose_apply, sepW, Fintype.sum_prod_type, ite_mul, zero_mul,
+    mul_ite, mul_zero]
+  refine sum_eq_zero fun i _ => sum_eq_zero fun q _ => ?_
+  by_cases hq : q = r
+  · subst hq
+    simp only [ite_true]
+    rw [sum_eq_zero fun k _ => sum_eq_zero fun q' _ => ?_, zero_mul]
+    by_cases hq' : q' = p
+    · subst hq'; simp [hM k i q' q hpr]
+    · simp [hq']
+  · simp [hq]
 
 end CoreVector
 
@@ -219,6 +242,17 @@ theorem blupW_eq_separate [Nonempty J] (hs : M.Separate) {α : P → J → T →
   rw [CoreVector.blupW_eq_sepW_of_componentBlockDiag (K_posDef_of_separate hs hα)
     (isComponentBlockDiag_K hs α) (L_transpose hs) (isComponentBlockDiag_L hs) j]
   simp only [component_L]
+
+
+/-- **The pure premium of separate predictions is unbiased** with no cross-component
+covariance: for separate weights the bias `(AᵀKA)_FY - L₍ⱼF₎₍ⱼY₎` of the product of the
+frequency and severity predictions is `0` (`CoreVector.VecEstimates.integral_mul_pred_sub`).
+With cross-correlation it is `Σᵢₖ a_Fᵢ a_Yₖ K₍ᵢF₎₍ₖY₎ - T_FY`. -/
+theorem prodBias_sepW_eq_zero (hs : M.Separate) (α : P → J → T → ℝ) (a : P → J → ℝ)
+    {p r : P} (hpr : p ≠ r) (j : J) :
+    ((CoreVector.sepW a)ᵀ * M.K α * CoreVector.sepW a) p r - M.L (j, p) (j, r) = 0 := by
+  rw [CoreVector.sepW_transpose_mul_mul_sepW_of_ne (isComponentBlockDiag_K hs α) a hpr]
+  simp [L, lev, hpr, hs.1 p r hpr]
 
 end FreqSev
 end Credibility

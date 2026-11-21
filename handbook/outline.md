@@ -16,6 +16,10 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Pure premium bias (2026-11-21, Finding 33): "the product of frequency and severity predictions
+  is biased by exactly cov(predictions) − cov(levels), zero for separate fits when F and Y don't
+  covary; watch out for a level correlation" (`Credibility.CoreVector.VecEstimates.integral_mul_pred_sub`,
+  `Credibility.FreqSev.prodBias_sepW_eq_zero`).
 - Relativities and the factor (2026-11-21, `FactorRelativity.lean`): "use it: card relativities
   need no factor model when loadings are equal and every card has the same month weights"
   (`Credibility.Factor.relCoef_factor_free`); "watch out: same months is not enough, different

@@ -252,6 +252,50 @@ theorem bestZ_mse_optimal [Nonempty J] (hK : K.PosDef) (j : J)
     (by simp [moments, transpose_mul, hKt, Matrix.mul_assoc]) hS hg.posSemidef
     (isUnit_iff_ne_zero.2 hg.det_pos.ne') Z
 
+
+omit [DecidableEq J] in
+/-- **The bias of a product of predictions is exact** (e.g. frequency × severity: the pure
+premium). For unbiased weights `A` (`UᵀA = I`) and components `p`, `r`,
+`E[(Aᵀx)ₚ(Aᵀx)ᵣ] - E[μⱼₚμⱼᵣ] = (AᵀKA)ₚᵣ - L₍ⱼₚ₎₍ⱼᵣ₎`: the covariance of the two predictions
+minus that of the two levels. No delta method and no distribution: only `E[XY] = EX·EY +
+cov(X, Y)`. -/
+theorem integral_mul_pred_sub {A : Matrix (J × P) P ℝ} (hA : (stack J P)ᵀ * A = 1) (j : J)
+    (p r : P) :
+    Pr[fun ω => (Aᵀ *ᵥ E.vec ω) p * (Aᵀ *ᵥ E.vec ω) r]
+        - Pr[fun ω => E.level (j, p) ω * E.level (j, r) ω]
+      = (Aᵀ * K * A) p r - L (j, p) (j, r) := by
+  have hpred : ∀ q, (fun ω => (Aᵀ *ᵥ E.vec ω) q)
+      = fun ω => E.centred.portLin (fun x => A x q) ω + m q := by
+    intro q; funext ω
+    have h := sum_mul_mean (m := m) hA q
+    simp only [vec, mulVec, dotProduct, transpose_apply, centred, Core.Estimates.portLin,
+      Core.portLin, mul_sub, sum_sub_distrib] at h ⊢
+    rw [h]; ring
+  have hm : ∀ q, MemLp (fun ω => (Aᵀ *ᵥ E.vec ω) q) 2 Pr := fun q => by
+    rw [hpred]; exact (E.centred.memLp_portLin _).add (memLp_const _)
+  have hi : ∀ q, Pr[fun ω => (Aᵀ *ᵥ E.vec ω) q] = m q := fun q => by
+    rw [hpred, integral_add ((E.centred.memLp_portLin _).integrable (by norm_num))
+      (integrable_const _), E.centred.integral_portLin]
+    simp
+  have hc : cov[fun ω => (Aᵀ *ᵥ E.vec ω) p, fun ω => (Aᵀ *ᵥ E.vec ω) r; Pr]
+      = (fun x => A x p) ⬝ᵥ (K *ᵥ fun x => A x r) := by
+    rw [hpred, hpred, covariance_add_const_left
+      ((E.centred.memLp_portLin _).integrable (by norm_num)),
+      covariance_add_const_right ((E.centred.memLp_portLin _).integrable (by norm_num)),
+      E.centred.cov_portLin]
+  have e1 := covariance_eq_sub (hm p) (hm r)
+  have e2 := covariance_eq_sub (E.level_memLp (j, p)) (E.level_memLp (j, r))
+  rw [hc, hi, hi] at e1
+  rw [E.cov_level, E.level_mean, E.level_mean] at e2
+  change _ = Pr[fun ω => (Aᵀ *ᵥ E.vec ω) p * (Aᵀ *ᵥ E.vec ω) r] - _ at e1
+  change _ = Pr[fun ω => E.level (j, p) ω * E.level (j, r) ω] - _ at e2
+  have hq : (fun x => A x p) ⬝ᵥ (K *ᵥ fun x => A x r) = (Aᵀ * K * A) p r := by
+    simp only [Matrix.mul_apply, transpose_apply, dotProduct, mulVec, mul_sum, sum_mul]
+    rw [sum_comm]
+    exact sum_congr rfl fun _ _ => sum_congr rfl fun _ _ => by ring
+  simp only at e2
+  linarith [hq]
+
 end VecEstimates
 
 end CoreVector

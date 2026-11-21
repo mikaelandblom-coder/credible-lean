@@ -5717,6 +5717,22 @@ severity) are such predictors, and so is the matrix blend.
   \ref{thm:CV_blend_price} and~\ref{thm:VBM_optimal}.
 \end{proof}
 
+\begin{theorem}[The bias of a product of predictions]\label{thm:CV_prod_bias}
+  \lean{Credibility.CoreVector.VecEstimates.integral_mul_pred_sub}
+  \leanok
+  \uses{def:CV_Estimates}
+  For unbiased weights $A$ ($U^\top A = I$) and components $p$, $r$,
+  $\mathbb E[(A^\top x)_p(A^\top x)_r] - \mathbb E[\mu_{jp}\mu_{jr}]
+    = (A^\top KA)_{pr} - L_{(j,p),(j,r)}$, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_centred, lem:Core_moments_lin}
+  $\mathbb E[XY] = \mathbb EX\,\mathbb EY + \cov(X, Y)$; both predictions have the means of the
+  levels (Lemma~\ref{lem:CV_centred}), and their covariance is $(A^\top KA)_{pr}$
+  (Lemma~\ref{lem:Core_moments_lin}).
+\end{proof}
+
 \section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
 
 \begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}
@@ -5786,6 +5802,30 @@ severity) are such predictors, and so is the matrix blend.
   sufficient check, not a necessary one; with unequal volume patterns (cards against claim
   counts) the Kronecker structure is unlikely, and the check is the practical one.
 \end{remark}
+
+\begin{corollary}[The pure premium of separate predictions]\label{cor:FreqSev_prod}
+  \lean{Credibility.CoreVector.sepW_transpose_mul_mul_sepW_of_ne,
+        Credibility.FreqSev.prodBias_sepW_eq_zero}
+  \leanok
+  \uses{def:FreqSev, thm:CV_prod_bias}
+  Separate weights give uncorrelated predictions of two components when $K$ has no
+  cross-component covariance. So, if separate, the product of the frequency and severity
+  predictions has bias $0$ in Theorem~\ref{thm:CV_prod_bias}; otherwise its bias is
+  $\sum_{ik} a_{Fi}a_{Yk}K_{(i,F),(k,Y)} - T_{FY}$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:FreqSev_separate}
+  The off-diagonal blocks vanish (Theorem~\ref{thm:FreqSev_separate}), and so does $T_{FY}$.
+\end{proof}
+
+\begin{remark}[Finding 33]
+  Expected: the bias of the product $\hat\varphi\hat\psi$ needs the delta method, an
+  approximation. It does not: the bias is exactly a difference of covariances
+  (Theorem~\ref{thm:CV_prod_bias}). What the second moments do not determine is the mean
+  squared error of the product, which needs third and fourth moments.
+\end{remark}
+
 
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the

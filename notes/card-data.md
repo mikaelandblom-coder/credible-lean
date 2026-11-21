@@ -296,7 +296,9 @@ consistent.
 covariance (`FreqSev`), joint `K`, `L` over cohorts × components, component blocks `≻ 0`
 (`FreqSev.component_K_posDef`), joint `K ≻ 0` when separate (`K_posDef_of_separate`), joint =
 separate (`FreqSev.blupW_eq_separate`). The "iff" is false (Finding 32,
-`CoreVector.blupW_kronecker`). Open: the delta-method term for the product.
+`CoreVector.blupW_kronecker`). The product's bias is exact, no delta method (Finding 33,
+`CoreVector.VecEstimates.integral_mul_pred_sub`, `FreqSev.prodBias_sepW_eq_zero`); its MSE needs
+higher moments (distribution layer).
 
 ### Step 7. App: a world like the card data (Default, app)
 The world uses the optional distribution layer: Poisson counts, gamma

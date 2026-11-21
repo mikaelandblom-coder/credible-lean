@@ -286,6 +286,9 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Pure premium (2026-11-21, Finding 33): when the world has a frequency–severity level
+  correlation, show the exact bias of the product of separate predictions
+  (`CoreVector.VecEstimates.integral_mul_pred_sub`) next to the simulated one.
 - Relativities (2026-11-21, Finding 31): in the card world, show the relativity error of a
   shock-only fit against the factor fit; it is exact (`Factor.quadTab_eq`) and zero only with
   equal loadings and equal month weights (`Factor.relCoef_factor_free`). Joint against separate

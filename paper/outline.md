@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Product bias (2026-11-21, Finding 33): exact, distribution-free
+  (`CoreVector.VecEstimates.integral_mul_pred_sub`, `FreqSev.prodBias_sepW_eq_zero`); with the
+  frequency × severity paragraph.
 - Relativities under a common factor (2026-11-21, `FactorRelativity.lean`): exact extra error
   `gᵀΓg` of any statistic (`Factor.quadTab_eq`), cancellation for relativities with equal loadings
   and equal month weights (`Factor.relCoef_factor_free`), Finding 31 (same months not enough). With

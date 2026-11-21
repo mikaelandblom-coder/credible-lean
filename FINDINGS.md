@@ -549,4 +549,15 @@ Gaps, extra hypotheses and new results found while formalizing.
    weighted by cards and severity by claim counts the cohort structures differ, so the gain is
    expected in practice; measure it rather than infer it from the correlation.
 
+33. **The bias of the product of frequency and severity predictions is exact, no delta method
+   (new; `notes/card-data.md` Step 6).** Expected: the bias of `φ̂ψ̂` needs a delta-method
+   approximation. Found: for unbiased linear predictions it is exactly
+   `(AᵀKA)_FY - L₍ⱼF₎₍ⱼY₎`, the covariance of the two predictions minus that of the two levels,
+   for every distribution (`CoreVector.VecEstimates.integral_mul_pred_sub`; only
+   `E[XY] = EX·EY + cov(X, Y)`). For separate weights with no cross-component covariance it is `0`
+   (`FreqSev.prodBias_sepW_eq_zero`); with cross-correlation separate predictions give
+   `Σ a_Fᵢ a_Yₖ K₍ᵢF₎₍ₖY₎ - T_FY`, so ignoring a level correlation `T_FY > 0` underprices. The MSE
+   of the product needs third and fourth moments (argued, not formalized): it lives in the
+   optional distribution layer.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
