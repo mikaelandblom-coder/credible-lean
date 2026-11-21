@@ -301,6 +301,20 @@ One chat per step; none needs Lean except step 5.
   months (`Factor.minque_cohortSeason_det_eq_zero_of_volume`) and report `Cⱼⱼ + sⱼ²h/2` there;
   otherwise the AR(1) fit is nonsingular for any prior (`Factor.minque_ar1_two_years_unbiased`),
   so the world can default to two years with seasonal volumes.
+  *Engine built 2026-11-21 (`app/monthly.js`, tests `app/monthly.test.js`, no page yet):* a
+  monthly world (cohorts × `12Y` months, AR(1) factor, shock, process noise, cohort level,
+  cohort season, volumes `seasonal` / `yearOnly` / `flat`), the table `covTable`, and `fit`:
+  `φ̂` from the pooled year-on-year cross-products at lags 1–6 (badge not proved yet), then
+  MINQUE with `W = I` given `φ̂`, `τ²` dropped (proved: `Factor.minque_ar1_two_years_unbiased`),
+  with warnings for one year, flat volume sums (Finding 29), `φ̂` near 0 or 1, and a singular
+  system (rank of the scaled `H`). Tests: nonsingular / singular exactly where the Lean results
+  say; unbiased given the true `φ` (500 draws, within 4 SE, `τ² = 0.05` and a season present);
+  `yoyPooled` unbiased. **Seen:** with two years `φ̂` is very noisy (true `φ = 0.6`, `J = 4`:
+  quartiles 0.01 / 0.29 / 0.86; `J = 8` with a strong factor 0.04 / 0.38 / 0.78); with three
+  years 0.25 / 0.66 / 0.93. So the page should show the price of estimating `φ` next to the
+  oracle `φ`, and suggest three years. Next: the page section (world switches, the fitted
+  table against the truth, the warnings), then `φ̂` by profiling the MINQUE fit (REML-like)
+  if the moment `φ̂` stays this noisy.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort

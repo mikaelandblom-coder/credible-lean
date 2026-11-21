@@ -191,9 +191,9 @@ jobs:
       # under Node, then the page is published at /app/ next to the blueprint.
       - name: Test and add the app
         run: |
-          node --test app/engine.test.js
+          node --test app/engine.test.js app/monthly.test.js
           mkdir -p blueprint/web/app
-          cp -r app/index.html app/engine.js app/manifest.webmanifest app/icons blueprint/web/app/
+          cp -r app/index.html app/engine.js app/monthly.js app/manifest.webmanifest app/icons blueprint/web/app/
 
       - uses: actions/upload-pages-artifact@v3
         with:
