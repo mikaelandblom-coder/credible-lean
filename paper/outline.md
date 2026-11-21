@@ -100,7 +100,11 @@ may need a paragraph.)
   projected tables are independent (`Model.minque_det_ne_zero_iff`), so card-specific means
   hide `τ²` (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`); a card season sees
   covariances only through repeated calendar months (Finding 28,
-  `Factor.unbiasedMean_cardSeason_eq_zero`, `Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`).
+  `Factor.unbiasedMean_cardSeason_eq_zero`, `Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`);
+  a sufficient condition by within-calendar-month contrasts, two years and AR(1) suffice
+  (`Factor.minque_cardSeason_det_ne_zero`, `Factor.minque_ar1_two_years_unbiased`), and with
+  two years the volumes must vary over the calendar (Finding 29,
+  `Factor.minque_cardSeason_det_eq_zero_of_volume`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing

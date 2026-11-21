@@ -492,6 +492,24 @@ Gaps, extra hypotheses and new results found while formalizing.
    fit second moments under a card season only with at least two years per card, and with
    factor shapes that decay within the year; check the rank of the projected tables
    (`Model.minque_det_ne_zero_iff`) rather than hoping for a general condition. A general
-   sufficient condition for nonsingularity is still open.
+   sufficient condition for nonsingularity: see Finding 29.
+
+29. **With two years, `s²` needs volumes that vary over the calendar, not only across years
+   (new; `notes/card-data.md` Step 5).** Expected: under a card season, two years, AR(1) with
+   `0 < φ < 1` and volume variation make MINQUE for `(A, C, s²)` nonsingular. Found: true with
+   the right kind of volume variation. Sufficient (`Factor.minque_cardSeason_det_ne_zero`, any
+   number of cards, any prior `W ≻ 0`): one nonzero year-on-year double difference of `Γ₀`
+   (for AR(1): `2φ - φ¹¹ - φ¹³ > 0`, `Factor.minque_ar1_two_years_det_ne_zero`), and for every
+   card `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` not constant over the calendar month `m`. The second condition
+   is needed: if it is constant for one card (e.g. its volume changes only from one year to
+   the next, or is the same each year in every month), `2Vₛⱼ - hV_Cⱼⱼ` is `YDᵀ + DYᵀ`, within
+   each calendar month `diag(x, -x)`, and MINQUE is singular for every prior and every shape
+   (`Factor.minque_cardSeason_det_eq_zero_of_volume`). The reason: with two years the only
+   contrasts are the year-on-year differences, which see the process noise only through
+   `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎`. With three or more years the diagonal `diag(1/wⱼ)` within a
+   calendar month is no longer of the form `u1ᵀ + 1uᵀ` (argued, not formalized). Dropping `τ²`
+   costs nothing: the estimators stay unbiased whatever `τ²` (`Factor.henderson_season_unbiased`,
+   `Model.UnbiasedMean.add_design`). Practice: with two years, check that each card's volume
+   has a within-year pattern; otherwise report `Cⱼⱼ + sⱼ²h/2` for that card.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

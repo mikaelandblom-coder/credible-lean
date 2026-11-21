@@ -33,7 +33,10 @@ voice, then trim towards 8 pages.
   card-specific means, leave `τ²` out" (Finding 27,
   `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero`); "with a card season, one year
   estimates no second moment, and a factor that repeats with the calendar is absorbed" (Finding
-  28, `Credibility.Factor.unbiasedMean_cardSeason_eq_zero`).
+  28, `Credibility.Factor.unbiasedMean_cardSeason_eq_zero`); "two years and AR(1) suffice for
+  MINQUE, but with two years each card's volume needs a within-year pattern" (Finding 29,
+  `Credibility.Factor.minque_ar1_two_years_unbiased`,
+  `Credibility.Factor.minque_cardSeason_det_eq_zero_of_volume`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
   observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch

@@ -73,6 +73,17 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   nothing is estimable (`unbiasedMean_cardSeason_eq_zero`). A factor shape `Γ₀ = aI + g(mon, mon)`
   (AR(1) at `φ = 0` or `1`, any calendar pattern) or per-card dynamics `G₀` of that form: singular
   (`hendersonMat_cardSeason_det_eq_zero_of_shape`, `hendersonMat_cardSeason_det_eq_zero_of_shapeG`).
+* **A sufficient condition under the card season** (`Model.minque_det_ne_zero_of_diff`,
+  `minque_cardSeason_det_ne_zero`): `RSR = 0` forces every within-calendar-month double
+  difference of `S` to vanish, so for `(A, C, s²)` (`seasonBasis`, `τ²` dropped) MINQUE is
+  nonsingular, for any number of cards and any prior, if the shape has one nonzero
+  year-on-year double difference (pairs with no month in common) and each card's
+  `1/wⱼₜ + 1/wⱼᵤ` differs between two same-calendar-month pairs. Two years, AR(1) with
+  `0 < φ < 1` (`minque_ar1_two_years_det_ne_zero`, `minque_ar1_two_years_unbiased`):
+  `2φ - φ¹¹ - φ¹³ > 0`. The card level does not move the result (`Model.UnbiasedMean.add_design`,
+  `henderson_season_unbiased`). With two years the volume condition is needed (Finding 29,
+  `minque_cardSeason_det_eq_zero_of_volume`): a volume that changes only between years makes
+  `sⱼ²` trade against `Cⱼⱼ`.
 -/
 
 open Finset Matrix
@@ -1237,6 +1248,120 @@ theorem minque_det_ne_zero_iff {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef
       _ = 0 := by rw [hWNW, Matrix.mul_zero, Matrix.zero_mul]
 
 
+omit [Fintype L] [DecidableEq L] [DecidableEq J] [DecidableEq T] in
+/-- **A table in the span of the design does not move an unbiased estimator**: if `f` is
+unbiased for `θ` under `C` for every `β`, it is unbiased for `θ` under `C + DNDᵀ` for any
+symmetric `N`, since `Dᵀ(Q + Qᵀ)D = 0` makes `Σₚq Qₚq(DNDᵀ)ₚq = 0`. Such a component (e.g. the
+card level under a card season) need not be modelled. -/
+theorem UnbiasedMean.add_design {C : J × T → J × T → ℝ} {D : Matrix (J × T) B ℝ}
+    {f : (J × T → ℝ) → ℝ} {θ : ℝ} (h : UnbiasedMean C D f θ) {N : Matrix B B ℝ} (hN : Nᵀ = N) :
+    UnbiasedMean (fun p q => C p q + (D * N * Dᵀ) p q) D f θ := by
+  obtain ⟨Q, hf, hE⟩ := h
+  refine ⟨Q, hf, ?_⟩
+  obtain ⟨hθ, h0⟩ := (ecovMean_eq_iff D Q θ).mp hE
+  refine (ecovMean_eq_iff D Q θ).mpr ⟨?_, h0⟩
+  set M := D * N * Dᵀ with hM
+  have hMt : ∀ p q, M q p = M p q := fun p q => by
+    rw [← transpose_apply M p q, hM, transpose_mul, transpose_mul, transpose_transpose, hN,
+      Matrix.mul_assoc]
+  have h2 : ∑ p, ∑ q, (of Q + (of Q)ᵀ) p q * M p q = 0 := by
+    rw [sum_mul_eq_trace, transpose_add, transpose_transpose, add_comm, hM,
+      show (of Q + (of Q)ᵀ) * (D * N * Dᵀ) = ((of Q + (of Q)ᵀ) * D * N) * Dᵀ by
+        simp only [Matrix.mul_assoc],
+      trace_mul_comm, show Dᵀ * ((of Q + (of Q)ᵀ) * D * N) = (Dᵀ * (of Q + (of Q)ᵀ) * D) * N by
+        simp only [Matrix.mul_assoc], h0, Matrix.zero_mul, trace_zero]
+  have hsym : ∑ p, ∑ q, Q q p * M p q = ∑ p, ∑ q, Q p q * M p q := by
+    rw [sum_comm]
+    exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by rw [hMt]
+  simp only [Matrix.add_apply, of_apply, transpose_apply, add_mul, sum_add_distrib, hsym] at h2
+  have hx : ∑ p, ∑ q, Q p q * M p q = 0 := by linarith
+  simp only [mul_add, sum_add_distrib, hx, add_zero, hθ]
+
+omit [Fintype L] [DecidableEq L] in
+/-- `RWa = a` for a contrast `a` (`Dᵀa = 0`): the MINQUE projection fixes what the design does
+not see. -/
+lemma minqueR_mul_mulVec {W : Matrix (J × T) (J × T) ℝ} (hW : IsUnit W.det)
+    {D : Matrix (J × T) B ℝ} {a : J × T → ℝ} (ha : Dᵀ *ᵥ a = 0) :
+    (minqueR W D * W) *ᵥ a = a := by
+  rw [minqueR, Matrix.sub_mul, nonsing_inv_mul _ hW, Matrix.sub_mulVec, one_mulVec,
+    Matrix.mul_assoc _ W⁻¹ W, nonsing_inv_mul _ hW, Matrix.mul_one, ← mulVec_mulVec, ha,
+    mulVec_zero, sub_zero]
+
+omit [Fintype L] [DecidableEq L] in
+/-- **A projected table seen through contrasts**: if `RSR = 0`, then `aᵀSb = 0` for all
+contrasts `a`, `b` (`Dᵀa = Dᵀb = 0`), since `a = RWa`. -/
+lemma dotProduct_mulVec_eq_zero_of_minqueR {W : Matrix (J × T) (J × T) ℝ} (hWt : Wᵀ = W)
+    (hW : IsUnit W.det) {D : Matrix (J × T) B ℝ} {S : Matrix (J × T) (J × T) ℝ}
+    (hS : minqueR W D * S * minqueR W D = 0) {a b : J × T → ℝ} (ha : Dᵀ *ᵥ a = 0)
+    (hb : Dᵀ *ᵥ b = 0) : a ⬝ᵥ (S *ᵥ b) = 0 := by
+  have hRt : (minqueR W D)ᵀ = minqueR W D := minqueR_transpose hWt D
+  have h0 : (minqueR W D * W)ᵀ * S * (minqueR W D * W) = 0 := by
+    rw [transpose_mul, hWt, hRt]
+    calc W * minqueR W D * S * (minqueR W D * W)
+        = W * (minqueR W D * S * minqueR W D) * W := by simp only [Matrix.mul_assoc]
+      _ = 0 := by rw [hS, Matrix.mul_zero, Matrix.zero_mul]
+  calc a ⬝ᵥ (S *ᵥ b)
+      = ((minqueR W D * W) *ᵥ a) ⬝ᵥ (S *ᵥ ((minqueR W D * W) *ᵥ b)) := by
+        rw [minqueR_mul_mulVec hW ha, minqueR_mul_mulVec hW hb]
+    _ = a ⬝ᵥ (((minqueR W D * W)ᵀ * S * (minqueR W D * W)) *ᵥ b) := by
+        rw [mulVec_mulVec, dotProduct_mulVec, ← vecMul_transpose, vecMul_vecMul,
+          dotProduct_mulVec, Matrix.mul_assoc]
+    _ = 0 := by rw [h0, zero_mulVec, dotProduct_zero]
+
+omit [Fintype L] [DecidableEq L] [Fintype B] [DecidableEq B] in
+/-- A difference of two cells with the same row in the design is a contrast. -/
+lemma transpose_mulVec_single_sub {D : Matrix (J × T) B ℝ} {p q : J × T} (h : D p = D q) :
+    Dᵀ *ᵥ (Pi.single p 1 - Pi.single q 1) = 0 := by
+  ext b
+  simp [mulVec_sub, h]
+
+omit [Fintype L] [DecidableEq L] [Fintype B] [DecidableEq B] in
+/-- `(eₚ - e_q)ᵀS(eᵣ - eₛ)` is the double difference of the entries. -/
+lemma single_sub_dotProduct_mulVec (S : Matrix (J × T) (J × T) ℝ) (p q r s : J × T) :
+    (Pi.single p 1 - Pi.single q 1) ⬝ᵥ (S *ᵥ (Pi.single r 1 - Pi.single s 1))
+      = S p r - S p s - S q r + S q s := by
+  simp only [mulVec_sub, mulVec_single_one, sub_dotProduct, dotProduct_sub, single_one_dotProduct,
+    Matrix.col_apply]
+  ring
+
+/-- **A sufficient condition for a nonsingular MINQUE system, by contrasts**: for `W ≻ 0`,
+`DᵀW⁻¹D` nonsingular and symmetric tables, if no `c ≠ 0` makes every double difference
+`Sₚᵣ - Sₚₛ - S_qr + S_qs` of `S = Σₖ cₖVₖ` vanish (`p, q` and `r, s` pairs of cells with the
+same row in the design), then `det H ≠ 0`. Each such double difference is the expectation of
+`(Xₚ - X_q)(Xᵣ - Xₛ)`, free of the fixed effects. -/
+theorem minque_det_ne_zero_of_diff {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef)
+    {D : Matrix (J × T) B ℝ} (hD : IsUnit (Dᵀ * W⁻¹ * D).det)
+    {V : L → Matrix (J × T) (J × T) ℝ} (hV : ∀ k, (V k)ᵀ = V k)
+    (h : ∀ c : L → ℝ, (∀ p q r s, D p = D q → D r = D s →
+      (∑ k, c k • V k) p r - (∑ k, c k • V k) p s - (∑ k, c k • V k) q r
+        + (∑ k, c k • V k) q s = 0) → c = 0) :
+    (hendersonMat (minqueForms W D V) V).det ≠ 0 := by
+  have hWt : Wᵀ = W := by
+    have := hW.1
+    rwa [IsHermitian, conjTranspose_eq_transpose_of_trivial] at this
+  have hWu : IsUnit W.det := isUnit_iff_ne_zero.mpr hW.det_pos.ne'
+  refine (minque_det_ne_zero_iff hW hD hV).mpr fun c hc => h c fun p q r s hpq hrs => ?_
+  rw [← single_sub_dotProduct_mulVec]
+  exact dotProduct_mulVec_eq_zero_of_minqueR hWt hWu hc (transpose_mulVec_single_sub hpq)
+    (transpose_mulVec_single_sub hrs)
+
+/-- **Modulo the design, MINQUE is singular**: if `Σₖ cₖVₖ = YDᵀ + DYᵀ` for some `c ≠ 0`, then
+`R(Σₖ cₖVₖ)R = 0` (`RD = 0`, `DᵀR = 0`), so the MINQUE system is singular for every prior. -/
+theorem minque_det_eq_zero_of_mod_design {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef)
+    {D : Matrix (J × T) B ℝ} (hD : IsUnit (Dᵀ * W⁻¹ * D).det)
+    {V : L → Matrix (J × T) (J × T) ℝ} (hV : ∀ k, (V k)ᵀ = V k) {c : L → ℝ} (hc : c ≠ 0)
+    (Y : Matrix (J × T) B ℝ) (h : ∑ k, c k • V k = Y * Dᵀ + D * Yᵀ) :
+    (hendersonMat (minqueForms W D V) V).det = 0 := by
+  by_contra hdet
+  refine hc ((minque_det_ne_zero_iff hW hD hV).mp hdet c ?_)
+  rw [h, Matrix.mul_add, Matrix.add_mul,
+    show minqueR W D * (Y * Dᵀ) * minqueR W D = minqueR W D * Y * (Dᵀ * minqueR W D) by
+      simp only [Matrix.mul_assoc],
+    show minqueR W D * (D * Yᵀ) * minqueR W D = minqueR W D * D * Yᵀ * minqueR W D by
+      simp only [Matrix.mul_assoc],
+    transpose_mul_minqueR W hD, minqueR_mul W hD]
+  simp
+
 omit [Fintype L] [DecidableEq L] in
 /-- **No fixed-effect-free contrast, nothing estimable**: if every cell is alone in some
 column of the design (`D` has a column `e_p` for each cell `p`), every quadratic estimator
@@ -1594,6 +1719,269 @@ theorem exists_independent_singular :
   · simp [Matrix.mul_apply]
   · funext p q
     simp [Matrix.mul_apply]
+
+/-! #### A sufficient condition under the card season -/
+
+/-- The parameters under a card season: `A`, `C`, `s²`, with the card level `τ²` dropped
+(Finding 27). -/
+abbrev SeasonPar (J : Type*) := Sym2 J ⊕ Sym2 J ⊕ J
+
+/-- The basis tables under a card season: those of `shapeBasis` without the card level. -/
+noncomputable def seasonBasis (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) :
+    SeasonPar J → Matrix (J × T) (J × T) ℝ
+  | .inl z => shapeBasis Γ₀ w (.inl z)
+  | .inr (.inl z) => shapeBasis Γ₀ w (.inr (.inl z))
+  | .inr (.inr j) => shapeBasis Γ₀ w (.inr (.inr (.inl j)))
+
+omit [Fintype J] [Fintype T] in
+/-- The basis tables are symmetric when `Γ₀` is. -/
+theorem seasonBasis_transpose {Γ₀ : Matrix T T ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s)
+    (w : J → T → ℝ) (l : SeasonPar J) : (seasonBasis Γ₀ w l)ᵀ = seasonBasis Γ₀ w l := by
+  funext p q
+  rw [transpose_apply]
+  rcases l with z | z | j <;> simp only [seasonBasis, shapeBasis, Sym2.eq_swap (a := q.1), hΓ₀]
+  · by_cases ht : p.2 = q.2
+    · simp [ht]
+    · simp [ht, Ne.symm ht]
+  · by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> by_cases ht : p.2 = q.2 <;>
+      simp [hp, hq, ht, eq_comm]
+
+omit [Fintype T] in
+/-- The combination `Σₗ cₗVₗ` of the season basis, entry by entry. -/
+lemma sum_smul_seasonBasis_apply (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (c : SeasonPar J → ℝ)
+    (p q : J × T) :
+    (∑ k, c k • seasonBasis Γ₀ w k) p q = c (.inl s(p.1, q.1)) * Γ₀ p.2 q.2
+      + if p.2 = q.2 then c (.inr (.inl s(p.1, q.1)))
+          + (if p.1 = q.1 then c (.inr (.inr p.1)) / w p.1 p.2 else 0) else 0 := by
+  rw [Matrix.sum_apply]
+  simp only [Fintype.sum_sum_type, Matrix.smul_apply, smul_eq_mul, seasonBasis, shapeBasis,
+    mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true]
+  by_cases ht : p.2 = q.2 <;> by_cases hj : p.1 = q.1 <;> simp [ht, hj, div_eq_mul_inv]
+  exact fun h => absurd h.symm hj
+
+/-- **Two years under a card season: MINQUE is nonsingular** (sufficient condition). For a
+symmetric shape `Γ₀`, a positive definite prior `W` and the card season `D` (`DᵀW⁻¹D`
+nonsingular), the system for `(A, C, s²)` is nonsingular if
+* the shape has a year-on-year double difference `Γ₀(t₁,t₂) - Γ₀(t₁,u₂) - Γ₀(u₁,t₂) + Γ₀(u₁,u₂)`
+  that is nonzero, for pairs `mon t₁ = mon u₁`, `mon t₂ = mon u₂` with no month in common
+  (it separates `A` from `C`; a shape `aI + g(mon, mon)` has none,
+  `hendersonMat_cardSeason_det_eq_zero_of_shape`), and
+* every card has two same-calendar-month pairs with different `1/wⱼₜ + 1/wⱼᵤ` (it separates
+  `sⱼ²` from `Cⱼⱼ`).
+Any number of cards. With two years these pairs are all the contrasts, and the condition on
+the volumes is needed too (`minque_cardSeason_det_eq_zero_of_volume`). -/
+theorem minque_cardSeason_det_ne_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    {Γ₀ : Matrix T T ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s) (w : J → T → ℝ) {mon : T → Mo}
+    {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef)
+    (hD : IsUnit ((cardSeason (J := J) mon)ᵀ * W⁻¹ * cardSeason mon).det)
+    {t₁ u₁ t₂ u₂ : T} (h₁ : mon t₁ = mon u₁) (h₂ : mon t₂ = mon u₂) (htt : t₁ ≠ t₂)
+    (htu : t₁ ≠ u₂) (hut : u₁ ≠ t₂) (huu : u₁ ≠ u₂)
+    (hΓ : Γ₀ t₁ t₂ - Γ₀ t₁ u₂ - Γ₀ u₁ t₂ + Γ₀ u₁ u₂ ≠ 0)
+    (hw : ∀ j, ∃ t u t' u', mon t = mon u ∧ t ≠ u ∧ mon t' = mon u' ∧ t' ≠ u' ∧
+      1 / w j t + 1 / w j u ≠ 1 / w j t' + 1 / w j u') :
+    (Model.hendersonMat (Model.minqueForms W (cardSeason mon) (seasonBasis Γ₀ w))
+      (seasonBasis Γ₀ w)).det ≠ 0 := by
+  refine Model.minque_det_ne_zero_of_diff hW hD (seasonBasis_transpose hΓ₀ w) fun c hc => ?_
+  have F : ∀ i j : J, ∀ {t u s v : T}, mon t = mon u → mon s = mon v →
+      (∑ k, c k • seasonBasis Γ₀ w k) (i, t) (j, s) - (∑ k, c k • seasonBasis Γ₀ w k) (i, t) (j, v)
+        - (∑ k, c k • seasonBasis Γ₀ w k) (i, u) (j, s)
+        + (∑ k, c k • seasonBasis Γ₀ w k) (i, u) (j, v) = 0 :=
+    fun i j _ _ _ _ h h' => hc _ _ _ _ (cardSeason_row i h) (cardSeason_row j h')
+  simp only [sum_smul_seasonBasis_apply] at F
+  -- `A`: the double difference of the shape.
+  have hA : ∀ z, c (.inl z) = 0 := fun z => by
+    induction z using Sym2.ind with
+    | _ i j =>
+      have := F i j h₁ h₂
+      simp only [htt, htu, hut, huu, ite_false, add_zero] at this
+      have h' : c (.inl s(i, j)) * (Γ₀ t₁ t₂ - Γ₀ t₁ u₂ - Γ₀ u₁ t₂ + Γ₀ u₁ u₂) = 0 := by
+        linarith
+      exact (mul_eq_zero.mp h').resolve_right hΓ
+  simp only [hA, zero_mul, zero_add] at F
+  -- `C` and `s²`: a same-calendar-month pair against itself.
+  have hCs : ∀ j, c (.inr (.inr j)) = 0 ∧ c (.inr (.inl s(j, j))) = 0 := fun j => by
+    obtain ⟨t, u, t', u', h, hne, h', hne', hv⟩ := hw j
+    have e := F j j h h
+    have e' := F j j h' h'
+    simp only [hne, hne.symm, hne', hne'.symm, ite_true, ite_false, sub_zero] at e e'
+    have hs : c (.inr (.inr j)) * ((1 / w j t + 1 / w j u) - (1 / w j t' + 1 / w j u')) = 0 := by
+      have : c (.inr (.inr j)) / w j t + c (.inr (.inr j)) / w j u
+          = c (.inr (.inr j)) / w j t' + c (.inr (.inr j)) / w j u' := by linarith
+      rw [mul_sub]
+      simp only [mul_add, mul_one_div]
+      linarith
+    have hs0 := (mul_eq_zero.mp hs).resolve_right (sub_ne_zero.mpr hv)
+    refine ⟨hs0, ?_⟩
+    simp only [hs0, zero_div, add_zero] at e
+    linarith
+  have hC : ∀ z, c (.inr (.inl z)) = 0 := fun z => by
+    induction z using Sym2.ind with
+    | _ i j =>
+      by_cases hij : i = j
+      · subst hij; exact (hCs i).2
+      · obtain ⟨t, u, -, -, h, hne, -⟩ := hw i
+        have e := F i j h h
+        simp only [hne, hne.symm, hij, ite_true, ite_false, add_zero, sub_zero] at e
+        linarith
+  funext l
+  rcases l with z | z | j
+  · exact hA z
+  · exact hC z
+  · exact (hCs j).1
+
+
+omit [Fintype T] [DecidableEq T] in
+/-- The card season has full column rank when every calendar month occurs. -/
+lemma cardSeason_mulVec_injective {Mo : Type*} [Fintype Mo] [DecidableEq Mo] {mon : T → Mo}
+    (hmon : Function.Surjective mon) : Function.Injective (cardSeason (J := J) mon).mulVec := by
+  intro β β' h
+  funext k
+  obtain ⟨t, ht⟩ := hmon k.2
+  have := congrFun h (k.1, t)
+  simpa [mulVec, dotProduct, cardSeason_apply_eq, ht] using this
+
+omit [Fintype T] in
+/-- `DᵀW⁻¹D` is nonsingular for the card season `D` and any `W ≻ 0`, when every calendar month
+occurs. -/
+theorem cardSeason_det_isUnit {Mo : Type*} [Fintype Mo] [DecidableEq Mo] [Fintype T]
+    {mon : T → Mo} (hmon : Function.Surjective mon) {W : Matrix (J × T) (J × T) ℝ}
+    (hW : W.PosDef) : IsUnit ((cardSeason (J := J) mon)ᵀ * W⁻¹ * cardSeason mon).det := by
+  have := hW.inv.conjTranspose_mul_mul_same (cardSeason_mulVec_injective (J := J) hmon)
+  rw [conjTranspose_eq_transpose_of_trivial] at this
+  exact isUnit_iff_ne_zero.mpr this.det_pos.ne'
+
+/-- The AR(1) shape over `Y` years of calendar months, the months in time order:
+`Γ₀((y, m), (y', m')) = φ^|12y + m - 12y' - m'|`. -/
+noncomputable def ar1Cal (Y : ℕ) (φ : ℝ) : Matrix (Fin Y × Fin 12) (Fin Y × Fin 12) ℝ :=
+  (ar1 (Y * 12) 1 φ).submatrix finProdFinEquiv finProdFinEquiv
+
+/-- The calendar AR(1) shape is symmetric. -/
+lemma ar1Cal_symm (Y : ℕ) (φ : ℝ) (t s : Fin Y × Fin 12) : ar1Cal Y φ s t = ar1Cal Y φ t s := by
+  simp only [ar1Cal, submatrix_apply, ar1, of_apply, one_mul]
+  congr 1
+  split_ifs <;> omega
+
+/-- **Two years, AR(1): MINQUE is nonsingular** (card-data Step 5): for any number of cards,
+two years of calendar months, a card season as fixed effects (`τ²` dropped, Finding 27),
+an AR(1) shape with `0 < φ < 1`, any prior `W ≻ 0`, and volumes with `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎`
+not constant over the calendar month for each card, the MINQUE system for `(A, C, s²)` is
+nonsingular, so MINQUE is unbiased for `γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`. The factor is seen through
+the January–February year-on-year double difference `2φ - φ¹¹ - φ¹³ > 0`. -/
+theorem minque_ar1_two_years_det_ne_zero {φ : ℝ} (hφ0 : 0 < φ) (hφ1 : φ < 1)
+    (w : J → Fin 2 × Fin 12 → ℝ) {W : Matrix (J × (Fin 2 × Fin 12)) (J × (Fin 2 × Fin 12)) ℝ}
+    (hW : W.PosDef)
+    (hw : ∀ j, ∃ m m', 1 / w j (0, m) + 1 / w j (1, m) ≠ 1 / w j (0, m') + 1 / w j (1, m')) :
+    (Model.hendersonMat
+      (Model.minqueForms W (cardSeason (J := J) Prod.snd) (seasonBasis (ar1Cal 2 φ) w))
+      (seasonBasis (ar1Cal 2 φ) w)).det ≠ 0 := by
+  refine minque_cardSeason_det_ne_zero (ar1Cal_symm 2 φ) w hW
+    (cardSeason_det_isUnit Prod.snd_surjective hW) (t₁ := (1, 0)) (u₁ := (0, 0)) (t₂ := (1, 1))
+    (u₂ := (0, 1)) rfl rfl (by decide) (by decide) (by decide) (by decide) ?_ fun j => ?_
+  · have h11 : φ ^ 11 < φ := pow_lt_self_of_lt_one₀ hφ0 hφ1 (by norm_num)
+    have h13 : φ ^ 13 < φ := pow_lt_self_of_lt_one₀ hφ0 hφ1 (by norm_num)
+    simp [ar1Cal, ar1, finProdFinEquiv]
+    linarith
+  · obtain ⟨m, m', h⟩ := hw j
+    exact ⟨(0, m), (1, m), (0, m'), (1, m'), rfl, by simp, rfl, by simp, h⟩
+
+/-- **Two years: `sⱼ²` needs volumes that vary over the calendar** (Finding 29). With two
+years and a card season, if `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎ = h` for every calendar month `m` (e.g. a
+volume that changes only from one year to the next), the table `2Vₛⱼ - hV_Cⱼⱼ` is `YDᵀ + DYᵀ`:
+within each calendar month it is `diag(x, -x)`. So MINQUE is singular for every prior and every
+shape: `sⱼ²` trades against `Cⱼⱼ`. -/
+theorem minque_cardSeason_det_eq_zero_of_volume {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    {Γ₀ : Matrix (Fin 2 × Mo) (Fin 2 × Mo) ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s)
+    (w : J → Fin 2 × Mo → ℝ) {W : Matrix (J × (Fin 2 × Mo)) (J × (Fin 2 × Mo)) ℝ}
+    (hW : W.PosDef) (j : J) {h : ℝ} (hh : ∀ m, 1 / w j (0, m) + 1 / w j (1, m) = h) :
+    (Model.hendersonMat
+      (Model.minqueForms W (cardSeason (J := J) Prod.snd) (seasonBasis Γ₀ w))
+      (seasonBasis Γ₀ w)).det = 0 := by
+  refine Model.minque_det_eq_zero_of_mod_design hW
+    (cardSeason_det_isUnit Prod.snd_surjective hW) (seasonBasis_transpose hΓ₀ w)
+    (c := Pi.single (.inr (.inr j)) 2 - Pi.single (.inr (.inl s(j, j))) h) ?_
+    (of fun p k => if k = (j, p.2.2) then (if p.1 = j then (2 / w j p.2 - h) / 2 else 0) else 0) ?_
+  · intro h0
+    have := congrFun h0 (.inr (.inr j))
+    simp at this
+  · ext p q
+    rw [sum_smul_seasonBasis_apply]
+    rcases p with ⟨i, y, m⟩
+    rcases q with ⟨i', y', m'⟩
+    have hy := hh m
+    simp only [Matrix.add_apply, Matrix.mul_apply, transpose_apply, of_apply, cardSeason_apply_eq,
+      ite_mul, mul_ite, zero_mul, mul_zero, one_mul, mul_one, sum_ite_eq, sum_ite_eq', mem_univ,
+      ite_true]
+    by_cases hi : i = j <;> by_cases hi' : i' = j <;> by_cases hm : m = m'
+    all_goals simp [hi, hi', hm, Prod.ext_iff]
+    · subst hm
+      simp only [div_eq_mul_inv, one_mul] at hy ⊢
+      fin_cases y <;> fin_cases y' <;> simp <;> linarith
+    · exact fun h => absurd h.symm hm
+    · exact fun _ h => absurd h.symm hi'
+
+/-- **Under a card season, Henderson III / MINQUE without `τ²` is unbiased for the full
+table**: for invariant forms and a nonsingular season system, `θ̂` is unbiased for every
+`Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, whatever `τ²` and the fixed effects. The card level lies in the span of
+the design (`shapeBasis_tau_eq_cardSeason`), so it does not move the expectation
+(`Model.UnbiasedMean.add_design`). -/
+theorem henderson_season_unbiased {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (mon : T → Mo)
+    {Q : SeasonPar J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0)
+    (hH : IsUnit (Model.hendersonMat Q (seasonBasis Γ₀ w)).det) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) (l : SeasonPar J) :
+    Model.UnbiasedMean (shapeTable Γ₀ w A C s2 τ2) (cardSeason mon)
+      (fun X => Model.henderson Q (seasonBasis Γ₀ w) X l) (Sum.elim A (Sum.elim C s2) l) := by
+  set E : Matrix (J × Mo) (J × Mo) ℝ := of fun k k' => if k.1 = k'.1 then (1 : ℝ) else 0
+  have hE : (τ2 • E)ᵀ = τ2 • E := by
+    ext k k'
+    simp [E, eq_comm]
+  have e : shapeTable Γ₀ w A C s2 τ2 = fun p q =>
+      Model.linTable (seasonBasis Γ₀ w) (Sum.elim A (Sum.elim C s2)) p q
+        + (cardSeason (J := J) mon * (τ2 • E) * (cardSeason (J := J) mon)ᵀ) p q := by
+    rw [Matrix.mul_smul, Matrix.smul_mul, ← shapeBasis_tau_eq_cardSeason Γ₀ w mon]
+    funext p q
+    have hl : Model.linTable (seasonBasis Γ₀ w) (Sum.elim A (Sum.elim C s2)) p q
+        = (∑ k, Sum.elim A (Sum.elim C s2) k • seasonBasis Γ₀ w k) p q := by
+      simp [Model.linTable, Matrix.sum_apply]
+    rw [hl, sum_smul_seasonBasis_apply]
+    simp only [shapeTable, shapeBasis, Sum.elim_inl, Sum.elim_inr]
+    change _ = _ + τ2 * (if p.1 = q.1 then 1 else 0)
+    split_ifs <;> ring
+  rw [e]
+  exact (Model.henderson_unbiased hQ hH _ l).add_design hE
+
+/-- **Two years, AR(1): MINQUE estimates the factor model** (card-data Step 5): for a factor
+model over two years of calendar months with `Γ = γΓ₀`, `Γ₀` the AR(1) shape with
+`0 < φ < 1`, a card season as fixed effects and volumes as in
+`minque_ar1_two_years_det_ne_zero`, MINQUE without `τ²` for any prior `W ≻ 0` is unbiased for
+`γλᵢλⱼ`, `Cᵢⱼ` and `sⱼ²`, whatever the season `β` and `τ²`. -/
+theorem minque_ar1_two_years_unbiased (M : Factor J (Fin 2 × Fin 12)) {γ φ : ℝ}
+    (hΓ : M.Γ = γ • ar1Cal 2 φ) (hφ0 : 0 < φ) (hφ1 : φ < 1)
+    {W : Matrix (J × (Fin 2 × Fin 12)) (J × (Fin 2 × Fin 12)) ℝ} (hW : W.PosDef)
+    (hw : ∀ j, ∃ m m', 1 / M.w j (0, m) + 1 / M.w j (1, m) ≠ 1 / M.w j (0, m') + 1 / M.w j (1, m')) :
+    (∀ i j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+          (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inl s(i, j)))
+        (γ * (M.load i * M.load j)))
+      ∧ (∀ i j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+          (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inr (.inl s(i, j))))
+        (M.C i j))
+      ∧ (∀ j, Model.UnbiasedMean (M.covG 0) (cardSeason Prod.snd)
+        (fun X => Model.henderson (Model.minqueForms W (cardSeason Prod.snd)
+          (seasonBasis (ar1Cal 2 φ) M.w)) (seasonBasis (ar1Cal 2 φ) M.w) X (.inr (.inr j)))
+        (M.s2 j)) := by
+  have hD := cardSeason_det_isUnit (J := J)
+    (Prod.snd_surjective : Function.Surjective (Prod.snd : Fin 2 × Fin 12 → Fin 12)) hW
+  have hH := isUnit_iff_ne_zero.mpr (minque_ar1_two_years_det_ne_zero hφ0 hφ1 M.w hW hw)
+  have hQ : ∀ k, Model.minqueForms W (cardSeason (J := J) Prod.snd)
+      (seasonBasis (ar1Cal 2 φ) M.w) k * cardSeason (J := J) (Prod.snd : Fin 2 × Fin 12 → Fin 12)
+        = 0 := fun k => by
+    rw [Model.minqueForms, Matrix.mul_assoc, Model.minqueR_mul W hD, Matrix.mul_zero]
+  rw [M.covG_zero_eq_shapeTable hΓ]
+  refine ⟨fun i j => ?_, fun i j => ?_, fun j => ?_⟩ <;>
+    exact (henderson_season_unbiased _ M.w Prod.snd hQ hH _ _ _ _ _).congr (fun _ => rfl)
+      (by simp)
 
 end Singular
 

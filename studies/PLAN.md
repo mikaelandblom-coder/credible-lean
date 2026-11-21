@@ -297,6 +297,10 @@ One chat per step; none needs Lean except step 5.
   `RVₖR` (`Model.minque_det_ne_zero_iff`). Under a card season (Finding 28): require at least
   two years per card for the second-moment fit (`Factor.unbiasedMean_cardSeason_eq_zero`), and
   warn when `φ̂` is near `0` or `1` (`Factor.hendersonMat_cardSeason_det_eq_zero_of_shape`).
+  Finding 29: with two years, warn for a card whose `1/wⱼ,₍₀,ₘ₎ + 1/wⱼ,₍₁,ₘ₎` is flat over the
+  months (`Factor.minque_cardSeason_det_eq_zero_of_volume`) and report `Cⱼⱼ + sⱼ²h/2` there;
+  otherwise the AR(1) fit is nonsingular for any prior (`Factor.minque_ar1_two_years_unbiased`),
+  so the world can default to two years with seasonal volumes.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per card pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card

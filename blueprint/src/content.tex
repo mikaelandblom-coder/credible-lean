@@ -4765,7 +4765,100 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Under a card season the data see the covariance only through within-calendar-month
   contrasts across years: one year identifies nothing, and a factor (or per-card dynamics)
   that repeats with the calendar, the constant factor $\varphi = 1$ included, is absorbed by
-  the season.
+  the season. A sufficient condition for the rest: Theorem~\ref{thm:Factor_season_nonsingular}.
+\end{remark}
+
+\begin{lemma}[MINQUE through contrasts]\label{lem:minque_contrasts}
+  \lean{Credibility.Model.minqueR_mul_mulVec,
+        Credibility.Model.dotProduct_mulVec_eq_zero_of_minqueR,
+        Credibility.Model.transpose_mulVec_single_sub,
+        Credibility.Model.single_sub_dotProduct_mulVec,
+        Credibility.Model.minque_det_ne_zero_of_diff,
+        Credibility.Model.minque_det_eq_zero_of_mod_design}
+  \leanok
+  \uses{thm:minque_nonsingular}
+  For $W \succ 0$, $D^\top W^{-1}D$ nonsingular and symmetric tables: if no $c \ne 0$ makes every
+  double difference $S_{pr} - S_{ps} - S_{qr} + S_{qs}$ of $S = \sum_kc_kV_k$ vanish ($p, q$ and
+  $r, s$ cells with equal rows of $D$), the MINQUE system is nonsingular. If
+  $\sum_kc_kV_k = YD^\top + DY^\top$ for some $c \ne 0$, it is singular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:minque_nonsingular}
+  For a contrast $a$ ($D^\top a = 0$), $RWa = a$; so $RSR = 0$ gives
+  $a^\top Sb = a^\top WRSRWb = 0$, and $e_p - e_q$ is a contrast. Conversely $RD = 0$ and
+  $D^\top R = 0$ give $R(YD^\top + DY^\top)R = 0$. Then Theorem~\ref{thm:minque_nonsingular}.
+\end{proof}
+
+\begin{theorem}[A table in the span of the design]\label{thm:unbiased_add_design}
+  \lean{Credibility.Model.UnbiasedMean.add_design}
+  \leanok
+  \uses{thm:unbiased_mean}
+  An estimator unbiased for $\theta$ under $C$ for every $\beta$ stays unbiased under
+  $C + DND^\top$ for any symmetric $N$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean, lem:henderson_singular}
+  $D^\top(Q + Q^\top)D = 0$, so $2\sum_{pq}Q_{pq}(DND^\top)_{pq}
+  = \operatorname{tr}(D^\top(Q + Q^\top)DN) = 0$.
+\end{proof}
+
+\begin{theorem}[Nonsingular under the card season]\label{thm:Factor_season_nonsingular}
+  \lean{Credibility.Factor.SeasonPar, Credibility.Factor.seasonBasis,
+        Credibility.Factor.seasonBasis_transpose, Credibility.Factor.sum_smul_seasonBasis_apply,
+        Credibility.Factor.minque_cardSeason_det_ne_zero,
+        Credibility.Factor.minque_cardSeason_det_eq_zero_of_volume,
+        Credibility.Factor.cardSeason_mulVec_injective, Credibility.Factor.cardSeason_det_isUnit}
+  \leanok
+  \uses{lem:minque_contrasts, def:Factor_yoy, thm:Factor_card_level}
+  Under a card season, with the parameters $(A, C, s^2)$ ($\tau^2$ dropped), any number of cards
+  and any prior $W \succ 0$, the MINQUE system is nonsingular if (i) $\Gamma_0$ has a nonzero
+  double difference $\Gamma_0(t_1,t_2) - \Gamma_0(t_1,u_2) - \Gamma_0(u_1,t_2) + \Gamma_0(u_1,u_2)$
+  for same-calendar-month pairs $(t_1, u_1)$, $(t_2, u_2)$ with no month in common, and (ii) each
+  card has two same-calendar-month pairs with different $1/w_{jt} + 1/w_{ju}$. With two years,
+  (ii) is needed: if $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$ is the same for every $m$, the system is
+  singular for every prior and shape. $D^\top W^{-1}D$ is nonsingular when every calendar month
+  occurs.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:minque_contrasts, def:Factor_yoy}
+  Lemma~\ref{lem:minque_contrasts} with the pairs: (i) leaves only $A$ in the double
+  difference, so $A = 0$; then a pair against itself gives $2C_{ij}$, and for $i = j$
+  $2C_{jj} + s_j^2(1/w_{jt} + 1/w_{ju})$; (ii) gives $s_j^2 = 0$, $C_{jj} = 0$. Necessity: with
+  $h$ the constant, $2V_{s_j} - hV_{C_{jj}}$ is $\operatorname{diag}(x, -x)$ within each calendar
+  month, which is $YD^\top + DY^\top$.
+\end{proof}
+
+\begin{theorem}[Two years, AR(1): MINQUE estimates the factor model]\label{thm:Factor_season_unbiased}
+  \lean{Credibility.Factor.henderson_season_unbiased, Credibility.Factor.ar1Cal,
+        Credibility.Factor.ar1Cal_symm, Credibility.Factor.minque_ar1_two_years_det_ne_zero,
+        Credibility.Factor.minque_ar1_two_years_unbiased}
+  \leanok
+  \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
+        thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
+  Under a card season, Henderson III / MINQUE without $\tau^2$ is unbiased for $A_{ij}$,
+  $C_{ij}$, $s_j^2$ whatever $\tau^2$. Two years of calendar months, $\Gamma = \gamma\Gamma_0$
+  with $\Gamma_0$ AR(1), $0 < \varphi < 1$, and volumes as in (ii): for every prior
+  $W \succ 0$ MINQUE is nonsingular and unbiased for $\gamma\lambda_i\lambda_j$, $C_{ij}$ and
+  $s_j^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
+        thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
+  The card level is $DED^\top$ (Theorem~\ref{thm:Factor_card_level}), so
+  Theorem~\ref{thm:unbiased_add_design} adds it to Theorem~\ref{thm:henderson_unbiased}. For
+  AR(1), January and February give $2\varphi - \varphi^{11} - \varphi^{13} > 0$; then
+  Theorem~\ref{thm:Factor_season_nonsingular}.
+\end{proof}
+
+\begin{remark}[Finding 29]
+  With two years under a card season, $s_j^2$ is separated from $C_{jj}$ only by volumes that
+  vary over the calendar: a volume that changes only from one year to the next leaves the
+  MINQUE system singular. The year-on-year differences see the process noise only through
+  $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$.
 \end{remark}
 
 \begin{theorem}[Henderson III with per-card dynamics of known shape]\label{thm:Factor_hendersonG}

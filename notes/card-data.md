@@ -252,8 +252,13 @@ basis with a full-rank design is not enough: under a card season `τ²` is never
 (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`). Without `τ²`, further collapses
 under a card season (Finding 28): one year identifies nothing
 (`Factor.unbiasedMean_cardSeason_eq_zero`); shapes `Γ₀` or `G₀` of the form `aI + g(mon, mon)`
-(AR(1) at `φ ∈ {0, 1}`) are singular. Open: a general sufficient condition for nonsingularity
-(the app checks the rank of `RVₖR`); profiling over `φ` is only consistent.
+(AR(1) at `φ ∈ {0, 1}`) are singular. Sufficient condition (2026-11-21,
+`Factor.minque_cardSeason_det_ne_zero`): one nonzero year-on-year double difference of `Γ₀` and,
+per card, `1/wⱼₜ + 1/wⱼᵤ` varying over same-calendar-month pairs; two years, AR(1),
+`0 < φ < 1`: nonsingular and unbiased for `(γλλᵀ, C, s²)` whatever `τ²`
+(`Factor.minque_ar1_two_years_unbiased`). With two years the volume condition is needed
+(Finding 29, `Factor.minque_cardSeason_det_eq_zero_of_volume`). Profiling over `φ` is only
+consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).
