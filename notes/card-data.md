@@ -349,8 +349,10 @@ per origin, both tests) and power over many draws (share picking A / none / B, s
 truly better, false-alarm rate at the same `n`). **Seen** (4 cohorts, φ = 0.6, burn-in 3 years, 40
 draws, BLUP year-on-year against last-year mean, truth −29% to −31% MSE): 6 years (25 origins)
 DM–HLN picks the BLUP in 15% and the last-year mean in 7.5%, false alarms 25%; 8 years (49 origins)
-picks the BLUP in 22.5%, never the other, false alarms 16%; the plain lower mean loss is right in
-85–88%. So with a few years the test says "no evidence" even for a 30% gap, and its rejections are
+picks the BLUP in 22.5%, never the other, false alarms 16%; 12 years (97 origins, truth −36%)
+picks it in 42.5%, false alarms 11%; the plain lower mean loss is right in 85–98%. The oracle
+against the fitted BLUP (truth −10%, the price of estimating, 8 years): DM–HLN picks the oracle
+in 2.5%. So with a few years the test says "no evidence" even for a 30% gap, and its rejections are
 inflated: report the paired mean difference with the false-alarm rate, not a ranking. Dropped: a
 "no factor" fit (Â = 0) whose BLUP, with a rank-one Ĉ and some ŝⱼ² = 0, regresses one cohort on
 another with coefficients near 700 and explodes.
