@@ -281,6 +281,29 @@ Studies:
 - separate against joint frequency and severity (Q4);
 - what the equal-loadings fit costs when loadings differ.
 
+### Step 7b. Comparing fits on data (proposal 2026-11-21, owner to confirm)
+Earlier pieces: leave-one-year-out CV judged too noisy for *tuning* a shrinkage
+(`studies/damping-theta.md` S14); the jackknife MSEP (Jiang–Lahiri–Wan) for one fit's own
+error (S19–S23). Neither is a protocol for *choosing between* switches. Proposal (literature
+§10i):
+- **Rolling origin, no look-ahead.** For each origin `t₀` (monthly, after a burn-in of at
+  least 5 years), refit every switch on months `< t₀` only (parameters, season, `K̂`), predict
+  each card's next 12 months, score against what happened. Same rule as the app: the fit
+  never sees its future.
+- **Loss:** squared error of the 12-month claim cost per card, exposure-weighted (the target
+  is a mean, so squared error is the right score, Gneiting 2011); report per card and pooled.
+- **Paired, not separate.** Compare switches by the *difference* of losses on the same
+  targets: the common shock of the target year hits all fits alike and largely cancels.
+  Monthly origins with 12-month targets overlap, so the differences are autocorrelated: a
+  Diebold–Mariano test with HAC lag 11 and the Harvey–Leybourne–Newbold correction; with few
+  years expect low power and say "no evidence of a difference" rather than a ranking.
+- **Not K-fold.** Shuffled CV is valid only for well-specified autoregressions with white
+  errors (Bergmeir, Hyndman & Koo 2018); a common factor makes held-out months correlated with
+  the training months, so it would be optimistic.
+- **The app checks the protocol:** in the simulated world the true MSEP of each fit is
+  known, so the app can show how often the rolling-origin comparison picks the truly better
+  fit at the student's sample size (power), before it is trusted on the real data.
+
 ### Step 8. Documents, then the proposal
 Each proved step gets its handbook entry and paper paragraph, or a "Pending"
 line, as usual. Then rewrite `studies/thesis-topics/` as one topic,

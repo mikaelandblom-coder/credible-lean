@@ -721,3 +721,25 @@ spending abroad (Riksbank/SCB) not verified.
   (`Model.UnbiasedMean` in `Expectation.lean`); item 3 for `Shock.crossHat` (Finding 26:
   `C + (1 - φ)γλλᵀ` with two months); open: item 2 (Henderson III given `φ`) and item 3 for
   `CHat` diagonal, `s2Hat`, `tauHat`.
+
+### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
+Web search (abstracts and listings); nothing read in full.
+- Tashman (2000), *Out-of-sample tests of forecasting accuracy: an analysis and review*,
+  IJF 16(4), 437–450: rolling-origin evaluation with recalibration at each origin and several
+  test periods is more reliable than one fixed origin. Used: the protocol of Step 7b.
+- Diebold & Mariano (1995, JBES; from memory) and Harvey, Leybourne & Newbold (1997, IJF):
+  test equal accuracy from the loss differential; for `h`-step forecasts the differentials
+  are serially correlated, so a HAC variance with lag `h − 1`, the HLN finite-sample factor
+  and `t(T−1)` critical values (statsmodels `diebold_mariano_test`). Harvey, Leybourne &
+  Whitehouse (2017, IJF 33(4)): the long-run variance can be negative in small samples at
+  multi-step horizons; Coroneo & Iacone's weighted-periodogram version sizes best. Used: paired
+  comparison with lag 11 for 12-month targets at monthly origins.
+- Bergmeir, Hyndman & Koo (2018), *A note on the validity of cross-validation for evaluating
+  autoregressive time series prediction*, CSDA 120, 70–83: K-fold CV is valid for purely
+  autoregressive models with uncorrelated errors, fails when errors are correlated
+  (misspecification). Used: why not K-fold here (a common factor correlates held-out and
+  training months).
+- Gneiting (2011), *Making and evaluating point forecasts*, JASA 106 (from memory): squared
+  error is consistent for the mean. Used: the score.
+- In this repo: leave-one-year-out CV for tuning (`studies/damping-theta.md` S14, too noisy);
+  jackknife MSEP of one fit (Jiang, Lahiri & Wan 2002; S19–S23).
