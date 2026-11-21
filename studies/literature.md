@@ -91,6 +91,11 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   translation-invariant variance estimators, **under normality**. Without normality the cross term
   `2E[(BLUP − target)(EBLUP − BLUP)]` need not vanish; it can be negative, which explains why our
   fit beats the fixed-weight floor under heavy tails (damping-theta.md, finding S9).
+- Kackar & Harville (1981), *Unbiasedness of two-stage estimation and prediction procedures for
+  mixed linear models*, Comm. Stat. A 10: the plug-in predictor is unbiased when the variance
+  estimator is even and translation invariant and the noise symmetric (from memory). Used
+  (2026-11-21): `Core.Target.plugIn_unbiased_of_symmetric`, `blup_plugIn_unbiased_of_symmetric`
+  (distribution layer, `Credibility/PlugInSymmetric.lean`).
 - Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve

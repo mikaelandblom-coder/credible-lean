@@ -286,6 +286,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Plug-in bias (2026-11-21, `Core.Target.blup_plugIn_unbiased_of_symmetric`): unbiased under
+  symmetric noise when `K̂` uses residuals only. The app's world is skewed (Poisson, gamma): show the
+  simulated mean error of the fitted BLUP, which may differ from 0. Check that the app's fit is
+  translation invariant (season `β̂` by GLS, moments from residuals).
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test
   is only sufficient: there, check `K̂` itself (Cholesky) instead.

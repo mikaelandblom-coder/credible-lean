@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Plug-in predictor (2026-11-21, `PlugInSymmetric.lean`): unbiased under symmetric noise for
+  even, translation-invariant fits (Kackar–Harville); with the estimation section, as the bridge
+  from the BLUP with known moments to the fitted one.
 - Valid tables with some `ŝⱼ² = 0` (2026-11-21, Finding 34): `K̂ ≻ 0` iff `(Â + Ĉ)_ZZ ≻ 0` on a
   full panel with `Φ ≻ 0` (`Factor.tableK_posDef_iff`); with the estimation section.
 - Choosing between fits on data (2026-11-21, app; card-data Step 7b): rolling origin, paired

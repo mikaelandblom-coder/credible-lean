@@ -267,6 +267,10 @@ per card, `1/wⱼₜ + 1/wⱼᵤ` varying over same-calendar-month pairs; two ye
 (`Factor.minque_ar1_two_years_unbiased`). With two years the volume condition is needed
 (Finding 29, `Factor.minque_cohortSeason_det_eq_zero_of_volume`). Profiling over `φ` is only
 consistent.
+**Plug-in (2026-11-21, distribution layer, `PlugInSymmetric.lean`):** the plug-in BLUP with even,
+translation-invariant `K̂`, `ℓ̂` (quadratic fits on residuals) is unbiased under symmetric noise
+(`Core.Target.blup_plugIn_unbiased_of_symmetric`, Kackar & Harville 1981). Distribution-free it need
+not be. Its MSE beyond the BLUP's (the Kackar–Harville term) is still open.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

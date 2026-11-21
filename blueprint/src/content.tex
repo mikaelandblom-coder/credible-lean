@@ -3244,6 +3244,32 @@ lost by not using the best of them all?
   $d^TKd - 2d^T\ell + v$.
 \end{proof}
 
+\section*{Under symmetric noise: the plug-in predictor (distribution layer)}
+
+This section assumes symmetric noise; nothing else depends on it.
+
+\begin{theorem}[The plug-in predictor is unbiased under symmetric noise]\label{thm:Blup_plugIn}
+  \lean{Credibility.Core.Target.centred,
+        Credibility.Core.Target.plugIn_unbiased_of_symmetric,
+        Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric}
+  \leanok
+  \uses{def:Blup_Target, lem:Blup_foc}
+  Let the weights $\hat d(u)$ be a measurable function of the data with $X^T\hat d(u) = x_0$,
+  translation invariant ($\hat d(u + Xb) = \hat d(u)$) and even ($\hat d(-u) = \hat d(u)$). If
+  $(x - X\beta, Y - x_0^T\beta)$ has the same law as its negative, then
+  $\mathbb E[\hat d(x)^Tx - Y] = 0$ (Kackar and Harville 1981). In particular the plug-in best
+  predictor $d^*(\hat K(x), \hat\ell(x))$ is unbiased when $\hat K(u) \succ 0$ and
+  $\hat K$, $\hat\ell$ are even and translation invariant, as quadratic fits on residuals are.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_foc}
+  By invariance and $X^T\hat d = x_0$ the error is $g(e, \varepsilon) = \hat d(e)^Te - \varepsilon$
+  of the centred pair, and $g$ is odd by evenness; a symmetric law gives
+  $\mathbb E g = \mathbb E g(-\cdot) = -\mathbb E g$. For the plug-in predictor,
+  $X^Td^* = x_0$ by Lemma~\ref{lem:Blup_foc}.
+\end{proof}
+
 \begin{definition}[Estimates and a level as data and target]\label{def:Core_toTarget}
   \lean{Credibility.Core.Estimates.toTarget}
   \leanok

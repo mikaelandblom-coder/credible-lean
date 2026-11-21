@@ -16,6 +16,10 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Plug-in unbiasedness (2026-11-21, distribution layer): "the plug-in premium (estimated `K̂`)
+  is unbiased if the fit uses residuals only (even, translation invariant) and the noise is
+  symmetric; with skewed claims (gamma, Poisson) no such guarantee"
+  (`Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric`).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"
