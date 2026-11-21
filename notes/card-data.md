@@ -287,7 +287,7 @@ Studies:
 - separate against joint frequency and severity (Q4);
 - what the equal-loadings fit costs when loadings differ.
 
-### Step 7b. Comparing fits on data (proposal 2026-11-21, owner to confirm)
+### Step 7b. Comparing fits on data (proposal 2026-11-21; owner: "a good start", 2026-11-21)
 Earlier pieces: leave-one-year-out CV judged too noisy for *tuning* a shrinkage
 (`studies/damping-theta.md` S14); the jackknife MSEP (Jiang–Lahiri–Wan) for one fit's own
 error (S19–S23). Neither is a protocol for *choosing between* switches. Proposal (literature
