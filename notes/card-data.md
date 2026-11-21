@@ -240,7 +240,10 @@ the shock fit's `Ĉ` under a factor (Finding 26, `crossHat_factor_unbiased`). Ne
 given `φ`, the bias of `tauHat` and the diagonal estimators under a factor. 2026-11-21 (later):
 the between-cohort spread under a factor (`between_factor_unbiased`, `between_factor_equal_weights`);
 the diagonal `Ĉⱼⱼ`, `ŝⱼ²` and `τ̂²` under a factor (`CdiagHat_factor_unbiased`,
-`s2Hat_factor_unbiased`, `tauHat_factor_unbiased`; independent months: `CdiagHat_s2Hat_indep`).
+`s2Hat_factor_unbiased`, `tauHat_factor_unbiased`; independent months: `CdiagHat_s2Hat_indep`);
+Henderson III / MINQUE given the shape `Γ₀` (`Model.henderson_unbiased`, `Model.minque_unbiased`,
+`Factor.henderson_factor_unbiased`). Open: when the system `H` is nonsingular (volume variation
+for `s²` against `C`; `Γ₀ ≠ I` for `A` against `C`); profiling over `φ` is only consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

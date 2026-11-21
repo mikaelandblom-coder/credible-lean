@@ -22,7 +22,9 @@ voice, then trim towards 8 pages.
   (`Credibility.Factor.yoy_unbiased_factor`, `Credibility.Factor.blup_eq_of_lag0`). Goes with
   the factor entry once the fit is complete. Also "watch out: a shock-only fit on data with a
   persistent factor estimates `C + (1 - φ)γλλᵀ`" (Finding 26, `Credibility.Factor.crossHat_ar1_two`)
-  and "loadings need three cards" (`Credibility.Factor.load_sq_of_three`).
+  and "loadings need three cards" (`Credibility.Factor.load_sq_of_three`). Given `φ`, "equate
+  invariant forms to their expectations and solve (Henderson III; MINQUE with a prior guess)"
+  (`Credibility.Factor.henderson_factor_unbiased`, `Credibility.Model.minque_unbiased`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
   observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch

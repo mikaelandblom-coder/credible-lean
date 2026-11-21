@@ -43,6 +43,11 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   passes it on to `Ĉⱼⱼ` and `ŝⱼ²`, and `τ̂²` collects the spread's extra term minus the
   plugged-in biases of `Σ̂`. With independent months `Γ = γI`: `Ĉⱼⱼ` reads `Cⱼⱼ + γλⱼ²` and `ŝⱼ²`
   stays unbiased (`CdiagHat_s2Hat_indep`).
+* **Henderson III / MINQUE given the shape** (`Model.henderson_unbiased`,
+  `Model.minque_unbiased`, `henderson_factor_unbiased`): for a table `ΣₗθₗVₗ`, invariant forms
+  (`QₖD = 0`) and a nonsingular system `Hₖₗ = Σ QₖVₗ`, `θ̂ = H⁻¹(quad Qₖ X)ₖ` is unbiased for every
+  `θ` and `β`; MINQUE's `RVₖR` are such forms. Given `Γ = γΓ₀` the factor table is linear in a
+  symmetric `A = γλλᵀ`, `C`, `s²`, `τ²` (`covG_zero_eq_shapeTable`).
 -/
 
 open Finset Matrix
@@ -831,4 +836,217 @@ theorem CdiagHat_s2Hat_indep (ha : ∀ j, ∑ t, a j t = 1) {γ : ℝ}
 end ShockDiag
 
 end Factor
+
+/-! ### Henderson III and MINQUE for a table linear in its parameters -/
+
+namespace Model
+
+section Henderson
+
+variable {J T L B : Type*} [Fintype J] [Fintype T] [Fintype L] [DecidableEq L] [Fintype B]
+
+/-- A covariance table linear in parameters `θ`: `Σₗ θₗVₗ`. -/
+def linTable (V : L → Matrix (J × T) (J × T) ℝ) (θ : L → ℝ) : J × T → J × T → ℝ :=
+  fun p q => ∑ l, θ l * V l p q
+
+/-- The Henderson III system for forms `Qₖ`: `Hₖₗ = Σₚq (Qₖ)ₚq(Vₗ)ₚq`, so that
+`E quad Qₖ = (Hθ)ₖ` when the forms annihilate the design. -/
+def hendersonMat (Q V : L → Matrix (J × T) (J × T) ℝ) : Matrix L L ℝ :=
+  of fun k l => ∑ p, ∑ q, Q k p q * V l p q
+
+/-- **Henderson III**: equate the forms to their expectations and solve,
+`θ̂ = H⁻¹(quad Qₖ X)ₖ`. -/
+noncomputable def henderson (Q V : L → Matrix (J × T) (J × T) ℝ) (X : J × T → ℝ) : L → ℝ :=
+  (hendersonMat Q V)⁻¹ *ᵥ fun k => quad (Q k) X
+
+omit [DecidableEq L] in
+/-- A form is linear in its matrix: `quad (Σₖ cₖQₖ) = Σₖ cₖ quad Qₖ`. -/
+lemma quad_sum (c : L → ℝ) (Q : L → Matrix (J × T) (J × T) ℝ) (X : J × T → ℝ) :
+    quad (fun p q => ∑ k, c k * Q k p q) X = ∑ k, c k * quad (Q k) X := by
+  simp only [quad, sum_mul, mul_sum]
+  symm
+  rw [sum_comm]
+  refine sum_congr rfl fun p _ => ?_
+  rw [sum_comm]
+  exact sum_congr rfl fun q _ => sum_congr rfl fun k _ => by ring
+
+omit [DecidableEq L] in
+/-- Regrouping `Σₚq (Σₖ cₖFₖ)ₚq (Σₘ bₘGₘ)ₚq` as `Σₖₘ cₖbₘ Σₚq (Fₖ)ₚq(Gₘ)ₚq`. -/
+lemma sum_lin_mul_lin (c b : L → ℝ) (F V : L → Matrix (J × T) (J × T) ℝ) :
+    ∑ p, ∑ q, (∑ k, c k * F k p q) * (∑ m, b m * V m p q)
+      = ∑ k, ∑ m, c k * b m * ∑ p, ∑ q, F k p q * V m p q := by
+  calc _ = ∑ p, ∑ q, ∑ k, ∑ m, c k * b m * (F k p q * V m p q) :=
+        sum_congr rfl fun p _ => sum_congr rfl fun q _ => by
+          rw [sum_mul_sum]
+          exact sum_congr rfl fun k _ => sum_congr rfl fun m _ => by ring
+    _ = ∑ k, ∑ p, ∑ q, ∑ m, c k * b m * (F k p q * V m p q) :=
+        (sum_congr rfl fun p _ => sum_comm).trans sum_comm
+    _ = ∑ k, ∑ m, ∑ p, ∑ q, c k * b m * (F k p q * V m p q) :=
+        sum_congr rfl fun k _ =>
+          (sum_congr rfl fun p _ => sum_comm).trans sum_comm
+    _ = _ := by simp only [mul_sum]
+
+/-- `quad Q x = xᵀQx`. -/
+lemma quad_eq_dotProduct (Q : Matrix (J × T) (J × T) ℝ) (x : J × T → ℝ) :
+    quad Q x = x ⬝ᵥ (Q *ᵥ x) := by
+  simp only [quad, dotProduct, mulVec, mul_sum]
+  exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by ring
+
+/-- **Invariance**: a form with `QD = 0` vanishes at every mean `Dβ`. -/
+lemma quad_design_eq_zero {D : Matrix (J × T) B ℝ} {Q : Matrix (J × T) (J × T) ℝ}
+    (hQ : Q * D = 0) (β : B → ℝ) : quad Q (D *ᵥ β) = 0 := by
+  rw [quad_eq_dotProduct, mulVec_mulVec, hQ, zero_mulVec, dotProduct_zero]
+
+/-- **Henderson III is unbiased** (Henderson 1953; Searle, Casella & McCulloch 1992, ch. 5):
+for a table linear in its parameters, invariant forms (`QₖD = 0`) and a nonsingular system
+`H`, every `θ̂ₗ` is unbiased for `θₗ`, for every `θ` and every fixed effect `β`. The
+estimator is a quadratic form, distribution-free; it need not be nonnegative. -/
+theorem henderson_unbiased {Q V : L → Matrix (J × T) (J × T) ℝ} {D : Matrix (J × T) B ℝ}
+    (hQ : ∀ k, Q k * D = 0) (hH : IsUnit (hendersonMat Q V).det) (θ : L → ℝ) (l : L) :
+    UnbiasedMean (linTable V θ) D (fun X => henderson Q V X l) (θ l) := by
+  set Hi := (hendersonMat Q V)⁻¹ with hHi
+  refine ⟨fun p q => ∑ k, Hi l k * Q k p q, fun X => ?_, fun β => ?_⟩
+  · rw [quad_sum]
+    simp only [henderson, mulVec, dotProduct, ← hHi]
+  · rw [EcovMean_eq, quad_sum]
+    simp only [quad_design_eq_zero (hQ _), mul_zero, sum_const_zero, add_zero, linTable]
+    rw [sum_lin_mul_lin]
+    have h : ∑ k, ∑ m, Hi l k * θ m * ∑ p, ∑ q, Q k p q * V m p q
+        = (Hi *ᵥ (hendersonMat Q V *ᵥ θ)) l := by
+      simp only [mulVec, dotProduct, hendersonMat, of_apply]
+      exact sum_congr rfl fun k _ => by
+        rw [mul_sum]
+        exact sum_congr rfl fun m _ => by ring
+    rw [h, mulVec_mulVec, hHi, nonsing_inv_mul _ hH, one_mulVec]
+
+variable [DecidableEq J] [DecidableEq T] [DecidableEq B]
+
+/-- The MINQUE projection for a prior table `W` (Rao 1971):
+`R = W⁻¹ - W⁻¹D(DᵀW⁻¹D)⁻¹DᵀW⁻¹`. -/
+noncomputable def minqueR (W : Matrix (J × T) (J × T) ℝ) (D : Matrix (J × T) B ℝ) :
+    Matrix (J × T) (J × T) ℝ :=
+  W⁻¹ - W⁻¹ * D * (Dᵀ * W⁻¹ * D)⁻¹ * Dᵀ * W⁻¹
+
+/-- `RD = 0` when `DᵀW⁻¹D` is nonsingular. -/
+lemma minqueR_mul (W : Matrix (J × T) (J × T) ℝ) {D : Matrix (J × T) B ℝ}
+    (hD : IsUnit (Dᵀ * W⁻¹ * D).det) : minqueR W D * D = 0 := by
+  have h : (Dᵀ * W⁻¹ * D)⁻¹ * (Dᵀ * W⁻¹ * D) = 1 := nonsing_inv_mul _ hD
+  rw [minqueR, Matrix.sub_mul, sub_eq_zero]
+  calc W⁻¹ * D = W⁻¹ * D * ((Dᵀ * W⁻¹ * D)⁻¹ * (Dᵀ * W⁻¹ * D)) := by rw [h, Matrix.mul_one]
+    _ = _ := by simp only [Matrix.mul_assoc]
+
+/-- The MINQUE forms `Qₖ = RVₖR`. -/
+noncomputable def minqueForms (W : Matrix (J × T) (J × T) ℝ) (D : Matrix (J × T) B ℝ)
+    (V : L → Matrix (J × T) (J × T) ℝ) (k : L) : Matrix (J × T) (J × T) ℝ :=
+  minqueR W D * V k * minqueR W D
+
+/-- **MINQUE is a Henderson III estimator**, so unbiased: with the forms `RVₖR` for any prior
+table `W` (`DᵀW⁻¹D` and the system nonsingular), `θ̂ₗ` is unbiased for `θₗ`. Iterating the
+prior is REML; the minimum-norm property is not used here. -/
+theorem minque_unbiased (W : Matrix (J × T) (J × T) ℝ) {D : Matrix (J × T) B ℝ}
+    {V : L → Matrix (J × T) (J × T) ℝ} (hD : IsUnit (Dᵀ * W⁻¹ * D).det)
+    (hH : IsUnit (hendersonMat (minqueForms W D V) V).det) (θ : L → ℝ) (l : L) :
+    UnbiasedMean (linTable V θ) D (fun X => henderson (minqueForms W D V) V X l) (θ l) :=
+  henderson_unbiased (fun k => by rw [minqueForms, Matrix.mul_assoc, minqueR_mul W hD,
+    Matrix.mul_zero]) hH θ l
+
+end Henderson
+
+end Model
+
+/-! ### The factor table given its shape is linear -/
+
+namespace Factor
+
+section GivenShape
+
+variable {J T B : Type*} [DecidableEq J] [DecidableEq T] (M : Factor J T) [Fintype J] [Fintype T]
+
+/-- The parameters of the factor table given the factor's shape `Γ₀`: a symmetric `A`
+(`γλλᵀ`), a symmetric `C` (both indexed by unordered pairs), `s²` per card, and `τ²`. -/
+abbrev Par (J : Type*) := Sym2 J ⊕ Sym2 J ⊕ J ⊕ Unit
+
+/-- The table given the shape `Γ₀` and volumes `w`:
+`Aᵢⱼ(Γ₀)ₜₛ + δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, linear in `(A, C, s², τ²)`. -/
+noncomputable def shapeTable (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) : J × T → J × T → ℝ := fun p q =>
+  A s(p.1, q.1) * Γ₀ p.2 q.2
+    + (if p.2 = q.2 then C s(p.1, q.1) + (if p.1 = q.1 then s2 p.1 / w p.1 p.2 else 0) else 0)
+    + (if p.1 = q.1 then τ2 else 0)
+
+/-- The basis tables `Vₗ`: `Eᵢⱼ ⊗ Γ₀`, `Eᵢⱼ ⊗ I`, `Eⱼⱼ ⊗ diag(1/wⱼ)`, `I ⊗ 11ᵀ`. -/
+noncomputable def shapeBasis (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) :
+    Par J → Matrix (J × T) (J × T) ℝ
+  | .inl z => fun p q => if s(p.1, q.1) = z then Γ₀ p.2 q.2 else 0
+  | .inr (.inl z) => fun p q => if s(p.1, q.1) = z then (if p.2 = q.2 then 1 else 0) else 0
+  | .inr (.inr (.inl j)) => fun p q =>
+      if p.1 = j then (if q.1 = j then (if p.2 = q.2 then 1 / w j p.2 else 0) else 0) else 0
+  | .inr (.inr (.inr _)) => fun p q => if p.1 = q.1 then 1 else 0
+
+/-- The parameter vector `(A, C, s², τ²)`. -/
+def shapePar (A C : Sym2 J → ℝ) (s2 : J → ℝ) (τ2 : ℝ) : Par J → ℝ :=
+  Sum.elim A (Sum.elim C (Sum.elim s2 fun _ => τ2))
+
+omit [Fintype T] in
+/-- **The table given the shape is linear in its parameters**: `Σₗ θₗVₗ`. -/
+theorem shapeTable_eq_linTable (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) :
+    shapeTable Γ₀ w A C s2 τ2 = Model.linTable (shapeBasis Γ₀ w) (shapePar A C s2 τ2) := by
+  funext p q
+  simp only [Model.linTable, Fintype.sum_sum_type, shapePar, Sum.elim_inl, Sum.elim_inr,
+    shapeBasis, mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true, Fintype.sum_unique,
+    shapeTable]
+  by_cases ht : p.2 = q.2 <;> by_cases hj : p.1 = q.1 <;> simp [ht, hj, div_eq_mul_inv]
+  all_goals first | exact fun h => absurd h.symm hj | ring
+
+variable [Fintype B]
+
+/-- **Henderson III / MINQUE given the factor's shape** (literature §10h, plan item 2): for any
+invariant forms (`QₖD = 0`, e.g. `minqueForms`) with a nonsingular system, `θ̂` is unbiased,
+whatever the fixed effects `β`, for every parameter of the table: `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²`. -/
+theorem henderson_shape_unbiased (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) {D : Matrix (J × T) B ℝ}
+    {Q : Par J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * D = 0)
+    (hH : IsUnit (Model.hendersonMat Q (shapeBasis Γ₀ w)).det) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) (l : Par J) :
+    Model.UnbiasedMean (shapeTable Γ₀ w A C s2 τ2) D
+      (fun X => Model.henderson Q (shapeBasis Γ₀ w) X l) (shapePar A C s2 τ2 l) := by
+  rw [shapeTable_eq_linTable]
+  exact Model.henderson_unbiased hQ hH _ l
+
+omit [Fintype J] [Fintype T] in
+/-- **The factor model given its shape** `Γ = γΓ₀` (e.g. `ar1 N 1 φ` for a known `φ`), without
+per-card dynamics: its table is `shapeTable` with `A = γλλᵀ`. So Henderson III / MINQUE
+(`henderson_shape_unbiased`) is unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²` and `τ²`. -/
+theorem covG_zero_eq_shapeTable {Γ₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀) :
+    M.covG 0 = shapeTable Γ₀ M.w
+      (Sym2.lift ⟨fun i j => γ * (M.load i * M.load j), fun i j => by ring⟩)
+      (Sym2.lift ⟨fun i j => M.C i j, fun i j => by
+        simpa using (M.C_posSemidef.1.apply i j).symm⟩) M.s2 M.τ2 := by
+  funext p q
+  simp only [covG, obsCovG, obsCov, Shock.obsCov, toShock, shapeTable, Sym2.lift_mk, hΓ,
+    Matrix.smul_apply, smul_eq_mul, Pi.zero_apply, Matrix.zero_apply]
+  by_cases ht : p.2 = q.2 <;> by_cases hj : p.1 = q.1 <;> simp [ht, hj] <;> ring
+
+/-- **Henderson III / MINQUE for the factor model given its shape** `Γ = γΓ₀`: unbiased for
+`γλᵢλⱼ` (on `s(i, j)`), `Cᵢⱼ`, `sⱼ²` and `τ²`, whatever the fixed effects. -/
+theorem henderson_factor_unbiased {Γ₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀)
+    {D : Matrix (J × T) B ℝ} {Q : Par J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * D = 0)
+    (hH : IsUnit (Model.hendersonMat Q (shapeBasis Γ₀ M.w)).det) :
+    (∀ i j, Model.UnbiasedMean (M.covG 0) D
+        (fun X => Model.henderson Q (shapeBasis Γ₀ M.w) X (.inl s(i, j))) (γ * (M.load i * M.load j)))
+      ∧ (∀ i j, Model.UnbiasedMean (M.covG 0) D
+        (fun X => Model.henderson Q (shapeBasis Γ₀ M.w) X (.inr (.inl s(i, j)))) (M.C i j))
+      ∧ (∀ j, Model.UnbiasedMean (M.covG 0) D
+        (fun X => Model.henderson Q (shapeBasis Γ₀ M.w) X (.inr (.inr (.inl j)))) (M.s2 j))
+      ∧ Model.UnbiasedMean (M.covG 0) D
+        (fun X => Model.henderson Q (shapeBasis Γ₀ M.w) X (.inr (.inr (.inr ())))) M.τ2 := by
+  rw [M.covG_zero_eq_shapeTable hΓ]
+  refine ⟨fun i j => ?_, fun i j => ?_, fun j => ?_, ?_⟩ <;>
+    exact (henderson_shape_unbiased Γ₀ M.w hQ hH _ _ _ _ _).congr (fun _ => rfl)
+      (by simp [shapePar])
+
+end GivenShape
+
+end Factor
+
 end Credibility

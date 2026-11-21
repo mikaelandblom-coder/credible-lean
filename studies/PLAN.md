@@ -297,7 +297,10 @@ One chat per step; none needs Lean except step 5.
   cross-moments (`ar1_identified`). Finding 26: the world-vs-fit comparison should show that
   a shock-only fit on factor data misreads `C` (`crossHat_ar1_two`: `C + (1 - φ)γλλᵀ`).
   Its `ŝ²` and `τ̂²` too (`tauHat_factor_unbiased`): show the shock fit's `τ̂²` against the
-  true `τ²` when loadings differ.
+  true `τ²` when loadings differ. Fit given `φ`: MINQUE with the forms `RVₖR`
+  (`Model.minque_unbiased`, parameters `Factor.shapeBasis`), prior `W` from the previous
+  iterate, profile over `φ` (plan item 4); report the raw estimate as unbiased, the
+  truncated one as the fit.
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): the fit switch "latent factor over
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true

@@ -4562,6 +4562,67 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   $0$ for the process noise.
 \end{proof}
 
+\begin{definition}[Henderson III for a table linear in its parameters]\label{def:henderson}
+  \lean{Credibility.Model.linTable, Credibility.Model.hendersonMat, Credibility.Model.henderson,
+        Credibility.Model.minqueR, Credibility.Model.minqueForms}
+  \leanok
+  \uses{def:unbiased_mean}
+  For a table $\sum_l\theta_lV_l$ and quadratic forms $Q_k$ (one per parameter), the system is
+  $H_{kl} = \sum_{p,q}(Q_k)_{pq}(V_l)_{pq}$ and $\hat\theta = H^{-1}(X^\top Q_kX)_k$ (Henderson
+  1953). MINQUE for a prior table $W$ (Rao 1971) takes $Q_k = RV_kR$,
+  $R = W^{-1} - W^{-1}D(D^\top W^{-1}D)^{-1}D^\top W^{-1}$.
+\end{definition}
+
+\begin{lemma}[Forms are linear in their matrix]\label{lem:quad_sum}
+  \lean{Credibility.Model.quad_sum, Credibility.Model.sum_lin_mul_lin,
+        Credibility.Model.quad_eq_dotProduct, Credibility.Model.quad_design_eq_zero,
+        Credibility.Model.minqueR_mul}
+  \leanok
+  \uses{def:henderson}
+  $X^\top(\sum_kc_kQ_k)X = \sum_kc_kX^\top Q_kX$; a form with $QD = 0$ vanishes at every mean
+  $D\beta$; $RD = 0$ when $D^\top W^{-1}D$ is nonsingular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange sums; $(D\beta)^\top Q D\beta = (D\beta)^\top(QD)\beta$; $(D^\top W^{-1}D)^{-1}(D^\top W^{-1}D) = I$.
+\end{proof}
+
+\begin{theorem}[Henderson III and MINQUE are unbiased]\label{thm:henderson_unbiased}
+  \lean{Credibility.Model.henderson_unbiased, Credibility.Model.minque_unbiased}
+  \leanok
+  \uses{def:henderson, thm:unbiased_mean}
+  If $Q_kD = 0$ for every $k$ and $H$ is nonsingular, every $\hat\theta_l$ is unbiased for
+  $\theta_l$, for every $\theta$ and every $\beta$. In particular MINQUE, for any prior $W$
+  with $D^\top W^{-1}D$ and its system nonsingular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:quad_sum, thm:unbiased_mean}
+  $\hat\theta_l$ is the form $\sum_k(H^{-1})_{lk}Q_k$; its expectation is
+  $\sum_k(H^{-1})_{lk}(H\theta)_k = \theta_l$, the means drop out since $Q_kD = 0$.
+\end{proof}
+
+\begin{theorem}[Henderson III / MINQUE given the factor's shape]\label{thm:Factor_henderson}
+  \lean{Credibility.Factor.Par, Credibility.Factor.shapeTable, Credibility.Factor.shapeBasis,
+        Credibility.Factor.shapePar, Credibility.Factor.shapeTable_eq_linTable,
+        Credibility.Factor.henderson_shape_unbiased, Credibility.Factor.covG_zero_eq_shapeTable,
+        Credibility.Factor.henderson_factor_unbiased}
+  \leanok
+  \uses{thm:henderson_unbiased, def:Factor_yoy}
+  Given the factor's shape $\Gamma = \gamma\Gamma_0$ (e.g.\ AR(1) with a known $\varphi$), and
+  without per-card dynamics, the table is linear in a symmetric $A$, a symmetric $C$, $s^2$
+  and $\tau^2$:
+  $A_{ij}(\Gamma_0)_{ts} + \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it}) + \tau^2\delta_{ij}$,
+  with $A = \gamma\lambda\lambda^\top$. So Henderson III (MINQUE included) with invariant forms
+  and a nonsingular system is unbiased for $\gamma\lambda_i\lambda_j$, $C_{ij}$, $s_j^2$ and
+  $\tau^2$ whatever the fixed effects. With $A = 0$ this is the setting of the shock fit.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:henderson_unbiased}
+  Expand $\sum_l\theta_lV_l$ entry by entry; then Theorem~\ref{thm:henderson_unbiased}.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

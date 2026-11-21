@@ -722,7 +722,10 @@ spending abroad (Riksbank/SCB) not verified.
   `C + (1 - φ)γλλᵀ` with two months) and the between-cohort spread
   (`Factor.between_factor_unbiased`: `+Σⱼxⱼ(λⱼ - λ̄)²αᵀΓα` with equal weights); item 3 in full
   (2026-11-21: `Factor.CdiagHat_factor_unbiased`, `s2Hat_factor_unbiased`,
-  `tauHat_factor_unbiased`); open: item 2 (Henderson III given `φ`).
+  `tauHat_factor_unbiased`); item 2 (2026-11-21: `Model.henderson_unbiased`,
+  `Model.minque_unbiased`, `Factor.henderson_factor_unbiased`: unbiased whenever the forms
+  annihilate the design and the system is nonsingular; which forms, and when `H` is
+  nonsingular, is left to the app).
 
 ### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
 Web search (abstracts and listings); nothing read in full.
