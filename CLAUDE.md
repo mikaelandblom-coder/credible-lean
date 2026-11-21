@@ -59,7 +59,8 @@ tactics.
   `Expectation.UnbiasedMean` (means `Dβ`: unbiased for all `β` iff the form annihilates `D`), (I1)
   scale `(λ, Γ) ↦ (aλ, a⁻²Γ)`, (I2) lag 0 only through `C + γλλᵀ`, (I3) lag ≥ 1 cross-card
   entries are `λᵢλⱼΓₜₛ`, the year-on-year lagged cross-product, (I4) loadings need three cards,
-  (I5) AR(1) from cross-moments, the shock estimators' bias under a factor (Finding 26)
+  (I5) AR(1) from cross-moments, the shock estimators' bias under a factor (Finding 26: `Ĉ`, the
+  between-cohort spread)
   → `Credibility/FactorEstimation.lean`
 - extension: shock plus process noise (Finding 23): `cov = δₜₛ(Cᵢⱼ + δᵢⱼsᵢ²/wᵢₜ) + τ²δᵢⱼ`, its `K`
   for any cohort weights, `K ≻ 0`, unbiased `Ĉ`, `ŝ²` (identified only through volume variation)

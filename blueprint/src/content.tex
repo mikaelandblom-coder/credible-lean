@@ -4487,6 +4487,40 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   $\varphi = 0$ (a rank-one shock, $C + \gamma\lambda\lambda^\top$) and a constant factor ($C$).
 \end{remark}
 
+\begin{lemma}[Regrouping a bilinear double sum]\label{lem:sum_mul_sum_bilin}
+  \lean{Credibility.Factor.sum_mul_sum_bilin}
+  \leanok
+  $\sum_{k,l} f_kg_l\,p_k^\top\Gamma q_l = \bigl(\sum_k f_kp_k\bigr)^\top\Gamma\bigl(\sum_l g_lq_l\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand and exchange the four sums.
+\end{proof}
+
+\begin{theorem}[The between-cohort spread under a factor]\label{thm:Factor_between}
+  \lean{Credibility.Factor.portCovG, Credibility.Factor.portCovG_eq,
+        Credibility.Factor.contrast_factor_unbiased, Credibility.Factor.between_factor_unbiased,
+        Credibility.Factor.between_factor_equal_weights}
+  \leanok
+  \uses{def:Shock_tauHat, def:Factor_yoy}
+  Under the factor table, $\cov(\hat\mu_i, \hat\mu_j) = K_{ij} + \lambda_i\lambda_j a_i^\top\Gamma a_j
+  + \delta_{ij}a_i^\top G_ia_i$, and for $\sum_j x_j = 1$ the spread
+  $\sum_j x_j(\hat\mu_j - \sum_i x_i\hat\mu_i)^2$ is unbiased for the value of
+  Theorem~\ref{thm:Shock_tauHat}'s spread plus $\sum_j x_j v_j^\top\Gamma v_j$,
+  $v_j = \lambda_ja_j - \sum_i x_i\lambda_ia_i$, plus $\sum_k x_k(1-x_k)a_k^\top G_ka_k$. With
+  equal weights $a_j = \alpha$ the factor term is
+  $\sum_j x_j(\lambda_j - \bar\lambda)^2\,\alpha^\top\Gamma\alpha$, $\bar\lambda = \sum_i x_i\lambda_i$:
+  a shock fit reads loading dispersion, and per-card dynamics, as heterogeneity $\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Shock_tauHat, lem:unbiased_linear, lem:sum_mul_sum_bilin}
+  Products of contrasts as in Theorem~\ref{thm:Shock_tauHat}; split $\cov(\hat\mu_i,\hat\mu_j)$;
+  the shock part has the known value (one estimator, one expectation,
+  Lemma~\ref{lem:unbiased_linear}); regroup the factor part with
+  Lemma~\ref{lem:sum_mul_sum_bilin}; $\sum_j x_j(\delta_{jk} - x_k)^2 = x_k(1 - x_k)$.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

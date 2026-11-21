@@ -33,6 +33,10 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
 * **The shock fit under a factor** (Finding 26, `res_unbiased`, `crossHat_factor_unbiased`,
   `crossHat_ar1_two`): within-card residuals keep `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)`; with two months
   and AR(1), `Shock.crossHat` estimates `C + (1 - φ)γλλᵀ`, neither `C` nor `C + γλλᵀ`.
+* **The between-cohort spread under a factor** (`between_factor_unbiased`): it gains
+  `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, and `Σₖxₖ(1 - xₖ)aₖᵀGₖaₖ`; with equal weights the factor
+  term is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`between_factor_equal_weights`), so `Shock.tauHat` reads loading
+  dispersion and per-card dynamics as heterogeneity.
 -/
 
 open Finset Matrix
@@ -486,6 +490,167 @@ theorem crossHat_ar1_two (M : Factor J (Fin 2)) (G : J → Matrix (Fin 2) (Fin 2
   ring
 
 end ShockBias
+
+/-! ### The between-cohort spread under a factor -/
+
+section Between
+
+omit [DecidableEq J] [DecidableEq T] in
+/-- Regrouping a double sum of a bilinear form: `Σₖₗ fₖgₗ(pₖᵀΓqₗ) = (Σₖ fₖpₖ)ᵀΓ(Σₗ gₗqₗ)`. -/
+lemma sum_mul_sum_bilin [Fintype J] [Fintype T] (f g : J → ℝ) (p q : J → T → ℝ)
+    (Γ : T → T → ℝ) :
+    ∑ k, ∑ l, f k * g l * (∑ t, ∑ s, p k t * q l s * Γ t s)
+      = ∑ t, ∑ s, (∑ k, f k * p k t) * (∑ l, g l * q l s) * Γ t s := by
+  have h : ∀ t s, (∑ k, f k * p k t) * (∑ l, g l * q l s) * Γ t s
+      = ∑ k, ∑ l, f k * g l * (p k t * q l s * Γ t s) := fun t s => by
+    rw [sum_mul_sum, sum_mul]
+    exact sum_congr rfl fun k _ => by rw [sum_mul]; exact sum_congr rfl fun l _ => by ring
+  rw [sum_congr rfl fun t _ => sum_congr rfl fun s _ => h t s]
+  have h2 : ∀ k l, f k * g l * (∑ t, ∑ s, p k t * q l s * Γ t s)
+      = ∑ t, ∑ s, f k * g l * (p k t * q l s * Γ t s) := fun k l => by simp only [mul_sum]
+  rw [sum_congr rfl fun k _ => sum_congr rfl fun l _ => h2 k l]
+  calc _ = ∑ k, ∑ t, ∑ l, ∑ s, f k * g l * (p k t * q l s * Γ t s) :=
+        sum_congr rfl fun k _ => sum_comm
+    _ = ∑ t, ∑ k, ∑ s, ∑ l, f k * g l * (p k t * q l s * Γ t s) :=
+        (sum_comm).trans (sum_congr rfl fun t _ => sum_congr rfl fun k _ => sum_comm)
+    _ = _ := sum_congr rfl fun t _ => sum_comm
+
+variable [Fintype J] [Fintype T] (G : J → Matrix T T ℝ) {a : J → T → ℝ}
+
+variable (a) in
+/-- `Pᵢⱼ = cov(μ̂ᵢ, μ̂ⱼ)` for the cohort estimates `μ̂ⱼ = Σₜaⱼₜ Xⱼₜ` under the factor table. -/
+noncomputable def portCovG (i j : J) : ℝ := ∑ t, ∑ s, a i t * a j s * M.obsCovG G i j t s
+
+omit [Fintype J] in
+/-- `P` is the `Shock` matrix `K` plus `λᵢλⱼaᵢᵀΓaⱼ` plus, on the diagonal, `aᵢᵀGᵢaᵢ`. -/
+theorem portCovG_eq (i j : J) :
+    M.portCovG G a i j = M.toShock.K a i j
+      + M.load i * M.load j * (∑ t, ∑ s, a i t * a j s * M.Γ t s)
+      + (if i = j then ∑ t, ∑ s, a i t * a i s * G i t s else 0) := by
+  simp only [portCovG, Shock.K, of_apply, obsCovG, obsCov, mul_add, sum_add_distrib, mul_sum]
+  congr 1
+  · rw [add_comm]
+    congr 1
+    exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+  · split_ifs with h
+    · subst h; rfl
+    · simp
+
+/-- Products of contrasts of the cohort estimates under the factor table: if `Σⱼ cⱼ = 0`, then
+`E[(Σⱼ cⱼμ̂ⱼ)(Σⱼ c'ⱼμ̂ⱼ)] = Σᵢⱼ cᵢc'ⱼPᵢⱼ`. -/
+theorem contrast_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) (c c' : J → ℝ)
+    (hc : ∑ j, c j = 0) :
+    Model.UnbiasedCov (M.covG G)
+      (fun X => (∑ j, c j * Shock.muHat a X j) * (∑ j, c' j * Shock.muHat a X j))
+      (∑ i, ∑ j, c i * c' j * M.portCovG G a i j) := by
+  have hlin : ∀ (e : J → ℝ) (X : J × T → ℝ),
+      ∑ p : J × T, e p.1 * a p.1 p.2 * X p = ∑ j, e j * Shock.muHat a X j := fun e X => by
+    simp only [Fintype.sum_prod_type, Shock.muHat, mul_sum, mul_assoc]
+  have hsum : ∑ p : J × T, c p.1 * a p.1 p.2 = 0 := by
+    simp only [Fintype.sum_prod_type, ← mul_sum, ha, mul_one, hc]
+  refine (Model.unbiasedCov_mul (M.covG G) (fun p => c p.1 * a p.1 p.2)
+    (fun p => c' p.1 * a p.1 p.2) hsum).congr (fun X => by rw [hlin, hlin]) ?_
+  simp only [Fintype.sum_prod_type, portCovG, covG, mul_sum]
+  refine sum_congr rfl fun i _ => ?_
+  rw [sum_comm]
+  exact sum_congr rfl fun j _ => sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+
+/-- **The between-cohort spread under a factor.** For weights `x` summing to one,
+`E Σⱼ xⱼ(μ̂ⱼ - Σᵢ xᵢμ̂ᵢ)²` is the `Shock` value `τ²(1 - Σⱼ xⱼ²) + Σⱼ xⱼΣⱼⱼ - xᵀΣx` plus the
+factor term `Σⱼ xⱼ vⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢ xᵢλᵢaᵢ`, plus `Σₖ xₖ(1 - xₖ)aₖᵀGₖaₖ`: per-card
+dynamics look like extra heterogeneity `τ²`. -/
+theorem between_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {x : J → ℝ} (hx : ∑ j, x j = 1) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.between a x X)
+      (M.τ2 * (1 - ∑ j, x j ^ 2) + ∑ j, x j * M.toShock.errCov a j j
+        - ∑ i, ∑ j, x i * x j * M.toShock.errCov a i j
+        + ∑ j, x j * ∑ t, ∑ s, (M.load j * a j t - ∑ i, x i * M.load i * a i t)
+            * (M.load j * a j s - ∑ i, x i * M.load i * a i s) * M.Γ t s
+        + ∑ k, x k * (1 - x k) * ∑ t, ∑ s, a k t * a k s * G k t s) := by
+  let c : J → J → ℝ := fun j k => (if k = j then 1 else 0) - x k
+  have hc : ∀ j, ∑ k, c j k = 0 := fun j => by simp [c, sum_sub_distrib, hx]
+  have hlin : ∀ j X, ∑ k, c j k * Shock.muHat a X k
+      = Shock.muHat a X j - ∑ i, x i * Shock.muHat a X i :=
+    fun j X => by simp [c, sub_mul, sum_sub_distrib]
+  have hfun : ∀ X, ∑ j ∈ univ, x j * ((∑ k, c j k * Shock.muHat a X k)
+      * (∑ k, c j k * Shock.muHat a X k)) = Shock.between a x X := fun X => by
+    simp only [Shock.between, hlin, sq]
+  -- The shock part: one estimator, one expectation.
+  have hS : ∑ j ∈ univ, x j * ∑ k, ∑ l, c j k * c j l * M.toShock.K a k l
+      = M.τ2 * (1 - ∑ j, x j ^ 2) + ∑ j, x j * M.toShock.errCov a j j
+        - ∑ i, ∑ j, x i * x j * M.toShock.errCov a i j :=
+    Model.UnbiasedCov.unique M.toShock.cov_symm
+      ((Model.UnbiasedCov.sum univ fun j _ =>
+        (M.toShock.unbiased_contrast ha (c j) (c j) (hc j)).const_mul (x j)).congr hfun rfl)
+      (M.toShock.between_unbiased ha hx)
+  refine ((Model.UnbiasedCov.sum univ fun j _ =>
+    (M.contrast_factor_unbiased G ha (c j) (c j) (hc j)).const_mul (x j)).congr hfun ?_)
+  have hsplit : ∑ j ∈ univ, x j * ∑ k, ∑ l, c j k * c j l * M.portCovG G a k l
+      = ∑ j ∈ univ, x j * ∑ k, ∑ l, c j k * c j l * M.toShock.K a k l
+        + ∑ j, x j * ∑ k, ∑ l, c j k * c j l
+            * (M.load k * M.load l * (∑ t, ∑ s, a k t * a l s * M.Γ t s))
+        + ∑ j, x j * ∑ k, ∑ l, c j k * c j l
+            * (if k = l then ∑ t, ∑ s, a k t * a k s * G k t s else 0) := by
+    simp only [portCovG_eq, mul_add, sum_add_distrib]
+  have hfac : ∑ j, x j * ∑ k, ∑ l, c j k * c j l
+        * (M.load k * M.load l * (∑ t, ∑ s, a k t * a l s * M.Γ t s))
+      = ∑ j, x j * ∑ t, ∑ s, (M.load j * a j t - ∑ i, x i * M.load i * a i t)
+          * (M.load j * a j s - ∑ i, x i * M.load i * a i s) * M.Γ t s := by
+    refine sum_congr rfl fun j _ => ?_
+    congr 1
+    have hv : ∀ t, ∑ k, c j k * M.load k * a k t
+        = M.load j * a j t - ∑ i, x i * M.load i * a i t :=
+      fun t => by simp [c, sub_mul, sum_sub_distrib]
+    calc _ = ∑ k, ∑ l, (c j k * M.load k) * (c j l * M.load l)
+          * (∑ t, ∑ s, a k t * a l s * M.Γ t s) :=
+          sum_congr rfl fun k _ => sum_congr rfl fun l _ => by ring
+      _ = _ := sum_mul_sum_bilin _ _ a a M.Γ
+      _ = _ := sum_congr rfl fun t _ => sum_congr rfl fun s _ => by rw [hv t, hv s]
+  -- The per-card part: `Σⱼ xⱼcⱼₖ² = xₖ(1 - xₖ)`.
+  have hq : ∀ k, ∑ j, x j * (c j k * c j k) = x k * (1 - x k) := fun k => by
+    simp only [c, sub_mul, mul_sub, ite_mul, one_mul, zero_mul, mul_ite, mul_one, mul_zero,
+      sum_sub_distrib, mem_univ, ite_true, sum_ite_eq]
+    rw [← sum_mul, hx]
+    ring
+  have hcard : ∑ j, x j * ∑ k, ∑ l, c j k * c j l
+        * (if k = l then ∑ t, ∑ s, a k t * a k s * G k t s else 0)
+      = ∑ k, x k * (1 - x k) * ∑ t, ∑ s, a k t * a k s * G k t s := by
+    have h1 : ∀ j, ∑ k, ∑ l, c j k * c j l
+          * (if k = l then ∑ t, ∑ s, a k t * a k s * G k t s else 0)
+        = ∑ k, c j k * c j k * ∑ t, ∑ s, a k t * a k s * G k t s := fun j =>
+      sum_congr rfl fun k _ => by simp [mul_ite]
+    have hg : ∀ g : J → ℝ, ∑ j, x j * ∑ k, c j k * c j k * g k = ∑ k, x k * (1 - x k) * g k :=
+      fun g => by
+        simp only [mul_sum]
+        rw [sum_comm]
+        refine sum_congr rfl fun k _ => ?_
+        rw [← hq k, sum_mul]
+        exact sum_congr rfl fun j _ => by ring
+    simp only [h1]
+    exact hg fun k => ∑ t, ∑ s, a k t * a k s * G k t s
+  rw [hsplit, hS, hfac, hcard]
+
+/-- **Equal weights**: with the same weights `aⱼₜ = αₜ` for every cohort, the factor term is
+`Σⱼ xⱼ(λⱼ - λ̄)² · αᵀΓα`, `λ̄ = Σᵢ xᵢλᵢ`: zero exactly when the loadings are equal (or
+`αᵀΓα = 0`). A shock fit then reads the loading dispersion times the factor variance of the
+averaged month as heterogeneity `τ²`. -/
+theorem between_factor_equal_weights {α : T → ℝ} (hα : ∑ t, α t = 1) {x : J → ℝ}
+    (hx : ∑ j, x j = 1) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.between (fun _ => α) x X)
+      (M.τ2 * (1 - ∑ j, x j ^ 2) + ∑ j, x j * M.toShock.errCov (fun _ => α) j j
+        - ∑ i, ∑ j, x i * x j * M.toShock.errCov (fun _ => α) i j
+        + (∑ j, x j * (M.load j - ∑ i, x i * M.load i) ^ 2)
+          * (∑ t, ∑ s, α t * α s * M.Γ t s)
+        + ∑ k, x k * (1 - x k) * ∑ t, ∑ s, α t * α s * G k t s) := by
+  refine (M.between_factor_unbiased G (fun _ => hα) hx).congr (fun _ => rfl) ?_
+  congr 2
+  rw [sum_mul]
+  refine sum_congr rfl fun j _ => ?_
+  have hv : ∀ t, M.load j * α t - ∑ i, x i * M.load i * α t
+      = (M.load j - ∑ i, x i * M.load i) * α t := fun t => by rw [← sum_mul]; ring
+  simp only [hv, mul_sum]
+  exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
+
+end Between
 
 end Factor
 end Credibility

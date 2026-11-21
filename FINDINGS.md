@@ -450,6 +450,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    on data with a persistent demand factor gives a `K̂` that is neither the shock nor the
    lag-0 covariance, and its lagged covariances (`ℓ` for the next year) are `0` where the
    truth has `λλᵀΓ(h)`. Fit the factor (`FactorEstimation`, year-on-year cross-products)
-   rather than reading it off the shock.
+   rather than reading it off the shock. The level estimate is affected too: the
+   between-cohort spread gains `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, which with equal weights
+   `aⱼ = α` is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`Factor.between_factor_equal_weights`): unequal loadings
+   look like heterogeneity `τ²`, as do per-card dynamics (`Σₖxₖ(1 - xₖ)αᵀGₖα`).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
