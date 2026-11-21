@@ -560,4 +560,16 @@ Gaps, extra hypotheses and new results found while formalizing.
    of the product needs third and fourth moments (argued, not formalized): it lives in the
    optional distribution layer.
 
+34. **`K̂ ≻ 0` iff `(Â + Ĉ)_ZZ ≻ 0` needs `Φ ≻ 0` and a common month (new; `studies/PLAN.md`,
+   valid tables).** Expected: valid tables (`Â, Ĉ ⪰ 0`, `ŝ² ≥ 0`) give `K̂ ≻ 0` iff
+   `Â_ZZ + Ĉ_ZZ ≻ 0`, `Z = {j : ŝⱼ² = 0}` (the app's `degenerateTable`). Found: true for distinct
+   cells when `Φ ≻ 0` and the cohorts in `Z` share an observed month (`Factor.tableK_posDef_iff`;
+   the directions separately: `tableK_posDef_of_zero`, `posDef_zero_of_tableK`), false without
+   either. `Φ = 0`, `Â = I`, `Ĉ = 0`, `ŝ² = 0`: `(Â + Ĉ)_ZZ = I` but `K̂ = 0`
+   (`Factor.tableK_counter_phi`; any singular `Φ` lets a month contrast escape the factor). Two
+   cohorts with `ŝ² = 0` in different months, `Ĉ = (1, -1)(1, -1)ᵀ`, `Φ = I`: `K̂ = I ≻ 0` but `Ĉ` is
+   singular (`Factor.tableK_counter_month`). The app meets both conditions (AR(1) with
+   `φ̂ ∈ (0.001, 0.999)`, full panel), so its check is exact there; with entry and exit it is only
+   sufficient.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -771,17 +771,22 @@ unbiased fit (MINQUE) of $A$, $C$, $s^2$ is least squares with Hessian $H$.
       unbiased fit's;
     \item if every $\hat s_j^2 > 0$, the fitted
       $\hat K = \hat A_{ij}\Phi_{ts} + \delta_{ts}\hat C_{ij} + \delta\,\hat s_i^2/w_{it}$
-      is positive definite (no $\tau^2$ needed, $\hat A$ need not be rank one).
+      is positive definite (no $\tau^2$ needed, $\hat A$ need not be rank one);
+    \item if some $\hat s_j^2 = 0$, $Z = \{j : \hat s_j^2 = 0\}$: on a full panel with
+      $\Phi \succ 0$ (an AR(1) with $|\phi| < 1$), $\hat K \succ 0$ exactly when
+      $(\hat A + \hat C)_{ZZ} \succ 0$.
   \end{itemize}
   \lean{Credibility.ConeProjection.exists_hsq_proj}
   \lean{Credibility.ConeProjection.hsq_proj_unique}
   \lean{Credibility.ConeProjection.hsq_proj_add_le}
   \lean{Credibility.ConeProjection.integral_hsq_proj_le}
   \lean{Credibility.Factor.tableK_ar1_posDef}
+  \lean{Credibility.Factor.tableK_posDef_iff}
 \end{result}
 \use Constrain the tables; take $\phi$ from a long index. The unbiased tables are
 almost never a valid $\hat K$, so they give no premium at all; the constrained ones
-do whenever every $\hat s_j^2 > 0$, and estimating $A$, $C$, $s^2$ then costs only 1--2\% of MSE. The
+do whenever every $\hat s_j^2 > 0$ (or the zero ones have $(\hat A + \hat C)_{ZZ} \succ 0$;
+watch out: with cards entering and leaving that test is only sufficient), and estimating $A$, $C$, $s^2$ then costs only 1--2\% of MSE. The
 real price of the plug-in is $\phi$: estimated from the data alone it adds about
 20\%, taken from an external index of ten years about 2\% (simulation in the app).
 \why The valid tables form a convex set that contains the truth, so moving the

@@ -25,6 +25,9 @@ injective map `c : n → J × T` (cohorts enter and leave: `n = {(j, t) | t ∈ 
   `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` (`ell_apply_of_future`); `v` in `var_eq`.
 * **The predictor** is Step 1's best linear unbiased predictor for this `K`, `ℓ`, `v`
   (`blup_optimal`, `predMse_blup`), with the season design of Step 2 (`blup_season_optimal`).
+* **Valid fitted tables** (`tableK`, no `τ²`): `≻ 0` when every `sⱼ² > 0` (`tableK_posDef`);
+  with some `sⱼ² = 0`, `Z = {j : sⱼ² = 0}`, iff `(A + C)_ZZ ≻ 0` when `Φ ≻ 0` and `Z` shares an
+  observed month (`tableK_posDef_iff`; both conditions needed, Finding 34).
 * **Negative weights** (Finding 25, `blup_neg_of_ar1`): two cohorts, two months, AR(1) with
   `φ = 1/2`; the predictor of cohort 0's next month puts `-1/30` on cohort 1's first month.
 -/
@@ -203,6 +206,251 @@ theorem tableK_not_posDef [Fintype n] [DecidableEq n] {A : Matrix J J ℝ} {Φ :
     ¬(tableK A Φ C s2 w c).PosDef := fun h => by
   have := h.diag_pos (i := p)
   simp [tableK, hA, hC, hs] at this
+
+section ValidTables
+
+open scoped Kronecker
+
+/-! #### Valid tables with some `ŝⱼ² = 0` -/
+
+/-- The fitted table over the full panel `J × T` (every cell observed). -/
+noncomputable def panelK (A : Matrix J J ℝ) (Φ : Matrix T T ℝ) (C : Matrix J J ℝ) (s2 : J → ℝ)
+    (w : J → T → ℝ) : Matrix (J × T) (J × T) ℝ :=
+  of fun x y => A x.1 y.1 * Φ x.2 y.2 + (if x.2 = y.2 then C x.1 y.1 else 0)
+    + (if x = y then s2 x.1 / w x.1 x.2 else 0)
+
+/-- For distinct observed cells, the fitted table is the panel table at those cells. -/
+theorem tableK_eq_submatrix [DecidableEq n] {A : Matrix J J ℝ} {Φ : Matrix T T ℝ}
+    {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} {c : n → J × T}
+    (hc : Function.Injective c) :
+    tableK A Φ C s2 w c = (panelK A Φ C s2 w).submatrix c c := by
+  ext p q
+  simp [tableK, panelK, hc.eq_iff]
+
+/-- The panel table is `diag(s²/w) + A ⊗ Φ + C ⊗ I`. -/
+theorem panelK_eq [Fintype J] [Fintype T] (A : Matrix J J ℝ) (Φ : Matrix T T ℝ)
+    (C : Matrix J J ℝ) (s2 : J → ℝ) (w : J → T → ℝ) :
+    panelK A Φ C s2 w = diagonal (fun x => s2 x.1 / w x.1 x.2)
+      + (A ⊗ₖ Φ + C ⊗ₖ (1 : Matrix T T ℝ)) := by
+  ext x y
+  simp only [panelK, of_apply, Matrix.add_apply, diagonal_apply, kroneckerMap_apply,
+    Matrix.one_apply, mul_ite, mul_one, mul_zero]
+  ring
+
+variable [Fintype J] [Fintype T]
+
+/-- **Valid tables with some `ŝⱼ² = 0`, full panel.** If `A ⪰ 0`, `Φ ≻ 0`, `C ⪰ 0`, `s² ≥ 0`
+and `(A + C)_ZZ ≻ 0` on `Z = {j : sⱼ² = 0}`, the panel table is `≻ 0`. -/
+theorem panelK_posDef {A : Matrix J J ℝ} {Φ : Matrix T T ℝ} {C : Matrix J J ℝ} {s2 : J → ℝ}
+    {w : J → T → ℝ} (hA : A.PosSemidef) (hΦ : Φ.PosDef) (hC : C.PosSemidef)
+    (hs : ∀ j, 0 ≤ s2 j) (hw : ∀ j t, 0 < w j t)
+    (hZ : ((A + C).submatrix (Subtype.val : {j // s2 j = 0} → J) Subtype.val).PosDef) :
+    (panelK A Φ C s2 w).PosDef := by
+  classical
+  rw [panelK_eq]
+  have hD : (diagonal fun x : J × T => s2 x.1 / w x.1 x.2).PosSemidef :=
+    posSemidef_diagonal_iff.2 fun x => div_nonneg (hs _) (hw _ _).le
+  have h1 : (A ⊗ₖ Φ).PosSemidef := hA.kronecker hΦ.posSemidef
+  have h2 : (C ⊗ₖ (1 : Matrix T T ℝ)).PosSemidef := hC.kronecker PosSemidef.one
+  refine PosDef.of_dotProduct_mulVec_pos (hD.add (h1.add h2)).1 fun x hx => ?_
+  by_contra hle
+  push Not at hle
+  rw [add_mulVec, add_mulVec, dotProduct_add, dotProduct_add] at hle
+  have q0 := hD.dotProduct_mulVec_nonneg x
+  have q1 := h1.dotProduct_mulVec_nonneg x
+  have q2 := h2.dotProduct_mulVec_nonneg x
+  have e := (add_eq_zero_iff_of_nonneg q0 (add_nonneg q1 q2)).1
+    (le_antisymm hle (add_nonneg q0 (add_nonneg q1 q2)))
+  have e' := (add_eq_zero_iff_of_nonneg q1 q2).1 e.2
+  have k0 := hD.dotProduct_mulVec_zero_iff.1 e.1
+  have k1 := h1.dotProduct_mulVec_zero_iff.1 e'.1
+  have k2 := h2.dotProduct_mulVec_zero_iff.1 e'.2
+  have hx0 : ∀ j t, s2 j ≠ 0 → x (j, t) = 0 := fun j t h => by
+    have := congrFun k0 (j, t)
+    simp only [mulVec_diagonal, Pi.zero_apply] at this
+    exact (mul_eq_zero.1 this).resolve_left (div_ne_zero h (hw j t).ne')
+  have hA1 : (A ⊗ₖ (1 : Matrix T T ℝ)) *ᵥ x = 0 := by
+    have hu : IsUnit ((1 : Matrix J J ℝ) ⊗ₖ Φ) := isUnit_one.kronecker hΦ.isUnit
+    have : ((1 : Matrix J J ℝ) ⊗ₖ Φ) *ᵥ ((A ⊗ₖ (1 : Matrix T T ℝ)) *ᵥ x)
+        = ((1 : Matrix J J ℝ) ⊗ₖ Φ) *ᵥ 0 := by
+      rw [mulVec_mulVec, ← mul_kronecker_mul, Matrix.one_mul, Matrix.mul_one, k1, mulVec_zero]
+    exact mulVec_injective_iff_isUnit.2 hu this
+  have hcol : ∀ (j : J) (t : T), ∑ k, (A + C) j k * x (k, t) = 0 := fun j t => by
+    have e1 := congrFun hA1 (j, t)
+    have e2 := congrFun k2 (j, t)
+    simp only [mulVec, dotProduct, kroneckerMap_apply, Matrix.one_apply, mul_ite, mul_one,
+      mul_zero, ite_mul, zero_mul, Fintype.sum_prod_type, sum_ite_eq, mem_univ, ite_true,
+      Pi.zero_apply] at e1 e2
+    simp only [Matrix.add_apply, add_mul, sum_add_distrib, e1, e2, add_zero]
+  apply hx
+  funext ⟨j, t⟩
+  by_cases hj : s2 j = 0
+  · let Z := {k // s2 k = 0}
+    let v : Z → ℝ := fun k => x (k.1, t)
+    have hv : (A + C).submatrix (Subtype.val : Z → J) Subtype.val *ᵥ v
+        = (A + C).submatrix (Subtype.val : Z → J) Subtype.val *ᵥ (0 : Z → ℝ) := by
+      rw [mulVec_zero]
+      funext i
+      simp only [mulVec, dotProduct, submatrix_apply, Pi.zero_apply, v]
+      refine (Fintype.sum_of_injective (Subtype.val : Z → J) Subtype.val_injective _
+        (fun k => (A + C) i.1 k * x (k, t))
+        (fun k hk => by
+          have : s2 k ≠ 0 := fun h => hk ⟨⟨k, h⟩, rfl⟩
+          rw [hx0 k t this, mul_zero]) (fun _ => rfl)).trans (hcol i.1 t)
+    have := congrFun (mulVec_injective_iff_isUnit.2 hZ.isUnit hv) ⟨j, hj⟩
+    simpa [v] using this
+  · exact hx0 j t hj
+
+/-- **The "if" for observed cells**: distinct observed cells, `A ⪰ 0`, `Φ ≻ 0`, `C ⪰ 0`,
+`s² ≥ 0` and `(A + C)_ZZ ≻ 0` give `K̂ ≻ 0`. -/
+theorem tableK_posDef_of_zero [Fintype n] [DecidableEq n] {A : Matrix J J ℝ}
+    {Φ : Matrix T T ℝ} {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} {c : n → J × T}
+    (hc : Function.Injective c) (hA : A.PosSemidef) (hΦ : Φ.PosDef) (hC : C.PosSemidef)
+    (hs : ∀ j, 0 ≤ s2 j) (hw : ∀ j t, 0 < w j t)
+    (hZ : ((A + C).submatrix (Subtype.val : {j // s2 j = 0} → J) Subtype.val).PosDef) :
+    (tableK A Φ C s2 w c).PosDef := by
+  rw [tableK_eq_submatrix hc]
+  exact (panelK_posDef hA hΦ hC hs hw hZ).submatrix hc
+
+/-- **The "only if"**: if `K̂ ≻ 0` at distinct observed cells and every cohort with `sⱼ² = 0` is
+observed in a common month `t₀`, then `(A + C)_ZZ ≻ 0`. (No condition on `Φ` is needed.) -/
+theorem posDef_zero_of_tableK [Fintype n] [DecidableEq n] {A : Matrix J J ℝ}
+    {Φ : Matrix T T ℝ} {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} {c : n → J × T}
+    (hc : Function.Injective c) (hA : A.PosSemidef) (hC : C.PosSemidef) {t₀ : T}
+    (ht : ∀ j, s2 j = 0 → ∃ p, c p = (j, t₀)) (hK : (tableK A Φ C s2 w c).PosDef) :
+    ((A + C).submatrix (Subtype.val : {j // s2 j = 0} → J) Subtype.val).PosDef := by
+  classical
+  let Z := {k // s2 k = 0}
+  have hS := (hA.add hC).submatrix (Subtype.val : Z → J)
+  refine PosDef.of_dotProduct_mulVec_pos hS.1 fun v hv => ?_
+  by_contra hle
+  push Not at hle
+  let u : J → ℝ := fun j => if h : s2 j = 0 then v ⟨j, h⟩ else 0
+  have hu : ∀ k : Z, u k.1 = v k := fun k => by simp [u, k.2]
+  have hu0 : ∀ j, u j ≠ 0 → s2 j = 0 := fun j h => by
+    by_contra h'; exact h (by simp [u, h'])
+  have hre : ∀ f : J → ℝ, ∑ k : Z, f k.1 * v k = ∑ j, f j * u j := fun f =>
+    Fintype.sum_of_injective (Subtype.val : Z → J) Subtype.val_injective _ _
+      (fun j hj => by
+        have : u j = 0 := by_contra fun h => hj ⟨⟨j, hu0 j h⟩, rfl⟩
+        rw [this, mul_zero]) (fun k => by rw [hu])
+  have hq : star v ⬝ᵥ ((A + C).submatrix (Subtype.val : Z → J) Subtype.val *ᵥ v)
+      = star u ⬝ᵥ (A *ᵥ u) + star u ⬝ᵥ (C *ᵥ u) := by
+    calc star v ⬝ᵥ ((A + C).submatrix (Subtype.val : Z → J) Subtype.val *ᵥ v)
+        = ∑ i : Z, ((A + C) *ᵥ u) i.1 * v i := by
+          simp only [star_trivial, dotProduct]
+          refine sum_congr rfl fun i _ => ?_
+          rw [mul_comm]
+          congr 1
+          simp only [mulVec, dotProduct, submatrix_apply]
+          exact hre (fun k => (A + C) i.1 k)
+      _ = ∑ j, ((A + C) *ᵥ u) j * u j := hre _
+      _ = _ := by
+          rw [← dotProduct_add, ← add_mulVec, star_trivial, dotProduct_comm]
+          rfl
+  have qA := hA.dotProduct_mulVec_nonneg u
+  have qC := hC.dotProduct_mulVec_nonneg u
+  rw [hq] at hle
+  have e := (add_eq_zero_iff_of_nonneg qA qC).1 (le_antisymm hle (add_nonneg qA qC))
+  have kA := hA.dotProduct_mulVec_zero_iff.1 e.1
+  have kC := hC.dotProduct_mulVec_zero_iff.1 e.2
+  let y : J × T → ℝ := fun x => if x.2 = t₀ then u x.1 else 0
+  have hy : panelK A Φ C s2 w *ᵥ y = 0 := by
+    rw [panelK_eq]
+    funext ⟨j, t⟩
+    have eA := congrFun kA j
+    have eC := congrFun kC j
+    simp only [mulVec, dotProduct, Pi.zero_apply] at eA eC
+    simp only [mulVec, dotProduct, Matrix.add_apply, diagonal_apply, kroneckerMap_apply,
+      Matrix.one_apply, Fintype.sum_prod_type, y, mul_ite, mul_zero, ite_mul, zero_mul,
+      mul_one, add_mul, Pi.zero_apply, Prod.mk.injEq]
+    simp only [sum_ite_eq', mem_univ, ite_true, sum_add_distrib]
+    have e1 : ∑ x, (if j = x ∧ t = t₀ then s2 j / w j t * u x else 0) = 0 := by
+      rw [sum_eq_single j (fun x _ hx => by simp [Ne.symm hx]) (by simp)]
+      by_cases h : t = t₀
+      · by_cases hj : u j = 0
+        · simp [hj]
+        · simp [h, hu0 j hj]
+      · simp [h]
+    have e2 : ∑ x, A j x * Φ t t₀ * u x = Φ t t₀ * ∑ x, A j x * u x := by
+      rw [mul_sum]; exact sum_congr rfl fun _ _ => by ring
+    have e3 : ∑ x, (if t = t₀ then C j x * u x else 0) = if t = t₀ then ∑ x, C j x * u x
+        else 0 := by split_ifs <;> simp
+    rw [e1, e2, e3, eA, eC]
+    simp
+  have hx : (fun p => y (c p)) ≠ 0 := by
+    intro h
+    obtain ⟨i, hi⟩ : ∃ i, v i ≠ 0 := by
+      by_contra h'; push Not at h'; exact hv (funext h')
+    obtain ⟨p, hp⟩ := ht i.1 i.2
+    have := congrFun h p
+    simp only [y, hp, ite_true, Pi.zero_apply, hu] at this
+    exact hi this
+  have hKx : tableK A Φ C s2 w c *ᵥ (fun p => y (c p)) = 0 := by
+    rw [tableK_eq_submatrix hc]
+    funext p
+    have := congrFun hy (c p)
+    simp only [mulVec, dotProduct, submatrix_apply, Pi.zero_apply] at this ⊢
+    refine (Fintype.sum_of_injective c hc _ (fun x => panelK A Φ C s2 w (c p) x * y x)
+      (fun x hx => ?_) (fun _ => rfl)).trans this
+    by_cases h : x.2 = t₀ ∧ u x.1 ≠ 0
+    · obtain ⟨q, hq⟩ := ht x.1 (hu0 x.1 h.2)
+      exact absurd ⟨q, by rw [hq, ← h.1]⟩ hx
+    · have : y x = 0 := by
+        simp only [y]; split_ifs with h1
+        · by_contra h2; exact h ⟨h1, h2⟩
+        · rfl
+      rw [this, mul_zero]
+  have := hK.dotProduct_mulVec_pos hx
+  rw [hKx, dotProduct_zero] at this
+  exact lt_irrefl _ this
+
+/-- **Valid tables: `K̂ ≻ 0` iff `(A + C)_ZZ ≻ 0`**, `Z = {j : sⱼ² = 0}`, for distinct observed
+cells, `A ⪰ 0`, `Φ ≻ 0`, `C ⪰ 0`, `s² ≥ 0`, when the cohorts in `Z` are observed in a common
+month (e.g. a full panel). Both extra conditions are needed (Finding 34). -/
+theorem tableK_posDef_iff [Fintype n] [DecidableEq n] {A : Matrix J J ℝ}
+    {Φ : Matrix T T ℝ} {C : Matrix J J ℝ} {s2 : J → ℝ} {w : J → T → ℝ} {c : n → J × T}
+    (hc : Function.Injective c) (hA : A.PosSemidef) (hΦ : Φ.PosDef) (hC : C.PosSemidef)
+    (hs : ∀ j, 0 ≤ s2 j) (hw : ∀ j t, 0 < w j t) {t₀ : T}
+    (ht : ∀ j, s2 j = 0 → ∃ p, c p = (j, t₀)) :
+    (tableK A Φ C s2 w c).PosDef
+      ↔ ((A + C).submatrix (Subtype.val : {j // s2 j = 0} → J) Subtype.val).PosDef :=
+  ⟨posDef_zero_of_tableK hc hA hC ht, tableK_posDef_of_zero hc hA hΦ hC hs hw⟩
+
+omit [Fintype J] [Fintype T] in
+/-- **The "if" needs `Φ ≻ 0`** (Finding 34): with no factor dynamics (`Φ = 0`), `A = I`,
+`C = 0`, `s² = 0`, `(A + C)_ZZ = I ≻ 0` but every cell has variance zero. -/
+theorem tableK_counter_phi [Fintype n] [DecidableEq n] [Nonempty n] (w : J → T → ℝ)
+    (c : n → J × T) :
+    ((1 + 0 : Matrix J J ℝ).submatrix (Subtype.val : {j // (0 : J → ℝ) j = 0} → J)
+        Subtype.val).PosDef
+      ∧ ¬(tableK 1 0 0 0 w c).PosDef := by
+  refine ⟨by rw [add_zero]; exact PosDef.one.submatrix Subtype.val_injective, fun h => ?_⟩
+  have := h.diag_pos (i := Classical.arbitrary n)
+  simp [tableK] at this
+
+/-- **The "only if" needs a common month** (Finding 34): two cohorts with `s² = 0` observed in
+different months, `A = 0`, `Φ = I`, `C = vvᵀ`, `v = (1, -1)` (all valid): `K̂ = I ≻ 0`, but
+`(A + C)_ZZ = C` is singular. -/
+theorem tableK_counter_month :
+    (tableK (0 : Matrix (Fin 2) (Fin 2) ℝ) (1 : Matrix (Fin 2) (Fin 2) ℝ)
+        (vecMulVec ![1, -1] ![1, -1]) 0 (fun _ _ => 1) ![((0 : Fin 2), (0 : Fin 2)), (1, 1)]).PosDef
+      ∧ ¬((0 + vecMulVec ![1, -1] ![1, -1] : Matrix (Fin 2) (Fin 2) ℝ).submatrix
+          (Subtype.val : {j // (0 : Fin 2 → ℝ) j = 0} → Fin 2) Subtype.val).PosDef := by
+  refine ⟨?_, fun h => ?_⟩
+  · have : tableK (0 : Matrix (Fin 2) (Fin 2) ℝ) (1 : Matrix (Fin 2) (Fin 2) ℝ)
+        (vecMulVec ![1, -1] ![1, -1]) 0 (fun _ _ => 1) ![((0 : Fin 2), (0 : Fin 2)), (1, 1)]
+        = 1 := by
+      ext p q
+      fin_cases p <;> fin_cases q <;> simp [tableK, vecMulVec_apply, Matrix.one_apply]
+    rw [this]; exact PosDef.one
+  · have h2 := h.submatrix (e := fun j : Fin 2 => (⟨j, rfl⟩ : {j // (0 : Fin 2 → ℝ) j = 0}))
+      fun a b hab => by simpa using hab
+    have hx : (![1, 1] : Fin 2 → ℝ) ≠ 0 := fun h => by simpa using congrFun h 0
+    have := h2.dotProduct_mulVec_pos hx
+    simp [dotProduct, mulVec, Fin.sum_univ_two] at this
+
+end ValidTables
 
 /-- **`K ≻ 0`** for any observed cells: the fitted-table case (`tableK_posDef`) with
 `A = λλᵀ`, `Φ = Γ`, plus the level part `τ²δᵢⱼ ⪰ 0`. -/

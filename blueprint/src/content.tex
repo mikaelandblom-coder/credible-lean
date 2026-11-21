@@ -4164,6 +4164,49 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   not of a factor model, and Theorem~\ref{thm:Factor_K} does not apply to it directly.
 \end{remark}
 
+\begin{theorem}[Valid tables with some $\hat s_j^2 = 0$]\label{thm:Factor_tableK_iff}
+  \lean{Credibility.Factor.panelK, Credibility.Factor.tableK_eq_submatrix,
+        Credibility.Factor.panelK_eq, Credibility.Factor.panelK_posDef,
+        Credibility.Factor.tableK_posDef_of_zero, Credibility.Factor.posDef_zero_of_tableK,
+        Credibility.Factor.tableK_posDef_iff}
+  \leanok
+  \uses{def:Factor_tableK}
+  Let $Z = \{j : s_j^2 = 0\}$, the cells distinct, $A \succeq 0$, $C \succeq 0$, $s^2 \ge 0$,
+  $w > 0$. If $\Phi \succ 0$ and $(A + C)_{ZZ} \succ 0$, then $\hat K \succ 0$. Conversely, if
+  $\hat K \succ 0$ and the cohorts in $Z$ are observed in a common month, then
+  $(A + C)_{ZZ} \succ 0$. So with $\Phi \succ 0$ and a common month (a full panel):
+  $\hat K \succ 0 \iff (A + C)_{ZZ} \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\hat K$ is the panel table $\mathrm{diag}(s^2/w) + A \otimes \Phi + C \otimes I$ at the cells.
+  If $x^\top(\cdot)x = 0$, each PSD part kills $x$: $x = 0$ off $Z$, $(A \otimes \Phi)x = 0$ gives
+  $(A \otimes I)x = 0$ since $I \otimes \Phi$ is invertible, so $(A + C)_{ZZ}$ kills each month's
+  column of $x$. Conversely, a $v$ with $v^\top(A + C)_{ZZ}v = 0$ has $Av = Cv = 0$, and $v$ placed
+  in the common month is a nonzero null vector of $\hat K$.
+\end{proof}
+
+\begin{lemma}[Both extra conditions are needed]\label{lem:Factor_tableK_counter}
+  \lean{Credibility.Factor.tableK_counter_phi, Credibility.Factor.tableK_counter_month}
+  \leanok
+  \uses{def:Factor_tableK}
+  $\Phi = 0$, $A = I$, $C = 0$, $s^2 = 0$: $(A + C)_{ZZ} = I \succ 0$ but $\hat K = 0$. Two cohorts
+  with $s^2 = 0$ observed in different months, $A = 0$, $\Phi = I$,
+  $C = (1, -1)(1, -1)^\top$: $\hat K = I \succ 0$ but $(A + C)_{ZZ} = C$ is singular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+\begin{remark}[Finding 34]
+  Expected: valid tables give $\hat K \succ 0$ iff $(A + C)_{ZZ} \succ 0$ (the app's check
+  \texttt{degenerateTable}). True with two conditions the app meets ($\Phi$ an AR(1) with
+  $|\varphi| < 1$, a full panel), false without either
+  (Lemma~\ref{lem:Factor_tableK_counter}). With cohorts entering and leaving, the check is
+  only sufficient for $\hat K \succ 0$, not necessary.
+\end{remark}
+
 \begin{theorem}[$K \succ 0$]\label{thm:Factor_K}
   \lean{Credibility.Factor.K_eq_parts, Credibility.Factor.factorPart_posSemidef,
         Credibility.Factor.shockPart_posSemidef, Credibility.Factor.levelPart_posSemidef,

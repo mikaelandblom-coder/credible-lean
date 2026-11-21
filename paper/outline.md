@@ -84,6 +84,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Valid tables with some `ŝⱼ² = 0` (2026-11-21, Finding 34): `K̂ ≻ 0` iff `(Â + Ĉ)_ZZ ≻ 0` on a
+  full panel with `Φ ≻ 0` (`Factor.tableK_posDef_iff`); with the estimation section.
 - Choosing between fits on data (2026-11-21, app; card-data Step 7b): rolling origin, paired
   losses, Diebold–Mariano with HLN; with a few years of monthly data the test has low power and
   inflated size (16–25% at 5%). A paragraph on model choice, pointing to the app.

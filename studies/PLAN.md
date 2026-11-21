@@ -286,6 +286,9 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
+  (`Factor.tableK_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test
+  is only sufficient: there, check `K̂` itself (Cholesky) instead.
 - Pure premium (2026-11-21, Finding 33): when the world has a frequency–severity level
   correlation, show the exact bias of the product of separate predictions
   (`CoreVector.VecEstimates.integral_mul_pred_sub`) next to the simulated one.
