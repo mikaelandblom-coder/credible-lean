@@ -37,6 +37,12 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, and `Σₖxₖ(1 - xₖ)aₖᵀGₖaₖ`; with equal weights the factor
   term is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`between_factor_equal_weights`), so `Shock.tauHat` reads loading
   dispersion and per-card dynamics as heterogeneity.
+* **The diagonal and `τ̂²` under a factor** (`CdiagHat_factor_unbiased`, `s2Hat_factor_unbiased`,
+  `errCovHat_factor_unbiased`, `tauHat_factor_unbiased`): each weighted sum of squared
+  residuals gains `Fⱼ(u) = Σₜuⱼₜ(λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ))`; Cramer's rule
+  passes it on to `Ĉⱼⱼ` and `ŝⱼ²`, and `τ̂²` collects the spread's extra term minus the
+  plugged-in biases of `Σ̂`. With independent months `Γ = γI`: `Ĉⱼⱼ` reads `Cⱼⱼ + γλⱼ²` and `ŝⱼ²`
+  stays unbiased (`CdiagHat_s2Hat_indep`).
 -/
 
 open Finset Matrix
@@ -651,6 +657,178 @@ theorem between_factor_equal_weights {α : T → ℝ} (hα : ∑ t, α t = 1) {x
   exact sum_congr rfl fun t _ => sum_congr rfl fun s _ => by ring
 
 end Between
+
+/-! ### The diagonal shock estimators and `τ̂²` under a factor -/
+
+section ShockDiag
+
+variable [Fintype J] [Fintype T] (G : J → Matrix T T ℝ) (a u v : J → T → ℝ)
+
+/-- What the factor and the per-card dynamics add to `E[rⱼₜ²]`:
+`λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ)`. -/
+noncomputable def resExtra (j : J) (t : T) : ℝ :=
+  M.load j ^ 2 * resQuad a M.Γ j j t + resQuad a (G j) j j t
+
+/-- Its `u`-weighted sum `Fⱼ(u) = Σₜ uⱼₜ · resExtra`. -/
+noncomputable def resExtraSum (j : J) : ℝ := ∑ t, u j t * M.resExtra G a j t
+
+/-- The bias of `Ĉⱼⱼ` under a factor, by Cramer's rule: `(hⱼ(v)Fⱼ(u) - hⱼ(u)Fⱼ(v)) / det`. -/
+noncomputable def CdiagBias (j : J) : ℝ :=
+  (M.toShock.hSum a v j * M.resExtraSum G a u j - M.toShock.hSum a u j * M.resExtraSum G a v j)
+    / M.toShock.det a u v j
+
+/-- The bias of `ŝⱼ²` under a factor: `(dⱼ(u)Fⱼ(v) - dⱼ(v)Fⱼ(u)) / det`. -/
+noncomputable def s2Bias (j : J) : ℝ :=
+  (Shock.dSum a u j * M.resExtraSum G a v j - Shock.dSum a v j * M.resExtraSum G a u j)
+    / M.toShock.det a u v j
+
+/-- The bias of `Σ̂ᵢⱼ` under a factor: on the diagonal from `Ĉⱼⱼ` and `ŝⱼ²`, off it from
+`Shock.crossHat` (`crossHat_factor_unbiased`). -/
+noncomputable def errCovBias (i j : J) : ℝ :=
+  if i = j then (∑ t, a i t * a i t) * M.CdiagBias G a u v i
+      + M.s2Bias G a u v i * ∑ t, a i t ^ 2 / M.w i t
+  else (∑ t, a i t * a j t)
+      * (M.load i * M.load j * (∑ t, resQuad a M.Γ i j t) / ∑ t, Shock.d a i j t)
+
+/-- What the factor and the per-card dynamics add to the between-cohort spread
+(`between_factor_unbiased`). -/
+noncomputable def betweenBias (x : J → ℝ) : ℝ :=
+  ∑ j, x j * ∑ t, ∑ s, (M.load j * a j t - ∑ i, x i * M.load i * a i t)
+      * (M.load j * a j s - ∑ i, x i * M.load i * a i s) * M.Γ t s
+    + ∑ k, x k * (1 - x k) * ∑ t, ∑ s, a k t * a k s * G k t s
+
+/-- The bias of `τ̂²` under a factor:
+`(betweenBias - Σⱼ xⱼBⱼⱼ + Σᵢⱼ xᵢxⱼBᵢⱼ) / (1 - Σⱼ xⱼ²)`, `B = errCovBias`. -/
+noncomputable def tauBias (x : J → ℝ) : ℝ :=
+  (M.betweenBias G a x - ∑ j, x j * M.errCovBias G a u v j j
+    + ∑ i, ∑ j, x i * x j * M.errCovBias G a u v i j) / (1 - ∑ j, x j ^ 2)
+
+variable {a u v}
+
+/-- `E Σₜ uⱼₜrⱼₜ² = dⱼ(u)Cⱼⱼ + hⱼ(u)sⱼ² + Fⱼ(u)` under a factor. -/
+theorem sqSum_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) (j : J) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.sqSum a u X j)
+      (Shock.dSum a u j * M.C j j + M.toShock.hSum a u j * M.s2 j + M.resExtraSum G a u j) := by
+  refine (Model.UnbiasedCov.sum univ fun t _ =>
+    (M.res_unbiased G ha j j t).const_mul (u j t)).congr
+    (fun X => by simp only [Shock.sqSum, sq]) ?_
+  simp only [ite_true, Shock.dSum, Shock.hSum, resExtraSum, resExtra, sum_mul,
+    ← sum_add_distrib]
+  exact sum_congr rfl fun t _ => by ring
+
+/-- **`Ĉⱼⱼ` under a factor** is unbiased for `Cⱼⱼ + CdiagBias`. -/
+theorem CdiagHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {j : J}
+    (hdet : M.toShock.det a u v j ≠ 0) :
+    Model.UnbiasedCov (M.covG G) (fun X => M.toShock.CdiagHat a u v X j)
+      (M.C j j + M.CdiagBias G a u v j) := by
+  refine (Model.UnbiasedCov.const_mul (M.toShock.det a u v j)⁻¹
+    (((M.sqSum_factor_unbiased G (u := u) ha j).const_mul (M.toShock.hSum a v j)).add
+      ((M.sqSum_factor_unbiased G (u := v) ha j).const_mul (-M.toShock.hSum a u j)))).congr
+    (fun X => by rw [Shock.CdiagHat, div_eq_inv_mul]; ring) ?_
+  rw [inv_mul_eq_iff_eq_mul₀ hdet, CdiagBias, mul_add (M.toShock.det a u v j),
+    mul_div_cancel₀ _ hdet]
+  simp only [Shock.det]
+  ring
+
+/-- **`ŝⱼ²` under a factor** is unbiased for `sⱼ² + s2Bias`. -/
+theorem s2Hat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {j : J}
+    (hdet : M.toShock.det a u v j ≠ 0) :
+    Model.UnbiasedCov (M.covG G) (fun X => M.toShock.s2Hat a u v X j)
+      (M.s2 j + M.s2Bias G a u v j) := by
+  refine (Model.UnbiasedCov.const_mul (M.toShock.det a u v j)⁻¹
+    (((M.sqSum_factor_unbiased G (u := v) ha j).const_mul (Shock.dSum a u j)).add
+      ((M.sqSum_factor_unbiased G (u := u) ha j).const_mul (-Shock.dSum a v j)))).congr
+    (fun X => by rw [Shock.s2Hat, div_eq_inv_mul]; ring) ?_
+  rw [inv_mul_eq_iff_eq_mul₀ hdet, s2Bias, mul_add (M.toShock.det a u v j),
+    mul_div_cancel₀ _ hdet]
+  simp only [Shock.det]
+  ring
+
+/-- **`Σ̂` under a factor**: every entry is unbiased for `Σᵢⱼ + errCovBias`. -/
+theorem errCovHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1)
+    (hd : ∀ i j, i ≠ j → ∑ t, Shock.d a i j t ≠ 0) (hdet : ∀ j, M.toShock.det a u v j ≠ 0)
+    (i j : J) :
+    Model.UnbiasedCov (M.covG G) (fun X => M.toShock.errCovHat a u v X i j)
+      (M.toShock.errCov a i j + M.errCovBias G a u v i j) := by
+  rw [M.toShock.errCov_apply]
+  by_cases hij : i = j
+  · subst hij
+    refine (((M.CdiagHat_factor_unbiased G ha (hdet i)).const_mul (∑ t, a i t * a i t)).add
+      ((M.s2Hat_factor_unbiased G ha (hdet i)).const_mul (∑ t, a i t ^ 2 / M.w i t))).congr
+      (fun X => by simp only [Shock.errCovHat, Shock.CHat, ite_true]; simp only [toShock]; ring) ?_
+    simp only [errCovBias, ite_true]
+    simp only [toShock]
+    ring
+  · refine ((M.crossHat_factor_unbiased G ha hij (hd i j hij)).const_mul
+      (∑ t, a i t * a j t)).congr
+      (fun X => by simp [Shock.errCovHat, Shock.CHat, hij]) ?_
+    simp only [errCovBias, hij, ite_false, add_zero]
+    simp only [toShock]
+    ring
+
+/-- **`τ̂²` under a factor** is unbiased for `τ² + tauBias`: the factor and the per-card
+dynamics enter both through the spread and through the plugged-in `Σ̂`. -/
+theorem tauHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1)
+    (hd : ∀ i j, i ≠ j → ∑ t, Shock.d a i j t ≠ 0) (hdet : ∀ j, M.toShock.det a u v j ≠ 0)
+    {x : J → ℝ} (hx : ∑ j, x j = 1) (hx2 : ∑ j, x j ^ 2 ≠ 1) :
+    Model.UnbiasedCov (M.covG G) (fun X => M.toShock.tauHat a u v x X)
+      (M.τ2 + M.tauBias G a u v x) := by
+  have hne : 1 - ∑ j, x j ^ 2 ≠ 0 := sub_ne_zero.mpr (Ne.symm hx2)
+  refine (Model.UnbiasedCov.const_mul (1 - ∑ j, x j ^ 2)⁻¹
+    (((M.between_factor_unbiased G ha hx).add ((Model.UnbiasedCov.sum univ fun j _ =>
+      (M.errCovHat_factor_unbiased G ha hd hdet j j).const_mul (x j)).const_mul (-1))).add
+      (Model.UnbiasedCov.sum univ fun i _ => Model.UnbiasedCov.sum univ fun j _ =>
+        (M.errCovHat_factor_unbiased G ha hd hdet i j).const_mul (x i * x j)))).congr
+    (fun X => by rw [Shock.tauHat, div_eq_inv_mul]; ring) ?_
+  rw [inv_mul_eq_iff_eq_mul₀ hne, tauBias, betweenBias, mul_add (1 - ∑ j, x j ^ 2),
+    mul_div_cancel₀ _ hne]
+  simp only [mul_add, sum_add_distrib]
+  ring
+
+omit [DecidableEq J] [Fintype J] in
+/-- With independent months `Γ = γI` the factor part of a residual product is `γ dᵢⱼₜ`: the
+same coefficient as the shock. -/
+theorem resQuad_smul_one (γ : ℝ) (i j : J) (t : T) :
+    resQuad a (γ • (1 : Matrix T T ℝ)) i j t = γ * Shock.d a i j t := by
+  have h : ∀ t', ∑ s', ((if t' = t then (1 : ℝ) else 0) - a i t')
+      * ((if s' = t then 1 else 0) - a j s') * (γ • (1 : Matrix T T ℝ)) t' s'
+      = γ * (((if t' = t then 1 else 0) - a i t') * ((if t' = t then 1 else 0) - a j t')) :=
+    fun t' => by
+      simp only [Matrix.smul_apply, Matrix.one_apply, smul_eq_mul, mul_ite, mul_one, mul_zero,
+        sum_ite_eq, mem_univ, ite_true]
+      ring
+  simp only [resQuad, h, ← mul_sum, Shock.d]
+  congr 1
+  simp only [sub_mul, mul_sub, ite_mul, one_mul, zero_mul, mul_ite, mul_one, mul_zero,
+    sum_sub_distrib, sum_ite_eq', mem_univ, ite_true]
+  ring
+
+/-- **Independent months: the factor is a rank-one shock.** With `Γ = γI` and no per-card
+dynamics, `Ĉⱼⱼ` is unbiased for `Cⱼⱼ + γλⱼ²` and `ŝⱼ²` stays unbiased for `sⱼ²`, as the
+off-diagonal `Shock.crossHat` reads `Cᵢⱼ + γλᵢλⱼ` (`crossHat_factor_unbiased`). -/
+theorem CdiagHat_s2Hat_indep (ha : ∀ j, ∑ t, a j t = 1) {γ : ℝ}
+    (hΓ : M.Γ = γ • (1 : Matrix T T ℝ)) {j : J} (hdet : M.toShock.det a u v j ≠ 0) :
+    Model.UnbiasedCov (M.covG 0) (fun X => M.toShock.CdiagHat a u v X j)
+        (M.C j j + γ * M.load j ^ 2)
+      ∧ Model.UnbiasedCov (M.covG 0) (fun X => M.toShock.s2Hat a u v X j) (M.s2 j) := by
+  have hF : ∀ u' : J → T → ℝ, M.resExtraSum 0 a u' j = M.load j ^ 2 * γ * Shock.dSum a u' j :=
+    fun u' => by
+      simp only [resExtraSum, resExtra, hΓ, resQuad_smul_one, Pi.zero_apply, Shock.dSum,
+        mul_sum]
+      refine sum_congr rfl fun t _ => ?_
+      simp only [resQuad, Matrix.zero_apply, mul_zero, sum_const_zero, add_zero]
+      ring
+  constructor
+  · refine (M.CdiagHat_factor_unbiased 0 ha hdet).congr (fun _ => rfl) ?_
+    rw [CdiagBias, hF, hF]
+    congr 1
+    rw [div_eq_iff hdet, Shock.det]
+    ring
+  · refine (M.s2Hat_factor_unbiased 0 ha hdet).congr (fun _ => rfl) ?_
+    rw [s2Bias, hF, hF]
+    ring_nf
+
+end ShockDiag
 
 end Factor
 end Credibility

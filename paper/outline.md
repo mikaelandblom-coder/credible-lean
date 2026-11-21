@@ -90,7 +90,8 @@ may need a paragraph.)
   `Factor.blup_rescale`, `blup_eq_of_lag0`, `factor_eq_of_obsCovG_eq`); the year-on-year
   estimator (`Factor.yoy_unbiased_factor`). 2026-11-21: three cards for loadings
   (`Factor.load_sq_of_three`), AR(1) from cross-moments (`Factor.ar1_identified`), and Finding 26
-  (`Factor.crossHat_ar1_two`): what a shock-only fit does with a persistent factor.
+  (`Factor.crossHat_ar1_two`): what a shock-only fit does with a persistent factor; its `τ̂²`
+  and diagonal `Ĉ`, `ŝ²` too (`Factor.tauHat_factor_unbiased`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing

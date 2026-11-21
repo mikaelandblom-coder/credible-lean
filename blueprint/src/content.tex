@@ -4521,6 +4521,47 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Lemma~\ref{lem:sum_mul_sum_bilin}; $\sum_j x_j(\delta_{jk} - x_k)^2 = x_k(1 - x_k)$.
 \end{proof}
 
+\begin{theorem}[$\hat C_{jj}$, $\hat s_j^2$, $\hat\Sigma$ and $\hat\tau^2$ under a factor]\label{thm:Factor_shock_diag}
+  \lean{Credibility.Factor.resExtra, Credibility.Factor.resExtraSum,
+        Credibility.Factor.CdiagBias, Credibility.Factor.s2Bias, Credibility.Factor.errCovBias,
+        Credibility.Factor.betweenBias, Credibility.Factor.tauBias,
+        Credibility.Factor.sqSum_factor_unbiased, Credibility.Factor.CdiagHat_factor_unbiased,
+        Credibility.Factor.s2Hat_factor_unbiased, Credibility.Factor.errCovHat_factor_unbiased,
+        Credibility.Factor.tauHat_factor_unbiased}
+  \leanok
+  \uses{def:Shock_estimators, def:Shock_tauHat, thm:Factor_shock_bias, thm:Factor_between}
+  Under the factor table let
+  $F_j(u) = \sum_t u_{jt}\bigl(\lambda_j^2(e_t - a_j)^\top\Gamma(e_t - a_j) + (e_t - a_j)^\top G_j(e_t - a_j)\bigr)$.
+  Then $\sum_t u_{jt}r_{jt}^2$ is unbiased for $d_j(u)C_{jj} + h_j(u)s_j^2 + F_j(u)$, so by
+  Cramer's rule $\hat C_{jj}$ is unbiased for $C_{jj} + (h_j(v)F_j(u) - h_j(u)F_j(v))/\Delta_j$
+  and $\hat s_j^2$ for $s_j^2 + (d_j(u)F_j(v) - d_j(v)F_j(u))/\Delta_j$. Every entry of
+  $\hat\Sigma$ is unbiased for $\Sigma_{ij} + B_{ij}$ ($B$ from these two biases on the
+  diagonal and from Theorem~\ref{thm:Factor_shock_bias} off it), and $\hat\tau^2$ for
+  $\tau^2 + (b - \sum_j x_jB_{jj} + \sum_{ij}x_ix_jB_{ij})/(1 - \sum_j x_j^2)$, $b$ the
+  spread's extra term of Theorem~\ref{thm:Factor_between}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_bias, thm:Factor_between, lem:unbiased_linear}
+  Sum Theorem~\ref{thm:Factor_shock_bias} over $t$ with weights $u$; then the same linear
+  combinations as in Theorems~\ref{thm:Shock_unbiased} and~\ref{thm:Shock_tauHat}, now with
+  Theorem~\ref{thm:Factor_between} for the spread.
+\end{proof}
+
+\begin{corollary}[Independent months: the factor is a rank-one shock]\label{cor:Factor_shock_diag_indep}
+  \lean{Credibility.Factor.resQuad_smul_one, Credibility.Factor.CdiagHat_s2Hat_indep}
+  \leanok
+  \uses{thm:Factor_shock_diag}
+  With $\Gamma = \gamma I$ and $G = 0$, $(e_t - a_i)^\top\Gamma(e_t - a_j) = \gamma d_{ijt}$, so
+  $\hat C_{jj}$ is unbiased for $C_{jj} + \gamma\lambda_j^2$ and $\hat s_j^2$ for $s_j^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_diag}
+  $F_j(u) = \gamma\lambda_j^2 d_j(u)$; Cramer's rule returns $\gamma\lambda_j^2$ for the shock and
+  $0$ for the process noise.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

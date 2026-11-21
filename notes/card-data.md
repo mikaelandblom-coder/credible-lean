@@ -238,7 +238,9 @@ expectation `Cells.integral_yoy`) under a per-card calendar-month season. 2026-1
 (`load_sq_of_three`, `two_cards_not_identified`), I5 (`ar1_identified`, `ar1_zero_eq_shock`),
 the shock fit's `Ĉ` under a factor (Finding 26, `crossHat_factor_unbiased`). Next: Henderson III
 given `φ`, the bias of `tauHat` and the diagonal estimators under a factor. 2026-11-21 (later):
-the between-cohort spread under a factor (`between_factor_unbiased`, `between_factor_equal_weights`).
+the between-cohort spread under a factor (`between_factor_unbiased`, `between_factor_equal_weights`);
+the diagonal `Ĉⱼⱼ`, `ŝⱼ²` and `τ̂²` under a factor (`CdiagHat_factor_unbiased`,
+`s2Hat_factor_unbiased`, `tauHat_factor_unbiased`; independent months: `CdiagHat_s2Hat_indep`).
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

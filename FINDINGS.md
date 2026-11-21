@@ -454,5 +454,13 @@ Gaps, extra hypotheses and new results found while formalizing.
    between-cohort spread gains `ΣⱼxⱼvⱼᵀΓvⱼ`, `vⱼ = λⱼaⱼ - Σᵢxᵢλᵢaᵢ`, which with equal weights
    `aⱼ = α` is `Σⱼxⱼ(λⱼ - λ̄)²·αᵀΓα` (`Factor.between_factor_equal_weights`): unequal loadings
    look like heterogeneity `τ²`, as do per-card dynamics (`Σₖxₖ(1 - xₖ)αᵀGₖα`).
+   The diagonal (2026-11-21): each `Σₜuⱼₜrⱼₜ²` gains
+   `Fⱼ(u) = Σₜuⱼₜ(λⱼ²(eₜ - aⱼ)ᵀΓ(eₜ - aⱼ) + (eₜ - aⱼ)ᵀGⱼ(eₜ - aⱼ))`, so `Ĉⱼⱼ` and `ŝⱼ²` are off by
+   the Cramer combinations of `Fⱼ(u)`, `Fⱼ(v)` (`Factor.CdiagHat_factor_unbiased`,
+   `s2Hat_factor_unbiased`), and `τ̂²` by the spread's term minus the plugged-in biases of `Σ̂`
+   (`Factor.tauHat_factor_unbiased`). A persistent factor is not constant in `t` after
+   demeaning, so it leaks into `ŝ²` too (it is told apart from the shock only by the
+   volume pattern, which the factor does not follow). With independent months the factor is
+   a rank-one shock: `Ĉⱼⱼ` reads `Cⱼⱼ + γλⱼ²`, `ŝⱼ²` stays unbiased (`Factor.CdiagHat_s2Hat_indep`).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

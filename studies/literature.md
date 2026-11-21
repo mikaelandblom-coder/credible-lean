@@ -720,9 +720,9 @@ spending abroad (Riksbank/SCB) not verified.
 - *Status (2026-11-21):* I1–I5 and plan item 1 proved in `Credibility/FactorEstimation.lean`
   (`Model.UnbiasedMean` in `Expectation.lean`); item 3 for `Shock.crossHat` (Finding 26:
   `C + (1 - φ)γλλᵀ` with two months) and the between-cohort spread
-  (`Factor.between_factor_unbiased`: `+Σⱼxⱼ(λⱼ - λ̄)²αᵀΓα` with equal weights); open: item 2
-  (Henderson III given `φ`) and item 3 for the diagonal `CdiagHat`, `s2Hat`, hence `tauHat` in
-  full.
+  (`Factor.between_factor_unbiased`: `+Σⱼxⱼ(λⱼ - λ̄)²αᵀΓα` with equal weights); item 3 in full
+  (2026-11-21: `Factor.CdiagHat_factor_unbiased`, `s2Hat_factor_unbiased`,
+  `tauHat_factor_unbiased`); open: item 2 (Henderson III given `φ`).
 
 ### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
 Web search (abstracts and listings); nothing read in full.
