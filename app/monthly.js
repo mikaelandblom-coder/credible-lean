@@ -158,10 +158,13 @@
   }
 
   /** One data set: season mean plus noise with the table's covariance (skewed innovations). */
+  const cholCache = new WeakMap();
   function draw(world, r) {
-    const { J, Y, w } = world, T = 12 * Y, V = covTable(world), L = cholesky(V);
+    const { J, Y, w } = world, T = 12 * Y;
+    let L = cholCache.get(world);
+    if (!L) { L = cholesky(covTable(world)); if (L) cholCache.set(world, L); }
     if (!L) throw new Error('table not positive definite');
-    const e = V.map(() => r.skewed(world.skew)), X = Array.from({ length: J }, () => new Array(T));
+    const e = L.map(() => r.skewed(world.skew)), X = Array.from({ length: J }, () => new Array(T));
     for (let i = 0; i < J; i++) for (let t = 0; t < T; t++) {
       const p = i * T + t;
       let x = world.truth.season[i][t % 12];
@@ -194,8 +197,68 @@
    * R = I − D(DᵀD)⁻¹Dᵀ centres each cohort × calendar month class; forms Q_k = R V_k R,
    * H_kl = tr(R V_k R V_l), q_k = (RX)ᵀ V_k (RX); θ̂ = H⁻¹q. Unbiased for A = γλλᵀ, C, s² whatever
    * τ² and the season, when H is nonsingular (`Factor.minque_ar1_two_years_unbiased`).
+   * Computed in Kronecker form: every basis table is E_ab ⊗ M (M = Φ, I or diag(1/w_j), T × T) and
+   * R = I_J ⊗ P, so H_kl = tr(E_ab E_cd)·tr(PMPN) and q_k = r_aᵀ M r_b (twice off the diagonal).
+   * Same numbers as `minqueDense`, at T × T cost; `prepare` caches the φ-free part for the profile.
    */
-  function minque(data, phi) {
+  function prepare(data) {
+    const { J, Y, w, X } = data, T = 12 * Y;
+    const P = Array.from({ length: T }, (_, t) => Array.from({ length: T }, (_, s) => (t === s ? 1 : 0) - (t % 12 === s % 12 ? 1 / Y : 0)));
+    const r = X.map((row) => {
+      const s = new Array(12).fill(0);
+      row.forEach((x, t) => { s[t % 12] += x; });
+      return row.map((x, t) => x - s[t % 12] / Y);
+    });
+    // Diagonal factors (I for C, diag(1/w_j) for s²_j): tr(P D_a P D_b) = Σ_tv P_tv² a_v b_t.
+    const diag = [new Array(T).fill(1)].concat(w.map((row) => row.map((x) => 1 / x)));
+    const pdp = diag.map((d) => P.map((row) => row.reduce((s, x, v) => s + x * x * d[v], 0)));
+    const trDD = diag.map((_, a) => diag.map((d) => d.reduce((s, x, t) => s + pdp[a][t] * x, 0)));
+    const qd = (d, a, b) => { let s = 0; for (let t = 0; t < T; t++) s += r[a][t] * d[t] * r[b][t]; return s; };
+    return { J, Y, T, w, P, r, diag, trDD, qd };
+  }
+
+  function minque(data, phi, prep) {
+    const pr = prep || prepare(data), { J, Y, T, w, r, diag, trDD, qd } = pr, { list } = basis(J, Y, w, phi);
+    const F = Array.from({ length: T }, (_, t) => Array.from({ length: T }, (_, s) => Math.pow(phi, Math.abs(t - s))));
+    // PFP and the traces with F.
+    const PF = pr.P.map((row) => F[0].map((_, u) => { let s = 0; for (let v = 0; v < T; v++) s += row[v] * F[v][u]; return s; }));
+    const PFP = PF.map((row) => pr.P[0].map((_, u) => { let s = 0; for (let v = 0; v < T; v++) s += row[v] * pr.P[v][u]; return s; }));
+    let trFF = 0;
+    for (let t = 0; t < T; t++) for (let u = 0; u < T; u++) trFF += PFP[t][u] * F[u][t];
+    const trFD = diag.map((d) => { let s = 0; for (let t = 0; t < T; t++) s += PFP[t][t] * d[t]; return s; });
+    // Index of a table's T × T factor: 'F', or a diagonal (0 = I for C, 1 + j for s²_j).
+    const fac = (b) => (b.kind === 'A' ? -1 : b.kind === 'C' ? 0 : 1 + b.i);
+    const tr2 = (a, b) => (a < 0 ? (b < 0 ? trFF : trFD[b]) : b < 0 ? trFD[a] : trDD[a][b]);
+    const pair = (b, c) => (b.i === b.j ? (c.i === c.j && b.i === c.i ? 1 : 0) : (c.i !== c.j && b.i === c.i && b.j === c.j ? 2 : 0));
+    const H = list.map((b) => list.map((c) => { const f = pair(b, c); return f ? f * tr2(fac(b), fac(c)) : 0; }));
+    const qv = list.map((b) => {
+      let s;
+      if (b.kind === 'A') { s = 0; for (let t = 0; t < T; t++) for (let u = 0; u < T; u++) s += r[b.i][t] * F[t][u] * r[b.j][u]; }
+      else s = qd(diag[fac(b)], b.i, b.j);
+      return b.i === b.j ? s : 2 * s;
+    });
+    return finish(list, H, qv);
+  }
+
+  /** Rank check and solve, shared by both MINQUE versions. */
+  function finish(list, H, qv) {
+    // Rank check on the scaled system H_kl / √(H_kk H_ll): the tables differ in scale (1/w ≪ 1).
+    const d = H.map((row, k) => Math.sqrt(Math.max(row[k], 0)));
+    const ev = d.some((x) => !(x > 0)) ? [0, 1]
+      : eigSym(H.map((row, k) => row.map((x, l) => x / (d[k] * d[l]))));
+    const cond = ev[0] / ev[ev.length - 1], singular = !(cond > 1e-10);
+    let theta = null;
+    if (!singular) theta = solve(H, qv);
+    return { list, H, q: qv, cond, singular, theta };
+  }
+
+  /**
+   * Dense reference MINQUE (n × n tables), kept for the test of `minque`. MINQUE with prior W = I given φ (Lean `Model.minqueForms`, `Factor.henderson_season_unbiased`):
+   * R = I − D(DᵀD)⁻¹Dᵀ centres each cohort × calendar month class; forms Q_k = R V_k R,
+   * H_kl = tr(R V_k R V_l), q_k = (RX)ᵀ V_k (RX); θ̂ = H⁻¹q. Unbiased for A = γλλᵀ, C, s² whatever
+   * τ² and the season, when H is nonsingular (`Factor.minque_ar1_two_years_unbiased`).
+   */
+  function minqueDense(data, phi) {
     const { J, Y, w, X } = data, { list, entry, T } = basis(J, Y, w, phi), n = J * T, K = list.length;
     // Classes (j, m): the months of cohort j with calendar month m.
     const cls = (p) => Math.floor(p / T) * 12 + ((p % T) % 12);
@@ -234,14 +297,7 @@
       for (let p = 0; p < n; p++) for (let q = 0; q < n; q++) s += r[p] * tables[k][p][q] * r[q];
       qv[k] = s;
     }
-    // Rank check on the scaled system H_kl / √(H_kk H_ll): the tables differ in scale (1/w ≪ 1).
-    const d = H.map((row, k) => Math.sqrt(Math.max(row[k], 0)));
-    const ev = d.some((x) => !(x > 0)) ? [0, 1]
-      : eigSym(H.map((row, k) => row.map((x, l) => x / (d[k] * d[l]))));
-    const cond = ev[0] / ev[ev.length - 1], singular = !(cond > 1e-10);
-    let theta = null;
-    if (!singular) theta = solve(H, qv);
-    return { list, H, q: qv, cond, singular, theta };
+    return finish(list, H, qv);
   }
 
   /** Pooled year-on-year cross-products at lag h over cohort pairs i ≠ j (Lean `Factor.yoy_unbiased_factor`). */
@@ -278,6 +334,47 @@
     return { phi: best.phi, c: best.c, S };
   }
 
+  /**
+   * φ̂ by profiling the MINQUE fit: for each φ, MINQUE given φ is the least-squares fit of the
+   * centred cross-products rrᵀ by Σ θ_k R V_k(φ) R (normal equations Hθ = q), so its residual is
+   * ‖rrᵀ‖² − qᵀθ̂(φ). φ̂ minimises it: the grid 0.02, …, 0.98, then golden section around the best.
+   * Returns φ̂ and the curve of the explained share qᵀθ̂ / (rᵀr)² (1 = perfect fit). Not proved;
+   * distribution-free (no likelihood). A plug-in REML profile was tried and fails: θ̂(φ) is
+   * unbiased, so the fitted table is often not positive definite.
+   */
+  function phiProfile(data) {
+    const pr = prepare(data);
+    let rr = 0;
+    pr.r.forEach((row) => row.forEach((x) => { rr += x * x; }));
+    const share = (phi) => {
+      const mq = minque(data, phi, pr);
+      return mq.singular ? NaN : mq.q.reduce((a, x, k) => a + x * mq.theta[k], 0) / (rr * rr);
+    };
+    const curve = [];
+    for (let k = 1; k < 50; k++) curve.push({ phi: k / 50, share: share(k / 50) });
+    const ok = curve.filter((c) => Number.isFinite(c.share));
+    if (!ok.length) return { phi: NaN, curve };
+    let best = ok.reduce((a, c) => (c.share > a.share ? c : a));
+    let lo = Math.max(best.phi - 0.02, 0.001), hi = Math.min(best.phi + 0.02, 0.999);
+    const g = (Math.sqrt(5) - 1) / 2;
+    let x1 = hi - g * (hi - lo), x2 = lo + g * (hi - lo), f1 = share(x1), f2 = share(x2);
+    for (let it = 0; it < 20; it++) {
+      if (!(f1 <= f2)) { hi = x2; x2 = x1; f2 = f1; x1 = hi - g * (hi - lo); f1 = share(x1); }
+      else { lo = x1; x1 = x2; f1 = f2; x2 = lo + g * (hi - lo); f2 = share(x2); }
+    }
+    const xm = (lo + hi) / 2, fm = share(xm);
+    if (fm > best.share) best = { phi: xm, share: fm };
+    return { phi: best.phi, share: best.share, curve };
+  }
+
+  /** The data as CSV: one row per cohort and month, the columns the fit sees. */
+  function toCSV(data) {
+    const { J, Y, w, X } = data, lines = ['cohort,year,month,volume,ratio'];
+    for (let j = 0; j < J; j++) for (let t = 0; t < 12 * Y; t++)
+      lines.push(`${j + 1},${Math.floor(t / 12) + 1},${(t % 12) + 1},${+w[j][t].toPrecision(10)},${+X[j][t].toPrecision(10)}`);
+    return lines.join('\n') + '\n';
+  }
+
   /** Data-side checks named after the Lean results (warnings before solving). */
   function diagnose(data, phi) {
     const { J, Y, w } = data, out = [];
@@ -291,11 +388,16 @@
     return out;
   }
 
-  /** The fit: φ̂ from the data, then MINQUE given φ̂. Gets the data table and nothing else. */
+  /**
+   * The fit: φ̂ from the data, then MINQUE given φ̂. Gets the data table and nothing else.
+   * opts.phiMethod: 'profile' (default) or 'moment' (year-on-year cross-products); opts.phi fixes φ
+   * (the oracle, for comparison only).
+   */
   function fit(data, opts) {
-    const o = opts || {};
-    const ph = o.phi !== undefined ? { phi: o.phi } : phiHat(data);
-    const warnings = diagnose(data, ph.phi), mq = minque(data, ph.phi);
+    const o = opts || {}, method = o.phi !== undefined ? 'given' : o.phiMethod || 'profile';
+    const ph = method === 'given' ? { phi: o.phi } : method === 'moment' ? phiHat(data) : phiProfile(data);
+    const warnings = diagnose(data, ph.phi);
+    const mq = Number.isFinite(ph.phi) ? minque(data, ph.phi) : { singular: true, cond: NaN };
     const J = data.J, A = J ? Array.from({ length: J }, () => new Array(J).fill(NaN)) : [];
     const C = A.map((row) => row.slice()), s2 = new Array(J).fill(NaN);
     if (mq.singular) warnings.push({ code: 'singular', text: 'The MINQUE system is singular: the parameters are not all estimable from these data.', lean: 'Model.minque_det_ne_zero_iff' });
@@ -304,12 +406,17 @@
       if (b.kind === 's') s2[b.i] = v;
       else { const M = b.kind === 'A' ? A : C; M[b.i][b.j] = v; M[b.j][b.i] = v; }
     });
+    const phiStep = method === 'given'
+      ? { name: 'φ given (oracle: the true value, not a fit)', value: ph.phi, badge: 'not proved yet' }
+      : method === 'moment'
+        ? { name: 'φ̂ from year-on-year cross-products', value: ph.phi, badge: 'not proved yet', lean: 'Factor.yoy_unbiased_factor' }
+        : { name: 'φ̂ by profiling the MINQUE fit (least squares over φ)', value: ph.phi, badge: 'not proved yet' };
     const steps = [
-      { name: 'φ̂ from year-on-year cross-products', value: ph.phi, badge: 'not proved yet', lean: 'Factor.yoy_unbiased_factor' },
+      phiStep,
       { name: 'MINQUE for (γλλᵀ, C, s²) given φ̂, τ² dropped', badge: 'proved', lean: 'Factor.minque_ar1_two_years_unbiased' },
     ];
-    return { phi: ph.phi, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
+    return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, minque, yoyPooled, yoyShape, phiHat, diagnose, fit };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, toCSV, diagnose, fit };
 });

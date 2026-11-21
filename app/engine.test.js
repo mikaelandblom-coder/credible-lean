@@ -641,3 +641,11 @@ test('Recipes: every symbol is defined (notation or an earlier formula), every p
     assert.ok(E.recipeText(id).includes(r.steps[0].formula), `${id}: text export`);
   }
 });
+
+test('toCSV writes the data the fit sees, one row per region and year', () => {
+  const w = E.makeWorld({ J: 3, T: 4 }), { data } = E.draw(w, E.rng(1)), lines = E.toCSV(data).trim().split('\n');
+  assert.equal(lines[0], 'region,year,volume,ratio');
+  assert.equal(lines.length, 1 + 3 * 4);
+  const [j, t, v, x] = lines[5].split(',').map(Number);
+  assert.ok(Math.abs(v - data.w[j - 1][t - 1]) < 1e-6 * v && Math.abs(x - data.X[j - 1][t - 1]) < 1e-9, 'values round-trip');
+});

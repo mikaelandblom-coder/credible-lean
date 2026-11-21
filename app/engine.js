@@ -964,6 +964,13 @@
     return out;
   }
 
+  /** One draw's data as CSV: one row per region and year, the columns the fit sees. */
+  function toCSV(data) {
+    const lines = ['region,year,volume,ratio'];
+    data.X.forEach((row, j) => row.forEach((x, t) => lines.push(`${j + 1},${t + 1},${+data.w[j][t].toPrecision(10)},${+x.toPrecision(10)}`)));
+    return lines.join('\n') + '\n';
+  }
+
   return {
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
@@ -971,6 +978,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
-    nextVolumes, drawNext, premium, floorForecast,
+    nextVolumes, drawNext, premium, floorForecast, toCSV,
   };
 });

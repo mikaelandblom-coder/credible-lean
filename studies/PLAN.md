@@ -315,6 +315,23 @@ One chat per step; none needs Lean except step 5.
   oracle `φ`, and suggest three years. Next: the page section (world switches, the fitted
   table against the truth, the warnings), then `φ̂` by profiling the MINQUE fit (REML-like)
   if the moment `φ̂` stays this noisy.
+  *Page built 2026-11-21* (section "Monthly cohorts" in `app/index.html`): switches `J`, `Y`, `φ`,
+  volume pattern and how the fit gets `φ` (profile / year-on-year / oracle); one draw with the
+  profile curve, fitted `γλλᵀ`, `C`, `s²` against the truth, the warnings and the steps; 200
+  draws with histograms of both `φ̂` and the table error given `φ̂` against the oracle `φ`; CSV
+  download of the data (also for the regions draw). MINQUE now in Kronecker form (`E_ab ⊗ M`,
+  `R = I_J ⊗ P`; tested equal to the dense version), about 12 ms per profiled fit.
+  **Profile `φ̂`** (`phiProfile`): MINQUE given `φ` is least squares of `rrᵀ` on `RVₖR`, so
+  profile `φ` by its residual `‖rrᵀ‖² − qᵀθ̂(φ)` (distribution-free; not proved). A plug-in REML
+  profile fails: the unbiased `θ̂(φ)` often gives a table that is not positive definite. **Seen**
+  (150 draws): RMSE profile / year-on-year 0.36 / 0.42 (default), 0.34 / 0.38 (`Y = 3`),
+  0.29 / 0.34 (`Y = 4`), 0.38 / 0.51 (`φ = 0.9`), but 0.45 / 0.42 at `φ = 0.3` (profile drifts
+  to 1). Both pile up at 0 and 1, where MINQUE is nearly singular (Finding 28) and the tables
+  explode. **Information limit:** REML on the factor path itself, observed without noise, with
+  12 month means: RMSE 0.26 (`Y = 2`), 0.17 (`Y = 3`), 0.12 (`Y = 5`) at `φ = 0.6`. So the
+  noise is mostly the data (one common series, about 12 year-on-year differences), not the
+  estimator; more cohorts do not help. Next: `φ` from a longer external index, or shrink `φ̂`
+  away from the edges; a constrained (PSD) fit if the tables' sign errors matter.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort

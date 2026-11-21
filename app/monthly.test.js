@@ -97,3 +97,41 @@ test('every proved step and every warning names a proved Lean declaration', () =
   }
   names.forEach((n) => assert.ok(proved.has('Credibility.' + n), `${n} is proved`));
 });
+
+test('the Kronecker MINQUE equals the dense one', () => {
+  const r = M.rng(8);
+  for (const par of [{}, { J: 3, Y: 3, volume: 'yearOnly' }]) {
+    const w = M.makeWorld(par), d = M.draw(w, r), a = M.minqueDense(d, 0.55), b = M.minque(d, 0.55);
+    a.H.forEach((row, k) => row.forEach((x, l) => close(b.H[k][l], x, 1e-10, `H ${k} ${l}`)));
+    a.q.forEach((x, k) => close(b.q[k], x, 1e-10, `q ${k}`));
+    assert.equal(a.singular, b.singular);
+  }
+});
+
+test('the profile φ̂ maximises the explained share and recovers φ when the factor is strong', () => {
+  const w = M.makeWorld({ J: 4, Y: 4, gamma: 0.1, s2: 4, c: 0.002 }), r = M.rng(9), est = [];
+  for (let n = 0; n < 30; n++) {
+    const p = M.phiProfile(M.draw(w, r));
+    p.curve.filter((c) => Number.isFinite(c.share)).forEach((c) => assert.ok(c.share <= p.share + 1e-12, 'max of the curve'));
+    est.push(p.phi);
+  }
+  est.sort((a, b) => a - b);
+  assert.ok(Math.abs(est[15] - w.truth.phi) < 0.1, `median ${est[15]}`);
+});
+
+test('toCSV writes the data the fit sees, one row per cohort and month', () => {
+  const w = M.makeWorld({ J: 2, Y: 2 }), d = M.draw(w, M.rng(10)), lines = M.toCSV(d).trim().split('\n');
+  assert.equal(lines[0], 'cohort,year,month,volume,ratio');
+  assert.equal(lines.length, 1 + 2 * 24);
+  const [j, y, m, v, x] = lines[30].split(',').map(Number), t = 12 * (y - 1) + m - 1;
+  assert.ok(Math.abs(v - d.w[j - 1][t]) < 1e-6 * v && Math.abs(x - d.X[j - 1][t]) < 1e-9, 'values round-trip');
+});
+
+test('fit: profile by default, moment on request, oracle φ when given; one year is singular', () => {
+  const d = M.draw(M.makeWorld({}), M.rng(11));
+  assert.equal(M.fit(d).phiMethod, 'profile');
+  assert.equal(M.fit(d, { phiMethod: 'moment' }).phi, M.phiHat(d).phi);
+  assert.equal(M.fit(d, { phi: 0.6 }).phi, 0.6);
+  const f1 = M.fit(M.draw(M.makeWorld({ Y: 1 }), M.rng(12)));
+  assert.ok(f1.singular && f1.warnings.some((x) => x.code === 'oneYear'));
+});
