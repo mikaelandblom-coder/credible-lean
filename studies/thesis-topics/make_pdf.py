@@ -1,8 +1,9 @@
-"""Builds thesis_topics.pdf: a menu of three master thesis topics continuing
-correlated credibility. Edit this script, not the PDF, and rerun it."""
+"""Builds thesis_topics.pdf: the master thesis proposal "Correlation structure of claims across
+card products" (notes/card-data.md, Step 8). It is the thesis worker's main document.
+Edit this script, not the PDF, and rerun it: python3 make_pdf.py (needs reportlab)."""
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem,
-                                PageBreak, Table, TableStyle)
+                                Table, TableStyle, KeepTogether)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib import colors
@@ -10,16 +11,17 @@ from reportlab.lib import colors
 out = "thesis_topics.pdf"
 doc = SimpleDocTemplate(out, pagesize=A4, leftMargin=2.3*cm, rightMargin=2.3*cm,
                         topMargin=1.8*cm, bottomMargin=1.8*cm,
-                        title="Master Thesis Topics: Correlated Credibility (draft v1)")
+                        title="Master Thesis Proposal: Correlation Structure of Claims across Card Products (draft v2)")
 ss = getSampleStyleSheet()
-title = ParagraphStyle("T", parent=ss["Title"], fontName="Helvetica-Bold", fontSize=18, leading=22, spaceAfter=2)
+NAVY = colors.HexColor("#1f3a5f")
+title = ParagraphStyle("T", parent=ss["Title"], fontName="Helvetica-Bold", fontSize=17, leading=21, spaceAfter=2)
 sub = ParagraphStyle("S", parent=ss["Normal"], fontName="Helvetica-Oblique", fontSize=10, textColor=colors.grey, alignment=1, spaceAfter=12)
-h = ParagraphStyle("H", parent=ss["Heading2"], fontName="Helvetica-Bold", fontSize=12, spaceBefore=8, spaceAfter=3, textColor=colors.HexColor("#1f3a5f"))
+h = ParagraphStyle("H", parent=ss["Heading2"], fontName="Helvetica-Bold", fontSize=12, spaceBefore=9, spaceAfter=3, textColor=NAVY)
+h3 = ParagraphStyle("H3", parent=ss["Normal"], fontName="Helvetica-Bold", fontSize=10.3, spaceBefore=6, spaceAfter=2)
 body = ParagraphStyle("B", parent=ss["Normal"], fontName="Helvetica", fontSize=10, leading=13.6)
 ref = ParagraphStyle("R", parent=body, fontSize=9.3, leading=12.2)
-ttl = ParagraphStyle("TT", parent=body, fontName="Helvetica-Bold", fontSize=12, spaceAfter=2)
-lvl = ParagraphStyle("L", parent=body, fontName="Helvetica-Oblique", fontSize=10, textColor=colors.grey, spaceAfter=6)
-cell = ParagraphStyle("C", parent=body, fontSize=9.8, leading=13)
+cell = ParagraphStyle("C", parent=body, fontSize=9.2, leading=12)
+lean = ParagraphStyle("L", parent=body, fontSize=8.8, leading=11.5, textColor=colors.HexColor("#444444"), leftIndent=0)
 
 
 def bullets(items, numbered=False, style=body):
@@ -28,247 +30,250 @@ def bullets(items, numbered=False, style=body):
                         leftIndent=16, bulletFontSize=10)
 
 
+def code(*names):
+    return ", ".join(f"<font face='Courier' size='8.3'>{n}</font>" for n in names)
+
+
+def table(rows, widths):
+    t = Table([[Paragraph(c, cell) for c in r] for r in rows], colWidths=widths, repeatRows=1)
+    t.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (-1, 0), 0.6, NAVY),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.25, colors.lightgrey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    return t
+
+
+SITE = "https://mikaelandblom-coder.github.io/credible-lean/"
 THESIS = ("Andblom, M. (2023). <i>Generalized B&uuml;hlmann&ndash;Straub credibility theory for "
           "correlated data</i>. Master Thesis in Actuarial Mathematics 2023:2, Stockholm University.")
 REPO = ("<i>credible-lean: a Lean 4 formalization of correlated credibility theory</i> (2026). "
-        "doi:10.5281/zenodo.24054631. Includes a paper draft, a practitioner's handbook and a log of findings.")
+        "doi:10.5281/zenodo.24054631. Site: " + SITE + " (paper, handbook, app, blueprint).")
 BG = ("B&uuml;hlmann, H. and Gisler, A. (2005). <i>A Course in Credibility Theory and its Applications</i>. "
-      "Springer (selected chapters).")
+      "Springer (chapters 4, 8 and 9).")
 
 s = []
 
-# ---------------------------------------------------------------- intro page
-s.append(Paragraph("Master Thesis Topics", title))
-s.append(Paragraph("Correlated credibility &middot; draft v1", sub))
+# ---------------------------------------------------------------- 1. overview
+s.append(Paragraph("Correlation Structure of Claims across Card Products", title))
+s.append(Paragraph("Master thesis proposal &middot; actuarial mathematics &middot; draft v2", sub))
 
-s.append(Paragraph("Background", h))
+s.append(Paragraph("1. The problem", h))
 s.append(Paragraph(
-    "Classical B&uuml;hlmann&ndash;Straub credibility assumes that the estimates for different cohorts "
-    "(risk groups, segments, years of entry) are independent. In practice a common shock, such as a change "
-    "in travel demand or in the economy, moves several cohorts at once. A master thesis from Stockholm "
-    "University (Andblom, 2023) generalized credibility to correlated cohorts. The work has since been "
-    "continued: the results have been restated in a common framework, extended (unequal observation "
-    "lengths, group structure, trends, common shocks, vector-valued levels) and several gaps and new results "
-    "have been found.", body))
-
-s.append(Paragraph("Why a review is needed", h))
+    "A travel insurance product is sold through several payment cards. For each card product and month "
+    "we have the cards in force, the claim counts and the paid amounts. The task is to price each card for "
+    "the <b>next underwriting year</b>, i.e. to predict its claim cost over the next 12 months, using its own "
+    "history and that of the other cards. Classical B&uuml;hlmann&ndash;Straub credibility assumes the cards' "
+    "experience is independent. It is not: travel demand moves all cards at once, strongly from year to "
+    "year, with the pandemic as the extreme case. On top of that the business is seasonal, volumes differ "
+    "widely between cards, and cards start and stop within the observation window.", body))
+s.append(Spacer(1, 4))
 s.append(Paragraph(
-    "The continuation was developed with extensive use of AI assistance. Its mathematical statements are "
-    "proved in the proof assistant Lean, so the proofs themselves are machine-checked. What a machine "
-    "cannot check is whether the statements and definitions say what is intended, whether the models fit "
-    "real insurance data, whether results presented as new are already known, and whether the simulation "
-    "studies outside Lean are sound. Each topic below therefore combines an <b>independent review</b> of a "
-    "group of results with an <b>open research question</b>. The student derives the reviewed results "
-    "by hand, without relying on the existing code, and is free to conclude that a result is wrong, "
-    "already known or of little practical use. Writing Lean is not required; reading the Lean "
-    "statements is optional.", body))
+    "A master thesis (Andblom, 2023) generalized credibility to correlated cohorts. The work has since "
+    "been continued in a repository (credible-lean) that builds the theory for <b>a menu of models</b> "
+    "for exactly this kind of data. For each model it states the best predictor, its error, and unbiased "
+    "estimators of the parameters. What the theory cannot say is <b>which model holds for the real "
+    "data</b>. That is the thesis: choose among the alternatives on actual card data, by out-of-sample "
+    "prediction, and report what the data say about the correlation structure.", body))
 
-s.append(Paragraph("Choosing a topic", h))
-rows = [
-    [Paragraph("<b>Topic</b>", cell), Paragraph("<b>Level</b>", cell), Paragraph("<b>Main skills</b>", cell)],
-    [Paragraph("1. Correlated credibility against the best linear predictor", cell),
-     Paragraph("Standard", cell), Paragraph("Linear algebra, simulation, R or Python", cell)],
-    [Paragraph("2. Correlated credibility on public insurance data", cell),
-     Paragraph("Standard to ambitious", cell), Paragraph("Data analysis, model checking, back-testing", cell)],
-    [Paragraph("3. Group structure: correlated hierarchical credibility", cell),
-     Paragraph("Ambitious", cell), Paragraph("Variance components, estimation theory, literature", cell)],
+s.append(Paragraph("2. Research questions", h))
+s.append(bullets([
+    "<b>Q1. Form of the correlation.</b> Does the correlation between cards shrink with volume (the 2023 "
+    "thesis), or is it a common shock that does not (a period shock plus process noise)?",
+    "<b>Q2. Persistence.</b> Is there a common demand factor that persists over months and years (AR(1), "
+    "a break at known dates), and do cards load on it equally?",
+    "<b>Q3. Seasonality.</b> Should the data be aggregated to years, or modelled per month with an "
+    "<i>estimated</i> season?",
+    "<b>Q4. Frequency and severity.</b> Model them combined (burning cost), separately, or jointly?",
+    "<b>Q5. Entry and exit.</b> How should new and decommissioned cards enter the fit?",
+]))
+s.append(Spacer(1, 3))
+s.append(Paragraph(
+    "The answers need not be a single winning model. A well-supported \"no evidence of a difference\" "
+    "between two alternatives is a result, and so is a finding that a theoretical statement in the "
+    "repository is wrong or impractical.", body))
+
+s.append(Paragraph("3. The starting point: every alternative is a switch", h))
+s.append(Paragraph(
+    "In the repository each modelling choice is a switch with proved consequences. (The Lean files call "
+    "a card product a <i>cohort</i>; nothing there is specific to cards.) Names below are Lean "
+    "declarations, which can be looked up in the blueprint.", body))
+s.append(Spacer(1, 4))
+s.append(table([
+    ["<b>Switch</b>", "<b>Alternatives</b>", "<b>Where in the repo</b>"],
+    ["Correlation form", "thesis <i>&sigma;&sigma;&rho;</i>; shock + process noise; common factor",
+     code("Unequal", "Shock", "Factor") + " (" + code("Factor.K_posDef") + ")"],
+    ["Factor over time", "independent months; AR(1); break at known dates; general &Gamma;; per-card dynamics",
+     code("Factor.ar1_posSemidef", "Factor.regime_posSemidef", "Factor.KG_posDef")],
+    ["Demand signal", "known index <i>D<sub>t</sub></i> with card-specific sensitivities; equal sensitivity "
+     "(an exposure adjustment)", code("CoreVector.hachemeister_bestZ", "CoreVector.blupW_optimal_dotProduct")],
+    ["Season", "none; known index; estimated fixed effects", code("Season.blup_eq_iff", "Unequal.a_eq_of_volume")],
+    ["Aggregation", "monthly; annual totals", code("Core.predMse_aggregate_eq_blup_add")],
+    ["Predictor", "thesis blend <i>z&mu;&#770;<sub>j</sub> + (1&minus;z)&mu;&#770;</i>; full best linear "
+     "unbiased predictor", code("Core.blup_optimal", "Core.predMse_blup")],
+    ["Frequency &times; severity", "combined; separate; joint (vector)",
+     code("CoreVector.blupW_eq_sepW_of_componentBlockDiag")],
+    ["Card set", "balanced; entry and exit (observed cells only)", "built into " + code("Factor") + " (any observed cells)"],
+], [3.3*cm, 6.6*cm, 6.5*cm]))
+s.append(Spacer(1, 4))
+s.append(Paragraph(
+    "The predictor for the 12-month target is the best linear unbiased predictor with fixed effects "
+    "(Goldberger 1962, Harville 1976; universal kriging), proved once for any covariance table, target "
+    "and design (" + code("Core.blup_optimal") + "). Its error splits into the error with known means plus "
+    "the price of estimating them. Each model only supplies its covariance table.", body))
+
+# ---------------------------------------------------------------- 4. extensions
+s.append(Paragraph("4. Suggested extensions to explore on the data", h))
+s.append(Paragraph(
+    "Ordered roughly by how promising they look. Each item says what the theory predicts and what the data "
+    "should be asked. The student picks a subset with the supervisors; the first three form a complete thesis "
+    "on their own.", body))
+
+ext = [
+    ("A. Shock or factor? (Q1, Q2)",
+     "A pure period shock is independent between months; a demand factor persists. Lagged cross-card "
+     "products (different cards, lag &ge; 1 month) see only the factor, so they separate it from the shock. "
+     "A shock-only fit on data with a persistent factor absorbs only part of it (Finding 26). With an AR(1) "
+     "factor the best weights can be <i>negative</i> even with positive autocorrelation (Finding 25). "
+     "<b>Data question:</b> are the lagged cross-card moments distinguishable from zero, and does the factor "
+     "model predict better than the shock model?",
+     code("Factor.yoy_unbiased_factor", "Factor.crossHat_ar1_two", "Factor.ar1_identified",
+          "Factor.blup_neg_of_ar1")),
+    ("B. Estimated season or annual totals? (Q3)",
+     "Whole years do <i>not</i> make the season drop out when volumes are seasonal: the one-mean predictor "
+     "leans on busy months and is biased (Finding 24). Annual aggregation is a restricted predictor and "
+     "never better with known parameters, but the season must then be estimated. "
+     "<b>Data question:</b> does the monthly fit with an estimated season beat annual totals once all "
+     "parameters are estimated?",
+     code("Season.blup_eq_iff", "Core.Target.integral_bias", "Core.predMse_blup_le_aggregate")),
+    ("C. Choosing between fits on data (method for all items)",
+     "Rolling origin with no look-ahead: at each month refit every alternative on the past only, predict "
+     "each card's next 12 months, and score the squared error. Compare alternatives by <i>paired</i> loss "
+     "differences (the target year's shock cancels), with a Diebold&ndash;Mariano test, HAC lag 11 and the "
+     "Harvey&ndash;Leybourne&ndash;Newbold correction. Not shuffled K-fold: the common factor makes held-out "
+     "months correlated with the training months. Proposal in the repository; not built yet. "
+     "<b>Also:</b> use the app's simulated world, where the true error is known, to measure how often this "
+     "comparison picks the better fit at the real sample size.",
+     "notes/card-data.md Step 7b, studies/literature.md &sect;10i"),
+    ("D. Equal or card-specific loadings (Q2)",
+     "Loadings are identified only with three or more cards; two cards give the product only. Open "
+     "theory: with equal loadings and cards observed in the same months the factor is expected to drop "
+     "out of card <i>relativities</i>, so ranking cards would need no trend model, with an exact extra "
+     "error otherwise (planned, Step 4). <b>Data question:</b> do the fitted loadings differ, and does it "
+     "matter for prediction?",
+     code("Factor.load_sq_of_three", "Factor.two_cohorts_not_identified", "Unequal.Noise.relativity_detrend")),
+    ("E. A public demand index (Q2)",
+     "Official passenger statistics as a known covariate with card-specific sensitivities is Hachemeister's "
+     "regression credibility with demand in place of time. <b>Data question:</b> conditional on the index, "
+     "how much cross-card correlation remains? A signal never captures the whole shock, so the index and "
+     "a latent factor can be combined.",
+     code("CoreVector.hachemeister_bestZ", "CoreVector.blupW_optimal_dotProduct")),
+    ("F. Frequency and severity (Q4)",
+     "Separate and joint prediction coincide exactly when the two components do not cross-correlate, so "
+     "the question is testable on residuals (Finding 22). A per-component factor table is planned "
+     "(Step 6). <b>Data question:</b> do frequency and severity residuals cross-correlate across cards and months?",
+     code("CoreVector.blupW_eq_sepW_of_componentBlockDiag")),
+    ("G. Estimation in practice",
+     "Unbiased moment estimators exist given the factor's shape (Henderson III / MINQUE), but with traps: "
+     "the process noise needs volume variation; card-specific means hide the common level &tau;&sup2; "
+     "(Finding 27); under a card season one year identifies nothing and two years need seasonal volumes "
+     "(Findings 28&ndash;29). Fitted tables may not be positive definite; projecting onto valid tables never "
+     "increases the error, and gives a positive definite K&#770; when every noise estimate is positive "
+     "(Finding 30). The AR(1) parameter is noisy with few years. <b>Data question:</b> how stable are the "
+     "estimates, and is profiling &phi; good enough?",
+     code("Factor.minque_ar1_two_years_unbiased", "Shock.not_unbiased_s2_of_const",
+          "Factor.hendersonMat_cohortSeason_det_eq_zero", "ConeProjection.hsq_proj_add_le",
+          "Factor.tableK_posDef")),
+    ("H. The pandemic, entry and exit (Q5)",
+     "The pandemic as a break at known dates (a block &Gamma;), an exclusion, or a large draw of the "
+     "factor. Exited cards keep their past cells in the fit; the exact results assume the exit date is "
+     "independent of the claims, so exits driven by results (Frees 2004) make them approximate. "
+     "<b>Data question:</b> which treatment of the pandemic predicts the post-pandemic years best?",
+     code("Factor.regime_posSemidef")),
 ]
-t = Table(rows, colWidths=[8.2*cm, 3.2*cm, 5.0*cm])
-t.setStyle(TableStyle([
-    ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.HexColor("#1f3a5f")),
-    ("LINEBELOW", (0, 1), (-1, -1), 0.25, colors.lightgrey),
-    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-    ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-]))
-s.append(t)
-s.append(Spacer(1, 6))
+for name, text, where in ext:
+    s.append(KeepTogether([Paragraph(name, h3), Paragraph(text, body),
+                           Paragraph("<i>In the repo:</i> " + where, lean)]))
+
+# ---------------------------------------------------------------- 5. how to work
+s.append(Paragraph("5. How to work with the repository", h))
 s.append(Paragraph(
-    "The topics are independent and can be adapted to the student's interests. Two students may take "
-    "different topics in parallel. All topics use only simulated or public data, and the thesis will be public.",
-    body))
-
-s.append(Paragraph("Common starting references", h))
-s.append(bullets([THESIS, REPO, BG], style=ref))
-
-# ---------------------------------------------------------------- topic 1
-s.append(PageBreak())
-s.append(Paragraph("Topic 1. Correlated credibility against the best linear predictor", ttl))
-s.append(Paragraph("Level: standard", lvl))
-
-s.append(Paragraph("Background", h))
-s.append(Paragraph(
-    "The 2023 thesis estimates each cohort's level as a blend of its own estimate and a portfolio estimate, "
-    "with an optimal credibility factor and optimal portfolio weights when the cohort estimates are "
-    "correlated. The classical benchmark is wider: the best linear unbiased predictor, which may weight every "
-    "cohort separately. Recent work states how much the blend loses against that predictor, when it loses "
-    "nothing, and how much is lost by ignoring the correlation altogether (classical B&uuml;hlmann&ndash;Straub). "
-    "All of these statements assume that the covariances are known.", body))
-
-s.append(Paragraph("Research questions", h))
+    "The continuation was developed with extensive AI assistance. Its proofs are machine-checked in "
+    "the proof assistant Lean, so a proved statement follows from its definitions. A machine cannot "
+    "check whether the definitions say what is intended, whether the models fit real data, whether a "
+    "result presented as new is already known, or whether the simulation code is sound. Therefore:", body))
 s.append(bullets([
-    "<b>Review.</b> Are the stated results correct and correctly interpreted: the optimal credibility factor "
-    "and weights, the loss of the blend against the best linear unbiased predictor, and the bounds on the "
-    "cost of ignoring correlation? Are they already known in the credibility or econometrics literature?",
-    "<b>Estimated parameters.</b> In practice the covariances are estimated from the same data. How much of "
-    "the advantage of the correlated blend, or of the full predictor, survives estimation, and when is the "
-    "simpler classical model the better choice?",
-], numbered=True))
-
-s.append(Paragraph("Requirements", h))
-s.append(bullets([
-    "The reviewed results are derived by hand in the thesis, independently of the existing code.",
-    "Numerical claims are reproduced with the student's own code (R or Python).",
-    "Recommendations should rest on explicit formulas where possible; simulation is used for evaluation.",
+    "Treat the repository as <b>guidance, not authority</b>. Derive by hand every result the thesis relies on, "
+    "and say so where a statement is wrong, already known, or of little practical use.",
+    "Write your own estimation and back-testing code (R or Python); the app is for intuition and for "
+    "checking the protocol, not a dependency.",
+    "Writing Lean is not required; reading the statements is optional, via the blueprint.",
+    "The core model is distribution-free (first and second moments only). Distributional choices "
+    "(Poisson counts, gamma amounts) are allowed in the simulation and stated as such.",
+    "Fitted models have no hand-set tuning parameters: everything is estimated from the data.",
 ]))
 
-s.append(Paragraph("Phases", h))
+# ---------------------------------------------------------------- 6. sources of inspiration
+s.append(Paragraph("6. Sources of inspiration in the repository", h))
+s.append(Paragraph(
+    "Beyond the results cited above, the repository holds material worth reading early. It is a "
+    "starting point; much of it was written for the author's own planning.", body))
+s.append(Spacer(1, 4))
+s.append(table([
+    ["<b>Where</b>", "<b>What you find there</b>"],
+    ["<b>Paper</b> (site /paper/)", "The up-to-date thesis: concepts and intuition, organized for lookup, with Lean names."],
+    ["<b>Handbook</b> (site, handbook.pdf)", "Formulas with practical notes: when to use them, what to watch out for."],
+    ["<b>App</b> (site /app/)", "Simulated worlds: draw data, fit models that never see the truth, compare with the oracle. "
+     "Its \"Monthly cohorts\" section is a world like the card data (season, AR(1) factor, shock, seasonal volumes)."],
+    ["<b>FINDINGS.md</b>", "Gaps and surprises found along the way, each with a counterexample or proof. "
+     "Findings 22&ndash;30 concern this data directly."],
+    ["<b>studies/literature.md</b>", "Annotated literature: credibility, small-area estimation (EBLUP), "
+     "covariance shrinkage; &sect;10 is the literature for this thesis (seasonal and evolutionary "
+     "credibility, factor models, panels with entry and exit, comparing forecasts)."],
+    ["<b>notes/card-data.md</b>", "The plan behind this proposal: the switches, what was proved, what is open."],
+    ["<b>notes/time-trends.md</b>, <b>notes/unequal-lengths.md</b>", "Trends and cards observed over different periods."],
+    ["<b>studies/</b> scripts and PLAN.md", "Small simulation studies (e.g. MSEP with estimated parameters, "
+     "damping the correlations, choosing shrinkage) with their outputs, and the plan for the app."],
+    ["<b>Blueprint</b> (site)", "Every statement with its proof and a dependency graph; reached by link."],
+], [4.6*cm, 11.8*cm]))
+
+# ---------------------------------------------------------------- 7. plan
+s.append(Paragraph("7. Suggested phases", h))
 s.append(bullets([
-    "<b>Review phase.</b> Literature review and derivation of the reviewed results; a short note on which "
-    "hold, which need extra conditions and which are known.",
-    "<b>Research phase.</b> Two to three candidate approaches to the estimation question, agreed with the supervisors.",
-    "<b>Simulation study</b> with known true parameters, against the baselines: classical "
-    "B&uuml;hlmann&ndash;Straub, and the correlated methods with the true parameters as an oracle.",
-    "<b>Evaluation and recommendations.</b>",
+    "<b>Literature and review.</b> Credibility with common effects, seasonal and evolutionary credibility, "
+    "BLUP with fixed effects, variance components; derive the results the thesis will use.",
+    "<b>Data.</b> Descriptive analysis: volumes, season, cross-card correlations by lag, the pandemic.",
+    "<b>Simulation check.</b> In a simulated world sized like the data: does the rolling-origin comparison "
+    "have the power to tell the alternatives apart?",
+    "<b>Comparison on data.</b> Extensions A&ndash;C first, then a selection of D&ndash;H.",
+    "<b>Recommendations</b> for pricing card products, and a list of statements checked, corrected or found known.",
 ], numbered=True))
 
-s.append(Paragraph("Evaluation criteria", h))
+s.append(Paragraph("Left to the student", h))
 s.append(Paragraph(
-    "Agreement of the reviewed results with the student's derivations; mean squared error of prediction with "
-    "estimated parameters; robustness to the number of cohorts, the number of periods and the size of the correlation.", body))
+    "The number of factors; whether loadings are equal; the treatment of the pandemic; reporting delay "
+    "(simplest: use developed months only); whether new cardholders behave differently.", body))
+
+s.append(Paragraph("Data and publication", h))
+s.append(Paragraph(
+    "Aggregated or anonymized company data by agreement; the thesis text is public. The method must also "
+    "run on the app's simulated data, so the analysis can be reproduced without the company data.", body))
 
 s.append(Paragraph("Prerequisites", h))
-s.append(Paragraph("Linear algebra, linear models, basic credibility theory, simulation.", body))
+s.append(Paragraph("Linear models and mixed models (variance components), credibility theory, time series "
+                   "basics, simulation, R or Python.", body))
 
-s.append(Paragraph("Suggested starting references", h))
+s.append(Paragraph("Starting references", h))
 s.append(bullets([
-    "Thesis, repository and B&uuml;hlmann &amp; Gisler as on the first page.",
+    THESIS, REPO, BG,
     "Goldberger, A. S. (1962). Best linear unbiased prediction in the generalized linear regression model. "
-    "<i>Journal of the American Statistical Association</i> 57, 369&ndash;375.",
-    "Prasad, N. G. N. and Rao, J. N. K. (1990). The estimation of the mean squared error of small-area "
-    "estimators. <i>Journal of the American Statistical Association</i> 85, 163&ndash;171.",
-    "Yeo, K. L. and Valdez, E. A. (2006). Claim dependence with common effects in credibility models. "
-    "<i>Insurance: Mathematics and Economics</i> 38(3).",
-], style=ref))
-
-# ---------------------------------------------------------------- topic 2
-s.append(PageBreak())
-s.append(Paragraph("Topic 2. Correlated credibility on public insurance data", ttl))
-s.append(Paragraph("Level: standard to ambitious", lvl))
-
-s.append(Paragraph("Background", h))
-s.append(Paragraph(
-    "The correlated credibility results are proved under assumptions on first and second moments only. "
-    "Whether these assumptions describe real portfolios has not been tested. Recent work suggests that the "
-    "thesis model, in which the correlation between cohorts is fixed while variances fall with volume, may "
-    "misdescribe a common shock, whose effect does not shrink with volume; an alternative model with a common "
-    "shock plus process noise has been proposed. Trends over time raise similar questions.", body))
-
-s.append(Paragraph("Research questions", h))
-s.append(bullets([
-    "<b>Review.</b> Are the modelling assumptions and the proposed alternatives (common shock, trends) "
-    "correctly derived, and are their parameter estimators unbiased as claimed?",
-    "<b>Evidence.</b> Is there correlation between cohorts in public insurance data, and which covariance model "
-    "describes it best?",
-    "<b>Prediction.</b> Does correlated credibility predict better out of sample than classical "
-    "B&uuml;hlmann&ndash;Straub, and under which portfolio characteristics?",
-], numbered=True))
-
-s.append(Paragraph("Requirements", h))
-s.append(bullets([
-    "Only public data, for example the CAS loss reserving database (NAIC Schedule P) or the classical "
-    "Hachemeister data. No proprietary data.",
-    "Model choice and evaluation are based on out-of-sample prediction, with the evaluation design fixed "
-    "before results are compared.",
-    "Fitted models have no hand-set tuning parameters.",
-]))
-
-s.append(Paragraph("Phases", h))
-s.append(bullets([
-    "<b>Review phase.</b> Derivation of the reviewed models and estimators; literature review.",
-    "<b>Data phase.</b> Choice of data sets, definition of cohorts and periods, descriptive analysis.",
-    "<b>Fitting and back-testing</b> of the candidate models against classical B&uuml;hlmann&ndash;Straub, "
-    "complemented by a simulation study where the true model is known.",
-    "<b>Evaluation and recommendations,</b> including a short practitioner summary.",
-], numbered=True))
-
-s.append(Paragraph("Evaluation criteria", h))
-s.append(Paragraph(
-    "Out-of-sample prediction error, stability of the estimated parameters, diagnostic fit of the covariance "
-    "models, and clarity of guidance on when correlation should be modelled.", body))
-
-s.append(Paragraph("Prerequisites", h))
-s.append(Paragraph("Basic non-life insurance mathematics, credibility theory, statistical inference, R or Python.", body))
-
-s.append(Paragraph("Suggested starting references", h))
-s.append(bullets([
-    "Thesis, repository and B&uuml;hlmann &amp; Gisler as on the first page.",
-    "Meyers, G. and Shi, P. (2011). Loss reserving data pulled from NAIC Schedule P. Casualty Actuarial Society.",
-    "Hachemeister, C. A. (1975). Credibility for regression models with application to trend. In Kahn, P. M. (ed.), "
-    "<i>Credibility: Theory and Applications</i>. Academic Press. Data in the R package <i>actuar</i> "
-    "(Dutang, Goulet and Pigeon, 2008, <i>Journal of Statistical Software</i> 25(7)).",
-    "Frees, E. W., Young, V. R. and Luo, Y. (1999). A longitudinal data analysis interpretation of "
-    "credibility models. <i>Insurance: Mathematics and Economics</i> 24, 229&ndash;247.",
-], style=ref))
-
-# ---------------------------------------------------------------- topic 3
-s.append(PageBreak())
-s.append(Paragraph("Topic 3. Group structure: correlated hierarchical credibility", ttl))
-s.append(Paragraph("Level: ambitious", lvl))
-
-s.append(Paragraph("Background", h))
-s.append(Paragraph(
-    "Cohorts often fall into groups, for example products within a line of business, so that cohorts in the "
-    "same group share part of their level. Hierarchical credibility (Jewell, Taylor) and nested error models in "
-    "small-area estimation handle this when the estimates are independent. The correlated framework has been "
-    "extended to group levels, with correlated noise. One finding is that the thesis estimator of the level "
-    "variance becomes biased when cohorts share a group level, and that pairs of cohorts within and across "
-    "groups identify the shared part.", body))
-
-s.append(Paragraph("Research questions", h))
-s.append(bullets([
-    "<b>Review.</b> Are the group extension, its optimal weights and the bias result correctly derived? How do "
-    "they relate to classical hierarchical credibility and to nested error models: what is new and what is known?",
-    "<b>Estimation.</b> How should the variance components of a group structure with correlated cohorts be "
-    "estimated in practice, and how does the choice affect the prediction error?",
-    "<b>Structure.</b> When does modelling the group structure pay off compared with ignoring it or treating "
-    "the groups as separate portfolios?",
-], numbered=True))
-
-s.append(Paragraph("Requirements", h))
-s.append(bullets([
-    "The reviewed results are derived by hand in the thesis, independently of the existing code.",
-    "Estimators should be explicit and implementable without resampling; simulation is used for evaluation.",
-    "Fitted models have no hand-set tuning parameters. Only simulated or public data.",
-]))
-
-s.append(Paragraph("Phases", h))
-s.append(bullets([
-    "<b>Review phase.</b> Literature review (hierarchical credibility, small-area estimation, variance "
-    "component estimation) and derivation of the reviewed results.",
-    "<b>Research phase.</b> Two to three candidate estimation approaches, agreed with the supervisors.",
-    "<b>Simulation study</b> against baselines: classical hierarchical credibility, the correlated model "
-    "without groups, and the group model with true parameters as an oracle.",
-    "<b>Evaluation and recommendations.</b>",
-], numbered=True))
-
-s.append(Paragraph("Evaluation criteria", h))
-s.append(Paragraph(
-    "Correctness of the reviewed results; bias and variance of the estimated components; mean squared error "
-    "of prediction across numbers of groups, group sizes and correlation levels.", body))
-
-s.append(Paragraph("Prerequisites", h))
-s.append(Paragraph("Linear models, mixed models or variance components, credibility theory, simulation.", body))
-
-s.append(Paragraph("Suggested starting references", h))
-s.append(bullets([
-    "Thesis, repository and B&uuml;hlmann &amp; Gisler (chapter 6) as on the first page.",
-    "Jewell, W. S. (1975). The use of collateral data in credibility theory: a hierarchical model. "
-    "IIASA Research Memorandum RM-75-24.",
-    "Taylor, G. C. (1979). Credibility analysis of a general hierarchical model. "
-    "<i>Scandinavian Actuarial Journal</i> 1979(1), 1&ndash;12.",
-    "Stukel, D. M. and Rao, J. N. K. (1999). On small-area estimation under two-fold nested error regression "
-    "models. <i>Journal of Statistical Planning and Inference</i> 78, 131&ndash;147.",
+    "<i>JASA</i> 57, 369&ndash;375.",
+    "Hachemeister, C. A. (1975). Credibility for regression models with application to trend. In "
+    "<i>Credibility: Theory and Applications</i>, Academic Press.",
+    "Frees, E. W. (2004). <i>Longitudinal and Panel Data</i>. Cambridge University Press.",
     "Rao, J. N. K. and Molina, I. (2015). <i>Small Area Estimation</i>, 2nd ed. Wiley.",
+    "Diebold, F. X. and Mariano, R. S. (1995). Comparing predictive accuracy. <i>JBES</i> 13, 253&ndash;263.",
 ], style=ref))
 
 doc.build(s)

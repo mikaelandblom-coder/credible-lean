@@ -7,8 +7,8 @@ choose what works. The repo proves "if model X, then these weights, this MSE,
 these unbiased estimators"; the student decides from the data which X holds,
 and checks our statements by hand (the human review; the repo is guidance,
 not to be trusted blindly). After the theory: one focused thesis proposal
-that cites Lean names (`studies/thesis-topics/` holds the earlier
-three-topic draft, to be replaced).
+that cites Lean names (`studies/thesis-topics/`: rewritten as one proposal, draft v2,
+2026-11-21).
 
 ## The data and the questions
 
@@ -329,6 +329,10 @@ error (S19–S23). Neither is a protocol for *choosing between* switches. Propos
   fit at the student's sample size (power), before it is trusted on the real data.
 
 ### Step 8. Documents, then the proposal
+**Status (2026-11-21):** proposal written (`studies/thesis-topics/make_pdf.py`, draft v2): the
+student's main document, with extensions A–H to test on data and a guide to the repo. Steps 4, 6
+and 7b appear there as planned; update its items D, F and C when they are done. Handbook and paper
+entries still pending.
 Each proved step gets its handbook entry and paper paragraph, or a "Pending"
 line, as usual. Then rewrite `studies/thesis-topics/` as one topic,
 "Correlation structure of claims across card products":
