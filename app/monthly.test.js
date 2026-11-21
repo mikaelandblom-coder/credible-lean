@@ -258,3 +258,22 @@ test('the floor beats the last-year mean, which is unbiased too (Factor.blup_sea
     }
   }
 });
+
+test('H-norm check: the projection is never further from the truth (ConeProjection.hsq_proj_add_le)', () => {
+  let n = 0, worst = Infinity, moved = 0;
+  for (const par of [{}, { J: 3, phi: 0.9 }, { indexYears: 10 }, { Y: 3, gamma: 0.06 }]) {
+    const w = M.makeWorld(par), r = M.rng(19);
+    for (let k = 0; k < 40; k++) {
+      const d = M.draw(w, r);
+      for (const opt of [{}, { phi: w.truth.phi }]) { // the profile φ̂ and the true φ: the bound holds for any estimate
+        const c = M.hNormCheck(w, M.fit(d, Object.assign({ psd: true }, opt)));
+        if (!c) continue;
+        // Tolerance: the block solver stops at a relative change of 1e-12 in the objective.
+        assert.ok(c.slack >= -1e-6 * c.unbiased, `${JSON.stringify(par)}: slack ${c.slack}, unbiased ${c.unbiased}`);
+        assert.ok(c.projected <= c.unbiased * (1 + 1e-6), 'projected ≤ unbiased');
+        worst = Math.min(worst, c.slack / c.unbiased); if (c.moved > 0) moved++; n++;
+      }
+    }
+  }
+  assert.ok(n > 250 && moved > 100, `checked ${n} draws, ${moved} moved by the projection; worst relative slack ${worst}`);
+});

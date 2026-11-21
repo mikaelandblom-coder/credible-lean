@@ -754,6 +754,8 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       `<p class="sub" style="margin:10px 0 4px"><b>Process noise s²</b> (per unit volume)</p><div class="tablewrap"><table class="mtab"><thead><tr><th>Cohort</th>${f.s2.map((_, j) => `<th>${j + 1}</th>`).join('')}</tr></thead><tbody>` +
       `<tr><td>Fit</td>${f.s2.map((x) => `<td>${f3(x)}</td>`).join('')}</tr><tr><td>True</td>${t.s2.map((x) => `<td>${f3(x)}</td>`).join('')}</tr></tbody></table></div>` +
       `<p class="sub" style="margin:6px 0 0">${ms.psd ? 'Constrained: the unbiased MINQUE projected onto valid tables (γλλᵀ and C positive semidefinite, s² ≥ 0) in its own least-squares metric. Biased, but far smaller errors (see Many draws).' : 'MINQUE is unbiased, not constrained: a fitted variance can come out negative in one draw.'} The loadings λⱼ = ${t.load.map((x) => x.toFixed(2)).join(', ')} and γ = ${t.gamma} are the truth behind γλλᵀ; τ² = ${t.tau2} is not estimated.</p>`);
+    const hc = ms.psd ? MO.hNormCheck(w, f) : null, g3 = (x) => x.toPrecision(3);
+    if (hc) $('m-tables').insertAdjacentHTML('beforeend', `<div class="expect"><b>Check, this draw</b> (uses the truth): distance to the true parameters in the fit's own metric ‖v‖²<sub>H</sub> = vᵀHv. Unbiased ‖θ̂ − θ‖²<sub>H</sub> = ${g3(hc.unbiased)}; projected ‖p − θ‖²<sub>H</sub> = ${g3(hc.projected)} (×${(hc.projected / hc.unbiased).toFixed(2)}); moved ‖θ̂ − p‖²<sub>H</sub> = ${g3(hc.moved)}. Projected + moved ≤ unbiased holds in every draw ${hc.slack >= -1e-6 * hc.unbiased ? '✓' : '✗ (solver tolerance)'} <span class="badge proved">proved</span> ${lean('ConeProjection.hsq_proj_add_le')}: the valid tables are convex and contain the truth.</div>`);
     $('m-steps').innerHTML = '<p class="sub" style="margin:10px 0 2px"><b>Fitting steps</b></p>' + f.steps.map((s) => {
       const badge = s.badge === 'proved' ? '<span class="badge proved">proved</span>' : '<span class="badge open">not proved yet</span>';
       return `<div class="step"><div class="step-head"><span class="step-name">${esc(s.name)}${s.value !== undefined && Number.isFinite(s.value) ? ': ' + s.value.toFixed(2) : ''}</span>${badge}</div>${s.lean ? `<div class="sub">${leanLink(s.lean)}</div>` : ''}</div>`;
@@ -778,7 +780,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   let mJob = 0;
   function mRenderMany() {
     const my = ++mJob, w = mWorld, r = MO.rng((ms.seed * 7919 + 17) >>> 0);
-    const acc = { prof: [], mom: [], idx: [], err: {}, prem: {}, notPD: {} };
+    const acc = { prof: [], mom: [], idx: [], err: {}, prem: {}, notPD: {}, hc: {} };
     const wt = futW(w), W = wt.reduce((a, x) => a + x, 0);
     const score = (key, pr, tg) => { (acc.prem[key] = acc.prem[key] || []).push(pr ? pr.reduce((a, x, j) => a + wt[j] * (x - tg[j]) ** 2, 0) / W : NaN); };
     const push = (key, f) => { if (!f.singular) (acc.err[key] = acc.err[key] || []).push(relErr(f)); };
@@ -811,6 +813,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
           for (const [suf, psd] of [['U', false], ['P', true]]) {
             const f = MO.fit(d, { phi, psd }), P = fitTab(w, f);
             push(key + suf, f);
+            if (psd) { const c = MO.hNormCheck(w, f); if (c) (acc.hc[key] = acc.hc[key] || []).push(c); }
             if (!P) acc.notPD[key + suf] = (acc.notPD[key + suf] || 0) + 1;
             score(key + suf, P ? P.predict(d.X) : null, drawn.target);
           }
@@ -861,6 +864,12 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       [['Profile φ̂', 'prof']].concat(acc.idx.length ? [['Index φ̂', 'idx']] : []).concat([['True φ (oracle)', 'oracle']]).flatMap(([lab, key]) =>
         [['unbiased', key + 'U'], ['valid', key + 'P']].map(([t, k], n) => { const l = acc.err[k] || []; return `<tr><td>${n ? '' : lab}</td><td>${t}</td><td>${mErr(l, 'A')}</td><td>${mErr(l, 'C')}</td><td>${mErr(l, 's')}</td></tr>`; })).join('') +
       `</tbody></table><p class="sub" style="margin:6px 0 0">Why φ̂ is so noisy with two years: the factor is one series shared by all cohorts, and the season takes one mean per calendar month, so two years leave about 12 year-on-year differences of that one series. Even with the factor path observed without noise, φ̂ then has RMSE about 0.26 at φ = 0.6 (0.17 with three years, 0.12 with five). More cohorts do not help; more years, or φ from a longer external index, do: with a 10-year index (noise ×1) φ̂ has RMSE about 0.19 and the error of γλλᵀ comes close to the oracle's.</p>`;
+    // the H-norm check over many draws (ConeProjection.hsq_proj_add_le)
+    const hcLine = [['profile φ̂', 'prof'], ['index φ̂', 'idx'], ['true φ', 'oracle']].filter(([, k]) => acc.hc[k]).map(([lab, k]) => {
+      const L = acc.hc[k], ok = L.filter((c) => c.slack >= -1e-6 * c.unbiased).length;
+      return `${lab}: ${ok} of ${L.length} draws, median ratio ${q(L.map((c) => c.projected / c.unbiased), 0.5).toFixed(2)}`;
+    }).join('; ');
+    $('m-many').insertAdjacentHTML('beforeend', `<div class="expect"><b>Check over these draws</b>: projected tables no further from the truth than the unbiased ones in the H-norm, ‖p − θ‖²<sub>H</sub> + ‖θ̂ − p‖²<sub>H</sub> ≤ ‖θ̂ − θ‖²<sub>H</sub> (<span class="badge proved">proved</span> ${lean('ConeProjection.hsq_proj_add_le')}; its mean is ${lean('ConeProjection.integral_hsq_proj_le')}). ${hcLine}. The ratio is ‖p − θ‖²<sub>H</sub> / ‖θ̂ − θ‖²<sub>H</sub>. The H-norm is the fit's own metric, so a table entry can still get worse; the table error above is the plain relative one.</div>`);
     // premium over many draws: typical error against the world's next 12 months
     const typ = (key) => {
       const v = (acc.prem[key] || []).filter(Number.isFinite);

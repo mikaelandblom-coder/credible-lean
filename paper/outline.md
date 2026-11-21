@@ -87,7 +87,8 @@ may need a paragraph.)
 - Valid tables by projection (2026-11-21): the H-projection of an unbiased estimate onto a convex
   set containing the truth is closer to it in every draw and in H-weighted MSE; exists and unique
   for `H ≻ 0` (`ConeProjection.hsq_proj_add_le`, `integral_hsq_proj_le`, `exists_hsq_proj`,
-  `hsq_proj_unique`, `convex_setOf_posSemidef`). With the estimation section.
+  `hsq_proj_unique`, `convex_setOf_posSemidef`). With the estimation section: move this line into
+  it when it is written. The app checks the inequality per draw ("Tables" switch, 2026-11-21).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): unbiasedness under fixed
   effects `Dβ` (a form must vanish on the design, `Model.ecovMean_eq_iff`); what the factor
   table identifies (scale, lag 0 only `C + γλλᵀ`, lagged cross-card moments only the factor:

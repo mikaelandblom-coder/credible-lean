@@ -19,7 +19,9 @@ voice, then trim towards 8 pages.
 - Valid tables by projection (2026-11-21, `ConeProjection.lean`): "project the unbiased fit onto
   the valid tables in the fit's own metric `H`: never further from the truth, in every draw, so
   never a worse H-weighted MSE; the price is bias" (`Credibility.ConeProjection.hsq_proj_le`,
-  `Credibility.ConeProjection.integral_hsq_proj_le`). Goes with the factor estimation entry.
+  `Credibility.ConeProjection.integral_hsq_proj_le`). Goes with the factor estimation entry: move
+  this line into that entry when it is written. The app shows it as a check per draw (2026-11-21:
+  never violated; median ‖p − θ‖²_H / ‖θ̂ − θ‖²_H ≈ 0.7).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"

@@ -381,6 +381,12 @@ One chat per step; none needs Lean except step 5.
   steps are proved; a Lean result that the PSD projection keeps K̂ ≻ 0 (C ⪰ 0, s² > 0 suffice,
   via `Factor.K_posDef`). Next: exposure-weighted targets (`bₜ ∝ wⱼₜ`, needs future volumes) and
   the rolling-origin comparison on data (card-data Step 7b).
+  *H-norm check (2026-11-21):* `fit` returns θ̂, the projection p and H (`minq`); the world-side
+  `hNormCheck` computes ‖θ̂ − θ‖²_H, ‖p − θ‖²_H, ‖θ̂ − p‖²_H and the slack of
+  `ConeProjection.hsq_proj_add_le`. Page: per draw under the tables (valid tables only) and over
+  many draws per φ. Test: slack ≥ −10⁻⁶‖θ̂ − θ‖²_H over 320 fits (profile and true φ). **Seen**
+  (500 draws, five worlds): never negative, smallest relative slack 4·10⁻⁴; ratio projected /
+  unbiased quartiles 0.55 / 0.75 / 0.87, max 0.998.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort

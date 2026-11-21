@@ -512,6 +512,30 @@
     return lines.join('\n') + '\n';
   }
 
+  // ---------------------------------------------------------------- the H-norm check (world side)
+
+  /** The true parameters in the order of a basis list: A_ij, C_ij (i ≤ j), s²_j. Uses the truth. */
+  function truthTheta(world, list) {
+    const t = world.truth;
+    return list.map((b) => (b.kind === 's' ? t.s2[b.i] : t[b.kind][b.i][b.j]));
+  }
+
+  /**
+   * `Credibility.ConeProjection.hsq_proj_add_le` for one draw: with p the H-projection of the
+   * unbiased θ̂ onto the valid tables (a convex set containing the true θ),
+   *   ‖p − θ‖²_H + ‖θ̂ − p‖²_H ≤ ‖θ̂ − θ‖²_H,   ‖v‖²_H = vᵀHv, H the MINQUE matrix.
+   * Returns the three terms and the slack ‖θ̂ − θ‖²_H − ‖p − θ‖²_H − ‖θ̂ − p‖²_H (≥ 0 up to the
+   * solver's tolerance). Needs a fit with `psd: true`. Holds for any φ̂ and any estimate.
+   */
+  function hNormCheck(world, f) {
+    if (!f.minq || !f.minq.proj) return null;
+    const { list, H, thetaHat, proj } = f.minq, th = truthTheta(world, list);
+    const hsq = (v) => v.reduce((a, x, k) => a + x * H[k].reduce((b, y, l) => b + y * v[l], 0), 0);
+    const unbiased = hsq(thetaHat.map((x, k) => x - th[k])), projected = hsq(proj.map((x, k) => x - th[k]));
+    const moved = hsq(thetaHat.map((x, k) => x - proj[k]));
+    return { unbiased, projected, moved, slack: unbiased - projected - moved };
+  }
+
   // ---------------------------------------------------------------- the premium: next 12 months
 
   /**
@@ -601,8 +625,10 @@
     const J = data.J, A = J ? Array.from({ length: J }, () => new Array(J).fill(NaN)) : [];
     const C = A.map((row) => row.slice()), s2 = new Array(J).fill(NaN);
     if (mq.singular) warnings.push({ code: 'singular', text: 'The MINQUE system is singular: the parameters are not all estimable from these data.', lean: 'Model.minque_det_ne_zero_iff' });
-    else {
+    let proj = null;
+    if (!mq.singular) {
       const th = o.psd ? constrainPSD(mq, J).theta : mq.theta;
+      if (o.psd) proj = th;
       mq.list.forEach((b, k) => {
       const v = th[k];
       if (b.kind === 's') s2[b.i] = v;
@@ -621,8 +647,10 @@
       { name: 'MINQUE for (γλλᵀ, C, s²) given φ̂, τ² dropped', badge: 'proved', lean: 'Factor.minque_ar1_two_years_unbiased' },
     ];
     if (o.psd) steps.push({ name: 'Constrained to valid tables (γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0): projection in the MINQUE metric', badge: 'not proved yet' });
-    return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
+    // The MINQUE system and both parameter vectors, for the H-norm check (`hNormCheck`).
+    const minq = mq.singular ? null : { list: mq.list, H: mq.H, thetaHat: mq.theta, proj };
+    return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps, minq };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck };
 });
