@@ -110,6 +110,36 @@
     return M.map((row, i) => row[i]).sort((a, b) => a - b);
   }
 
+  /** Eigen-decomposition of a symmetric matrix (cyclic Jacobi): values and unit vectors (columns of V). */
+  function eigSymVec(A) {
+    const n = A.length, M = A.map((row) => row.slice()), V = A.map((_, i) => A.map((__, j) => (i === j ? 1 : 0)));
+    for (let sweep = 0; sweep < 100; sweep++) {
+      let off = 0;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += M[p][q] * M[p][q];
+      if (off < 1e-30) break;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+        if (Math.abs(M[p][q]) < 1e-300) continue;
+        const th = (M[q][q] - M[p][p]) / (2 * M[p][q]);
+        const t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th * th + 1));
+        const c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+        for (let k = 0; k < n; k++) { const a = M[k][p], b = M[k][q]; M[k][p] = c * a - sn * b; M[k][q] = sn * a + c * b; }
+        for (let k = 0; k < n; k++) { const a = M[p][k], b = M[q][k]; M[p][k] = c * a - sn * b; M[q][k] = sn * a + c * b; }
+        for (let k = 0; k < n; k++) { const a = V[k][p], b = V[k][q]; V[k][p] = c * a - sn * b; V[k][q] = sn * a + c * b; }
+      }
+    }
+    return { values: M.map((row, i) => row[i]), V };
+  }
+
+  /** The nearest PSD matrix in the Frobenius norm: negative eigenvalues set to 0. */
+  function clipPSD(T) {
+    const { values, V } = eigSymVec(T), n = T.length;
+    return T.map((_, i) => T.map((__, j) => {
+      let s = 0;
+      for (let k = 0; k < n; k++) if (values[k] > 0) s += values[k] * V[i][k] * V[j][k];
+      return s;
+    }));
+  }
+
   // ---------------------------------------------------------------- world
 
   const DEFAULTS = {
@@ -324,6 +354,39 @@
     return finish(list, H, qv);
   }
 
+  /**
+   * MINQUE constrained to valid tables: γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0. MINQUE given φ minimises
+   * θᵀHθ − 2qᵀθ (least squares of rrᵀ on the RVₖR), so the constrained fit minimises the same over
+   * the cone, i.e. projects the unbiased θ̂ onto the cone in the H-metric (Pukelsheim 1981: a
+   * projection in parameter space; Hartung 1981). Within one block (A, C or s²) H is a constant
+   * times the Frobenius weights (1 on the diagonal, 2 off it), so a block update is the nearest
+   * PSD matrix to the block's unconstrained target (eigenvalues clipped at 0), and for s² a clip at
+   * 0. Cycling the blocks converges to the minimum (a convex quadratic over a product of convex
+   * sets). Biased (unbiased nonnegative estimators do not exist in general, LaMotte 1973); not proved.
+   */
+  function constrainPSD(mq, J) {
+    const { list, H, q } = mq, K = list.length;
+    const blocks = ['A', 'C', 's'].map((kind) => list.map((b, k) => (b.kind === kind ? k : -1)).filter((k) => k >= 0));
+    const theta = mq.theta ? mq.theta.slice() : new Array(K).fill(0);
+    const obj = (th) => { let v = 0; for (let k = 0; k < K; k++) { let h = 0; for (let l = 0; l < K; l++) h += H[k][l] * th[l]; v += th[k] * h - 2 * q[k] * th[k]; } return v; };
+    let prev = Infinity, sweeps = 0;
+    for (; sweeps < 5000; sweeps++) {
+      blocks.forEach((ks, bi) => {
+        const inB = new Set(ks);
+        const T = ks.map((k) => { let g = q[k]; for (let l = 0; l < K; l++) if (!inB.has(l)) g -= H[k][l] * theta[l]; return g / H[k][k]; });
+        if (bi === 2) { ks.forEach((k, a) => { theta[k] = Math.max(T[a], 0); }); return; }
+        const M = Array.from({ length: J }, () => new Array(J).fill(0));
+        ks.forEach((k, a) => { const b = list[k]; M[b.i][b.j] = T[a]; M[b.j][b.i] = T[a]; });
+        const P = clipPSD(M);
+        ks.forEach((k) => { const b = list[k]; theta[k] = P[b.i][b.j]; });
+      });
+      const v = obj(theta);
+      if (prev - v <= 1e-12 * Math.abs(v)) break;
+      prev = v;
+    }
+    return { theta, sweeps, objective: obj(theta) };
+  }
+
   /** Pooled year-on-year cross-products at lag h over cohort pairs i ≠ j (Lean `Factor.yoy_unbiased_factor`). */
   function yoyPooled(data, h) {
     const { J, Y, X } = data, T = 12 * Y;
@@ -450,6 +513,7 @@
    * The fit: φ̂ from the data, then MINQUE given φ̂. Gets the data table and nothing else.
    * opts.phiMethod: 'profile' (default), 'moment' (year-on-year cross-products) or 'index' (the
    * external index, when the data carry one); opts.phi fixes φ (the oracle, for comparison only).
+   * opts.psd: constrain the tables to be valid covariances (`constrainPSD`); default unbiased.
    */
   function fit(data, opts) {
     const o = opts || {};
@@ -464,11 +528,14 @@
     const J = data.J, A = J ? Array.from({ length: J }, () => new Array(J).fill(NaN)) : [];
     const C = A.map((row) => row.slice()), s2 = new Array(J).fill(NaN);
     if (mq.singular) warnings.push({ code: 'singular', text: 'The MINQUE system is singular: the parameters are not all estimable from these data.', lean: 'Model.minque_det_ne_zero_iff' });
-    else mq.list.forEach((b, k) => {
-      const v = mq.theta[k];
+    else {
+      const th = o.psd ? constrainPSD(mq, J).theta : mq.theta;
+      mq.list.forEach((b, k) => {
+      const v = th[k];
       if (b.kind === 's') s2[b.i] = v;
       else { const M = b.kind === 'A' ? A : C; M[b.i][b.j] = v; M[b.j][b.i] = v; }
-    });
+      });
+    }
     const phiStep = method === 'given'
       ? { name: 'φ given (oracle: the true value, not a fit)', value: ph.phi, badge: 'not proved yet' }
       : method === 'index'
@@ -480,8 +547,9 @@
       phiStep,
       { name: 'MINQUE for (γλλᵀ, C, s²) given φ̂, τ² dropped', badge: 'proved', lean: 'Factor.minque_ar1_two_years_unbiased' },
     ];
+    if (o.psd) steps.push({ name: 'Constrained to valid tables (γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0): projection in the MINQUE metric', badge: 'not proved yet' });
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD };
 });

@@ -683,6 +683,13 @@ Write `Σ_h(i, j)` for the covariance of cards `i, j` at months `t, t + h`.
   estimating equation (consistent for second-moment parameters under any distribution): the
   app's φ̂ from an external index (`phiIndex`), better than lag-ratio moments when the index is
   noisy (the noise dilutes the low-lag autocorrelations).
+- Nonnegative MINQUE: Hartung (1981), *Nonnegative minimum biased invariant estimation in
+  variance component models*, Ann. Statist. 9(2), 278–292 (minimum over a cone of PSD forms;
+  minimum-norm among minimum-bias); Pukelsheim (1981, Math. Operationsforsch. Statist.): the
+  minimum-bias requirement is a projection in parameter space; LaMotte (1973) and Pukelsheim
+  (1981, Ann. Statist.): unbiased nonnegative estimators do not exist in general. Used: the
+  app's `constrainPSD`, the projection of the unbiased MINQUE onto {γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0} in
+  the MINQUE metric (matrix cones instead of one sign per component).
 
 **Public travel demand signals (Step 3b)**, adding to §10e: Tillväxtverket/SCB accommodation
 statistics (`NV1701`, PxWeb), monthly guest nights since 1978 by type and guest residence,

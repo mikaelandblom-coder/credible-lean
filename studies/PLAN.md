@@ -344,9 +344,24 @@ One chat per step; none needs Lean except step 5.
   appends the index as rows `cohort = index` (years ≤ 0 before the data).
   *Shrinking φ̂ away from 0 and 1: not built.* No hyperparameter-free rule found: Andrews (1993)
   median-unbiased and Sørbye et al. bias correction assume normal errors (distribution layer) and
-  simulate inside each fit (literature §10h). Next, if wanted: a joint fit of φ from data and
-  index (profile + index quasi-likelihood, weighted by their information), or a constrained (PSD)
-  MINQUE if the tables' sign errors matter.
+  simulate inside each fit (literature §10h).
+  *Joint φ from data and index: not built.* Upper bound by simulation (150 draws), mixing the
+  profile and index φ̂ with the best fixed weight (read off the truth, so unattainable): RMSE
+  0.161 → 0.148 (10-year index), 0.198 → 0.189 (5 years), 0.320 → 0.258 (5 years, noise ×4).
+  Estimated weights would get less, and the profile φ̂ has no cheap variance estimate. Revisit
+  only for short or noisy indices.
+  *Valid tables (2026-11-21, `constrainPSD`, page switch "Tables", default on):* MINQUE given φ
+  is least squares θᵀHθ − 2qᵀθ, so the constrained fit (γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0) is the
+  projection of the unbiased θ̂ onto that cone in the H-metric (Pukelsheim 1981, Hartung 1981).
+  Each block's Hessian is a constant times the Frobenius weights, so block coordinate descent
+  with eigenvalue clipping solves it exactly (about 30 sweeps; up to 5000 when φ̂ is at an edge,
+  ≤ 70 ms). Biased; not proved (a Lean candidate: the projection is unique and its MSE is at most
+  the unbiased one's in the H-norm, since the cone is convex and contains the truth). **Seen**
+  (100 draws, median relative error γλλᵀ / C / s²): defaults, profile φ̂: unbiased 10.5 / 7.6 /
+  2.2, valid 1.2 / 2.1 / 0.9; true φ: unbiased 1.1 / 5.8 / 2.2, valid 0.9 / 2.3 / 0.9. With
+  `Y = 4`: valid 0.6 / 1.5 / 0.8. So the constraint removes most of the price of φ̂ and most of
+  the noise of C; never γλλᵀ = 0 in these draws. Next: the premium step with the fitted tables
+  (the 12-month target, `Factor` ℓ and v), so the app compares predictions, not only tables.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per cohort pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-cohort `G` and of any per-cohort

@@ -174,3 +174,30 @@ test('toCSV appends the index with years before the data numbered 0, −1, …',
   assert.deepEqual(last.slice(0, 3), ['index', '2', '12']);
   assert.ok(Math.abs(+last[4] - d.index[d.index.length - 1]) < 1e-9);
 });
+
+test('constrainPSD: valid tables, the unbiased fit when it is valid, and a minimum over the cone', () => {
+  const r = M.rng(16), J = 4, mineig = (X) => Math.min(...M.eigSymVec(X).values);
+  let checked = 0, kept = 0;
+  for (let n = 0; n < 12; n++) {
+    const w = M.makeWorld({ J }), d = M.draw(w, r), mq = M.minque(d, 0.6), c = M.constrainPSD(mq, J);
+    const tab = (kind) => { const X = Array.from({ length: J }, () => new Array(J).fill(0)); mq.list.forEach((b, k) => { if (b.kind === kind) { X[b.i][b.j] = c.theta[k]; X[b.j][b.i] = c.theta[k]; } }); return X; };
+    assert.ok(mineig(tab('A')) > -1e-10 && mineig(tab('C')) > -1e-10, 'PSD');
+    mq.list.forEach((b, k) => { if (b.kind === 's') assert.ok(c.theta[k] >= 0, 's² ≥ 0'); });
+    // Valid unbiased fit: unchanged.
+    const valid = (() => { const u = { theta: mq.theta }; const t = (kind) => { const X = Array.from({ length: J }, () => new Array(J).fill(0)); mq.list.forEach((b, k) => { if (b.kind === kind) { X[b.i][b.j] = u.theta[k]; X[b.j][b.i] = u.theta[k]; } }); return X; };
+      return mineig(t('A')) >= 0 && mineig(t('C')) >= 0 && mq.list.every((b, k) => b.kind !== 's' || u.theta[k] >= 0); })();
+    if (valid) { kept++; mq.theta.forEach((x, k) => close(c.theta[k], x, 1e-8, 'unchanged')); }
+    // No feasible point nearby does better: shrink towards 0 or mix with the clipped unbiased fit.
+    const obj = (th) => th.reduce((v, x, k) => v + x * mq.H[k].reduce((h, y, l) => h + y * th[l], 0) - 2 * mq.q[k] * x, 0);
+    for (const a of [0.9, 0.99, 1.01]) assert.ok(obj(c.theta.map((x) => a * x)) >= c.objective - 1e-9 * Math.abs(c.objective), `scale ${a}`);
+    checked++;
+  }
+  assert.ok(checked === 12);
+  void kept;
+});
+
+test('fit with psd: valid tables and the extra step, badge not proved yet', () => {
+  const w = M.makeWorld({}), d = M.draw(w, M.rng(17)), f = M.fit(d, { psd: true });
+  assert.ok(Math.min(...M.eigSymVec(f.A).values) > -1e-10 && Math.min(...M.eigSymVec(f.C).values) > -1e-10 && f.s2.every((x) => x >= 0));
+  assert.ok(f.steps.some((s) => s.badge === 'not proved yet' && /valid tables/.test(s.name)));
+});
