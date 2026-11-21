@@ -436,4 +436,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    best predictor here, not a fitting error; a predictor restricted to nonnegative weights
    (like the thesis blend) gives this up.
 
+26. **The shock fit absorbs only part of a persistent factor (new; `notes/card-data.md`
+   Step 5, literature §10h item 3).** Fitting `Shock` (`Ĉ` from within-card residuals
+   `rⱼₜ = Xⱼₜ - Σₛaⱼₛ Xⱼₛ`) to data from the factor model: each residual product picks up
+   `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` (`Factor.res_unbiased`), so for `i ≠ j` `Shock.crossHat` is
+   unbiased for `Cᵢⱼ + λᵢλⱼΣₜ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)/Σₜdᵢⱼₜ` (`Factor.crossHat_factor_unbiased`).
+   Expected: biased for `C`. Found: also biased for the lag-0 covariance `C + γλλᵀ`
+   whenever the factor persists. Two months, equal weights, AR(1) `γφ^|t-s|`: `Ĉᵢⱼ`
+   estimates `Cᵢⱼ + (1 - φ)γλᵢλⱼ` (`Factor.crossHat_ar1_two`). The two ends: `φ = 0` gives
+   `C + γλλᵀ` (the factor is a rank-one shock, as in `obsCov_eq_shock_loadings`), and a
+   constant factor (`φ = 1`) gives `C` (demeaning removes it). Why: subtracting each card's
+   own mean removes the part of the factor shared by all its months. Practice: a shock fit
+   on data with a persistent demand factor gives a `K̂` that is neither the shock nor the
+   lag-0 covariance, and its lagged covariances (`ℓ` for the next year) are `0` where the
+   truth has `λλᵀΓ(h)`. Fit the factor (`FactorEstimation`, year-on-year cross-products)
+   rather than reading it off the shock.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

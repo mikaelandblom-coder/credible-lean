@@ -4407,6 +4407,86 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Theorem~\ref{thm:integral_quad_mean} for the true expectation.
 \end{proof}
 
+\begin{theorem}[(I4) Loadings from three cards, not from two]\label{thm:Factor_three}
+  \lean{Credibility.Factor.load_sq_of_three, Credibility.Factor.obsCovG_eq_of_trade,
+        Credibility.Factor.exTwo, Credibility.Factor.two_cards_not_identified}
+  \leanok
+  \uses{thm:Factor_lagged}
+  For distinct cards $i, j, k$ with $\lambda_j, \lambda_k \ne 0$ and $t \ne s$,
+  $\Sigma(i,j)\Sigma(i,k)/\Sigma(j,k) = \lambda_i^2\Gamma_{ts}$ (Anderson--Rubin). With two
+  cards this fails: models that agree in $\lambda_i\lambda_j$ ($i \ne j$) and in
+  $G_i + \lambda_i^2\Gamma$ have the same table; loadings $(2, \tfrac12)$ with $G = (0, \tfrac34 I)$
+  and loadings $(1, 1)$ with $G = (3I, 0)$, $\Gamma = I$, are an example.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_lagged}
+  The three entries are $\lambda_i\lambda_j\Gamma_{ts}$, $\lambda_i\lambda_k\Gamma_{ts}$,
+  $\lambda_j\lambda_k\Gamma_{ts}$ (Theorem~\ref{thm:Factor_lagged}). For the trade, compare the
+  table entry by entry.
+\end{proof}
+
+\begin{theorem}[(I5) An AR(1) factor from its cross-moments]\label{thm:Factor_ar1_id}
+  \lean{Credibility.Factor.obsCovG_ar1, Credibility.Factor.obsCovG_ar1_lag0,
+        Credibility.Factor.ar1_identified, Credibility.Factor.factorToShock,
+        Credibility.Factor.ar1_zero_eq_shock}
+  \leanok
+  \uses{thm:Factor_lagged, thm:Factor_lag0}
+  Let $\Gamma_{ts} = \gamma\varphi^{|t-s|}$ and $i \ne j$. Then
+  $\Sigma_h(i,j) = \gamma\lambda_i\lambda_j\varphi^h$ for $h \ge 1$ and
+  $\Sigma_0(i,j) = \gamma\lambda_i\lambda_j + C_{ij}$, so $\Sigma_2 = \varphi\Sigma_1$; if
+  $\varphi \ne 0$ and $\gamma\lambda_i\lambda_j \ne 0$, then $\varphi = \Sigma_2/\Sigma_1$,
+  $\gamma\lambda_i\lambda_j = \Sigma_1^2/\Sigma_2$ and $C_{ij} = \Sigma_0 - \Sigma_1^2/\Sigma_2$.
+  With $\varphi = 0$ the table is that of the shock $C + \gamma\lambda\lambda^\top$ without a
+  factor: nothing separates them.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_lagged, thm:Factor_lag0}
+  Theorem~\ref{thm:Factor_lagged} and the definition of $\Gamma$; for $\varphi = 0$,
+  Theorem~\ref{thm:Factor_lag0} with $\gamma' = 0$.
+\end{proof}
+
+\begin{theorem}[The shock estimators under a factor]\label{thm:Factor_shock_bias}
+  \lean{Credibility.Factor.resQuad, Credibility.Factor.res_unbiased,
+        Credibility.Factor.crossHat_factor_unbiased}
+  \leanok
+  \uses{def:Shock_estimators, def:Factor_yoy}
+  For the within-card residuals of Definition~\ref{def:Shock_estimators} under the factor
+  table, $\mathbb E[r_{it}r_{jt}]$ is the shock value of Lemma~\ref{lem:Shock_unbiased_res}
+  plus $\lambda_i\lambda_j(e_t - a_i)^\top\Gamma(e_t - a_j)$ plus, for $i = j$,
+  $(e_t - a_i)^\top G_i(e_t - a_i)$. So for $i \ne j$, $\hat C_{ij}$ is unbiased for
+  $C_{ij} + \lambda_i\lambda_j\sum_t(e_t - a_i)^\top\Gamma(e_t - a_j)/\sum_t d_{ijt}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Shock_unbiased_res, lem:unbiased_linear}
+  Split the table into factor, shock and per-card parts. The shock part of the expectation
+  is the value of Lemma~\ref{lem:Shock_unbiased_res}, since an estimator has one expectation
+  (Lemma~\ref{lem:unbiased_linear}); the other parts are the quadratic forms in
+  $e_t - a_i$, $e_t - a_j$. Then sum over $t$.
+\end{proof}
+
+\begin{theorem}[Finding 26: the shock fit absorbs only part of the factor]\label{thm:Factor_crossHat_ar1}
+  \lean{Credibility.Factor.crossHat_ar1_two}
+  \leanok
+  \uses{thm:Factor_shock_bias}
+  Two months, equal weights $a_{jt} = \tfrac12$, AR(1) $\Gamma_{ts} = \gamma\varphi^{|t-s|}$:
+  $\hat C_{ij}$ ($i \ne j$) is unbiased for $C_{ij} + (1-\varphi)\gamma\lambda_i\lambda_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_bias}
+  $\sum_t d_{ijt} = 1$ and $\sum_t (e_t - a)^\top\Gamma(e_t - a) = \gamma(1-\varphi)$.
+\end{proof}
+
+\begin{remark}[Finding 26]\label{rem:factor_shock_bias}
+  For $0 < \varphi < 1$ and $\gamma\lambda_i\lambda_j \ne 0$, the shock fit's $\hat C_{ij}$ is
+  unbiased neither for $C_{ij}$ nor for the lag-$0$ covariance $C_{ij} + \gamma\lambda_i\lambda_j$:
+  demeaning each card removes the part of the factor its months share. The ends are
+  $\varphi = 0$ (a rank-one shock, $C + \gamma\lambda\lambda^\top$) and a constant factor ($C$).
+\end{remark}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

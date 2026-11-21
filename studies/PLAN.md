@@ -292,6 +292,10 @@ One chat per step; none needs Lean except step 5.
   calendar season). Report loadings normalised to exposure-weighted mean `1` (`blup_rescale`:
   presentation only); with a stationary `Γ` the app need not split lag-0 covariance between
   shock and factor (`blup_eq_of_lag0`), so show `C + γλλᵀ` as one matrix.
+  2026-11-21: individual loadings need three cards (`load_sq_of_three`); with two the app
+  should report only `λ₁λ₂` (`two_cards_not_identified`). `φ̂ = Σ₂/Σ₁` from pooled
+  cross-moments (`ar1_identified`). Finding 26: the world-vs-fit comparison should show that
+  a shock-only fit on factor data misreads `C` (`crossHat_ar1_two`: `C + (1 - φ)γλλᵀ`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): the fit switch "latent factor over
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true

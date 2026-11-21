@@ -20,7 +20,9 @@ voice, then trim towards 8 pages.
   of two cards at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   card means and seasons; the shock and the factor's lag-0 share need not be split"
   (`Credibility.Factor.yoy_unbiased_factor`, `Credibility.Factor.blup_eq_of_lag0`). Goes with
-  the factor entry once the fit is complete.
+  the factor entry once the fit is complete. Also "watch out: a shock-only fit on data with a
+  persistent factor estimates `C + (1 - φ)γλλᵀ`" (Finding 26, `Credibility.Factor.crossHat_ar1_two`)
+  and "loadings need three cards" (`Credibility.Factor.load_sq_of_three`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
   observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch

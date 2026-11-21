@@ -26,6 +26,13 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   `s = t + h`, `v = s - 12` and a stationary `Γ` this is `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))`
   for `h ≥ 1`, `h ≠ 12`. Pooled over months: `yoyPooled_unbiased`; the true expectation for
   random cells (`Cells.integral_yoy`).
+* **(I4) Three cards** (`load_sq_of_three`): `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ`; with two cards a
+  loading trades against per-card dynamics (`obsCovG_eq_of_trade`, `two_cards_not_identified`).
+* **(I5) AR(1)** (`ar1_identified`): `Σ₂ = φΣ₁` across cards, so `φ`, `γλᵢλⱼ` and `Cᵢⱼ` are read off
+  when `φ ≠ 0`; `φ = 0` is the shock `C + γλλᵀ` (`ar1_zero_eq_shock`).
+* **The shock fit under a factor** (Finding 26, `res_unbiased`, `crossHat_factor_unbiased`,
+  `crossHat_ar1_two`): within-card residuals keep `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)`; with two months
+  and AR(1), `Shock.crossHat` estimates `C + (1 - φ)γλλᵀ`, neither `C` nor `C + γλλᵀ`.
 -/
 
 open Finset Matrix
@@ -247,6 +254,238 @@ theorem integral_yoy [Fintype J] [Fintype T] (X : Cells (M.obsCovG G) D β P) {i
     fun p q => X.cov p q
 
 end Cells
+
+/-! ### (I4) Individual loadings need three cards -/
+
+section Loadings
+
+variable (G : J → Matrix T T ℝ)
+
+/-- **(I4) Three cards identify a loading**: for distinct cards `i, j, k` with `λⱼ, λₖ ≠ 0` and
+months `t ≠ s`, `Σ(i,j)Σ(i,k)/Σ(j,k) = λᵢ²Γₜₛ` (Anderson–Rubin), whatever `C`, `s²`, `τ²`, `G`. -/
+theorem load_sq_of_three {i j k : J} (hij : i ≠ j) (hik : i ≠ k) (hjk : j ≠ k)
+    (hj : M.load j ≠ 0) (hk : M.load k ≠ 0) {t s : T} (hts : t ≠ s) :
+    M.obsCovG G i j t s * M.obsCovG G i k t s / M.obsCovG G j k t s
+      = M.load i ^ 2 * M.Γ t s := by
+  rw [M.obsCovG_of_ne G hij hts, M.obsCovG_of_ne G hik hts, M.obsCovG_of_ne G hjk hts]
+  by_cases hΓ : M.Γ t s = 0
+  · simp [hΓ]
+  · field_simp
+
+/-- **Trading a loading against per-card dynamics**: two models that differ only in their
+loadings and per-card dynamics have the same table if the cross products `λᵢλⱼ` (`i ≠ j`) agree
+and `Gᵢ + λᵢ²Γ` agrees for every card. -/
+theorem obsCovG_eq_of_trade {M' : Factor J T} {G' : J → Matrix T T ℝ} (hτ : M'.τ2 = M.τ2)
+    (hC : M'.C = M.C) (hs : M'.s2 = M.s2) (hw : M'.w = M.w) (hΓ : M'.Γ = M.Γ)
+    (hcross : ∀ i j, i ≠ j → M'.load i * M'.load j = M.load i * M.load j)
+    (hG : ∀ i t s, G' i t s + M'.load i ^ 2 * M.Γ t s = G i t s + M.load i ^ 2 * M.Γ t s)
+    (i j : J) (t s : T) : M'.obsCovG G' i j t s = M.obsCovG G i j t s := by
+  simp only [obsCovG, obsCov, Shock.obsCov, toShock, hτ, hC, hs, hw, hΓ]
+  by_cases hij : i = j
+  · subst hij
+    have := hG i t s
+    simp only [ite_true]
+    nlinarith [this]
+  · simp only [hij, ite_false, hcross i j hij]
+
+/-- Two cards, two months, `Γ = I`, no shock, unit noise and `τ² = 1`; loadings `l`. -/
+noncomputable def exTwo (l : Fin 2 → ℝ) : Factor (Fin 2) (Fin 2) where
+  τ2 := 1
+  C := 0
+  s2 := fun _ => 1
+  w := fun _ _ => 1
+  load := l
+  Γ := 1
+  τ2_pos := one_pos
+  C_posSemidef := PosSemidef.zero
+  s2_pos := fun _ => one_pos
+  w_pos := fun _ _ => one_pos
+  Γ_posSemidef := PosSemidef.one
+
+/-- **(I4) Two cards do not identify the loadings**: loadings `(2, 1/2)` with per-card dynamics
+`(0, (3/4)I)` and loadings `(1, 1)` with `(3I, 0)` (all `⪰ 0`) give the same table, but
+`λ₀² = 4` against `1`. -/
+theorem two_cards_not_identified :
+    (∀ j, (![0, (3 / 4 : ℝ) • 1] : Fin 2 → Matrix (Fin 2) (Fin 2) ℝ) j |>.PosSemidef) ∧
+    (∀ j, (![(3 : ℝ) • 1, 0] : Fin 2 → Matrix (Fin 2) (Fin 2) ℝ) j |>.PosSemidef) ∧
+    (∀ i j t s, (exTwo ![1, 1]).obsCovG ![(3 : ℝ) • 1, 0] i j t s
+      = (exTwo ![2, 1 / 2]).obsCovG ![0, (3 / 4 : ℝ) • 1] i j t s) ∧
+    (exTwo ![2, 1 / 2]).load 0 ^ 2 ≠ (exTwo ![1, 1]).load 0 ^ 2 := by
+  refine ⟨fun j => ?_, fun j => ?_, obsCovG_eq_of_trade _ _ rfl rfl rfl rfl rfl ?_ ?_, ?_⟩
+  · fin_cases j
+    · exact PosSemidef.zero
+    · exact PosSemidef.one.smul (by norm_num)
+  · fin_cases j
+    · exact PosSemidef.one.smul (by norm_num)
+    · exact PosSemidef.zero
+  · intro i j hij
+    fin_cases i <;> fin_cases j <;> simp [exTwo] at hij ⊢
+  · intro i t s
+    fin_cases i <;> simp [exTwo, Matrix.one_apply] <;> split_ifs <;> norm_num
+  · simp [exTwo]; norm_num
+
+end Loadings
+
+/-! ### (I5) An AR(1) factor from its cross-moments -/
+
+section AR1
+
+variable {N : ℕ} (M : Factor J (Fin N)) (G : J → Matrix (Fin N) (Fin N) ℝ) {γ φ : ℝ}
+
+/-- Under an AR(1) factor, two different cards at lag `h = s - t ≥ 1` have covariance
+`λᵢλⱼγφʰ`. -/
+theorem obsCovG_ar1 (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) {t s : Fin N}
+    (hts : t < s) : M.obsCovG G i j t s = M.load i * M.load j * γ * φ ^ ((s : ℕ) - t) := by
+  rw [M.obsCovG_of_ne G hij hts.ne, hΓ, ar1, of_apply]
+  simp only [show (t : ℕ) ≤ s from Fin.le_def.mp hts.le, ite_true]
+  ring
+
+/-- At lag `0`, two different cards have covariance `γλᵢλⱼ + Cᵢⱼ`. -/
+theorem obsCovG_ar1_lag0 (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) (t : Fin N) :
+    M.obsCovG G i j t t = M.load i * M.load j * γ + M.C i j := by
+  simp [obsCovG, obsCov, Shock.obsCov, toShock, hΓ, ar1, hij]
+
+/-- **(I5) `φ`, `γλᵢλⱼ` and `Cᵢⱼ` from the cross-moments**: with `N ≥ 3` months and two
+different cards, `S₂ = φS₁` (lags `2` and `1` from month `0`); if `φ ≠ 0` and `γλᵢλⱼ ≠ 0`,
+then `φ = S₂/S₁`, `γλᵢλⱼ = S₁²/S₂` and `Cᵢⱼ = S₀ - S₁²/S₂`. -/
+theorem ar1_identified (hN : 3 ≤ N) (hΓ : M.Γ = ar1 N γ φ) {i j : J} (hij : i ≠ j) :
+    let S₀ := M.obsCovG G i j ⟨0, by omega⟩ ⟨0, by omega⟩
+    let S₁ := M.obsCovG G i j ⟨0, by omega⟩ ⟨1, by omega⟩
+    let S₂ := M.obsCovG G i j ⟨0, by omega⟩ ⟨2, by omega⟩
+    S₂ = φ * S₁ ∧ (φ ≠ 0 → M.load i * M.load j * γ ≠ 0 →
+      φ = S₂ / S₁ ∧ M.load i * M.load j * γ = S₁ ^ 2 / S₂ ∧ M.C i j = S₀ - S₁ ^ 2 / S₂) := by
+  intro S₀ S₁ S₂
+  have h1 : S₁ = M.load i * M.load j * γ * φ :=
+    (M.obsCovG_ar1 G hΓ hij (by simp [Fin.lt_def])).trans (by simp)
+  have h2 : S₂ = M.load i * M.load j * γ * φ ^ 2 :=
+    (M.obsCovG_ar1 G hΓ hij (by simp [Fin.lt_def])).trans (by simp)
+  have h0 : S₀ = M.load i * M.load j * γ + M.C i j := M.obsCovG_ar1_lag0 G hΓ hij _
+  refine ⟨by rw [h1, h2]; ring, fun hφ hk => ?_⟩
+  have hk' := hk
+  simp only [mul_ne_zero_iff] at hk'
+  obtain ⟨⟨hi, hj⟩, hγ⟩ := hk'
+  rw [h0, h1, h2]
+  refine ⟨?_, ?_, ?_⟩ <;> field_simp
+  ring
+
+omit [DecidableEq J] in
+/-- The same model with the factor moved into the shock: `C + γλλᵀ` and no factor. -/
+noncomputable def factorToShock [Fintype J] {T : Type*} (M : Factor J T) (γ : ℝ) (hγ : 0 ≤ γ) :
+    Factor J T :=
+  { M with
+    C := M.C + γ • vecMulVec M.load M.load
+    Γ := 0
+    C_posSemidef := M.C_posSemidef.add ((posSemidef_loadings M.load).smul hγ)
+    Γ_posSemidef := PosSemidef.zero }
+
+/-- **(I5) `φ = 0` does not separate**: an AR(1) factor with `φ = 0` is independent months, and
+the table is that of the same model with shock `C + γλλᵀ` and no factor (`obsCov_eq_of_lag0`). -/
+theorem ar1_zero_eq_shock [Fintype J] (hΓ : M.Γ = ar1 N γ 0) (hγ : 0 ≤ γ) (i j : J)
+    (t s : Fin N) : M.obsCov i j t s = (M.factorToShock γ hγ).obsCov i j t s := by
+  refine M.obsCov_eq_of_lag0 (M' := M.factorToShock γ hγ) (γ := γ) (γ' := 0) rfl rfl rfl (fun _ => by simp [hΓ, ar1])
+    (fun _ => rfl) (fun i' j' => by
+      simp only [factorToShock, Matrix.add_apply, Matrix.smul_apply, vecMulVec_apply,
+        smul_eq_mul]
+      ring) (fun i' j' t' s' hts => ?_) i j t s
+  have hv := Fin.val_ne_of_ne hts
+  simp only [factorToShock, hΓ, ar1, of_apply, Matrix.zero_apply, mul_zero]
+  split_ifs with h
+  · rw [zero_pow (by omega), mul_zero, mul_zero]
+  · rw [zero_pow (by omega), mul_zero, mul_zero]
+
+end AR1
+
+/-! ### The shock estimators under a factor -/
+
+section ShockBias
+
+variable [Fintype J] [Fintype T] (G : J → Matrix T T ℝ) {a : J → T → ℝ}
+
+variable (a) in
+/-- `(eₜ - aᵢ)ᵀA(eₜ - aⱼ)`: what a matrix `A` over months contributes to `E[rᵢₜrⱼₜ]` for the
+within-card residuals `rⱼₜ = Xⱼₜ - Σₛaⱼₛ Xⱼₛ`. -/
+def resQuad (A : Matrix T T ℝ) (i j : J) (t : T) : ℝ :=
+  ∑ t', ∑ s', ((if t' = t then 1 else 0) - a i t') * ((if s' = t then 1 else 0) - a j s') * A t' s'
+
+/-- **Residual products under a factor**: `E[rᵢₜrⱼₜ]` is the `Shock` value
+`dᵢⱼₜCᵢⱼ + δᵢⱼhᵢₜsᵢ²` plus `λᵢλⱼ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ)` plus, on one card, `(eₜ - aᵢ)ᵀGᵢ(eₜ - aᵢ)`:
+within-card demeaning removes only the part of the factor that is constant over the months. -/
+theorem res_unbiased (ha : ∀ j, ∑ t, a j t = 1) (i j : J) (t : T) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.res a X i t * Shock.res a X j t)
+      (Shock.d a i j t * M.C i j + (if i = j then M.s2 i * M.toShock.h a i t else 0)
+        + M.load i * M.load j * resQuad a M.Γ i j t
+        + (if i = j then resQuad a (G i) i i t else 0)) := by
+  let c : J → T → ℝ := fun k t' => (if t' = t then 1 else 0) - a k t'
+  let ℓ : J → J × T → ℝ := fun k p => if p.1 = k then c k p.2 else 0
+  have hlin : ∀ k (X : J × T → ℝ), ∑ p, ℓ k p * X p = Shock.res a X k t := fun k X => by
+    rw [Fintype.sum_prod_type, sum_eq_single k (fun l _ hl => by simp [ℓ, hl]) (by simp)]
+    simp [ℓ, c, Shock.res, sub_mul, sum_sub_distrib]
+  have hsum : ∑ p, ℓ i p = 0 := by
+    have := hlin i (fun _ => 1)
+    simp only [mul_one] at this
+    rw [this, Shock.res]; simp [ha]
+  have hpair : ∀ F : J × T → J × T → ℝ,
+      ∑ p, ∑ q, ℓ i p * ℓ j q * F p q = ∑ t', ∑ s', c i t' * c j s' * F (i, t') (j, s') := by
+    intro F
+    rw [Fintype.sum_prod_type, sum_eq_single i (fun k _ hk => by simp [ℓ, hk]) (by simp)]
+    refine sum_congr rfl fun t' _ => ?_
+    rw [Fintype.sum_prod_type, sum_eq_single j (fun l _ hl => by simp [ℓ, hl]) (by simp)]
+    simp [ℓ]
+  -- The shock part is the `Shock` value: one estimator has one expectation.
+  have hshock : ∑ p, ∑ q, ℓ i p * ℓ j q * M.toShock.cov p q
+      = Shock.d a i j t * M.C i j + (if i = j then M.s2 i * M.toShock.h a i t else 0) :=
+    Model.UnbiasedCov.unique M.toShock.cov_symm
+      ((Model.unbiasedCov_mul M.toShock.cov (ℓ i) (ℓ j) hsum).congr
+        (fun X => by rw [hlin, hlin]) rfl)
+      (M.toShock.unbiased_res ha i j t)
+  refine (Model.unbiasedCov_mul (M.covG G) (ℓ i) (ℓ j) hsum).congr
+    (fun X => by rw [hlin, hlin]) ?_
+  have hsplit : ∀ p q, M.covG G p q = M.load p.1 * M.load q.1 * M.Γ p.2 q.2
+      + M.toShock.cov p q + (if p.1 = q.1 then G p.1 p.2 q.2 else 0) := fun p q => by
+    simp [covG, obsCovG, obsCov, Shock.cov]
+  have hfac : ∑ t', ∑ s', c i t' * c j s' * (M.load i * M.load j * M.Γ t' s')
+      = M.load i * M.load j * resQuad a M.Γ i j t := by
+    simp only [resQuad, c, mul_sum]
+    exact sum_congr rfl fun t' _ => sum_congr rfl fun s' _ => by ring
+  have hcard : ∑ t', ∑ s', c i t' * c j s' * (if i = j then G i t' s' else 0)
+      = if i = j then resQuad a (G i) i i t else 0 := by
+    split_ifs with hij
+    · subst hij; rfl
+    · simp
+  simp only [hsplit, mul_add, sum_add_distrib, hshock, hpair]
+  rw [hfac, hcard]
+  ring
+
+/-- **`Shock.crossHat` under a factor** (`i ≠ j`): unbiased for
+`Cᵢⱼ + λᵢλⱼ Σₜ(eₜ - aᵢ)ᵀΓ(eₜ - aⱼ) / Σₜdᵢⱼₜ`. With independent months `Γ = γI` the ratio is
+`γ` (the factor is a rank-one shock); with a constant factor it is `0`. -/
+theorem crossHat_factor_unbiased (ha : ∀ j, ∑ t, a j t = 1) {i j : J} (hij : i ≠ j)
+    (hd : ∑ t, Shock.d a i j t ≠ 0) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.crossHat a X i j)
+      (M.C i j + M.load i * M.load j * (∑ t, resQuad a M.Γ i j t) / ∑ t, Shock.d a i j t) := by
+  refine (Model.UnbiasedCov.const_mul (∑ t, Shock.d a i j t)⁻¹
+    (Model.UnbiasedCov.sum univ fun t _ => M.res_unbiased G ha i j t)).congr
+    (fun X => by rw [Shock.crossHat, div_eq_inv_mul]) ?_
+  simp only [hij, ite_false, add_zero, sum_add_distrib, ← sum_mul, ← mul_sum]
+  field_simp
+
+/-- **Finding 26: the shock fit absorbs only part of the factor.** Two months, equal weights
+`aⱼₜ = 1/2`, an AR(1) factor `γφ^|t-s|`: `Shock.crossHat` is unbiased for
+`Cᵢⱼ + (1 - φ)γλᵢλⱼ`, so for `0 < φ < 1` (and `γλᵢλⱼ ≠ 0`) neither for `Cᵢⱼ` nor for the lag-0
+covariance `Cᵢⱼ + γλᵢλⱼ`. -/
+theorem crossHat_ar1_two (M : Factor J (Fin 2)) (G : J → Matrix (Fin 2) (Fin 2) ℝ) {γ φ : ℝ}
+    (hΓ : M.Γ = ar1 2 γ φ) {i j : J} (hij : i ≠ j) :
+    Model.UnbiasedCov (M.covG G) (fun X => Shock.crossHat (fun _ _ => 1 / 2) X i j)
+      (M.C i j + (1 - φ) * γ * (M.load i * M.load j)) := by
+  have hd : ∑ t, Shock.d (fun (_ : J) (_ : Fin 2) => (1 / 2 : ℝ)) i j t = 1 := by
+    simp [Shock.d]; norm_num
+  refine (M.crossHat_factor_unbiased G (fun j => by simp) hij
+    (by rw [hd]; norm_num)).congr (fun _ => rfl) ?_
+  rw [hd, hΓ]
+  simp [resQuad, Fin.sum_univ_two, ar1]
+  ring
+
+end ShockBias
 
 end Factor
 end Credibility
