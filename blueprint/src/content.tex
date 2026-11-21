@@ -4623,6 +4623,75 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   Expand $\sum_l\theta_lV_l$ entry by entry; then Theorem~\ref{thm:henderson_unbiased}.
 \end{proof}
 
+\begin{lemma}[When the Henderson system is nonsingular]\label{lem:henderson_singular}
+  \lean{Credibility.Model.hendersonMat_mulVec, Credibility.Model.hendersonMat_det_eq_zero,
+        Credibility.Model.hendersonMat_det_eq_zero_of_smul,
+        Credibility.Model.dotProduct_hendersonMat_self,
+        Credibility.Model.hendersonMat_self_det_ne_zero,
+        Credibility.Model.exists_hendersonMat_det_ne_zero_iff}
+  \leanok
+  \uses{def:henderson}
+  If $\sum_lc_lV_l = 0$ for some $c \ne 0$ (in particular if two basis tables are
+  proportional), $H$ is singular for every choice of forms. Conversely, if the $V_l$ are
+  linearly independent, the forms $Q_k = V_k$ give a nonsingular $H$ (the Gram matrix of the
+  tables). So some system is nonsingular iff the table determines $\theta$; invariance
+  $Q_kD = 0$ can only lose rank on top of this.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Hc)_k = \sum_{p,q}(Q_k)_{pq}(\sum_lc_lV_l)_{pq}$. With $Q = V$,
+  $c^\top Hc = \sum_{p,q}(\sum_lc_lV_l)_{pq}^2$, which vanishes only if $\sum_lc_lV_l = 0$.
+\end{proof}
+
+\begin{theorem}[Singular shape systems: constant volumes, independent months]\label{thm:Factor_henderson_singular}
+  \lean{Credibility.Factor.ShockPar, Credibility.Factor.shockBasis,
+        Credibility.Factor.shapeBasis_s2_eq_smul, Credibility.Factor.hendersonMat_shock_det_eq_zero,
+        Credibility.Factor.hendersonMat_shape_det_eq_zero_of_const,
+        Credibility.Factor.shapeBasis_one_inl, Credibility.Factor.hendersonMat_shape_one_det_eq_zero,
+        Credibility.Factor.shapeTable_one_eq, Credibility.Factor.shapeTable_symm,
+        Credibility.Factor.not_unbiased_shape_one, Credibility.Factor.not_unbiased_factor_of_indep}
+  \leanok
+  \uses{thm:Factor_henderson, lem:henderson_singular, thm:unbiased_mean, thm:Factor_ar1_id}
+  (1) If card $j$ has a constant volume $w_j$, its process-noise table is $1/w_j$ times its
+  shock variance table, so the system of the shock part ($A = 0$), and of the full shape, is
+  singular for every choice of forms: $s_j^2$ needs volume variation
+  (cf.\ Theorem~\ref{thm:Shock_not_unbiased}).
+  (2) With independent months $\Gamma_0 = I$ the tables of $A_{ij}$ and $C_{ij}$ coincide: the
+  system is singular, the table depends on $A$ and $C$ only through $A + C$, and no function of
+  the data is unbiased for $A_z$ for every parameter set, nor for $\gamma\lambda_i\lambda_j$ in
+  every factor model with $\Gamma = \gamma I$ when $\gamma\lambda_i\lambda_j \ne 0$
+  (the rank-one shock of Corollary~\ref{cor:Factor_shock_diag_indep}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular, thm:Factor_henderson, thm:unbiased_mean, thm:Factor_ar1_id}
+  (1) and the singularity in (2) by Lemma~\ref{lem:henderson_singular}. For the rest, the
+  parameter sets $(A, C)$ and $(0, A + C)$ (for the factor model: the model and its factor moved
+  into the shock) give the same symmetric table, and an estimator has one expectation under it.
+\end{proof}
+
+\begin{theorem}[Henderson III with per-card dynamics of known shape]\label{thm:Factor_hendersonG}
+  \lean{Credibility.Factor.ParG, Credibility.Factor.shapeTableG, Credibility.Factor.shapeBasisG,
+        Credibility.Factor.shapeParG, Credibility.Factor.shapeTableG_eq_linTable,
+        Credibility.Factor.henderson_shapeG_unbiased, Credibility.Factor.covG_eq_shapeTableG,
+        Credibility.Factor.henderson_factorG_unbiased,
+        Credibility.Factor.hendersonMat_shapeG_one_det_eq_zero}
+  \leanok
+  \uses{thm:Factor_henderson, lem:henderson_singular}
+  With per-card dynamics $G_j = g_jG_0$ of known shape $G_0$ and $\Gamma = \gamma\Gamma_0$, the
+  table adds $\delta_{ij}g_i(G_0)_{ts}$, one basis table $E_{jj}\otimes G_0$ per card. Henderson
+  III with invariant forms and a nonsingular system is unbiased for $\gamma\lambda_i\lambda_j$,
+  $C_{ij}$, $s_j^2$, $\tau^2$ and $g_j$ whatever the fixed effects. White noise $G_0 = I$ is the
+  shock variance table again: the system is singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_henderson, thm:henderson_unbiased, lem:henderson_singular}
+  Split the sum over the parameters into the shape part (Theorem~\ref{thm:Factor_henderson}) and
+  the per-card part; then Theorem~\ref{thm:henderson_unbiased}. For $G_0 = I$,
+  Lemma~\ref{lem:henderson_singular}.
+\end{proof}
+
 \chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
 % Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
 

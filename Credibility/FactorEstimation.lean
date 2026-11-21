@@ -48,6 +48,17 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   (`QₖD = 0`) and a nonsingular system `Hₖₗ = Σ QₖVₗ`, `θ̂ = H⁻¹(quad Qₖ X)ₖ` is unbiased for every
   `θ` and `β`; MINQUE's `RVₖR` are such forms. Given `Γ = γΓ₀` the factor table is linear in a
   symmetric `A = γλλᵀ`, `C`, `s²`, `τ²` (`covG_zero_eq_shapeTable`).
+* **When the system is nonsingular** (`Model.exists_hendersonMat_det_ne_zero_iff`): some forms
+  give `det H ≠ 0` iff the basis tables are linearly independent; a dependent basis is singular
+  for every choice of forms (`Model.hendersonMat_det_eq_zero`). So: a card with constant volume
+  makes the shock part singular, `sⱼ²` against `Cⱼⱼ` (`hendersonMat_shock_det_eq_zero`, cf.
+  `Shock.not_unbiased_s2_of_const`); independent months `Γ₀ = I` make `A` and `C` one table
+  (`hendersonMat_shape_one_det_eq_zero`), and no estimator separates them
+  (`not_unbiased_shape_one`, `not_unbiased_factor_of_indep`; cf. `CdiagHat_s2Hat_indep`).
+* **Per-card dynamics of known shape** `Gⱼ = gⱼG₀` (`covG_eq_shapeTableG`,
+  `henderson_factorG_unbiased`): one more basis table `Eⱼⱼ ⊗ G₀` per card; Henderson III is
+  unbiased for `gⱼ` too. White noise `G₀ = I` is the shock variance again
+  (`hendersonMat_shapeG_one_det_eq_zero`).
 -/
 
 open Finset Matrix
@@ -919,6 +930,77 @@ theorem henderson_unbiased {Q V : L → Matrix (J × T) (J × T) ℝ} {D : Matri
         exact sum_congr rfl fun m _ => by ring
     rw [h, mulVec_mulVec, hHi, nonsing_inv_mul _ hH, one_mulVec]
 
+
+/-! #### When is the system nonsingular? -/
+
+omit [DecidableEq L] in
+/-- `H` applied to a parameter vector `c` pairs each form with the table `Σₗ cₗVₗ`. -/
+lemma hendersonMat_mulVec (Q V : L → Matrix (J × T) (J × T) ℝ) (c : L → ℝ) :
+    hendersonMat Q V *ᵥ c = fun k => ∑ p, ∑ q, Q k p q * linTable V c p q := by
+  funext k
+  simp only [mulVec, dotProduct, hendersonMat, of_apply, linTable, mul_sum, sum_mul]
+  rw [sum_comm]
+  refine sum_congr rfl fun p _ => ?_
+  rw [sum_comm]
+  exact sum_congr rfl fun q _ => sum_congr rfl fun l _ => by ring
+
+/-- **A dependent basis makes the system singular, whatever the forms**: if `Σₗ cₗVₗ = 0` for
+some `c ≠ 0`, two parameter vectors `θ` and `θ + c` give the same table, and `Hc = 0`. -/
+theorem hendersonMat_det_eq_zero {Q V : L → Matrix (J × T) (J × T) ℝ} {c : L → ℝ} (hc : c ≠ 0)
+    (h : linTable V c = 0) : (hendersonMat Q V).det = 0 :=
+  exists_mulVec_eq_zero_iff.mp ⟨c, hc, by
+    rw [hendersonMat_mulVec, h]; funext k; simp⟩
+
+/-- **Two proportional basis tables make the system singular**: `V l' = a • V l`, `l ≠ l'`. -/
+theorem hendersonMat_det_eq_zero_of_smul {Q V : L → Matrix (J × T) (J × T) ℝ} {l l' : L}
+    (hl : l ≠ l') (a : ℝ) (h : V l' = a • V l) : (hendersonMat Q V).det = 0 := by
+  refine hendersonMat_det_eq_zero (c := Pi.single l' 1 - Pi.single l a) ?_ ?_
+  · intro h0
+    have := congrFun h0 l'
+    simp [hl.symm] at this
+  · funext p q
+    simp only [linTable, Pi.sub_apply, sub_mul, sum_sub_distrib, Pi.single_apply, ite_mul,
+      one_mul, zero_mul, sum_ite_eq', mem_univ, ite_true, h, Matrix.smul_apply, smul_eq_mul]
+    simp
+
+omit [DecidableEq L] in
+/-- `cᵀ H(V, V) c = Σₚq (Σₗ cₗVₗ)ₚq²`: with the basis tables themselves as forms, `H` is the
+Gram matrix of the tables. -/
+lemma dotProduct_hendersonMat_self (V : L → Matrix (J × T) (J × T) ℝ) (c : L → ℝ) :
+    c ⬝ᵥ (hendersonMat V V *ᵥ c) = ∑ p, ∑ q, linTable V c p q ^ 2 := by
+  rw [hendersonMat_mulVec]
+  simp only [dotProduct, mul_sum]
+  rw [sum_comm]
+  refine sum_congr rfl fun p _ => ?_
+  rw [sum_comm]
+  refine sum_congr rfl fun q _ => ?_
+  simp only [linTable, sq, sum_mul]
+  exact sum_congr rfl fun l _ => by ring
+
+/-- **Independent basis tables give a nonsingular system** with the tables as forms (`Qₖ = Vₖ`,
+the Gram matrix). -/
+theorem hendersonMat_self_det_ne_zero {V : L → Matrix (J × T) (J × T) ℝ}
+    (hV : ∀ c, linTable V c = 0 → c = 0) : (hendersonMat V V).det ≠ 0 := by
+  intro hdet
+  obtain ⟨c, hc, h0⟩ := exists_mulVec_eq_zero_iff.mpr hdet
+  apply hc (hV c _)
+  have hsq := dotProduct_hendersonMat_self V c
+  rw [h0, dotProduct_zero] at hsq
+  have hp := (sum_eq_zero_iff_of_nonneg fun p _ =>
+    sum_nonneg fun q _ => sq_nonneg (linTable V c p q)).mp hsq.symm
+  funext p q
+  have := (sum_eq_zero_iff_of_nonneg fun q _ => sq_nonneg (linTable V c p q)).mp
+    (hp p (mem_univ _)) q (mem_univ _)
+  simpa using this
+
+/-- **When some system is nonsingular**: there are forms with `det H ≠ 0` iff the basis tables
+are linearly independent (no `c ≠ 0` with `Σₗ cₗVₗ = 0`), i.e. iff the table determines `θ`.
+Invariance (`QₖD = 0`) can only lose rank on top of this. -/
+theorem exists_hendersonMat_det_ne_zero_iff {V : L → Matrix (J × T) (J × T) ℝ} :
+    (∃ Q, (hendersonMat Q V).det ≠ 0) ↔ ∀ c, linTable V c = 0 → c = 0 := by
+  refine ⟨fun ⟨Q, hQ⟩ c hc => ?_, fun hV => ⟨V, hendersonMat_self_det_ne_zero hV⟩⟩
+  by_contra hne
+  exact hQ (hendersonMat_det_eq_zero hne hc)
 variable [DecidableEq J] [DecidableEq T] [DecidableEq B]
 
 /-- The MINQUE projection for a prior table `W` (Rao 1971):
@@ -1046,6 +1128,265 @@ theorem henderson_factor_unbiased {Γ₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.�
       (by simp [shapePar])
 
 end GivenShape
+
+/-! ### When is the shape system nonsingular? -/
+
+section Singular
+
+variable {J T B : Type*} [DecidableEq J] [DecidableEq T] [Fintype J] [Fintype T]
+
+/-- The parameters of the shock part (`A = 0`): `C`, `s²`, `τ²`. -/
+abbrev ShockPar (J : Type*) := Sym2 J ⊕ J ⊕ Unit
+
+/-- The basis tables of the shock part: `Eᵢⱼ ⊗ I`, `Eⱼⱼ ⊗ diag(1/wⱼ)`, `I ⊗ 11ᵀ` (the shape basis
+without the factor). -/
+noncomputable def shockBasis (w : J → T → ℝ) : ShockPar J → Matrix (J × T) (J × T) ℝ :=
+  fun l => shapeBasis 0 w (.inr l)
+
+omit [Fintype J] [Fintype T] in
+/-- At a constant volume `wⱼ`, the process-noise table of card `j` is `1/wⱼ` times its shock
+variance table: `Eⱼⱼ ⊗ diag(1/wⱼ) = (1/wⱼ)(Eⱼⱼ ⊗ I)`. -/
+theorem shapeBasis_s2_eq_smul (Γ₀ : Matrix T T ℝ) {w : J → T → ℝ} {j : J} {c : ℝ}
+    (hw : ∀ t, w j t = c) :
+    shapeBasis Γ₀ w (.inr (.inr (.inl j))) = (1 / c) • shapeBasis Γ₀ w (.inr (.inl s(j, j))) := by
+  funext p q
+  rw [Matrix.smul_apply]
+  simp only [shapeBasis, smul_eq_mul, Sym2.eq_iff]
+  by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> by_cases ht : p.2 = q.2 <;>
+    simp [hp, hq, ht, hw]
+
+/-- **The shock part needs volume variation** (cf. `Shock.not_unbiased_s2_of_const`): if card
+`j` has the same volume in every month, the Henderson III system of the shock part (`A = 0`)
+is singular for every choice of forms, since `sⱼ²` and `Cⱼⱼ` enter the table only through
+`Cⱼⱼ + sⱼ²/wⱼ`. -/
+theorem hendersonMat_shock_det_eq_zero [Nonempty T] (w : J → T → ℝ) {j : J}
+    (hw : ∀ t t', w j t = w j t') (Q : ShockPar J → Matrix (J × T) (J × T) ℝ) :
+    (Model.hendersonMat Q (shockBasis w)).det = 0 := by
+  obtain ⟨t₀⟩ := (inferInstance : Nonempty T)
+  exact Model.hendersonMat_det_eq_zero_of_smul (l := .inl s(j, j)) (l' := .inr (.inl j))
+    (by simp) _ (shapeBasis_s2_eq_smul 0 fun t => hw t t₀)
+
+/-- With the factor too: a constant volume of one card makes the full shape system singular,
+whatever `Γ₀` and the forms. -/
+theorem hendersonMat_shape_det_eq_zero_of_const [Nonempty T] (Γ₀ : Matrix T T ℝ)
+    (w : J → T → ℝ) {j : J} (hw : ∀ t t', w j t = w j t') (Q : Par J → Matrix (J × T) (J × T) ℝ) :
+    (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 := by
+  obtain ⟨t₀⟩ := (inferInstance : Nonempty T)
+  exact Model.hendersonMat_det_eq_zero_of_smul (l := .inr (.inl s(j, j)))
+    (l' := .inr (.inr (.inl j))) (by simp) _ (shapeBasis_s2_eq_smul Γ₀ fun t => hw t t₀)
+
+omit [Fintype J] [Fintype T] in
+/-- With independent months `Γ₀ = I` the factor table of a pair is its shock table:
+`Eᵢⱼ ⊗ I` twice. -/
+theorem shapeBasis_one_inl (w : J → T → ℝ) (z : Sym2 J) :
+    shapeBasis (1 : Matrix T T ℝ) w (.inl z) = shapeBasis 1 w (.inr (.inl z)) := by
+  funext p q
+  simp [shapeBasis, Matrix.one_apply]
+
+/-- **Independent months: `A` and `C` are not separable by Henderson III** (the rank-one shock,
+cf. `CdiagHat_s2Hat_indep`): with `Γ₀ = I` the system is singular for every choice of forms. -/
+theorem hendersonMat_shape_one_det_eq_zero [Nonempty J] (w : J → T → ℝ)
+    (Q : Par J → Matrix (J × T) (J × T) ℝ) :
+    (Model.hendersonMat Q (shapeBasis (1 : Matrix T T ℝ) w)).det = 0 := by
+  obtain ⟨j⟩ := (inferInstance : Nonempty J)
+  exact Model.hendersonMat_det_eq_zero_of_smul (l := .inr (.inl s(j, j))) (l' := .inl s(j, j))
+    (by simp) 1 (by rw [one_smul, shapeBasis_one_inl])
+
+omit [Fintype J] [Fintype T] in
+/-- With `Γ₀ = I` the table depends on `A` and `C` only through `A + C`. -/
+theorem shapeTable_one_eq (w : J → T → ℝ) (A C : Sym2 J → ℝ) (s2 : J → ℝ) (τ2 : ℝ) :
+    shapeTable (1 : Matrix T T ℝ) w A C s2 τ2 = shapeTable 1 w 0 (A + C) s2 τ2 := by
+  funext p q
+  simp only [shapeTable, Matrix.one_apply, Pi.zero_apply, Pi.add_apply]
+  split_ifs <;> ring
+
+omit [Fintype J] [Fintype T] in
+/-- The shape table is symmetric when `Γ₀` is. -/
+theorem shapeTable_symm {Γ₀ : Matrix T T ℝ} (hΓ₀ : ∀ t s, Γ₀ s t = Γ₀ t s) (w : J → T → ℝ)
+    (A C : Sym2 J → ℝ) (s2 : J → ℝ) (τ2 : ℝ) (p q : J × T) :
+    shapeTable Γ₀ w A C s2 τ2 q p = shapeTable Γ₀ w A C s2 τ2 p q := by
+  simp only [shapeTable, Sym2.eq_swap (a := q.1), hΓ₀]
+  by_cases ht : p.2 = q.2 <;> by_cases hj : p.1 = q.1
+  · simp [ht, hj]
+  · simp [ht, hj, Ne.symm hj]
+  · simp [ht, hj, Ne.symm ht]
+  · simp [ht, hj, Ne.symm ht, Ne.symm hj]
+
+variable [Fintype B]
+
+/-- **Independent months: no estimator separates `A` from `C`.** With `Γ₀ = I`, no function of
+the data is unbiased for `A_z` for every parameter set (whatever the design): `(A, C)` and
+`(A + 1, C - 1)` give the same table. -/
+theorem not_unbiased_shape_one (w : J → T → ℝ) (D : Matrix (J × T) B ℝ) (z : Sym2 J)
+    (f : (J × T → ℝ) → ℝ) :
+    ¬ ∀ (A C : Sym2 J → ℝ) (s2 : J → ℝ) (τ2 : ℝ),
+      Model.UnbiasedMean (shapeTable (1 : Matrix T T ℝ) w A C s2 τ2) D f (A z) := by
+  intro H
+  have h0 := H 0 0 1 1
+  have h1 := H 1 (-1) 1 1
+  rw [shapeTable_one_eq] at h0 h1
+  simp only [add_neg_cancel, add_zero] at h0 h1
+  have := Model.UnbiasedMean.unique (shapeTable_symm (fun t s => by
+    simp [Matrix.one_apply, eq_comm]) w _ _ _ _) h0 h1
+  simp at this
+
+/-- **Independent months: the factor is not identified from the shock** (the factor-model form
+of `not_unbiased_shape_one`): if `M` has `Γ = γI` and `γλᵢλⱼ ≠ 0`, no function of the data is
+unbiased for `γ'λ'ᵢλ'ⱼ` in every model `M'` with `Γ' = γ'I`, whatever the design: moving the
+factor into the shock (`factorToShock`) keeps the table and gives `0`. -/
+theorem not_unbiased_factor_of_indep (M : Factor J T) [Nonempty T] {γ : ℝ}
+    (hΓ : M.Γ = γ • (1 : Matrix T T ℝ)) {i j : J} (hne : γ * (M.load i * M.load j) ≠ 0)
+    (D : Matrix (J × T) B ℝ) (f : (J × T → ℝ) → ℝ) :
+    ¬ ∀ (M' : Factor J T) (γ' : ℝ), M'.Γ = γ' • (1 : Matrix T T ℝ) →
+      Model.UnbiasedMean (M'.covG 0) D f (γ' * (M'.load i * M'.load j)) := by
+  intro H
+  obtain ⟨t₀⟩ := (inferInstance : Nonempty T)
+  have hγ : 0 ≤ γ := by simpa [hΓ] using M.Γ_posSemidef.diag_nonneg (i := t₀)
+  set M₀ := M.factorToShock γ hγ
+  have h1 := H M γ hΓ
+  have h0 := H M₀ 0 (by simp [M₀, factorToShock])
+  rw [M.covG_zero_eq_shapeTable hΓ, shapeTable_one_eq] at h1
+  rw [M₀.covG_zero_eq_shapeTable (Γ₀ := 1) (γ := 0) (by simp [M₀, factorToShock]),
+    shapeTable_one_eq] at h0
+  have hT : shapeTable (1 : Matrix T T ℝ) M₀.w 0
+      ((Sym2.lift ⟨fun i j => 0 * (M₀.load i * M₀.load j), fun i j => by ring⟩) +
+        Sym2.lift ⟨fun i j => M₀.C i j, fun i j => by
+          simpa using (M₀.C_posSemidef.1.apply i j).symm⟩) M₀.s2 M₀.τ2
+      = shapeTable 1 M.w 0
+      ((Sym2.lift ⟨fun i j => γ * (M.load i * M.load j), fun i j => by ring⟩) +
+        Sym2.lift ⟨fun i j => M.C i j, fun i j => by
+          simpa using (M.C_posSemidef.1.apply i j).symm⟩) M.s2 M.τ2 := by
+    congr 1
+    funext z
+    induction z using Sym2.ind with
+    | _ a b =>
+      simp only [Pi.add_apply, Sym2.lift_mk, M₀, factorToShock, Matrix.add_apply,
+        Matrix.smul_apply, vecMulVec_apply, smul_eq_mul]
+      ring
+  rw [hT] at h0
+  have := Model.UnbiasedMean.unique (shapeTable_symm (fun t s => by
+    simp [Matrix.one_apply, eq_comm]) _ _ _ _ _) h1 h0
+  simp only [zero_mul] at this
+  exact hne this
+
+end Singular
+
+/-! ### Per-card dynamics of known shape -/
+
+section GivenShapeG
+
+variable {J T B : Type*} [DecidableEq J] [DecidableEq T] (M : Factor J T) [Fintype J] [Fintype T]
+
+/-- The parameters given the shapes `Γ₀` of the factor and `G₀` of the per-card dynamics
+(`Gⱼ = gⱼG₀`): those of `Par` and one scale `gⱼ` per card. -/
+abbrev ParG (J : Type*) := Par J ⊕ J
+
+/-- The table given both shapes: `shapeTable` plus `δᵢⱼgᵢ(G₀)ₜₛ`. -/
+noncomputable def shapeTableG (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) (g : J → ℝ) : J × T → J × T → ℝ := fun p q =>
+  shapeTable Γ₀ w A C s2 τ2 p q + if p.1 = q.1 then g p.1 * G₀ p.2 q.2 else 0
+
+/-- The basis tables: those of `shapeBasis` and `Eⱼⱼ ⊗ G₀` per card. -/
+noncomputable def shapeBasisG (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ) :
+    ParG J → Matrix (J × T) (J × T) ℝ :=
+  Sum.elim (shapeBasis Γ₀ w) fun j p q => if p.1 = j ∧ q.1 = j then G₀ p.2 q.2 else 0
+
+/-- The parameter vector `(A, C, s², τ², g)`. -/
+def shapeParG (A C : Sym2 J → ℝ) (s2 : J → ℝ) (τ2 : ℝ) (g : J → ℝ) : ParG J → ℝ :=
+  Sum.elim (shapePar A C s2 τ2) g
+
+omit [Fintype T] in
+/-- **The table given both shapes is linear in its parameters**. -/
+theorem shapeTableG_eq_linTable (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) (g : J → ℝ) :
+    shapeTableG Γ₀ G₀ w A C s2 τ2 g
+      = Model.linTable (shapeBasisG Γ₀ G₀ w) (shapeParG A C s2 τ2 g) := by
+  funext p q
+  rw [shapeTableG, shapeTable_eq_linTable]
+  simp only [Model.linTable]
+  conv_rhs => rw [Fintype.sum_sum_type]
+  simp only [shapeBasisG, shapeParG, Sum.elim_inl, Sum.elim_inr]
+  congr 1
+  change _ = ∑ k, g k * (if p.1 = k ∧ q.1 = k then G₀ p.2 q.2 else 0)
+  by_cases hj : p.1 = q.1
+  · simp [hj]
+  · simp only [hj, ite_false]
+    refine (sum_eq_zero fun k _ => ?_).symm
+    by_cases hk : p.1 = k
+    · subst hk; simp [Ne.symm hj]
+    · simp [hk]
+
+variable [Fintype B]
+
+/-- **Henderson III / MINQUE given both shapes**: for invariant forms with a nonsingular system,
+`θ̂` is unbiased for every `Aᵢⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and per-card scale `gⱼ`, whatever `β`. -/
+theorem henderson_shapeG_unbiased (Γ₀ G₀ : Matrix T T ℝ) (w : J → T → ℝ)
+    {D : Matrix (J × T) B ℝ} {Q : ParG J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * D = 0)
+    (hH : IsUnit (Model.hendersonMat Q (shapeBasisG Γ₀ G₀ w)).det) (A C : Sym2 J → ℝ)
+    (s2 : J → ℝ) (τ2 : ℝ) (g : J → ℝ) (l : ParG J) :
+    Model.UnbiasedMean (shapeTableG Γ₀ G₀ w A C s2 τ2 g) D
+      (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ w) X l) (shapeParG A C s2 τ2 g l) := by
+  rw [shapeTableG_eq_linTable]
+  exact Model.henderson_unbiased hQ hH _ l
+
+omit [Fintype J] [Fintype T] in
+/-- **The factor model with per-card dynamics of known shape** `Gⱼ = gⱼG₀` and `Γ = γΓ₀` is
+`shapeTableG` with `A = γλλᵀ`. -/
+theorem covG_eq_shapeTableG {Γ₀ G₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀)
+    {G : J → Matrix T T ℝ} {g : J → ℝ} (hG : ∀ j, G j = g j • G₀) :
+    M.covG G = shapeTableG Γ₀ G₀ M.w
+      (Sym2.lift ⟨fun i j => γ * (M.load i * M.load j), fun i j => by ring⟩)
+      (Sym2.lift ⟨fun i j => M.C i j, fun i j => by
+        simpa using (M.C_posSemidef.1.apply i j).symm⟩) M.s2 M.τ2 g := by
+  funext p q
+  rw [shapeTableG, ← M.covG_zero_eq_shapeTable hΓ]
+  simp only [covG, obsCovG, hG, Pi.zero_apply, Matrix.zero_apply, Matrix.smul_apply,
+    smul_eq_mul, ite_self, add_zero]
+
+/-- **Henderson III / MINQUE for the factor model with per-card dynamics** of known shapes
+`Γ = γΓ₀`, `Gⱼ = gⱼG₀`: unbiased for `γλᵢλⱼ`, `Cᵢⱼ`, `sⱼ²`, `τ²` and `gⱼ`, whatever the fixed
+effects. The system is singular, for instance, when `G₀ = I` (`hendersonMat_shapeG_one_det_eq_zero`:
+`gⱼ` against `Cⱼⱼ`). -/
+theorem henderson_factorG_unbiased {Γ₀ G₀ : Matrix T T ℝ} {γ : ℝ} (hΓ : M.Γ = γ • Γ₀)
+    {G : J → Matrix T T ℝ} {g : J → ℝ} (hG : ∀ j, G j = g j • G₀)
+    {D : Matrix (J × T) B ℝ} {Q : ParG J → Matrix (J × T) (J × T) ℝ} (hQ : ∀ k, Q k * D = 0)
+    (hH : IsUnit (Model.hendersonMat Q (shapeBasisG Γ₀ G₀ M.w)).det) :
+    (∀ i j, Model.UnbiasedMean (M.covG G) D
+        (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ M.w) X (.inl (.inl s(i, j))))
+        (γ * (M.load i * M.load j)))
+      ∧ (∀ i j, Model.UnbiasedMean (M.covG G) D
+        (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ M.w) X (.inl (.inr (.inl s(i, j)))))
+        (M.C i j))
+      ∧ (∀ j, Model.UnbiasedMean (M.covG G) D
+        (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ M.w) X (.inl (.inr (.inr (.inl j)))))
+        (M.s2 j))
+      ∧ Model.UnbiasedMean (M.covG G) D
+        (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ M.w) X (.inl (.inr (.inr (.inr ())))))
+        M.τ2
+      ∧ (∀ j, Model.UnbiasedMean (M.covG G) D
+        (fun X => Model.henderson Q (shapeBasisG Γ₀ G₀ M.w) X (.inr j)) (g j)) := by
+  rw [M.covG_eq_shapeTableG hΓ hG]
+  refine ⟨fun i j => ?_, fun i j => ?_, fun j => ?_, ?_, fun j => ?_⟩ <;>
+    exact (henderson_shapeG_unbiased Γ₀ G₀ M.w hQ hH _ _ _ _ _ _).congr (fun _ => rfl)
+      (by simp [shapeParG, shapePar])
+
+/-- **White-noise per-card dynamics are not separable from the shock**: with `G₀ = I` the
+per-card table `Eⱼⱼ ⊗ I` is the shock variance table of card `j`, so the system is singular
+for every choice of forms. -/
+theorem hendersonMat_shapeG_one_det_eq_zero [Nonempty J] (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ)
+    (Q : ParG J → Matrix (J × T) (J × T) ℝ) :
+    (Model.hendersonMat Q (shapeBasisG Γ₀ 1 w)).det = 0 := by
+  obtain ⟨j⟩ := (inferInstance : Nonempty J)
+  refine Model.hendersonMat_det_eq_zero_of_smul (l := .inl (.inr (.inl s(j, j)))) (l' := .inr j)
+    (by simp) 1 ?_
+  rw [one_smul]
+  funext p q
+  change (if p.1 = j ∧ q.1 = j then (1 : Matrix T T ℝ) p.2 q.2 else 0)
+    = shapeBasis Γ₀ w (.inr (.inl s(j, j))) p q
+  simp only [shapeBasis, Matrix.one_apply, Sym2.eq_iff]
+  by_cases hp : p.1 = j <;> by_cases hq : q.1 = j <;> simp [hp, hq]
+
+end GivenShapeG
 
 end Factor
 

@@ -25,6 +25,11 @@ voice, then trim towards 8 pages.
   and "loadings need three cards" (`Credibility.Factor.load_sq_of_three`). Given `φ`, "equate
   invariant forms to their expectations and solve (Henderson III; MINQUE with a prior guess)"
   (`Credibility.Factor.henderson_factor_unbiased`, `Credibility.Model.minque_unbiased`).
+  Watch out (2026-11-21): "the system is singular, whatever the forms, if a card has constant
+  volume (`s²` against `C`) or months are independent (`Γ₀ = I`: factor against shock)"
+  (`Credibility.Factor.hendersonMat_shock_det_eq_zero`,
+  `Credibility.Factor.hendersonMat_shape_one_det_eq_zero`); per-card dynamics of known shape
+  add one parameter per card (`Credibility.Factor.henderson_factorG_unbiased`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
   observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch

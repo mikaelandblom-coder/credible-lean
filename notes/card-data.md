@@ -242,8 +242,12 @@ the between-cohort spread under a factor (`between_factor_unbiased`, `between_fa
 the diagonal `Ĉⱼⱼ`, `ŝⱼ²` and `τ̂²` under a factor (`CdiagHat_factor_unbiased`,
 `s2Hat_factor_unbiased`, `tauHat_factor_unbiased`; independent months: `CdiagHat_s2Hat_indep`);
 Henderson III / MINQUE given the shape `Γ₀` (`Model.henderson_unbiased`, `Model.minque_unbiased`,
-`Factor.henderson_factor_unbiased`). Open: when the system `H` is nonsingular (volume variation
-for `s²` against `C`; `Γ₀ ≠ I` for `A` against `C`); profiling over `φ` is only consistent.
+`Factor.henderson_factor_unbiased`). Later: when `H` is nonsingular: iff the basis tables are
+independent (`Model.exists_hendersonMat_det_ne_zero_iff`); singular for every choice of forms at
+a constant volume (`Factor.hendersonMat_shock_det_eq_zero`) and for `Γ₀ = I`, where no estimator
+separates `A` from `C` (`Factor.not_unbiased_factor_of_indep`); per-card dynamics of known shape
+`Gⱼ = gⱼG₀` (`Factor.henderson_factorG_unbiased`; `G₀ = I` singular). Open: profiling over `φ`
+is only consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

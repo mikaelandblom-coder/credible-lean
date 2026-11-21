@@ -286,6 +286,12 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Henderson III fit (2026-11-21, `FactorEstimation.lean`): before solving, check that the basis
+  tables are independent (`Model.exists_hendersonMat_det_ne_zero_iff`); drop `sⱼ²` (report
+  `Cⱼⱼ + sⱼ²/wⱼ`) for a card with constant volume (`Factor.hendersonMat_shock_det_eq_zero`), and
+  the factor when `φ = 0` (`Factor.not_unbiased_factor_of_indep`); a per-card AR(1) shape adds
+  one scale per card (`Factor.henderson_factorG_unbiased`), but per-card white noise is the shock.
+  Message in the app when the fit hits one of these.
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per card pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card

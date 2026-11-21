@@ -724,8 +724,10 @@ spending abroad (Riksbank/SCB) not verified.
   (2026-11-21: `Factor.CdiagHat_factor_unbiased`, `s2Hat_factor_unbiased`,
   `tauHat_factor_unbiased`); item 2 (2026-11-21: `Model.henderson_unbiased`,
   `Model.minque_unbiased`, `Factor.henderson_factor_unbiased`: unbiased whenever the forms
-  annihilate the design and the system is nonsingular; which forms, and when `H` is
-  nonsingular, is left to the app).
+  annihilate the design and the system is nonsingular; which forms is left to the app; `H` can
+  be nonsingular iff the basis tables are independent, `Model.exists_hendersonMat_det_ne_zero_iff`,
+  with constant volumes and `Γ₀ = I` as the singular cases, and per-card `Gⱼ = gⱼG₀` as one
+  more basis table, `Factor.henderson_factorG_unbiased`).
 
 ### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
 Web search (abstracts and listings); nothing read in full.
