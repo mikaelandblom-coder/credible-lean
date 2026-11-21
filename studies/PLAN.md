@@ -291,7 +291,10 @@ One chat per step; none needs Lean except step 5.
   `Cⱼⱼ + sⱼ²/wⱼ`) for a card with constant volume (`Factor.hendersonMat_shock_det_eq_zero`), and
   the factor when `φ = 0` (`Factor.not_unbiased_factor_of_indep`); a per-card AR(1) shape adds
   one scale per card (`Factor.henderson_factorG_unbiased`), but per-card white noise is the shock.
-  Message in the app when the fit hits one of these.
+  Message in the app when the fit hits one of these. With a card season as fixed effects,
+  leave `τ²` out of the Henderson / MINQUE parameters (Finding 27,
+  `Factor.hendersonMat_cardSeason_det_eq_zero`); test MINQUE nonsingularity by the rank of the
+  `RVₖR` (`Model.minque_det_ne_zero_iff`).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): the first unbiased step of
   the factor fit is the year-on-year lagged cross-product per card pair and lag
   (`Factor.yoy_unbiased_factor`; free of `C`, `s²`, `τ²`, per-card `G` and of any per-card

@@ -29,7 +29,9 @@ voice, then trim towards 8 pages.
   volume (`s²` against `C`) or months are independent (`Γ₀ = I`: factor against shock)"
   (`Credibility.Factor.hendersonMat_shock_det_eq_zero`,
   `Credibility.Factor.hendersonMat_shape_one_det_eq_zero`); per-card dynamics of known shape
-  add one parameter per card (`Credibility.Factor.henderson_factorG_unbiased`).
+  add one parameter per card (`Credibility.Factor.henderson_factorG_unbiased`); "with
+  card-specific means, leave `τ²` out" (Finding 27,
+  `Credibility.Factor.hendersonMat_cardSeason_det_eq_zero`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
   (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
   observed cells, `ℓ` for the next 12 months only sees the factor and the card level; watch

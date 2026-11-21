@@ -61,6 +61,12 @@ the first unbiased estimator (`studies/literature.md` §10h). Distribution-free 
   `henderson_factorG_unbiased`): one more basis table `Eⱼⱼ ⊗ G₀` per card; Henderson III is
   unbiased for `gⱼ` too. White noise `G₀ = I` is the shock variance again
   (`hendersonMat_shapeG_one_det_eq_zero`).
+* **When MINQUE is nonsingular** (`Model.minque_det_ne_zero_iff`): for `W ≻ 0` and symmetric
+  tables, iff the projected tables `RVₖR` are independent. An independent basis and a
+  full-rank design are not enough (`exists_independent_singular`): a table `DNDᵀ` in the span
+  of the design is invisible to every invariant form (`Model.hendersonMat_det_eq_zero_of_design`).
+  So with a card season the card level `τ²` cannot be estimated (Finding 27,
+  `hendersonMat_cardSeason_det_eq_zero`).
 -/
 
 open Finset Matrix
@@ -966,18 +972,24 @@ theorem hendersonMat_det_eq_zero_of_smul {Q V : L → Matrix (J × T) (J × T) �
     simp
 
 omit [DecidableEq L] in
-/-- `cᵀ H(V, V) c = Σₚq (Σₗ cₗVₗ)ₚq²`: with the basis tables themselves as forms, `H` is the
-Gram matrix of the tables. -/
-lemma dotProduct_hendersonMat_self (V : L → Matrix (J × T) (J × T) ℝ) (c : L → ℝ) :
-    c ⬝ᵥ (hendersonMat V V *ᵥ c) = ∑ p, ∑ q, linTable V c p q ^ 2 := by
+/-- `cᵀ H c = Σₚq (Σₖ cₖQₖ)ₚq (Σₗ cₗVₗ)ₚq`. -/
+lemma dotProduct_hendersonMat (Q V : L → Matrix (J × T) (J × T) ℝ) (c : L → ℝ) :
+    c ⬝ᵥ (hendersonMat Q V *ᵥ c) = ∑ p, ∑ q, linTable Q c p q * linTable V c p q := by
   rw [hendersonMat_mulVec]
   simp only [dotProduct, mul_sum]
   rw [sum_comm]
   refine sum_congr rfl fun p _ => ?_
   rw [sum_comm]
   refine sum_congr rfl fun q _ => ?_
-  simp only [linTable, sq, sum_mul]
+  simp only [linTable, sum_mul]
   exact sum_congr rfl fun l _ => by ring
+
+omit [DecidableEq L] in
+/-- `cᵀ H(V, V) c = Σₚq (Σₗ cₗVₗ)ₚq²`: with the basis tables themselves as forms, `H` is the
+Gram matrix of the tables. -/
+lemma dotProduct_hendersonMat_self (V : L → Matrix (J × T) (J × T) ℝ) (c : L → ℝ) :
+    c ⬝ᵥ (hendersonMat V V *ᵥ c) = ∑ p, ∑ q, linTable V c p q ^ 2 := by
+  simp only [dotProduct_hendersonMat, sq]
 
 /-- **Independent basis tables give a nonsingular system** with the tables as forms (`Qₖ = Vₖ`,
 the Gram matrix). -/
@@ -1003,6 +1015,26 @@ theorem exists_hendersonMat_det_ne_zero_iff {V : L → Matrix (J × T) (J × T) 
   refine ⟨fun ⟨Q, hQ⟩ c hc => ?_, fun hV => ⟨V, hendersonMat_self_det_ne_zero hV⟩⟩
   by_contra hne
   exact hQ (hendersonMat_det_eq_zero hne hc)
+
+/-- `Σₚq QₚqYₚq = tr(QᵀY)`. -/
+lemma sum_mul_eq_trace (Q Y : Matrix (J × T) (J × T) ℝ) :
+    ∑ p, ∑ q, Q p q * Y p q = trace (Qᵀ * Y) := by
+  simp only [trace, Matrix.diag_apply]
+  exact sum_comm
+
+/-- **A basis table in the span of the design is lost to invariant forms**: if
+`V l = DNDᵀ`, then `Σₚq (Qₖ)ₚq(V l)ₚq = tr(QₖᵀDNDᵀ) = 0` whenever `QₖD = 0`, so the column `l`
+of `H` vanishes and the system is singular, however independent the basis. Such a component
+is confounded with the fixed effects (e.g. the card level `τ²` under card-specific means). -/
+theorem hendersonMat_det_eq_zero_of_design {Q V : L → Matrix (J × T) (J × T) ℝ}
+    {D : Matrix (J × T) B ℝ} (hQ : ∀ k, Q k * D = 0) {l : L} (N : Matrix B B ℝ)
+    (hV : V l = D * N * Dᵀ) : (hendersonMat Q V).det = 0 := by
+  refine det_eq_zero_of_column_eq_zero l fun k => ?_
+  have h0 : Dᵀ * (Q k)ᵀ = 0 := by rw [← transpose_mul, hQ k, transpose_zero]
+  simp only [hendersonMat, of_apply]
+  rw [sum_mul_eq_trace, hV, ← Matrix.mul_assoc, ← Matrix.mul_assoc, trace_mul_comm,
+    ← Matrix.mul_assoc, ← Matrix.mul_assoc, h0, Matrix.zero_mul, Matrix.zero_mul, trace_zero]
+
 variable [DecidableEq J] [DecidableEq T] [DecidableEq B]
 
 /-- The MINQUE projection for a prior table `W` (Rao 1971):
@@ -1033,6 +1065,141 @@ theorem minque_unbiased (W : Matrix (J × T) (J × T) ℝ) {D : Matrix (J × T) 
     UnbiasedMean (linTable V θ) D (fun X => henderson (minqueForms W D V) V X l) (θ l) :=
   henderson_unbiased (fun k => by rw [minqueForms, Matrix.mul_assoc, minqueR_mul W hD,
     Matrix.mul_zero]) hH θ l
+
+/-! #### When is the MINQUE system nonsingular? -/
+
+omit [Fintype L] [DecidableEq L] [DecidableEq J] [DecidableEq T] in
+/-- A positive semidefinite real matrix is `BᵀB` (from the spectral theorem). -/
+lemma PosSemidef.exists_eq_transpose_mul_self {n : Type*} [Fintype n] [DecidableEq n]
+    {W : Matrix n n ℝ} (hW : W.PosSemidef) : ∃ B : Matrix n n ℝ, W = Bᵀ * B := by
+  set U : Matrix n n ℝ := (hW.1.eigenvectorUnitary : Matrix n n ℝ)
+  refine ⟨diagonal (fun i => Real.sqrt (hW.1.eigenvalues i)) * Uᵀ, ?_⟩
+  have h := hW.1.spectral_theorem
+  rw [Unitary.conjStarAlgAut_apply] at h
+  rw [transpose_mul, transpose_transpose, diagonal_transpose, Matrix.mul_assoc,
+    ← Matrix.mul_assoc (diagonal _), diagonal_mul_diagonal]
+  have he : (fun i => Real.sqrt (hW.1.eigenvalues i) * Real.sqrt (hW.1.eigenvalues i))
+      = RCLike.ofReal ∘ hW.1.eigenvalues := by
+    funext i; simp [Real.mul_self_sqrt (hW.eigenvalues_nonneg i)]
+  rw [he, ← Matrix.mul_assoc]
+  convert h using 2
+  rw [star_eq_conjTranspose, conjTranspose_eq_transpose_of_trivial]
+
+omit [Fintype L] [DecidableEq L] in
+/-- `DᵀR = 0` when `DᵀW⁻¹D` is nonsingular. -/
+lemma transpose_mul_minqueR (W : Matrix (J × T) (J × T) ℝ) {D : Matrix (J × T) B ℝ}
+    (hD : IsUnit (Dᵀ * W⁻¹ * D).det) : Dᵀ * minqueR W D = 0 := by
+  have h : (Dᵀ * W⁻¹ * D) * (Dᵀ * W⁻¹ * D)⁻¹ = 1 := mul_nonsing_inv _ hD
+  rw [minqueR, Matrix.mul_sub, sub_eq_zero]
+  calc Dᵀ * W⁻¹ = (Dᵀ * W⁻¹ * D) * (Dᵀ * W⁻¹ * D)⁻¹ * (Dᵀ * W⁻¹) := by rw [h, Matrix.one_mul]
+    _ = _ := by simp only [Matrix.mul_assoc]
+
+omit [Fintype L] [DecidableEq L] in
+/-- `RWR = R`. -/
+lemma minqueR_mul_mul {W : Matrix (J × T) (J × T) ℝ} (hW : IsUnit W.det) {D : Matrix (J × T) B ℝ}
+    (hD : IsUnit (Dᵀ * W⁻¹ * D).det) : minqueR W D * W * minqueR W D = minqueR W D := by
+  have hWW : W⁻¹ * W = 1 := nonsing_inv_mul _ hW
+  have h0 := transpose_mul_minqueR W hD
+  calc minqueR W D * W * minqueR W D
+        = W⁻¹ * W * minqueR W D - W⁻¹ * D * (Dᵀ * W⁻¹ * D)⁻¹ * (Dᵀ * (W⁻¹ * W) * minqueR W D) := by
+          conv_lhs => arg 1; arg 1; rw [minqueR]
+          simp only [Matrix.sub_mul, Matrix.mul_assoc]
+    _ = minqueR W D := by rw [hWW, Matrix.mul_one, h0, Matrix.one_mul, Matrix.mul_zero, sub_zero]
+
+omit [Fintype L] [DecidableEq L] in
+/-- `R` is symmetric for a symmetric prior `W`. -/
+lemma minqueR_transpose {W : Matrix (J × T) (J × T) ℝ} (hW : Wᵀ = W) (D : Matrix (J × T) B ℝ) :
+    (minqueR W D)ᵀ = minqueR W D := by
+  have hWi : (W⁻¹)ᵀ = W⁻¹ := by rw [transpose_nonsing_inv, hW]
+  have hG : ((Dᵀ * W⁻¹ * D)⁻¹)ᵀ = (Dᵀ * W⁻¹ * D)⁻¹ := by
+    rw [transpose_nonsing_inv, transpose_mul, transpose_mul, transpose_transpose, hWi,
+      Matrix.mul_assoc]
+  rw [minqueR, transpose_sub, hWi, transpose_mul, transpose_mul, transpose_mul, transpose_mul,
+    hWi, hG, transpose_transpose]
+  simp only [Matrix.mul_assoc]
+
+/-- **When the MINQUE system is nonsingular** (Rao 1971): for a positive definite prior `W`,
+`DᵀW⁻¹D` nonsingular and symmetric basis tables, `det H ≠ 0` iff the projected tables `RVₖR`
+are linearly independent. `H` is the Gram matrix of the `RVₖR` in the `W`-weighted trace
+inner product. An independent basis is not enough (`hendersonMat_det_eq_zero_of_design`): a
+table in the span of the design projects to `0`. -/
+theorem minque_det_ne_zero_iff {W : Matrix (J × T) (J × T) ℝ} (hW : W.PosDef)
+    {D : Matrix (J × T) B ℝ} (hD : IsUnit (Dᵀ * W⁻¹ * D).det)
+    {V : L → Matrix (J × T) (J × T) ℝ} (hV : ∀ k, (V k)ᵀ = V k) :
+    (hendersonMat (minqueForms W D V) V).det ≠ 0
+      ↔ ∀ c : L → ℝ, minqueR W D * (∑ k, c k • V k) * minqueR W D = 0 → c = 0 := by
+  set R := minqueR W D with hR
+  have hWt : Wᵀ = W := by
+    have := hW.1
+    rwa [IsHermitian, conjTranspose_eq_transpose_of_trivial] at this
+  have hWu : IsUnit W.det := isUnit_iff_ne_zero.mpr hW.det_pos.ne'
+  have hRt : Rᵀ = R := minqueR_transpose hWt D
+  have hRWR : R * W * R = R := minqueR_mul_mul hWu hD
+  have hlin : ∀ c : L → ℝ, linTable V c = ∑ k, c k • V k := fun c => by
+    funext p q; simp [linTable, Matrix.sum_apply]
+  have hlinQ : ∀ c : L → ℝ, linTable (minqueForms W D V) c = R * (∑ k, c k • V k) * R :=
+    fun c => by
+      funext p q
+      simp only [linTable, minqueForms, ← hR]
+      rw [Matrix.mul_sum, Matrix.sum_mul, Matrix.sum_apply]
+      exact sum_congr rfl fun k _ => by
+        rw [Matrix.mul_smul, Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul]
+  -- `(Hc)ₖ = tr(RVₖR S)`, `S = Σ cₗVₗ`.
+  have hHc : ∀ c : L → ℝ, hendersonMat (minqueForms W D V) V *ᵥ c
+      = fun k => trace (V k * (R * (∑ l, c l • V l) * R)) := fun c => by
+    rw [hendersonMat_mulVec, hlin]
+    funext k
+    rw [sum_mul_eq_trace, minqueForms, ← hR, transpose_mul, transpose_mul, hRt, hV,
+      Matrix.mul_assoc, trace_mul_comm, Matrix.mul_assoc, Matrix.mul_assoc]
+    simp only [Matrix.mul_assoc]
+  constructor
+  · intro hdet c hc
+    by_contra hne
+    refine hdet (exists_mulVec_eq_zero_iff.mp ⟨c, hne, ?_⟩)
+    rw [hHc, hc]
+    funext k
+    simp
+  · intro hind hdet
+    obtain ⟨c, hc, h0⟩ := exists_mulVec_eq_zero_iff.mpr hdet
+    apply hc (hind c _)
+    set S := ∑ l, c l • V l with hS
+    have hSt : Sᵀ = S := by
+      rw [hS, transpose_sum]
+      exact sum_congr rfl fun l _ => by rw [transpose_smul, hV]
+    set N := R * S * R with hN
+    have hNt : Nᵀ = N := by
+      rw [hN, transpose_mul, transpose_mul, hRt, hSt, Matrix.mul_assoc]
+    -- `0 = cᵀHc = tr(NS) = tr(WNWN)`.
+    have htr : trace (W * N * W * N) = 0 := by
+      have h1 := dotProduct_hendersonMat (minqueForms W D V) V c
+      rw [h0, dotProduct_zero, hlinQ, hlin, sum_mul_eq_trace, ← hS, ← hN, hNt] at h1
+      rw [h1]
+      have e1 : W * N * W * N = (W * R * S * R * W * R * S) * R := by
+        simp only [hN, Matrix.mul_assoc]
+      have e2 : R * (W * R * S * R * W * R * S) = (R * W * R) * S * (R * W * R) * S := by
+        simp only [Matrix.mul_assoc]
+      rw [e1, trace_mul_comm, e2, hRWR, hN]
+    obtain ⟨B', hB'⟩ := PosSemidef.exists_eq_transpose_mul_self hW.posSemidef
+    set Y := B' * N * B'ᵀ with hY
+    have hYt : Yᵀ = Y := by
+      rw [hY, transpose_mul, transpose_mul, transpose_transpose, hNt]
+      simp only [hN, Matrix.mul_assoc]
+    have hY0 : Y = 0 := by
+      refine trace_conjTranspose_mul_self_eq_zero_iff.mp ?_
+      rw [conjTranspose_eq_transpose_of_trivial, hYt, ← htr, hY, hB',
+        show B'ᵀ * B' * N * (B'ᵀ * B') * N = B'ᵀ * (B' * N * B'ᵀ * B' * N) by
+          simp only [Matrix.mul_assoc], trace_mul_comm B'ᵀ]
+      simp only [Matrix.mul_assoc]
+    have hWNW : W * N * W = 0 := by
+      rw [hB']
+      calc B'ᵀ * B' * N * (B'ᵀ * B') = B'ᵀ * Y * B' := by rw [hY]; simp only [Matrix.mul_assoc]
+        _ = 0 := by rw [hY0, Matrix.mul_zero, Matrix.zero_mul]
+    have hWi : W⁻¹ * W = 1 := nonsing_inv_mul _ hWu
+    have hWi' : W * W⁻¹ = 1 := mul_nonsing_inv _ hWu
+    calc N = W⁻¹ * (W * N * W) * W⁻¹ := by
+          simp only [← Matrix.mul_assoc, hWi, Matrix.one_mul]
+          rw [Matrix.mul_assoc, hWi', Matrix.mul_one]
+      _ = 0 := by rw [hWNW, Matrix.mul_zero, Matrix.zero_mul]
 
 end Henderson
 
@@ -1270,6 +1437,54 @@ theorem not_unbiased_factor_of_indep (M : Factor J T) [Nonempty T] {γ : ℝ}
     simp [Matrix.one_apply, eq_comm]) _ _ _ _ _) h1 h0
   simp only [zero_mul] at this
   exact hne this
+
+omit [Fintype T] in
+/-- The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season `D = cardSeason mon`, with
+`E_{(j,m),(j',m')} = δⱼⱼ'`: the card level lies in the span of card-specific means. -/
+theorem shapeBasis_tau_eq_cardSeason {Mo : Type*} [Fintype Mo] [DecidableEq Mo] (Γ₀ : Matrix T T ℝ)
+    (w : J → T → ℝ) (mon : T → Mo) :
+    shapeBasis Γ₀ w (.inr (.inr (.inr ()))) = cardSeason (J := J) mon
+      * (of fun k k' : J × Mo => if k.1 = k'.1 then (1 : ℝ) else 0) * (cardSeason (J := J) mon)ᵀ := by
+  have hD : ∀ (p : J × T) (k : J × Mo),
+      (cardSeason mon : Matrix (J × T) (J × Mo) ℝ) p k = if (p.1, mon p.2) = k then 1 else 0 :=
+    fun p k => by simp [cardSeason, Prod.ext_iff]
+  funext p q
+  simp [shapeBasis, Matrix.mul_apply, hD]
+  rw [Fintype.sum_eq_single (p.1, mon p.2) (fun x hx => by simp [Ne.symm hx])]
+  simp
+
+
+/-- **Card-specific means hide the card level** (Finding 27): with the card season as fixed
+effects (it contains the card means), every invariant system of the shape is singular, so
+Henderson III / MINQUE never applies as stated; drop `τ²` from the parameters (`τ²` is the
+spread of what the design already fits). -/
+theorem hendersonMat_cardSeason_det_eq_zero {Mo : Type*} [Fintype Mo] [DecidableEq Mo]
+    (Γ₀ : Matrix T T ℝ) (w : J → T → ℝ) (mon : T → Mo) {Q : Par J → Matrix (J × T) (J × T) ℝ}
+    (hQ : ∀ k, Q k * cardSeason (J := J) mon = 0) :
+    (Model.hendersonMat Q (shapeBasis Γ₀ w)).det = 0 :=
+  Model.hendersonMat_det_eq_zero_of_design hQ _ (shapeBasis_tau_eq_cardSeason Γ₀ w mon)
+
+/-- **An independent basis and a full-rank design are not enough** for MINQUE (or any
+invariant forms): one card, two months, a common mean (`D = 1`), and the tables `I` (shock)
+and `11ᵀ` (card level). The tables are independent and `DᵀD = 2`, but `11ᵀ = DDᵀ`, so every
+invariant system is singular (`Model.hendersonMat_det_eq_zero_of_design`). -/
+theorem exists_independent_singular :
+    ∃ (V : Bool → Matrix (Unit × Fin 2) (Unit × Fin 2) ℝ) (D : Matrix (Unit × Fin 2) Unit ℝ),
+      (∀ c, Model.linTable V c = 0 → c = 0) ∧ IsUnit (Dᵀ * D).det ∧
+      ∀ Q : Bool → Matrix (Unit × Fin 2) (Unit × Fin 2) ℝ, (∀ k, Q k * D = 0) →
+        (Model.hendersonMat Q V).det = 0 := by
+  refine ⟨fun b => if b then 1 else of fun _ _ => 1, of fun _ _ => 1, fun c hc => ?_, ?_,
+    fun Q hQ => Model.hendersonMat_det_eq_zero_of_design (l := false) hQ 1 ?_⟩
+  · have h0 := congrFun (congrFun hc ((), 0)) ((), 1)
+    have h1 := congrFun (congrFun hc ((), 0)) ((), 0)
+    simp [Model.linTable] at h0 h1
+    funext b
+    cases b
+    · simpa using h0
+    · simp only [Pi.zero_apply]; linarith
+  · simp [Matrix.mul_apply]
+  · funext p q
+    simp [Matrix.mul_apply]
 
 end Singular
 

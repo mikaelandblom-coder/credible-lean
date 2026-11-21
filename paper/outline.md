@@ -96,7 +96,9 @@ may need a paragraph.)
   its system is nonsingular: iff the basis tables are independent
   (`Model.exists_hendersonMat_det_ne_zero_iff`); constant volumes and independent months fail
   (`Factor.hendersonMat_shock_det_eq_zero`, `Factor.not_unbiased_factor_of_indep`); per-card
-  dynamics of known shape (`Factor.henderson_factorG_unbiased`).
+  dynamics of known shape (`Factor.henderson_factorG_unbiased`); MINQUE nonsingular iff the
+  projected tables are independent (`Model.minque_det_ne_zero_iff`), so card-specific means
+  hide `τ²` (Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`).
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing

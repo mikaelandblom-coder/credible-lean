@@ -4630,19 +4630,44 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
         Credibility.Model.hendersonMat_det_eq_zero_of_smul,
         Credibility.Model.dotProduct_hendersonMat_self,
         Credibility.Model.hendersonMat_self_det_ne_zero,
-        Credibility.Model.exists_hendersonMat_det_ne_zero_iff}
+        Credibility.Model.exists_hendersonMat_det_ne_zero_iff,
+        Credibility.Model.dotProduct_hendersonMat, Credibility.Model.sum_mul_eq_trace,
+        Credibility.Model.hendersonMat_det_eq_zero_of_design}
   \leanok
   \uses{def:henderson}
   If $\sum_lc_lV_l = 0$ for some $c \ne 0$ (in particular if two basis tables are
   proportional), $H$ is singular for every choice of forms. Conversely, if the $V_l$ are
   linearly independent, the forms $Q_k = V_k$ give a nonsingular $H$ (the Gram matrix of the
   tables). So some system is nonsingular iff the table determines $\theta$; invariance
-  $Q_kD = 0$ can only lose rank on top of this.
+  $Q_kD = 0$ can only lose rank on top of this, and does for a table $V_l = DND^\top$ in the
+  span of the design: its column of $H$ is $\operatorname{tr}(Q_k^\top DND^\top) = 0$.
 \end{lemma}
 \begin{proof}
   \leanok
   $(Hc)_k = \sum_{p,q}(Q_k)_{pq}(\sum_lc_lV_l)_{pq}$. With $Q = V$,
   $c^\top Hc = \sum_{p,q}(\sum_lc_lV_l)_{pq}^2$, which vanishes only if $\sum_lc_lV_l = 0$.
+  For the design, cycle the trace: $\operatorname{tr}(D^\top Q_k^\top DN) = 0$ since $Q_kD = 0$.
+\end{proof}
+
+\begin{theorem}[When the MINQUE system is nonsingular]\label{thm:minque_nonsingular}
+  \lean{Credibility.Model.minque_det_ne_zero_iff,
+        Credibility.Model.PosSemidef.exists_eq_transpose_mul_self,
+        Credibility.Model.transpose_mul_minqueR, Credibility.Model.minqueR_mul_mul,
+        Credibility.Model.minqueR_transpose}
+  \leanok
+  \uses{def:henderson, lem:henderson_singular}
+  For a positive definite prior $W$, $D^\top W^{-1}D$ nonsingular and symmetric basis tables,
+  the MINQUE system is nonsingular iff the projected tables $RV_kR$ are linearly independent
+  (Rao 1971). An independent basis with a full-rank design is not enough
+  (Theorem~\ref{thm:Factor_card_level}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular}
+  $D^\top R = 0$ and $RWR = R$. With $S = \sum_lc_lV_l$ and $N = RSR$,
+  $(Hc)_k = \operatorname{tr}(V_kN)$, so $N = 0$ gives $Hc = 0$. Conversely
+  $c^\top Hc = \operatorname{tr}(NS) = \operatorname{tr}(WNWN)$; writing $W = B^\top B$ (spectral
+  theorem) this is $\|BNB^\top\|^2$, so $Hc = 0$ forces $BNB^\top = 0$, $WNW = 0$, $N = 0$.
 \end{proof}
 
 \begin{theorem}[Singular shape systems: constant volumes, independent months]\label{thm:Factor_henderson_singular}
@@ -4671,6 +4696,30 @@ cards at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the sh
   parameter sets $(A, C)$ and $(0, A + C)$ (for the factor model: the model and its factor moved
   into the shock) give the same symmetric table, and an estimator has one expectation under it.
 \end{proof}
+
+\begin{theorem}[Card-specific means hide the card level]\label{thm:Factor_card_level}
+  \lean{Credibility.Factor.shapeBasis_tau_eq_cardSeason,
+        Credibility.Factor.hendersonMat_cardSeason_det_eq_zero,
+        Credibility.Factor.exists_independent_singular}
+  \leanok
+  \uses{lem:henderson_singular, thm:Factor_henderson, def:Factor_yoy}
+  The card-level table $I\otimes\mathbf 1\mathbf 1^\top$ is $DED^\top$ for the card season $D$
+  ($E_{(j,m),(j',m')} = \delta_{jj'}$), so every invariant shape system is singular under a card
+  season, and $\tau^2$ must be left out. Minimal case: one card, two months, a common mean,
+  tables $I$ and $\mathbf 1\mathbf 1^\top$: independent, $D^\top D = 2$, every invariant
+  system singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular}
+  Each cell has one nonzero entry in $D$; then Lemma~\ref{lem:henderson_singular}.
+\end{proof}
+
+\begin{remark}[Finding 27]
+  Under card-specific fixed means, Henderson III / MINQUE (Theorems~\ref{thm:Factor_henderson},
+  \ref{thm:Factor_hendersonG}) never has a nonsingular system with $\tau^2$ among the
+  parameters: the card level is what the design already fits.
+\end{remark}
 
 \begin{theorem}[Henderson III with per-card dynamics of known shape]\label{thm:Factor_hendersonG}
   \lean{Credibility.Factor.ParG, Credibility.Factor.shapeTableG, Credibility.Factor.shapeBasisG,

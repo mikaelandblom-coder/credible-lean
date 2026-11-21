@@ -727,7 +727,9 @@ spending abroad (Riksbank/SCB) not verified.
   annihilate the design and the system is nonsingular; which forms is left to the app; `H` can
   be nonsingular iff the basis tables are independent, `Model.exists_hendersonMat_det_ne_zero_iff`,
   with constant volumes and `Γ₀ = I` as the singular cases, and per-card `Gⱼ = gⱼG₀` as one
-  more basis table, `Factor.henderson_factorG_unbiased`).
+  more basis table, `Factor.henderson_factorG_unbiased`; MINQUE: nonsingular iff the `RVₖR` are
+  independent, `Model.minque_det_ne_zero_iff` (Rao 1971; Searle, Casella & McCulloch 1992,
+  ch. 11, from memory); under card-specific means `τ²` drops out, Finding 27).
 
 ### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
 Web search (abstracts and listings); nothing read in full.

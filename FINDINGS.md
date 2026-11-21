@@ -463,4 +463,17 @@ Gaps, extra hypotheses and new results found while formalizing.
    volume pattern, which the factor does not follow). With independent months the factor is
    a rank-one shock: `Ĉⱼⱼ` reads `Cⱼⱼ + γλⱼ²`, `ŝⱼ²` stays unbiased (`Factor.CdiagHat_s2Hat_indep`).
 
+27. **Card-specific means hide the card level from invariant estimators (new; `notes/card-data.md`
+   Step 5).** Expected: Henderson III / MINQUE given the shape (`Factor.henderson_factor_unbiased`)
+   estimates `τ²` with the other parameters whenever the basis tables are independent and the
+   design has full rank. Found: no. The card-level table `I ⊗ 11ᵀ` is `DEDᵀ` for the card season
+   `D` (`Factor.shapeBasis_tau_eq_cardSeason`), and a table in the span of the design gets weight
+   `0` from every form with `QD = 0` (`Model.hendersonMat_det_eq_zero_of_design`), so every
+   invariant system is singular (`Factor.hendersonMat_cardSeason_det_eq_zero`). The right
+   condition for MINQUE is independence of the projected tables `RVₖR`
+   (`Model.minque_det_ne_zero_iff`); minimal counterexample: one card, two months, a common mean,
+   tables `I` and `11ᵀ` (`Factor.exists_independent_singular`). Practice: under card-specific
+   means fit `(A, C, s², g)` without `τ²`; `τ²` is the spread of what the design already
+   estimates, so it is not needed for prediction with those fixed effects.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

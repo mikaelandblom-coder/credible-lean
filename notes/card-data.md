@@ -246,8 +246,11 @@ Henderson III / MINQUE given the shape `Γ₀` (`Model.henderson_unbiased`, `Mod
 independent (`Model.exists_hendersonMat_det_ne_zero_iff`); singular for every choice of forms at
 a constant volume (`Factor.hendersonMat_shock_det_eq_zero`) and for `Γ₀ = I`, where no estimator
 separates `A` from `C` (`Factor.not_unbiased_factor_of_indep`); per-card dynamics of known shape
-`Gⱼ = gⱼG₀` (`Factor.henderson_factorG_unbiased`; `G₀ = I` singular). Open: profiling over `φ`
-is only consistent.
+`Gⱼ = gⱼG₀` (`Factor.henderson_factorG_unbiased`; `G₀ = I` singular). MINQUE is nonsingular
+iff the projected tables `RVₖR` are independent (`Model.minque_det_ne_zero_iff`); an independent
+basis with a full-rank design is not enough: under a card season `τ²` is never estimable
+(Finding 27, `Factor.hendersonMat_cardSeason_det_eq_zero`). Open: profiling over `φ` is only
+consistent.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).
