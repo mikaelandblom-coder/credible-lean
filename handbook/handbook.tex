@@ -793,6 +793,54 @@ bias: the projection is not unbiased.
   \lean{Credibility.Factor.tableK_not_posDef}
 \end{caveat}
 
+\subsection*{Monthly data with a common factor: relativities}
+
+Take one factor, $A = \lambda\lambda^\top$: cohort $j$ has loading $\lambda_j$, and
+$\Gamma$ is the factor's covariance over months, so the cells covary by an extra
+$\lambda_i\lambda_j\Gamma_{ts}$ on top of the shock and process noise. Most of what
+a tariff uses are relativities: a cohort against the portfolio.
+
+\begin{result}[What the factor adds to any statistic]\label{res:factor_extra}
+  For any coefficients $a_{jt}$ over the cells, past and future (a statistic
+  $\sum a_{jt}X_{jt}$, or the error of a linear predictor),
+  \[
+    \Var_{\text{factor}}\Bigl(\sum a_{jt}X_{jt}\Bigr)
+      = \Var_{\text{no factor}}\Bigl(\sum a_{jt}X_{jt}\Bigr) + g^\top\Gamma g,
+    \qquad g_t = \sum_j \lambda_j a_{jt}.
+  \]
+  The extra term is $\ge 0$: a fit without the factor understates the error.
+  \lean{Credibility.Factor.quadTab_eq}
+  \lean{Credibility.Factor.quadTab_shock_le}
+\end{result}
+\why $g_t$ is how much of month $t$'s factor the statistic picks up. A
+statistic that picks up none of it does not see the factor at all.
+
+\begin{result}[Relativities that need no factor model]\label{res:relativity_factor}
+  For the relativity $z(\hmu_j - \sum_i b_i\hmu_i)$ with $\hmu_i = \sum_t \alpha_{it}X_{it}$
+  and $\sum_i b_i = 1$, the profile is $g_t = z(\lambda_j\alpha_{jt} - \sum_i b_i\lambda_i\alpha_{it})$.
+  With equal loadings and the same month weights for every cohort, $\alpha_{it} = \alpha_t$,
+  it is zero: the relativity has the variance it has without the factor, whatever $\Gamma$.
+  \lean{Credibility.Factor.quadTab_relCoef}
+  \lean{Credibility.Factor.relCoef_factor_free}
+\end{result}
+\use Rank cards on a common window with common month weights, and the factor can be
+left out of the relativities. Exposure weights qualify when the cards' volumes are
+proportional over the months.
+\lean{Credibility.Shock.expo_eq_of_proportional}
+\why In a month the factor hits every card alike; if every card weights that month
+alike, the difference subtracts it out.
+\begin{caveat}
+  Being observed in the same months is not enough; the weights must match. With
+  two months, an AR(1) factor $\gamma\phi^{|t-s|}$ and equal loadings, weights
+  $(\tfrac34, \tfrac14)$ against $(\tfrac14, \tfrac34)$ (a shrinking and a growing
+  card) leave $\gamma(1-\phi)/2$, and so does a card entering in the second month;
+  loadings $(1, 2)$ leave $\Gamma_{tt}$. Only a factor constant over the window
+  ($\phi = 1$) always cancels. Otherwise keep the factor in the fit (Finding~31).
+  \lean{Credibility.Factor.extra_profile}
+  \lean{Credibility.Factor.extra_entry}
+  \lean{Credibility.Factor.extra_loadings}
+\end{caveat}
+
 \subsection*{When to merge two cohorts}
 
 Two cohorts on their own, with error variances $v_1, v_2$, error covariance
@@ -1024,6 +1072,53 @@ numbers.
   unbiased predictor beats separate blends (and the matrix blend) in summed
   error.
   \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
+\end{caveat}
+
+\subsection*{Frequency times severity}
+
+Two components, frequency $F$ (claims per card, weighted by cards) and severity
+$Y$ (cost per claim, weighted by claim counts), each with its own monthly table:
+loadings, factor, shock, process noise and $\tau^2$. Across components the cells may
+covary in any way. This gives the joint $K$ and $L$ of the matrix blend.
+
+\begin{result}[Joint against separate]\label{res:freqsev_joint}
+  With no covariance between frequency and severity (in the noise and the levels),
+  the best linear unbiased predictor of $(\mu_{jF}, \mu_{jY})$ is the scalar best
+  predictor of each component on its own data. The converse fails: with the same
+  cohort structure in both components, $K = K_c \otimes S$ and $L = L_c \otimes S$,
+  joint is separate whatever the cross-covariance $S$.
+  \lean{Credibility.FreqSev.blupW_eq_separate}
+  \lean{Credibility.CoreVector.blupW_kronecker}
+\end{result}
+\use Fit the components separately when they don't covary. When they do, a joint fit
+may gain; with frequency weighted by cards and severity by claim counts the cohort
+structures differ, so expect a gain, and measure it.
+\why The Kronecker case is Zellner's seemingly unrelated regressions with the same
+regressors: the other component's data then carry nothing new.
+\begin{caveat}
+  Correlated residuals are necessary for a gain from joint prediction, not
+  sufficient (Finding~32). Don't infer the gain from the correlation.
+\end{caveat}
+
+\begin{result}[The bias of the pure premium]\label{res:prodBias}
+  For unbiased linear predictions $\hat\varphi$ of $\mu_{jF}$ and $\hat\psi$ of
+  $\mu_{jY}$ (weights $A$ with $U^{\mathsf T}A = I$), for every distribution,
+  \[
+    E[\hat\varphi\hat\psi] - E[\mu_{jF}\mu_{jY}]
+      = \cov(\hat\varphi, \hat\psi) - \cov(\mu_{jF}, \mu_{jY})
+      = (A^{\mathsf T}KA)_{FY} - L_{(jF)(jY)}.
+  \]
+  For separate weights with no covariance between the components it is $0$.
+  \lean{Credibility.CoreVector.VecEstimates.integral_mul_pred_sub}
+  \lean{Credibility.FreqSev.prodBias_sepW_eq_zero}
+\end{result}
+\use Subtract the bias from the product; no delta method is needed.
+\why $E[XY] = EX\,EY + \cov(X, Y)$, and both predictions are unbiased.
+\begin{caveat}
+  A level correlation matters: with separate predictions the bias is
+  $\sum_{i,k} a_{Fi}a_{Yk}K_{(iF)(kY)} - L_{(jF)(jY)}$, so ignoring a positive level
+  correlation underprices (Finding~33). The bias is exact; the mean squared error of
+  the product needs third and fourth moments and is not covered here.
 \end{caveat}
 
 \end{document}

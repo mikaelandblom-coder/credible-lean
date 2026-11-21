@@ -64,7 +64,7 @@ as §7.4.)
 | 4 | Balance | when it holds for free, the cost of forcing it, how to balance | §7 | draft |
 | 5 | Estimating the parameters | unbiased estimators, plug-in `K̂`, damping, a fit with no tuning, error of a fitted model | §8 | draft |
 | 6 | Why the moments are real | true covariances and MSE; consistent iff `ρ ⪰ 0` | §9 | draft |
-| 7 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; the matrix blend, Hachemeister, Finding 22 | §10, §11, §12, new | draft |
+| 7 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Monthly data with a common factor; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; relativities under a factor (Finding 31); the matrix blend, Hachemeister, Finding 22, frequency × severity and the pure-premium bias (Findings 32–33) | §10, §11, §12, new | draft |
 | 8 | Related work | what is used from where | §14 | draft |
 | 9 | Open directions | crossed levels, time, better fits, the distribution layer | §13 | draft |
 | A | Changes from the thesis | corrections, beyond the thesis, concordance | A | draft |
@@ -84,14 +84,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Product bias (2026-11-21, Finding 33): exact, distribution-free
-  (`CoreVector.VecEstimates.integral_mul_pred_sub`, `FreqSev.prodBias_sepW_eq_zero`); with the
-  frequency × severity paragraph.
-- Relativities under a common factor (2026-11-21, `FactorRelativity.lean`): exact extra error
-  `gᵀΓg` of any statistic (`Factor.quadTab_eq`), cancellation for relativities with equal loadings
-  and equal month weights (`Factor.relCoef_factor_free`), Finding 31 (same months not enough). With
-  the factor section. Frequency × severity with a factor table per component (`FreqSev.lean`,
-  `FreqSev.blupW_eq_separate`) and Finding 32 (`CoreVector.blupW_kronecker`), with the vector section.
 - Choosing between fits on data (2026-11-21, app; card-data Step 7b): rolling origin, paired
   losses, Diebold–Mariano with HLN; with a few years of monthly data the test has low power and
   inflated size (16–25% at 5%). A paragraph on model choice, pointing to the app.
@@ -123,7 +115,8 @@ may need a paragraph.)
   (`Factor.minque_cohortSeason_det_ne_zero`, `Factor.minque_ar1_two_years_unbiased`), and with
   two years the volumes must vary over the calendar (Finding 29,
   `Factor.minque_cohortSeason_det_eq_zero_of_volume`).
-- Common factor (2026-11-20, `Factor.lean`, Finding 25): one table for the factor-over-time
+- Common factor (2026-11-20, `Factor.lean`, Finding 25; §7.4 "Monthly data with a common
+  factor" exists since 2026-11-21 with the relativities only, so this goes there): one table for the factor-over-time
   switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
   is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing
   the factor from other cohorts (`Factor.blup_neg_of_ar1`).

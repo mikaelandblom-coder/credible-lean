@@ -16,17 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Pure premium bias (2026-11-21, Finding 33): "the product of frequency and severity predictions
-  is biased by exactly cov(predictions) − cov(levels), zero for separate fits when F and Y don't
-  covary; watch out for a level correlation" (`Credibility.CoreVector.VecEstimates.integral_mul_pred_sub`,
-  `Credibility.FreqSev.prodBias_sepW_eq_zero`).
-- Relativities and the factor (2026-11-21, `FactorRelativity.lean`): "use it: card relativities
-  need no factor model when loadings are equal and every card has the same month weights"
-  (`Credibility.Factor.relCoef_factor_free`); "watch out: same months is not enough, different
-  volume patterns or a mid-window entry leave `gᵀΓg`" (Finding 31, `Credibility.Factor.quadTab_eq`,
-  `Credibility.Factor.extra_profile`). Frequency × severity per factor table: joint = separate
-  without cross-covariance (`Credibility.FreqSev.blupW_eq_separate`), but also with a Kronecker
-  structure (Finding 32, `Credibility.CoreVector.blupW_kronecker`).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"
@@ -171,6 +160,14 @@ voice, then trim towards 8 pages.
     `‖p − θ‖²_H / ‖θ̂ − θ‖²_H ≈ 0.7`), valid tables give `K̂ ≻ 0` when every
     `ŝⱼ² > 0`; "use it": constrain the tables, take `φ` from a long index; "watch out":
     `ŝ² ≥ 0` alone is not enough (Finding 30) — `res:valid_tables`.
+18a. Relativities under the factor (drafted 2026-11-21): the factor adds exactly `gᵀΓg` to any
+    statistic; relativities with equal loadings and common month weights need no factor model;
+    "watch out": same months is not enough (Finding 31) — `res:factor_extra`,
+    `res:relativity_factor`.
+19. Frequency times severity (drafted 2026-11-21, after the matrix blend): joint = separate
+    without cross-covariance, and also in the Kronecker case (Finding 32); the exact bias of the
+    pure premium, zero for separate fits of uncorrelated components (Finding 33) —
+    `res:freqsev_joint`, `res:prodBias`.
 
 (Damping is in, as 5a; 1-D k-means intervals are in via item 16.)
 
