@@ -18,8 +18,9 @@ injective map `c : n → J × T` (cohorts enter and leave: `n = {(j, t) | t ∈ 
   noise a positive diagonal.
 * **Instances of `Γ`**: `Γ = 0` is `Shock` (`obsCov_eq_shock`); `C = 0`, `Γ = I` is `Shock` with
   the rank-one shock `C = λλᵀ` (`obsCov_eq_shock_loadings`); AR(1) `Γₜₛ = γφ^|t-s|` with
-  `|φ| ≤ 1` (`ar1_posSemidef`); a break at known dates, a block `Γ` with no correlation across
-  regimes (`block_posSemidef`, a constant level per regime: `regime_posSemidef`).
+  `|φ| ≤ 1` (`ar1_posSemidef`; `≻ 0` for `|φ| < 1`, `γ > 0`: `ar1_posDef`); a break at known
+  dates, a block `Γ` with no correlation across regimes (`block_posSemidef`, a constant level per
+  regime: `regime_posSemidef`).
 * **The target** `Y = Σₜ bₜX_{j₀t}` (`bₜ = 1` on the next 12 months): `ℓ = Cov(x, Y)` (`ell`) and
   `v = Var Y` (`var`). For months not yet observed, `ℓ` only sees the factor and the cohort level:
   `ℓ_{(i,t)} = λᵢλ_{j₀}(Γb)ₜ + τ²δ_{ij₀}Σₛbₛ` (`ell_apply_of_future`); `v` in `var_eq`.
@@ -551,6 +552,30 @@ theorem ar1_posSemidef (N : ℕ) {γ φ : ℝ} (hγ : 0 ≤ γ) (hφ : |φ| ≤ 
   rw [h]
   exact h1.smul hγ
 
+/-- **AR(1) with `|φ| < 1` is positive definite**: `γφ^|t-s| ≻ 0` for `γ > 0`. In `LDLᵀ`
+(`ar1_eq`) `L` is unit lower triangular and the innovation variances `1, 1 - φ², …` are
+positive. -/
+theorem ar1_posDef (N : ℕ) {γ φ : ℝ} (hγ : 0 < γ) (hφ : |φ| < 1) : (ar1 N γ φ).PosDef := by
+  have hL : (ar1L N φ).IsLowerTriangular := fun t k h => by
+    have : ¬(k : ℕ) ≤ t := not_le.2 h
+    simp only [ar1L, of_apply, this, ite_false]
+  have hdet : (ar1L N φ).det = 1 := by
+    rw [det_of_isLowerTriangular _ hL]
+    exact Finset.prod_eq_one fun t _ => by simp [ar1L]
+  have hu : IsUnit (ar1L N φ) := (isUnit_iff_isUnit_det _).2 (by rw [hdet]; exact isUnit_one)
+  have h1 : (ar1 N 1 φ).PosDef := by
+    rw [ar1_eq, ← conjTranspose_eq_transpose_of_trivial]
+    refine PosDef.mul_mul_conjTranspose_same (PosDef.diagonal fun k => ?_)
+      (vecMul_injective_iff_isUnit.2 hu)
+    simp only [ar1D]
+    split_ifs
+    · exact zero_lt_one
+    · have := (sq_lt_one_iff_abs_lt_one φ).mpr hφ
+      linarith
+  have h : ar1 N γ φ = γ • ar1 N 1 φ := by ext t s; simp [ar1]
+  rw [h]
+  exact h1.smul hγ
+
 omit [DecidableEq J] [DecidableEq T] in
 /-- **The app's fitted table is positive definite**: AR(1) correlation `Φₜₛ = φ^|t-s|` with
 `|φ| ≤ 1`, a factor table `A ⪰ 0`, `C ⪰ 0` and every `sⱼ² > 0`, as the projection of the
@@ -560,6 +585,18 @@ theorem tableK_ar1_posDef {N : ℕ} [Fintype n] [DecidableEq n] {A C : Matrix J 
     (hs : ∀ j, 0 < s2 j) (hw : ∀ j t, 0 < w j t) (c : n → J × Fin N) :
     (tableK A (ar1 N 1 φ) C s2 w c).PosDef :=
   tableK_posDef hA (ar1_posSemidef N zero_le_one hφ) hC hs hw c
+
+/-- **The app's check is exact**: AR(1) correlation with `|φ| < 1`, valid tables `A, C ⪰ 0`,
+`s² ≥ 0`, distinct cells, and the cohorts with `sⱼ² = 0` observed in a common month (a full
+panel): `K̂ ≻ 0` iff `(A + C)_ZZ ≻ 0` (`tableK_posDef_iff`, Finding 34). -/
+theorem tableK_ar1_posDef_iff [Fintype J] {N : ℕ} [Fintype n] [DecidableEq n]
+    {A C : Matrix J J ℝ} {φ : ℝ} {s2 : J → ℝ} {w : J → Fin N → ℝ} {c : n → J × Fin N}
+    (hc : Function.Injective c) (hA : A.PosSemidef) (hφ : |φ| < 1) (hC : C.PosSemidef)
+    (hs : ∀ j, 0 ≤ s2 j) (hw : ∀ j t, 0 < w j t) {t₀ : Fin N}
+    (ht : ∀ j, s2 j = 0 → ∃ p, c p = (j, t₀)) :
+    (tableK A (ar1 N 1 φ) C s2 w c).PosDef
+      ↔ ((A + C).submatrix (Subtype.val : {j // s2 j = 0} → J) Subtype.val).PosDef :=
+  tableK_posDef_iff hc hA (ar1_posDef N zero_lt_one hφ) hC hs hw ht
 
 /-- A break at known dates: months in regime `r t`, a block `G_r` within each regime and no
 correlation across regimes. -/

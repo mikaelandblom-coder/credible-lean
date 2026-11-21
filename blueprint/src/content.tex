@@ -4273,6 +4273,34 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   Theorem~\ref{thm:Factor_tableK} with $\Phi \succeq 0$ from Theorem~\ref{thm:Factor_ar1}.
 \end{proof}
 
+\begin{lemma}[AR(1) with $|\varphi| < 1$ is positive definite]\label{lem:Factor_ar1_posDef}
+  \lean{Credibility.Factor.ar1_posDef}
+  \leanok
+  \uses{def:Factor_ar1}
+  $\gamma\varphi^{|t-s|} \succ 0$ for $\gamma > 0$ and $|\varphi| < 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_ar1}
+  In $LDL^\top$ (Theorem~\ref{thm:Factor_ar1}) $L$ is unit lower triangular, so invertible,
+  and $D = \mathrm{diag}(1, 1-\varphi^2, \dots) \succ 0$.
+\end{proof}
+
+\begin{corollary}[The app's check is exact]\label{cor:Factor_tableK_ar1_iff}
+  \lean{Credibility.Factor.tableK_ar1_posDef_iff}
+  \leanok
+  \uses{def:Factor_tableK}
+  With $\Phi_{ts} = \varphi^{|t-s|}$, $|\varphi| < 1$, valid tables ($A, C \succeq 0$, $s^2 \ge 0$),
+  distinct cells and the cohorts with $s_j^2 = 0$ observed in a common month (a full panel):
+  $\hat K \succ 0$ iff $(A + C)_{ZZ} \succ 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_tableK_iff, lem:Factor_ar1_posDef}
+  Theorem~\ref{thm:Factor_tableK_iff} with $\Phi \succ 0$ from
+  Lemma~\ref{lem:Factor_ar1_posDef}.
+\end{proof}
+
 \begin{theorem}[A break at known dates]\label{thm:Factor_block}
   \lean{Credibility.Factor.block_posSemidef, Credibility.Factor.regime_posSemidef}
   \leanok

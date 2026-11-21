@@ -569,7 +569,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    (`Factor.tableK_counter_phi`; any singular `Φ` lets a month contrast escape the factor). Two
    cohorts with `ŝ² = 0` in different months, `Ĉ = (1, -1)(1, -1)ᵀ`, `Φ = I`: `K̂ = I ≻ 0` but `Ĉ` is
    singular (`Factor.tableK_counter_month`). The app meets both conditions (AR(1) with
-   `φ̂ ∈ (0.001, 0.999)`, full panel), so its check is exact there; with entry and exit it is only
+   `φ̂ ∈ (0.001, 0.999)`, full panel), so its check is exact there (`Factor.tableK_ar1_posDef_iff`,
+   with `Factor.ar1_posDef`); with entry and exit it is only
    sufficient.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
