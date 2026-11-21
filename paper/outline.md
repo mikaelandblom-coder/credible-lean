@@ -84,6 +84,11 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Relativities under a common factor (2026-11-21, `FactorRelativity.lean`): exact extra error
+  `gᵀΓg` of any statistic (`Factor.quadTab_eq`), cancellation for relativities with equal loadings
+  and equal month weights (`Factor.relCoef_factor_free`), Finding 31 (same months not enough). With
+  the factor section. Frequency × severity with a factor table per component (`FreqSev.lean`,
+  `FreqSev.blupW_eq_separate`) and Finding 32 (`CoreVector.blupW_kronecker`), with the vector section.
 - Valid tables by projection (2026-11-21): the H-projection of an unbiased estimate onto a convex
   set containing the truth is closer to it in every draw and in H-weighted MSE; exists and unique
   for `H ≻ 0` (`ConeProjection.hsq_proj_add_le`, `integral_hsq_proj_le`, `exists_hsq_proj`,

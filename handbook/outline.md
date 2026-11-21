@@ -16,6 +16,13 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Relativities and the factor (2026-11-21, `FactorRelativity.lean`): "use it: card relativities
+  need no factor model when loadings are equal and every card has the same month weights"
+  (`Credibility.Factor.relCoef_factor_free`); "watch out: same months is not enough, different
+  volume patterns or a mid-window entry leave `gᵀΓg`" (Finding 31, `Credibility.Factor.quadTab_eq`,
+  `Credibility.Factor.extra_profile`). Frequency × severity per factor table: joint = separate
+  without cross-covariance (`Credibility.FreqSev.blupW_eq_separate`), but also with a Kronecker
+  structure (Finding 32, `Credibility.CoreVector.blupW_kronecker`).
 - Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
   of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
   cohort means and seasons; the shock and the factor's lag-0 share need not be split"

@@ -754,6 +754,18 @@ spending abroad (Riksbank/SCB) not verified.
   independent, `Model.minque_det_ne_zero_iff` (Rao 1971; Searle, Casella & McCulloch 1992,
   ch. 11, from memory); under card-specific means `τ²` drops out, Finding 27).
 
+### 10h2. Relativities and joint frequency × severity (card-data Steps 4, 6; 2026-11-21)
+From memory, not re-checked online.
+- Kruskal (1968), *When are Gauss–Markov and least squares estimators identical?*, Ann. Math.
+  Stat. 39: GLS = OLS iff the column space of the design is invariant under the covariance.
+  Zellner (1962) (§9): SUR with identical regressors is equation-by-equation OLS whatever the
+  cross-equation covariance. Used for Finding 32 (`CoreVector.blupW_kronecker`): the Kronecker
+  case is the credibility analogue.
+- Common factors cancel from within-period contrasts: the interactive-effects literature
+  (Pesaran 2006, Bai 2009, §9) removes them by cross-sectional averages only when loadings are
+  homogeneous; the difference-in-differences logic. Used for Step 4: the exact remainder `gᵀΓg`
+  is the new piece (`Factor.quadTab_eq`).
+
 ### 10i. Comparing fits on data (card-data Step 7b, 2026-11-21)
 Web search (abstracts and listings); nothing read in full.
 - Tashman (2000), *Out-of-sample tests of forecasting accuracy: an analysis and review*,

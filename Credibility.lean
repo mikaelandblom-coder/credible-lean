@@ -6,6 +6,7 @@ import Credibility.BlupMoments
 import Credibility.Season
 import Credibility.Factor
 import Credibility.FactorMoments
+import Credibility.FactorRelativity
 import Credibility.FactorEstimation
 import Credibility.Core
 import Credibility.CoreMoments
@@ -30,5 +31,6 @@ import Credibility.KMeansBridge
 import Credibility.Trend
 import Credibility.CoreVector
 import Credibility.CoreVectorMoments
+import Credibility.FreqSev
 import Credibility.Shock
 import Credibility.ShockMoments

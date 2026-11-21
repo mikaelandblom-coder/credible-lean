@@ -286,6 +286,11 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Relativities (2026-11-21, Finding 31): in the card world, show the relativity error of a
+  shock-only fit against the factor fit; it is exact (`Factor.quadTab_eq`) and zero only with
+  equal loadings and equal month weights (`Factor.relCoef_factor_free`). Joint against separate
+  frequency × severity (`FreqSev.blupW_eq_separate`, Step 7 study): report the gain, not only the
+  residual correlation (Finding 32).
 - Henderson III fit (2026-11-21, `FactorEstimation.lean`): before solving, check that the basis
   tables are independent (`Model.exists_hendersonMat_det_ne_zero_iff`); drop `sⱼ²` (report
   `Cⱼⱼ + sⱼ²/wⱼ`) for a cohort with constant volume (`Factor.hendersonMat_shock_det_eq_zero`), and

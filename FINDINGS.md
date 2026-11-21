@@ -522,4 +522,31 @@ Gaps, extra hypotheses and new results found while formalizing.
    `0` has cells of variance zero and `K̂` is singular (`Factor.tableK_not_posDef`). Practice:
    check `ŝⱼ² > 0` after the projection (the app's Cholesky fails otherwise and gives no premium).
 
+31. **Equal loadings and the same months do not make the factor drop out of relativities; the
+   month weights must match (new; `notes/card-data.md` Step 4).** Expected: with equal loadings
+   and cohorts observed in the same months the common factor cancels from cohort relativities.
+   Found: any linear statistic (or predictor error) `Σ aX` has, under the factor model, the
+   factor-free variance plus exactly `gᵀΓg`, `gₜ = Σⱼ λⱼaⱼₜ` (`Factor.quadTab_eq`; true variance:
+   `Factor.Cells.variance_lin_eq`). For the relativity `z(μ̂ⱼ - Σᵢ bᵢμ̂ᵢ)` with `μ̂ᵢ = Σₜ αᵢₜXᵢₜ`,
+   `gₜ = z(λⱼαⱼₜ - Σᵢ bᵢλᵢαᵢₜ)` (`Factor.quadTab_relCoef`). It vanishes for equal loadings **and the
+   same weight profile** `αᵢₜ = αₜ` (`Factor.relCoef_factor_free`), e.g. exposure weights with
+   proportional volumes (`Shock.expo_eq_of_proportional`). Same months with different weights do
+   not suffice: two months, AR(1) `γφ^|t-s|`, weights `(3/4, 1/4)` against `(1/4, 3/4)` leave
+   `γ(1 - φ)/2` (`Factor.extra_profile`), as does a cohort entering in month 2
+   (`Factor.extra_entry`); unequal loadings `(1, 2)` leave `Γₜₜ` in one month
+   (`Factor.extra_loadings`). Only a factor constant over the window (`φ = 1`) always cancels.
+   Practice: rank cards on a common window with common month weights, or keep the factor in the
+   fit; ignoring it understates the error (`Factor.quadTab_shock_le`).
+
+32. **Separate equals joint frequency × severity without block diagonality (new;
+   `notes/card-data.md` Step 6).** Expected: separate and joint prediction coincide iff there is
+   no cross-component covariance. Found: only "if" holds
+   (`CoreVector.blupW_eq_sepW_of_componentBlockDiag`; for a factor table per component:
+   `FreqSev.blupW_eq_separate`). With the same cohort structure in both components, `K = K_c ⊗ S`,
+   `L = L_c ⊗ S`, the best predictor is the separate one whatever the cross-covariance `S`
+   (`CoreVector.blupW_kronecker`; Zellner's SUR with identical regressors). So cross-correlated
+   residuals are necessary for a gain from joint prediction, not sufficient. With frequency
+   weighted by cards and severity by claim counts the cohort structures differ, so the gain is
+   expected in practice; measure it rather than infer it from the correlation.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

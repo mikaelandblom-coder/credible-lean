@@ -4361,6 +4361,98 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   and~\ref{thm:Factor_card}.
 \end{proof}
 
+\section*{When the factor cancels from relativities (card data, Step 4)}
+
+\begin{definition}[Month profile of a statistic]\label{def:Factor_profile}
+  \lean{Credibility.Factor.quadTab, Credibility.Factor.profile, Credibility.Factor.relCoef}
+  \leanok
+  \uses{def:Factor}
+  A linear statistic, or the error of a linear predictor, is $\sum_p a_pX_p$ for coefficients
+  $a$ over all cells $J \times T$. Its variance under a table is
+  $\sum_p\sum_q a_pa_q\,\mathrm{tab}(p,q)$, and its loading-weighted month profile is
+  $g_t = \sum_j \lambda_j a_{jt}$. The relativity $z(\hmu_j - \sum_i b_i\hmu_i)$ of cohort
+  estimates $\hmu_i = \sum_t \alpha_{it}X_{it}$ has $a_{it} = z(\delta_{ij} - b_i)\alpha_{it}$.
+\end{definition}
+
+\begin{theorem}[The exact factor term]\label{thm:Factor_quadTab}
+  \lean{Credibility.Factor.quadTab_eq, Credibility.Factor.quadTab_shock_le,
+        Credibility.Factor.quadTab_eq_shock_iff, Credibility.Factor.profile_sub,
+        Credibility.Factor.profile_eq_zero_of_equal}
+  \leanok
+  \uses{def:Factor_profile, lem:Factor_shock}
+  For any coefficients $a$,
+  $\Var_{\mathrm{Factor}}(\sum aX) = \Var_{\mathrm{Shock}}(\sum aX) + g^\top\Gamma g$. The term is
+  $\ge 0$, so ignoring the factor understates the error; for $\Gamma \succ 0$ it vanishes iff
+  $g = 0$. The profile is linear in $a$. Equal loadings and a contrast within every month
+  ($\sum_j a_{jt} = 0$) give $g = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The table is $\lambda_i\lambda_j\Gamma_{ts}$ plus the Shock table; the first part sums to
+  $g^\top\Gamma g$. Then $\Gamma \succeq 0$, resp.\ $\succ 0$.
+\end{proof}
+
+\begin{theorem}[Relativities need no factor model]\label{thm:Factor_relCoef}
+  \lean{Credibility.Factor.profile_relCoef, Credibility.Factor.quadTab_relCoef,
+        Credibility.Factor.relCoef_factor_free, Credibility.Factor.quadTab_relCoef_eq_shock,
+        Credibility.Shock.expo_eq_of_proportional}
+  \leanok
+  \uses{def:Factor_profile, cor:Shock_expo}
+  The relativity has profile $g_t = z(\lambda_j\alpha_{jt} - \sum_i b_i\lambda_i\alpha_{it})$ and
+  extra variance $z^2 g^\top\Gamma g$ (with $g$ taken for $z = 1$). With equal loadings, the same
+  weight profile $\alpha_{it} = \alpha_t$ in every cohort and $\sum_i b_i = 1$, the factor cancels:
+  the relativity has the variance of the factor-free model, whatever $\Gamma$. Exposure weights
+  have the same profile when volumes are proportional.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab}
+  Theorem~\ref{thm:Factor_quadTab}; $\sum_i b_i\lambda\alpha_t = \lambda\alpha_t$.
+\end{proof}
+
+\begin{lemma}[Counterexamples]\label{lem:Factor_relCoef_counter}
+  \lean{Credibility.Factor.diffCoef, Credibility.Factor.extra_loadings,
+        Credibility.Factor.ar1_half_profile, Credibility.Factor.extra_entry,
+        Credibility.Factor.extra_profile}
+  \leanok
+  \uses{def:Factor_profile}
+  Equal loadings and the same months are not enough: the weights must have the same profile.
+  Two months, AR(1) factor $\Gamma_{ts} = \gamma\varphi^{|t-s|}$, equal loadings, the difference
+  $\hmu_0 - \hmu_1$: a cohort entering in the second month (weights $(\tfrac12,\tfrac12)$ against
+  $(0, 1)$) and two cohorts in both months with weights $(\tfrac34,\tfrac14)$ and
+  $(\tfrac14,\tfrac34)$ both keep $\gamma(1-\varphi)/2$, zero only for $\varphi = 1$ (a factor
+  constant over the window). Unequal loadings $\lambda = (1, 2)$ keep $\Gamma_{tt}$ in a single
+  month.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab}
+  Theorem~\ref{thm:Factor_quadTab}: in both two-month examples the profile is
+  $(\tfrac12, -\tfrac12)$.
+\end{proof}
+
+\begin{remark}[Finding 31]
+  Expected: equal loadings and cohorts observed in the same months make the factor drop out of
+  relativities. Needed in addition: the same weight profile over months
+  (Lemma~\ref{lem:Factor_relCoef_counter}). Practice: compute relativities on a common window
+  with common month weights, or keep the factor in the fit.
+\end{remark}
+
+\begin{theorem}[In true variance]\label{thm:Factor_rel_true}
+  \lean{Credibility.Factor.Cells.variance_lin, Credibility.Factor.Cells.variance_lin_eq,
+        Credibility.Factor.Cells.variance_relCoef}
+  \leanok
+  \uses{def:Factor_Cells, def:Factor_profile}
+  For any random cells with a covariance table, $\Var(\sum aX) = \sum_p\sum_q a_pa_q\,
+  \mathrm{tab}(p,q)$. So Theorems~\ref{thm:Factor_quadTab} and~\ref{thm:Factor_relCoef} hold
+  for the true variance, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab, thm:Factor_relCoef}
+  Bilinearity of the covariance.
+\end{proof}
+
 \section*{Estimation, part 1: what the data identify}
 
 Write $\Sigma_h(i,j)$ for the covariance of cohorts $i$, $j$ at months $t$, $t + h$. Across
@@ -5624,6 +5716,76 @@ severity) are such predictors, and so is the matrix blend.
   and of $A^\ast$; then Lemma~\ref{lem:CV_blendW}, Theorems~\ref{thm:CV_blup_optimal},
   \ref{thm:CV_blend_price} and~\ref{thm:VBM_optimal}.
 \end{proof}
+
+\section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
+
+\begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}
+  \lean{Credibility.CoreVector.posDef_of_componentBlockDiag}
+  \leanok
+  \uses{lem:CV_sepW, thm:CV_blup_separate}
+  A matrix over $J \times P$ with no covariance between components and positive definite
+  component blocks is positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The quadratic form is the sum of the component forms.
+\end{proof}
+
+\begin{definition}[Frequency $\times$ severity]\label{def:FreqSev}
+  \lean{Credibility.FreqSev, Credibility.FreqSev.lev, Credibility.FreqSev.tab,
+        Credibility.FreqSev.K, Credibility.FreqSev.L, Credibility.FreqSev.Separate,
+        Credibility.FreqSev.wMat}
+  \leanok
+  \uses{def:Factor, def:CV_moments}
+  Each component $p \in P = \{F, Y\}$ has its own table of Definition~\ref{def:Factor}
+  (frequency: volumes are cards; severity: volumes are claim counts), with its own loadings,
+  $\Gamma$, shock, process noise and $\tau_p^2$. Across components, cells have a level covariance
+  $\delta_{ik}T_{pq}$ and any further covariance. Cohort estimates
+  $\hmu_{jp} = \sum_t\alpha_{pjt}X_{jpt}$ give the joint $K$ over cohorts $\times P$, the level
+  vectors the joint $L = (\delta_{ik}T_{pq})$, $T_{pp} = \tau_p^2$. \emph{Separate}: no
+  covariance between components.
+\end{definition}
+
+\begin{theorem}[Joint $=$ separate for frequency and severity]\label{thm:FreqSev_separate}
+  \lean{Credibility.FreqSev.component_K, Credibility.FreqSev.component_K_posDef,
+        Credibility.FreqSev.isComponentBlockDiag_K, Credibility.FreqSev.isComponentBlockDiag_L,
+        Credibility.FreqSev.L_transpose, Credibility.FreqSev.component_L,
+        Credibility.FreqSev.K_posDef_of_separate, Credibility.FreqSev.blupW_eq_separate}
+  \leanok
+  \uses{def:FreqSev}
+  Each component's block of $K$ is the covariance of its estimates under its own table, and is
+  $\succ 0$ for weights summing to one; component $p$ of $L$ is $\tau_p^2 I$. If separate, the
+  joint $K \succ 0$ and the best linear unbiased predictor of $(\mu_{jF}, \mu_{jY})$ predicts
+  each component by the scalar best predictor of its own table alone.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_K, lem:CV_posDef_blockDiag, thm:CV_blup_separate}
+  The block is $A_p^\top K_p A_p$ with $K_p \succ 0$ (Theorem~\ref{thm:Factor_K}) and $A_p$
+  injective; Lemma~\ref{lem:CV_posDef_blockDiag}; Theorem~\ref{thm:CV_blup_separate}.
+\end{proof}
+
+\begin{theorem}[Joint $=$ separate without block diagonality]\label{thm:CV_blupW_kronecker}
+  \lean{Credibility.CoreVector.blupW_kronecker}
+  \leanok
+  \uses{lem:CV_sepW}
+  If $K = K_c \otimes S \succ 0$ and $L = L_c \otimes S$ with $K_c \succ 0$, $L_c$ symmetric, the
+  best predictor uses for every component the scalar weights of $(K_c, L_c)$, whatever $S$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_unique}
+  The first-order condition of Lemma~\ref{lem:CV_blup_unique} with $C = cS$.
+\end{proof}
+
+\begin{remark}[Finding 32]
+  Expected: separate equals joint \emph{iff} there is no cross-component covariance. Only the
+  ``if'' holds. With the same cohort structure in both components (Kronecker $K$ and $L$, as
+  in Zellner's seemingly unrelated regressions with identical regressors) the cross-component
+  covariance $S$ carries no information. So ``do the residuals cross-correlate?'' is a
+  sufficient check, not a necessary one; with unequal volume patterns (cards against claim
+  counts) the Kronecker structure is unlikely, and the check is the practical one.
+\end{remark}
 
 \chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
 % Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the

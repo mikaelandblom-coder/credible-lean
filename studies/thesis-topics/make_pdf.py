@@ -157,12 +157,13 @@ ext = [
      "comparison picks the better fit at the real sample size.",
      "notes/card-data.md Step 7b, studies/literature.md &sect;10i"),
     ("D. Equal or card-specific loadings (Q2)",
-     "Loadings are identified only with three or more cards; two cards give the product only. Open "
-     "theory: with equal loadings and cards observed in the same months the factor is expected to drop "
-     "out of card <i>relativities</i>, so ranking cards would need no trend model, with an exact extra "
-     "error otherwise (planned, Step 4). <b>Data question:</b> do the fitted loadings differ, and does it "
-     "matter for prediction?",
-     code("Factor.load_sq_of_three", "Factor.two_cohorts_not_identified", "Unequal.Noise.relativity_detrend")),
+     "Loadings are identified only with three or more cards; two cards give the product only. Proved: "
+     "any statistic picks up exactly g'&Gamma;g from the factor, g the loading-weighted month profile; "
+     "card <i>relativities</i> are factor-free with equal loadings <i>and</i> the same month weights, but "
+     "not with the same months alone (Finding 31: different volume patterns or a mid-window entry leave "
+     "&gamma;(1&minus;&phi;)/2 in a two-month example). <b>Data question:</b> do the fitted loadings differ, "
+     "and does it matter for ranking cards and for prediction?",
+     code("Factor.load_sq_of_three", "Factor.quadTab_eq", "Factor.relCoef_factor_free", "Factor.extra_profile")),
     ("E. A public demand index (Q2)",
      "Official passenger statistics as a known covariate with card-specific sensitivities is Hachemeister's "
      "regression credibility with demand in place of time. <b>Data question:</b> conditional on the index, "
@@ -170,10 +171,12 @@ ext = [
      "a latent factor can be combined.",
      code("CoreVector.hachemeister_bestZ", "CoreVector.blupW_optimal_dotProduct")),
     ("F. Frequency and severity (Q4)",
-     "Separate and joint prediction coincide exactly when the two components do not cross-correlate, so "
-     "the question is testable on residuals (Finding 22). A per-component factor table is planned "
-     "(Step 6). <b>Data question:</b> do frequency and severity residuals cross-correlate across cards and months?",
-     code("CoreVector.blupW_eq_sepW_of_componentBlockDiag")),
+     "With a factor table per component (frequency weighted by cards, severity by claim counts), separate "
+     "and joint prediction coincide when the components do not cross-correlate. The converse fails "
+     "(Finding 32): with the same card structure in both, cross-correlation carries no information. So "
+     "measure the gain of the joint fit rather than infer it from residual correlation. <b>Data question:</b> "
+     "do frequency and severity residuals cross-correlate, and does the joint fit predict better?",
+     code("FreqSev.blupW_eq_separate", "CoreVector.blupW_kronecker")),
     ("G. Estimation in practice",
      "Unbiased moment estimators exist given the factor's shape (Henderson III / MINQUE), but with traps: "
      "the process noise needs volume variation; card-specific means hide the common level &tau;&sup2; "

@@ -223,6 +223,11 @@ Otherwise there is an exact extra error term.
   with a card entering mid-window.
 - **Payoff:** the theorem behind "credibility for relativities, a separate
   forecast for the portfolio level".
+**Done (2026-11-21, `FactorRelativity.lean`):** exact term `gᵀΓg`, `gₜ = Σⱼ λⱼaⱼₜ`, for any
+linear statistic or predictor error (`Factor.quadTab_eq`, true variance `Cells.variance_lin_eq`);
+relativities cancel with equal loadings and the same month weights (`Factor.relCoef_factor_free`,
+`Cells.variance_relCoef`), not with the same months alone (Finding 31: `extra_profile`,
+`extra_entry`, `extra_loadings`).
 
 ### Step 5. Estimators (Lean)
 **Literature (2026-11-20):** `studies/literature.md` §10h. Lagged cross-moments (`i ≠ j`,
@@ -287,6 +292,11 @@ consistent.
   switch.
 - **Optional:** the bias of the product `φ̂ψ̂` as a covariance term (delta
   method), labelled as an approximation.
+**Done (2026-11-21, `FreqSev.lean`):** a `Factor` table per component plus any cross-component
+covariance (`FreqSev`), joint `K`, `L` over cohorts × components, component blocks `≻ 0`
+(`FreqSev.component_K_posDef`), joint `K ≻ 0` when separate (`K_posDef_of_separate`), joint =
+separate (`FreqSev.blupW_eq_separate`). The "iff" is false (Finding 32,
+`CoreVector.blupW_kronecker`). Open: the delta-method term for the product.
 
 ### Step 7. App: a world like the card data (Default, app)
 The world uses the optional distribution layer: Poisson counts, gamma
@@ -331,7 +341,7 @@ error (S19–S23). Neither is a protocol for *choosing between* switches. Propos
 ### Step 8. Documents, then the proposal
 **Status (2026-11-21):** proposal written (`studies/thesis-topics/make_pdf.py`, draft v2): the
 student's main document, with extensions A–H to test on data and a guide to the repo. Steps 4, 6
-and 7b appear there as planned; update its items D, F and C when they are done. Handbook and paper
+and 7b appear there as planned (4 and 6 now done: update D and F); update its items D, F and C when they are done. Handbook and paper
 entries still pending.
 Each proved step gets its handbook entry and paper paragraph, or a "Pending"
 line, as usual. Then rewrite `studies/thesis-topics/` as one topic,

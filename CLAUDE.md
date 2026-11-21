@@ -56,6 +56,11 @@ tactics.
   → `Credibility/Factor.lean`; its moment layer (`Factor.Cells`: random cells over
   all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE)
   → `Credibility/FactorMoments.lean`
+- extension: when the factor cancels from relativities (`notes/card-data.md` Step 4, Finding 31):
+  exact extra variance `gᵀΓg` of any linear statistic, relativities with equal loadings and month
+  weights, counterexamples, true variance → `Credibility/FactorRelativity.lean`
+- extension: frequency × severity with a `Factor` table per component (Step 6, Finding 32): joint
+  `K`, `L`, joint = separate, Kronecker case → `Credibility/FreqSev.lean`
 - extension: estimating the factor model, part 1 (`notes/card-data.md` Step 5, literature §10h):
   `Expectation.UnbiasedMean` (means `Dβ`: unbiased for all `β` iff the form annihilates `D`), (I1)
   scale `(λ, Γ) ↦ (aλ, a⁻²Γ)`, (I2) lag 0 only through `C + γλλᵀ`, (I3) lag ≥ 1 cross-card
