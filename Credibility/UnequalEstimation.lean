@@ -121,6 +121,10 @@ noncomputable def rhoPooled (sig : J → ℝ) (X : J × T → ℝ) : ℝ :=
     / ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
         * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2))
 
+/-- PLAN G1: the table with every off-diagonal entry replaced by the common `ĉ`. -/
+noncomputable def sigCommon (X : J × T → ℝ) (i j : J) : ℝ :=
+  if i = j then M.sigRhoHat w X j j else M.commonCovHat w X
+
 /-- `ĉⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ^`, eq. (39). -/
 noncomputable def cHat (X : J × T → ℝ) (j : J) : ℝ :=
   ∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * M.sigRhoHat w X i j
@@ -129,6 +133,16 @@ noncomputable def cHat (X : J × T → ℝ) (j : J) : ℝ :=
 noncomputable def tauHat (X : J × T → ℝ) : ℝ :=
   (∑ j, M.wtot w j * ((M.muHat w X j - ∑ i, M.wtot w i / M.wall w * M.muHat w X i) ^ 2
       - M.cHat w X j))
+    / (M.wall w - ∑ i, M.wtot w i ^ 2 / M.wall w)
+
+/-- PLAN G1: `ĉⱼ` of eq. (39) on the common-covariance table `sigCommon`. -/
+noncomputable def cHatCommon (X : J × T → ℝ) (j : J) : ℝ :=
+  ∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * M.sigCommon w X i j
+
+/-- PLAN G1: `τ̂²` of eq. (39) on the common-covariance table `sigCommon`. -/
+noncomputable def tauHatCommon (X : J × T → ℝ) : ℝ :=
+  (∑ j, M.wtot w j * ((M.muHat w X j - ∑ i, M.wtot w i / M.wall w * M.muHat w X i) ^ 2
+      - M.cHatCommon w X j))
     / (M.wall w - ∑ i, M.wtot w i ^ 2 / M.wall w)
 
 /-- `K̂ᵢⱼ = σ²ᵢⱼρᵢⱼ^ + τ̂²δᵢⱼ`, last line of eq. (39). -/
@@ -421,6 +435,50 @@ theorem tauHat_unbiased (hJ : 2 ≤ Fintype.card J)
           refine sum_congr rfl fun j _ => ?_
           rw [hWj]; ring
       _ = _ := by rw [key]; ring
+
+/-- PLAN G1: under a common covariance `σ²ᵢⱼρᵢⱼ = c` (`i ≠ j`), every entry of the
+common-covariance table is unbiased for `σ²ᵢⱼρᵢⱼ`. -/
+theorem sigCommon_unbiased (hJ : 2 ≤ Fintype.card J)
+    (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) (i j : J) :
+    M.toModel.Unbiased (fun X => M.sigCommon w X i j) (M.σ2 i j * M.ρ i j) := by
+  by_cases h : i = j
+  · subst h
+    exact (M.sigRhoHat_unbiased sig hw hσ i i (hden i i)).congr
+      (fun X => by simp [sigCommon]) rfl
+  · exact (M.commonCovHat_unbiased sig hw hσ hJ hden hc).congr
+      (fun X => by simp [sigCommon, h]) (hc i j h).symm
+
+/-- PLAN G1: under a common covariance, `ĉⱼ` on the common table is unbiased for the same
+`cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ` as `ĉⱼ` itself. -/
+theorem cHatCommon_unbiased (hJ : 2 ≤ Fintype.card J)
+    (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) (j : J) :
+    M.toModel.Unbiased (fun X => M.cHatCommon w X j)
+      (∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * (M.σ2 i j * M.ρ i j)) :=
+  Model.UnbiasedCov.sum univ fun i _ =>
+    (M.sigCommon_unbiased sig hw hσ hJ hden hc i j).const_mul _
+
+/-- PLAN G1: under a common covariance, `τ̂²` on the common table is unbiased.
+Proof: it differs from `τ̂²` (39) by `Σⱼ wⱼ*(ĉⱼ - ĉⱼ^common)/D`, which has expectation 0. -/
+theorem tauHatCommon_unbiased (hJ : 2 ≤ Fintype.card J)
+    (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) :
+    M.toModel.Unbiased (M.tauHatCommon w) M.τ2 := by
+  refine ((M.tauHat_unbiased sig hw hσ hJ hden).add
+    ((Model.UnbiasedCov.sum univ fun j _ =>
+      ((M.cHat_unbiased sig hw hσ hden j).add
+        ((M.cHatCommon_unbiased sig hw hσ hJ hden hc j).const_mul (-1))).const_mul
+          (M.wtot w j)).const_mul (1 / (M.wall w - ∑ i, M.wtot w i ^ 2 / M.wall w)))).congr
+    (fun X => ?_) ?_
+  · have key : ∀ (f g h : J → ℝ) (D : ℝ), (∑ j, M.wtot w j * (f j - h j)) / D
+          + 1 / D * ∑ j, M.wtot w j * (h j + -1 * g j)
+        = (∑ j, M.wtot w j * (f j - g j)) / D := fun f g h D => by
+      simp only [mul_sub, mul_add, sum_sub_distrib, sum_add_distrib, mul_neg, neg_one_mul,
+        sum_neg_distrib]
+      ring
+    exact key _ _ _ _
+  · simp
 
 /-- Eq. (39), last line: `K̂ᵢⱼ` is unbiased for `Kᵢⱼ`. -/
 theorem KHat_unbiased (hJ : 2 ≤ Fintype.card J)

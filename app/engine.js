@@ -743,8 +743,8 @@
       steps.push({ name: 'common covariance', formula: F.common, values: [cbar], badge: 'proved', lean: 'Credibility.Model.commonCovHat_unbiased', note: 'unbiased when every off-diagonal covariance is the same c' });
     }
     steps.push(
-      { name: 'ĉⱼ', formula: F.cj, values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
-      { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.tauHat_unbiased', gap: o.common ? 'G1' : null, note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
+      { name: 'ĉⱼ', formula: F.cj, values: c, badge: 'proved', lean: o.common ? 'Credibility.Model.cHatCommon_unbiased' : 'Credibility.Model.cHat_unbiased', note: o.common ? 'with the common ĉ: unbiased under a common covariance' : null },
+      { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: 'proved', lean: o.common ? 'Credibility.Model.tauHatCommon_unbiased' : 'Credibility.Model.tauHat_unbiased', note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
       dist ? taperStep(rhoT, lags, psd && tau2 > 0)
         : { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: (psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem`) + `; θ̂ = ${thetaFit} by the plug-in rule S3 (${F.dampRule}), a heuristic (G2)` },
     );
@@ -1098,8 +1098,8 @@
     ];
     if (common) steps.push({ name: 'common covariance', formula: F.common, badge: 'proved', lean: 'Credibility.Model.commonCovHat_unbiased', rule: 'use ĉ in place of every off-diagonal Σ̂ᵢⱼ below' });
     steps.push(
-      { name: 'ĉⱼ', formula: F.cj, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.cHat_unbiased', gap: common ? 'G1' : null },
-      { name: 'τ̂²', formula: F.tau, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.tauHat_unbiased', gap: common ? 'G1' : null, rule: TAU_ZERO },
+      { name: 'ĉⱼ', formula: F.cj, badge: 'proved', lean: common ? 'Credibility.Model.cHatCommon_unbiased' : 'Credibility.Model.cHat_unbiased' },
+      { name: 'τ̂²', formula: F.tau, badge: 'proved', lean: common ? 'Credibility.Model.tauHatCommon_unbiased' : 'Credibility.Model.tauHat_unbiased', rule: TAU_ZERO },
       taper
         ? { name: 'tapered K̂', formula: F.taper, badge: 'not proved yet', gap: 'G2', varies: true,
           rule: `${F.taperRule}; lowered in steps of 0.05 only if K̂ is not positive definite`,

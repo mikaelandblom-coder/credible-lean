@@ -71,6 +71,19 @@ noncomputable def rhoPooled (sig : J → ℝ) (X : J × T → ℝ) : ℝ :=
     / ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
         * (((Fintype.card T : ℝ) - 2) + sqrtSum w p.1 p.2 ^ 2 / (wtot w p.1 * wtot w p.2))
 
+/-- PLAN G1: the table with every off-diagonal entry replaced by the common `ĉ`. -/
+noncomputable def sigCommon (X : J × T → ℝ) (i j : J) : ℝ :=
+  if i = j then sigRhoHat w X j j else commonCovHat w X
+
+/-- PLAN G1: `ĉⱼ` of eq. (39) on the common-covariance table. -/
+noncomputable def cHatCommon (X : J × T → ℝ) (j : J) : ℝ :=
+  ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * sigCommon w X i j
+
+/-- PLAN G1: `τ̂²` of eq. (39) on the common-covariance table. -/
+noncomputable def tauHatCommon (X : J × T → ℝ) : ℝ :=
+  (∑ j, wtot w j * ((muHat w X j - ∑ i, wtot w i / wall w * muHat w X i) ^ 2 - cHatCommon w X j))
+    / (wall w - ∑ i, wtot w i ^ 2 / wall w)
+
 /-- `ĉⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ^`, eq. (39). -/
 noncomputable def cHat (X : J × T → ℝ) (j : J) : ℝ :=
   ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * sigRhoHat w X i j
@@ -140,6 +153,19 @@ lemma toUnequal_rhoPooled [Nonempty T] (hw : ∀ j t, 0 < w j t) (sig : J → �
     M.toUnequal.rhoPooled w sig X = rhoPooled w sig X := by
   simp only [Unequal.rhoPooled, M.toUnequal_qHat, rhoPooled,
     M.toUnequal.count_of_full w hw (fun _ => rfl), M.toUnequal_sqrtSum, M.toUnequal_wtot]
+
+variable {w} in
+lemma toUnequal_cHatCommon [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T → ℝ) :
+    M.toUnequal.cHatCommon w X = cHatCommon w X := by
+  funext j
+  simp only [Unequal.cHatCommon, Unequal.sigCommon,
+    M.toUnequal_sigRhoHat hw, M.toUnequal_commonCovHat hw]; rfl
+
+variable {w} in
+lemma toUnequal_tauHatCommon [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T → ℝ) :
+    M.toUnequal.tauHatCommon w X = tauHatCommon w X := by
+  simp only [Unequal.tauHatCommon, Unequal.cHatCommon, Unequal.sigCommon,
+    M.toUnequal_sigRhoHat hw, M.toUnequal_commonCovHat hw]; rfl
 
 variable {w} in
 lemma toUnequal_tauHat [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T → ℝ) :
@@ -226,6 +252,27 @@ theorem rhoPooled_unbiased [Nonempty T] {r : ℝ} (hρ : ∀ i j, i ≠ j → M.
     (fun X => by rw [M.toUnequal_rhoPooled hw]) rfl
   simpa only [M.toUnequal.count_of_full w hw (fun _ => rfl), M.toUnequal_sqrtSum,
     M.toUnequal_wtot] using hD
+
+/-- PLAN G1: with a common covariance, `ĉⱼ` on the common-covariance table is unbiased for
+the same `cⱼ` as `ĉⱼ` itself. -/
+theorem cHatCommon_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) (j : J) :
+    M.Unbiased (fun X => cHatCommon w X j)
+      (∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * (M.σ2 i j * M.ρ i j)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  exact (M.toUnequal.cHatCommon_unbiased sig hw hσ hJ (M.toUnequal_den_pos hw hT)
+    (fun i j h => by rw [toUnequal_σ2]; exact hc i j h) j).congr
+    (fun X => by rw [M.toUnequal_cHatCommon hw]) (by rw [toUnequal_σ2]; rfl)
+
+/-- PLAN G1: with a common covariance, `τ̂²` on the common-covariance table (every
+off-diagonal `σ²ᵢⱼρᵢⱼ^` replaced by `ĉ`) is unbiased. Needs `T ≥ 2` and `J ≥ 2`. -/
+theorem tauHatCommon_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) :
+    M.Unbiased (tauHatCommon w) M.τ2 := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  exact (M.toUnequal.tauHatCommon_unbiased sig hw hσ hJ (M.toUnequal_den_pos hw hT)
+    (fun i j h => by rw [toUnequal_σ2]; exact hc i j h)).congr
+    (fun X => by rw [M.toUnequal_tauHatCommon hw]) rfl
 
 /-- Eq. (39): `τ̂²` is unbiased. Needs `T ≥ 2` and `J ≥ 2`: with one cohort
 the denominator `w** - Σᵢ wᵢ*²/w**` is `0`. -/

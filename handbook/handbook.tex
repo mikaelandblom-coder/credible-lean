@@ -521,7 +521,9 @@ subtracts the noise.
     \mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}\Bigl((T-2) + \frac{S_{ij}^2}{w_{i*}w_{j*}}\Bigr).
   \]
   If all off-diagonal $\sigma^2_{ij}\rho_{ij}$ equal $c$, the average $\hat c$ of the
-  $\widehat{\sigma^2_{ij}\rho_{ij}}$ over the pairs $i \ne j$ is unbiased for $c$. If all
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ over the pairs $i \ne j$ is unbiased for $c$, and
+  $\widehat{\tau^2}$ of Result~\ref{res:estimation} stays unbiased with $\hat c$ in place of every
+  off-diagonal $\widehat{\sigma^2_{ij}\rho_{ij}}$. If all
   $\rho_{ij}$ ($i \ne j$) equal $\rho$,
   \[
     \hat\rho = \frac{\sum_{i<j} Q_{ij}}{\sum_{i<j}\sigma_i\sigma_j\bigl((T-2) + S_{ij}^2/(w_{i*}w_{j*})\bigr)}
@@ -530,6 +532,7 @@ subtracts the noise.
   (Result~\ref{res:unequal_est}).
   \lean{Credibility.Model.qHat_unbiased}
   \lean{Credibility.Model.commonCovHat_unbiased}
+  \lean{Credibility.Model.tauHatCommon_unbiased}
   \lean{Credibility.Model.rhoPooled_unbiased}
   \lean{Credibility.Unequal.rhoPooled_unbiased}
 \end{result}
