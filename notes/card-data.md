@@ -270,7 +270,10 @@ consistent.
 **Plug-in (2026-11-21, distribution layer, `PlugInSymmetric.lean`):** the plug-in BLUP with even,
 translation-invariant `K̂`, `ℓ̂` (quadratic fits on residuals) is unbiased under symmetric noise
 (`Core.Target.blup_plugIn_unbiased_of_symmetric`, Kackar & Harville 1981). Distribution-free it need
-not be. Its MSE beyond the BLUP's (the Kackar–Harville term) is still open.
+not be. Its MSE (2026-11-22): `mse(d*) + E B² + 2E[AB]` for any distribution
+(`Core.Target.integral_sq_plugIn`); under normal noise and a translation-invariant fit the cross
+term vanishes, so the plug-in costs exactly `E(EBLUP − BLUP)² ≥ 0` (`plugIn_mse_of_normal`).
+Open: a distribution-free bound on the cross term.
 - **Lagged cross-products:** for `i ≠ j` they estimate `λᵢλⱼΓ(h)`, which
   generalizes `Shock.crossHat_unbiased`.
 - **`s²`:** needs volume variation (`Shock.not_unbiased_s2_of_const`).

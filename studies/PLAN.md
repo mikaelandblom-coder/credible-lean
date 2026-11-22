@@ -286,6 +286,9 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`): in the app's oracle comparison,
+  split the fitted BLUP's excess loss into E B² and the cross term 2E[AB] (both are simulable);
+  under normal noise the cross term is 0 (`plugIn_mse_of_normal`).
 - Plug-in bias (2026-11-21, `Core.Target.blup_plugIn_unbiased_of_symmetric`): unbiased under
   symmetric noise when `K̂` uses residuals only. The app's world is skewed (Poisson, gamma): show the
   simulated mean error of the fitted BLUP, which may differ from 0. Check that the app's fit is

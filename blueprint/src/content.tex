@@ -3270,6 +3270,41 @@ This section assumes symmetric noise; nothing else depends on it.
   $X^Td^* = x_0$ by Lemma~\ref{lem:Blup_foc}.
 \end{proof}
 
+\begin{theorem}[The exact MSE of a plug-in predictor]\label{thm:Blup_plugIn_mse}
+  \lean{Credibility.Core.Target.plugIn, Credibility.Core.Target.integral_sq_plugIn}
+  \leanok
+  \uses{def:Blup_Target}
+  For random weights $\hat d$ and fixed unbiased weights $d$, with $A = d^Tx - Y$ and
+  $B = \hat d^Tx - d^Tx$ square integrable,
+  $\mathbb E(\hat d^Tx - Y)^2 = \mathrm{mse}(d) + \mathbb E B^2 + 2\,\mathbb E[AB]$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_mse_true}
+  Expand $(A + B)^2$; $\mathbb E A^2 = \mathrm{mse}(d)$ by Theorem~\ref{thm:Blup_mse_true}.
+\end{proof}
+
+\begin{theorem}[The plug-in predictor under normal noise]\label{thm:Blup_plugIn_normal}
+  \lean{Credibility.Core.Target.resid, Credibility.Core.Target.resid_mul,
+        Credibility.Core.Target.eq_resid_add, Credibility.Core.Target.plugIn_mse_of_normal,
+        Credibility.Core.Target.plugIn_mse_ge_of_normal}
+  \leanok
+  \uses{thm:Blup_plugIn_mse, lem:Blup_foc}
+  Distribution layer. Let $\hat d(u)$ be measurable, unbiased for every data set and translation
+  invariant, and $(x, Y)$ jointly normal. Then
+  $\mathbb E(\hat d^Tx - Y)^2 = \mathrm{mse}(d^*) + \mathbb E(\hat d^Tx - d^{*T}x)^2
+  \ge \mathrm{mse}(d^*)$ (Kackar and Harville 1984).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_plugIn_mse, lem:Blup_foc}
+  With $M = I - X(X^TX)^{-1}X^T$, invariance makes $\hat d^Tx - d^{*T}x$ a function of $Mx$, and
+  $\cov(d^{*T}x - Y, Mx) = M(Kd^* - \ell) = 0$ by the first-order condition
+  (Lemma~\ref{lem:Blup_foc}). Jointly normal and uncorrelated means independent, so the cross
+  term of Theorem~\ref{thm:Blup_plugIn_mse} is $\mathbb E[d^{*T}x - Y]\cdot\mathbb E[\cdot] = 0$.
+\end{proof}
+
 \begin{definition}[Estimates and a level as data and target]\label{def:Core_toTarget}
   \lean{Credibility.Core.Estimates.toTarget}
   \leanok

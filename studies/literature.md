@@ -96,6 +96,11 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   estimator is even and translation invariant and the noise symmetric (from memory). Used
   (2026-11-21): `Core.Target.plugIn_unbiased_of_symmetric`, `blup_plugIn_unbiased_of_symmetric`
   (distribution layer, `Credibility/PlugInSymmetric.lean`).
+- Kackar & Harville (1984), JASA 79: the MSE identity MSE(EBLUP) = MSE(BLUP) + E(EBLUP − BLUP)²
+  under normality for translation-invariant estimators (from memory). Used (2026-11-22): the
+  distribution-free identity with the cross term (`Core.Target.integral_sq_plugIn`) and the normal
+  case (`plugIn_mse_of_normal`, `plugIn_mse_ge_of_normal`, `Credibility/PlugInNormal.lean`).
+  Evenness is not needed for the MSE identity, only for unbiasedness.
 - Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve

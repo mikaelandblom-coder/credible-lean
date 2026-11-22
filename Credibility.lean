@@ -4,6 +4,8 @@ import Credibility.Weights
 import Credibility.Blup
 import Credibility.BlupMoments
 import Credibility.PlugInSymmetric
+import Credibility.PlugIn
+import Credibility.PlugInNormal
 import Credibility.Season
 import Credibility.Factor
 import Credibility.FactorMoments

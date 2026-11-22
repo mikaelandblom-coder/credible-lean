@@ -16,6 +16,10 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Plug-in MSE (2026-11-22): "the fitted premium's error is the true-moment premium's plus
+  E(EBLUP − BLUP)² plus a cross term; under normal noise the cross term is 0, so estimating can
+  only cost; with heavy tails it can help" (`Credibility.Core.Target.integral_sq_plugIn`,
+  `Credibility.Core.Target.plugIn_mse_of_normal`).
 - Plug-in unbiasedness (2026-11-21, distribution layer): "the plug-in premium (estimated `K̂`)
   is unbiased if the fit uses residuals only (even, translation invariant) and the noise is
   symmetric; with skewed claims (gamma, Poisson) no such guarantee"
