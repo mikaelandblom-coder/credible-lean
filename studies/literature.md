@@ -876,3 +876,19 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   (Jewell 1974; Diaconis & Ylvisaker 1979), and the Poisson–gamma mixture stays in the six
   (negative binomial). The zero-parameter closure is Gaussian (Isserlis): third and fourth
   moments follow from the covariance. Not yet used. Candidate for a cumulant layer (PLAN Pending).
+- Heavy tails (owner's question, 2026-11-22; from memory, standard). No variance function gives
+  them. A natural exponential family has a moment generating function near 0 for every `θ`
+  inside its natural range, so its tails are at most exponential and all its moments are finite.
+  Lognormal and Pareto are not in the class, and power tails appear only at the boundary (stable
+  laws, infinite mean). A steep `V` (Tweedie `p > 2`, inverse Gaussian `p = 3`; exponential
+  variance functions, Bar-Lev & Enis 1986) only makes skewness grow fast in `μ`. The actuarial
+  route is a compound Poisson cell `S = Σᵢ₌₁ᴺ Yᵢ`, `N ~ Poisson(λw)`. Then `κₙ(S) = λw E[Yⁿ]`
+  (collective risk model; Klugman, Panjer & Willmot, *Loss Models*), so the cell mean keeps the
+  `κₙ ∝ w^−(n−1)` scaling. A gamma severity gives back Tweedie with `1 < p < 2`. Two-parameter
+  heavy-tailed severities with a moment recursion:
+  - Lomax (Pareto II): `E[Yⁿ⁺¹]/E[Yⁿ] = θ(n+1)/(α−n−1)`, finite only for `n < α`;
+  - lognormal: `E[Yⁿ⁺¹]/E[Yⁿ] = exp(m + (2n+1)σ²/2)`, all moments finite, subexponential.
+  The fourth-moment tools need `α > 4`. For `α ≤ 4` the variance of `ŝ²` is truly infinite, which
+  is why winsorizing (Zhao & Poudyal 2026) exists. The tail index is normally estimated from
+  individual claims (Hill 1975, Ann. Stat. 3). Out of scope for now (owner, 2026-11-22): only cell
+  totals are fitted. Not yet used.

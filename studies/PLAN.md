@@ -593,4 +593,11 @@ One chat per step; none needs Lean except step 5.
   of Zhao & Poudyal (2026). Like the distribution layer, it goes in its own files, named "under
   a variance function", and nothing in the core depends on it. The app's `noiseDiagnostics`
   already estimates `p` and `κ` (§10k): check `κ̂ⱼ` against the Tweedie prediction `p φ² μ^(2p−1)`
-  before relying on it. Lean work needs the **lean** environment.
+  before relying on it. Heavy tails (§10l): no variance function gives them. Use a compound
+  Poisson cell instead, with `κₙ(S) = λw E[Yⁿ]` and a Lomax (`α, θ`) or lognormal severity, whose
+  raw moments follow a two-parameter recursion. The fourth-moment results then need `α > 4`, and
+  should say what fails for `α ≤ 4`. Fitting individual claims (Hill estimator) is out of scope
+  (owner, 2026-11-22). From cell totals only, severity moments could come from cell cumulants
+  (`κ̂ₙ / (λw)`), but `κ̂₃` and `κ̂₄` are very unstable under heavy tails. So the app world could
+  draw Lomax claims to show where the tools break, without fitting `α`. Lean work needs the
+  **lean** environment.
