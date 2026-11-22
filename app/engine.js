@@ -54,6 +54,8 @@
     };
     /** Mean 0, variance 1, skewness 2/√k: the model only fixes two moments. */
     u.skewed = function (k) { return (u.gamma(k) - k) / Math.sqrt(k); };
+    /** The world's standardized draw: normal when `normal`, else skewed with shape k. */
+    u.unit = function (k, normal) { return normal ? u.normal() : u.skewed(k); };
     return u;
   }
 
@@ -133,6 +135,7 @@
     growth: 0.03,    // yearly growth of every region's volume
     levelShape: 4,   // gamma shape of the level draws (skewness 2/√k)
     noiseShape: 2,   // gamma shape of the noise draws
+    normal: false,   // normal levels and noise instead of gamma (the plug-in cross term vanishes: plugIn_mse_of_normal)
     noiseSpread: 0,  // region-specific σⱼ = σ·4^(s((j mod 4)/3 − ½)): 0 equal, 1 = ×0.5–2 (studies' spread worlds)
   };
 
@@ -198,20 +201,22 @@
 
   /**
    * One data set from the world: the levels μⱼ (truth) and the table { w, X }.
-   * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; all draws skewed.
+   * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; all draws skewed
+   * (gamma), or normal with `params.normal`.
    */
   function draw(world, r) {
     const { J, T, w, truth, params } = world;
     const rho = params.rho, a = Math.sqrt(Math.max(rho, 0)), b = Math.sqrt(1 - Math.max(rho, 0));
     const tau = Math.sqrt(truth.tau2), sig = truth.sigmaj2.map(Math.sqrt);
     const levels = [], X = [];
-    for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.skewed(params.levelShape));
+    const nz = params.normal, ns = params.noiseShape;
+    for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
     const eta = [];
-    for (let t = 0; t < T; t++) eta.push(r.skewed(params.noiseShape));
+    for (let t = 0; t < T; t++) eta.push(r.unit(ns, nz));
     for (let j = 0; j < J; j++) {
       const row = [];
       for (let t = 0; t < T; t++) {
-        const eps = a * eta[t] + b * r.skewed(params.noiseShape);
+        const eps = a * eta[t] + b * r.unit(ns, nz);
         row.push(levels[j] + sig[j] / Math.sqrt(w[j][t]) * eps);
       }
       X.push(row);
@@ -356,8 +361,8 @@
    */
   function drawNext(world, levels, wNext, r) {
     const { params, truth } = world, a = Math.sqrt(Math.max(params.rho, 0)), b = Math.sqrt(1 - Math.max(params.rho, 0));
-    const eta = r.skewed(params.noiseShape);
-    return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * r.skewed(params.noiseShape)));
+    const eta = r.unit(params.noiseShape, params.normal);
+    return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * r.unit(params.noiseShape, params.normal)));
   }
 
   /**
@@ -925,6 +930,11 @@
    * next year's volumes wⱼ* / T × `nextFactor` (default 1); `floor.ftheory`: the floor's true
    * forecast MSE, weighted alike. Next year is drawn from its own stream, so the rest is
    * unchanged draw for draw.
+   * `split` (each fit): its excess over the oracle (the BLUP with true K, `floorBlup`) split as in
+   * Core.Target.integral_sq_plugIn: with A = oracle rate − μⱼ and B = fit rate − oracle rate,
+   * exposure-weighted, error = oracle error + E B² + 2E[AB] draw for draw. `b2`, `cross` (= 2E[AB])
+   * and their standard errors; under normal noise and an even, translation-invariant fit (BLUP on
+   * corrBS's K̂) the cross term is 0 (Core.Target.plugIn_mse_of_normal).
    */
   function simulate(world, ids, n, seed, nextFactor) {
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
@@ -933,13 +943,18 @@
     const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
     const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
     const acc = {};
-    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, warn: 0, flags: {}, expected: {} };
+    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, b: 0, bb: 0, c: 0, cc: 0, warn: 0, flags: {}, expected: {} };
+    const wsum = (v) => sum(v.map((x, j) => wt[j] * x)) / wall;
     const fe = (rates, Y) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) * (x - Y[j]))) / wall;
     for (let k = 0; k < n; k++) {
       const { levels, data } = draw(world, r), Y = drawNext(world, levels, wNext, rn);
+      const mm = cohortMeans(data).m, br = Dstar.map((d) => sum(d.map((x, i) => x * mm[i])));
+      const A = br.map((x, j) => x - levels[j]);
       for (const id of ids) {
         const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y);
         acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
+        const B = f.rates.map((x, j) => x - br[j]), b2 = wsum(B.map((x) => x * x)), c2 = 2 * wsum(B.map((x, j) => A[j] * x));
+        acc[id].b += b2; acc[id].bb += b2 * b2; acc[id].c += c2; acc[id].cc += c2 * c2;
         for (const k in f.flags) if (f.flags[k]) {
           acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
           if (f.expected && f.expected[k]) acc[id].expected[k] = (acc[id].expected[k] || 0) + 1;
@@ -947,7 +962,6 @@
       }
       const fr = fl.apply(data).rates, e = weightedSE(data, fr, levels), g = fe(fr, Y);
       acc.floor.s += e; acc.floor.ss += e * e; acc.floor.f += g; acc.floor.ff += g * g;
-      const mm = cohortMeans(data).m, br = Dstar.map((d) => sum(d.map((x, i) => x * mm[i])));
       const eb = weightedSE(data, br, levels), gb = fe(br, Y);
       acc.floorBlup.s += eb; acc.floorBlup.ss += eb * eb; acc.floorBlup.f += gb; acc.floorBlup.ff += gb * gb;
     }
@@ -959,6 +973,10 @@
       for (const k in acc[id].flags) flags[k] = acc[id].flags[k] / n;
       for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
       out[id] = { mse: mean, se: Math.sqrt(v / n), fmse: fm, fse: Math.sqrt(fv / n), warnShare: acc[id].warn / n, flags, expected };
+      if (ids.includes(id)) {
+        const bm = acc[id].b / n, cm = acc[id].c / n;
+        out[id].split = { b2: bm, b2se: Math.sqrt(Math.max(acc[id].bb / n - bm * bm, 0) / n), cross: cm, crossSe: Math.sqrt(Math.max(acc[id].cc / n - cm * cm, 0) / n) };
+      }
     }
     out.floor.ftheory = ftheory;
     return out;

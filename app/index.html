@@ -169,6 +169,9 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row" id="rho-row" hidden>
       <label for="s-rho">ρ between regions</label><input type="range" id="s-rho" min="0" max="0.9" step="0.05" value="0.5"><output id="o-rho"></output>
     </div>
+    <div class="feature">
+      <input type="checkbox" id="f-normal"><label for="f-normal">Normal noise <span class="sub">(instead of skewed gamma levels and noise; the model only fixes two moments)</span></label>
+    </div>
     <div class="feature off"><input type="checkbox" disabled><label>Unequal lengths <span class="sub">(regions entered recently)</span></label><span class="tag">soon</span></div>
     <div class="feature off"><input type="checkbox" disabled><label>Group levels <span class="sub">(regions of one country)</span></label><span class="tag">soon</span></div>
   </section>
@@ -201,6 +204,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="sub" id="headline-sub"></div>
     <svg class="chart" id="c-many" role="img" aria-label="Error of fit, reference and floor"></svg>
     <p class="sub" id="forecast-many" style="margin:8px 0 0"></p>
+    <p class="sub" id="split-many" style="margin:8px 0 0"></p>
     <div id="w-many"></div>
     <details><summary>Table</summary><div class="tablewrap" id="t-many"></div></details>
   </section>
@@ -324,6 +328,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   showRho();
   rhoBox.addEventListener('change', () => { state.rhoOn = rhoBox.checked; showRho(); update(); });
   rhoIn.addEventListener('input', () => { state.rhoVal = +rhoIn.value; showRho(); update(); });
+  $('f-normal').addEventListener('change', (e) => { state.normal = e.target.checked; update(); });
 
   for (const [sel, key] of [[$('m-fit'), 'fit'], [$('m-ref'), 'ref']]) {
     for (const [id, m] of Object.entries(E.MODELS)) {
@@ -605,6 +610,10 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
         for (const m of ms) for (const k in m.expected || {}) expected[k] = (expected[k] || 0) + m.expected[k] / ms.length;
         const fmse = sum(ms.map((m) => m.fmse)) / ms.length, fse = Math.sqrt(sum(ms.map((m) => m.fse * m.fse))) / ms.length;
         merged[id] = { mse, se, fmse, fse, ftheory: ms[0].ftheory, warnShare: sum(ms.map((m) => m.warnShare)) / ms.length, flags, expected };
+        if (ms[0].split) {
+          const avg = (k) => sum(ms.map((m) => m.split[k])) / ms.length, rss = (k) => Math.sqrt(sum(ms.map((m) => m.split[k] ** 2))) / ms.length;
+          merged[id].split = { b2: avg('b2'), b2se: rss('b2se'), cross: avg('cross'), crossSe: rss('crossSe') };
+        }
       }
       drawMany(merged);
     };
@@ -669,6 +678,13 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       rows.concat([{ label: 'Floor, best linear predictor (BLUP, known K)', ...toR(res.floorBlup) }]).map((r) => `<tr><td>${r.label}</td><td>${pct(r.r, 3)}</td><td>${pct(2 * r.e, 3)}</td></tr>`).join('') + '</tbody></table>';
     const fr = (id) => pct(Math.sqrt(res[id].fmse), 2);
     $('forecast-many').innerHTML = `<b>Premium for next year</b> (volume ×${state.next.toFixed(2)} this year's mean): typical error against the world's next-year outcome, fit ${fr(state.fit)}, reference ${fr(state.ref)}, floor ${fr('floor')}; the floor's theory √(level MSE + σⱼ²/wⱼ,next) is ${pct(Math.sqrt(res.floor.ftheory), 2)} <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener" style="color:var(--accent)">mse_forecast</a>. Most of it is next year's noise, which no premium can remove.`;
+    const sp = res[state.fit].split, o = res.floorBlup.mse, rel = (x) => (x >= 0 ? '+' : '−') + pct(Math.abs(x) / o, 1);
+    $('split-many').innerHTML = `<b>Fit against the oracle</b> (the BLUP with true K): the fit's mean squared error is the oracle's ${rel(sp.b2 + sp.cross)}, split as E B² ${rel(sp.b2)} plus the cross term 2E[AB] ${rel(sp.cross)} ± ${pct(2 * sp.crossSe / o, 1)} (2 SE), with A the oracle's error and B the fit's rate minus the oracle's <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Target.integral_sq_plugIn" target="_blank" rel="noopener" style="color:var(--accent)">integral_sq_plugIn</a>. ` +
+      (state.fit === 'blup'
+        ? (state.normal
+          ? `Under normal noise the cross term is 0 for an even, translation-invariant fit like this one, so estimation only costs E B² <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Target.plugIn_mse_of_normal" target="_blank" rel="noopener" style="color:var(--accent)">plugIn_mse_of_normal</a>.`
+          : `With skewed noise nothing makes the cross term 0: a negative one means K̂'s errors partly cancel the oracle's, which is how a fit can beat the oracle. Tick “Normal noise” to see it vanish.`)
+        : `The cross term vanishes under normal noise only for a plug-in BLUP (choose “BLUP” as the fitted model).`);
     $('n-draws').textContent = N.toLocaleString();
   }
 

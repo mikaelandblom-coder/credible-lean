@@ -649,3 +649,27 @@ test('toCSV writes the data the fit sees, one row per region and year', () => {
   const [j, t, v, x] = lines[5].split(',').map(Number);
   assert.ok(Math.abs(v - data.w[j - 1][t - 1]) < 1e-6 * v && Math.abs(x - data.X[j - 1][t - 1]) < 1e-9, 'values round-trip');
 });
+
+test('Excess over the oracle BLUP splits into E B² + 2E[AB] (Core.Target.integral_sq_plugIn); the cross term is 0 under normal noise (plugIn_mse_of_normal), not in the gamma world', () => {
+  for (const [p, seed] of [[{}, 7], [{ normal: true }, 1], [{ rho: 0.6, normal: true }, 2], [{ T: 4, levelShape: 1, noiseShape: 1 }, 7]]) {
+    const world = E.makeWorld(p), res = E.simulate(world, ['blup', 'bs'], 3000, seed);
+    for (const id of ['blup', 'bs']) {
+      const s = res[id].split;
+      close(res[id].mse - res.floorBlup.mse, s.b2 + s.cross, 1e-10, `identity ${id} ${JSON.stringify(p)}`);
+      assert.ok(s.b2 > 0);
+    }
+    const s = res.blup.split;
+    if (p.normal) {
+      assert.ok(Math.abs(s.cross) < 4 * s.crossSe, `normal: cross ${s.cross} ± ${s.crossSe}`);
+      assert.ok(Math.abs(s.cross) < 0.15 * s.b2, `normal: cross ${s.cross} small against E B² ${s.b2}`);
+    } else {
+      assert.ok(s.cross < -4 * s.crossSe, `gamma: cross ${s.cross} ± ${s.crossSe} clearly negative`);
+    }
+  }
+  // The normal switch draws normal levels: no skew in the level draws.
+  const r = E.rng(3), wn = E.makeWorld({ normal: true, J: 3 }), lv = [];
+  for (let k = 0; k < 4000; k++) lv.push(...E.draw(wn, r).levels);
+  const m = lv.reduce((a, x) => a + x, 0) / lv.length, sd = Math.sqrt(lv.reduce((a, x) => a + (x - m) ** 2, 0) / lv.length);
+  const skew = lv.reduce((a, x) => a + ((x - m) / sd) ** 3, 0) / lv.length;
+  assert.ok(Math.abs(skew) < 0.1, `skew ${skew}`);
+});

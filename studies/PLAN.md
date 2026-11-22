@@ -286,9 +286,15 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
-- Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`): in the app's oracle comparison,
-  split the fitted BLUP's excess loss into E B² and the cross term 2E[AB] (both are simulable);
-  under normal noise the cross term is 0 (`plugIn_mse_of_normal`).
+- [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
+  returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
+  exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch
+  "Normal noise" (`params.normal`). Test: identity, cross term 0 under normal noise
+  (`plugIn_mse_of_normal`), clearly negative in the gamma world. **Seen (3000 draws, BLUP on
+  corrBS's K̂, in % of the oracle's MSE):** default world: E B² +18, 2E[AB] −6 (gamma) vs +15, +0.5
+  ± 1.2 (normal); `T = 4`, shapes 1: cross term −1.8e-3 against E B² 3.2e-3, so skew roughly halves
+  the price of estimation (S9: the fit can beat the oracle). With `ρ > 0` the theorem's predictor
+  uses the cohort means only, which are then not sufficient; the cross term was still within noise.
 - Plug-in bias (2026-11-21, `Core.Target.blup_plugIn_unbiased_of_symmetric`): unbiased under
   symmetric noise when `K̂` uses residuals only. The app's world is skewed (Poisson, gamma): show the
   simulated mean error of the fitted BLUP, which may differ from 0. Check that the app's fit is
