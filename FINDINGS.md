@@ -580,11 +580,13 @@ Gaps, extra hypotheses and new results found while formalizing.
    (z ≈ −10), −2.4% with `T = 4` and shape 1; corrBS alike; BS, own, pool and the oracle (true `K`)
    0; all 0 under normal noise. With the pooled `σ̂²` in place of the region-specific `σ̃ⱼ²` the bias
    is gone (−0.06%, z −1.5); with `ρ = 0.6` a second channel through `ρ̂` remains (−0.5%).
-   Why (argued, not formalized): (a) exact, any distribution: for weights with `d̂ᵀ1 = 1`,
-   `E(d̂ᵀμ̂ − μⱼ) = Σᵢ cov(d̂ᵢ, μ̂ᵢ)`, so the fit is biased exactly when its weights covary with the
-   estimates they weight; fixed weights (the oracle) never are. (b) exact: an exposure-balanced fit
-   (`Σⱼ wⱼ*rateⱼ = Σⱼ wⱼ*μ̂ⱼ` in every draw, `bs_balance`) has portfolio bias 0 in every world.
-   (c) first order: `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
+   Why: (a) exact, any distribution (proved, `Core.Estimates.integral_randomLin_sub`): for
+   square-integrable weights with `d̂ᵀ1 = 1`, `E(d̂ᵀμ̂ − μⱼ) = Σᵢ cov(d̂ᵢ, μ̂ᵢ)`, so the fit is biased
+   exactly when its weights covary with the estimates they weight; fixed weights (the oracle) never
+   are. (b) exact (proved, `Core.Estimates.integral_portfolio_sub_of_balanced`): an
+   exposure-balanced fit (`Σⱼ wⱼ*rateⱼ = Σⱼ wⱼ*μ̂ⱼ` in every draw, `bs_balance`; the G7
+   corrections, `Core.Estimates.correct_balanced`) has portfolio bias 0 in every world.
+   (c) first order (argued, not formalized): `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
    a third moment (for iid cells `cov(sample mean, sample variance) = κ₃/T`): 0 under symmetry,
    and with right skew (`κ₃ > 0`, every claims world) a region with high draws gets a high mean
    and a high `σ̂ⱼ²` together, so less weight (`∂dᵢ/∂σᵢ² < 0`): under-pricing of order

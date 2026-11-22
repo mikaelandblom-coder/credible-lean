@@ -13,6 +13,7 @@ import Credibility.FactorRelativity
 import Credibility.FactorEstimation
 import Credibility.Core
 import Credibility.CoreMoments
+import Credibility.RandomWeights
 import Credibility.Model
 import Credibility.BuhlmannStraub
 import Credibility.Balance

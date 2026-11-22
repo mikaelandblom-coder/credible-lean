@@ -2804,6 +2804,46 @@ these two covariances.
   $\kappa = 0$ by Lemma~\ref{lem:Core_imbalanceCov_diag}.
 \end{proof}
 
+\subsection*{Random weights}
+
+Extension (Finding 35). A fitted blend uses weights estimated from the same data as the
+estimates they weight. Two exact facts, for every distribution with the moments of
+Definition~\ref{def:Core_Estimates}.
+
+\begin{theorem}[The bias of random weights]\label{thm:Core_randomLin_bias}
+  % Lean: Credibility/RandomWeights.lean
+  \lean{Credibility.Core.Estimates.randomLin,
+        Credibility.Core.Estimates.integral_randomLin_sub}
+  \leanok
+  \uses{def:Core_Estimates}
+  Let the weights $\hat d_i$ be square-integrable random variables with
+  $\sum_i \hat d_i = 1$ in every draw. Then
+  $\mathbb E(\hat d^T\hmu - \mu_j) = \sum_i \cov(\hat d_i, \hmu_i)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates}
+  $\cov(\hat d_i, \hmu_i) = \mathbb E[\hat d_i\hmu_i] - \mu\,\mathbb E\hat d_i$, and
+  $\sum_i \mathbb E\hat d_i = 1$, so the sum is $\mathbb E[\hat d^T\hmu] - \mu$.
+\end{proof}
+
+\begin{theorem}[Exposure balance keeps the portfolio unbiased]\label{thm:Core_balanced_unbiased}
+  \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced,
+        Credibility.Core.Estimates.correct_balanced}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_mse_correct}
+  If fitted levels $\hat\theta_j$, built from the data in any way, satisfy
+  $\sum_j u_j\hat\theta_j = \sum_j u_j\hmu_j$ in every draw, then
+  $\mathbb E\sum_j u_j(\hat\theta_j - \mu_j) = 0$. The corrections $\hmu_j^b + c_jD$ with
+  $\sum_j u_jc_j = 1$ are such fits.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_mse_correct}
+  By balance the portfolio error is $\sum_j u_j(\hmu_j - \mu_j)$ in every draw, which has
+  mean $0$. The corrections are balanced by Theorem~\ref{thm:Core_mse_correct}.
+\end{proof}
+
 \subsection*{A general target with fixed effects}
 
 Extension (\texttt{notes/card-data.md}, Step 1). The data $x$ are indexed by observed
@@ -3272,10 +3312,12 @@ This section assumes symmetric noise; nothing else depends on it.
 
 \begin{remark}[Finding 35]
   Symmetry is needed. In the app's skewed (gamma) world, the plug-in best predictor on a
-  $\hat K$ with region-specific variance estimates is biased low (simulated): with
-  $\hat d^T\mathbf 1 = 1$ the bias is $\sum_i \operatorname{cov}(\hat d_i, \hat\mu_i)$, and under
-  right skew a region's mean and its variance estimate rise together, so it gets less weight.
-  Exposure-balanced fits keep the portfolio level unbiased in every world.
+  $\hat K$ with region-specific variance estimates is biased low (simulated). With
+  $\hat d^T\mathbf 1 = 1$ the bias is exactly $\sum_i \operatorname{cov}(\hat d_i, \hat\mu_i)$
+  (Theorem~\ref{thm:Core_randomLin_bias}), and under right skew a region's mean and its variance
+  estimate rise together, so it gets less weight (first order, not formalized).
+  Exposure-balanced fits keep the portfolio level unbiased in every world
+  (Theorem~\ref{thm:Core_balanced_unbiased}).
 \end{remark}
 
 \begin{theorem}[The exact MSE of a plug-in predictor]\label{thm:Blup_plugIn_mse}
