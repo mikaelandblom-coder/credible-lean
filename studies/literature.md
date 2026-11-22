@@ -818,3 +818,17 @@ Web search (abstracts and listings); nothing read in full.
 - Benchmarking (§ above: Pfeffermann & Barnard 1991; Wang, Fuller & Qu 2008): balance fixes the
   portfolio level exactly (Finding 35 (b)), not region-level bias.
 
+
+### 10k. Noise shape from moments (PLAN "Noise shape" step 1, 2026-11-22)
+From memory, standard results; not re-read for this step.
+- Fisher's k-statistics (Fisher 1929, Proc. LMS 30): unbiased estimators of cumulants from
+  products of residuals. Used: `noiseDiagnostics`'s `κ̂ⱼ` is the weighted third-order analogue
+  for `X = μ + noise` with variances `σ²/w` and third cumulants `κ/w^q` (exact correction
+  `Σₜ cₜ Σₛ (δₜₛ − aₛ)³ wₛ^(−q)`).
+- Taylor's power law (Taylor 1961, Nature 189) and the Tweedie variance function `V(μ) = μᵖ`
+  (Jørgensen 1997; estimated by profile likelihood in Dunn & Smyth's `tweedie`): log variance
+  linear in log mean. Used: the power `p`, but by regression of moments only, no family.
+- Sample splitting / cross-fitting (as in Chernozhukov et al. 2018, Econometrics J. 21, double
+  ML): estimate the two sides of a product from independent parts of the data. Used: `σ̂²` from
+  even years against `μ̂` from odd ones, which removes the same-years bias (the Finding 35 channel,
+  §10j) of the naive slope (≈ 2 instead of 0 in the app's skewed world).

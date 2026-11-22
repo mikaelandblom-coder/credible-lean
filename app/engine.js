@@ -1079,6 +1079,86 @@
     return null;
   }
 
+  // ---------------------------------------------------------------- noise shape (moments only)
+
+  /**
+   * Third-moment and variance–mean checks of the noise, per region, from the data alone (PLAN
+   * "Noise shape" step 1; no distribution is fitted). Within region j, rₜ = Xⱼₜ − μ̂ⱼ with
+   * μ̂ⱼ = Σ aₜXⱼₜ, aₜ = wⱼₜ/wⱼ*. Assumed: noise independent over years with variance σⱼ²/wⱼₜ and
+   * third cumulant κⱼ/wⱼₜ^q (q = 3/2: a standardized cell √w(X − μ)/σ has a fixed skewness, as in
+   * the app's world; q = 2: the ratio is a mean over wⱼₜ independent units, as in real portfolios).
+   * Then, exactly (k-statistic style):
+   *   E Σₜ wₜ rₜ² = (T − 1)σⱼ²,   E Σₜ cₜ rₜ³ = κⱼ Σₜ cₜ Σₛ (δₜₛ − aₛ)³ wₛ^(−q),   cₜ = wₜ^q,
+   * so σ̂ⱼ² and κ̂ⱼ are unbiased; the skewness gⱼ = κⱼ/σⱼ³ (of one unit of volume) is estimated by
+   * the ratio κ̂ⱼ/σ̂ⱼ³ (not unbiased), and pooled as Σκ̂ⱼ / Σσ̂ⱼ³ with SE from the spread over regions.
+   * Common year shocks (ρ > 0) stay in rₜ and count as noise.
+   *
+   * Variance against mean: log σ̂ⱼ² = a + p log μ̂ⱼ over regions (Taylor's power law; p = 1 Poisson,
+   * 2 gamma). Under skew μ̂ⱼ and σ̂ⱼ² from the same years move together (the Finding 35 channel), so
+   * p from them is biased upwards even when σⱼ does not follow μⱼ; `power` is therefore cross-fitted:
+   * σ̂² from the even years against μ̂ from the odd ones and vice versa (independent given the
+   * levels). `powerSame` is the naive slope, for comparison. Needs T ≥ 4 and μ̂ > 0.
+   */
+  function noiseDiagnostics(data, opts) {
+    const q = (opts && opts.q) || 1.5;
+    const J = data.X.length, T = data.X[0].length;
+    const part = (j, ts) => {
+      const w = ts.map((t) => data.w[j][t]), x = ts.map((t) => data.X[j][t]), ws = sum(w);
+      const a = w.map((v) => v / ws), mu = sum(x.map((v, k) => a[k] * v)), r = x.map((v) => v - mu);
+      const n = ts.length, s2 = sum(r.map((v, k) => w[k] * v * v)) / (n - 1);
+      let m3 = 0, c3 = 0;
+      for (let t = 0; t < n; t++) {
+        const c = Math.pow(w[t], q);
+        m3 += c * r[t] ** 3;
+        let e = 0;
+        for (let u = 0; u < n; u++) e += ((t === u ? 1 : 0) - a[u]) ** 3 * Math.pow(w[u], -q);
+        c3 += c * e;
+      }
+      return { mu, s2, kappa: m3 / c3 };
+    };
+    const all = Array.from({ length: T }, (_, t) => t);
+    const regions = Array.from({ length: J }, (_, j) => {
+      const p = part(j, all);
+      return { mu: p.mu, s2: p.s2, kappa: p.kappa, skew: p.kappa / Math.pow(p.s2, 1.5) };
+    });
+    const sk = regions.map((r) => r.skew), mSk = sum(sk) / J;
+    // Pooled skewness g (one value for all regions): mean κ̂ⱼ over (mean σ̂ⱼ²)^(3/2). A ratio of
+    // averages, so its bias from the κ̂–σ̂ dependence and from the 3/2 power is O(1/J); with equal σⱼ
+    // it targets g, with unequal σⱼ the skewness of a region with the average variance (below g).
+    const kBar = sum(regions.map((r) => r.kappa)) / J, sBar = sum(regions.map((r) => r.s2)) / J;
+    const skew = kBar / Math.pow(sBar, 1.5);
+    // SE: jackknife over regions (leave one region out).
+    const jk = regions.map((r) => (kBar * J - r.kappa) / (J - 1) / Math.pow((sBar * J - r.s2) / (J - 1), 1.5));
+    const jkBar = sum(jk) / J, skewSE = J > 1 ? Math.sqrt((J - 1) / J * sum(jk.map((v) => (v - jkBar) ** 2))) : NaN;
+    const evenT = all.filter((t) => t % 2 === 0), oddT = all.filter((t) => t % 2 === 1);
+    const slope = (xs, ys) => {
+      const n = xs.length, mx = sum(xs) / n, my = sum(ys) / n;
+      const sxx = sum(xs.map((v) => (v - mx) ** 2)), b = sum(xs.map((v, k) => (v - mx) * (ys[k] - my))) / sxx;
+      const res = ys.map((v, k) => v - my - b * (xs[k] - mx));
+      return { b, se: n > 2 ? Math.sqrt(sum(res.map((v) => v * v)) / (n - 2) / sxx) : NaN };
+    };
+    const ok = (v) => Number.isFinite(v) && v > 0;
+    let power = null, powerSame = null;
+    if (regions.every((r) => ok(r.mu) && ok(r.s2)) && J > 2) powerSame = slope(regions.map((r) => Math.log(r.mu)), regions.map((r) => Math.log(r.s2)));
+    if (T >= 4 && J > 2) {
+      // Two directions (σ̂² even / μ̂ odd, and the reverse), each centred on its own means: points of
+      // different directions share years (same region, or a common year shock), so a joint centring
+      // would correlate them. Pooled slope Σ Sxy / Σ Sxx; SE from the J region-level contributions.
+      const even = evenT, odd = oddT;
+      const pe = Array.from({ length: J }, (_, j) => part(j, even)), po = Array.from({ length: J }, (_, j) => part(j, odd));
+      const dirs = [[po, pe], [pe, po]].map(([X, Y]) => ({ x: X.map((r) => Math.log(r.mu)), y: Y.map((r) => Math.log(r.s2)) }));
+      if (dirs.every((d) => d.x.concat(d.y).every(Number.isFinite))) {
+        const c = dirs.map((d) => { const mx = sum(d.x) / J, my = sum(d.y) / J; return { dx: d.x.map((v) => v - mx), dy: d.y.map((v) => v - my) }; });
+        const sxx = sum(c.map((d) => sum(d.dx.map((v) => v * v))));
+        const b = sum(c.map((d) => sum(d.dx.map((v, j) => v * d.dy[j])))) / sxx;
+        // Influence of region j: Σ_dir dx(dy − b dx); its spread over regions gives the SE.
+        const inf = Array.from({ length: J }, (_, j) => sum(c.map((d) => d.dx[j] * (d.dy[j] - b * d.dx[j]))));
+        power = { b, se: Math.sqrt(J / (J - 2) * sum(inf.map((v) => v * v))) / sxx };
+      }
+    }
+    return { q, regions, skew, skewSE, power, powerSame };
+  }
+
   /** One draw's data as CSV: one row per region and year, the columns the fit sees. */
   function toCSV(data) {
     const lines = ['region,year,volume,ratio'];
@@ -1093,6 +1173,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics,
   };
 });

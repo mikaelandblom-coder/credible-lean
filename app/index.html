@@ -198,6 +198,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <svg class="chart" id="c-draw" role="img" aria-label="Rates per region for one draw"></svg>
     <div id="w-draw"></div>
     <details><summary>Table</summary><div class="tablewrap" id="t-draw"></div></details>
+    <details><summary>Noise shape (this draw, moments only)</summary><div class="tablewrap" id="t-noise"></div></details>
   </section>
 
   <section class="card" aria-labelledby="h-many">
@@ -524,6 +525,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     renderSteps({ fit: withPremium(fit, pFit), ref: withPremium(ref, pRef) });
     renderRecipe();
     renderPrice(data, [[state.fit, fit], [state.ref, ref]]);
+    renderNoise(data);
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
     const fe = (rates) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) ** 2)) / sum(wt);
@@ -531,6 +533,24 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       order.map((j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td>${spreadOn ? `<td>${Math.sqrt(world.truth.sigmaj2[j]).toFixed(1)}</td>` : ''}<td>${levels[j].toFixed(3)}</td><td>${fit.means[j].toFixed(3)}</td><td>${fit.rates[j].toFixed(3)}</td><td>${fit.z ? fit.z[j].toFixed(2) : ''}</td><td>${ownWeight(fit, j).toFixed(2)}</td><td>${ref.rates[j].toFixed(3)}</td>${typ ? `<td>${pct(typ[j], 2)}</td>` : ''}${pFit ? `<td>${pct(pFit.typical[j], 2)}</td>` : ''}<td>${Y[j].toFixed(3)}</td></tr>`).join('') +
       '</tbody></table>' + (typ ? `<p class="sub" style="margin:6px 0 0">* Typical error of the ${tShort} rate (jackknife MSEP): an average-case error over data sets like this one, not an interval.</p>` : '') +
       `<p class="sub" style="margin:6px 0 0">${pFit ? `† Premium = the fit's rate (z unchanged). Its typical error for next year's outcome: √(MSEⱼ + σ̂ⱼ²/wⱼ,next), the level error plus next year's noise (<a href="../find/#doc/Credibility.Core.Estimates.mse_forecast" target="_blank" rel="noopener">mse_forecast</a>, proved). ` : ''}§ Own-data weight of the fit: the coefficient of the region's own mean in its rate, cⱼ = bⱼ + zⱼ(1 − bⱼ) for a blend (for BLUP the weight d̂ⱼⱼ). Unlike z it stays bounded through the two-cohort singularity (Finding 17, <a href="../find/#doc/Credibility.Core.abs_bestZ_mul_one_sub_le" target="_blank" rel="noopener">abs_bestZ_mul_one_sub_le</a>). ‡ The world's actual next-year outcome, with next year's volume ×${state.next.toFixed(2)} this year's mean. This draw, error against it: fit ${pct(Math.sqrt(fe(fit.rates)), 2)}, reference ${pct(Math.sqrt(fe(ref.rates)), 2)}.</p>`;
+  }
+
+  // ---------- noise shape (PLAN "Noise shape" step 1): skewness and variance against mean, from the data alone
+  function renderNoise(data) {
+    const D = E.noiseDiagnostics(data), pr = world.params, wt = data.w.map(sum);
+    const a = Math.sqrt(Math.max(pr.rho, 0)), b = Math.sqrt(1 - Math.max(pr.rho, 0));
+    const trueSkew = pr.normal ? 0 : (a ** 3 + b ** 3) * 2 / Math.sqrt(pr.noiseShape);
+    const pm = (v, se, d) => `${v.toFixed(d)}${Number.isFinite(se) ? ` ± ${se.toFixed(d)}` : ''}`;
+    const pw = D.power ? pm(D.power.b, D.power.se, 2) : data.X[0].length < 4 ? 'needs T ≥ 4' : 'undefined: some half-sample μ̂ⱼ ≤ 0';
+    $('t-noise').innerHTML = `<p class="sub" style="margin:6px 0">No distribution is fitted: only the third moment and how the variance moves with the mean, from the residuals Xⱼₜ − μ̂ⱼ (noise independent over years). Third cumulant κ̂ⱼ is unbiased for any distribution; the skewness ĝⱼ = κ̂ⱼ/σ̂ⱼ³ of a standardized cell √w(X − μ)/σ is a ratio, so noisy with ${data.X[0].length} years.</p>
+      <table><thead><tr><th>Summary</th><th>This draw</th><th>World</th></tr></thead><tbody>
+      <tr><td>Pooled skewness ĝ (± jackknife SE over regions)</td><td>${pm(D.skew, D.skewSE, 2)}</td><td>${trueSkew.toFixed(2)}</td></tr>
+      <tr><td>Variance power p in σⱼ² ∝ μⱼᵖ, cross-fitted (even vs odd years)</td><td>${pw}</td><td>0</td></tr>
+      <tr><td>Same power from the same years (biased up under skew)</td><td>${D.powerSame ? pm(D.powerSame.b, D.powerSame.se, 2) : ''}</td><td>0</td></tr>
+      </tbody></table>
+      <table style="margin-top:6px"><thead><tr><th>Region</th><th>Vehicle-years</th><th>μ̂ⱼ</th><th>σ̂ⱼ</th><th>ĝⱼ</th></tr></thead><tbody>` +
+      D.regions.map((r, j) => `<tr><td>R${j + 1}</td><td>${Math.round(wt[j]).toLocaleString()}</td><td>${r.mu.toFixed(3)}</td><td>${Math.sqrt(r.s2).toFixed(2)}</td><td>${r.skew.toFixed(2)}</td></tr>`).join('') +
+      `</tbody></table><p class="sub" style="margin:6px 0 0">Why it matters: positive skew makes a region's mean and its σ̂ⱼ² high together, so a fit with region-specific σ̂ⱼ² gives high draws less weight and under-prices the portfolio (Finding 35; the balance switch removes it). Watch out: the pooled ĝ reads about 10% low (20% with ρ = 0.6), and its SE ignores the year shocks regions share. The power is cross-fitted because the same-years slope reads about 2 (a gamma variance) when the truth is 0. With a level spread of τ = ${pr.tau}, one portfolio barely moves the power (SE ≈ 1.4 in the default world), so a variance model by mean needs a wider spread of levels.</p>`;
   }
 
   // ---------- fitting steps

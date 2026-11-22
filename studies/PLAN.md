@@ -352,6 +352,19 @@ One chat per step; none needs Lean except step 5.
   the balance switch. (3) If the variance follows the mean: a variance model by volume and mean in place of
   region-specific `σ̂ⱼ²`. Any Lean result that assumes a family goes in the distribution layer.
   Out of scope: fitting a full noise family for intervals or quantiles.
+  *Step 1 built 2026-11-22* (`Engine.noiseDiagnostics`, page "Noise shape" under One draw, Node test):
+  per region `κ̂ⱼ`, an exactly unbiased third cumulant (k-statistic style, third cumulant `κⱼ/w^q`,
+  `q = 3/2` as in the world, `q = 2` for unit sums), skewness `κ̂ⱼ/σ̂ⱼ³`, pooled `ĝ` = mean `κ̂` over
+  (mean `σ̂²`)^(3/2) with a jackknife SE over regions; the variance power `p` (`σⱼ² ∝ μⱼᵖ`)
+  cross-fitted, even against odd years, each direction centred on its own means. Kurtosis
+  dropped: no unbiased fourth cumulant with unequal weights without squares of `σ̂²`, and step 2
+  needs only `κ`. **Seen** (2000–3000 draws): `κ̂ⱼ/σⱼ³` within 1 SE of the truth in 7 worlds
+  (normal: 0); pooled `ĝ` −10% (default), −20% (`ρ = 0.6`, regions share year shocks, SE then too
+  small), +6% (`σ` spread 1, unequal `σⱼ`); power cross-fitted −0.08 ± 0.03 (truth 0), the naive
+  same-years slope +2.1 (+4.3 at `T = 4`, shapes 1): skew alone fakes a gamma variance. But one
+  draw's power has SE ≈ 1.4 at `τ = 0.1`: step (3) by mean is not identifiable from one such
+  portfolio; keep it only for wide level spreads. Next: step (2) with `κ̂ⱼ` (unbiased, so the
+  correction needs no ratio), compared with the pooled `σ̂²` and the balance switch.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test
   is only sufficient: there, check `K̂` itself (Cholesky) instead.
@@ -492,6 +505,9 @@ One chat per step; none needs Lean except step 5.
   (`Model.minque_unbiased`, parameters `Factor.shapeBasis`), prior `W` from the previous
   iterate, profile over `φ` (plan item 4); report the raw estimate as unbiased, the
   truncated one as the fit.
+  *Status 2026-11-22:* built in `app/monthly.js`: `φ̂` (year-on-year, profile, index), MINQUE given
+  `φ̂`, `γλλᵀ` shown as one matrix. Open: the shock-only fit on factor data (Finding 26: its `Ĉ`,
+  `τ̂²` against the truth); loadings `λ̂` normalised to mean 1, only `λ₁λ₂` with two cohorts.
 - Common factor (2026-11-20, `Factor.lean`, Finding 25): the fit switch "latent factor over
   time: none / independent months / AR(1) / break at known dates" with `K` from `Factor.K`,
   `ℓ`, `v` from `Factor.ell`, `Factor.var` and weights from `Core.blup` (oracle with the true
@@ -501,16 +517,23 @@ One chat per step; none needs Lean except step 5.
   Estimation (literature §10h): fit `φ̂` from lag ratios, `λ̂`, `Ĉ` by moments given `φ̂`,
   then Gaussian quasi-ML by Kalman EM (missing cells for cohorts entering and leaving);
   sandwich standard errors, no hyperparameters.
+  *Status 2026-11-22:* built: AR(1) with the true or fitted table, premium by `Core.blup`. Open: the
+  switch "none / independent months / break", per-cohort AR(1), negative cell weights shown as
+  normal, Kalman quasi-ML with missing cells (needs cohorts entering and leaving).
 - Season (2026-11-20, `Season.lean`, Finding 24): a fit switch "season: none / estimated
   (one fixed effect per month) / known index". Ignoring a real season biases the forecast by
   `Σₘ (Sₘ(d*) - cₘ)βₘ` (`Core.Target.integral_bias`), which the app can show per cohort; the
   known-index oracle weights cells by expected claims `cₜwⱼₜ` (`Unequal.a_eq_of_volume`).
+  *Status 2026-11-22:* built: season as fixed effects (always on). Open: the switch "none / known
+  index" and the bias of ignoring it per cohort.
 - General best predictor (2026-11-20, `Blup.lean`): any target (e.g. a 12-month total)
   and fixed effects (a season) via `Core.blup`; its error shows the price of estimating the
   season (`Core.predMse_blup`). For Step 7 of `notes/card-data.md`. With known covariances,
   annual totals lose exactly `(Ac - d*)ᵀK(Ac - d*)` (`Core.predMse_aggregate_eq_blup_add`) and
   an unneeded season costs `(d₂* - d₁*)ᵀK(d₂* - d₁*)` (`Core.predMse_blup_nested`): the oracle
   side of the Q3 study (monthly against annual), against which the estimated fits are compared.
+  *Status 2026-11-22:* built: 12-month target and its exact MSE (`predictor`, tested). Open: the
+  annual-totals and unneeded-season oracle losses next to the estimated fits.
 - Finding 23 (2026-11-19): the world model's period shock should be `C + s²/w` (does not
   shrink with volume), not `σ²ρ/w`. Check what `engine.js` simulates; with growing volumes
   the thesis fit is then misspecified, which the app could show. Now proved
@@ -518,6 +541,7 @@ One chat per step; none needs Lean except step 5.
   `Shock.K_apply` and `Ĉ`, `ŝ²` from `Shock.CHat`, `Shock.s2Hat` (exposure weights, weightings
   `1` and `w`; works whenever `T ≥ 3` and the volumes vary (`Shock.det_expo_neg`), else fall back to the thesis fit), and `τ̂²`, `K̂` from `Shock.tauHat`,
   `Shock.KHat` (portfolio weights `x = w_{j*}/w_{**}`; proved 2026-11-20).
+  *Status 2026-11-22:* not built: `engine.js` still draws the period shock as `σⱼσₖρ/√(wⱼwₖ)`.
 - Monthly cohort data (2026-11-20, `notes/card-data.md` Step 7): a world with a monthly season,
   an AR(1) demand factor (optional break) seen through a noisy observed index, equal or unequal
   loadings and cohorts entering and

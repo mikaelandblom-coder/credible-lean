@@ -739,3 +739,23 @@ test('Balance switch: any fit shifted by one D is exposure-balanced, linear weig
     assert.ok(E.recipeText(id, { balance: true }).includes(E.F.balance));
   }
 });
+
+test('Noise shape: κ̂ⱼ unbiased for the third cumulant (any distribution, q = 3/2), 0 under normal noise; cross-fitted variance power ≈ 0 where the same-years slope is biased up', () => {
+  for (const [params, n] of [[{}, 2000], [{ T: 4, noiseShape: 1 }, 2000], [{ rho: 0.6 }, 1500], [{ normal: true }, 1500]]) {
+    const world = E.makeWorld(params), r = E.rng(7), p = world.params;
+    const a = Math.sqrt(p.rho), b = Math.sqrt(1 - p.rho), g = p.normal ? 0 : (a ** 3 + b ** 3) * 2 / Math.sqrt(p.noiseShape);
+    const k = [], pw = [], ps = [];
+    for (let i = 0; i < n; i++) {
+      const D = E.noiseDiagnostics(E.draw(world, r).data);
+      k.push(D.regions[0].kappa / world.truth.sigmaj2[0] ** 1.5);
+      if (D.power) pw.push(D.power.b);
+      if (D.powerSame) ps.push(D.powerSame.b);
+    }
+    const m = sum(k) / n, se = Math.sqrt(sum(k.map((v) => (v - m) ** 2)) / (n - 1) / n);
+    assert.ok(Math.abs(m - g) < 4 * se, `${JSON.stringify(params)}: κ̂/σ³ ${m} ± ${se} vs ${g}`);
+    assert.ok(pw.length > 0.95 * n, `power defined in ${pw.length} of ${n} draws (needs every μ̂ > 0)`);
+    const np = pw.length, mp = sum(pw) / np, sp = Math.sqrt(sum(pw.map((v) => (v - mp) ** 2)) / (np - 1) / np);
+    assert.ok(Math.abs(mp) < 0.15 && Math.abs(mp) < 6 * sp + 0.05, `power ${mp} ± ${sp}`);
+    if (!p.normal && p.rho === 0) assert.ok(sum(ps) / ps.length > 1, `same-years slope biased up: ${sum(ps) / ps.length}`);
+  }
+});

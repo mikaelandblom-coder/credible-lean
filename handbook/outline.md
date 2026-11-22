@@ -16,7 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- (none; cleared 2026-11-22 for v3.0.0)
+- Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
+  `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
+  cross-fit (even against odd years). Add when step 2 (skew correction) is settled.
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
