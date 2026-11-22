@@ -306,6 +306,11 @@ One chat per step; none needs Lean except step 5.
   high mean and a high σ̂ⱼ² together, so it gets less weight. Open for the owner: log as a finding
   (outside the distribution-free core: the core only promises unbiasedness for known K), and
   try a fix that keeps the plug-in BLUP but restores balance, e.g. the G7 balanced shift.
+  *Logged as Finding 35 (2026-11-22).* The pooled `σ̂²` removes it (scratch check, not in the app).
+- Finding 35 remedies (2026-11-22): add fits "BLUP, pooled σ̂²" and "BLUP + balanced shift" (G7);
+  compare bias and MSE over many draws, gamma and normal. Lean (in **lean**): (a) `E(d̂ᵀμ̂ − μⱼ) =
+  Σᵢ cov(d̂ᵢ, μ̂ᵢ)` for random weights with `d̂ᵀ1 = 1` (`Core.Estimates`, distribution-free);
+  (b) an exposure-balanced fit has portfolio bias 0 in every world.
   The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test

@@ -573,4 +573,25 @@ Gaps, extra hypotheses and new results found while formalizing.
    with `Factor.ar1_posDef`); with entry and exit it is only
    sufficient.
 
+35. **Under skewed claims, fits with region-specific estimated variances under-price (new; app,
+   `studies/PLAN.md` "Plug-in bias").** Expected: the plug-in BLUP on corrBS's `K̂` is unbiased, as
+   under symmetric noise (`Core.Target.blup_plugIn_unbiased_of_symmetric`). Found (simulated,
+   4000 draws, gamma noise): portfolio mean error −0.37% of the tariff in the default world
+   (z ≈ −10), −2.4% with `T = 4` and shape 1; corrBS alike; BS, own, pool and the oracle (true `K`)
+   0; all 0 under normal noise. With the pooled `σ̂²` in place of the region-specific `σ̃ⱼ²` the bias
+   is gone (−0.06%, z −1.5); with `ρ = 0.6` a second channel through `ρ̂` remains (−0.5%).
+   Why (argued, not formalized): (a) exact, any distribution: for weights with `d̂ᵀ1 = 1`,
+   `E(d̂ᵀμ̂ − μⱼ) = Σᵢ cov(d̂ᵢ, μ̂ᵢ)`, so the fit is biased exactly when its weights covary with the
+   estimates they weight; fixed weights (the oracle) never are. (b) exact: an exposure-balanced fit
+   (`Σⱼ wⱼ*rateⱼ = Σⱼ wⱼ*μ̂ⱼ` in every draw, `bs_balance`) has portfolio bias 0 in every world.
+   (c) first order: `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
+   a third moment (for iid cells `cov(sample mean, sample variance) = κ₃/T`): 0 under symmetry,
+   and with right skew (`κ₃ > 0`, every claims world) a region with high draws gets a high mean
+   and a high `σ̂ⱼ²` together, so less weight (`∂dᵢ/∂σᵢ² < 0`): under-pricing of order
+   skewness × `σⱼ/√(T wⱼ*)` × the shrinkage `ζⱼ`. A common `σ̂²` dilutes this by `1/J`. Same
+   mechanism as inverse-variance weighting with estimated variances in meta-analysis
+   (Hamman et al. 2018; Doncaster et al. 2017; `studies/literature.md` §10j). The core (two moments) cannot exclude it: it
+   promises unbiasedness for known `K` only. Remedies to compare in the app: pooled `σ̂²`, the
+   balanced shift (G7, `Credibility/Core.lean`), or a variance model by volume rather than by region.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

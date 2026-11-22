@@ -3270,6 +3270,14 @@ This section assumes symmetric noise; nothing else depends on it.
   $X^Td^* = x_0$ by Lemma~\ref{lem:Blup_foc}.
 \end{proof}
 
+\begin{remark}[Finding 35]
+  Symmetry is needed. In the app's skewed (gamma) world, the plug-in best predictor on a
+  $\hat K$ with region-specific variance estimates is biased low (simulated): with
+  $\hat d^T\mathbf 1 = 1$ the bias is $\sum_i \operatorname{cov}(\hat d_i, \hat\mu_i)$, and under
+  right skew a region's mean and its variance estimate rise together, so it gets less weight.
+  Exposure-balanced fits keep the portfolio level unbiased in every world.
+\end{remark}
+
 \begin{theorem}[The exact MSE of a plug-in predictor]\label{thm:Blup_plugIn_mse}
   \lean{Credibility.Core.Target.plugIn, Credibility.Core.Target.integral_sq_plugIn}
   \leanok

@@ -802,3 +802,19 @@ Web search (abstracts and listings); nothing read in full.
   error is consistent for the mean. Used: the score.
 - In this repo: leave-one-year-out CV for tuning (`studies/damping-theta.md` S14, too noisy);
   jackknife MSEP of one fit (Jiang, Lahiri & Wan 2002; S19–S23).
+
+### 10j. Bias of weights estimated from the same data (Finding 35, 2026-11-22)
+- Hamman et al. (2018), *Bias in meta-analyses using Hedges' d* (abstract only, ECU ScholarShip
+  10342/8371; journal not checked): inverse-variance weighting is biased because the
+  estimated effect and its weight are correlated; sample-size weights are nearly unbiased.
+  Used: the mechanism of Finding 35; exposure weights (BS) play the role of sample-size weights.
+- Doncaster et al. (2017), Methods in Ecology and Evolution (Southampton eprint 416153; title not
+  checked): weight by an adjusted (pooled)
+  variance. Used: the pooled-`σ̂²` remedy, which removes the bias in the app (Finding 35).
+- Wang & Fuller (2003), *The MSE of small area predictors constructed with estimated area
+  variances*, JASA 98, 716–723 (abstract): EBLUP with each area's own direct variance; MSE term
+  for the variance error. Not yet used: their setting has a bias channel only under skew; check
+  whether they treat it.
+- Benchmarking (§ above: Pfeffermann & Barnard 1991; Wang, Fuller & Qu 2008): balance fixes the
+  portfolio level exactly (Finding 35 (b)), not region-level bias.
+

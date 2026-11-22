@@ -84,6 +84,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Finding 35 (2026-11-22): under-pricing by estimated region variances under skew; with the
+  plug-in sections (Kackar–Harville is the symmetric case), balance as the portfolio-level guard.
 - Plug-in MSE (2026-11-22, `PlugIn.lean`, `PlugInNormal.lean`): exact identity with the cross term,
   which vanishes under normal noise (Kackar–Harville); explains S9 (heavy tails, fit beats floor).
 - Plug-in predictor (2026-11-21, `PlugInSymmetric.lean`): unbiased under symmetric noise for

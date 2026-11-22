@@ -16,6 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Finding 35 (2026-11-22): "watch out: with skewed claims, region-specific variance estimates
+  make the premium too low on average; exposure balance protects the portfolio level" (once the
+  Lean lemmas (a), (b) of Finding 35 are proved; `studies/PLAN.md` Pending).
 - Plug-in MSE (2026-11-22): "the fitted premium's error is the true-moment premium's plus
   E(EBLUP − BLUP)² plus a cross term; under normal noise the cross term is 0, so estimating can
   only cost; with heavy tails it can help" (`Credibility.Core.Target.integral_sq_plugIn`,
