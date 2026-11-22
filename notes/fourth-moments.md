@@ -1,10 +1,11 @@
-# A fourth-moment layer (draft, 2026-11-22; awaiting the owner's decision)
+# A fourth-moment layer (2026-11-22; approved, being built)
 
 Status: approved (owner, 2026-11-22), with option (b) below. Built so far in `Credibility/Cumulants.lean`:
 the general lemma (`variance_quad_of_cumulants`) and the algebra of the independent-sources corollary
-(`varQuad_sources`: given the source form of the tables). Next: that independent sources give
-those tables, the third-moment pieces, and the conditional version (b). The owner decides first, because it settles the
-open question of a third-moment layer (`κ̂ⱼ` in `Engine.noiseDiagnostics`) at the same time.
+(`varQuad_sources`: given the source form of the tables), and the third-moment pieces
+(`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`, `L³` only). This settles the
+third-moment question: it is the first half of this layer. Next: that independent sources give the
+source form of the tables, and the conditional version (b).
 
 ## Why
 

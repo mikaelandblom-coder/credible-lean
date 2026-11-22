@@ -7992,3 +7992,52 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   \uses{def:varQuad, lem:cumulants_sums}
   Insert the tables, move the sum over sources to the front, and factor.
 \end{proof}
+
+\section{Third moments}
+
+\begin{lemma}[Integrability with three moments]\label{lem:cumulants_integrable3}
+  \lean{Credibility.Cumulants.abs_mul3_le, Credibility.Cumulants.integrable_abs_pow3,
+        Credibility.Cumulants.integrable_mul3_of_L3, Credibility.Cumulants.integrable_mul2_of_L3}
+  \leanok
+  $3|abc| \le |a|^3 + |b|^3 + |c|^3$, so products of up to three $L^3$ functions are integrable
+  on a probability space.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $x^3 + y^3 + z^3 - 3xyz = \tfrac12(x+y+z)\bigl((x-y)^2 + (y-z)^2 + (z-x)^2\bigr)$.
+\end{proof}
+
+\begin{definition}[Cubic and mixed moments]\label{def:eCubic}
+  \lean{Credibility.Cumulants.eCubic, Credibility.Cumulants.covQuadLin}
+  \leanok
+  $E_3(T) = \sum_{ijk} T_{ijk}(\kappa_{3,ijk} + m_iC_{jk} + m_jC_{ik} + m_kC_{ij} + m_im_jm_k)$ and
+  $V_{2,1}(A, b) = 2(Am)^\top Cb + \sum_{ijk} A_{ij}b_k\kappa_{3,ijk}$.
+\end{definition}
+
+\begin{theorem}[Expectation of a cubic estimator]\label{thm:integral_cubic_of_cumulants}
+  \lean{Credibility.Cumulants.integral_cubic_of_cumulants}
+  \leanok
+  \uses{def:eCubic}
+  For random cells in $L^3$ with means $m$, covariances $C$ and third central moments
+  $\kappa_3$, $\mathbb E\sum_{ijk}T_{ijk}Z_iZ_jZ_k = E_3(T)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable3}
+  Write $Z_i = e_i + m_i$, expand each product into eight terms and use $\mathbb E e_i = 0$.
+\end{proof}
+
+\begin{theorem}[Covariance of a quadratic and a linear estimator]\label{thm:covariance_quad_lin_of_cumulants}
+  \lean{Credibility.Cumulants.covariance_quad_lin_of_cumulants}
+  \leanok
+  \uses{def:eCubic}
+  For random cells in $L^3$ with means $m$, covariances $C$, third central moments $\kappa_3$ and a
+  symmetric $A$, $\operatorname{cov}(\sum A_{ij}Z_iZ_j, \sum b_kZ_k) = V_{2,1}(A, b)$. With
+  symmetric cells ($\kappa_3 = 0$) only the Gaussian term remains.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:eCubic, lem:cumulants_integrable, lem:cumulants_integrable3}
+  As for the variance: $Z^\top AZ - \mathbb E = U + W$ and $b^\top Z - \mathbb E = b^\top e$; then
+  $\mathbb E[Ub^\top e]$ is a third moment and $\mathbb E[Wb^\top e] = 2(Am)^\top Cb$.
+\end{proof}

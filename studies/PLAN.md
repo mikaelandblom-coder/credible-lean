@@ -612,6 +612,9 @@ One chat per step; none needs Lean except step 5.
   pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Approved (owner); assumptions 1 + 6 with the
   conditional version (b). *General lemma proved 2026-11-22 (`Cumulants.variance_quad_of_cumulants`).*
   App: nothing yet; the G2 `V` and the G4 weights will use it once the source corollary is in.
+  *Third moments proved 2026-11-22* (`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`):
+  next, `κ̂ⱼ` of `noiseDiagnostics` unbiased as a corollary (its weights as a cubic form `T`), then its
+  badge can say "proved"; and the Finding 35 bias with quadratic weights `d̂`.
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like
