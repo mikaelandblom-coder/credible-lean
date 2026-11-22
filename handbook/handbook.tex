@@ -260,6 +260,21 @@ each pair; with few cohorts it costs (study S36--S37).
 \lean{Credibility.posDef_hadamard_of_corr}
 \lean{Credibility.distTaper_posSemidef}
 
+\begin{result}[The optimal damping of the table]\label{res:bestTheta}
+  For off-diagonal estimates with means $s_{ij}$ and variances $V_{ij}$, the damping $\theta$
+  minimising $\mathbb{E}\sum(\theta\hat s_{ij} - s_{ij})^2$ is
+  $\theta^* = \sum s_{ij}^2/(\sum s_{ij}^2 + \sum V_{ij}) \in [0, 1]$. A $\theta$ beats both no
+  damping and dropping the correlations exactly when $|\theta - \theta^*| \le \min(\theta^*, 1-\theta^*)$.
+  \lean{Credibility.Damping.bestTheta_optimal}
+  \lean{Credibility.Damping.safe_iff}
+\end{result}
+\use The rule $\hat\theta = \bar r^2/(\bar r^2 + (1-\bar r^2)^2/(T-1))$ is $\theta^*$ for one
+correlation with its normal-theory variance plugged in.
+\begin{caveat}
+  This optimum is for the table, not for the rates: the rates want less damping, most of all under
+  heavy tails (study S12). And $V$ involves fourth moments, so $\theta^*$ depends on the noise law.
+\end{caveat}
+
 \begin{result}[What ignoring or damping correlation costs]\label{res:ignoreCorr}
   Let all noise correlations equal $r \in [0,1)$, with $J$ cohorts, and use a $K$ whose
   off-diagonal noise covariances are multiplied by $\theta \in [0,1]$ ($\theta = 0$:

@@ -6255,6 +6255,58 @@ $\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
   $(1 - 2\rho)\|x\|^2 + \rho\sum_{i<j}(x_i - x_j)^2 \ge 0$.
 \end{proof}
 
+\section{Damping as shrinkage (PLAN G2)}
+
+\begin{definition}[Shrinkage loss]\label{def:dampLoss}
+  \lean{Credibility.Damping.loss, Credibility.Damping.signal, Credibility.Damping.noise,
+        Credibility.Damping.bestTheta}
+  \leanok
+  For estimates $\hat s_i$ ($i \in S$) with means $s_i$ and variances $V_i$ (given numbers),
+  $L(\theta) = \mathbb{E}\sum_i(\theta\hat s_i - s_i)^2
+  = \sum_i \bigl(\theta^2(s_i^2 + V_i) - 2\theta s_i^2 + s_i^2\bigr)$, and
+  $\theta^* = \sum s_i^2 / (\sum s_i^2 + \sum V_i)$.
+\end{definition}
+
+\begin{theorem}[The optimal damping]\label{thm:bestTheta}
+  \lean{Credibility.Damping.loss_eq_poly, Credibility.Damping.loss_eq,
+        Credibility.Damping.bestTheta_optimal, Credibility.Damping.bestTheta_mem,
+        Credibility.Damping.loss_bestTheta, Credibility.Damping.loss_one,
+        Credibility.Damping.loss_zero, Credibility.Damping.bestTheta_single}
+  \leanok
+  \uses{def:dampLoss}
+  If $\sum s_i^2 + \sum V_i > 0$: $L(\theta) = L(\theta^*) + (\sum s_i^2 + \sum V_i)(\theta - \theta^*)^2$,
+  so $\theta^*$ is optimal, with $L(\theta^*) = \sum s^2 \sum V / (\sum s^2 + \sum V)$,
+  $L(1) = \sum V$, $L(0) = \sum s^2$, and $\theta^* \in [0, 1]$ when all $V_i \ge 0$.
+  For one entry, $\theta^* = s^2/(s^2 + V)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Complete the square.
+\end{proof}
+
+\begin{theorem}[A safe $\theta$]\label{thm:dampSafe}
+  \lean{Credibility.Damping.loss_le_one_iff, Credibility.Damping.loss_le_zero_iff,
+        Credibility.Damping.safe_iff}
+  \leanok
+  \uses{def:dampLoss, thm:bestTheta}
+  Let $\sum s^2 + \sum V > 0$ and $V_i \ge 0$. Then $L(\theta) \le L(1)$ iff
+  $\theta \in [2\theta^* - 1, 1]$, $L(\theta) \le L(0)$ iff $\theta \in [0, 2\theta^*]$, and
+  $\theta$ beats both iff $|\theta - \theta^*| \le \min(\theta^*, 1 - \theta^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  By the parabola, $L(\theta) \le L(c)$ iff $|\theta - \theta^*| \le |c - \theta^*|$.
+\end{proof}
+
+\begin{remark}[The damping rule]\label{rem:dampRule}
+  \uses{thm:bestTheta}
+  The app's $\hat\theta = \bar r^2/(\bar r^2 + (1 - \bar r^2)^2/(T-1))$ is the one-entry
+  $\theta^*$ with $s = \rho$ replaced by $\bar r$ and $V$ by the normal-theory variance of a
+  sample correlation: a plug-in, not itself proved optimal. $V$ needs fourth moments, so no
+  two-moment theorem can fix $\theta$ (study S7). The loss is that of the covariance table;
+  the rates want less damping (S12), so the link to the rates' error stays numerical.
+\end{remark}
+
 \section{The distance taper}
 
 \begin{definition}[Distance taper]\label{def:distTaper}

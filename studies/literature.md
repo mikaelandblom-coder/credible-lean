@@ -16,6 +16,9 @@ the loss you care about.**
   fourth moments assumed**; asymptotic in J, T → ∞.
 - Frahm & Memmel (2010), *Dominating estimators for minimum-variance portfolios*, J. Econometrics:
   finite-sample shrinkage of GMV weights that dominates the plug-in (normal returns).
+- Schäfer & Strimmer (2005), *A shrinkage approach to large-scale covariance matrix estimation*,
+  SAGMB 4(1): the zero-target ("target D") intensity `Σ Var(ŝᵢⱼ)/Σ ŝᵢⱼ²` form. Used 2026-11-22 for
+  G2: `Damping.bestTheta = Σs²/(Σs² + ΣV)` is the exact finite-sample version with given moments.
 - Ledoit & Wolf (2004), *Honey, I shrunk the sample covariance matrix*, JPM 30(4): the
   **constant-correlation target** (average sample correlation × sample variances), from Elton &
   Gruber's constant-correlation model. This is our H1 model; linear shrinkage intensity there is

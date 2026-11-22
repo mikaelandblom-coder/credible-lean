@@ -86,6 +86,8 @@ tactics.
   containing the truth (PSD tables) has `H`-norm error ≤ the estimate's, in every draw and in mean;
   exists and is unique for `H ≻ 0` (`studies/PLAN.md`, `constrainPSD`) → `Credibility/ConeProjection.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
+- extension: damping as shrinkage (PLAN G2): the table-optimal `θ* = Σs²/(Σs² + ΣV)` for given
+  means and variances, and the safe range of `θ` → `Credibility/Damping.lean`
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
   intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,

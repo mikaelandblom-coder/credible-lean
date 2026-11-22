@@ -163,6 +163,12 @@ the floor line and in the tests.
 - **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
   rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed
   `θ` in 23 of 24 worlds (H2 in `studies/damping-theta.md`).*
+  *Proved 2026-11-22 for the table loss (`Credibility/Damping.lean`): with means `s` and variances
+  `V` of the off-diagonal estimates, `E Σ(θŝ − s)²` is minimised at `θ* = Σs²/(Σs² + ΣV)` (Ledoit–Wolf
+  / Schäfer–Strimmer intensity), and `θ` beats both `θ = 0` and `θ = 1` iff
+  `|θ − θ*| ≤ min(θ*, 1 − θ*)` (`safe_iff`). The app's rule is the one-entry `θ*` with normal-theory
+  `V` plugged in. Open: the rates' MSE (S12: they want less damping), and `θ̂` with estimated
+  inputs. App: the damping note now names `bestTheta_optimal`; the badge stays (it is about `K̂ ≻ 0`).*
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.

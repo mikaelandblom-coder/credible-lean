@@ -746,7 +746,7 @@
       { name: 'ĉⱼ', formula: F.cj, values: c, badge: 'proved', lean: o.common ? 'Credibility.Model.cHatCommon_unbiased' : 'Credibility.Model.cHat_unbiased', note: o.common ? 'with the common ĉ: unbiased under a common covariance' : null },
       { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: 'proved', lean: o.common ? 'Credibility.Model.tauHatCommon_unbiased' : 'Credibility.Model.tauHat_unbiased', note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
       dist ? taperStep(rhoT, lags, psd && tau2 > 0)
-        : { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: (psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem`) + `; θ̂ = ${thetaFit} by the plug-in rule S3 (${F.dampRule}), a heuristic (G2)` },
+        : { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: (psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem`) + `; θ̂ = ${thetaFit} by the plug-in rule S3 (${F.dampRule}): the plug-in of the table-optimal θ* = s²/(s² + V) (Damping.bestTheta_optimal); optimal for the rates not proved (G2)` },
     );
     if (o.common && tau2 > 0) {
       steps.push(

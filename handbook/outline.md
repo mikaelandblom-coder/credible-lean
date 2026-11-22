@@ -41,6 +41,8 @@ voice, then trim towards 8 pages.
    `J ≥ 2` is needed (Finding 2).
 5a. Damped plug-in `K̂`: `ρ̂ ⪰ 0`, `θ ∈ [0,1)`, `τ̂² ≥ 0` (truncated) give
    `K̂ ≻ 0` — `thm:U_dampedK_posDef` (drafted).
+5a'. Optimal damping of the table `θ* = Σs²/(Σs² + ΣV)` and the safe range (G2) —
+   `thm:bestTheta`, `thm:dampSafe`.
 5b. What ignoring or damping correlation costs (Findings 19–20): sharp
    `(A + a)²/(4aA)` for equal correlations — `cor:Core_ignoreCorr_equicorr`,
    `cor:Core_damped_equicorr`, `thm:Core_damped_mse` (drafted).
