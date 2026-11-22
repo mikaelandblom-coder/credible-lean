@@ -181,6 +181,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row" id="lomax-row" hidden>
       <label for="s-lomax">Tail index α <span class="sub">(third moment infinite for α ≤ 3, fourth for α ≤ 4)</span></label><input type="range" id="s-lomax" min="2.2" max="8" step="0.1" value="3"><output id="o-lomax"></output>
     </div>
+    <p class="sub" id="lomax-note" hidden style="margin:4px 0 0"><b>Use it:</b> with many claims per region and year (the default ~55) heavy tails barely matter: the sum smooths them. With few claims (try 50 vehicle-years) fits with region-specific variances (corrBS, BLUP) lose most and under-price the portfolio, since a big claim raises a region's mean and its σ̂ⱼ² together. Then prefer pooled variances (BS, BLUP pooled) or keep “Balance the total premium” on. <b>Watch out:</b> the typical error of one draw reads 15–25% low at α near 2 (right on average). Seen in simulation (<code>studies/lomax-tails.js</code>), not proved.</p>
     <div class="feature off"><input type="checkbox" disabled><label>Unequal lengths <span class="sub">(regions entered recently)</span></label><span class="tag">soon</span></div>
     <div class="feature off"><input type="checkbox" disabled><label>Group levels <span class="sub">(regions of one country)</span></label><span class="tag">soon</span></div>
   </section>
@@ -349,6 +350,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const a = +lomaxIn.value, M = E.lomaxMoments(a), lam = (M.m2 / (M.m1 * M.m1)) / (state.sigma * state.sigma);
     lomaxOut.textContent = `${a.toFixed(1)} · ${lam.toFixed(2)} claims per vehicle-year`;
     $('lomax-row').hidden = !lomaxBox.checked;
+    $('lomax-note').hidden = !lomaxBox.checked;
   };
   showLomax();
   $('s-sigma').addEventListener('input', showLomax);

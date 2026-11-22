@@ -628,3 +628,4 @@ One chat per step; none needs Lean except step 5.
   it overstates (1.1–1.5) in every world. Practical rule for the app's text: with heavy tails and small
   cells, use pooled variances (BS, BLUP pooled) or the balance switch, as for Finding 35. No new Finding:
   no theorem's statement is affected.
+  *Rule shown in the app 2026-11-22* (note under the Lomax slider).
