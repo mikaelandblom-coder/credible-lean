@@ -523,6 +523,35 @@ on average, so the Bühlmann--Straub fit is a proper baseline.
   that biases $\widehat{\tau^2}$ unless $J = T$.
 \end{caveat}
 
+\begin{result}[Estimated weights: the bias, and what balance protects]\label{res:randomWeights}
+  Let cohort $j$'s rate be $\sum_i \hat d_i\hmu_i$ with weights $\hat d_i$ computed from the
+  same data and summing to one in every draw (any plug-in blend or predictor). Then
+  \[
+    \mathbb E\Bigl(\sum_i \hat d_i\hmu_i - \mu_j\Bigr) = \sum_i \operatorname{cov}(\hat d_i, \hmu_i).
+  \]
+  If fitted rates $\theta_j$ balance volumes $u_j$ in every draw,
+  $\sum_j u_j\theta_j = \sum_j u_j\hmu_j$, then $\mathbb E\sum_j u_j(\theta_j - \mu_j) = 0$, however
+  the $\theta_j$ are built. Both hold for every distribution with the model's moments.
+  \lean{Credibility.Core.Estimates.integral_randomLin_sub}
+  \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
+\end{result}
+\use Fixed weights never bias the premium; estimated weights bias it by exactly as much as
+they move together with the estimates they weight. To protect the total premium, balance on
+exposures: shift all rates by the same amount (Result~\ref{res:commonShift}).
+Bühlmann--Straub is balanced already (Result~\ref{res:bs}).
+\why Claims are right-skewed. A cohort with unluckily large claims gets a high $\hmu_j$ and
+a high $\hat\sigma_j^2$ together, so a weight built from its own $\hat\sigma_j^2$ drops exactly
+when its estimate is high: $\operatorname{cov}(\hat d_j, \hmu_j) < 0$. With symmetric noise
+these covariances vanish for fits on residuals (Kackar and Harville).
+\begin{caveat}
+  With skewed claims, region-specific variance estimates make the premium too low on
+  average. In the app's gamma worlds the plug-in predictor on such a $\hat K$ is 0.4\% of the
+  tariff too low over the portfolio, and 2.4\% with four years of very skewed data. One pooled
+  $\hat\sigma^2$, or the common shift, removes it. Without correlation neither costs accuracy;
+  under correlation the shift costs about 20\% more error. Balance protects the portfolio total
+  only: a single cohort can still be priced too low.
+\end{caveat}
+
 % ===========================================================================
 \section{The moments are real}\label{sec:moments}
 

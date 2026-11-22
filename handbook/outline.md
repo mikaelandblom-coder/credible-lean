@@ -16,10 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Finding 35 (2026-11-22): "watch out: with skewed claims, region-specific variance estimates
-  make the premium too low on average; exposure balance protects the portfolio level"
-  (`Credibility.Core.Estimates.integral_randomLin_sub`,
-  `Credibility.Core.Estimates.integral_portfolio_sub_of_balanced`).
 - Plug-in MSE (2026-11-22): "the fitted premium's error is the true-moment premium's plus
   E(EBLUP − BLUP)² plus a cross term; under normal noise the cross term is 0, so estimating can
   only cost; with heavy tails it can help" (`Credibility.Core.Target.integral_sq_plugIn`,
@@ -124,6 +120,9 @@ voice, then trim towards 8 pages.
 10. Unbiased estimators, eqs. (37)–(41), and what they need (`T ≥ 2`, `J ≥ 2`;
     Finding 7) — `cor:estimation`.
 10a. Balance of Bühlmann–Straub (in section 2) — `thm:bs_balance`.
+10b. Estimated weights (2026-11-22, Finding 35): bias `Σᵢ cov(d̂ᵢ, μ̂ᵢ)`; exposure balance keeps the
+    portfolio unbiased; watch out for skewed claims with region-specific variances —
+    `Core.Estimates.integral_randomLin_sub`, `integral_portfolio_sub_of_balanced`.
 
 ## 4. The moments are real (1 page)
 11. Any random `μ̂ⱼ`, `μⱼ` with covariances `K`, `L`: GLS optimal and `z`
