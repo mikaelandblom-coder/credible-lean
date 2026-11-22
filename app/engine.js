@@ -56,6 +56,19 @@
     u.skewed = function (k) { return (u.gamma(k) - k) / Math.sqrt(k); };
     /** The world's standardized draw: normal when `normal`, else skewed with shape k. */
     u.unit = function (k, normal) { return normal ? u.normal() : u.skewed(k); };
+    /** Poisson(m): Knuth's product method, in pieces of mean ≤ 30 (a sum of Poissons is Poisson). */
+    u.poisson = function (m) {
+      let n = 0;
+      while (m > 0) {
+        const c = Math.min(m, 30), L = Math.exp(-c);
+        let p = u();
+        while (p > L) { n++; p *= u(); }
+        m -= c;
+      }
+      return n;
+    };
+    /** Lomax (Pareto II) claim with scale 1 and tail index α: P(Y > y) = (1 + y)^(−α). */
+    u.lomax = function (alpha) { return Math.pow(1 - u(), -1 / alpha) - 1; };
     return u;
   }
 
@@ -137,8 +150,65 @@
     levelShape: 4,   // gamma shape of the level draws (skewness 2/√k)
     noiseShape: 2,   // gamma shape of the noise draws
     normal: false,   // normal levels and noise instead of gamma (the plug-in cross term vanishes: plugIn_mse_of_normal)
+    lomax: 0,        // 0: off; α > 2: the region part of the noise is a sum of Lomax claims with tail index α (literature §10l)
     noiseSpread: 0,  // region-specific σⱼ = σ·4^(s((j mod 4)/3 − ½)): 0 equal, 1 = ×0.5–2 (studies' spread worlds)
   };
+
+  /**
+   * Raw moments of the Lomax claim (scale 1, tail index α > 2): E Y = 1/(α−1),
+   * E Y² = 2/((α−1)(α−2)), E Y³ = 6/((α−1)(α−2)(α−3)) (∞ for α ≤ 3); in general
+   * E Yⁿ⁺¹ / E Yⁿ = (n+1)/(α−n−1) for n + 1 < α (literature §10l).
+   */
+  function lomaxMoments(alpha) {
+    const m1 = 1 / (alpha - 1), m2 = 2 / ((alpha - 1) * (alpha - 2));
+    const m3 = alpha > 3 ? 6 / ((alpha - 1) * (alpha - 2) * (alpha - 3)) : Infinity;
+    const m4 = alpha > 4 ? 24 / ((alpha - 1) * (alpha - 2) * (alpha - 3) * (alpha - 4)) : Infinity;
+    return { m1, m2, m3, m4 };
+  }
+
+  /** E[Yᵏ; Y ≤ u] for the Lomax claim, k = 1, 2 (substitute x = 1 + y). */
+  function lomaxTruncated(alpha, uTop) {
+    const x = 1 + uTop, I = (e) => (Math.pow(x, e) - 1) / e; // ∫₁ˣ tᵉ⁻¹ dt
+    const a1 = alpha * (I(1 - alpha) - I(-alpha));
+    const a2 = alpha * (I(2 - alpha) - 2 * I(1 - alpha) + I(-alpha));
+    return { a1, a2 };
+  }
+
+  /**
+   * The standardized noise of one cell in the Lomax claims world (literature §10l): the total
+   * S of N ~ Poisson(n) Lomax claims with tail index α, as (S − n E Y)/√(n E Y²), so mean 0 and
+   * variance 1 exactly, skewness E Y³/(√n (E Y²)^(3/2)) (∞ for α ≤ 3), excess kurtosis
+   * E Y⁴/(n (E Y²)²) (∞ for α ≤ 4). Exact for n ≤ 200 expected claims. Above, claims beyond the
+   * level u that n·P(Y > u) = 50 expected claims exceed are drawn exactly (Y | Y > u is
+   * (1 + u)·Pareto(α) − 1), and the claims below u are summed as a gamma with their exact mean
+   * n E[Y; Y ≤ u] and variance n E[Y²; Y ≤ u]: the first two moments stay exact and the tail
+   * is exact, only the small claims' shape is approximate.
+   */
+  function claimNoise(r, n, alpha) {
+    const M = lomaxMoments(alpha);
+    let S = 0;
+    if (n <= 200) {
+      const N = r.poisson(n);
+      for (let i = 0; i < N; i++) S += r.lomax(alpha);
+    } else {
+      const big = 50, uTop = Math.pow(n / big, 1 / alpha) - 1;
+      const N = r.poisson(big);
+      for (let i = 0; i < N; i++) S += (1 + uTop) * Math.pow(1 - r(), -1 / alpha) - 1;
+      const t = lomaxTruncated(alpha, uTop), mean = n * t.a1, v = n * t.a2;
+      S += r.gamma(mean * mean / v) * v / mean;
+    }
+    return (S - n * M.m1) / Math.sqrt(n * M.m2);
+  }
+
+  /**
+   * Claims per vehicle-year in region j of the Lomax world: λⱼ = μ²(E Y²/(E Y)²)/σⱼ², with mean
+   * claim σⱼ²(E Y/E Y²)/μ, so that at the tariff μ = 1 a vehicle-year has mean μ and variance
+   * σⱼ² (λ E Y = μ, λ E Y² = σⱼ²), as in the other worlds. σ = 6, α = 3: λ ≈ 0.11, mean claim ≈ 9.
+   */
+  function claimRate(world, j) {
+    const M = lomaxMoments(world.params.lomax), mu = world.truth.mu;
+    return mu * mu * (M.m2 / (M.m1 * M.m1)) / world.truth.sigmaj2[j];
+  }
 
   /** Factor of region j's noise: σⱼ = σ·noiseFactor(j, s); cycles over 4 regions, so not tied to volume. */
   const noiseFactor = (j, s) => Math.pow(4, s * ((j % 4) / 3 - 0.5));
@@ -204,17 +274,28 @@
    * One year's noise vector ε over the J regions, unit variances, for ordered regions:
    * ε₀ = ξ₀, εⱼ = ρεⱼ₋₁ + √(1−ρ²)ξⱼ (an AR(1) along the order), so corr(εᵢ, εⱼ) = ρ^|i−j|.
    */
-  function orderedNoise(J, rho, r, ns, nz) {
-    const c = Math.sqrt(1 - rho * rho), e = [r.unit(ns, nz)];
-    for (let j = 1; j < J; j++) e.push(rho * e[j - 1] + c * r.unit(ns, nz));
+  function orderedNoise(J, rho, r, ns, nz, xi) {
+    const x = xi || (() => r.unit(ns, nz));
+    const c = Math.sqrt(1 - rho * rho), e = [x(0)];
+    for (let j = 1; j < J; j++) e.push(rho * e[j - 1] + c * x(j));
     return e;
+  }
+
+  /**
+   * The region part ξ of region j's noise in a cell of volume w: a standardized sum of Lomax
+   * claims when `params.lomax` (expected claims λⱼw), else the world's gamma or normal draw.
+   */
+  function regionDraw(world, r, j, w) {
+    const p = world.params;
+    return p.lomax ? claimNoise(r, claimRate(world, j) * w, p.lomax) : r.unit(p.noiseShape, p.normal);
   }
 
   /**
    * One data set from the world: the levels μⱼ (truth) and the table { w, X }.
    * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; with
    * `params.ordered` εₜ = orderedNoise (corr ρ^|i−j|). All draws skewed (gamma), or normal with
-   * `params.normal`.
+   * `params.normal`. With `params.lomax` the region part ξⱼₜ (the AR(1) innovations when
+   * ordered) is a standardized sum of Lomax claims (claimNoise); the year shock ηₜ is not.
    */
   function draw(world, r) {
     const { J, T, w, truth, params } = world;
@@ -225,7 +306,7 @@
     for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
     if (params.ordered) {
       const E = [];
-      for (let t = 0; t < T; t++) E.push(orderedNoise(J, Math.max(rho, 0), r, ns, nz));
+      for (let t = 0; t < T; t++) E.push(orderedNoise(J, Math.max(rho, 0), r, ns, nz, (j) => regionDraw(world, r, j, w[j][t])));
       for (let j = 0; j < J; j++) X.push(E.map((e, t) => levels[j] + sig[j] / Math.sqrt(w[j][t]) * e[j]));
       return { levels, data: Object.freeze({ w: w.map((row) => Object.freeze(row.slice())), X }) };
     }
@@ -234,7 +315,7 @@
     for (let j = 0; j < J; j++) {
       const row = [];
       for (let t = 0; t < T; t++) {
-        const eps = a * eta[t] + b * r.unit(ns, nz);
+        const eps = a * eta[t] + b * regionDraw(world, r, j, w[j][t]);
         row.push(levels[j] + sig[j] / Math.sqrt(w[j][t]) * eps);
       }
       X.push(row);
@@ -380,11 +461,11 @@
   function drawNext(world, levels, wNext, r) {
     const { params, truth } = world, a = Math.sqrt(Math.max(params.rho, 0)), b = Math.sqrt(1 - Math.max(params.rho, 0));
     if (params.ordered) {
-      const e = orderedNoise(levels.length, Math.max(params.rho, 0), r, params.noiseShape, params.normal);
+      const e = orderedNoise(levels.length, Math.max(params.rho, 0), r, params.noiseShape, params.normal, (j) => regionDraw(world, r, j, wNext[j]));
       return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * e[j]);
     }
     const eta = r.unit(params.noiseShape, params.normal);
-    return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * r.unit(params.noiseShape, params.normal)));
+    return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * regionDraw(world, r, j, wNext[j])));
   }
 
   /**
@@ -1267,6 +1348,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, lomaxMoments, claimNoise, claimRate,
   };
 });

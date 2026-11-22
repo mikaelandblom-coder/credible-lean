@@ -601,3 +601,12 @@ One chat per step; none needs Lean except step 5.
   (`κ̂ₙ / (λw)`), but `κ̂₃` and `κ̂₄` are very unstable under heavy tails. So the app world could
   draw Lomax claims to show where the tools break, without fitting `α`. Lean work needs the
   **lean** environment.
+  *App switch built 2026-11-22:* world "Lomax claims" (`params.lomax = α`, slider 2.2–8, default 3;
+  excludes "Normal noise"). The region part `ξⱼₜ` of each cell is a standardized compound Poisson sum
+  (`Engine.claimNoise`) with `λⱼ = μ²(E Y²/(E Y)²)/σⱼ²` claims per vehicle-year (0.11 at `σ = 6`,
+  `α = 3`), so mean and variance, and hence `K` and the floor, are unchanged (Node test). Above 200
+  expected claims per cell, claims beyond the level exceeded by 50 expected claims are drawn exactly
+  and the rest summed as a moment-matched gamma, so the tail is exact and the first two moments too.
+  The year shock `ηₜ` stays gamma. The noise page gives the world skewness at the middle volume (∞ for
+  `α ≤ 3`). Not yet looked at: how much the fits' MSE, bias and jackknife MSEP suffer as `α` falls
+  through 4 and 3.

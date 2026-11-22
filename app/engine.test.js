@@ -807,3 +807,45 @@ test('Distance taper ρ^|tᵢ−tⱼ|: PSD for any positions, ties allowed (dist
     assert.ok(mean >= lo && mean <= hi, `${JSON.stringify(params)}: mean ρ̂ ${mean} in [${lo}, ${hi}]`);
   }
 });
+
+test('Lomax claims world: moments of the claim (recursion E Yⁿ⁺¹/E Yⁿ = (n+1)/(α−n−1)), the claim rate keeps mean μ and variance σⱼ²', () => {
+  for (const a of [2.5, 3.5, 6]) {
+    const M = E.lomaxMoments(a);
+    close(M.m2 / M.m1, 2 / (a - 2), 1e-12, 'm2/m1');
+    if (a > 3) close(M.m3 / M.m2, 3 / (a - 3), 1e-12, 'm3/m2'); else assert.equal(M.m3, Infinity);
+    if (a > 4) close(M.m4 / M.m3, 4 / (a - 4), 1e-12, 'm4/m3'); else assert.equal(M.m4, Infinity);
+    const world = E.makeWorld({ lomax: a, noiseSpread: 1 });
+    for (let j = 0; j < world.J; j++) {
+      const lam = E.claimRate(world, j), sc = world.truth.sigmaj2[j] * M.m1 / (world.truth.mu * M.m2);
+      close(lam * sc * M.m1, world.truth.mu, 1e-12, 'mean per vehicle-year');
+      close(lam * sc * sc * M.m2, world.truth.sigmaj2[j], 1e-12, 'variance per vehicle-year');
+    }
+  }
+  const w = E.makeWorld({ lomax: 3 });
+  assert.ok(Math.abs(E.claimRate(w, 0) - 0.111) < 0.001, 'σ = 6, α = 3: about 0.11 claims per vehicle-year');
+});
+
+test('Lomax claim noise has mean 0, variance 1 and the compound Poisson skewness, exactly drawn (n ≤ 200) and split (n > 200)', () => {
+  const a = 8, M = E.lomaxMoments(a), r = E.rng(21);
+  for (const [n, N] of [[20, 60000], [150, 30000], [2000, 30000]]) {
+    let s = 0, ss = 0, s3 = 0;
+    for (let k = 0; k < N; k++) { const x = E.claimNoise(r, n, a); s += x; ss += x * x; s3 += x * x * x; }
+    const m = s / N, v = ss / N - m * m, g = (s3 / N - 3 * m * v - m ** 3) / v ** 1.5;
+    const skew = M.m3 / (Math.sqrt(n) * M.m2 ** 1.5);
+    assert.ok(Math.abs(m) < 4 / Math.sqrt(N), `n = ${n}: mean ${m}`);
+    assert.ok(Math.abs(v - 1) < 0.04, `n = ${n}: variance ${v}`);
+    assert.ok(Math.abs(g - skew) < 0.25 * skew + 0.05, `n = ${n}: skewness ${g} vs ${skew}`);
+  }
+});
+
+test('Lomax claims world: the floor MSE is unchanged (only two moments enter), and heavy tails (α = 3) run through every fit', () => {
+  const world = E.makeWorld({ lomax: 6, rho: 0.5 }), fl = E.floorBlend(world), tau2 = world.truth.tau2;
+  const wt = world.w.map(sum), wall = sum(wt);
+  const exact = sum(wt.map((x, j) => x * E.blendMSE(fl.K, tau2, fl.b, fl.s2, j, fl.z[j]))) / wall;
+  const sim = E.simulate(world, [], 8000, 4).floor;
+  assert.ok(Math.abs(sim.mse - exact) < 4 * sim.se, `${sim.mse} ± ${sim.se} vs ${exact}`);
+  for (const p of [{ lomax: 3 }, { lomax: 2.2, rho: 0.5, ordered: true, spread: 2, volume: 5000 }]) {
+    const res = E.simulate(E.makeWorld(p), ['bs', 'vc', 'blup'], 30, 9);
+    for (const [id, x] of Object.entries(res)) if (x && typeof x.mse === 'number') assert.ok(Number.isFinite(x.mse), `${JSON.stringify(p)} ${id}: ${x.mse}`);
+  }
+});
