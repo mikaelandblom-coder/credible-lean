@@ -591,7 +591,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    skewness × `σⱼ/√(T wⱼ*)` × the shrinkage `ζⱼ`. A common `σ̂²` dilutes this by `1/J`. Same
    mechanism as inverse-variance weighting with estimated variances in meta-analysis
    (Hamman et al. 2018; Doncaster et al. 2017; `studies/literature.md` §10j). The core (two moments) cannot exclude it: it
-   promises unbiasedness for known `K` only. Remedies to compare in the app: pooled `σ̂²`, the
-   balanced shift (G7, `Credibility/Core.lean`), or a variance model by volume rather than by region.
+   promises unbiasedness for known `K` only. Remedies in the app (`blupPool`, `blupBal`;
+   `studies/PLAN.md`): without correlation the common shift to exposure balance removes the bias at
+   no MSE cost, and the pooled `σ̂²` also removes it but gives up real variance differences; under
+   correlation the shift costs about 20% more MSE, and the pooled `σ̂²` leaves the `ρ̂` channel.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

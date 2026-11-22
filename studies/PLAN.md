@@ -307,8 +307,25 @@ One chat per step; none needs Lean except step 5.
   (outside the distribution-free core: the core only promises unbiasedness for known K), and
   try a fix that keeps the plug-in BLUP but restores balance, e.g. the G7 balanced shift.
   *Logged as Finding 35 (2026-11-22).* The pooled `σ̂²` removes it (scratch check, not in the app).
-- Finding 35 remedies (2026-11-22): add fits "BLUP, pooled σ̂²" and "BLUP + balanced shift" (G7);
-  compare bias and MSE over many draws, gamma and normal. Lean (in **lean**): (a) `E(d̂ᵀμ̂ − μⱼ) =
+- [x] Finding 35 remedies (2026-11-22): fits `blupPool` (pooled σ̂², `vcEstimate(data, { pooled })`)
+  and `blupBal` (BLUP + common shift D, exposure-balanced every draw, exact plug-in MSE with the
+  shifted weights; `Core.commonShift_optimal`), with recipes and a Node test. **Seen (3000 draws;
+  MSE in % of the oracle / portfolio bias in % of the tariff):**
+  | world | BLUP | pooled | balanced | BS |
+  |---|---|---|---|---|
+  | default (gamma) | 113 / −0.36 | 111 / −0.05 | 112 / −0.05 | 111 / −0.05 |
+  | normal | 113 / 0.04 | 113 / 0.04 | 112 / 0.04 | 113 / 0.04 |
+  | T = 4, shapes 1 | 126 / −2.33 | 109 / 0.00 | 115 / 0.02 | 108 / 0.02 |
+  | ρ = 0.6 | 111 / −0.61 | 110 / −0.54 | 130 / −0.11 | 152 / −0.11 |
+  | σ spread 1 | 123 / −0.83 | 138 / −0.06 | 125 / −0.06 | 137 / −0.06 |
+  | ρ = 0.6, spread 1 | 119 / −0.99 | 152 / −0.38 | 142 / −0.14 | 167 / −0.14 |
+  | J = 20 | 107 / −0.32 | 105 / −0.01 | 107 / −0.01 | 105 / −0.01 |
+  So without correlation the shift fixes the bias at no cost (it even helps under strong skew);
+  the pooled σ̂² also fixes it, but loses the region variances when they really differ.
+  Under correlation no remedy is free: the shift costs ~20 points (exposure balance is the wrong
+  balance there, S28), the pooled σ̂² leaves the `ρ̂` channel (−0.5%). Tried and dropped: shifting the
+  BLUP to the pooled BLUP's portfolio level (no better than the shift, worse under ρ). Open: a
+  remedy for the `ρ̂` channel; whether to make `blupBal` the recommended BLUP (owner). Lean (in **lean**): (a) `E(d̂ᵀμ̂ − μⱼ) =
   Σᵢ cov(d̂ᵢ, μ̂ᵢ)` for random weights with `d̂ᵀ1 = 1` (`Core.Estimates`, distribution-free);
   (b) an exposure-balanced fit has portfolio bias 0 in every world.
   The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.

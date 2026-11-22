@@ -393,6 +393,8 @@
     vcK: 'K̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j),  σ̃ⱼ²/wⱼ* + τ̂² (i = j)',
     blupD: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ',
     blupRates: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ',
+    vcPooled: 'σ̃ⱼ² = σ̂² for every region (pooled)',
+    shift: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − Σₖ d̂ₖ⁽ⁱ⁾ μ̂ₖ)/w**',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
   };
 
@@ -606,7 +608,7 @@
    *   Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) (i ≠ j), σ̃ⱼ²/wⱼ* (i = j); τ̂² by eq. (39) on Σ̂, truncated at 0.
    * K̂ = Σ̂ + τ̂²I ≻ 0 by Model.K_posDef (the ρ-table 1 / ρ̂ is PSD for ρ̂ ∈ [0, 1)).
    */
-  function vcEstimate(data) {
+  function vcEstimate(data, opts) {
     const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data);
     const S = [], Q = [];
     for (let i = 0; i < J; i++) {
@@ -624,7 +626,8 @@
     });
     const betweenRaw = sum(own.map((x) => (x - pooled) ** 2)) / (J - 1) - sum(W) / J;
     const between = Math.max(0, betweenRaw);
-    const zeta = W.map((Wj) => (between > 0 ? between / (between + Wj) : 0));
+    // opts.pooled: one noise variance for all regions (ζⱼ = 0), the Finding 35 remedy.
+    const zeta = W.map((Wj) => (between > 0 && !(opts && opts.pooled) ? between / (between + Wj) : 0));
     const s2 = own.map((x, j) => zeta[j] * x + (1 - zeta[j]) * pooled);
     const sd = s2.map(Math.sqrt);
     let qn = 0, qa = 0;
@@ -646,15 +649,15 @@
     return { K, b, z, s2, mu: res.mu, rates: res.rates, g };
   }
 
-  function fitVC(data) {
-    const p = vcEstimate(data), { m, wt, S } = p, J = m.length;
+  function fitVC(data, opts) {
+    const pooled = !!(opts && opts.pooled), p = vcEstimate(data, opts), { m, wt, S } = p, J = m.length;
     const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
     const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), zNeg: z.some((x) => x < 0), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
     // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings S27–S29): with ρ̂ > 0
     // the true-K blend has negative b and z near 1 (so ẑ > 1 by noise); with ρ̂ > 0 or unequal σ̃ⱼ it is
     // balanced for the weights bⱼ/(1 − zⱼ), not for the exposures. These go to `notes`, not `warnings`.
-    const expected = { zOver1: p.rho > 0, zNeg: false, bNeg: p.rho > 0, offBalance: p.rho > 0 || p.between > 0 };
+    const expected = { zOver1: p.rho > 0, zNeg: false, bNeg: p.rho > 0, offBalance: p.rho > 0 || (!pooled && p.between > 0) };
     const why = p.rho > 0 ? 'expected under correlation' : 'expected with region-specific σⱼ';
     const msg = {
       tauNeg: 'τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂',
@@ -673,8 +676,12 @@
     const steps = [
       { name: 'cohort means', formula: F.means, values: m, badge: 'proved', lean: 'Credibility.Model.a_special', note: 'aⱼₜ = wⱼₜ/wⱼ* (eq. (29))' },
       { name: 'σ̂ⱼ²', formula: F.vcSigma, values: p.own, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self', note: `pooled σ̂² = ${p.pooled.toPrecision(4)}` },
+      ...(pooled ? [
+        { name: 'σ̃ⱼ²', formula: F.vcPooled, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'one noise variance for all regions: a region with high draws does not get less weight for its high σ̂ⱼ² (Finding 35)' },
+      ] : [
       { name: 'Wⱼ, β²', formula: F.vcW, values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
       { name: 'σ̃ⱼ²', formula: F.vcTilde, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
+      ]),
       { name: 'ρ̂', formula: F.vcRho, values: [p.rhoRaw], badge: 'not proved yet', gap: 'G1', note: `one common correlation by a moment equation${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
       { name: 'τ̂²', formula: F.vcTau, values: [p.tauRaw], badge: 'not proved yet', gap: 'G1', note: `on the common-ρ Σ̂: unbiased if Σ̂ is${p.tauRaw <= 0 ? '; negative: truncated to 0 (eq. (40))' : ''}` },
       { name: 'K̂', formula: F.vcK, values: [p.rho], badge: 'proved', lean: 'Credibility.Model.K_posDef', note: `K̂ ≻ 0 for any ρ̂ ∈ [0, 1): no damping, no θ; ρ̂ = ${p.rho.toFixed(3)}` },
@@ -691,8 +698,8 @@
    * through μ̂. Optimal for the true K (Core.blupWeight_optimal); whether it survives estimating
    * every K̂ᵢⱼ is what the app shows. `c` holds the own-data weights d̂ⱼⱼ; `levelMSE` the plug-in MSE.
    */
-  function fitBLUP(data) {
-    const base = fitVC(data), { K, tau2, means: m, b } = base, J = m.length;
+  function fitBLUP(data, opts) {
+    const base = fitVC(data, opts), { K, tau2, means: m, b } = base, J = m.length;
     const D = m.map((_, j) => blupWeight(K, tau2, j));
     const rates = D.map((d) => sum(d.map((x, i) => x * m[i])));
     const c = D.map((d, j) => d[j]);
@@ -705,6 +712,26 @@
       { name: 'rates', formula: F.blupRates, values: rates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal', note: 'the parameters are plugged in: optimal among all unbiased linear predictors for the true K, τ²' },
     ]);
     return { means: m, z: null, b, c, mu: base.mu, rates, warnings, notes: [], flags: { tauNeg: base.flags.tauNeg }, K, tau2, rho: base.rho, theta: 1, levelMSE, steps };
+  }
+
+  /**
+   * The plug-in BLUP plus the common shift that balances it on exposures (Finding 35 remedy):
+   * rateⱼ + D with D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, so Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw and the
+   * portfolio level is unbiased in every world. Still linear in μ̂ with weights summing to 1:
+   * d̂ⱼ' = d̂ⱼ + (w − Σᵢ wᵢ* d̂ᵢ)/w**, so its plug-in MSE is exact on K̂. The common shift is the best
+   * balanced correction when cov(rateⱼ − μⱼ, D) is the same for every region (Core.commonShift_optimal).
+   */
+  function fitBLUPBal(data, opts) {
+    const f = fitBLUP(data, opts), { means: m, K, tau2 } = f, wt = data.w.map(sum), wall = sum(wt), J = m.length;
+    const D = sum(wt.map((x, j) => x * (m[j] - f.rates[j]))) / wall;
+    const Dh = m.map((_, j) => blupWeight(K, tau2, j));
+    const g = wt.map((x, i) => (x - sum(Dh.map((d, k) => wt[k] * d[i]))) / wall);
+    const levelMSE = Dh.map((d, j) => linMse(K, tau2, j, d.map((x, i) => x + g[i])));
+    const rates = f.rates.map((x) => x + D);
+    const steps = f.steps.map((s) => (s.name === 'rates' ? Object.assign({}, s, { values: rates.map((x) => x - D), name: 'BLUP rates' }) : s)).concat([
+      { name: 'rates', formula: F.shift, values: rates, badge: 'proved', lean: 'Credibility.Core.commonShift_optimal', note: `D = ${(100 * D).toFixed(2)}% of the tariff; balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ, so the portfolio level is unbiased in every world (Finding 35)` },
+    ]);
+    return Object.assign({}, f, { rates, levelMSE, steps, shift: D, c: f.c.map((x, j) => x + g[j]) });
   }
 
   /**
@@ -734,8 +761,10 @@
    */
   const MODELS = {
     bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
-    vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: fitVC, ready: true, msep: jackknifeMSEP },
-    blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: fitBLUP, ready: true },
+    vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: (data) => fitVC(data), ready: true, msep: jackknifeMSEP },
+    blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: (data) => fitBLUP(data), ready: true },
+    blupPool: { name: 'BLUP, one pooled noise variance (no under-pricing by skew)', short: 'BLUP pooled', fit: (data) => fitBLUP(data, { pooled: true }), ready: true },
+    blupBal: { name: 'BLUP, balanced by a common shift', short: 'BLUP bal.', fit: (data) => fitBLUPBal(data), ready: true },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
@@ -833,6 +862,18 @@
   };
   RECIPES.blup.steps = RECIPES.vc.steps.filter((s) => !['b', 'z', 'rates', 'premium'].includes(s.name)).concat(RECIPES.blup.tail);
   delete RECIPES.blup.tail;
+  RECIPES.blupPool = {
+    intro: 'The plug-in BLUP with one pooled noise variance σ̂² for all regions instead of corrBS’s credibility-weighted σ̃ⱼ². Under skewed claims the region-specific variances make the premium too low on average (Finding 35); the pooled one does not.',
+    steps: RECIPES.blup.steps.filter((s) => s.name !== 'Wⱼ, β²').map((s) => (s.name === 'σ̃ⱼ²'
+      ? { name: 'σ̃ⱼ²', formula: F.vcPooled, badge: 'not proved yet', gap: 'G1', note: 'one noise variance: no region gets less weight for its own high σ̂ⱼ²' } : s)),
+  };
+  RECIPES.blupBal = {
+    intro: 'The plug-in BLUP on corrBS’s K̂, then every rate shifted by the same D so that the rates balance the exposures: the portfolio level is unbiased in every world (Finding 35).',
+    steps: RECIPES.blup.steps.map((s) => (s.name === 'rates' ? Object.assign({}, s, { name: 'BLUP rates' }) : s)).filter((s) => s.name !== 'premium').concat([
+      { name: 'rates', formula: F.shift, badge: 'proved', lean: 'Credibility.Core.commonShift_optimal', note: 'the best balanced correction by a common term when cov(rateⱼ − μⱼ, D) is equal for all regions (G7b); d̂⁽ⁱ⁾ are region i’s BLUP weights' },
+      premiumStep('MSEⱼ = d̂′ᵀK̂d̂′ − 2τ̂²d̂′ⱼ + τ̂², with d̂′ = d̂ + (w − Σᵢ wᵢ* d̂⁽ⁱ⁾)/w** region j’s weights after the shift'),
+    ]),
+  };
   function corrSteps(common) {
     const steps = [
       { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
@@ -1006,7 +1047,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate,
     nextVolumes, drawNext, premium, floorForecast, toCSV,
   };

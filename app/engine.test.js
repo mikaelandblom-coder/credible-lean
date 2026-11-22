@@ -687,3 +687,23 @@ test('Plug-in bias: the BLUP on corrBS K̂ is even and translation invariant, so
     else assert.ok(b.mean < -10 * b.se, `gamma: ${b.mean} ± ${b.se} clearly negative`);
   }
 });
+
+test('Finding 35 remedies: BLUP balanced by a common shift (exact exposure balance, linear weights summing to 1) and BLUP with a pooled σ̂²; both remove the under-pricing without correlation', () => {
+  const world = E.makeWorld({ rho: 0.4, noiseSpread: 1 }), { data } = E.draw(world, E.rng(9));
+  const wt = data.w.map(sum), m = E.cohortMeans(data).m, f = E.fitBLUPBal(data), base = E.fitBLUP(data);
+  close(sum(wt.map((x, j) => x * f.rates[j])), sum(wt.map((x, j) => x * m[j])), 1e-12, 'balanced');
+  f.rates.forEach((x, j) => close(x, base.rates[j] + f.shift, 1e-12, `common shift ${j}`));
+  const g = wt.map((x, i) => (x - sum(m.map((_, k) => wt[k] * E.blupWeight(base.K, base.tau2, k)[i]))) / sum(wt));
+  m.forEach((_, j) => {
+    const d = E.blupWeight(base.K, base.tau2, j).map((x, i) => x + g[i]);
+    close(sum(d), 1, 1e-12, `weights sum to 1, ${j}`);
+    close(f.rates[j], sum(d.map((x, i) => x * m[i])), 1e-12, `linear ${j}`);
+    close(f.levelMSE[j], E.linMse(base.K, base.tau2, j, d), 1e-12, `MSE ${j}`);
+  });
+  const pooled = E.vcEstimate(data, { pooled: true });
+  pooled.s2.forEach((x) => close(x, pooled.pooled, 1e-12, 'one σ̃²'));
+  const res = E.simulate(E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 }), ['blup', 'blupPool', 'blupBal'], 2000, 21);
+  assert.ok(res.blup.bias.mean < -10 * res.blup.bias.se, 'BLUP prices low');
+  for (const id of ['blupPool', 'blupBal']) assert.ok(Math.abs(res[id].bias.mean) < 4 * res[id].bias.se, `${id} unbiased: ${res[id].bias.mean} ± ${res[id].bias.se}`);
+  assert.ok(res.blupPool.mse < res.blup.mse && res.blupBal.mse < res.blup.mse, 'and more accurate here');
+});
