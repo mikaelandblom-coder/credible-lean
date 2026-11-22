@@ -56,7 +56,7 @@ grows with corollaries. Three numbers that do not:
 |---|---|---|
 | Main results | 142 | proved blueprint statements labelled *theorem*, one per statement (special cases are corollaries or lemmas there), with a Lean proof of at least 4 lines; 183 counting thesis-facing restatements of a general result (listed below) |
 | Substantial proofs | 187 | Lean proofs of at least 10 lines (of 888 proved) |
-| Findings backed by Lean | 24 / 34 | entries of `FINDINGS.md` whose blueprint remark `\uses` a proved statement: what is new against the thesis (missing: 23, 26, 27, 28, 29, 30, 31, 32, 33, 34) |
+| Findings backed by Lean | 24 / 35 | entries of `FINDINGS.md` whose blueprint remark `\uses` a proved statement: what is new against the thesis (missing: 23, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35) |
 
 Blueprint theorems whose Lean proofs are all under 4 lines, not counted as
 main results: mostly thesis-facing statements proved from a general result
