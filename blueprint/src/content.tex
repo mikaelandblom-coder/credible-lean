@@ -7963,3 +7963,32 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   give $2\operatorname{tr}(ACAC)$ by the symmetry of $A$ and $C$. Products of four $L^4$ functions are
   integrable by $4|abcd| \le a^4 + b^4 + c^4 + d^4$.
 \end{proof}
+
+\begin{lemma}[Reordering sums]\label{lem:cumulants_sums}
+  \lean{Credibility.Cumulants.sum_comm_last3, Credibility.Cumulants.sum_comm_last4,
+        Credibility.Cumulants.diag_transpose_mul_mul}
+  \leanok
+  A finite sum can be moved from the inside to the outside, and
+  $(B^\top AB)_{ss} = \sum_{ij} B_{is}A_{ij}B_{js}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange two finite sums at a time.
+\end{proof}
+
+\begin{theorem}[Independent sources]\label{thm:varQuad_sources}
+  \lean{Credibility.Cumulants.varQuad_sources}
+  \leanok
+  \uses{def:varQuad}
+  If the cumulant tables are $\kappa_{3,ijk} = \sum_s c_{3,s}B_{is}B_{js}B_{ks}$ and
+  $\kappa_{4,ijkl} = \sum_s c_{4,s}B_{is}B_{js}B_{ks}B_{ls}$ (cells $m + B\xi$ with independent
+  sources $\xi_s$ of cumulants $c_{3,s}$, $c_{4,s}$), then with $M = B^\top AB$ and $a = B^\top Am$
+  \[ V(A) = 2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am) + 4\sum_s c_{3,s}M_{ss}a_s + \sum_s c_{4,s}M_{ss}^2. \]
+  A source drops out of the non-Gaussian part when $M_{ss} = 0$, i.e.\ when the estimator cancels
+  its loading.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:varQuad, lem:cumulants_sums}
+  Insert the tables, move the sum over sources to the front, and factor.
+\end{proof}

@@ -251,4 +251,70 @@ theorem variance_quad_of_cumulants (Z : ι → Ω → ℝ) (A C : Matrix ι ι �
   rw [varQuad, t1, t2, t3, t4]
   ring
 
+section Sources
+
+omit [Fintype ι]
+
+/-- Move the last of four sums to the front. -/
+lemma sum_comm_last3 {α β γ δ : Type*} [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    (f : α → β → γ → δ → ℝ) :
+    ∑ a, ∑ b, ∑ c, ∑ d, f a b c d = ∑ d, ∑ a, ∑ b, ∑ c, f a b c d := by
+  calc _ = ∑ a, ∑ b, ∑ d, ∑ c, f a b c d :=
+        sum_congr rfl fun a _ => sum_congr rfl fun b _ => sum_comm
+    _ = ∑ a, ∑ d, ∑ b, ∑ c, f a b c d := sum_congr rfl fun a _ => sum_comm
+    _ = _ := sum_comm
+
+/-- Move the last of five sums to the front. -/
+lemma sum_comm_last4 {α β γ δ ε : Type*} [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    [Fintype ε] (f : α → β → γ → δ → ε → ℝ) :
+    ∑ a, ∑ b, ∑ c, ∑ d, ∑ e, f a b c d e = ∑ e, ∑ a, ∑ b, ∑ c, ∑ d, f a b c d e := by
+  calc _ = ∑ a, ∑ e, ∑ b, ∑ c, ∑ d, f a b c d e :=
+        sum_congr rfl fun a _ => sum_comm_last3 _
+    _ = _ := sum_comm
+
+variable [Fintype ι] {S : Type*} [Fintype S]
+
+omit [Fintype S] in
+lemma diag_transpose_mul_mul (A : Matrix ι ι ℝ) (B : Matrix ι S ℝ) (s : S) :
+    (Bᵀ * A * B) s s = ∑ i, ∑ j, B i s * A i j * B j s := by
+  simp only [Matrix.mul_apply, transpose_apply, sum_mul]
+  exact sum_comm
+
+/-- **Independent sources.** If the cells are `m + Bξ` for independent sources `ξₛ` with third
+cumulants `c₃ₛ` and fourth cumulants `c₄ₛ`, the cumulant tables of the cells are
+`κ₃ᵢⱼₖ = Σₛ c₃ₛ BᵢₛBⱼₛBₖₛ` and `κ₄ᵢⱼₖₗ = Σₛ c₄ₛ BᵢₛBⱼₛBₖₛBₗₛ`. Then the non-Gaussian part of the
+variance needs one number of each order per source:
+`varQuad = 2 tr(ACAC) + 4 (Am)ᵀC(Am) + 4 Σₛ c₃ₛ Mₛₛ aₛ + Σₛ c₄ₛ Mₛₛ²`, `M = BᵀAB`, `a = BᵀAm`. -/
+theorem varQuad_sources (A C : Matrix ι ι ℝ) (m : ι → ℝ) (B : Matrix ι S ℝ) (c₃ c₄ : S → ℝ)
+    (κ₃ : ι → ι → ι → ℝ) (κ₄ : ι → ι → ι → ι → ℝ)
+    (h₃ : ∀ i j k, κ₃ i j k = ∑ s, c₃ s * B i s * B j s * B k s)
+    (h₄ : ∀ i j k l, κ₄ i j k l = ∑ s, c₄ s * B i s * B j s * B k s * B l s) :
+    varQuad A C m κ₃ κ₄ = 2 * trace (A * C * A * C) + 4 * (A *ᵥ m) ⬝ᵥ (C *ᵥ (A *ᵥ m))
+      + 4 * ∑ s, c₃ s * (Bᵀ * A * B) s s * (Bᵀ *ᵥ (A *ᵥ m)) s
+      + ∑ s, c₄ s * (Bᵀ * A * B) s s ^ 2 := by
+  have t3 : ∑ i, ∑ j, ∑ k, A i j * (A *ᵥ m) k * κ₃ i j k
+      = ∑ s, c₃ s * (Bᵀ * A * B) s s * (Bᵀ *ᵥ (A *ᵥ m)) s := by
+    generalize A *ᵥ m = w
+    simp only [h₃, mul_sum]
+    rw [sum_comm_last3]
+    refine sum_congr rfl fun s _ => ?_
+    rw [diag_transpose_mul_mul]
+    simp only [mulVec, dotProduct, transpose_apply]
+    rw [mul_assoc]
+    simp only [sum_mul]
+    simp only [mul_sum]
+    exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => sum_congr rfl fun k _ => by ring
+  have t4 : ∑ i, ∑ j, ∑ k, ∑ l, A i j * A k l * κ₄ i j k l
+      = ∑ s, c₄ s * (Bᵀ * A * B) s s ^ 2 := by
+    simp only [h₄, mul_sum]
+    rw [sum_comm_last4]
+    refine sum_congr rfl fun s _ => ?_
+    rw [diag_transpose_mul_mul, sq]
+    simp only [mul_sum, sum_mul]
+    exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => sum_congr rfl fun k _ =>
+      sum_congr rfl fun l _ => by ring
+  rw [varQuad, t3, t4]
+
+end Sources
+
 end Credibility.Cumulants
