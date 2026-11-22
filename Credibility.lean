@@ -39,3 +39,4 @@ import Credibility.CoreVectorMoments
 import Credibility.FreqSev
 import Credibility.Shock
 import Credibility.ShockMoments
+import Credibility.Cumulants

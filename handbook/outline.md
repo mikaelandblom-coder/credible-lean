@@ -16,6 +16,8 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
+  formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
   cross-fit (even against odd years). Add when step 2 (skew correction) is settled.

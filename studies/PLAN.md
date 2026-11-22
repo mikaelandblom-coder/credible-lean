@@ -609,7 +609,9 @@ One chat per step; none needs Lean except step 5.
   a Finding comes out.
 - [ ] Fourth-moment layer (2026-11-22, `notes/fourth-moments.md`): one lemma for `Var` of a quadratic
   form with third and fourth cumulants (G1 `Wⱼ`, `β²`; G2 `V`; G4 pair weights), plus the third-moment
-  pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Awaiting the owner's go-ahead.
+  pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Approved (owner); assumptions 1 + 6 with the
+  conditional version (b). *General lemma proved 2026-11-22 (`Cumulants.variance_quad_of_cumulants`).*
+  App: nothing yet; the G2 `V` and the G4 weights will use it once the source corollary is in.
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like

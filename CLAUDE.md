@@ -85,6 +85,9 @@ tactics.
 - extension: valid estimates by projection: the `H`-projection of an estimate onto a convex set
   containing the truth (PSD tables) has `H`-norm error ≤ the estimate's, in every draw and in mean;
   exists and is unique for `H ≻ 0` (`studies/PLAN.md`, `constrainPSD`) → `Credibility/ConeProjection.lean`
+- moment layer, order four: the variance of any quadratic estimator from the mean, covariance and
+  third and fourth cumulant tables (`varQuad`, `variance_quad_of_cumulants`; distribution-free,
+  `notes/fourth-moments.md`) → `Credibility/Cumulants.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: damping as shrinkage (PLAN G2): the table-optimal `θ* = Σs²/(Σs² + ΣV)` for given
   means and variances, and the safe range of `θ` → `Credibility/Damping.lean`
@@ -104,7 +107,7 @@ estimation / EBLUP, portfolio and covariance shrinkage) for work to build on, an
 used in `studies/literature.md`: combine the best existing pieces in this framework rather than
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
-Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `FactorMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
+Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `Cumulants.lean`, `FactorMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
 `Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second

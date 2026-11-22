@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why
+  variances need cumulants, and the assumptions that cut their number (independent sources, a
+  variance function). Write once the source corollary is proved.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

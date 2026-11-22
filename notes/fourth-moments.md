@@ -1,6 +1,8 @@
 # A fourth-moment layer (draft, 2026-11-22; awaiting the owner's decision)
 
-Status: proposal only; assumptions chosen (1 + 6, below), the layer itself not yet approved. No `.lean` file yet. The owner decides first, because it settles the
+Status: approved (owner, 2026-11-22), with option (b) below. Built so far in `Credibility/Cumulants.lean`:
+the general lemma (`variance_quad_of_cumulants`). Next: the independent-sources corollary, the
+third-moment pieces, and the conditional version (b). The owner decides first, because it settles the
 open question of a third-moment layer (`κ̂ⱼ` in `Engine.noiseDiagnostics`) at the same time.
 
 ## Why
@@ -77,7 +79,7 @@ variance function, adds only `p`. Points to settle when it is built:
   uncorrelated with the level, but not independent, so the independent-sources corollary does not
   apply as is. Either (a) evaluate `V` at the cohort's mean (first order; fine when `τ` is small
   next to `μ`), or (b) prove a conditional version through the law of total cumulance (one more
-  lemma, exact). The choice is open.
+  lemma, exact). **Owner's choice: (b).**
 - **`p` is weakly identified** from one portfolio: `noiseDiagnostics`' cross-fitted `p` has SE ≈ 1.4
   at `τ = 0.1` (PLAN, noise shape). Check `κ̂ⱼ` against the predicted `κ₃` first (PLAN, cumulant
   layer), and show the result for the normal value `p = 0` (`κ₃ = κ₄ = 0`) next to the fitted `p`.

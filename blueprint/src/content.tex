@@ -7912,3 +7912,54 @@ not apply, but a swap argument does.
   breaks for unequal variances because then $z_a$ depends on which units
   share a cohort, not only on how many (Remark~\ref{rem:kmeans_bridge}).
 \end{remark}
+
+\chapter{Extension: moments up to order four}\label{ch:cumulants}
+
+The second-moment core gives the expectation of every quadratic estimator. Its variance
+needs moments up to order four. They enter as given tables, like the covariance: the third
+cumulant $\kappa_3$ (third central moment) and the fourth cumulant $\kappa_4$ (fourth central
+moment minus its three Gaussian pairings). No distribution is assumed; $\kappa_3 = \kappa_4 = 0$
+is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
+
+\begin{definition}[Variance of a quadratic form]\label{def:varQuad}
+  \lean{Credibility.Cumulants.varQuad}
+  \leanok
+  For a matrix $A$, a covariance $C$, a mean $m$ and tables $\kappa_3$, $\kappa_4$,
+  \[ V(A) = 2\operatorname{tr}(ACAC) + 4\,(Am)^\top C (Am)
+     + 4\sum_{ijk} A_{ij}(Am)_k\,\kappa_{3,ijk} + \sum_{ijkl} A_{ij}A_{kl}\,\kappa_{4,ijkl}. \]
+\end{definition}
+
+\begin{lemma}[Integrability of products]\label{lem:cumulants_integrable}
+  \lean{Credibility.Cumulants.abs_mul4_le, Credibility.Cumulants.integrable_pow4,
+        Credibility.Cumulants.integrable_mul4, Credibility.Cumulants.integrable_mul3,
+        Credibility.Cumulants.integrable_mul2, Credibility.Cumulants.sum_mul_sum_eq,
+        Credibility.Cumulants.integrable_sum_mul_sum, Credibility.Cumulants.integral_sum_mul_sum}
+  \leanok
+  $4|abcd| \le a^4 + b^4 + c^4 + d^4$, so products of up to four $L^4$ functions are integrable on
+  a probability space, and the integral of a product of two finite linear combinations is the
+  double sum of the integrals of the products.
+\end{lemma}
+\begin{proof}
+  \leanok
+  AM--GM twice; then dominated by an integrable function, and linearity.
+\end{proof}
+
+\begin{theorem}[The variance of a quadratic estimator]\label{thm:variance_quad_of_cumulants}
+  \lean{Credibility.Cumulants.variance_quad_of_cumulants}
+  \leanok
+  \uses{def:varQuad}
+  Let $Z_i$ be random variables in $L^4$ with means $m_i$, covariances $C_{ij}$,
+  $\mathbb E[e_ie_je_k] = \kappa_{3,ijk}$ and
+  $\mathbb E[e_ie_je_ke_l] = \kappa_{4,ijkl} + C_{ij}C_{kl} + C_{ik}C_{jl} + C_{il}C_{jk}$,
+  where $e_i = Z_i - m_i$, and let $A$ be symmetric. Then
+  $\operatorname{Var}(\sum_{ij} A_{ij}Z_iZ_j) = V(A)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:varQuad, lem:cumulants_integrable}
+  $Z^\top AZ - \mathbb E = U + W$ with $U = \sum A_{ij}(e_ie_j - C_{ij})$ and
+  $W = 2(Am)^\top e$. Then $\mathbb E U^2$ is a fourth moment minus $\sum A_{ij}A_{kl}C_{ij}C_{kl}$,
+  $\mathbb E UW$ a third moment and $\mathbb E W^2 = 4(Am)^\top C(Am)$; the two remaining pairings
+  give $2\operatorname{tr}(ACAC)$ by the symmetry of $A$ and $C$. Products of four $L^4$ functions are
+  integrable by $4|abcd| \le a^4 + b^4 + c^4 + d^4$.
+\end{proof}
