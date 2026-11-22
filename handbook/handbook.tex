@@ -255,6 +255,8 @@ keeps it positive definite and keeps the variances. For ordered cohorts (years o
 age bands) the distance taper $\theta^{|t_i - t_j|}$ damps distant pairs more.
 Watch out: in simulated worlds where the correlation does decay with distance, the taper
 gave the blend no gain over plain damping, even with its best $\theta$ (study S33--S35).
+It pays in the best linear predictor (the BLUP) with many cohorts, about 20 or more, which uses
+each pair; with few cohorts it costs (study S36--S37).
 \lean{Credibility.posDef_hadamard_of_corr}
 \lean{Credibility.distTaper_posSemidef}
 

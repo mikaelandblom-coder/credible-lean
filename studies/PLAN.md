@@ -576,9 +576,12 @@ One chat per step; none needs Lean except step 5.
   equal to S3's θ̂ when all pairs are at distance 1), badge "proved" (`posDef_distTaper_hadamard`)
   when `Σ̂ ⪰ 0` and `τ̂² > 0`; world switch "decays with distance" (`params.ordered`, noise
   correlation `ρ^|i−j|`). Node test. **Seen** (`studies/taper.js`, S33–S35): no gain over damping
-  for the blend, even at the best fixed ρ; corrBS stays best. Open: the taper on the BLUP's K̂
-  (S34's hypothesis), and damping "corr" by S3's θ̂ instead of the grid rule (up to 12 points better
-  at ρ ≤ 0.6, 1 at J = 20; 0–3 worse at ρ = 0.9).
+  for the blend, even at the best fixed ρ; corrBS stays best. *Then (2026-11-22):* "corr" damps by S3's
+  θ̂ (old grid rule kept as `thetaRule: 'grid'`); fit "BLUP taper" (`fitBLUPTaper`, `blupOn`),
+  Node tests. **Seen** (`studies/taper-blup.js`, S36–S37): with J = 20 ordered regions the BLUP on
+  the tapered `K̂` is 9–28 points (of the blend floor) better than BLUP on corrBS's `K̂`; about even at
+  J = 8, T = 10; worse with T = 5 or a common ρ. Open: a data-side signal for when to prefer it (e.g. r̄_d falling with
+  d), since a practitioner cannot see the world.
 - [ ] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. Does the BLUP's
   implied decay depend on volume the way Morris's λ does by account size? If EWMA is a

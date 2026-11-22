@@ -197,7 +197,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row">
       <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
     </div>
-    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>; “corr taper” tapers it by <i>ρ̂</i><sup>|i−j|</sup> for regions in an order, <i>ρ̂</i> from the data. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
+    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>; “corr taper” tapers it by <i>ρ̂</i><sup>|i−j|</sup> for regions in an order, <i>ρ̂</i> from the data, and “BLUP taper” plugs that <i>K̂</i> into the BLUP: worth it with many regions whose correlation fades with distance. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
@@ -736,7 +736,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     });
     const msgs = [], WHAT = {
       tauNeg: 'τ̂² ≤ 0 (set to 0)', zOver1: 'z > 1 for some region', zNeg: 'z < 0 for some region', bNeg: 'a negative weight b',
-      thetaLow: 'damping lowered below θ = 0.95', offBalance: 'off-balance above 1%',
+      thetaLow: 'damping lowered below its fitted θ̂', offBalance: 'off-balance above 1%',
     };
     const pairs = state.fit === state.ref ? [[state.fit, 'Fit and reference']] : [[state.fit, 'Fit'], [state.ref, 'Reference']];
     const share = (x) => (x < 0.01 ? '<1%' : pct(x, 0)), notes = [];

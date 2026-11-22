@@ -322,5 +322,26 @@ unless K̂ fails) and by S3's θ̂.
     over a better-shaped table of J(J − 1)/2 noisy pairs (as S5, S16).
 
 For the app: keep "corr taper" as an option for ordered cohorts (its K̂ ≻ 0 is proved, ρ̂ comes
-from the data), not as a recommendation; damping by S3's θ̂ would improve "corr" more than the
-taper does.
+from the data), not as a recommendation. "corr" now damps by S3's θ̂ instead of the grid rule
+(θ = 0.95 unless K̂ fails; kept as `thetaRule: 'grid'`): up to 12 points better at ρ ≤ 0.6, 0–3
+worse at ρ = 0.9 (table above, columns "damp grid" and "damp S3").
+
+## The taper on the BLUP (`taper-blup.js`, output `taper-blup.out.txt`, 2026-11-22)
+
+S34's hypothesis tested: plug-in BLUP on the full `K̂` (every pair), damped by S3's θ̂ or tapered
+by ρ̂^|i−j|, against the BLUP on corrBS's one-ρ̂ `K̂` (app "BLUP"). 11 worlds, 1000 draws, MSE in %
+of the blend floor; "best fixed ρ" sweeps the taper as an oracle.
+
+- S36. *[numerical]* **With many ordered regions the taper pays, through the BLUP.** J = 20, T = 10:
+    BLUP taper 104 / 103 at ρ = 0.6 / 0.9, against BLUP on corrBS's `K̂` 113 / 131 and BLUP damped
+    109 / 107; J = 20, T = 20, ρ = 0.9: 92 against 114 and 94, below the blend floor. BLUP on one
+    common ρ̂ fails here because the far pairs are nearly uncorrelated (0.9^19 ≈ 0.14) while the
+    near ones are strong: one ρ̂ fits neither. The fitted ρ̂ is within 1–4 points of the best fixed
+    ρ in these worlds.
+- S37. *[numerical]* **With few regions or one common ρ it does not.** J = 8 ordered, T = 10: about
+    even (BLUP taper 112 / 110 / 123 against 114 / 106 / 125 at ρ = 0.6 / 0.9 / σⱼ spread); T = 5:
+    worse (131 / 136 against 128 / 118): 28 noisy pairs are too many for 5 years. Common ρ (taper misspecified): 104–133 against 83–103.
+    So the shape matters only once the BLUP can use each pair (S31) and there are enough pairs at
+    each distance to average over (n_d grows with J).
+
+App: fit "BLUP taper" (`fitBLUPTaper`), for ordered regions with many of them; not a default.

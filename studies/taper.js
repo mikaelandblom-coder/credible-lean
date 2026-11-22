@@ -2,8 +2,8 @@
 // (studies/PLAN.md "Taper switch", OffDiagonal.lean). Run: node studies/taper.js [draws]
 // Entries: exposure-weighted MSE of the rates relative to the floor (100 = best blend with
 // known K, τ²), the same draws for every column. Columns:
-//   damp grid: the app's corr fit (θ = the largest of 0.95, 0.9, … with K̂ ≻ 0);
-//   damp S3:   θ̂ by the plug-in rule S3 (taperRho with every pair at distance 1);
+//   damp grid: the old rule (θ = the largest of 0.95, 0.9, … with K̂ ≻ 0; thetaRule 'grid');
+//   damp S3:   θ̂ by the plug-in rule S3, the app's corr fit since 2026-11-22;
 //   taper:     the app's corr taper fit (ρ̂ by the same criterion, per distance);
 //   corrBS, BS for reference.
 'use strict';
@@ -33,7 +33,7 @@ for (const p of worlds) {
   for (let k = 0; k < N; k++) {
     const { levels, data } = E.draw(world, r), se = (rates) => E.weightedSE(data, rates, levels);
     acc.floor += se(fl.apply(data).rates);
-    const g = E.fitCorr(data); acc.grid += se(g.rates); par.grid += g.theta;
+    const g = E.fitCorr(data, { thetaRule: 'grid' }); acc.grid += se(g.rates); par.grid += g.theta;
     const s = dampS3(data); acc.s3 += se(s.f.rates); par.s3 += s.th;
     const t = E.fitCorr(data, { taper: 'distance' }); acc.taper += se(t.rates); par.taper += t.rhoTaper;
     acc.vc += se(E.fitVC(data).rates); acc.bs += se(E.fitBS(data).rates);

@@ -849,3 +849,37 @@ test('Lomax claims world: the floor MSE is unchanged (only two moments enter), a
     for (const [id, x] of Object.entries(res)) if (x && typeof x.mse === 'number') assert.ok(Number.isFinite(x.mse), `${JSON.stringify(p)} ${id}: ${x.mse}`);
   }
 });
+
+test('corr damps by S3’s θ̂ = r̄²/(r̄² + (1 − r̄²)²/(T − 1)), lowered only if K̂ is not ≻ 0; the old grid rule stays as thetaRule "grid"', () => {
+  const r = E.rng(41);
+  for (const params of [{}, { rho: 0.6 }, { rho: 0.9, T: 5 }, { J: 12, rho: 0.3 }]) {
+    const world = E.makeWorld(params);
+    for (let k = 0; k < 100; k++) {
+      const { data } = E.draw(world, r), { Sig } = E.sigmaHat(data), J = Sig.length, T = data.X[0].length;
+      let s = 0, n = 0;
+      for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { s += Sig[i][j] / Math.sqrt(Sig[i][i] * Sig[j][j]); n++; }
+      const rb = Math.max(-1, Math.min(1, s / n)), th = Math.min(rb * rb / (rb * rb + (1 - rb * rb) ** 2 / (T - 1)), 0.999);
+      const f = E.fitCorr(data);
+      assert.ok(Math.abs(f.thetaFit - th) <= 0.0006, `θ̂ ${f.thetaFit} vs ${th}`);
+      assert.ok(f.theta <= f.thetaFit && f.theta >= 0 && E.cholesky(f.K), 'lowered only as needed, K̂ ≻ 0');
+      if (f.theta < f.thetaFit) assert.ok(!E.cholesky(E.shrinkOffDiag(f.theta + 0.05, Sig).map((row, i) => row.map((x, j) => x + (i === j ? f.tau2 : 0)))), 'one step up fails');
+      const g = E.fitCorr(data, { thetaRule: 'grid' });
+      assert.ok(E.THETAS.includes(g.theta));
+    }
+  }
+});
+
+test('BLUP taper: the BLUP (Core.blupWeight_optimal) on corr taper’s K̂; beats BLUP on corrBS’s K̂ with many ordered regions (studies S36)', () => {
+  const r = E.rng(51), sum = (a) => a.reduce((s, x) => s + x, 0);
+  const { data } = E.draw(E.makeWorld({ rho: 0.7, ordered: true }), r);
+  const f = E.fitBLUPTaper(data), base = E.fitCorr(data, { taper: 'distance' });
+  f.rates.forEach((x, j) => close(x, sum(E.blupWeight(base.K, base.tau2, j).map((d, i) => d * base.means[i])), 1e-12, `rate ${j}`));
+  f.weights.forEach((d) => close(sum(d), 1, 1e-12, 'weights sum to 1'));
+  const world = E.makeWorld({ J: 20, rho: 0.9, ordered: true });
+  let a = 0, b = 0;
+  for (let k = 0; k < 150; k++) {
+    const { levels, data: d } = E.draw(world, r);
+    a += E.weightedSE(d, E.fitBLUPTaper(d).rates, levels); b += E.weightedSE(d, E.fitBLUP(d).rates, levels);
+  }
+  assert.ok(a < 0.9 * b, `BLUP taper ${a} vs BLUP ${b}`);
+});
