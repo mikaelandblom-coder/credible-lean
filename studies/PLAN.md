@@ -327,8 +327,12 @@ One chat per step; none needs Lean except step 5.
   BLUP to the pooled BLUP's portfolio level (no better than the shift, worse under ρ). Open: a
   remedy for the `ρ̂` channel; whether to make `blupBal` the recommended BLUP (owner). Lean done (2026-11-22,
   `Credibility/RandomWeights.lean`): (a) `Core.Estimates.integral_randomLin_sub`, (b)
-  `Core.Estimates.integral_portfolio_sub_of_balanced` (`blupBal` is such a fit). The app could show
-  `Σᵢ cov(d̂ᵢ, μ̂ᵢ)` (estimated over draws) next to the simulated bias.
+  `Core.Estimates.integral_portfolio_sub_of_balanced` (`blupBal` is such a fit). *Done 2026-11-22:*
+  `simulate` returns `covDiag` (sample `Σᵢ cov(d̂ᵢ, μ̂ᵢ)` over draws, own weight vs other regions,
+  per region and exposure-weighted; `weightsOf` for the BLUPs and blends), shown under Bias; test.
+  **Seen:** the sum matches the bias (BLUP, T = 4 skew: −2.34 vs −2.33; default −0.31 vs −0.36) and is
+  less noisy (no level draws in it); the *other* regions' terms carry it (default: own +0.04, other
+  −0.35; T = 4: −0.70, −1.64), i.e. the GLS portfolio weights; BS and `blupBal` give 0 exactly.
   The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test

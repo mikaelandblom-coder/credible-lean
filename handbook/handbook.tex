@@ -539,9 +539,10 @@ on average, so the Bühlmann--Straub fit is a proper baseline.
 they move together with the estimates they weight. To protect the total premium, balance on
 exposures: shift all rates by the same amount (Result~\ref{res:commonShift}).
 Bühlmann--Straub is balanced already (Result~\ref{res:bs}).
-\why Claims are right-skewed. A cohort with unluckily large claims gets a high $\hmu_j$ and
-a high $\hat\sigma_j^2$ together, so a weight built from its own $\hat\sigma_j^2$ drops exactly
-when its estimate is high: $\operatorname{cov}(\hat d_j, \hmu_j) < 0$. With symmetric noise
+\why Claims are right-skewed. A cohort with unluckily large claims gets a high $\hmu_i$ and
+a high $\hat\sigma_i^2$ together, so the weight every rate gives it drops exactly when its
+estimate is high: $\operatorname{cov}(\hat d_i, \hmu_i) < 0$. In the app most of this comes
+through the portfolio weights $b_i$, so all rates are pulled down. With symmetric noise
 these covariances vanish for fits on residuals (Kackar and Harville).
 \begin{caveat}
   With skewed claims, region-specific variance estimates make the premium too low on

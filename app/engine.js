@@ -711,7 +711,7 @@
       { name: 'BLUP weights', formula: F.blupD, values: c, badge: 'proved', lean: 'Credibility.Core.blupWeight_optimal', note: `the weights sum to 1 and use every region individually; ${negOther} region(s) give some other region a negative weight` },
       { name: 'rates', formula: F.blupRates, values: rates, badge: 'proved', lean: 'Credibility.Core.Estimates.blup_mse_optimal', note: 'the parameters are plugged in: optimal among all unbiased linear predictors for the true K, τ²' },
     ]);
-    return { means: m, z: null, b, c, mu: base.mu, rates, warnings, notes: [], flags: { tauNeg: base.flags.tauNeg }, K, tau2, rho: base.rho, theta: 1, levelMSE, steps };
+    return { means: m, z: null, b, c, weights: D, mu: base.mu, rates, warnings, notes: [], flags: { tauNeg: base.flags.tauNeg }, K, tau2, rho: base.rho, theta: 1, levelMSE, steps };
   }
 
   /**
@@ -731,7 +731,7 @@
     const steps = f.steps.map((s) => (s.name === 'rates' ? Object.assign({}, s, { values: rates.map((x) => x - D), name: 'BLUP rates' }) : s)).concat([
       { name: 'rates', formula: F.shift, values: rates, badge: 'proved', lean: 'Credibility.Core.commonShift_optimal', note: `D = ${(100 * D).toFixed(2)}% of the tariff; balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ, so the portfolio level is unbiased in every world (Finding 35)` },
     ]);
-    return Object.assign({}, f, { rates, levelMSE, steps, shift: D, c: f.c.map((x, j) => x + g[j]) });
+    return Object.assign({}, f, { rates, levelMSE, steps, shift: D, c: f.c.map((x, j) => x + g[j]), weights: Dh.map((d) => d.map((x, i) => x + g[i])) });
   }
 
   /**
@@ -980,6 +980,10 @@
    * (`mean`, `se`) and per region (`region`, `regionSe`). The oracle is unbiased in every world; a
    * plug-in fit that is even and translation invariant is unbiased under symmetric noise
    * (Core.Target.blup_plugIn_unbiased_of_symmetric), not necessarily under skewed noise.
+   * `covDiag` (fits with weights, `weightsOf`): the sample covariances over the draws behind that
+   * bias, Σᵢ cov(d̂ᵢ⁽ʲ⁾, μ̂ᵢ) (Core.Estimates.integral_randomLin_sub: it equals the bias in
+   * expectation), split into the own-weight term cov(d̂ⱼ⁽ʲ⁾, μ̂ⱼ) and the other regions' terms, per
+   * region and exposure-weighted (`own`, `other`, `ownW`, `otherW`).
    */
   function simulate(world, ids, n, seed, nextFactor) {
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
@@ -994,17 +998,23 @@
       a.m += q; a.mm += q * q; e.forEach((x, j) => { a.rm[j] += x; a.rmm[j] += x * x; });
     };
     const wsum = (v) => sum(v.map((x, j) => wt[j] * x)) / wall;
+    const J = wt.length, zeros = () => Array.from({ length: J }, () => new Array(J).fill(0));
+    const cd = {}, mSum = new Array(J).fill(0);
+    for (const id of ids) cd[id] = { d: zeros(), dm: zeros(), n: 0 };
     const fe = (rates, Y) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) * (x - Y[j]))) / wall;
     for (let k = 0; k < n; k++) {
       const { levels, data } = draw(world, r), Y = drawNext(world, levels, wNext, rn);
       const mm = cohortMeans(data).m, br = Dstar.map((d) => sum(d.map((x, i) => x * mm[i])));
       const A = br.map((x, j) => x - levels[j]);
+      mm.forEach((x, i) => { mSum[i] += x; });
       for (const id of ids) {
         const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y);
         acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
         const B = f.rates.map((x, j) => x - br[j]), b2 = wsum(B.map((x) => x * x)), c2 = 2 * wsum(B.map((x, j) => A[j] * x));
         acc[id].b += b2; acc[id].bb += b2 * b2; acc[id].c += c2; acc[id].cc += c2 * c2;
         addBias(acc[id], f.rates, levels);
+        const W = weightsOf(f);
+        if (W) { cd[id].n++; W.forEach((d, j) => d.forEach((x, i) => { cd[id].d[j][i] += x; cd[id].dm[j][i] += x * mm[i]; })); }
         for (const k in f.flags) if (f.flags[k]) {
           acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
           if (f.expected && f.expected[k]) acc[id].expected[k] = (acc[id].expected[k] || 0) + 1;
@@ -1031,8 +1041,20 @@
         out[id].split = { b2: bm, b2se: Math.sqrt(Math.max(acc[id].bb / n - bm * bm, 0) / n), cross: cm, crossSe: Math.sqrt(Math.max(acc[id].cc / n - cm * cm, 0) / n) };
       }
     }
+    for (const id of ids) if (cd[id].n === n) {
+      const cv = cd[id].d.map((row, j) => row.map((x, i) => cd[id].dm[j][i] / n - (x / n) * (mSum[i] / n)));
+      const own = cv.map((row, j) => row[j]), other = cv.map((row, j) => sum(row) - row[j]);
+      out[id].covDiag = { own, other, ownW: wsum(own), otherW: wsum(other) };
+    }
     out.floor.ftheory = ftheory;
     return out;
+  }
+
+  /** A fit's weights d̂⁽ʲ⁾ on the cohort means (rows j), when its rates are linear in them: the BLUP's own, or a blend's zⱼeⱼ + (1 − zⱼ)b. */
+  function weightsOf(f) {
+    if (f.weights) return f.weights;
+    if (f.z && f.b) return f.z.map((z, j) => blendWeight(z, f.b, j));
+    return null;
   }
 
   /** One draw's data as CSV: one row per region and year, the columns the fit sees. */
@@ -1048,7 +1070,7 @@
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
-    floorBlend, weightedSE, simulate,
+    floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV,
   };
 });

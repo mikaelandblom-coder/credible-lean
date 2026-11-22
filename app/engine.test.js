@@ -707,3 +707,14 @@ test('Finding 35 remedies: BLUP balanced by a common shift (exact exposure balan
   for (const id of ['blupPool', 'blupBal']) assert.ok(Math.abs(res[id].bias.mean) < 4 * res[id].bias.se, `${id} unbiased: ${res[id].bias.mean} ± ${res[id].bias.se}`);
   assert.ok(res.blupPool.mse < res.blup.mse && res.blupBal.mse < res.blup.mse, 'and more accurate here');
 });
+
+test('Σcov(d̂ᵢ, μ̂ᵢ) over draws equals the simulated bias (Core.Estimates.integral_randomLin_sub); exactly 0 at the portfolio level for balanced fits (integral_portfolio_sub_of_balanced)', () => {
+  const res = E.simulate(E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 }), ['blup', 'blupBal', 'bs', 'own'], 2000, 21);
+  const c = res.blup.covDiag;
+  assert.ok(Math.abs(c.ownW + c.otherW - res.blup.bias.mean) < 4 * res.blup.bias.se, `sum ${c.ownW + c.otherW} vs bias ${res.blup.bias.mean}`);
+  assert.ok(c.otherW < -10 * res.blup.bias.se, 'the portfolio weights carry most of it');
+  for (const id of ['blupBal', 'bs']) { const d = res[id].covDiag; assert.ok(Math.abs(d.ownW + d.otherW) < 1e-12, `${id}: ${d.ownW + d.otherW}`); }
+  assert.equal(res.own.covDiag, undefined, 'own: no z, b, weights');
+  const f = E.fitBLUP(E.draw(E.makeWorld({}), E.rng(2)).data);
+  E.weightsOf(f).forEach((d) => close(sum(d), 1, 1e-12, 'weights sum to 1'));
+});

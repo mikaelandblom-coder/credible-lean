@@ -589,7 +589,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    (c) first order (argued, not formalized): `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
    a third moment (for iid cells `cov(sample mean, sample variance) = κ₃/T`): 0 under symmetry,
    and with right skew (`κ₃ > 0`, every claims world) a region with high draws gets a high mean
-   and a high `σ̂ⱼ²` together, so less weight (`∂dᵢ/∂σᵢ² < 0`): under-pricing of order
+   and a high `σ̂ⱼ²` together, so less weight (`∂dᵢ/∂σᵢ² < 0`; in the app mostly through the GLS
+   portfolio weights `bᵢ`, i.e. the other regions' terms of `Σᵢ cov`, not the own weight): under-pricing of order
    skewness × `σⱼ/√(T wⱼ*)` × the shrinkage `ζⱼ`. A common `σ̂²` dilutes this by `1/J`. Same
    mechanism as inverse-variance weighting with estimated variances in meta-analysis
    (Hamman et al. 2018; Doncaster et al. 2017; `studies/literature.md` §10j). The core (two moments) cannot exclude it: it
