@@ -394,7 +394,7 @@
     blupD: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ',
     blupRates: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ',
     vcPooled: 'σ̃ⱼ² = σ̂² for every region (pooled)',
-    shift: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − Σₖ d̂ₖ⁽ⁱ⁾ μ̂ₖ)/w**',
+    balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
   };
 
@@ -715,23 +715,39 @@
   }
 
   /**
-   * The plug-in BLUP plus the common shift that balances it on exposures (Finding 35 remedy):
-   * rateⱼ + D with D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, so Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw and the
-   * portfolio level is unbiased in every world. Still linear in μ̂ with weights summing to 1:
-   * d̂ⱼ' = d̂ⱼ + (w − Σᵢ wᵢ* d̂ᵢ)/w**, so its plug-in MSE is exact on K̂. The common shift is the best
-   * balanced correction when cov(rateⱼ − μⱼ, D) is the same for every region (Core.commonShift_optimal).
+   * Balance a fit on exposures (the page's "Balance the total premium" switch, Finding 35): every
+   * rate + D with D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, so Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw and the
+   * portfolio level is unbiased in every world (Core.Estimates.integral_portfolio_sub_of_balanced).
+   * For rates linear in μ̂ (weightsOf) the shifted weights d̂ⱼ' = d̂ⱼ + (w − Σₖ wₖ* d̂⁽ᵏ⁾)/w** still sum
+   * to 1, so the plug-in MSE stays exact on K̂. The common shift is the best balanced correction when
+   * cov(rateⱼ − μⱼ, D) is the same for every region (Core.commonShift_optimal).
    */
-  function fitBLUPBal(data, opts) {
-    const f = fitBLUP(data, opts), { means: m, K, tau2 } = f, wt = data.w.map(sum), wall = sum(wt), J = m.length;
+  function balanceFit(f, data) {
+    const { wt, m } = cohortMeans(data), wall = sum(wt);
     const D = sum(wt.map((x, j) => x * (m[j] - f.rates[j]))) / wall;
-    const Dh = m.map((_, j) => blupWeight(K, tau2, j));
-    const g = wt.map((x, i) => (x - sum(Dh.map((d, k) => wt[k] * d[i]))) / wall);
-    const levelMSE = Dh.map((d, j) => linMse(K, tau2, j, d.map((x, i) => x + g[i])));
-    const rates = f.rates.map((x) => x + D);
-    const steps = f.steps.map((s) => (s.name === 'rates' ? Object.assign({}, s, { values: rates.map((x) => x - D), name: 'BLUP rates' }) : s)).concat([
-      { name: 'rates', formula: F.shift, values: rates, badge: 'proved', lean: 'Credibility.Core.commonShift_optimal', note: `D = ${(100 * D).toFixed(2)}% of the tariff; balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ, so the portfolio level is unbiased in every world (Finding 35)` },
-    ]);
-    return Object.assign({}, f, { rates, levelMSE, steps, shift: D, c: f.c.map((x, j) => x + g[j]), weights: Dh.map((d) => d.map((x, i) => x + g[i])) });
+    const out = Object.assign({}, f, { rates: f.rates.map((x) => x + D), shift: D, balanced: true });
+    const W = weightsOf(f);
+    if (W) {
+      const g = wt.map((x, i) => (x - sum(W.map((d, k) => wt[k] * d[i]))) / wall);
+      out.weights = W.map((d) => d.map((x, i) => x + g[i]));
+      out.c = out.weights.map((d, j) => d[j]);
+      if (f.K) out.levelMSE = out.weights.map((d, j) => linMse(f.K, f.tau2, j, d));
+    }
+    const off = (t) => !/off-balance/.test(t);
+    out.flags = Object.assign({}, f.flags, { offBalance: false });
+    out.warnings = (f.warnings || []).filter(off);
+    out.notes = (f.notes || []).filter(off);
+    out.steps = (f.steps || []).concat([Object.assign({}, BALANCE_STEP, { values: [D], note: `D = ${D >= 0 ? '+' : '−'}${(100 * Math.abs(D)).toFixed(2)}% of the tariff; ` + BALANCE_STEP.note })]);
+    return out;
+  }
+
+  /** The BLUP on corrBS's K̂, balanced (kept for the tests; on the page it is BLUP with the switch on). */
+  function fitBLUPBal(data) { return balanceFit(fitBLUP(data), data); }
+
+  /** A model's fit, balanced when opts.balance (models already balanced on exposures are left alone). */
+  function fitWith(id, data, opts) {
+    const f = MODELS[id].fit(data);
+    return opts && opts.balance && !MODELS[id].balanced ? balanceFit(f, data) : f;
   }
 
   /**
@@ -760,15 +776,14 @@
    * table and nothing else. `ready: false` entries are listed but disabled.
    */
   const MODELS = {
-    bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true },
+    bs: { name: 'Bühlmann–Straub', short: 'BS', fit: fitBS, ready: true, balanced: true },
     vc: { name: 'Correlated BS, credibility-weighted variances (recommended)', short: 'corrBS', fit: (data) => fitVC(data), ready: true, msep: jackknifeMSEP },
     blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: (data) => fitBLUP(data), ready: true },
     blupPool: { name: 'BLUP, one pooled noise variance (no under-pricing by skew)', short: 'BLUP pooled', fit: (data) => fitBLUP(data, { pooled: true }), ready: true },
-    blupBal: { name: 'BLUP, balanced by a common shift', short: 'BLUP bal.', fit: (data) => fitBLUPBal(data), ready: true },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
-    own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true },
-    pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true },
+    own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true, balanced: true },
+    pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true, balanced: true },
   };
 
   /**
@@ -867,13 +882,16 @@
     steps: RECIPES.blup.steps.filter((s) => s.name !== 'Wⱼ, β²').map((s) => (s.name === 'σ̃ⱼ²'
       ? { name: 'σ̃ⱼ²', formula: F.vcPooled, badge: 'not proved yet', gap: 'G1', note: 'one noise variance: no region gets less weight for its own high σ̂ⱼ²' } : s)),
   };
-  RECIPES.blupBal = {
-    intro: 'The plug-in BLUP on corrBS’s K̂, then every rate shifted by the same D so that the rates balance the exposures: the portfolio level is unbiased in every world (Finding 35).',
-    steps: RECIPES.blup.steps.map((s) => (s.name === 'rates' ? Object.assign({}, s, { name: 'BLUP rates' }) : s)).filter((s) => s.name !== 'premium').concat([
-      { name: 'rates', formula: F.shift, badge: 'proved', lean: 'Credibility.Core.commonShift_optimal', note: 'the best balanced correction by a common term when cov(rateⱼ − μⱼ, D) is equal for all regions (G7b); d̂⁽ⁱ⁾ are region i’s BLUP weights' },
-      premiumStep('MSEⱼ = d̂′ᵀK̂d̂′ − 2τ̂²d̂′ⱼ + τ̂², with d̂′ = d̂ + (w − Σᵢ wᵢ* d̂⁽ⁱ⁾)/w** region j’s weights after the shift'),
-    ]),
-  };
+  /** The balance step the switch appends (any model not already balanced). */
+  const BALANCE_STEP = { name: 'balance', formula: F.balance, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_portfolio_sub_of_balanced', note: 'balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw, so the portfolio level is unbiased in every world (Finding 35); with skewed claims the unbalanced rates are too low on average. The best balanced correction by a common term when cov(rateⱼ − μⱼ, D) is equal for all regions (Core.commonShift_optimal); under strong correlation it costs accuracy' };
+
+  /** A recipe's steps, with the balance step before the premium when opts.balance. */
+  function recipeSteps(id, opts) {
+    const st = RECIPES[id].steps;
+    if (!(opts && opts.balance) || MODELS[id].balanced) return st;
+    const k = st.findIndex((x) => x.name === 'premium');
+    return k < 0 ? st.concat([BALANCE_STEP]) : st.slice(0, k).concat([BALANCE_STEP], st.slice(k));
+  }
   function corrSteps(common) {
     const steps = [
       { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
@@ -915,11 +933,11 @@
   }
 
   /** The recipe as plain text, for copying. */
-  function recipeText(id) {
+  function recipeText(id, opts) {
     const r = RECIPES[id], out = [MODELS[id].name, r.intro, '', 'Notation'];
     for (const n of recipeNotation(id)) out.push(`  ${n.sym}: ${n.text}`);
     out.push('', 'Steps');
-    r.steps.forEach((s, k) => {
+    recipeSteps(id, opts).forEach((s, k) => {
       out.push(`${k + 1}. ${s.name}: ${s.formula}`);
       if (s.rule) out.push(`   rule: ${s.rule}`);
       if (s.note) out.push(`   note: ${s.note}`);
@@ -985,14 +1003,15 @@
    * expectation), split into the own-weight term cov(d̂ⱼ⁽ʲ⁾, μ̂ⱼ) and the other regions' terms, per
    * region and exposure-weighted (`own`, `other`, `ownW`, `otherW`).
    */
-  function simulate(world, ids, n, seed, nextFactor) {
+  function simulate(world, ids, n, seed, nextFactor, opts) {
+    const bal = !!(opts && opts.balance);
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
     const Dstar = fl.K.map((_, j) => blupWeight(fl.K, world.truth.tau2, j));
     const wt = world.w.map(sum), wall = sum(wt);
     const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
     const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
     const acc = {};
-    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, b: 0, bb: 0, c: 0, cc: 0, m: 0, mm: 0, rm: wt.map(() => 0), rmm: wt.map(() => 0), warn: 0, flags: {}, expected: {} };
+    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, b: 0, bb: 0, c: 0, cc: 0, rs: 0, rss: 0, m: 0, mm: 0, rm: wt.map(() => 0), rmm: wt.map(() => 0), warn: 0, flags: {}, expected: {} };
     const addBias = (a, rates, levels) => {
       const e = rates.map((x, j) => x - levels[j]), q = wsum(e);
       a.m += q; a.mm += q * q; e.forEach((x, j) => { a.rm[j] += x; a.rmm[j] += x * x; });
@@ -1008,7 +1027,9 @@
       const A = br.map((x, j) => x - levels[j]);
       mm.forEach((x, i) => { mSum[i] += x; });
       for (const id of ids) {
-        const f = MODELS[id].fit(data), e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y);
+        const raw = MODELS[id].fit(data), f = bal && !MODELS[id].balanced ? balanceFit(raw, data) : raw;
+        const e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y), er = weightedSE(data, raw.rates, levels);
+        acc[id].rs += er; acc[id].rss += er * er;
         acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
         const B = f.rates.map((x, j) => x - br[j]), b2 = wsum(B.map((x) => x * x)), c2 = 2 * wsum(B.map((x, j) => A[j] * x));
         acc[id].b += b2; acc[id].bb += b2 * b2; acc[id].c += c2; acc[id].cc += c2 * c2;
@@ -1035,6 +1056,7 @@
       for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
       out[id] = { mse: mean, se: Math.sqrt(v / n), fmse: fm, fse: Math.sqrt(fv / n), warnShare: acc[id].warn / n, flags, expected };
       const se = (x, xx) => Math.sqrt(Math.max(xx / n - (x / n) ** 2, 0) / n);
+      if (bal && ids.includes(id) && !MODELS[id].balanced) out[id].raw = { mse: acc[id].rs / n, se: se(acc[id].rs, acc[id].rss) };
       if (id !== 'floor') out[id].bias = { mean: acc[id].m / n, se: se(acc[id].m, acc[id].mm), region: acc[id].rm.map((x) => x / n), regionSe: acc[id].rm.map((x, j) => se(x, acc[id].rmm[j])) };
       if (ids.includes(id)) {
         const bm = acc[id].b / n, cm = acc[id].c / n;
@@ -1069,7 +1091,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
     floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV,
   };

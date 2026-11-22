@@ -325,21 +325,31 @@ One chat per step; none needs Lean except step 5.
   Under correlation no remedy is free: the shift costs ~20 points (exposure balance is the wrong
   balance there, S28), the pooled σ̂² leaves the `ρ̂` channel (−0.5%). Tried and dropped: shifting the
   BLUP to the pooled BLUP's portfolio level (no better than the shift, worse under ρ). Open: a
-  remedy for the `ρ̂` channel; whether to make `blupBal` the recommended BLUP (owner). Lean done (2026-11-22,
+  remedy for the `ρ̂` channel. *Owner, 2026-11-22: balance by default* (below). Lean done (2026-11-22,
   `Credibility/RandomWeights.lean`): (a) `Core.Estimates.integral_randomLin_sub`, (b)
-  `Core.Estimates.integral_portfolio_sub_of_balanced` (`blupBal` is such a fit). *Done 2026-11-22:*
+  `Core.Estimates.integral_portfolio_sub_of_balanced` (the balanced BLUP is such a fit). *Done 2026-11-22:*
   `simulate` returns `covDiag` (sample `Σᵢ cov(d̂ᵢ, μ̂ᵢ)` over draws, own weight vs other regions,
   per region and exposure-weighted; `weightsOf` for the BLUPs and blends), shown under Bias; test.
   **Seen:** the sum matches the bias (BLUP, T = 4 skew: −2.34 vs −2.33; default −0.31 vs −0.36) and is
   less noisy (no level draws in it); the *other* regions' terms carry it (default: own +0.04, other
-  −0.35; T = 4: −0.70, −1.64), i.e. the GLS portfolio weights; BS and `blupBal` give 0 exactly.
+  −0.35; T = 4: −0.70, −1.64), i.e. the GLS portfolio weights; BS and the balanced fits give 0 exactly.
   The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.
+- [x] Balance switch (owner, 2026-11-22; replaces "no balance switch" in G7/3b for the fits): "Balance
+  the total premium", **on by default**, shifts every rate of any fit not already balanced (BS, own,
+  pool are) by one `D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**` (`Engine.balanceFit`, `fitWith`, `recipeSteps`; recipe
+  step "balance" linked to `integral_portfolio_sub_of_balanced`). Linear fits keep exact plug-in MSE
+  with the shifted weights; the jackknife MSEP is not shown for a balanced fit. `simulate(..., { balance })`
+  also returns the unbalanced MSE (`raw`), shown as the cost of balancing. The separate `blupBal`
+  model is gone (BLUP + switch). Why default on: the bias is one-sided and does not average out over
+  regions or years; the cost is regional noise, 0–4 MSE points up to ρ = 0.2, ~10 at 0.45, ~20 at
+  0.6 (table in the Finding 35 remedies item and the chat of 2026-11-22). No automatic choice by
+  `ρ̂` (would need a hand-set threshold). Balance protects the portfolio, not each region.
 - Noise shape (2026-11-22, discussion after Finding 35): no distribution fitting, only moments.
   (1) Residual diagnostics per region on the fitted data: skewness, kurtosis, and whether the
   variance scales with the mean (a power law as in Tweedie GLMs). (2) If skew is clear: a
   skew-based correction of the Finding 35 bias (first order (c): skewness × `σⱼ/√(T wⱼ*)` × `ζⱼ`,
   with `κ₃` estimated from residuals, no hand-set hyperparameters), compared with the pooled σ̂² and
-  `blupBal`. (3) If the variance follows the mean: a variance model by volume and mean in place of
+  the balance switch. (3) If the variance follows the mean: a variance model by volume and mean in place of
   region-specific `σ̂ⱼ²`. Any Lean result that assumes a family goes in the distribution layer.
   Out of scope: fitting a full noise family for intervals or quantiles.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`

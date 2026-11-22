@@ -702,19 +702,40 @@ test('Finding 35 remedies: BLUP balanced by a common shift (exact exposure balan
   });
   const pooled = E.vcEstimate(data, { pooled: true });
   pooled.s2.forEach((x) => close(x, pooled.pooled, 1e-12, 'one σ̃²'));
-  const res = E.simulate(E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 }), ['blup', 'blupPool', 'blupBal'], 2000, 21);
+  const wd = E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 });
+  const res = E.simulate(wd, ['blup', 'blupPool'], 2000, 21), rb = E.simulate(wd, ['blup'], 2000, 21, 1, { balance: true });
   assert.ok(res.blup.bias.mean < -10 * res.blup.bias.se, 'BLUP prices low');
-  for (const id of ['blupPool', 'blupBal']) assert.ok(Math.abs(res[id].bias.mean) < 4 * res[id].bias.se, `${id} unbiased: ${res[id].bias.mean} ± ${res[id].bias.se}`);
-  assert.ok(res.blupPool.mse < res.blup.mse && res.blupBal.mse < res.blup.mse, 'and more accurate here');
+  assert.ok(Math.abs(res.blupPool.bias.mean) < 4 * res.blupPool.bias.se, `pooled unbiased: ${res.blupPool.bias.mean}`);
+  assert.ok(Math.abs(rb.blup.bias.mean) < 4 * rb.blup.bias.se, `balanced unbiased: ${rb.blup.bias.mean}`);
+  assert.ok(res.blupPool.mse < res.blup.mse && rb.blup.mse < res.blup.mse, 'and more accurate here');
+  close(rb.blup.raw.mse, res.blup.mse, 1e-12, 'raw MSE is the unbalanced fit');
 });
 
 test('Σcov(d̂ᵢ, μ̂ᵢ) over draws equals the simulated bias (Core.Estimates.integral_randomLin_sub); exactly 0 at the portfolio level for balanced fits (integral_portfolio_sub_of_balanced)', () => {
-  const res = E.simulate(E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 }), ['blup', 'blupBal', 'bs', 'own'], 2000, 21);
+  const wd = E.makeWorld({ T: 4, levelShape: 1, noiseShape: 1 });
+  const res = E.simulate(wd, ['blup', 'bs', 'own'], 2000, 21), rb = E.simulate(wd, ['blup', 'vc'], 2000, 21, 1, { balance: true });
   const c = res.blup.covDiag;
   assert.ok(Math.abs(c.ownW + c.otherW - res.blup.bias.mean) < 4 * res.blup.bias.se, `sum ${c.ownW + c.otherW} vs bias ${res.blup.bias.mean}`);
   assert.ok(c.otherW < -10 * res.blup.bias.se, 'the portfolio weights carry most of it');
-  for (const id of ['blupBal', 'bs']) { const d = res[id].covDiag; assert.ok(Math.abs(d.ownW + d.otherW) < 1e-12, `${id}: ${d.ownW + d.otherW}`); }
+  for (const d of [res.bs.covDiag, rb.blup.covDiag, rb.vc.covDiag]) assert.ok(Math.abs(d.ownW + d.otherW) < 1e-12, `balanced: ${d.ownW + d.otherW}`);
   assert.equal(res.own.covDiag, undefined, 'own: no z, b, weights');
   const f = E.fitBLUP(E.draw(E.makeWorld({}), E.rng(2)).data);
   E.weightsOf(f).forEach((d) => close(sum(d), 1, 1e-12, 'weights sum to 1'));
+});
+
+test('Balance switch: any fit shifted by one D is exposure-balanced, linear weights still sum to 1, plug-in MSE exact; already balanced models untouched; recipe gets the step', () => {
+  const world = E.makeWorld({ rho: 0.5, noiseSpread: 1 }), { data } = E.draw(world, E.rng(12)), wt = data.w.map(sum), m = E.cohortMeans(data).m;
+  for (const id of Object.keys(E.MODELS)) {
+    const raw = E.MODELS[id].fit(data), f = E.fitWith(id, data, { balance: true });
+    close(sum(wt.map((x, j) => x * f.rates[j])), sum(wt.map((x, j) => x * m[j])), 1e-10, `${id} balanced`);
+    if (E.MODELS[id].balanced) { assert.deepEqual(f.rates, raw.rates, `${id} left alone`); assert.ok(!f.balanced); assert.equal(E.recipeSteps(id, { balance: true }), E.RECIPES[id].steps); continue; }
+    f.rates.forEach((x, j) => close(x, raw.rates[j] + f.shift, 1e-12, `${id} common shift`));
+    assert.ok(!f.flags.offBalance && !f.warnings.concat(f.notes).some((t) => /off-balance/.test(t)), `${id}: no off-balance message`);
+    if (f.weights) f.weights.forEach((d, j) => { close(sum(d), 1, 1e-12, `${id} sum`); close(sum(d.map((x, i) => x * m[i])), f.rates[j], 1e-10, `${id} linear`);
+      if (raw.K) close(f.levelMSE[j], E.linMse(raw.K, raw.tau2, j, d), 1e-12, `${id} MSE`); });
+    const names = f.steps.map((x) => x.name), rs = E.recipeSteps(id, { balance: true }).map((x) => x.name);
+    assert.equal(names[names.length - 1], 'balance');
+    assert.deepEqual(rs.filter((x) => x !== 'premium').sort(), names.slice().sort(), `${id}: recipe steps`);
+    assert.ok(E.recipeText(id, { balance: true }).includes(E.F.balance));
+  }
 });
