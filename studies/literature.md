@@ -879,6 +879,13 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   (Jewell 1974; Diaconis & Ylvisaker 1979), and the Poisson–gamma mixture stays in the six
   (negative binomial). The zero-parameter closure is Gaussian (Isserlis): third and fourth
   moments follow from the covariance. Not yet used. Candidate for a cumulant layer (PLAN Pending).
+- Variance of a quadratic form beyond normality (2026-11-22, from memory, standard): with cumulant
+  tensors `κ₃`, `κ₄` of the centred cells, `Var(xᵀAx) = 2tr(AΣAΣ) + 4μᵀAΣAμ + 4Σ(Aμ)ᵢAⱼₖκ₃ᵢⱼₖ +
+  ΣAᵢⱼAₖₗκ₄ᵢⱼₖₗ`. Independent components: Atiqullah (1962, JRSS B 24); Seber & Lee (2003), Thm 1.6.
+  Gaussian case: Searle (1971) §2.5; Searle, Casella & McCulloch (1992), App. S. MINQUE variance
+  with kurtosis: Rao & Kleffe (1988), ch. 5. Products of forms via cumulants: Bao & Ullah
+  (https://eml.berkeley.edu/~webfac/bgraham/secnf/Ullah.pdf). Proposed use: `notes/fourth-moments.md`
+  (one lemma for G1, G2, G4 and the `κ̂ⱼ` third-moment pieces), awaiting the owner.
 - Heavy tails (owner's question, 2026-11-22; from memory, standard). No variance function gives
   them. A natural exponential family has a moment generating function near 0 for every `θ`
   inside its natural range, so its tails are at most exponential and all its moments are finite.

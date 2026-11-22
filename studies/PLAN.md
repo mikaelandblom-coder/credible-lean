@@ -607,6 +607,9 @@ One chat per step; none needs Lean except step 5.
   restricted predictor, its excess MSE is exact (`Blup.lean` restricted predictors). It could be
   a fit option ("EWMA years") next to the BLUP. Lean: none needed beyond existing results, unless
   a Finding comes out.
+- [ ] Fourth-moment layer (2026-11-22, `notes/fourth-moments.md`): one lemma for `Var` of a quadratic
+  form with third and fourth cumulants (G1 `Wⱼ`, `β²`; G2 `V`; G4 pair weights), plus the third-moment
+  pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Awaiting the owner's go-ahead.
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like
