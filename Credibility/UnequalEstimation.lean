@@ -100,6 +100,27 @@ noncomputable def sigRhoHat (X : J × T → ℝ) (i j : J) : ℝ :=
   (∑ t ∈ M.overlap i j, √(w i t * w j t) * (X (i, t) - M.muHat w X i) * (X (j, t) - M.muHat w X j))
     / M.den w i j
 
+/-- The weighted cross-product `Qᵢⱼ = Σ_{t∈Tᵢⱼ} √(wᵢₜwⱼₜ)(μᵢₜ - μ̂ᵢ)(μⱼₜ - μ̂ⱼ)`, the
+numerator of eq. (39). -/
+noncomputable def qHat (X : J × T → ℝ) (i j : J) : ℝ :=
+  ∑ t ∈ M.overlap i j, √(w i t * w j t) * (X (i, t) - M.muHat w X i) * (X (j, t) - M.muHat w X j)
+
+omit [Fintype J] [DecidableEq J] [Fintype T] in
+lemma sigRhoHat_eq_qHat (X : J × T → ℝ) (i j : J) :
+    M.sigRhoHat w X i j = M.qHat w X i j / M.den w i j := rfl
+
+/-- PLAN G1, one common covariance: `ĉ`, the average of `σ²ᵢⱼρᵢⱼ^` over the pairs `i ≠ j`. -/
+noncomputable def commonCovHat (X : J × T → ℝ) : ℝ :=
+  (∑ p ∈ (univ : Finset J).offDiag, M.sigRhoHat w X p.1 p.2) / #(univ : Finset J).offDiag
+
+/-- PLAN G1, one common correlation: the pooled `ρ̂ = Σ_{i≠j} Qᵢⱼ / Σ_{i≠j} σᵢσⱼ(nᵢⱼ + Sᵢⱼ²/(wᵢ*wⱼ*))`
+with given base standard deviations `σⱼ` (the app plugs in `σ̃ⱼ`). Summing over `i < j`
+instead gives the same ratio, both sums being symmetric. -/
+noncomputable def rhoPooled (sig : J → ℝ) (X : J × T → ℝ) : ℝ :=
+  (∑ p ∈ (univ : Finset J).offDiag, M.qHat w X p.1 p.2)
+    / ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+        * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2))
+
 /-- `ĉⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ^`, eq. (39). -/
 noncomputable def cHat (X : J × T → ℝ) (j : J) : ℝ :=
   ∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * M.sigRhoHat w X i j
@@ -207,24 +228,19 @@ theorem σ2ρ_special (i j : J) :
     key i t (mem_inter.mp ht).1, key j t (mem_inter.mp ht).2]
   ring
 
-/-- Eq. (39), first line, with the per-pair count: `σ²ᵢⱼρᵢⱼ^` is unbiased whenever
-the denominator is positive (or there is no shared period, when both sides are `0`). -/
-theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.den w i j) :
-    M.toModel.Unbiased (fun X => M.sigRhoHat w X i j) (M.σ2 i j * M.ρ i j) := by
-  rcases (M.overlap i j).eq_empty_or_nonempty with hO | hO
-  · refine ⟨0, fun X => ?_, fun μ => ?_⟩
-    · simp [Model.quad, sigRhoHat, hO]
-    · simp [Model.Ecov, σ2, hO]
-  have hden' := hden hO
+/-- PLAN G1: the weighted cross-product `Qᵢⱼ = Σ_{t∈Tᵢⱼ} √(wᵢₜwⱼₜ)(μᵢₜ - μ̂ᵢ)(μⱼₜ - μ̂ⱼ)` has
+expectation `σᵢσⱼρᵢⱼ(nᵢⱼ + Sᵢⱼ²/(wᵢ*wⱼ*))`; with every cohort observed, `nᵢⱼ = T - 2`. -/
+theorem qHat_unbiased (i j : J) :
+    M.toModel.Unbiased (fun X => M.qHat w X i j)
+      (sig i * sig j * M.ρ i j
+        * (M.count w i j + M.sqrtSum w i j ^ 2 / (M.wtot w i * M.wtot w j))) := by
   have hW : ∀ k, 0 < M.wtot w k := M.wtot_pos hw
-  have hS : 0 < M.sqrtSum w i j :=
-    sum_pos (fun t _ => Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))) hO
   have hmu : ∀ X k, M.muHat w X k = ∑ s ∈ M.obs k, M.a k s * X (k, s) := fun X k =>
     sum_congr rfl fun s hs => by rw [M.a_special sig hw hσ k hs]
-  -- The estimator is a combination of the residual products of `unbiased_dev`.
-  refine (Model.UnbiasedCov.const_mul (M.den w i j)⁻¹ (Model.UnbiasedCov.sum (M.overlap i j) fun t ht =>
-    (M.unbiased_dev i j ht).const_mul √(w i t * w j t))).congr (fun X => ?_) ?_
-  · simp only [sigRhoHat, hmu, div_eq_mul_inv, sum_mul, mul_sum]
+  -- `Qᵢⱼ` is a combination of the residual products of `unbiased_dev`.
+  refine (Model.UnbiasedCov.sum (M.overlap i j) fun t ht =>
+    (M.unbiased_dev i j ht).const_mul √(w i t * w j t)).congr (fun X => ?_) ?_
+  · simp only [qHat, hmu]
     exact sum_congr rfl fun t _ => by ring
   · -- `√(wᵢₜwⱼₜ) σᵢₜσⱼₜ = σᵢσⱼ`, and `Σ_{Tᵢⱼ} (1 - aᵢₜ - aⱼₜ) = nᵢⱼ`.
     have hterm : ∀ t ∈ M.overlap i j, √(w i t * w j t) * ((1 - M.a i t - M.a j t) * M.σ i t
@@ -242,11 +258,30 @@ theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.
     rw [sum_congr rfl hterm]
     simp only [sum_add_distrib, ← sum_mul, hcount]
     rw [show ∑ t ∈ M.overlap i j, √(w i t * w j t) = M.sqrtSum w i j from rfl,
-      M.σ2ρ_special sig hw hσ, inv_mul_eq_iff_eq_mul₀ hden'.ne']
-    simp only [den]
-    have := (hW i).ne'; have := (hW j).ne'; have := hS.ne'
+      M.σ2ρ_special sig hw hσ]
+    have := (hW i).ne'; have := (hW j).ne'
     field_simp
-    ring
+
+/-- Eq. (39), first line, with the per-pair count: `σ²ᵢⱼρᵢⱼ^` is unbiased whenever
+the denominator is positive (or there is no shared period, when both sides are `0`).
+Proof: `σ²ᵢⱼρᵢⱼ^ = Qᵢⱼ/(Sᵢⱼ + nᵢⱼwᵢ*wⱼ*/Sᵢⱼ)` and `qHat_unbiased`. -/
+theorem sigRhoHat_unbiased (i j : J) (hden : (M.overlap i j).Nonempty → 0 < M.den w i j) :
+    M.toModel.Unbiased (fun X => M.sigRhoHat w X i j) (M.σ2 i j * M.ρ i j) := by
+  rcases (M.overlap i j).eq_empty_or_nonempty with hO | hO
+  · refine ⟨0, fun X => ?_, fun μ => ?_⟩
+    · simp [Model.quad, sigRhoHat, hO]
+    · simp [Model.Ecov, σ2, hO]
+  have hden' := hden hO
+  have hW : ∀ k, 0 < M.wtot w k := M.wtot_pos hw
+  have hS : 0 < M.sqrtSum w i j :=
+    sum_pos (fun t _ => Real.sqrt_pos.mpr (mul_pos (hw i t) (hw j t))) hO
+  refine ((M.qHat_unbiased sig hw hσ i j).const_mul (M.den w i j)⁻¹).congr
+    (fun X => by rw [sigRhoHat_eq_qHat, div_eq_inv_mul]) ?_
+  rw [M.σ2ρ_special sig hw hσ, inv_mul_eq_iff_eq_mul₀ hden'.ne']
+  simp only [den]
+  have := (hW i).ne'; have := (hW j).ne'; have := hS.ne'
+  field_simp
+  ring
 
 /-- `ĉⱼ` is unbiased for `cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ`, whenever the
 denominators are positive. -/
@@ -254,6 +289,41 @@ theorem cHat_unbiased (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w 
     M.toModel.Unbiased (fun X => M.cHat w X j)
       (∑ i, ((if i = j then 1 else 0) - M.wtot w i / M.wall w) * (M.σ2 i j * M.ρ i j)) :=
   Model.UnbiasedCov.sum univ fun i _ => (M.sigRhoHat_unbiased sig hw hσ i j (hden i j)).const_mul _
+
+/-- PLAN G1: with a common covariance `σ²ᵢⱼρᵢⱼ = c` for all `i ≠ j` (and `J ≥ 2`), the average
+`ĉ` of the pair estimators is unbiased for `c`. -/
+theorem commonCovHat_unbiased (hJ : 2 ≤ Fintype.card J)
+    (hden : ∀ i j, (M.overlap i j).Nonempty → 0 < M.den w i j)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) :
+    M.toModel.Unbiased (M.commonCovHat w) c := by
+  have hn : (#(univ : Finset J).offDiag : ℝ) ≠ 0 := by
+    rw [offDiag_card, card_univ]
+    have : Fintype.card J < Fintype.card J * Fintype.card J := by nlinarith
+    exact_mod_cast (Nat.sub_pos_of_lt this).ne'
+  refine ((Model.UnbiasedCov.sum (univ : Finset J).offDiag fun (p : J × J) _ =>
+    M.sigRhoHat_unbiased sig hw hσ p.1 p.2 (hden p.1 p.2)).const_mul
+      (1 / #(univ : Finset J).offDiag : ℝ)).congr
+    (fun X => by rw [commonCovHat]; ring) ?_
+  rw [sum_congr rfl fun p hp => hc p.1 p.2 (mem_offDiag.mp hp).2.2, sum_const, nsmul_eq_mul]
+  field_simp
+
+/-- PLAN G1: with a common correlation `ρᵢⱼ = r` for all `i ≠ j`, the pooled `ρ̂` with the true
+`σⱼ` in its denominator is unbiased for `r` (whenever that denominator is nonzero).
+Proof: sum `qHat_unbiased` over the pairs. -/
+theorem rhoPooled_unbiased {r : ℝ} (hρ : ∀ i j, i ≠ j → M.ρ i j = r)
+    (hD : ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+        * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2)) ≠ 0) :
+    M.toModel.Unbiased (M.rhoPooled w sig) r := by
+  set D := ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+    * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2))
+  refine ((Model.UnbiasedCov.sum (univ : Finset J).offDiag fun (p : J × J) _ =>
+    M.qHat_unbiased sig hw hσ p.1 p.2).const_mul (1 / D)).congr
+    (fun X => by rw [rhoPooled]; ring) ?_
+  rw [sum_congr rfl fun p hp => by rw [hρ p.1 p.2 (mem_offDiag.mp hp).2.2]]
+  rw [show ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2 * r
+      * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2)) = r * D by
+    simp only [D, mul_sum]; exact sum_congr rfl fun x _ => by ring]
+  field_simp
 
 /-- Eq. (39): `τ̂²` is unbiased. Needs `J ≥ 2` and a positive denominator for every
 overlapping pair (e.g. `|Tᵢⱼ| ≠ 1` for all `i, j`, `den_pos_of_two_le`). -/

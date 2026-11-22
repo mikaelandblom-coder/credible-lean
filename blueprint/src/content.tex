@@ -1345,7 +1345,8 @@ proved once for any symmetric $C$.
 \begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
   \lean{Credibility.Model.wtot, Credibility.Model.wall, Credibility.Model.sqrtSum,
         Credibility.Model.muHat, Credibility.Model.sigRhoHat, Credibility.Model.cHat,
-        Credibility.Model.tauHat, Credibility.Model.KHat}
+        Credibility.Model.tauHat, Credibility.Model.KHat, Credibility.Model.qHat,
+        Credibility.Model.commonCovHat, Credibility.Model.rhoPooled}
   \leanok
   With $\hmu_j = \sum_t (w_{jt}/w_{j*})\mu_{jt}$,
   \begin{align*}
@@ -1389,6 +1390,25 @@ proved once for any symmetric $C$.
   and Theorems~\ref{thm:U_unbiased} and~\ref{thm:U_sigRhoHat_self}: then
   $T_{ij} = T$, the count $n_{ij}$ is $T - 2$, and $T \ge 2$ makes every denominator
   positive (Lemma~\ref{lem:U_estimators_full}).
+\end{proof}
+
+\begin{corollary}[One common covariance or correlation, PLAN G1]\label{cor:pooled}
+  \lean{Credibility.Model.qHat_unbiased, Credibility.Model.commonCovHat_unbiased,
+        Credibility.Model.rhoPooled_unbiased}
+  \leanok
+  \uses{def:estimators, lem:U_qHat, thm:U_pooled, lem:U_count, lem:U_estimators_full}
+  With $Q_{ij} = \sum_t \sqrt{w_{it}w_{jt}}(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)$:
+  $\mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}\bigl((T-2) + S_{ij}^2/(w_{i*}w_{j*})\bigr)$.
+  If $T, J \ge 2$ and $\sigma^2_{ij}\rho_{ij} = c$ for $i \ne j$, the average $\hat c$ of the
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ over $i \ne j$ is unbiased for $c$. If $\rho_{ij} = r$ for
+  $i \ne j$, the pooled
+  $\hat\rho = \sum_{i\ne j}Q_{ij}/\sum_{i\ne j}\sigma_i\sigma_j((T-2) + S_{ij}^2/(w_{i*}w_{j*}))$
+  is unbiased for $r$ (denominator nonzero).
+\end{corollary}
+\begin{proof}
+  \leanok
+  The case $T_j = T$ of Lemma~\ref{lem:U_qHat} and Theorem~\ref{thm:U_pooled}, with
+  $n_{ij} = T - 2$ (Lemma~\ref{lem:U_count}).
 \end{proof}
 
 \begin{remark}[Finding 7: sample sizes]\label{rem:estimation_sizes}
@@ -2110,7 +2130,9 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   \lean{Credibility.Model.toUnequal_wtot, Credibility.Model.toUnequal_wall,
         Credibility.Model.toUnequal_muHat, Credibility.Model.toUnequal_sqrtSum,
         Credibility.Model.toUnequal_sigRhoHat, Credibility.Model.toUnequal_tauHat,
-        Credibility.Model.toUnequal_KHat, Credibility.Model.toUnequal_den_pos}
+        Credibility.Model.toUnequal_KHat, Credibility.Model.toUnequal_den_pos,
+        Credibility.Model.toUnequal_qHat, Credibility.Model.toUnequal_commonCovHat,
+        Credibility.Model.toUnequal_rhoPooled}
   \leanok
   \uses{def:U_estimators, def:estimators, lem:U_full}
   With $T_j = T$ the estimators are those of \eqth{39}, and $T \ge 2$ gives
@@ -2149,25 +2171,71 @@ and $S_{ij} = \sum_{t \in T_{ij}}\sqrt{w_{it}w_{jt}}$. An estimator is
   terms; the $\tau^2\delta_{ij}$ parts cancel.
 \end{proof}
 
+\begin{definition}[Pooled estimators, PLAN G1]\label{def:U_pooled}
+  \lean{Credibility.Unequal.qHat, Credibility.Unequal.commonCovHat,
+        Credibility.Unequal.rhoPooled}
+  \leanok
+  \uses{def:U_estimators}
+  $Q_{ij} = \sum_{t \in T_{ij}} \sqrt{w_{it}w_{jt}}\,(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)$, so
+  $\widehat{\sigma^2_{ij}\rho_{ij}} = Q_{ij}/D_{ij}$. One common covariance:
+  $\hat c = \frac{1}{J(J-1)}\sum_{i \ne j}\widehat{\sigma^2_{ij}\rho_{ij}}$. One common
+  correlation, with given $\sigma_j$:
+  \[
+    \hat\rho = \frac{\sum_{i \ne j} Q_{ij}}
+      {\sum_{i \ne j}\sigma_i\sigma_j\bigl(n_{ij} + S_{ij}^2/(w_{i*}w_{j*})\bigr)}.
+  \]
+\end{definition}
+
+\begin{lemma}[The cross-product]\label{lem:U_qHat}
+  \lean{Credibility.Unequal.qHat_unbiased, Credibility.Unequal.sigRhoHat_eq_qHat}
+  \leanok
+  \uses{def:U_pooled, lem:U_unbiased_dev, lem:U_special}
+  $\mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}\bigl(n_{ij} + S_{ij}^2/(w_{i*}w_{j*})\bigr)$,
+  for every pair (no condition on $D_{ij}$).
+\end{lemma}
+\begin{proof}
+  \leanok
+  Weight Lemma~\ref{lem:U_unbiased_dev} by $\sqrt{w_{it}w_{jt}}$ and sum over $T_{ij}$:
+  $\sqrt{w_{it}w_{jt}}\sigma_{it}\sigma_{jt} = \sigma_i\sigma_j$, the shares add up to
+  $n_{ij}$, and $S_{ij}\sigma^2_{ij}\rho_{ij} = S_{ij}^2\sigma_i\sigma_j\rho_{ij}/(w_{i*}w_{j*})$
+  (Lemma~\ref{lem:U_special}).
+\end{proof}
+
 \begin{theorem}[Unbiasedness with unequal lengths]\label{thm:U_unbiased}
   \lean{Credibility.Unequal.sigRhoHat_unbiased, Credibility.Unequal.cHat_unbiased,
         Credibility.Unequal.tauHat_unbiased, Credibility.Unequal.KHat_unbiased}
   \leanok
-  \uses{def:U_estimators, lem:U_unbiased_dev, lem:U_special, lem:U_K_apply}
+  \uses{def:U_estimators, lem:U_qHat, lem:U_special, lem:U_K_apply}
   If $D_{ij} > 0$ whenever $T_{ij} \ne \emptyset$, then
   $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for $\sigma^2_{ij}\rho_{ij}$ and
   $\hat c_j$ for $c_j$; if moreover $J \ge 2$, then $\widehat{\tau^2}$ and $\hat K_{ij}$ are unbiased.
 \end{theorem}
 \begin{proof}
   \leanok
-  Weighting Lemma~\ref{lem:U_unbiased_dev} by $\sqrt{w_{it}w_{jt}}$ and
-  summing over $T_{ij}$ gives $\sigma_i\sigma_j\rho_{ij}n_{ij} + S_{ij}\sigma^2_{ij}\rho_{ij}
+  By Lemma~\ref{lem:U_qHat}, $\mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}(n_{ij} + S_{ij}^2/(w_{i*}w_{j*}))
   = D_{ij}\sigma^2_{ij}\rho_{ij}$ by Lemma~\ref{lem:U_special}. For
   $\widehat{\tau^2}$, $\mathbb{E}(\hmu_j - \sum_i v_i\hmu_i)^2
   = \sum_{ik}(\delta_{ij}-v_i)(\delta_{kj}-v_k)K_{ik}$ with $v_i = w_{i*}/w_{**}$,
   and $K = \sigma^2\rho + \tau^2\delta$ (Lemma~\ref{lem:U_K_apply}). Weighting by
   $w_{j*}$, the $\sigma^2\rho$ part is $\sum_j w_{j*}c_j$ and the $\tau^2$ part is
   $(w_{**} - \sum_i w_{i*}^2/w_{**})\tau^2$; that denominator is positive iff $J \ge 2$.
+\end{proof}
+
+\begin{theorem}[One common covariance or correlation, PLAN G1]\label{thm:U_pooled}
+  \lean{Credibility.Unequal.commonCovHat_unbiased, Credibility.Unequal.rhoPooled_unbiased}
+  \leanok
+  \uses{def:U_pooled, lem:U_qHat, thm:U_unbiased}
+  (a) If $J \ge 2$, $D_{ij} > 0$ whenever $T_{ij} \ne \emptyset$, and
+  $\sigma^2_{ij}\rho_{ij} = c$ for all $i \ne j$, then $\hat c$ is unbiased for $c$.
+  (b) If $\rho_{ij} = r$ for all $i \ne j$ and the denominator of $\hat\rho$ is nonzero, then
+  $\hat\rho$ (with the true $\sigma_j$) is unbiased for $r$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  (a) Average Theorem~\ref{thm:U_unbiased} over the $J(J-1)$ pairs. (b) Sum
+  Lemma~\ref{lem:U_qHat} over the pairs: the numerator has expectation $r$ times the
+  denominator. With $\tilde\sigma_j$ plugged in, $\hat\rho$ is a ratio of random
+  quantities and (b) no longer applies.
 \end{proof}
 
 \begin{lemma}\label{lem:U_observed}

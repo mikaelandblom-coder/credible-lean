@@ -63,6 +63,8 @@ voice, then trim towards 8 pages.
 ## 3. Estimating the parameters (1 page)
 10. Unbiased estimators, eqs. (37)–(41), and what they need (`T ≥ 2`, `J ≥ 2`;
     Finding 7) — `cor:estimation`.
+10c. One common covariance or correlation (PLAN G1, 2026-11-22): `E Qᵢⱼ`, the average `ĉ`, the
+    pooled `ρ̂` with true `σ` — `cor:pooled`, `thm:U_pooled`.
 10a. Balance of Bühlmann–Straub (in section 2) — `thm:bs_balance`.
 10b. Estimated weights (2026-11-22, Finding 35): bias `Σᵢ cov(d̂ᵢ, μ̂ᵢ)`; exposure balance keeps the
     portfolio unbiased; watch out for skewed claims with region-specific variances —

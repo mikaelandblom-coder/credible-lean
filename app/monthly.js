@@ -668,7 +668,7 @@
       phiStep,
       { name: 'MINQUE for (γλλᵀ, C, s²) given φ̂, τ² dropped', badge: 'proved', lean: 'Factor.minque_ar1_two_years_unbiased' },
     ];
-    if (o.psd) steps.push({ name: 'Constrained to valid tables (γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0): projection in the MINQUE metric', badge: 'not proved yet' });
+    if (o.psd) steps.push({ name: 'Constrained to valid tables (γλλᵀ ⪰ 0, C ⪰ 0, s² ≥ 0): projection in the MINQUE metric', badge: 'proved', lean: 'ConeProjection.integral_hsq_proj_le' });
     // The MINQUE system and both parameter vectors, for the H-norm check (`hNormCheck`).
     const minq = mq.singular ? null : { list: mq.list, H: mq.H, thetaHat: mq.theta, proj };
     return { phi: ph.phi, phiMethod: method, curve: ph.curve, A, C, s2, singular: mq.singular, cond: mq.cond, warnings, steps, minq };

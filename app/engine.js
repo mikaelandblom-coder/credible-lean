@@ -740,7 +740,7 @@
       { name: 'Σ̂ off-diagonal', formula: F.sigOff, values: offs, summary: true, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; J(J−1)/2 pairs' },
     ];
     if (o.common) {
-      steps.push({ name: 'common covariance', formula: F.common, values: [cbar], badge: 'not proved yet', gap: 'G1', note: 'unbiased for a common c: not proved yet (G1)' });
+      steps.push({ name: 'common covariance', formula: F.common, values: [cbar], badge: 'proved', lean: 'Credibility.Model.commonCovHat_unbiased', note: 'unbiased when every off-diagonal covariance is the same c' });
     }
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
@@ -859,7 +859,7 @@
       { name: 'Wⱼ, β²', formula: F.vcW, values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
       { name: 'σ̃ⱼ²', formula: F.vcTilde, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
       ]),
-      { name: 'ρ̂', formula: F.vcRho, values: [p.rhoRaw], badge: 'not proved yet', gap: 'G1', note: `one common correlation by a moment equation${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
+      { name: 'ρ̂', formula: F.vcRho, values: [p.rhoRaw], badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', note: `one common correlation by a moment equation, E Qᵢⱼ = σᵢσⱼρ((T−2) + Sᵢⱼ²/(wᵢ*wⱼ*)); unbiased with the true σⱼ in the denominator, not with σ̃ⱼ plugged in (a ratio)${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
       { name: 'τ̂²', formula: F.vcTau, values: [p.tauRaw], badge: 'not proved yet', gap: 'G1', note: `on the common-ρ Σ̂: unbiased if Σ̂ is${p.tauRaw <= 0 ? '; negative: truncated to 0 (eq. (40))' : ''}` },
       { name: 'K̂', formula: F.vcK, values: [p.rho], badge: 'proved', lean: 'Credibility.Model.K_posDef', note: `K̂ ≻ 0 for any ρ̂ ∈ [0, 1): no damping, no θ; ρ̂ = ${p.rho.toFixed(3)}` },
       { name: 'b', formula: F.gls, values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
@@ -1031,7 +1031,7 @@
         { name: 'σ̂ⱼ²', formula: F.vcSigma, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
         { name: 'Wⱼ, β²', formula: F.vcW, badge: 'not proved yet', gap: 'G1', rule: 'if β² ≤ 0, set β² = 0 (then every σ̃ⱼ² below is the pooled σ̂²)', note: 'Wⱼ estimates Var(σ̂ⱼ²) from the yearly terms; β² is the between-region variance of the σⱼ²' },
         { name: 'σ̃ⱼ²', formula: F.vcTilde, badge: 'not proved yet', gap: 'G1', rule: 'ζⱼ = 0 when β² = 0' },
-        { name: 'ρ̂', formula: F.vcRho, badge: 'not proved yet', gap: 'G1', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)' },
+        { name: 'ρ̂', formula: F.vcRho, badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)', note: 'unbiased for a common ρ with the true σⱼ in the denominator; with σ̃ⱼ plugged in (a ratio), not proved' },
         { name: 'τ̂²', formula: F.vcTau, badge: 'not proved yet', gap: 'G1', rule: `Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j; ${TAU_ZERO}` },
         { name: 'K̂', formula: F.vcK, badge: 'proved', lean: 'Credibility.Model.K_posDef', note: 'positive definite for any ρ̂ in [0, 1): no damping needed' },
         { name: 'b', formula: F.gls, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
@@ -1096,7 +1096,7 @@
       { name: 'Σ̂ diagonal', formula: F.sigDiag, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
       { name: 'Σ̂ off-diagonal', formula: F.sigOff, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_unbiased', note: 'unbiased; one value per pair of regions' },
     ];
-    if (common) steps.push({ name: 'common covariance', formula: F.common, badge: 'not proved yet', gap: 'G1', rule: 'use ĉ in place of every off-diagonal Σ̂ᵢⱼ below' });
+    if (common) steps.push({ name: 'common covariance', formula: F.common, badge: 'proved', lean: 'Credibility.Model.commonCovHat_unbiased', rule: 'use ĉ in place of every off-diagonal Σ̂ᵢⱼ below' });
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.cHat_unbiased', gap: common ? 'G1' : null },
       { name: 'τ̂²', formula: F.tau, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.tauHat_unbiased', gap: common ? 'G1' : null, rule: TAU_ZERO },

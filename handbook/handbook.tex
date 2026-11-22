@@ -515,6 +515,33 @@ subtracts the noise.
   positive semidefinite. Truncate and damp (Result~\ref{res:damped}).
 \end{caveat}
 
+\begin{result}[One common covariance or correlation]\label{res:pooled}
+  Let $Q_{ij} = \sum_t \sqrt{w_{it}w_{jt}}(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)$. Then
+  \[
+    \mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}\Bigl((T-2) + \frac{S_{ij}^2}{w_{i*}w_{j*}}\Bigr).
+  \]
+  If all off-diagonal $\sigma^2_{ij}\rho_{ij}$ equal $c$, the average $\hat c$ of the
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ over the pairs $i \ne j$ is unbiased for $c$. If all
+  $\rho_{ij}$ ($i \ne j$) equal $\rho$,
+  \[
+    \hat\rho = \frac{\sum_{i<j} Q_{ij}}{\sum_{i<j}\sigma_i\sigma_j\bigl((T-2) + S_{ij}^2/(w_{i*}w_{j*})\bigr)}
+  \]
+  is unbiased for $\rho$. With unequal lengths, $T - 2$ becomes $n_{ij}$
+  (Result~\ref{res:unequal_est}).
+  \lean{Credibility.Model.qHat_unbiased}
+  \lean{Credibility.Model.commonCovHat_unbiased}
+  \lean{Credibility.Model.rhoPooled_unbiased}
+  \lean{Credibility.Unequal.rhoPooled_unbiased}
+\end{result}
+\use Prefer the common correlation: with unequal volumes the true covariances
+shrink with volume, so one common $c$ overshoots for the large cohorts and $z$
+can exceed 1.
+\begin{caveat}
+  The unbiasedness of $\hat\rho$ is for the true $\sigma_j$ in the denominator. In
+  practice you plug in estimates $\tilde\sigma_j$; the ratio is then only
+  approximately unbiased.
+\end{caveat}
+
 \begin{result}[The classical Bühlmann--Straub $\widehat{\tau^2}$]\label{res:bs_tau}
   With uncorrelated cohorts and a common $\sigma_j = \sigma$, the textbook estimator
   \[

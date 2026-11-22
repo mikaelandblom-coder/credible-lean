@@ -119,8 +119,8 @@ a recipe from data.
 |---|---|---|---|
 | Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`), `τ̂²` of eq. (13) (`tauHatBS_unbiased`) | |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
-| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z` | unbiasedness of `ρ̂σ²`, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
-| Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`) | the estimator (G1) |
+| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
+| Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | `ĉⱼ`, `τ̂²` on the common `ĉ` (linear, G1) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind) | pooling all pairs (G4) |
 | `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only | G3 |
@@ -145,6 +145,12 @@ the floor line and in the tests.
   2026-11-14 (`studies/damping-theta.md`): with unequal volumes a common
   covariance is misspecified and its z explode; a common **correlation**
   `Σᵢⱼ = ρ̄√(ΣᵢᵢΣⱼⱼ)` is the better one-parameter model (H1 there).*
+  *Proved 2026-11-22 (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`;
+  `Model` twins): `E Qᵢⱼ = σᵢσⱼρᵢⱼ(nᵢⱼ + Sᵢⱼ²/(wᵢ*wⱼ*))` (`nᵢⱼ = T − 2`), so the average `ĉ`
+  is unbiased for a common covariance and the pooled `ρ̂` with the **true** `σⱼ` in its
+  denominator for a common correlation. App badges for `ĉ` and `ρ̂` now "proved". Still open:
+  `ρ̂` with `σ̃ⱼ` plugged in (a ratio), `Wⱼ`, `β²` (fourth moments), and `ĉⱼ`, `τ̂²` built on
+  the common `ĉ` (unbiased by linearity, not yet in Lean).*
 - **G4. Pooled pair estimator of `φτ²`**, unbiased for any weights.
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
 - **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the

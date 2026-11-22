@@ -56,6 +56,21 @@ noncomputable def sigRhoHat (X : J × T → ℝ) (i j : J) : ℝ :=
   (∑ t, √(w i t * w j t) * (X (i, t) - muHat w X i) * (X (j, t) - muHat w X j))
     / (sqrtSum w i j + ((Fintype.card T : ℝ) - 2) * wtot w i * wtot w j / sqrtSum w i j)
 
+/-- `Qᵢⱼ = Σₜ √(wᵢₜwⱼₜ)(μᵢₜ - μ̂ᵢ)(μⱼₜ - μ̂ⱼ)`, the numerator of eq. (39). -/
+noncomputable def qHat (X : J × T → ℝ) (i j : J) : ℝ :=
+  ∑ t, √(w i t * w j t) * (X (i, t) - muHat w X i) * (X (j, t) - muHat w X j)
+
+/-- PLAN G1, one common covariance: `ĉ`, the average of `σ²ᵢⱼρᵢⱼ^` over the pairs `i ≠ j`. -/
+noncomputable def commonCovHat (X : J × T → ℝ) : ℝ :=
+  (∑ p ∈ (univ : Finset J).offDiag, sigRhoHat w X p.1 p.2) / #(univ : Finset J).offDiag
+
+/-- PLAN G1, one common correlation:
+`ρ̂ = Σ_{i≠j} Qᵢⱼ / Σ_{i≠j} σᵢσⱼ((T - 2) + Sᵢⱼ²/(wᵢ*wⱼ*))` with given `σⱼ`. -/
+noncomputable def rhoPooled (sig : J → ℝ) (X : J × T → ℝ) : ℝ :=
+  (∑ p ∈ (univ : Finset J).offDiag, qHat w X p.1 p.2)
+    / ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+        * (((Fintype.card T : ℝ) - 2) + sqrtSum w p.1 p.2 ^ 2 / (wtot w p.1 * wtot w p.2))
+
 /-- `ĉⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**) σ²ᵢⱼρᵢⱼ^`, eq. (39). -/
 noncomputable def cHat (X : J × T → ℝ) (j : J) : ℝ :=
   ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w) * sigRhoHat w X i j
@@ -108,6 +123,23 @@ lemma toUnequal_sigRhoHat [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T →
     toUnequal_sqrtSum]
   simp [sigRhoHat, Unequal.overlap, toUnequal]
   rfl
+
+omit [Fintype J] [DecidableEq J] in
+lemma toUnequal_qHat [Nonempty T] (X : J × T → ℝ) : M.toUnequal.qHat w X = qHat w X := by
+  funext i j; simp [Unequal.qHat, qHat, Unequal.overlap, toUnequal]; rfl
+
+variable {w} in
+omit [DecidableEq J] in
+lemma toUnequal_commonCovHat [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T → ℝ) :
+    M.toUnequal.commonCovHat w X = commonCovHat w X := by
+  simp only [Unequal.commonCovHat, M.toUnequal_sigRhoHat hw, commonCovHat]
+
+variable {w} in
+omit [DecidableEq J] in
+lemma toUnequal_rhoPooled [Nonempty T] (hw : ∀ j t, 0 < w j t) (sig : J → ℝ) (X : J × T → ℝ) :
+    M.toUnequal.rhoPooled w sig X = rhoPooled w sig X := by
+  simp only [Unequal.rhoPooled, M.toUnequal_qHat, rhoPooled,
+    M.toUnequal.count_of_full w hw (fun _ => rfl), M.toUnequal_sqrtSum, M.toUnequal_wtot]
 
 variable {w} in
 lemma toUnequal_tauHat [Nonempty T] (hw : ∀ j t, 0 < w j t) (X : J × T → ℝ) :
@@ -164,6 +196,36 @@ theorem cHat_unbiased (hT : 2 ≤ Fintype.card T) (j : J) :
   exact (M.toUnequal.cHat_unbiased sig hw hσ (M.toUnequal_den_pos hw hT) j).congr
     (fun X => by simp only [Unequal.cHat, M.toUnequal_sigRhoHat hw]; rfl)
     (by rw [toUnequal_σ2]; rfl)
+
+/-- PLAN G1: `E Qᵢⱼ = σᵢσⱼρᵢⱼ((T - 2) + Sᵢⱼ²/(wᵢ*wⱼ*))`. Needs a period (with none, `Qᵢⱼ = 0`). -/
+theorem qHat_unbiased [Nonempty T] (i j : J) :
+    M.Unbiased (fun X => qHat w X i j)
+      (sig i * sig j * M.ρ i j
+        * (((Fintype.card T : ℝ) - 2) + sqrtSum w i j ^ 2 / (wtot w i * wtot w j))) := by
+  refine (M.toUnequal.qHat_unbiased sig hw hσ i j).congr
+    (fun X => by rw [M.toUnequal_qHat]) ?_
+  rw [M.toUnequal.count_of_full w hw (fun _ => rfl), M.toUnequal_sqrtSum]; rfl
+
+/-- PLAN G1: with a common covariance `σ²ᵢⱼρᵢⱼ = c` for all `i ≠ j`, the average `ĉ` of the
+pair estimators (39) is unbiased for `c`. Needs `T ≥ 2` and `J ≥ 2`. -/
+theorem commonCovHat_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
+    {c : ℝ} (hc : ∀ i j, i ≠ j → M.σ2 i j * M.ρ i j = c) :
+    M.Unbiased (commonCovHat w) c := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  exact (M.toUnequal.commonCovHat_unbiased sig hw hσ hJ (M.toUnequal_den_pos hw hT)
+    (fun i j h => by rw [toUnequal_σ2]; exact hc i j h)).congr
+    (fun X => by rw [M.toUnequal_commonCovHat hw]) rfl
+
+/-- PLAN G1: with a common correlation `ρᵢⱼ = r` for all `i ≠ j`, the pooled `ρ̂` with the true
+`σⱼ` in its denominator is unbiased for `r` (whenever that denominator is nonzero). -/
+theorem rhoPooled_unbiased [Nonempty T] {r : ℝ} (hρ : ∀ i j, i ≠ j → M.ρ i j = r)
+    (hD : ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+        * (((Fintype.card T : ℝ) - 2) + sqrtSum w p.1 p.2 ^ 2 / (wtot w p.1 * wtot w p.2)) ≠ 0) :
+    M.Unbiased (rhoPooled w sig) r := by
+  refine (M.toUnequal.rhoPooled_unbiased sig hw hσ hρ ?_).congr
+    (fun X => by rw [M.toUnequal_rhoPooled hw]) rfl
+  simpa only [M.toUnequal.count_of_full w hw (fun _ => rfl), M.toUnequal_sqrtSum,
+    M.toUnequal_wtot] using hD
 
 /-- Eq. (39): `τ̂²` is unbiased. Needs `T ≥ 2` and `J ≥ 2`: with one cohort
 the denominator `w** - Σᵢ wᵢ*²/w**` is `0`. -/

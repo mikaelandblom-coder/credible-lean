@@ -196,10 +196,10 @@ test('constrainPSD: valid tables, the unbiased fit when it is valid, and a minim
   void kept;
 });
 
-test('fit with psd: valid tables and the extra step, badge not proved yet', () => {
+test('fit with psd: valid tables and the extra step, badge proved (ConeProjection.integral_hsq_proj_le)', () => {
   const w = M.makeWorld({}), d = M.draw(w, M.rng(17)), f = M.fit(d, { psd: true });
   assert.ok(Math.min(...M.eigSymVec(f.A).values) > -1e-10 && Math.min(...M.eigSymVec(f.C).values) > -1e-10 && f.s2.every((x) => x >= 0));
-  assert.ok(f.steps.some((s) => s.badge === 'not proved yet' && /valid tables/.test(s.name)));
+  assert.ok(f.steps.some((s) => s.badge === 'proved' && s.lean === 'ConeProjection.integral_hsq_proj_le' && /valid tables/.test(s.name)));
 });
 
 // The premium: the next-12-month mean of each cohort (Factor.blup_season_optimal).
