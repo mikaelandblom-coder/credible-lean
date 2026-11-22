@@ -935,6 +935,10 @@
    * exposure-weighted, error = oracle error + E B² + 2E[AB] draw for draw. `b2`, `cross` (= 2E[AB])
    * and their standard errors; under normal noise and an even, translation-invariant fit (BLUP on
    * corrBS's K̂) the cross term is 0 (Core.Target.plugIn_mse_of_normal).
+   * `bias` (each fit and the oracle): mean error of the rates, rateⱼ − μⱼ, exposure-weighted
+   * (`mean`, `se`) and per region (`region`, `regionSe`). The oracle is unbiased in every world; a
+   * plug-in fit that is even and translation invariant is unbiased under symmetric noise
+   * (Core.Target.blup_plugIn_unbiased_of_symmetric), not necessarily under skewed noise.
    */
   function simulate(world, ids, n, seed, nextFactor) {
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
@@ -943,7 +947,11 @@
     const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
     const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
     const acc = {};
-    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, b: 0, bb: 0, c: 0, cc: 0, warn: 0, flags: {}, expected: {} };
+    for (const id of ids.concat(['floor', 'floorBlup'])) acc[id] = { s: 0, ss: 0, f: 0, ff: 0, b: 0, bb: 0, c: 0, cc: 0, m: 0, mm: 0, rm: wt.map(() => 0), rmm: wt.map(() => 0), warn: 0, flags: {}, expected: {} };
+    const addBias = (a, rates, levels) => {
+      const e = rates.map((x, j) => x - levels[j]), q = wsum(e);
+      a.m += q; a.mm += q * q; e.forEach((x, j) => { a.rm[j] += x; a.rmm[j] += x * x; });
+    };
     const wsum = (v) => sum(v.map((x, j) => wt[j] * x)) / wall;
     const fe = (rates, Y) => sum(rates.map((x, j) => wt[j] * (x - Y[j]) * (x - Y[j]))) / wall;
     for (let k = 0; k < n; k++) {
@@ -955,6 +963,7 @@
         acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
         const B = f.rates.map((x, j) => x - br[j]), b2 = wsum(B.map((x) => x * x)), c2 = 2 * wsum(B.map((x, j) => A[j] * x));
         acc[id].b += b2; acc[id].bb += b2 * b2; acc[id].c += c2; acc[id].cc += c2 * c2;
+        addBias(acc[id], f.rates, levels);
         for (const k in f.flags) if (f.flags[k]) {
           acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
           if (f.expected && f.expected[k]) acc[id].expected[k] = (acc[id].expected[k] || 0) + 1;
@@ -963,6 +972,7 @@
       const fr = fl.apply(data).rates, e = weightedSE(data, fr, levels), g = fe(fr, Y);
       acc.floor.s += e; acc.floor.ss += e * e; acc.floor.f += g; acc.floor.ff += g * g;
       const eb = weightedSE(data, br, levels), gb = fe(br, Y);
+      addBias(acc.floorBlup, br, levels);
       acc.floorBlup.s += eb; acc.floorBlup.ss += eb * eb; acc.floorBlup.f += gb; acc.floorBlup.ff += gb * gb;
     }
     const out = {};
@@ -973,6 +983,8 @@
       for (const k in acc[id].flags) flags[k] = acc[id].flags[k] / n;
       for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
       out[id] = { mse: mean, se: Math.sqrt(v / n), fmse: fm, fse: Math.sqrt(fv / n), warnShare: acc[id].warn / n, flags, expected };
+      const se = (x, xx) => Math.sqrt(Math.max(xx / n - (x / n) ** 2, 0) / n);
+      if (id !== 'floor') out[id].bias = { mean: acc[id].m / n, se: se(acc[id].m, acc[id].mm), region: acc[id].rm.map((x) => x / n), regionSe: acc[id].rm.map((x, j) => se(x, acc[id].rmm[j])) };
       if (ids.includes(id)) {
         const bm = acc[id].b / n, cm = acc[id].c / n;
         out[id].split = { b2: bm, b2se: Math.sqrt(Math.max(acc[id].bb / n - bm * bm, 0) / n), cross: cm, crossSe: Math.sqrt(Math.max(acc[id].cc / n - cm * cm, 0) / n) };

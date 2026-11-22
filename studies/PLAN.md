@@ -295,10 +295,18 @@ One chat per step; none needs Lean except step 5.
   ± 1.2 (normal); `T = 4`, shapes 1: cross term −1.8e-3 against E B² 3.2e-3, so skew roughly halves
   the price of estimation (S9: the fit can beat the oracle). With `ρ > 0` the theorem's predictor
   uses the cohort means only, which are then not sufficient; the cross term was still within noise.
-- Plug-in bias (2026-11-21, `Core.Target.blup_plugIn_unbiased_of_symmetric`): unbiased under
-  symmetric noise when `K̂` uses residuals only. The app's world is skewed (Poisson, gamma): show the
-  simulated mean error of the fitted BLUP, which may differ from 0. Check that the app's fit is
-  translation invariant (season `β̂` by GLS, moments from residuals).
+- [x] Plug-in bias (2026-11-21, `Core.Target.blup_plugIn_unbiased_of_symmetric`). *Done 2026-11-22:*
+  `simulate` returns `bias` per fit and for the oracle (exposure-weighted mean error and per region,
+  with SEs), shown under Many draws. Test: `fitBLUP` is translation invariant (X + c) and even
+  (−X) to 1e-10; unbiased under normal noise per region; oracle and BS unbiased. **Seen (4000
+  draws, pooled mean error in % of the tariff):** default gamma world: oracle, BS, own, pool −0.05
+  (z −1.3, i.e. 0); corrBS −0.35, BLUP −0.37 (z ≈ −9); `T = 4`, shapes 1: corrBS −2.2, BLUP −2.4
+  (z ≈ −37), BS +0.01. Normal: all 0. So under skew corrBS and its BLUP *under-price the portfolio*;
+  BS escapes by exposure balance. Likely cause (not checked): a region with high noise draws has a
+  high mean and a high σ̂ⱼ² together, so it gets less weight. Open for the owner: log as a finding
+  (outside the distribution-free core: the core only promises unbiasedness for known K), and
+  try a fix that keeps the plug-in BLUP but restores balance, e.g. the G7 balanced shift.
+  The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test
   is only sufficient: there, check `K̂` itself (Cholesky) instead.

@@ -673,3 +673,17 @@ test('Excess over the oracle BLUP splits into E B² + 2E[AB] (Core.Target.integr
   const skew = lv.reduce((a, x) => a + ((x - m) / sd) ** 3, 0) / lv.length;
   assert.ok(Math.abs(skew) < 0.1, `skew ${skew}`);
 });
+
+test('Plug-in bias: the BLUP on corrBS K̂ is even and translation invariant, so unbiased under normal noise (blup_plugIn_unbiased_of_symmetric); under gamma noise it prices low, BS and the oracle do not', () => {
+  // Hypotheses of the theorem: data X → c + X shifts every rate by c; X → −X flips them (K̂ even).
+  const world = E.makeWorld({ rho: 0.4, noiseSpread: 1 }), { data } = E.draw(world, E.rng(8)), f = E.fitBLUP(data);
+  const shift = E.fitBLUP({ w: data.w, X: data.X.map((row) => row.map((x) => x + 0.37)) });
+  const flip = E.fitBLUP({ w: data.w, X: data.X.map((row) => row.map((x) => -x)) });
+  f.rates.forEach((x, j) => { close(shift.rates[j], x + 0.37, 1e-10, `shift ${j}`); close(flip.rates[j], -x, 1e-10, `flip ${j}`); });
+  for (const [p, seed] of [[{ normal: true }, 5], [{ normal: true, T: 4, rho: 0.6 }, 6], [{ T: 4, levelShape: 1, noiseShape: 1 }, 5]]) {
+    const res = E.simulate(E.makeWorld(p), ['blup', 'bs'], 3000, seed), b = res.blup.bias;
+    for (const id of ['floorBlup', 'bs']) assert.ok(Math.abs(res[id].bias.mean) < 4 * res[id].bias.se, `${id} unbiased ${JSON.stringify(p)}`);
+    if (p.normal) b.region.forEach((m, j) => assert.ok(Math.abs(m) < 4 * b.regionSe[j], `normal: region ${j} ${m} ± ${b.regionSe[j]}`));
+    else assert.ok(b.mean < -10 * b.se, `gamma: ${b.mean} ± ${b.se} clearly negative`);
+  }
+});
