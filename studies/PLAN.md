@@ -123,7 +123,7 @@ a recipe from data.
 | Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | — (`ĉⱼ`, `τ̂²` on `ĉ`: `tauHatCommon_unbiased`) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind), pooled `phiTauPooled_unbiasedG` (G4) | best pair weights (fourth moments) |
-| `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only | G3 |
+| `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only; clipping harmless iff true `z ∈ [0, 1]` (`errVar_clipZ_le_iff`) | estimated `ẑ` (G3) |
 | Choosing cohorts | not yet: the rules need the true levels or the true `d` | `merge_iff`, `pool_optimal_contiguous` | G5; not in the first version |
 
 Known-parameter results (optimal `z`, GLS weights, true MSE) appear only as
@@ -156,6 +156,10 @@ the floor line and in the tests.
   across groups and on the pairs within groups, any choice (e.g. `wᵢ*wⱼ*`). Which weights
   minimise the variance needs fourth moments (open). The app has no group fit yet, so no badge.*
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
+  *Proved 2026-11-22 (`BlendMoments.errVar_clipZ_le_iff`, Finding 36): for a fixed `z`, clipping
+  never increases the error iff the best `z*` is in `[0, 1]`; otherwise clipping `z*` costs
+  `Var(μ̂ⱼ − μ̂)·dist(z*, [0, 1])²`. Open: an estimated `ẑ` (the error in a draw is a different
+  parabola). App: the `z > 1` warning now says this; no clip switch added (the app does not clip).*
 - **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
   rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed
   `θ` in 23 of 24 worlds (H2 in `studies/damping-theta.md`).*

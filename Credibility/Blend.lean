@@ -71,6 +71,51 @@ theorem bestZ_unique (h : 0 < m.gap) {z : ℝ} (hz : m.errVar z ≤ m.errVar m.b
     exact (mul_eq_zero.mp h1).resolve_left h.ne'
   exact sub_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp hsq)
 
+/-! ### Clipping `z` to `[0, 1]` (thesis eq. (34), PLAN G3) -/
+
+/-- `z` clipped to `[0, 1]`, as in eq. (34). -/
+def clipZ (z : ℝ) : ℝ := max 0 (min z 1)
+
+lemma clipZ_mem (z : ℝ) : 0 ≤ clipZ z ∧ clipZ z ≤ 1 :=
+  ⟨le_max_left _ _, max_le zero_le_one (min_le_right _ _)⟩
+
+lemma clipZ_of_mem {z : ℝ} (h0 : 0 ≤ z) (h1 : z ≤ 1) : clipZ z = z := by
+  simp [clipZ, min_eq_left h1, max_eq_right h0]
+
+/-- Clipping moves `z` towards every point of `[0, 1]`. -/
+lemma sq_clipZ_sub_le {b : ℝ} (h0 : 0 ≤ b) (h1 : b ≤ 1) (z : ℝ) :
+    (clipZ z - b) ^ 2 ≤ (z - b) ^ 2 := by
+  unfold clipZ
+  rcases le_total z 1 with hz | hz
+  · rw [min_eq_left hz]
+    rcases le_total 0 z with hz0 | hz0
+    · rw [max_eq_right hz0]
+    · rw [max_eq_left hz0]; nlinarith
+  · rw [min_eq_right hz, max_eq_right zero_le_one]; nlinarith
+
+/-- PLAN G3: if the best factor lies in `[0, 1]`, clipping any `z` to `[0, 1]` never increases
+the error variance. -/
+theorem errVar_clipZ_le (h : 0 < m.gap) (h0 : 0 ≤ m.bestZ) (h1 : m.bestZ ≤ 1) (z : ℝ) :
+    m.errVar (clipZ z) ≤ m.errVar z := by
+  rw [m.errVar_eq h.ne' z, m.errVar_eq h.ne' (clipZ z)]
+  have := mul_le_mul_of_nonneg_left (sq_clipZ_sub_le h0 h1 z) h.le
+  linarith
+
+/-- The price of clipping the best factor: `Var(μ̂ⱼ - μ̂)` times its squared distance to
+`[0, 1]`. -/
+theorem errVar_clipZ_bestZ (h : m.gap ≠ 0) :
+    m.errVar (clipZ m.bestZ) = m.errVar m.bestZ + m.gap * (clipZ m.bestZ - m.bestZ) ^ 2 :=
+  m.errVar_eq h _
+
+/-- PLAN G3: clipping is harmless for every `z` exactly when the best factor lies in `[0, 1]`.
+Otherwise it already hurts at `z = bestZ` (Finding 36). -/
+theorem errVar_clipZ_le_iff (h : 0 < m.gap) :
+    (∀ z, m.errVar (clipZ z) ≤ m.errVar z) ↔ 0 ≤ m.bestZ ∧ m.bestZ ≤ 1 := by
+  refine ⟨fun hc => ?_, fun hb z => m.errVar_clipZ_le h hb.1 hb.2 z⟩
+  have e := m.bestZ_unique h (hc m.bestZ)
+  rw [← e]
+  exact clipZ_mem _
+
 /-! ### Shifting all moments of the blend by a constant -/
 
 /-- Add `c` to all six second moments of the blend: what a common component of

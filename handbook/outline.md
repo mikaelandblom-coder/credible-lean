@@ -57,6 +57,8 @@ voice, then trim towards 8 pages.
    `thm:z1_eq`, `thm:b1_eq_z` (Finding 4).
 8. When `z₁ > 1` and the sign flip past the singularity —
    `thm:z1_gt_one_iff`, `thm:z1_neg_iff` (Finding 3).
+8a. When clipping `z` to [0, 1] is harmless: iff the true `z` is in [0, 1] (Finding 36, G3) —
+   `thm:clipZ`.
 9. Equal covariances, any `J`: `bⱼ = zⱼ/z_*` — `thm:b_eq_of_equalCov`,
    `thm:bestZ_of_equalCov` (Finding 5).
 

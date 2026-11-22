@@ -439,6 +439,17 @@ corrects for it. The condition does not involve $\tau^2$.
   $\hat\tau^2$ first: a near-singular $\hat K$ is the likelier cause.
 \end{caveat}
 
+\begin{result}[When clipping is harmless]\label{res:clipZ}
+  Let $g = \operatorname{Var}(\hmu_j - \hmu) > 0$ and $z^*$ the best factor. Clipping any $z$ to
+  $[0, 1]$ never increases the error variance if and only if $z^* \in [0, 1]$. Clipping $z^*$
+  itself costs $g\,(\operatorname{clip} z^* - z^*)^2$.
+  \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}
+  \lean{Credibility.BlendMoments.errVar_clipZ_bestZ}
+\end{result}
+\use Clip only when you believe the true $z$ is in $[0, 1]$: then clipping a noisy $z$ can
+only help. With two cohorts the true $z_1$ leaves $[0, 1]$ exactly in the cases of
+Result~\ref{res:z1_range}.
+
 \subsection*{Equal covariances, any number of cohorts}
 
 \begin{result}[Equal covariances]\label{res:equalcov}

@@ -598,5 +598,14 @@ Gaps, extra hypotheses and new results found while formalizing.
    `studies/PLAN.md`): without correlation the common shift to exposure balance removes the bias at
    no MSE cost, and the pooled `σ̂²` also removes it but gives up real variance differences; under
    correlation the shift costs about 20% more MSE, and the pooled `σ̂²` leaves the `ρ̂` channel.
+36. **Clipping `z` to `[0, 1]` is harmless exactly when the best `z` lies in `[0, 1]` (new; PLAN G3;
+   Lean: `BlendMoments.errVar_clipZ_le_iff`, `errVar_clipZ_le`, `errVar_clipZ_bestZ`).** The thesis
+   clips in eq. (34) without saying what it costs. The error variance is the parabola
+   `E(z) = E(z*) + g(z − z*)²`, `g = Var(μ̂ⱼ − μ̂) > 0`, and clipping moves any `z` towards every point
+   of `[0, 1]`. So if `z* ∈ [0, 1]`, clipping never increases the error, whatever `z` was; if not, it
+   already hurts at `z = z*`, by exactly `g·dist(z*, [0, 1])²`. With two cohorts `z₁* > 1` below the
+   singularity iff `σ₁ < σ₂ρ` (Finding 3), and `z₁* < 0` past it (Finding 17): there clipping costs.
+   Caveat: this is for a fixed `z` against the true error curve; for an estimated `ẑ` that depends on
+   the same data the error in a draw is a different parabola, and nothing is claimed.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

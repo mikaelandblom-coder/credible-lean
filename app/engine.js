@@ -727,7 +727,7 @@
     };
     const warnings = [];
     if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
-    if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂ (thesis eq. (34) would clip it)`);
+    if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂ (thesis eq. (34) would clip it; clipping cannot hurt only if the true z is in [0, 1], Finding 36)`);
     if (flags.zNeg) warnings.push(`z < 0 for ${z.filter((x) => x < 0).length} region(s): with the true parameters a negative z can be the best blend (Finding 17: past a singularity the gap μ̂ⱼ − μ̂ flips sign together with z, and the own-data weight cⱼ = bⱼ + zⱼ(1 − bⱼ) stays bounded), so clipping z to 0 is not the fix; in a fit it more likely means K̂ is nearly singular: look at ρ̂ and τ̂²`);
     if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
     if (flags.thetaLow) warnings.push(dist ? `K̂ was not positive definite at the fitted ρ̂ = ${rhoFit}; taper lowered to ρ = ${rhoT}` : `K̂ was not positive definite at θ̂ = ${thetaFit}; damping lowered to θ = ${theta}`);
