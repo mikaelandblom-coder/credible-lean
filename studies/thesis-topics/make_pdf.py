@@ -48,8 +48,11 @@ def table(rows, widths):
 SITE = "https://mikaelandblom-coder.github.io/credible-lean/"
 THESIS = ("Andblom, M. (2023). <i>Generalized B&uuml;hlmann&ndash;Straub credibility theory for "
           "correlated data</i>. Master Thesis in Actuarial Mathematics 2023:2, Stockholm University.")
-REPO = ("<i>credible-lean: a Lean 4 formalization of correlated credibility theory</i> (2026). "
-        "doi:10.5281/zenodo.24054631. Site: " + SITE + " (paper, handbook, app, blueprint).")
+# The thesis cites a frozen release; fill in its version DOI from Zenodo once v3.0.0 is out.
+VERSION, VERSION_DOI = "v3.0.0", "10.5281/zenodo.24054631"  # TODO: v3.0.0 version DOI
+REPO = ("<i>credible-lean: a Lean 4 formalization of correlated credibility theory</i>, " + VERSION +
+        " (2026). doi:" + VERSION_DOI + ". All repository paths in this proposal refer to this release. "
+        "Current site (keeps developing): " + SITE + " (paper, handbook, app, blueprint).")
 BG = ("B&uuml;hlmann, H. and Gisler, A. (2005). <i>A Course in Credibility Theory and its Applications</i>. "
       "Springer (chapters 4, 8 and 9).")
 
@@ -176,19 +179,31 @@ ext = [
      "and joint prediction coincide when the components do not cross-correlate. The converse fails "
      "(Finding 32): with the same card structure in both, cross-correlation carries no information. So "
      "measure the gain of the joint fit rather than infer it from residual correlation. <b>Data question:</b> "
-     "do frequency and severity residuals cross-correlate, and does the joint fit predict better?",
-     code("FreqSev.blupW_eq_separate", "CoreVector.blupW_kronecker")),
+     "do frequency and severity residuals cross-correlate, and does the joint fit predict better? "
+     "The pure premium as a product of two predictions has an exact bias, the covariance of the two "
+     "predictions minus that of the two levels, for any distribution (Finding 33): zero for separate "
+     "fits of uncorrelated components, an under-pricing when a level correlation is ignored.",
+     code("FreqSev.blupW_eq_separate", "CoreVector.blupW_kronecker",
+          "CoreVector.VecEstimates.integral_mul_pred_sub", "FreqSev.prodBias_sepW_eq_zero")),
     ("G. Estimation in practice",
      "Unbiased moment estimators exist given the factor's shape (Henderson III / MINQUE), but with traps: "
      "the process noise needs volume variation; card-specific means hide the common level &tau;&sup2; "
      "(Finding 27); under a card season one year identifies nothing and two years need seasonal volumes "
      "(Findings 28&ndash;29). Fitted tables may not be positive definite; projecting onto valid tables never "
      "increases the error, and gives a positive definite K&#770; when every noise estimate is positive "
-     "(Finding 30). The AR(1) parameter is noisy with few years. <b>Data question:</b> how stable are the "
-     "estimates, and is profiling &phi; good enough?",
+     "(Finding 30), or, with some zero, exactly when the factor and shock tables are definite on those "
+     "cards (Finding 34). The AR(1) parameter is noisy with few years. "
+     "<b>Skewed claims:</b> weights estimated from the same data bias the premium by exactly "
+     "&Sigma; cov(d&#770;<sub>i</sub>, &mu;&#770;<sub>i</sub>); with right-skewed claims and a separate "
+     "variance estimate per card the portfolio is priced too low (Finding 35, 0.4&ndash;2.4% in "
+     "simulation). The bias is exact but depends on third moments, so it cannot be read off K&#770;; "
+     "balancing the total premium removes it at portfolio level in every world, a pooled variance "
+     "mostly. A skew-based correction is an open option. <b>Data question:</b> how stable are the "
+     "estimates, is profiling &phi; good enough, and how skewed are the residuals?",
      code("Factor.minque_ar1_two_years_unbiased", "Shock.not_unbiased_s2_of_const",
           "Factor.hendersonMat_cohortSeason_det_eq_zero", "ConeProjection.hsq_proj_add_le",
-          "Factor.tableK_posDef")),
+          "Factor.tableK_posDef", "Factor.tableK_posDef_iff", "Core.Estimates.integral_randomLin_sub",
+          "Core.Estimates.integral_portfolio_sub_of_balanced")),
     ("H. The pandemic, entry and exit (Q5)",
      "The pandemic as a break at known dates (a block &Gamma;), an exclusion, or a large draw of the "
      "factor. Exited cards keep their past cells in the fit; the exact results assume the exit date is "

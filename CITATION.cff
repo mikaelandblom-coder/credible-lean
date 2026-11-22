@@ -4,8 +4,8 @@ message: >-
   thesis it formalizes.
 title: "credible-lean: a Lean 4 formalization of correlated credibility theory"
 type: software
-version: 2.0.0
-date-released: "2026-11-16"
+version: 3.0.0
+date-released: "2026-11-22"
 authors:
   - given-names: Mikael
     family-names: Andblom
@@ -17,7 +17,10 @@ abstract: >-
   A Lean 4 + Mathlib formalization of generalized Bühlmann–Straub
   credibility theory for data correlated across cohorts, with a
   leanblueprint summary and a list of gaps and new results found while
-  formalizing. The Lean proofs, blueprint text and scripts were written
+  formalizing. Version 3 adds a toolbox for monthly data with a common
+  demand factor (best linear unbiased prediction of any target with fixed
+  effects, season, factor model, its estimation, frequency × severity),
+  the plug-in error, and a practitioner's handbook, paper and app. The Lean proofs, blueprint text and scripts were written
   by Claude Code (Anthropic) in conversation with the author, who chose
   the statements and directed the work; Lean checks every proof.
 keywords:
