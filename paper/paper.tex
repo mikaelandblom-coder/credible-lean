@@ -992,7 +992,10 @@ not be positive semidefinite, so $\hat K$ may not be invertible. The first
 repair is the one of Section~\ref{sec:K}: truncate $\hat\tau^2$ at zero and
 multiply the off-diagonal correlations by a damping factor
 $\theta < 1$; then $\hat K$ is positive definite whenever the estimated
-correlation table is semidefinite (\hb{res:damped}{8}). How much to damp?
+correlation table is semidefinite (\hb{res:damped}{8}). Damping is one case of
+\emph{tapering}: multiplying $\hat K$ entrywise by any correlation matrix keeps it
+positive definite and keeps the variances (the Schur product theorem; Furrer, Genton
+and Nychka 2006), so ordered cohorts can damp distant pairs more. How much to damp?
 The best fixed $\theta$ grows with the correlation and with the length of
 the history, from 0 without correlation to nearly 1 at $\rho = 0.9$ or 20
 years, and no damping at all ($\theta = 1$) is risky with short
@@ -1058,7 +1061,29 @@ normal noise the cross term vanishes; under heavy tails it is negative,
 because a large shock inflates both a cohort's deviation and the variance
 estimates, so the fitted factor shrinks hardest exactly when the raw mean
 is most off (S21). That is how a fitted model can beat the best blend with
-fixed weights (S9).
+fixed weights (S9). The split itself is exact for every distribution: the fitted
+predictor's error is the best predictor's, plus the mean square of the difference
+between the two, plus twice the cross term; under normal noise and a fit that is
+unbiased and translation invariant the cross term is zero, so estimating can only cost
+(\hb{res:plugIn}{20}). With symmetric noise and a fit on residuals the plug-in predictor
+is also unbiased.
+
+\paragraph{Estimated weights and skewed claims.}
+
+That guarantee needs symmetry, and claims are skewed. Whatever the distribution, a
+rate built with weights estimated from the same data is biased by exactly the sum of
+the covariances between each weight and the estimate it weights
+(\hb{res:randomWeights}{19}). Fixed weights never are. With right-skewed claims a cohort
+with unlucky large claims gets a high mean and a high variance estimate together, so
+every rate gives it less weight exactly when it is high: fits with a separate
+estimated variance per cohort price the portfolio too low, in the app's gamma worlds by
+0.4\% of the tariff, and by 2.4\% with four years of very skewed data (\finding{35}).
+The bias is exact but not a second moment: it depends on the third moments and on how
+the fit uses them, so it cannot be read off $\hat K$. Two remedies need no estimate of
+it. A pooled variance removes most of it. Balance removes it at portfolio level in
+every world: fitted rates that reproduce the exposure-weighted total of the cohort
+estimates are unbiased for the portfolio however they were built (Section~\ref{sec:balance}).
+A single cohort can still be priced too low.
 
 Two data-only estimates of the fitted error were tried. A jackknife that
 re-fits the parameters with one year deleted (Jiang, Lahiri and Wan 2002) is
@@ -1090,15 +1115,21 @@ sets like it (S26).
 \end{itemize}
 
 \see \hb{res:damped}{8}, \hb{res:estimation}{17}, \hb{res:bs_tau}{18},
-\hb{res:integral_quad}{23} ·
+\hb{res:integral_quad}{23}, \hb{res:plugIn}{20}, \hb{res:randomWeights}{19} ·
 \lean{Credibility.Model.sigRhoHat_unbiased},
 \lean{Credibility.Model.tauHat_unbiased},
 \lean{Credibility.Model.KHat_unbiased},
 \lean{Credibility.Model.sigRhoHat_self},
 \lean{Credibility.Model.tauHatBS_unbiased},
 \lean{Credibility.Unequal.dampedK_posDef},
-\lean{Credibility.Unequal.K_posDef} ·
-\app{Models}, \app{Fitting steps} · \finding{7} ·
+\lean{Credibility.Unequal.K_posDef},
+\lean{Credibility.posDef_hadamard_of_corr},
+\lean{Credibility.Core.Target.integral_sq_plugIn},
+\lean{Credibility.Core.Target.plugIn_mse_of_normal},
+\lean{Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric},
+\lean{Credibility.Core.Estimates.integral_randomLin_sub},
+\lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced} ·
+\app{Models}, \app{Fitting steps} · \finding{7}, \finding{35} ·
 \file{studies/damping-theta.md} (S1--S26),
 \file{studies/literature.md} §2, §4 · thesis §2.8, eqs.~(37)--(41).
 
@@ -1608,8 +1639,56 @@ Pooling with an unweighted loss fails the same way.
 
 \oneline With monthly data, cohorts share more than a shock in a period: a
 demand factor that persists over months, which every cohort feels through
-its own loading. This subsection is about the question a tariff asks first:
-does the factor matter for relativities, a cohort against the portfolio?
+its own loading. The premium is then a prediction of next year's twelve
+months from all cells, with an estimated season; the factor can be estimated,
+with traps; and for relativities it sometimes drops out.
+
+\paragraph{The target and the season.} Next year's total is not one of the
+cohort levels, and the factor links it to past months, so the blend is not
+enough. The general tool is the best linear unbiased predictor of any target
+with fixed effects (Goldberger 1962; universal kriging): give the covariances of
+the data, their covariance with the target, and a design for the unknown means
+(one mean, a season, a mean per component), and the best unbiased weights and
+their error follow, the error split into the part with known means and the
+price of estimating them (\hb{res:blup}{30}). The level predictor of
+Section~\ref{sec:z} and the matrix one of Section~\ref{sec:vector} are its special cases.
+With known covariances, annual totals never beat the monthly cells, and a season
+that is not there has an exact price. Whole years do not make an estimated season
+drop out: with seasonal volume a one-mean predictor leans on the busy months and
+is biased by the season it ignores (\hb{res:season}{31}, \finding{24}). A known
+seasonal index is a change of units, with cells weighted by expected claims
+rather than exposure.
+
+\paragraph{The factor model.} One covariance table covers the alternatives: the
+factor's covariance over all months, past and future, times the loadings, on top
+of the shock and process noise. No factor is the shock model; AR(1), a break at
+known dates and per-cohort dynamics are other choices. Its $K$ is positive definite
+for any observed cells, so the predictor applies (\hb{res:factor}{32}). One surprise
+(\finding{25}): even with positive autocorrelation the best weights can be negative,
+because another cohort's change between two months tracks the factor, which persists.
+
+\paragraph{Estimating it.} Lagged products of two cohorts' year-on-year differences
+see only the factor, whatever the means and seasons, so they separate it from the
+shock; at lag 0 only the sum is seen, which the predictor does not need to split.
+Given the factor's shape, Henderson's method III and MINQUE are unbiased for the rest.
+The traps are systematic (\hb{res:factor_est}{33}): constant volume confounds shock and
+process noise, independent months confound factor and shock, cohort-specific means
+hide the level variance (\finding{27}), a cohort season leaves only repeated calendar
+months to learn from (\finding{28}), and with two years each cohort's volume must vary
+over the calendar (\finding{29}). Loadings need three cohorts. A fit of the shock model
+on data with a persistent factor absorbs only part of it (\finding{26}). Unbiased
+tables are almost never valid; projecting them onto the valid tables in the fit's own
+metric brings them closer to the truth in every draw, and gives a positive definite
+$\hat K$ when every process-noise estimate is positive, not with nonnegative ones alone
+(\hb{res:valid_tables}{34}, \finding{30}, \finding{34}).
+
+\paragraph{Choosing between fits on data.} The theory says what each model implies,
+not which one holds. The app compares fits the way data allow: a rolling origin that
+refits on the past only, predicts each cohort's next twelve months, and compares fits by
+paired loss differences with a Diebold--Mariano test (\app{Comparing fits on data}).
+In the simulated world, where the truth is known, the test is weak with a few years of
+monthly data: it finds a 30\% gap in a fifth of the draws, and rejects too often when
+two fits are equally good. A ``no evidence of a difference'' is the typical result.
 
 \paragraph{What the factor adds.} Any linear statistic of the cells, or the
 error of any linear predictor, is a weighted sum over cohorts and months. The
@@ -1641,7 +1720,22 @@ the window.
     factor in the fit.
 \end{itemize}
 
-\see \hb{res:factor_extra}{35}, \hb{res:relativity_factor}{36} ·
+\see \hb{res:blup}{30}, \hb{res:season}{31}, \hb{res:factor}{32}, \hb{res:factor_est}{33},
+\hb{res:valid_tables}{34}, \hb{res:factor_extra}{35}, \hb{res:relativity_factor}{36} ·
+\lean{Credibility.Core.blup_optimal},
+\lean{Credibility.Core.predMse_blup},
+\lean{Credibility.Core.predMse_blup_le_aggregate},
+\lean{Credibility.Season.blup_eq_iff},
+\lean{Credibility.Season.blup_ne_of_volume},
+\lean{Credibility.Factor.K_posDef},
+\lean{Credibility.Factor.blup_neg_of_ar1},
+\lean{Credibility.Factor.yoy_unbiased_factor},
+\lean{Credibility.Factor.henderson_factor_unbiased},
+\lean{Credibility.Factor.crossHat_ar1_two},
+\lean{Credibility.Factor.minque_ar1_two_years_unbiased},
+\lean{Credibility.ConeProjection.hsq_proj_add_le},
+\lean{Credibility.Factor.tableK_posDef},
+\lean{Credibility.Factor.tableK_posDef_iff},
 \lean{Credibility.Factor.quadTab_eq},
 \lean{Credibility.Factor.quadTab_shock_le},
 \lean{Credibility.Factor.quadTab_relCoef},
@@ -1650,7 +1744,7 @@ the window.
 \lean{Credibility.Factor.extra_profile},
 \lean{Credibility.Factor.extra_entry},
 \lean{Credibility.Factor.extra_loadings} ·
-\finding{31} · \file{notes/card-data.md} Step~4.
+\finding{24}--\finding{31}, \finding{34} · \file{notes/card-data.md} Steps~1--5, 7b.
 
 \subsection{Several quantities per cohort}\label{sec:vector}
 
@@ -1958,16 +2052,19 @@ out of that, in order of size.
     before (\lean{Credibility.Shock.Cells.bestZ_mse_optimal},
     \lean{Credibility.Shock.Cells.integral_KHat}). With little volume
     variation the split is noisy; how noisy is a question for simulation.
-  \item \emph{Serial correlation.} Replace ``no correlation across
-    periods'' by a general covariance over cells (cohort, period), an
-    autoregressive one for example. That is a new $K$; prove it positive
-    definite and the core applies unchanged. Unequal lengths become a
-    special case.
+  \item \emph{Serial correlation.} Done for monthly data: a factor with any
+    covariance over months, AR(1) and breaks included, is a new $K$, positive
+    definite for any observed cells (Section~\ref{sec:factor}). Open: a
+    Kalman-filter form for long histories, and estimating the shape of the
+    factor's dynamics with guarantees (the profile over $\phi$ is only consistent).
   \item \emph{Trends.} A slope per cohort, as in Hachemeister's model,
     makes the credibility factor a matrix. That step is done
     (Section~\ref{sec:vector}), with cohorts correlated through year
-    shocks. Open: the target as next period's level on the line, and
-    estimators for the line model's $K$.
+    shocks. A known common trend is simpler still: restate every year to the
+    target year and blend; the weights and $z$ do not move, and relativities are
+    free of the trend, but only for the true trend, not an estimated one
+    (\hb{res:trend}{27}, \finding{21}). Open: the target as next period's level
+    on the line, and estimators for the line model's $K$.
 \end{itemize}
 
 \paragraph{Better fits.}

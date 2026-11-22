@@ -84,66 +84,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Finding 35 (2026-11-22): under-pricing by estimated region variances under skew; with the
-  plug-in sections (Kackar–Harville is the symmetric case), balance as the portfolio-level guard
-  (Lean: `Core.Estimates.integral_randomLin_sub`, `Core.Estimates.integral_portfolio_sub_of_balanced`).
-- Plug-in MSE (2026-11-22, `PlugIn.lean`, `PlugInNormal.lean`): exact identity with the cross term,
-  which vanishes under normal noise (Kackar–Harville); explains S9 (heavy tails, fit beats floor).
-- Plug-in predictor (2026-11-21, `PlugInSymmetric.lean`): unbiased under symmetric noise for
-  even, translation-invariant fits (Kackar–Harville); with the estimation section, as the bridge
-  from the BLUP with known moments to the fitted one.
-- Valid tables with some `ŝⱼ² = 0` (2026-11-21, Finding 34): `K̂ ≻ 0` iff `(Â + Ĉ)_ZZ ≻ 0` on a
-  full panel with `Φ ≻ 0` (`Factor.tableK_posDef_iff`); with the estimation section.
-- Choosing between fits on data (2026-11-21, app; card-data Step 7b): rolling origin, paired
-  losses, Diebold–Mariano with HLN; with a few years of monthly data the test has low power and
-  inflated size (16–25% at 5%). A paragraph on model choice, pointing to the app.
-- Valid tables by projection (2026-11-21): the H-projection of an unbiased estimate onto a convex
-  set containing the truth is closer to it in every draw and in H-weighted MSE; exists and unique
-  for `H ≻ 0` (`ConeProjection.hsq_proj_add_le`, `integral_hsq_proj_le`, `exists_hsq_proj`,
-  `hsq_proj_unique`, `convex_setOf_posSemidef`, `isClosed_setOf_posSemidef`). With the estimation
-  section. Valid tables give `K̂ ≻ 0` when every `ŝⱼ² > 0` (`Factor.tableK_posDef`),
-  not with `ŝ² ≥ 0` alone (Finding 30, `Factor.tableK_not_posDef`); handbook "Constrained tables". The app checks
-  the inequality per draw ("Tables" switch, 2026-11-21).
-- Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): unbiasedness under fixed
-  effects `Dβ` (a form must vanish on the design, `Model.ecovMean_eq_iff`); what the factor
-  table identifies (scale, lag 0 only `C + γλλᵀ`, lagged cross-card moments only the factor:
-  `Factor.blup_rescale`, `blup_eq_of_lag0`, `factor_eq_of_obsCovG_eq`); the year-on-year
-  estimator (`Factor.yoy_unbiased_factor`). 2026-11-21: three cohorts for loadings
-  (`Factor.load_sq_of_three`), AR(1) from cross-moments (`Factor.ar1_identified`), and Finding 26
-  (`Factor.crossHat_ar1_two`): what a shock-only fit does with a persistent factor; its `τ̂²`
-  and diagonal `Ĉ`, `ŝ²` too (`Factor.tauHat_factor_unbiased`). Henderson III / MINQUE given
-  the factor's shape (`Model.henderson_unbiased`, `Factor.henderson_factor_unbiased`). When
-  its system is nonsingular: iff the basis tables are independent
-  (`Model.exists_hendersonMat_det_ne_zero_iff`); constant volumes and independent months fail
-  (`Factor.hendersonMat_shock_det_eq_zero`, `Factor.not_unbiased_factor_of_indep`); per-cohort
-  dynamics of known shape (`Factor.henderson_factorG_unbiased`); MINQUE nonsingular iff the
-  projected tables are independent (`Model.minque_det_ne_zero_iff`), so cohort-specific means
-  hide `τ²` (Finding 27, `Factor.hendersonMat_cohortSeason_det_eq_zero`); a cohort season sees
-  covariances only through repeated calendar months (Finding 28,
-  `Factor.unbiasedMean_cohortSeason_eq_zero`, `Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape`);
-  a sufficient condition by within-calendar-month contrasts, two years and AR(1) suffice
-  (`Factor.minque_cohortSeason_det_ne_zero`, `Factor.minque_ar1_two_years_unbiased`), and with
-  two years the volumes must vary over the calendar (Finding 29,
-  `Factor.minque_cohortSeason_det_eq_zero_of_volume`).
-- Common factor (2026-11-20, `Factor.lean`, Finding 25; §7.4 "Monthly data with a common
-  factor" exists since 2026-11-21 with the relativities only, so this goes there): one table for the factor-over-time
-  switch (`Shock` is `Γ = 0`; AR(1); a break at known dates); why the general target of Step 1
-  is needed (`ℓ` links past and future months through `Γ`); negative weights from borrowing
-  the factor from other cohorts (`Factor.blup_neg_of_ar1`).
-- Season (2026-11-20, `Season.lean`, Finding 24): when an estimated season drops out of the
-  12-month predictor (interchangeable months) and why it usually does not (seasonal volume);
-  a known index is a change of units plus weights by expected claims.
-- General target with fixed effects (2026-11-20, `Blup.lean`): the level and matrix best
-  predictors are one result, universal kriging (`Core.blup_optimal`), with the error split
-  into "known β" plus "price of estimating β" (`Core.predMse_blup`). A paragraph when the
-  card-data season (Step 2) is written up.
-- Known common trend (2026-11-19, `Trend.lean`, Finding 21): "trend first, then blend; the
-  weights do not move"; relativities trend-free only for the true `g`. One paragraph in §13
-  (time trends), citing handbook `res:trend`.
-- Plug-in `K̂` repair (2026-11-17): damping is now a corollary of tapering by any
-  correlation matrix (Schur product theorem; `Credibility.posDef_hadamard_of_corr`,
-  `Credibility.distTaper_posSemidef`). One sentence where the paper explains damping,
-  citing Furrer–Genton–Nychka (2006) for tapering.
+- (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
+  in §8; the general target, season, factor model, its estimation, valid tables and choosing
+  between fits on data in §10.4; known trend and serial correlation in §12. The items below are
+  standing notes.)
 - Appendix C: Bühlmann–Gisler notation checked against pp. 89–90 (Theorem 4.4)
   and 145–147 (owner's photos, 2026-11-17): all symbols match, after fixing the
   collective premium `μ_0` (was `m`; also in §3 and the handbook), `τ²` (was `a`),
