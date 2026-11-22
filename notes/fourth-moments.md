@@ -1,6 +1,6 @@
 # A fourth-moment layer (draft, 2026-11-22; awaiting the owner's decision)
 
-Status: proposal only. No `.lean` file yet. The owner decides first, because it settles the
+Status: proposal only; assumptions chosen (1 + 6, below), the layer itself not yet approved. No `.lean` file yet. The owner decides first, because it settles the
 open question of a third-moment layer (`κ̂ⱼ` in `Engine.noiseDiagnostics`) at the same time.
 
 ## Why
@@ -30,19 +30,62 @@ the `μ` term, the cross term is a third moment, and the quadratic part is a fou
 three Gaussian pairings. No independence is assumed. Gaussian data: both cumulant terms vanish
 (Isserlis), which leaves the classical `2tr(AΣ)² + 4μᵀAΣAμ`.
 
-**Corollary 1 (independent years).** If the year blocks `x₍·ₜ₎` are independent, `κ₃` and `κ₄`
-vanish unless all indices are in the same year. Then the cumulant terms are sums over years.
-
-**Corollary 2 (independent sources).** `x = μ + Bξ` with independent sources `ξₛ` (the levels,
-each year's shock and each cell's noise), variances `vₛ`, cumulants `κ₃ₛ`, `κ₄ₛ`. With `M = BᵀAB`
-and `a = BᵀAμ`:
+**Corollary (independent sources).** `x = μ + Bξ` with independent sources `ξₛ`, variances `vₛ`,
+cumulants `κ₃ₛ`, `κ₄ₛ`. With `M = BᵀAB` and `a = BᵀAμ`:
 
     Var(xᵀAx) = 2 tr(AΣAΣ) + 4 μᵀAΣAμ + 4 Σₛ κ₃ₛ aₛ Mₛₛ + Σₛ κ₄ₛ Mₛₛ²,   Σ = B diag(v) Bᵀ.
 
-This is the form the models use. It only needs one third and one fourth cumulant per source, for
-example `κ₄ = 0` for Gaussian-like random effects and the variance function or compound Poisson
-cumulants for the noise (PLAN "Cumulant layer"). Checked numerically by exact enumeration
-(4 cells, 6 three-point sources, symmetric `A`): both sides 384.3165165313785.
+Checked numerically by exact enumeration (4 cells, 6 three-point sources, symmetric `A`): both
+sides 384.3165165313785.
+
+Independent *sources* are enough; independent *years* are not needed (an earlier draft had them as
+a corollary, which is too narrow):
+- **AR(1) factor.** `fₜ = φfₜ₋₁ + ηₜ` is linear in independent innovations `ηₜ`, so the sources are
+  the `ηₜ` and `B` carries the recursion. The factor stays correlated across years. The stationary
+  start `f₁` is one more source, with `κₙ(f₁) = κₙ(η)/(1 − φⁿ)`.
+- **Within-year shock with a general `C`.** It splits into independent sources only if `C` has a
+  factor structure (common plus idiosyncratic parts). Otherwise it is one J-vector source per
+  year: give it `κ = 0` (Gaussian-like) or its own J-tensor.
+- **Which sources enter.** A source drops out when `Mₛₛ = bₛᵀAbₛ = 0` and `aₛ = 0`, i.e. when the
+  estimator cancels its loading. Within-cohort estimators difference out the levels, so level
+  cumulants never enter them; between-cohort ones (`Ĉ`, `τ̂²`) do pick them up. So assuming the
+  random effects Gaussian-like is weak for some estimators and a real assumption for others.
+
+## Assumptions that cut the DoF (they stack)
+
+The lemma needs none; each assumption only reduces the cumulant numbers to supply. Without any,
+`C(n+2,3) + C(n+3,4)` for `n = JT` cells (`J = T = 10`: about 4.6M).
+1. **Independent sources** (owner, 2026-11-22: fine in most cases). Cell noise independent across
+   years and cells; the shock and the factor carry the common parts. Leaves one `(κ₃, κ₄)` per
+   source, i.e. per cell for the noise. Stronger than the core's "uncorrelated": check it with
+   the correlation of *squared* residuals across years (volatility clustering), which no
+   second-moment check sees.
+2. Volume scaling `κₙ = κₙ,unit / w^(n−1)`: one number per cohort and order (`2J`).
+3. Common standardized shape `κ₃ⱼ = g σⱼ³`, `κ₄ⱼ = h σⱼ⁴`: 2 numbers.
+4. Gaussian-like random effects (levels, shocks, factor): `κ = 0` for them.
+5. Elliptical: `κ₃ = 0`, `κ₄ = h·(three pairings)`, 1 number even for a correlated shock; no skew.
+6. **Variance function** `V(μ) = μᵖ` with dispersion `φ/w` (Tweedie; literature §10l):
+   `κ₃ = (φ/w)² p μ^(2p−1)`, `κ₄ = (φ/w)³ p(2p−1) μ^(3p−2)`, from `κₙ₊₁ = (φ/w) V dκₙ/dμ`.
+   No new numbers beyond `p`, since `φ/w` is the noise variance already fitted.
+7. Compound Poisson with a severity family (Lomax `α, θ`): 2 numbers, heavy tails explicit;
+   fourth moments need `α > 4`.
+
+**Owner's choice (2026-11-22): 1 + 6.** Independent sources, with the noise cumulants from a
+variance function, adds only `p`. Points to settle when it is built:
+- **Noise and levels are no longer independent.** Under a variance function the noise cumulants
+  depend on the cell's own mean `μⱼ`, which is random. Unconditionally the noise is still
+  uncorrelated with the level, but not independent, so the independent-sources corollary does not
+  apply as is. Either (a) evaluate `V` at the cohort's mean (first order; fine when `τ` is small
+  next to `μ`), or (b) prove a conditional version through the law of total cumulance (one more
+  lemma, exact). The choice is open.
+- **`p` is weakly identified** from one portfolio: `noiseDiagnostics`' cross-fitted `p` has SE ≈ 1.4
+  at `τ = 0.1` (PLAN, noise shape). Check `κ̂ⱼ` against the predicted `κ₃` first (PLAN, cumulant
+  layer), and show the result for the normal value `p = 0` (`κ₃ = κ₄ = 0`) next to the fitted `p`.
+- **No heavy tails.** No variance function gives them (literature §10l); the Lomax world shows
+  where 6 breaks.
+- Random effects still need 4 (or their own `V`); 6 covers only the noise.
+- Fallback with no `κ` at all: a delete-a-year jackknife of the estimator's variance (uses the
+  fourth moments implicitly; noisy for small `T`).
 
 ## The third-moment pieces (same file, same tensors)
 
@@ -58,7 +101,7 @@ fourth-moment one. A separate third-moment layer would only be its first half.
 - `Credibility/Cumulants.lean` (moment layer, distribution-free: the cumulants are *defined* from
   the moments, nothing assumed about the family): the tensor statement as "`Vquad` is the actual
   variance of any random vector with `L⁴` cells", in the style of `integral_quad_of_mean`, then
-  Corollaries 1 and 2, the `Cov` and cubic `E` pieces.
+  the independent-sources corollary, the `Cov` and cubic `E` pieces.
 - Fits the core rule: still no distribution assumed, only more moments. A variance-function or
   compound Poisson choice of the `κₛ` stays in its own file (distribution/cumulant layer).
 - First users: the exact `V` in G2 (`Damping.lean` takes it as a given number), the variance of
