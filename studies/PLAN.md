@@ -611,5 +611,20 @@ One chat per step; none needs Lean except step 5.
   expected claims per cell, claims beyond the level exceeded by 50 expected claims are drawn exactly
   and the rest summed as a moment-matched gamma, so the tail is exact and the first two moments too.
   The year shock `ηₜ` stays gamma. The noise page gives the world skewness at the middle volume (∞ for
-  `α ≤ 3`). Not yet looked at: how much the fits' MSE, bias and jackknife MSEP suffer as `α` falls
-  through 4 and 3.
+  `α ≤ 3`). **Seen** (`studies/lomax-tails.js`, 3000 draws, seeds 1 and 2; Monte Carlo SEs are
+  unreliable for `α ≤ 4`, the two seeds agree): (1) Default world (~55 claims per cell): no damage.
+  MSE above the floor is +8 to +12% for every fit down to `α = 3.5`, as with gamma noise. It falls at
+  heavier tails (+4 to +8% at 2.5) and turns negative at `α = 2.2` (−1 to −4%): the plug-in fits beat
+  the known-`K` floor. That floor is the best *linear* predictor. An estimated `σ̂²` jumps with a large
+  claim and then shrinks that region harder, which acts like a crude robust estimator (S9 effect,
+  amplified). (2) Small cells (`volume = 50`, ~5 claims, under 2 in the smallest regions): the fits with
+  region-specific variances suffer. corrBS and BLUP are +50 to +58% unbalanced (gamma +40%) and the
+  portfolio under-pricing grows (corrBS −250 to −285 bp against −184 under gamma and ≈ 0 under normal:
+  the Finding 35 channel). BS and BLUP pooled stay at +19 to +26%. Even `α = 8` is worse than gamma
+  there: a claims world's skewness grows like `1/√claims` in the small regions, while the gamma noise
+  has the same skewness at every volume. (3) Jackknife MSEP of corrBS: right on average (ratio
+  0.94–1.05 in the default world), but the typical draw reads low as `α` falls. The median ratio is
+  0.77–0.85 at `α = 2.2`, so one draw's "typical error" understates the error by 15–25%. In small cells
+  it overstates (1.1–1.5) in every world. Practical rule for the app's text: with heavy tails and small
+  cells, use pooled variances (BS, BLUP pooled) or the balance switch, as for Finding 35. No new Finding:
+  no theorem's statement is affected.
