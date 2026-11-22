@@ -16,65 +16,7 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Plug-in MSE (2026-11-22): "the fitted premium's error is the true-moment premium's plus
-  E(EBLUP − BLUP)² plus a cross term; under normal noise the cross term is 0, so estimating can
-  only cost; with heavy tails it can help" (`Credibility.Core.Target.integral_sq_plugIn`,
-  `Credibility.Core.Target.plugIn_mse_of_normal`).
-- Plug-in unbiasedness (2026-11-21, distribution layer): "the plug-in premium (estimated `K̂`)
-  is unbiased if the fit uses residuals only (even, translation invariant) and the noise is
-  symmetric; with skewed claims (gamma, Poisson) no such guarantee"
-  (`Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric`).
-- Factor estimation part 1 (2026-11-20, `FactorEstimation.lean`): "year-on-year differences
-  of two cohorts at lag `h` estimate `λᵢλⱼ(2Γ(h) - Γ(h-12) - Γ(h+12))` without bias, whatever the
-  cohort means and seasons; the shock and the factor's lag-0 share need not be split"
-  (`Credibility.Factor.yoy_unbiased_factor`, `Credibility.Factor.blup_eq_of_lag0`). Goes with
-  the factor entry once the fit is complete. Also "watch out: a shock-only fit on data with a
-  persistent factor estimates `C + (1 - φ)γλλᵀ`" (Finding 26, `Credibility.Factor.crossHat_ar1_two`)
-  and "loadings need three cohorts" (`Credibility.Factor.load_sq_of_three`). Given `φ`, "equate
-  invariant forms to their expectations and solve (Henderson III; MINQUE with a prior guess)"
-  (`Credibility.Factor.henderson_factor_unbiased`, `Credibility.Model.minque_unbiased`).
-  Watch out (2026-11-21): "the system is singular, whatever the forms, if a cohort has constant
-  volume (`s²` against `C`) or months are independent (`Γ₀ = I`: factor against shock)"
-  (`Credibility.Factor.hendersonMat_shock_det_eq_zero`,
-  `Credibility.Factor.hendersonMat_shape_one_det_eq_zero`); per-cohort dynamics of known shape
-  add one parameter per cohort (`Credibility.Factor.henderson_factorG_unbiased`); "with
-  cohort-specific means, leave `τ²` out" (Finding 27,
-  `Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero`); "with a cohort season, one year
-  estimates no second moment, and a factor that repeats with the calendar is absorbed" (Finding
-  28, `Credibility.Factor.unbiasedMean_cohortSeason_eq_zero`); "two years and AR(1) suffice for
-  MINQUE, but with two years each cohort's volume needs a within-year pattern" (Finding 29,
-  `Credibility.Factor.minque_ar1_two_years_unbiased`,
-  `Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume`).
-- Common factor (2026-11-20, `Factor.lean`, Finding 25): "a demand factor over months
-  (AR(1), or a block per regime) on top of the shock; its `K` is positive definite for any
-  observed cells, `ℓ` for the next 12 months only sees the factor and the cohort level; watch
-  out: the best weights can be negative even with positive autocorrelation"
-  (`Credibility.Factor.K_posDef`, `Credibility.Factor.ell_apply_of_future`,
-  `Credibility.Factor.blup_neg_of_ar1`). Entry together with the season once Step 4
-  (estimating `Γ`, `λ`) gives a usable fit.
-- Season (2026-11-20, `Season.lean`, Finding 24): "whole years do not make the season drop
-  out: with seasonal volume the one-mean predictor leans on busy months and is biased by
-  `Σₘ (Sₘ - cₘ)βₘ`; fit the season or divide by a known index and weight by expected claims"
-  (`Credibility.Season.blup_eq_iff`, `Credibility.Core.Target.integral_bias`,
-  `Credibility.Unequal.a_eq_of_volume`).
-- General target with fixed effects (2026-11-20, `Blup.lean`, card-data Step 1): the best
-  linear unbiased predictor `d* = K⁻¹ℓ + K⁻¹X(XᵀK⁻¹X)⁻¹(x₀ - XᵀK⁻¹ℓ)` for any target `Y`
-  (`Credibility.Core.blup_optimal`), its error `v - ℓᵀK⁻¹ℓ + rᵀ(XᵀK⁻¹X)⁻¹r` with the price of
-  estimating `β` as the last term (`Credibility.Core.predMse_blup`). Entry once the season
-  (Step 2) gives it a practical use; the level BLUP entry can then cite it as `X = 1`. With it:
-  "annual totals never beat monthly data with known covariances" (`Core.predMse_blup_le_aggregate`)
-  and "an unneeded season has a price" (`Core.predMse_blup_nested`).
-- Tapering (2026-11-17, `OffDiagonal.lean`): multiplying `K̂` entrywise by a correlation
-  matrix keeps it positive (semi)definite and keeps the variances
-  (`Credibility.posDef_hadamard_of_corr`); the distance taper `ρ^|tᵢ-tⱼ|` is one
-  (`Credibility.distTaper_posSemidef`). One line next to the damped plug-in result
-  (`res:damped`): "damping is one taper; ordered cohorts can use the distance taper".
-- Finding 18 (2026-11-16): the best linear unbiased predictor and the price of the
-  blend (`Core.blupWeight_optimal`, `Core.errVar_eq_blupWeight_add`,
-  `Core.exists_blendWeight_eq_blupWeight_iff`): one entry in §1, "is the blend enough?".
-  App (2026-11-17, `studies/PLAN.md` 3c): the plug-in BLUP on corrBS's `K̂` beats the blend
-  under correlation (98% of the blend floor at `ρ = 0.6`), ties at `ρ = 0`: worth a "use it" line.
-
+- (none; cleared 2026-11-22 for v3.0.0)
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
@@ -165,6 +107,15 @@ voice, then trim towards 8 pages.
     no cross-component covariance (separate predictors), balance; "why": true MSE for any
     distribution; "watch out": the blend need not beat separate blends (Finding 22) —
     `res:vector`.
+17a. Tapering (2026-11-22, with 5a): any correlation-matrix taper keeps `K̂ ≻ 0`; distance taper
+    for ordered cohorts — `res:damped`.
+10c. The price of plugging in (2026-11-22, after 10b): `mse(d*) + E B² + 2E[AB]`; normal noise:
+    cross term 0; symmetric noise: unbiased — `res:plugIn`.
+17b. The best linear predictor of any target (2026-11-22, Finding 18): universal kriging, its
+    error, the price of the blend; aggregation and unneeded design columns — `res:blup`.
+17c. Monthly data: the season (Finding 24) — `res:season`.
+17d. The factor model (Finding 25) and estimating it (Findings 26–29) — `res:factor`,
+    `res:factor_est`.
 18. Monthly data with a common factor, constrained tables (drafted 2026-11-21, placed after
     shock and process noise): project the unbiased fit onto valid tables in its own metric `H`
     (exists, unique, closer to the truth in every draw; the app's check: never violated, median
