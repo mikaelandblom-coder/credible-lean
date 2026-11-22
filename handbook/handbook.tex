@@ -1164,10 +1164,13 @@ follows.
   there is one group. Pairs fix it: if $i \ne j$ share a group and $k$ is in
   another, let $\widehat P_{ab} = (\hmu_a - \hmu_b)^2$ minus its noise estimate
   $\widehat{\sigma^2_{aa}\rho_{aa}} + \widehat{\sigma^2_{bb}\rho_{bb}} - 2\widehat{\sigma^2_{ab}\rho_{ab}}$.
-  Then $(\widehat P_{ik} - \widehat P_{ij})/2$ is unbiased for $\phi\tau^2$.
+  Then $(\widehat P_{ik} - \widehat P_{ij})/2$ is unbiased for $\phi\tau^2$, and so is the
+  pooled version: a weighted average of $\widehat P$ over the pairs across groups minus one
+  over the pairs within groups, halved, for any weights summing to one on each side.
   \lean{Credibility.Model.tauHat_unbiasedG}
   \lean{Credibility.Model.KHat_unbiasedG_iff}
   \lean{Credibility.Model.phiTauHat_unbiasedG}
+  \lean{Credibility.Model.phiTauPooled_unbiasedG}
   \lean{Credibility.Model.NoiseG.integral_quad}
 \end{result}
 \begin{caveat}

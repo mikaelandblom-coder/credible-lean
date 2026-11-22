@@ -93,7 +93,7 @@ voice, then trim towards 8 pages.
 14. When merging two cohorts pays off: `1/d > 1/V + 1/τ²` — `thm:merge_iff` (Finding 6).
 15. A shared level drops out (one group); several groups: `z` with `B_g`,
     true MSE, consistency; two-stage GLS; estimation biased with several
-    groups, `φτ²` from pairs (Finding 13) — `thm:bestZ_phi_eq`,
+    groups, `φτ²` from pairs, pooled over all pairs (Finding 13, G4) — `thm:bestZ_phi_eq`,
     `thm:bestZ_G_eq`, `thm:G_bestZ_mse`, `thm:G_exists_noise`, with unequal lengths
     `thm:U_bestZ_G_eq`, `thm:U_G_bestZ_mse`, `thm:U_G_exists_noise`,
     `thm:glsWeight_blockDiag`, `thm:estimation_G`, `cor:KHat_G_iff`,

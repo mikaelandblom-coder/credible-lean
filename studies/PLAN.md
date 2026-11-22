@@ -122,7 +122,7 @@ a recipe from data.
 | Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
 | Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | — (`ĉⱼ`, `τ̂²` on `ĉ`: `tauHatCommon_unbiased`) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
-| Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind) | pooling all pairs (G4) |
+| Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind), pooled `phiTauPooled_unbiasedG` (G4) | best pair weights (fourth moments) |
 | `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only | G3 |
 | Choosing cohorts | not yet: the rules need the true levels or the true `d` | `merge_iff`, `pool_optimal_contiguous` | G5; not in the first version |
 
@@ -152,6 +152,9 @@ the floor line and in the tests.
   `ρ̂` with `σ̃ⱼ` plugged in (a ratio), `Wⱼ`, `β²` (fourth moments). `ĉⱼ`, `τ̂²` on the common
   `ĉ`: proved the same day (`cHatCommon_unbiased`, `tauHatCommon_unbiased`), badges "proved".*
 - **G4. Pooled pair estimator of `φτ²`**, unbiased for any weights.
+  *Proved 2026-11-22 (`Model.phiTauPooled_unbiasedG`): weights summing to one on the pairs
+  across groups and on the pairs within groups, any choice (e.g. `wᵢ*wⱼ*`). Which weights
+  minimise the variance needs fourth moments (open). The app has no group fit yet, so no badge.*
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
 - **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
   rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed

@@ -842,6 +842,36 @@ theorem phiTauHat_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) {i j k : J} (
   simp only [hg, hk', ite_true, ite_false]
   ring
 
+/-- PLAN G4: weights `a` on the pairs across groups and `b` on the pairs within a group, each
+summing to one, pool the pair estimators: `(Σ_across aᵢₖ P̂ᵢₖ - Σ_within bᵢⱼ P̂ᵢⱼ)/2` is unbiased
+for `φτ²`, whatever the weights (they may depend on the volumes). Ordered pairs `i ≠ j`. -/
+theorem phiTauPooled_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) (a b : J × J → ℝ)
+    (ha : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 ≠ grp p.2, a p = 1)
+    (hb : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 = grp p.2, b p = 1) :
+    M.UnbiasedG grp φ
+      (fun X => ((∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 ≠ grp p.2,
+          a p * pairHat w X p.1 p.2)
+        - ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 = grp p.2, b p * pairHat w X p.1 p.2) / 2)
+      (φ * M.τ2) := by
+  have hP : ∀ p ∈ (Finset.univ : Finset J).offDiag, M.UnbiasedG grp φ (fun X => pairHat w X p.1 p.2)
+      (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp p.1 = grp p.2 then 1 else 0)) := fun p hp =>
+    M.pairHat_unbiasedG grp sig hw hσ hT φ (Finset.mem_offDiag.mp hp).2.2
+  refine (((Model.UnbiasedCov.sum _ fun p hp => (hP p (Finset.mem_filter.mp hp).1).const_mul (a p)).add
+    ((Model.UnbiasedCov.sum _ fun p hp =>
+      (hP p (Finset.mem_filter.mp hp).1).const_mul (b p)).const_mul (-1))).const_mul (1 / 2)).congr
+    (fun X => by ring) ?_
+  have h1 : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 ≠ grp p.2,
+      a p * (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp p.1 = grp p.2 then 1 else 0)) = 2 * M.τ2 := by
+    rw [Finset.sum_congr rfl fun p hp => by rw [if_neg (Finset.mem_filter.mp hp).2]]
+    simp only [mul_zero, sub_zero, ← Finset.sum_mul, ha, one_mul]
+  have h2 : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 = grp p.2,
+      b p * (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp p.1 = grp p.2 then 1 else 0))
+        = 2 * M.τ2 - 2 * (φ * M.τ2) := by
+    rw [Finset.sum_congr rfl fun p hp => by rw [if_pos (Finset.mem_filter.mp hp).2]]
+    simp only [mul_one, ← Finset.sum_mul, hb, one_mul]
+  rw [h1, h2]
+  ring
+
 /-! #### Bridge 3 as the case of one group -/
 
 omit [DecidableEq T] hσ in

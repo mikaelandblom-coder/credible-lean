@@ -7109,6 +7109,21 @@ itself, evaluated on noise-free data.
   Linearity.
 \end{proof}
 
+\begin{corollary}[Pooled pairs, PLAN G4]\label{cor:phiTauPooled}
+  \lean{Credibility.Model.phiTauPooled_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  Let $a$ be weights on the ordered pairs $i \ne k$ across groups and $b$ on the
+  ordered pairs $i \ne j$ within a group, each summing to one. Then
+  $\bigl(\sum_{\mathrm{across}} a_{ik}\widehat P_{ik} - \sum_{\mathrm{within}} b_{ij}\widehat P_{ij}\bigr)/2$
+  is unbiased for $\phi\tau^2$, for any such weights.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_G}
+  Linearity: the across sum has expectation $2\tau^2$, the within sum $2\tau^2 - 2\phi\tau^2$.
+\end{proof}
+
 \begin{remark}[Finding 13: with groups the plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
   \uses{thm:estimation_G, cor:KHat_G_iff, cor:phiTauHat, rem:hier_bridge4}
   $\widehat{\tau^2}$ averages $\tfrac12(\hmu_i - \hmu_j)^2$ over pairs of
