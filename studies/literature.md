@@ -832,3 +832,41 @@ From memory, standard results; not re-read for this step.
   ML): estimate the two sides of a product from independent parts of the data. Used: `σ̂²` from
   even years against `μ̂` from odd ones, which removes the same-years bias (the Finding 35 channel,
   §10j) of the naive slope (≈ 2 instead of 0 in the app's skewed world).
+
+### 10l. Recent credibility papers, and higher moments from a variance function (2026-11-22)
+Checked to exist; read from abstracts and listings only, not the full texts.
+- Morris (2026), *Logistic Credibility with Temporal Decay: Extending Bühlmann–Straub for
+  Commercial Lines*, arXiv 2606.08692 (preprint; code at github.com/jakem87/logistic-credibility,
+  CAS Schedule P data). The credibility weight is a logistic function of account characteristics
+  in place of one `K`, and older years are discounted by an EWMA weight λ. All of it is fitted
+  jointly by likelihood, and it nests Bühlmann–Straub. Reports a λ that depends on account size.
+  Not yet used. For us, the decay over years should follow from the covariance over time (AR(1)
+  `Γ`, `Factor.lean`), with volume entering through `s²/wᵢₜ`. Question: is EWMA a restricted
+  predictor of our BLUP, and does a size-dependent λ come out of the BLUP for free? (PLAN Pending.)
+  A likelihood fit belongs in the distribution layer.
+- Wen & Liu (2026), *A new credibility estimation of process variance with applications*,
+  ASTIN Bull. 56(3), 1036–1065, doi 10.1017/asb.2026.10094. Gives each risk a credibility
+  estimate of its own process variance `σ²(θ)`, with and without a known hypothetical mean, by
+  constrained linear projection, for premium principles that use the variance. Not yet used.
+  Our §2.8 `ŝ²` and the `Shock.lean` estimators estimate one variance for the whole portfolio;
+  shrinking each region's `σ̂ⱼ²` (the Finding 35 remedy between own and pooled `σ̂²`) is their
+  setting. It needs fourth moments (see the variance-function item below).
+- Zhao & Poudyal (2026), *Robust quadratic credibility*, Ann. Actuar. Sci. 20(2), 302–332 (online
+  2025-12-16, doi 10.1017/S1748499525100201, open access). Adds second-order polynomial terms of
+  winsorized losses to the credibility premium, extending semi-linear credibility, for heavy
+  tails. Not yet used. It needs moments up to order four of the transformed data, so it lies
+  outside the second-moment core. Robustness background next to Künsch (1992) and Gisler &
+  Reinhard (1993) in §5.
+- Higher moments from two parameters (owner's question, 2026-11-22; from memory, standard).
+  In a natural exponential family, or an exponential dispersion model with dispersion `φ` and
+  weight `w`, the variance function `V(μ)` fixes every cumulant through the recursion
+  `κₙ₊₁ = (φ/w) V(μ) dκₙ/dμ` (Jørgensen 1997, *The Theory of Dispersion Models*). Morris (1982),
+  *Natural exponential families with quadratic variance functions*, Ann. Stat. 10, finds exactly
+  six families with `V = v₀ + v₁μ + v₂μ²`: normal, Poisson, gamma, binomial, negative binomial
+  and generalized hyperbolic secant. Their cumulants are polynomials in `μ`, and Morris (1983,
+  Ann. Stat. 11) builds the moment theory from them. Tweedie `V = μᵖ` gives `κ₃ = (φ/w)² p μ^(2p−1)`,
+  skewness `p √(φ/w) μ^(p/2−1)` (gamma: `2·CV`; Poisson: `1/√μ`), and `κₙ ∝ w^−(n−1)`, the
+  `q = 2` scaling of §10k. Conjugate priors make linear credibility exact in these families
+  (Jewell 1974; Diaconis & Ylvisaker 1979), and the Poisson–gamma mixture stays in the six
+  (negative binomial). The zero-parameter closure is Gaussian (Isserlis): third and fourth
+  moments follow from the covariance. Not yet used. Candidate for a cumulant layer (PLAN Pending).

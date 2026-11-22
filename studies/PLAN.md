@@ -572,3 +572,18 @@ One chat per step; none needs Lean except step 5.
   bands; `distTaper_posSemidef`, ties allowed). Badge "proved" for both when `Σ̂ ⪰ 0`.
   Its `ρ` must be fitted, not hand-set (§1): e.g. choose it like `θ`, by the plug-in
   criterion of `studies/damping-theta.md`.
+- [ ] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
+  years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. Does the BLUP's
+  implied decay depend on volume the way Morris's λ does by account size? If EWMA is a
+  restricted predictor, its excess MSE is exact (`Blup.lean` restricted predictors). It could be
+  a fit option ("EWMA years") next to the BLUP. Lean: none needed beyond existing results, unless
+  a Finding comes out.
+- [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
+  noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
+  it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like
+  (Isserlis) or get their own `V`. It would give the exact variance of `ŝ²`, `Ĉ` and `K̂` (the
+  plug-in `g₃` term), a per-region shrunk `σ̂ⱼ²` (Wen & Liu 2026), and the quadratic credibility
+  of Zhao & Poudyal (2026). Like the distribution layer, it goes in its own files, named "under
+  a variance function", and nothing in the core depends on it. The app's `noiseDiagnostics`
+  already estimates `p` and `κ` (§10k): check `κ̂ⱼ` against the Tweedie prediction `p φ² μ^(2p−1)`
+  before relying on it. Lean work needs the **lean** environment.
