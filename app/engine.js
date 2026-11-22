@@ -130,6 +130,7 @@
     tau: 0.10,       // spread of the region levels μⱼ around μ = 1
     sigma: 6.0,      // noise of one vehicle-year: Var(Xⱼₜ | μⱼ) = σ²/wⱼₜ
     rho: 0,          // correlation between regions within a year (common winters)
+    ordered: false,  // regions in an order (age bands, neighbours): corr ρ^|i−j| instead of one common ρ
     volume: 500,     // vehicle-years per region and year, middle region
     spread: 1.0,     // how unequal the volumes are (log scale)
     growth: 0.03,    // yearly growth of every region's volume
@@ -175,9 +176,9 @@
       for (let t = 0; t < T; t++) row.push(size * Math.pow(1 + p.growth, t - (T - 1) / 2));
       w.push(row);
     }
-    // ρᵢⱼ: one common coefficient for now (a country structure comes with group levels).
-    const rho = [];
-    for (let i = 0; i < J; i++) { rho.push([]); for (let j = 0; j < J; j++) rho[i].push(i === j ? 1 : p.rho); }
+    // ρᵢⱼ: one common coefficient, or ρ^|i−j| for ordered regions (a country structure comes with group levels).
+    const rho = [], r0 = Math.max(p.rho, 0);
+    for (let i = 0; i < J; i++) { rho.push([]); for (let j = 0; j < J; j++) rho[i].push(i === j ? 1 : p.ordered ? Math.pow(r0, Math.abs(i - j)) : p.rho); }
     // σⱼ²: region-specific noise; σ² stays the base (σⱼ = σ when noiseSpread = 0).
     const sigmaj2 = Array.from({ length: J }, (_, j) => (p.sigma * noiseFactor(j, p.noiseSpread)) ** 2);
     const truth = { mu: 1, tau2: p.tau * p.tau, sigma2: p.sigma * p.sigma, sigmaj2, rho };
@@ -200,9 +201,20 @@
   }
 
   /**
+   * One year's noise vector ε over the J regions, unit variances, for ordered regions:
+   * ε₀ = ξ₀, εⱼ = ρεⱼ₋₁ + √(1−ρ²)ξⱼ (an AR(1) along the order), so corr(εᵢ, εⱼ) = ρ^|i−j|.
+   */
+  function orderedNoise(J, rho, r, ns, nz) {
+    const c = Math.sqrt(1 - rho * rho), e = [r.unit(ns, nz)];
+    for (let j = 1; j < J; j++) e.push(rho * e[j - 1] + c * r.unit(ns, nz));
+    return e;
+  }
+
+  /**
    * One data set from the world: the levels μⱼ (truth) and the table { w, X }.
-   * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; all draws skewed
-   * (gamma), or normal with `params.normal`.
+   * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; with
+   * `params.ordered` εₜ = orderedNoise (corr ρ^|i−j|). All draws skewed (gamma), or normal with
+   * `params.normal`.
    */
   function draw(world, r) {
     const { J, T, w, truth, params } = world;
@@ -211,6 +223,12 @@
     const levels = [], X = [];
     const nz = params.normal, ns = params.noiseShape;
     for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
+    if (params.ordered) {
+      const E = [];
+      for (let t = 0; t < T; t++) E.push(orderedNoise(J, Math.max(rho, 0), r, ns, nz));
+      for (let j = 0; j < J; j++) X.push(E.map((e, t) => levels[j] + sig[j] / Math.sqrt(w[j][t]) * e[j]));
+      return { levels, data: Object.freeze({ w: w.map((row) => Object.freeze(row.slice())), X }) };
+    }
     const eta = [];
     for (let t = 0; t < T; t++) eta.push(r.unit(ns, nz));
     for (let j = 0; j < J; j++) {
@@ -361,6 +379,10 @@
    */
   function drawNext(world, levels, wNext, r) {
     const { params, truth } = world, a = Math.sqrt(Math.max(params.rho, 0)), b = Math.sqrt(1 - Math.max(params.rho, 0));
+    if (params.ordered) {
+      const e = orderedNoise(levels.length, Math.max(params.rho, 0), r, params.noiseShape, params.normal);
+      return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * e[j]);
+    }
     const eta = r.unit(params.noiseShape, params.normal);
     return levels.map((mu, j) => mu + Math.sqrt(truth.sigmaj2[j] / wNext[j]) * (a * eta + b * r.unit(params.noiseShape, params.normal)));
   }
@@ -382,6 +404,8 @@
     cj: 'ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ',
     tau: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**)  (eq. (39))',
     damped: 'K̂ = Σ̂ with off-diagonal × θ, + τ̂²⁺ I',
+    taper: 'K̂ᵢⱼ = ρ^|i−j| (Σ̂ + τ̂²⁺ I)ᵢⱼ  (regions in their order)',
+    taperRule: 'ρ̂ minimises Σ_d n_d [ρ^2d (r̄_d² + (1 − r̄_d²)²/(T−1)) − 2ρ^d r̄_d²], r̄_d the average estimated correlation of the n_d pairs at distance d',
     zEq: 'zⱼ = τ̂² / (τ̂² + v̂ⱼ − θĉ)',
     gls: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))',
     z26: 'zⱼ = (1 − bⱼ)τ̂² / (K̂ⱼⱼ − s²),  s² = 1/1ᵀK̂⁻¹1  (eq. (26))',
@@ -516,6 +540,39 @@
     return cholesky(addDiag(A, 1e-12 * Math.abs(tr) / n + 1e-300)) !== null;
   }
 
+  /** The distance taper ρ^|tᵢ − tⱼ| for cohorts at positions t (Lean: distTaper); t = 0…J−1 by default. */
+  function distTaper(rho, J, t) {
+    const pos = t || Array.from({ length: J }, (_, j) => j);
+    return pos.map((ti) => pos.map((tj) => Math.pow(rho, Math.abs(ti - tj))));
+  }
+  const hadamard = (R, A) => A.map((row, i) => row.map((x, j) => R[i][j] * x));
+
+  /**
+   * The taper's ρ by the plug-in criterion of the damping study (studies/damping-theta.md S3 and
+   * "What a distribution-free theorem can say"): on the correlation scale, a taper Rᵢⱼ = ρ^dᵢⱼ
+   * turns the estimate r̂ᵢⱼ into Rᵢⱼr̂ᵢⱼ, with expected loss Σᵢ<ⱼ E(Rᵢⱼr̂ᵢⱼ − rᵢⱼ)²
+   *   = Σᵢ<ⱼ [Rᵢⱼ²(rᵢⱼ² + Vᵢⱼ) − 2Rᵢⱼ rᵢⱼ²] + const.
+   * Plug-ins: rᵢⱼ² by r̄_d², the average estimated correlation over the pairs at distance d (as S3
+   * uses ρ̄ over all pairs), and Vᵢⱼ by (1 − r̄_d²)²/(T − 1). Minimised over ρ ∈ [0, 1] on a grid
+   * of 0.001. With every pair at distance 1 (the damping taper) the minimiser is S3's
+   * θ̂ = r̄²/(r̄² + (1 − r̄²)²/(T − 1)). Data only, nothing to tune.
+   * Returns { rho, lags: [{ d, n, r }] }.
+   */
+  function taperRho(Sig, T, dist) {
+    const J = Sig.length, by = new Map();
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) {
+      const d = dist(i, j), r = Sig[i][j] / Math.sqrt(Sig[i][i] * Sig[j][j]);
+      if (!by.has(d)) by.set(d, { d, n: 0, s: 0 });
+      const g = by.get(d); g.n++; g.s += r;
+    }
+    const lags = [...by.values()].sort((a, b) => a.d - b.d).map((g) => ({ d: g.d, n: g.n, r: Math.max(-1, Math.min(1, g.s / g.n)) }));
+    const terms = lags.map((g) => { const S = g.r * g.r; return { d: g.d, n: g.n, S, V: (1 - S) ** 2 / (T - 1) }; });
+    const loss = (rho) => sum(terms.map((g) => { const R = Math.pow(rho, g.d); return g.n * (R * R * (g.S + g.V) - 2 * R * g.S); }));
+    let best = 0, bl = loss(0);
+    for (let k = 1; k <= 1000; k++) { const x = k / 1000, l = loss(x); if (l < bl - 1e-15) { bl = l; best = x; } }
+    return { rho: best, lags };
+  }
+
   /** The damping factors tried, largest first: θ = 0.95 by default (handbook), lowered if needed. */
   const THETAS = [0.95, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
 
@@ -525,6 +582,9 @@
    *   covariance; then zⱼ = τ²/(τ² + vⱼ − c), Core.bestZ_of_equalCov).
    * opts.theta: force a damping factor (tests); otherwise the largest of THETAS
    *   with K̂ ≻ 0.
+   * opts.taper = 'distance': instead of damping, taper by ρ^|i−j| over the region order
+   *   (K̂ = R ⊙ (Σ̂ + τ̂²I), Lean: posDef_distTaper_hadamard), ρ̂ by taperRho (opts.rho forces it);
+   *   lowered in steps of 0.05 only if K̂ is not positive definite.
    */
   function fitCorr(data, opts) {
     const o = opts || {};
@@ -540,12 +600,24 @@
     const { c, tau2: tauRaw } = thesisTau(m, wt, Sig);
     const tau2 = Math.max(tauRaw, 0);
     const psd = isPSD(Sig);
-    let theta = null, K = null;
-    for (const th of (o.theta != null ? [o.theta] : THETAS)) {
-      const Kt = addDiag(shrinkOffDiag(th, Sig), tau2);
-      if (cholesky(Kt)) { theta = th; K = Kt; break; }
+    const T = data.X[0].length, dist = o.taper === 'distance';
+    let theta = null, K = null, rhoT = null, rhoFit = null, lags = null;
+    if (dist) {
+      const tr = o.rho != null ? { rho: o.rho, lags: null } : taperRho(Sig, T, (i, j) => Math.abs(i - j));
+      rhoFit = tr.rho; lags = tr.lags;
+      const Kraw = addDiag(Sig, tau2);
+      for (let x = rhoFit; ; x = Math.max(0, Math.round((x - 0.05) * 1000) / 1000)) {
+        const Kt = hadamard(distTaper(x, J), Kraw);
+        if (cholesky(Kt)) { rhoT = x; K = Kt; break; }
+        if (x === 0) break;
+      }
+    } else {
+      for (const th of (o.theta != null ? [o.theta] : THETAS)) {
+        const Kt = addDiag(shrinkOffDiag(th, Sig), tau2);
+        if (cholesky(Kt)) { theta = th; K = Kt; break; }
+      }
     }
-    if (!K) throw new Error('K̂ not positive definite even at θ = 0');
+    if (!K) throw new Error(`K̂ not positive definite even at ${dist ? 'ρ' : 'θ'} = 0`);
     const v = Sig.map((row, j) => row[j]);
     let { b, z, s2 } = bestBlendWeights(K, tau2);
     const cDamped = o.common ? theta * cbar : null;
@@ -558,14 +630,14 @@
     const offBal = sum(wt.map((x, j) => x * (m[j] - res.rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = {
       tauNeg: tauRaw <= 0, zOver1: z.some((x) => x > 1), zNeg: z.some((x) => x < 0), bNeg: b.some((x) => x < 0),
-      thetaLow: theta < THETAS[0], offBalance: Math.abs(offBal) > 0.01,
+      thetaLow: dist ? rhoT < rhoFit : theta < THETAS[0], offBalance: Math.abs(offBal) > 0.01,
     };
     const warnings = [];
     if (flags.tauNeg) warnings.push('τ̂² ≤ 0, set to 0 (eq. (40)): no credibility, every region gets the portfolio level μ̂');
     if (flags.zOver1) warnings.push(`z > 1 for ${z.filter((x) => x > 1).length} region(s): the rate moves past the region's own mean, away from μ̂ (thesis eq. (34) would clip it)`);
     if (flags.zNeg) warnings.push(`z < 0 for ${z.filter((x) => x < 0).length} region(s): with the true parameters a negative z can be the best blend (Finding 17: past a singularity the gap μ̂ⱼ − μ̂ flips sign together with z, and the own-data weight cⱼ = bⱼ + zⱼ(1 − bⱼ) stays bounded), so clipping z to 0 is not the fix; in a fit it more likely means K̂ is nearly singular: look at ρ̂ and τ̂²`);
     if (flags.bNeg) warnings.push(`negative portfolio weight b for ${b.filter((x) => x < 0).length} region(s): GLS uses it as a hedge against correlated noise`);
-    if (flags.thetaLow) warnings.push(`K̂ was not positive definite at θ = ${THETAS[0]}; damping lowered to θ = ${theta}`);
+    if (flags.thetaLow) warnings.push(dist ? `K̂ was not positive definite at the fitted ρ̂ = ${rhoFit}; taper lowered to ρ = ${rhoT}` : `K̂ was not positive definite at θ = ${THETAS[0]}; damping lowered to θ = ${theta}`);
     if (flags.offBalance) warnings.push(`off-balance: Σ wⱼ*(μ̂ⱼ − μ̂ⱼᵇ) is ${(100 * offBal).toFixed(1)}% of the premium volume`);
     const offs = [];
     for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) offs.push(Sig[i][j]);
@@ -580,7 +652,8 @@
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, values: c, badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.cHat_unbiased', gap: o.common ? 'G1' : null, note: o.common ? 'with the common ĉ: unbiased if ĉ is (G1)' : null },
       { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: o.common ? 'not proved yet' : 'proved', lean: o.common ? null : 'Credibility.Model.tauHat_unbiased', gap: o.common ? 'G1' : null, note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
-      { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1; the choice θ = ${theta} is a heuristic (G2)` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem (G2)` },
+      dist ? taperStep(rhoT, lags, psd && tau2 > 0)
+        : { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1; the choice θ = ${theta} is a heuristic (G2)` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem (G2)` },
     );
     if (o.common && tau2 > 0) {
       steps.push(
@@ -594,7 +667,18 @@
       );
     }
     steps.push({ name: 'rates', formula: F.rates, values: res.rates, badge: 'proved', lean: 'Credibility.BlendMoments.bestZ_optimal', note: `the parameters are plugged in: the formulas are optimal for the true K, τ²; off-balance ${(100 * offBal).toFixed(2)}%` });
-    return { means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags, K, theta, tauRaw, tau2, cbar, steps };
+    return { means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags, K, theta, tauRaw, tau2, cbar, steps, rhoTaper: rhoT, rhoFit, lags };
+  }
+
+  /** The taper step of fitCorr (this draw). `proved`: Σ̂ ⪰ 0 and τ̂² > 0, so Σ̂ + τ̂²I ≻ 0. */
+  function taperStep(rho, lags, proved) {
+    const lagText = lags ? '; r̄_d by distance: ' + lags.slice(0, 4).map((g) => `d=${g.d}: ${g.r.toFixed(2)}`).join(', ') + (lags.length > 4 ? ', …' : '') : '';
+    return {
+      name: 'tapered K̂', formula: `${F.taper};  ρ̂ = ${rho}`, values: [rho], badge: proved ? 'proved' : 'not proved yet',
+      lean: proved ? 'Credibility.posDef_distTaper_hadamard' : null, gap: 'G2',
+      note: (proved ? 'Σ̂ ⪰ 0 and τ̂² > 0, so K̂ ≻ 0 for every ρ ∈ [0, 1]' : `Σ̂ + τ̂²I is not positive definite: K̂ ≻ 0 checked numerically at ρ = ${rho}, not by a theorem`) +
+        `; ρ̂ by the plug-in criterion (${F.taperRule}), the damping study’s rule S3 (studies/damping-theta.md)${lagText}`,
+    };
   }
 
   /**
@@ -781,6 +865,7 @@
     blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: (data) => fitBLUP(data), ready: true },
     blupPool: { name: 'BLUP, one pooled noise variance (no under-pricing by skew)', short: 'BLUP pooled', fit: (data) => fitBLUP(data, { pooled: true }), ready: true },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
+    corrT: { name: 'Thesis model with correlation, distance taper ρ̂^|i−j| (ordered regions)', short: 'corr taper', fit: (data) => fitCorr(data, { taper: 'distance' }), ready: true },
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true, balanced: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true, balanced: true },
@@ -862,6 +947,10 @@
       intro: 'The thesis model with correlation: the estimators (37)–(41) for every pair of regions, then a damped K̂.',
       steps: null,   // filled below (corrSteps)
     },
+    corrT: {
+      intro: 'The thesis model with correlation, for regions with an order (age bands, neighbours): the estimators (37)–(41) for every pair, then K̂ tapered by ρ̂^|i−j| instead of damped, so far-apart pairs are shrunk more than neighbours. ρ̂ from the data by the damping study’s plug-in criterion (rule S3).',
+      steps: null,
+    },
     corrC: {
       intro: 'One common covariance for all pairs of regions. Not recommended with unequal volumes (its z can explode).',
       steps: null,
@@ -892,7 +981,7 @@
     const k = st.findIndex((x) => x.name === 'premium');
     return k < 0 ? st.concat([BALANCE_STEP]) : st.slice(0, k).concat([BALANCE_STEP], st.slice(k));
   }
-  function corrSteps(common) {
+  function corrSteps(common, taper) {
     const steps = [
       { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
       { name: 'Σ̂ diagonal', formula: F.sigDiag, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
@@ -902,9 +991,13 @@
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.cHat_unbiased', gap: common ? 'G1' : null },
       { name: 'τ̂²', formula: F.tau, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.Model.tauHat_unbiased', gap: common ? 'G1' : null, rule: TAU_ZERO },
-      { name: 'damped K̂', formula: F.damped, badge: 'not proved yet', gap: 'G2', varies: true,
-        rule: 'θ = the largest of 0.95, 0.9, 0.8, 0.7, …, 0.1, 0 for which K̂ is positive definite (a Cholesky factorisation succeeds)',
-        note: 'K̂ ≻ 0 for every θ < 1 is proved when Σ̂ is positive semidefinite (posDef_shrinkOffDiag); the choice of θ is a heuristic' },
+      taper
+        ? { name: 'tapered K̂', formula: F.taper, badge: 'not proved yet', gap: 'G2', varies: true,
+          rule: `${F.taperRule}; lowered in steps of 0.05 only if K̂ is not positive definite`,
+          note: 'K̂ ≻ 0 for every ρ ∈ [0, 1] is proved when Σ̂ + τ̂²I ≻ 0 (posDef_distTaper_hadamard, ties allowed); the criterion for ρ̂ is a plug-in (G2), with every pair at distance 1 it is the damping study’s rule S3 for the damping factor' }
+        : { name: 'damped K̂', formula: F.damped, badge: 'not proved yet', gap: 'G2', varies: true,
+          rule: 'θ = the largest of 0.95, 0.9, 0.8, 0.7, …, 0.1, 0 for which K̂ is positive definite (a Cholesky factorisation succeeds)',
+          note: 'K̂ ≻ 0 for every θ < 1 is proved when Σ̂ is positive semidefinite (posDef_shrinkOffDiag); the choice of θ is a heuristic' },
     );
     if (common) {
       steps.push(
@@ -925,6 +1018,7 @@
   }
   RECIPES.corr.steps = corrSteps(false);
   RECIPES.corrC.steps = corrSteps(true);
+  RECIPES.corrT.steps = corrSteps(false, true);
 
   /** The notation a recipe needs: entries marked always, and those its text mentions. */
   function recipeNotation(id) {
@@ -1171,7 +1265,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics,
   };

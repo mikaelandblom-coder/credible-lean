@@ -995,7 +995,10 @@ $\theta < 1$; then $\hat K$ is positive definite whenever the estimated
 correlation table is semidefinite (\hb{res:damped}{8}). Damping is one case of
 \emph{tapering}: multiplying $\hat K$ entrywise by any correlation matrix keeps it
 positive definite and keeps the variances (the Schur product theorem; Furrer, Genton
-and Nychka 2006), so ordered cohorts can damp distant pairs more. How much to damp?
+and Nychka 2006), so ordered cohorts can damp distant pairs more. In simulated
+worlds whose correlation does decay with distance this buys the blend nothing over plain
+damping, even with the best fixed taper: the blend uses $\hat K$ only through its weights
+$b$ and $z$ (study findings S33--S35). How much to damp?
 The best fixed $\theta$ grows with the correlation and with the length of
 the history, from 0 without correlation to nearly 1 at $\rho = 0.9$ or 20
 years, and no damping at all ($\theta = 1$) is risky with short

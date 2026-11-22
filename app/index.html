@@ -169,6 +169,9 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row" id="rho-row" hidden>
       <label for="s-rho">ρ between regions</label><input type="range" id="s-rho" min="0" max="0.9" step="0.05" value="0.5"><output id="o-rho"></output>
     </div>
+    <div class="feature" id="ordered-row" hidden>
+      <input type="checkbox" id="f-ordered"><label for="f-ordered">Decays with distance <span class="sub">(regions in an order, e.g. age bands: correlation ρ^|i−j|; try the fit “corr taper”)</span></label>
+    </div>
     <div class="feature">
       <input type="checkbox" id="f-normal"><label for="f-normal">Normal noise <span class="sub">(instead of skewed gamma levels and noise; the model only fixes two moments)</span></label>
     </div>
@@ -188,7 +191,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row">
       <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
     </div>
-    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
+    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>; “corr taper” tapers it by <i>ρ̂</i><sup>|i−j|</sup> for regions in an order, <i>ρ̂</i> from the data. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
@@ -329,12 +332,13 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     inp.addEventListener('input', () => { state[s.key] = +inp.value; show(); update(); });
   }
   const rhoBox = $('f-rho'), rhoRow = $('rho-row'), rhoIn = $('s-rho'), rhoOut = $('o-rho');
-  const showRho = () => { rhoOut.textContent = (+rhoIn.value).toFixed(2); rhoRow.hidden = !rhoBox.checked; };
+  const showRho = () => { rhoOut.textContent = (+rhoIn.value).toFixed(2); rhoRow.hidden = !rhoBox.checked; $('ordered-row').hidden = !rhoBox.checked; };
   showRho();
   rhoBox.addEventListener('change', () => { state.rhoOn = rhoBox.checked; showRho(); update(); });
   rhoIn.addEventListener('input', () => { state.rhoVal = +rhoIn.value; showRho(); update(); });
   $('f-balance').addEventListener('change', (e) => { state.balance = e.target.checked; update(); });
   $('f-normal').addEventListener('change', (e) => { state.normal = e.target.checked; update(); });
+  $('f-ordered').addEventListener('change', (e) => { state.ordered = e.target.checked; update(); });
 
   for (const [sel, key] of [[$('m-fit'), 'fit'], [$('m-ref'), 'ref']]) {
     for (const [id, m] of Object.entries(E.MODELS)) {
@@ -403,6 +407,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   function worldParams() {
     const p = {}; for (const k in E.DEFAULTS) p[k] = state[k];
     p.rho = state.rhoOn ? state.rhoVal : 0;
+    p.ordered = state.rhoOn && state.ordered;
     return p;
   }
 

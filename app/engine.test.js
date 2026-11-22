@@ -759,3 +759,51 @@ test('Noise shape: κ̂ⱼ unbiased for the third cumulant (any distribution, q 
     if (!p.normal && p.rho === 0) assert.ok(sum(ps) / ps.length > 1, `same-years slope biased up: ${sum(ps) / ps.length}`);
   }
 });
+
+test('Distance taper ρ^|tᵢ−tⱼ|: PSD for any positions, ties allowed (distTaper_posSemidef); K̂ ≻ 0 by posDef_distTaper_hadamard; ρ̂ by the damping study’s plug-in rule S3', () => {
+  const r = E.rng(31);
+  // The theorem: R(ρ, t) ⪰ 0 for ρ ∈ [0, 1] and any positions t ∈ ℕ (ties allowed).
+  for (let k = 0; k < 300; k++) {
+    const n = 1 + Math.floor(r() * 9), t = Array.from({ length: n }, () => Math.floor(r() * 5)), rho = k % 10 === 0 ? 1 : r();
+    const R = E.distTaper(rho, n, t);
+    assert.ok(E.eigSym(R)[0] > -1e-12, `PSD at ρ = ${rho}, t = ${t}`);
+    R.forEach((row, i) => assert.equal(row[i], 1, 'unit diagonal'));
+  }
+  // With every pair at distance 1 the criterion's minimiser is S3's θ̂ = r̄²/(r̄² + (1 − r̄²)²/(T − 1)).
+  for (const [params, seed] of [[{ rho: 0.5 }, 1], [{ rho: 0.9, T: 5 }, 2], [{ rho: 0.1, J: 12 }, 3]]) {
+    const { data } = E.draw(E.makeWorld(params), E.rng(seed)), { Sig } = E.sigmaHat(data), J = Sig.length, T = data.X[0].length;
+    let s = 0, n = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { s += Sig[i][j] / Math.sqrt(Sig[i][i] * Sig[j][j]); n++; }
+    const rb = s / n, th = rb * rb / (rb * rb + (1 - rb * rb) ** 2 / (T - 1));
+    assert.ok(Math.abs(E.taperRho(Sig, T, () => 1).rho - th) <= 0.0006, `S3 θ̂ ${th}`);
+  }
+  // The ordered world: corr(εᵢ, εⱼ) = ρ^|i−j|, in trueK and in the draws.
+  const wo = E.makeWorld({ rho: 0.7, ordered: true, J: 5 });
+  assert.equal(wo.truth.rho[0][3], Math.pow(0.7, 3));
+  const acc = [0, 0, 0, 0], N = 20000;
+  for (let k = 0; k < N; k++) { const e = E.orderedNoise(5, 0.7, r, 2, false); for (let d = 1; d <= 4; d++) acc[d - 1] += e[0] * e[d]; }
+  acc.forEach((x, i) => close(x / N, Math.pow(0.7, i + 1), 0.04, `corr at distance ${i + 1}`));
+  // The fit: K̂ = R(ρ̂) ⊙ (Σ̂ + τ̂²I) ≻ 0 in every draw; ρ̂ follows the world.
+  for (const [params, lo, hi] of [[{ rho: 0 }, 0, 0.6], [{ rho: 0.8, ordered: true }, 0.6, 1], [{ rho: 0.8, ordered: true, J: 12, T: 4 }, 0.3, 1], [{ rho: 0.5 }, 0.5, 1]]) {
+    const world = E.makeWorld(params);
+    let mean = 0;
+    for (let k = 0; k < 200; k++) {
+      const { data } = E.draw(world, r), f = E.fitCorr(data, { taper: 'distance' }), est = E.sigmaHat(data);
+      assert.ok(E.cholesky(f.K), 'K̂ ≻ 0');
+      assert.ok(f.rhoTaper >= 0 && f.rhoTaper <= f.rhoFit && f.rhoFit <= 1, 'ρ ∈ [0, ρ̂]');
+      const R = E.distTaper(f.rhoTaper, f.K.length);
+      f.K.forEach((row, i) => row.forEach((x, j) => close(x, R[i][j] * (est.Sig[i][j] + (i === j ? f.tau2 : 0)), 1e-12, 'K̂ = R ⊙ (Σ̂ + τ̂²I)')));
+      const step = f.steps.find((s) => s.name === 'tapered K̂');
+      if (E.isPSD(est.Sig) && f.tau2 > 0) {
+        assert.equal(step.badge, 'proved');
+        const Kraw = est.Sig.map((row, i) => row.map((y, j) => y + (i === j ? f.tau2 : 0)));
+        for (const x of [0, 0.3, 0.9, 1]) {
+          const Rx = E.distTaper(x, R.length);
+          assert.ok(E.cholesky(Kraw.map((row, i) => row.map((y, j) => Rx[i][j] * y))), `≻ 0 at ρ = ${x}`);
+        }
+      }
+      mean += f.rhoFit / 200;
+    }
+    assert.ok(mean >= lo && mean <= hi, `${JSON.stringify(params)}: mean ρ̂ ${mean} in [${lo}, ${hi}]`);
+  }
+});

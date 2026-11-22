@@ -571,7 +571,14 @@ One chat per step; none needs Lean except step 5.
   `R = θ11ᵀ + (1-θ)I`) and "distance ρ^|tᵢ-tⱼ|" for cohorts with an order (years, age
   bands; `distTaper_posSemidef`, ties allowed). Badge "proved" for both when `Σ̂ ⪰ 0`.
   Its `ρ` must be fitted, not hand-set (§1): e.g. choose it like `θ`, by the plug-in
-  criterion of `studies/damping-theta.md`.
+  criterion of `studies/damping-theta.md`. *Done 2026-11-22:* fit "corr taper"
+  (`fitCorr(data, { taper: 'distance' })`, `taperRho`: S3's loss per distance, ρ̂ on a 0.001 grid,
+  equal to S3's θ̂ when all pairs are at distance 1), badge "proved" (`posDef_distTaper_hadamard`)
+  when `Σ̂ ⪰ 0` and `τ̂² > 0`; world switch "decays with distance" (`params.ordered`, noise
+  correlation `ρ^|i−j|`). Node test. **Seen** (`studies/taper.js`, S33–S35): no gain over damping
+  for the blend, even at the best fixed ρ; corrBS stays best. Open: the taper on the BLUP's K̂
+  (S34's hypothesis), and damping "corr" by S3's θ̂ instead of the grid rule (up to 12 points better
+  at ρ ≤ 0.6, 1 at J = 20; 0–3 worse at ρ = 0.9).
 - [ ] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. Does the BLUP's
   implied decay depend on volume the way Morris's λ does by account size? If EWMA is a

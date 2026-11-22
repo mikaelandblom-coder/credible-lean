@@ -169,6 +169,12 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Kac, Murdock & Szegő (1953), *On the eigenvalues of certain Hermitian forms*, J. Rational
   Mech. Anal. 2: the matrix `ρ^|i-j|` (AR(1) correlation). Its positivity is not needed in KMS
   form: a Hadamard product of two-block matrices, one per gap, gives it for any ℕ positions.
+- Choosing the taper width: Bickel & Levina (2008), *Regularized estimation of large covariance
+  matrices*, Ann. Stat. 36(1), choose the band by random splits of the sample; Cai, Zhang & Zhou
+  (2010), Ann. Stat. 38(4), give the optimal tapering rate (from memory, not checked here). Not
+  used: splitting is cross-validation, which S14 found too noisy and too cautious for us; the app's
+  taper `ρ̂` uses the plug-in loss of S3 per distance instead (study S33–S35: no gain over damping
+  for the blend).
 - Covariance shrinkage towards a target (Ledoit & Wolf, §1) is additive; tapering is
   multiplicative. Both keep `K̂ ⪰ 0`; damping is both at once (`shrinkOffDiag_eq`).
 

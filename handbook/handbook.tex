@@ -253,6 +253,8 @@ rescue an indefinite $\hat\rho$ for every $\theta$: that hypothesis stays.
 Damping is one \emph{taper}: multiplying $\hat K$ entrywise by any correlation matrix
 keeps it positive definite and keeps the variances. For ordered cohorts (years of entry,
 age bands) the distance taper $\theta^{|t_i - t_j|}$ damps distant pairs more.
+Watch out: in simulated worlds where the correlation does decay with distance, the taper
+gave the blend no gain over plain damping, even with its best $\theta$ (study S33--S35).
 \lean{Credibility.posDef_hadamard_of_corr}
 \lean{Credibility.distTaper_posSemidef}
 

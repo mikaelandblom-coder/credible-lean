@@ -293,3 +293,34 @@ blend floor. Two plug-in BLUPs: on corrBS's `K̂` (app fit "BLUP"), and on the t
     unstructured loadings it is often the worst correlated fit (up to 141–144, against corrBS 116–126):
     J(J − 1)/2 noisy pairs. The gap of S31 calls for a `K̂` with few parameters that knows the
     groups (ρ within and between: the group-levels step of the PLAN, step 4), and the BLUP on it.
+
+## Distance taper against damping (`taper.js`, output `taper.out.txt`, 2026-11-22)
+
+App fit "corr taper": the thesis fit with every pair estimated, `K̂ = R ⊙ (Σ̂ + τ̂²I)` with
+`Rᵢⱼ = ρ̂^|i−j|` over the region order (`posDef_distTaper_hadamard`). `ρ̂` minimises the plug-in
+loss of S3 per distance, `Σ_d n_d [ρ^2d (r̄_d² + (1 − r̄_d²)²/(T−1)) − 2ρ^d r̄_d²]` (r̄_d the average
+estimated correlation of the pairs at distance d); with every pair at distance 1 this is S3's θ̂.
+New world switch "decays with distance": noise correlation `ρ^|i−j|` (an AR(1) along the region
+order). 16 worlds, 1000 draws, MSE in % of the floor; damping by the app's grid rule (θ = 0.95
+unless K̂ fails) and by S3's θ̂.
+
+- S33. *[numerical]* **The taper does not beat damping for the blend.** With the plug-in rule it is
+    within 0–4 points of S3 damping in the ordered worlds (e.g. J = 8, T = 10, ρ = 0.6: 113 against
+    112) and worse in a short history with a common ρ (T = 5, ρ = 0.6: 138 against 128: it keeps too
+    much of the noisy far pairs). Against the app's grid rule (θ = 0.95) it gains 1–9 points at
+    ρ ≤ 0.6 in the ordered worlds and at ρ = 0 (the grid rule hardly damps), and loses 1–7 at
+    ρ = 0.9 and up to 8 with a common ρ = 0.6.
+- S34. *[numerical]* **Not the rule's fault: the shape does not help even at its best fixed ρ.**
+    Sweeping fixed ρ and θ (600 draws, ordered worlds): the best taper and the best damping are within
+    1 point (J = 8, T = 10, ρ = 0.6: 110 / 110; J = 20: 110 / 110; T = 5: 123 / 123), and at ρ = 0.9
+    damping is better (111 at θ = 0.7–0.8 against 113 at ρ = 0.9). *[hypothesis]* The blend uses K̂ only
+    through the GLS weights b and z, and reaches the other regions only through μ̂ (S31), so getting
+    the far pairs right buys little; a predictor that uses each pair (the BLUP) might, and is the
+    place to try the taper next.
+- S35. *[numerical]* **corrBS stays best**: one common ρ̂, misspecified in the ordered worlds, still
+    scores 108–122 in the ordered worlds against 109–138 for the taper, the gap largest with T = 5. Few parameters win
+    over a better-shaped table of J(J − 1)/2 noisy pairs (as S5, S16).
+
+For the app: keep "corr taper" as an option for ordered cohorts (its K̂ ≻ 0 is proved, ρ̂ comes
+from the data), not as a recommendation; damping by S3's θ̂ would improve "corr" more than the
+taper does.
