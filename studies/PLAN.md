@@ -334,6 +334,14 @@ One chat per step; none needs Lean except step 5.
   less noisy (no level draws in it); the *other* regions' terms carry it (default: own +0.04, other
   −0.35; T = 4: −0.70, −1.64), i.e. the GLS portfolio weights; BS and `blupBal` give 0 exactly.
   The monthly fit (season `β̂` by GLS, moments from residuals) is not checked yet.
+- Noise shape (2026-11-22, discussion after Finding 35): no distribution fitting, only moments.
+  (1) Residual diagnostics per region on the fitted data: skewness, kurtosis, and whether the
+  variance scales with the mean (a power law as in Tweedie GLMs). (2) If skew is clear: a
+  skew-based correction of the Finding 35 bias (first order (c): skewness × `σⱼ/√(T wⱼ*)` × `ζⱼ`,
+  with `κ₃` estimated from residuals, no hand-set hyperparameters), compared with the pooled σ̂² and
+  `blupBal`. (3) If the variance follows the mean: a variance model by volume and mean in place of
+  region-specific `σ̂ⱼ²`. Any Lean result that assumes a family goes in the distribution layer.
+  Out of scope: fitting a full noise family for intervals or quantiles.
 - `degenerateTable` (2026-11-21, Finding 34): exact for the app's full panel and `φ̂ < 1`
   (`Factor.tableK_ar1_posDef_iff`). If the world gets cards entering and leaving (Step 7), the test
   is only sufficient: there, check `K̂` itself (Cholesky) instead.
