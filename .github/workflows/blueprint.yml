@@ -195,6 +195,10 @@ jobs:
           mkdir -p blueprint/web/app
           cp -r app/index.html app/engine.js app/monthly.js app/manifest.webmanifest app/icons blueprint/web/app/
 
+      # The master thesis proposal (studies/thesis-topics/make_pdf.py builds the committed PDF).
+      - name: Add the thesis proposal
+        run: cp studies/thesis-topics/thesis_topics.pdf blueprint/web/thesis-proposal.pdf
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: blueprint/web
