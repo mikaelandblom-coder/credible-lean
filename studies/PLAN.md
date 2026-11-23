@@ -627,7 +627,10 @@ One chat per step; none needs Lean except step 5.
   independent years, `Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T` exactly; the app's S3 rule uses the
   first term only (in correlation form). App, pending: a kurtosis term needs a `κ̂₄ᵢⱼᵢⱼ` from the
   residuals (cross-region, so not the dropped per-region kurtosis); default `κ₄ = 0` keeps today's
-  rule. Next in Lean: the weighted `Shock.crossHat` (year shock as a J-vector source).
+  rule. *Weighted `Shock.crossHat` proved 2026-11-23* (`Cumulants.variance_crossResid`): exact
+  `Var Ĉᵢⱼ` for any cohort weights and volumes, from the year covariances `Nₛ` (shock + process
+  noise) and the within-year fourth cumulants; the levels cancel. App: this is the `V` to plug into
+  `θ* = Σs²/(Σs² + ΣV)` (`Damping.bestTheta`) in covariance form, with `κ₄ = 0` as the default.
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like

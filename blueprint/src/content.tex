@@ -7933,7 +7933,8 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   \lean{Credibility.Cumulants.abs_mul4_le, Credibility.Cumulants.integrable_pow4,
         Credibility.Cumulants.integrable_mul4, Credibility.Cumulants.integrable_mul3,
         Credibility.Cumulants.integrable_mul2, Credibility.Cumulants.sum_mul_sum_eq,
-        Credibility.Cumulants.integrable_sum_mul_sum, Credibility.Cumulants.integral_sum_mul_sum}
+        Credibility.Cumulants.integrable_sum_mul_sum, Credibility.Cumulants.integral_sum_mul_sum,
+        Credibility.Cumulants.holder442}
   \leanok
   $4|abcd| \le a^4 + b^4 + c^4 + d^4$, so products of up to four $L^4$ functions are integrable on
   a probability space, and the integral of a product of two finite linear combinations is the
@@ -8129,7 +8130,8 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   \lean{Credibility.Cumulants.centering, Credibility.Cumulants.pairMat,
         Credibility.Cumulants.centering_rowSum, Credibility.Cumulants.trace_centering_sq,
         Credibility.Cumulants.trace_pairMat_mul, Credibility.Cumulants.sum_centered_mul,
-        Credibility.Cumulants.sum_pairMat, Credibility.Cumulants.sum_yearDiag}
+        Credibility.Cumulants.sum_pairMat, Credibility.Cumulants.sum_yearDiag',
+        Credibility.Cumulants.sum_yearDiag}
   \leanok
   With $H = I - \mathbf 1\mathbf 1^\top/T$ and $S = E_{ij} + E_{ji}$: the rows of $H$ sum to $0$,
   $\operatorname{tr}H^2 = T - 1$, $\operatorname{tr}(SCSC) = 2(C_{ii}C_{jj} + C_{ij}^2)$ for symmetric $C$,
@@ -8161,6 +8163,58 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   since the fourth moments and their pairings are).
 \end{proof}
 
+\begin{theorem}[Variance of a sum of products of linear statistics]\label{thm:variance_sum_mul_lin}
+  \lean{Credibility.Cumulants.variance_sum_mul_lin}
+  \leanok
+  For cells $e_p$ in $L^4$ with second moments $C$ and fourth moments
+  $\kappa_{4,pqrs} + C_{pq}C_{rs} + C_{pr}C_{qs} + C_{ps}C_{qr}$, and vectors $u_t$, $v_t$,
+  \[ \operatorname{Var}\sum_t(u_t^\top e)(v_t^\top e) = \sum_{t,t'}\bigl[(u_t^\top Cu_{t'})(v_t^\top Cv_{t'})
+     + (u_t^\top Cv_{t'})(v_t^\top Cu_{t'}) + \kappa_4(u_t, v_t, u_{t'}, v_{t'})\bigr]. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable}
+  $\operatorname{E}Q^2 - (\operatorname{E}Q)^2$, each term a fourth moment of the cells; the pairing
+  $C_{pq}C_{rs}$ cancels against $(\operatorname{E}Q)^2$.
+\end{proof}
+
+\begin{definition}[Residual coefficients and year-diagonal covariance]\label{def:resCross}
+  \lean{Credibility.Cumulants.resCross, Credibility.Cumulants.resCoef, Credibility.Cumulants.yearCov}
+  \leanok
+  The residual $r_{ct} = X_{ct} - \sum_sa_{cs}X_{cs}$ has coefficients $\delta_{ts} - a_{cs}$ on
+  cohort $c$; $N\otimes$ years is the covariance $N_s$ in year $s$ and none across years;
+  $G^{bc}_{tt'} = \sum_s(\delta_{ts} - a_{bs})(\delta_{t's} - a_{cs})N_{s,bc}$.
+\end{definition}
+
+\begin{lemma}[Covariance of two residuals]\label{lem:resCoef_dot}
+  \lean{Credibility.Cumulants.resCoef_dot}
+  \leanok
+  \uses{def:resCross}
+  The residual coefficient vectors give $\operatorname{cov}(r_{bt}, r_{ct'}) = G^{bc}_{tt'}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only cohort $b$, cohort $c$ and equal years contribute.
+\end{proof}
+
+\begin{theorem}[Variance of the shock-covariance estimator]\label{thm:variance_crossResid}
+  \lean{Credibility.Cumulants.variance_crossResid}
+  \leanok
+  \uses{def:resCross}
+  Cells $X_{ct} = L_c + e_{ct}$ with any random levels and noise in $L^4$, uncorrelated across
+  years with covariance $N_s$ in year $s$, whose fourth cumulants vanish unless all four cells are
+  in the same year ($k_s$ there). For weights $\sum_ta_{ct} = 1$ and any $D$,
+  \[ \operatorname{Var}\frac{\sum_tr_{it}r_{jt}}{D} = \frac{1}{D^2}\Bigl(\sum_{t,t'}\bigl[G^{ii}_{tt'}G^{jj}_{tt'}
+     + G^{ij}_{tt'}G^{ji}_{tt'}\bigr] + \sum_s(1 - a_{is} - a_{js} + Ta_{is}a_{js})^2k_{s,ijij}\Bigr). \]
+  With $D = \sum_td_{ijt}$ this is the variance of $\hat C_{ij}$ in the shock model.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_mul_lin, lem:resCoef_dot, lem:sampleCov_algebra}
+  The levels cancel in the residuals; Theorem~\ref{thm:variance_sum_mul_lin} with the residual
+  coefficients, and the cumulant term sums over one year.
+\end{proof}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:
@@ -8181,7 +8235,7 @@ This section assumes a noise family (\texttt{VarianceFunction.lean}); nothing in
 \end{proof}
 
 \begin{lemma}[Quadratic forms of $L^4$ cells]\label{lem:memLp_quad}
-  \lean{Credibility.VarianceFunction.holder442, Credibility.VarianceFunction.memLp_quad}
+  \lean{Credibility.VarianceFunction.memLp_quad}
   \leanok
   A quadratic form in $L^4$ cells is in $L^2$.
 \end{lemma}

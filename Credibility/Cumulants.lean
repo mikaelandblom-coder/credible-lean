@@ -77,6 +77,11 @@ lemma integrable_mul2 [IsFiniteMeasure P] {f g : Ω → ℝ} (hf : MemLp f 4 P) 
     Integrable (fun ω => f ω * g ω) P := by
   simpa using integrable_mul3 hf hg (memLp_const 1)
 
+/-- Hölder for two `L⁴` factors: `1/4 + 1/4 = 1/2`. -/
+lemma holder442 : ENNReal.HolderTriple 4 4 2 := ⟨by
+  rw [show (4 : ENNReal) = 2 * 2 by norm_num, ENNReal.mul_inv (by simp) (by simp),
+    ← two_mul, ← mul_assoc, ENNReal.mul_inv_cancel (by simp) (by simp), one_mul]⟩
+
 omit [Fintype ι] [MeasurableSpace Ω] in
 lemma sum_mul_sum_eq {α β : Type*} (s : Finset α) (t : Finset β) (a : α → ℝ) (b : β → ℝ)
     (g : α → Ω → ℝ) (h : β → Ω → ℝ) (ω : Ω) :
@@ -953,16 +958,24 @@ lemma sum_pairMat (g : J → J → ℝ) (i j : J) :
     sum_ite_irrel, sum_const_zero, sum_ite_eq', mem_univ, ite_true]
 
 omit [DecidableEq J] in
-/-- A fourth table that vanishes unless all four cells are in the same year. -/
-lemma sum_yearDiag (F : J × T → J × T → J × T → J × T → ℝ) (k : J → J → J → J → ℝ) :
+/-- A fourth table that vanishes unless all four cells are in the same year, with a table per year. -/
+lemma sum_yearDiag' (F : J × T → J × T → J × T → J × T → ℝ) (k : T → J → J → J → J → ℝ) :
     ∑ p, ∑ q, ∑ r, ∑ s, F p q r s
-      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
-      = ∑ t, ∑ a, ∑ b, ∑ d, ∑ e, F (a, t) (b, t) (d, t) (e, t) * k a b d e := by
+      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.2 p.1 q.1 r.1 s.1 else 0)
+      = ∑ t, ∑ a, ∑ b, ∑ d, ∑ e, F (a, t) (b, t) (d, t) (e, t) * k t a b d e := by
   simp only [Fintype.sum_prod_type, mul_ite, mul_zero, ite_and]
   rw [sum_comm]
   refine sum_congr rfl fun t _ => ?_
   refine sum_congr rfl fun a _ => ?_
   simp only [sum_ite_irrel, sum_const_zero, sum_ite_eq, mem_univ, ite_true]
+
+omit [DecidableEq J] in
+/-- A fourth table that vanishes unless all four cells are in the same year. -/
+lemma sum_yearDiag (F : J × T → J × T → J × T → J × T → ℝ) (k : J → J → J → J → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, F p q r s
+      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
+      = ∑ t, ∑ a, ∑ b, ∑ d, ∑ e, F (a, t) (b, t) (d, t) (e, t) * k a b d e :=
+  sum_yearDiag' F fun _ => k
 
 variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
 
@@ -1104,5 +1117,187 @@ theorem variance_sampleCov (Z : J × T → Ω → ℝ) (μ : J → ℝ) (V : Mat
   ring
 
 end SampleCovariance
+
+section SumsOfProducts
+
+/-! ### The variance of a sum of products of two linear statistics -/
+
+variable {K : Type*} [Fintype K]
+
+/-- **Variance of a sum of products of linear statistics.** For cells `eₚ` in `L⁴` with second
+moments `C` and fourth moments `κ₄ + CC + CC + CC` (for centred cells: covariance `C` and fourth
+cumulant `κ₄`), and coefficient vectors `uₜ`, `vₜ`,
+`Var Σₜ (uₜ·e)(vₜ·e) = Σₜₜ' [(uₜCuₜ')(vₜCvₜ') + (uₜCvₜ')(vₜCuₜ') + κ₄(uₜ, vₜ, uₜ', vₜ')]`.
+No symmetry and no distribution is assumed. -/
+theorem variance_sum_mul_lin (e : ι → Ω → ℝ) (hL : ∀ p, MemLp (e p) 4 P) (C : Matrix ι ι ℝ)
+    (κ₄ : ι → ι → ι → ι → ℝ) (h2 : ∀ p q, ∫ ω, e p ω * e q ω ∂P = C p q)
+    (h4 : ∀ p q r s, ∫ ω, e p ω * e q ω * e r ω * e s ω ∂P
+      = κ₄ p q r s + C p q * C r s + C p r * C q s + C p s * C q r)
+    (u v : K → ι → ℝ) :
+    variance (fun ω => ∑ t, (∑ p, u t p * e p ω) * (∑ q, v t q * e q ω)) P
+      = ∑ t, ∑ t', ((u t ⬝ᵥ (C *ᵥ u t')) * (v t ⬝ᵥ (C *ᵥ v t'))
+          + (u t ⬝ᵥ (C *ᵥ v t')) * (v t ⬝ᵥ (C *ᵥ u t'))
+          + ∑ p, ∑ q, ∑ r, ∑ s, u t p * v t q * u t' r * v t' s * κ₄ p q r s) := by
+  set U : K → Ω → ℝ := fun t ω => ∑ p, u t p * e p ω
+  set W : K → Ω → ℝ := fun t ω => ∑ q, v t q * e q ω
+  have hU : ∀ t, MemLp (U t) 4 P := fun t => memLp_finsetSum _ fun p _ => (hL p).const_mul _
+  have hW : ∀ t, MemLp (W t) 4 P := fun t => memLp_finsetSum _ fun p _ => (hL p).const_mul _
+  have hQ : MemLp (fun ω => ∑ t, U t ω * W t ω) 2 P := by
+    have := holder442
+    exact memLp_finsetSum _ fun t _ => (hU t).mul (hW t) (p := 4) (q := 4) (r := 2)
+  have i2 : ∀ p q, Integrable (fun ω => e p ω * e q ω) P := fun p q =>
+    integrable_mul2 (hL p) (hL q)
+  have i4 : ∀ p q r s, Integrable (fun ω => e p ω * e q ω * (e r ω * e s ω)) P :=
+    fun p q r s => by simpa only [mul_assoc] using integrable_mul4 (hL p) (hL q) (hL r) (hL s)
+  have hpair : ∀ t ω, U t ω * W t ω
+      = ∑ pq : ι × ι, u t pq.1 * v t pq.2 * (e pq.1 ω * e pq.2 ω) := fun t ω => by
+    simp only [U, W]; rw [sum_mul_sum_eq, ← Fintype.sum_prod_type']
+  have iUW : ∀ t, Integrable (fun ω => U t ω * W t ω) P := fun t => by
+    simp only [hpair]
+    exact integrable_finsetSum _ fun pq _ => (i2 pq.1 pq.2).const_mul _
+  have E2 : ∀ t, ∫ ω, U t ω * W t ω ∂P = u t ⬝ᵥ (C *ᵥ v t) := fun t => by
+    simp only [U, W]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ i2]
+    simp only [h2, dotProduct, mulVec, mul_sum]
+    exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by ring
+  have dpm : ∀ x y : ι → ℝ, x ⬝ᵥ (C *ᵥ y) = ∑ p, ∑ q, x p * C p q * y q := fun x y => by
+    simp only [dotProduct, mulVec, mul_sum]
+    exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by ring
+  have E4 : ∀ t t', ∫ ω, (U t ω * W t ω) * (U t' ω * W t' ω) ∂P
+      = (u t ⬝ᵥ (C *ᵥ v t)) * (u t' ⬝ᵥ (C *ᵥ v t'))
+        + ((u t ⬝ᵥ (C *ᵥ u t')) * (v t ⬝ᵥ (C *ᵥ v t'))
+          + (u t ⬝ᵥ (C *ᵥ v t')) * (v t ⬝ᵥ (C *ᵥ u t'))
+          + ∑ p, ∑ q, ∑ r, ∑ s, u t p * v t q * u t' r * v t' s * κ₄ p q r s) := fun t t' => by
+    simp only [hpair]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ fun pq rs => i4 pq.1 pq.2 rs.1 rs.2]
+    simp only [show ∀ p q r s, ∫ ω, e p ω * e q ω * (e r ω * e s ω) ∂P
+        = ∫ ω, e p ω * e q ω * e r ω * e s ω ∂P from fun p q r s => by simp only [mul_assoc],
+      h4, Fintype.sum_prod_type, mul_add, sum_add_distrib]
+    have P1 : ∑ p, ∑ q, ∑ r, ∑ s, u t p * v t q * (u t' r * v t' s) * (C p q * C r s)
+        = (u t ⬝ᵥ (C *ᵥ v t)) * (u t' ⬝ᵥ (C *ᵥ v t')) := by
+      rw [dpm, dpm, sum_mul_sum]; simp only [sum_mul_sum]
+      refine sum_congr rfl fun p _ => ?_
+      rw [sum_comm]
+      exact sum_congr rfl fun q _ => sum_congr rfl fun r _ => sum_congr rfl fun s _ => by ring
+    have P2 : ∑ p, ∑ q, ∑ r, ∑ s, u t p * v t q * (u t' r * v t' s) * (C p r * C q s)
+        = (u t ⬝ᵥ (C *ᵥ u t')) * (v t ⬝ᵥ (C *ᵥ v t')) := by
+      rw [dpm, dpm, sum_mul_sum]; simp only [sum_mul_sum]
+      exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => sum_congr rfl fun r _ =>
+        sum_congr rfl fun s _ => by ring
+    have P3 : ∑ p, ∑ q, ∑ r, ∑ s, u t p * v t q * (u t' r * v t' s) * (C p s * C q r)
+        = (u t ⬝ᵥ (C *ᵥ v t')) * (v t ⬝ᵥ (C *ᵥ u t')) := by
+      rw [dpm, dpm, sum_mul_sum]; simp only [sum_mul_sum]
+      refine sum_congr rfl fun p _ => sum_congr rfl fun q _ => ?_
+      rw [sum_comm]
+      exact sum_congr rfl fun r _ => sum_congr rfl fun s _ => by ring
+    rw [P1, P2, P3]
+    simp only [mul_assoc]
+    ring
+  have iUW2 : ∀ t t', Integrable (fun ω => (U t ω * W t ω) * (U t' ω * W t' ω)) P :=
+    fun t t' => by
+    simp only [hpair]
+    exact integrable_sum_mul_sum _ _ _ _ _ _ fun pq rs => i4 pq.1 pq.2 rs.1 rs.2
+  have hEQ : ∫ ω, ∑ t, U t ω * W t ω ∂P = ∑ t, u t ⬝ᵥ (C *ᵥ v t) := by
+    rw [integral_finsetSum _ fun t _ => iUW t]; exact sum_congr rfl fun t _ => E2 t
+  have hEQ2 : ∫ ω, (∑ t, U t ω * W t ω) ^ 2 ∂P
+      = ∑ t, ∑ t', ∫ ω, (U t ω * W t ω) * (U t' ω * W t' ω) ∂P := by
+    simp only [sq, sum_mul_sum]
+    rw [integral_finsetSum _ fun t _ => integrable_finsetSum _ fun t' _ => iUW2 t t']
+    exact sum_congr rfl fun t _ => integral_finsetSum _ fun t' _ => iUW2 t t'
+  rw [variance_eq_sub hQ]
+  simp only [Pi.pow_apply]
+  rw [hEQ2, hEQ]
+  simp only [E4, sq, sum_mul_sum, sum_add_distrib]
+  ring
+end SumsOfProducts
+
+section CrossResiduals
+
+variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+
+/-- `cov(rᵢₜ, rⱼₜ')` for residuals `rᵢₜ = Xᵢₜ − Σₛ aᵢₛXᵢₛ` when the noise is uncorrelated across
+years with covariance `Nₛ` in year `s`: `Σₛ (δₜₛ − aᵢₛ)(δₜ'ₛ − aⱼₛ) Nₛᵢⱼ`. -/
+def resCross (N : T → Matrix J J ℝ) (a : J → T → ℝ) (i j : J) (t t' : T) : ℝ :=
+  ∑ s, ((if t = s then 1 else 0) - a i s) * ((if t' = s then 1 else 0) - a j s) * N s i j
+
+/-- The coefficients of the residual `rᶜₜ` on the cells. -/
+def resCoef (a : J → T → ℝ) (c : J) (t : T) (p : J × T) : ℝ :=
+  if p.1 = c then (if t = p.2 then 1 else 0) - a c p.2 else 0
+
+/-- The covariance table of cells uncorrelated across years, with covariance `Nₛ` in year `s`. -/
+def yearCov (N : T → Matrix J J ℝ) : Matrix (J × T) (J × T) ℝ :=
+  of fun p q => if p.2 = q.2 then N p.2 p.1 q.1 else 0
+
+/-- `uᵇₜ·(N ⊗ years)uᶜₜ' = cov(rᵇₜ, rᶜₜ')`. -/
+lemma resCoef_dot (N : T → Matrix J J ℝ) (a : J → T → ℝ) (b c : J) (t t' : T) :
+    resCoef a b t ⬝ᵥ (yearCov N *ᵥ resCoef a c t') = resCross N a b c t t' := by
+  simp only [dotProduct, mulVec, resCoef, resCross, yearCov, of_apply, Fintype.sum_prod_type, ite_mul,
+    zero_mul, mul_ite, mul_zero, sum_ite_eq', mem_univ, ite_true, sum_ite_irrel, sum_const_zero]
+  simp only [sum_ite_eq, mem_univ, ite_true]
+  exact sum_congr rfl fun s _ => by ring
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+
+/-- **Variance of the shock-covariance estimator** (numerator of `Shock.crossHat`, divided by any
+`D`). Cells `Xᶜₜ = Lᶜ + eᶜₜ` with any random levels `L` and noise in `L⁴` that is uncorrelated
+across years with covariance `Nₛ` in year `s`, whose fourth cumulants vanish unless all four cells
+are in the same year, `kₛ` there (e.g. independent years: the year shock plus process noise).
+With weights `Σₜ aᶜₜ = 1` and residuals `rᶜₜ = Xᶜₜ − Σₛ aᶜₛXᶜₛ`,
+`Var(Σₜ rᵢₜrⱼₜ / D) = (Σₜₜ' [GⁱⁱGʲʲ + GⁱʲGʲⁱ]ₜₜ' + Σₛ (1 − aᵢₛ − aⱼₛ + |T| aᵢₛaⱼₛ)² kₛᵢⱼᵢⱼ) / D²`
+with `Gᵇᶜₜₜ' = cov(rᵇₜ, rᶜₜ')` (`resCross`). The levels cancel; skewness does not enter. -/
+theorem variance_crossResid (e : J × T → Ω → ℝ) (L : J → Ω → ℝ) (hL : ∀ p, MemLp (e p) 4 P)
+    (N : T → Matrix J J ℝ) (k : T → J → J → J → J → ℝ)
+    (h2 : ∀ p q, ∫ ω, e p ω * e q ω ∂P = yearCov N p q)
+    (h4 : ∀ p q r s, ∫ ω, e p ω * e q ω * e r ω * e s ω ∂P
+      = (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.2 p.1 q.1 r.1 s.1 else 0)
+        + yearCov N p q * yearCov N r s + yearCov N p r * yearCov N q s
+        + yearCov N p s * yearCov N q r)
+    (a : J → T → ℝ) (ha : ∀ c, ∑ t, a c t = 1) (D : ℝ) (i j : J) :
+    variance (fun ω => (∑ t, (L i ω + e (i, t) ω - ∑ s, a i s * (L i ω + e (i, s) ω))
+        * (L j ω + e (j, t) ω - ∑ s, a j s * (L j ω + e (j, s) ω))) / D) P
+      = (∑ t, ∑ t', (resCross N a i i t t' * resCross N a j j t t'
+            + resCross N a i j t t' * resCross N a j i t t')
+          + ∑ s, (1 - a i s - a j s + Fintype.card T * (a i s * a j s)) ^ 2 * k s i j i j)
+        / D ^ 2 := by
+  have hres : ∀ c t ω, L c ω + e (c, t) ω - ∑ s, a c s * (L c ω + e (c, s) ω)
+      = ∑ p, resCoef a c t p * e p ω := fun c t ω => by
+    simp only [resCoef, Fintype.sum_prod_type, ite_mul, zero_mul, sum_ite_irrel, sum_const_zero,
+      sum_ite_eq', mem_univ, ite_true, sub_mul, one_mul, sum_sub_distrib, sum_ite_eq, mul_add,
+      sum_add_distrib, ← sum_mul, ha]
+    ring
+  have hfun : (fun ω => (∑ t, (L i ω + e (i, t) ω - ∑ s, a i s * (L i ω + e (i, s) ω))
+        * (L j ω + e (j, t) ω - ∑ s, a j s * (L j ω + e (j, s) ω))) / D)
+      = fun ω => D⁻¹ * ∑ t, (∑ p, resCoef a i t p * e p ω) * (∑ q, resCoef a j t q * e q ω) := by
+    funext ω; simp only [hres]; rw [div_eq_inv_mul]
+  rw [hfun, variance_const_mul,
+    variance_sum_mul_lin e hL (yearCov N) _ h2 h4 (resCoef a i) (resCoef a j)]
+  simp only [resCoef_dot]
+  have hk : ∀ t t', ∑ p, ∑ q, ∑ r, ∑ s, resCoef a i t p * resCoef a j t q * resCoef a i t' r
+      * resCoef a j t' s
+      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.2 p.1 q.1 r.1 s.1 else 0)
+      = ∑ s, ((if t = s then 1 else 0) - a i s) * ((if t = s then 1 else 0) - a j s)
+        * (((if t' = s then 1 else 0) - a i s) * ((if t' = s then 1 else 0) - a j s))
+        * k s i j i j := fun t t' => by
+    rw [sum_yearDiag' (fun p q r s => resCoef a i t p * resCoef a j t q * resCoef a i t' r
+      * resCoef a j t' s)]
+    refine sum_congr rfl fun s _ => ?_
+    simp only [resCoef, ite_mul, zero_mul, mul_ite, mul_zero, sum_ite_eq', mem_univ, ite_true]
+    ring
+  have hsum : ∀ s, ∑ t, ((if t = s then 1 else 0) - a i s) * ((if t = s then 1 else 0) - a j s)
+      = 1 - a i s - a j s + Fintype.card T * (a i s * a j s) := fun s => by
+    simp only [sub_mul, mul_sub, ite_mul, mul_ite, one_mul, mul_one, zero_mul, mul_zero,
+      sum_sub_distrib, sum_ite_eq', mem_univ, ite_true, sum_const, card_univ, nsmul_eq_mul]
+    ring
+  simp only [hk, sum_add_distrib]
+  have h4t : ∑ t, ∑ t', ∑ s, ((if t = s then 1 else 0) - a i s) * ((if t = s then 1 else 0) - a j s)
+        * (((if t' = s then 1 else 0) - a i s) * ((if t' = s then 1 else 0) - a j s)) * k s i j i j
+      = ∑ s, (1 - a i s - a j s + Fintype.card T * (a i s * a j s)) ^ 2 * k s i j i j := by
+    rw [sum_congr rfl fun t _ => sum_comm, sum_comm]
+    refine sum_congr rfl fun s _ => ?_
+    rw [← hsum s, sq, sum_mul_sum, sum_mul]
+    exact sum_congr rfl fun t _ => by rw [sum_mul]
+  rw [h4t, ← sum_add_distrib, div_eq_inv_mul, inv_pow]
+
+end CrossResiduals
 
 end Credibility.Cumulants

@@ -56,11 +56,6 @@ theorem variance_compProd {f : α × β → ℝ} (hf : MemLp f 2 (μ ⊗ₘ κ))
   rw [Measure.integral_compProd hf2, Measure.integral_compProd hf1]
   ring
 
-/-- Hölder for two `L⁴` factors: `1/4 + 1/4 = 1/2`. -/
-lemma holder442 : ENNReal.HolderTriple 4 4 2 := ⟨by
-  rw [show (4 : ENNReal) = 2 * 2 by norm_num, ENNReal.mul_inv (by simp) (by simp),
-    ← two_mul, ← mul_assoc, ENNReal.mul_inv_cancel (by simp) (by simp), one_mul]⟩
-
 variable {ι : Type*} [Fintype ι] {S : Type*} [Fintype S] [DecidableEq S]
 
 omit [IsProbabilityMeasure μ] [IsMarkovKernel κ] [DecidableEq S] in
@@ -71,7 +66,7 @@ lemma memLp_quad {ν : Measure β} (ξ : S → β → ℝ) (hL : ∀ s, MemLp (�
       * (m j + ∑ s, B j s * ξ s b)) 2 ν := by
   have hZ : ∀ i, MemLp (fun b => m i + ∑ s, B i s * ξ s b) 4 ν := fun i =>
     (memLp_const _).add (memLp_finsetSum _ fun s _ => (hL s).const_mul _)
-  have := holder442
+  have := Cumulants.holder442
   refine memLp_finsetSum _ fun i _ => memLp_finsetSum _ fun j _ => ?_
   exact ((hZ i).const_mul (A i j)).mul (hZ j) (p := 4) (q := 4) (r := 2)
 
