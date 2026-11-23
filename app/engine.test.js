@@ -883,3 +883,31 @@ test('BLUP taper: the BLUP (Core.blupWeight_optimal) on corr taper’s K̂; beat
   }
   assert.ok(a < 0.9 * b, `BLUP taper ${a} vs BLUP ${b}`);
 });
+
+test('G2 V: exact Var Σ̂ᵢⱼ (sigmaHatVar); unit weights give variance_crossResid’s closed form; matches Monte Carlo with the shock kurtosis', () => {
+  // Closed form of Cumulants.variance_crossResid (D = 1): Σₜₜ' [GⁱⁱGʲʲ + GⁱʲGʲⁱ] + Σₛ (1 − aᵢₛ − aⱼₛ + T aᵢₛaⱼₛ)² kₛᵢⱼᵢⱼ.
+  const world = E.makeWorld({ J: 4, T: 5, rho: 0.5, noiseSpread: 1, spread: 1.5 }), { w, J, T } = world;
+  const sd = world.truth.sigmaj2.map(Math.sqrt), cov = sd.map((a, i) => sd.map((b, j) => (i === j ? a * a : 0.5 * a * b)));
+  const kappa = 3, wt = w.map(sum), a = (i, s) => w[i][s] / wt[i], dl = (t, s) => (t === s ? 1 : 0);
+  const N = (s, b, c) => cov[b][c] / Math.sqrt(w[b][s] * w[c][s]);
+  const resCross = (b, c, t, t2) => sum(Array.from({ length: T }, (_, s) => (dl(t, s) - a(b, s)) * (dl(t2, s) - a(c, s)) * N(s, b, c)));
+  const V = E.sigmaHatVar(w, cov, kappa, true);
+  for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) {
+    let q = 0;
+    for (let t = 0; t < T; t++) for (let t2 = 0; t2 < T; t2++) q += resCross(i, i, t, t2) * resCross(j, j, t, t2) + resCross(i, j, t, t2) * resCross(j, i, t, t2);
+    for (let s = 0; s < T; s++) q += (1 - a(i, s) - a(j, s) + T * a(i, s) * a(j, s)) ** 2 * kappa * N(s, i, j) ** 2;
+    close(V[i][j], q, 1e-10, `crossResid ${i}${j}`);
+  }
+  // Monte Carlo on the app's weighted Σ̂ (eq. (39)), gamma world: shock kurtosis 6/k = 3.
+  const g = E.makeWorld({ rho: 0.6, T: 5 }), gs = g.truth.sigmaj2.map(Math.sqrt);
+  const gc = gs.map((x, i) => gs.map((y, j) => (i === j ? x * x : 0.6 * x * y)));
+  const Vg = E.sigmaHatVar(g.w, gc, 3), r = E.rng(5), M = 20000;
+  let m = 0, m2 = 0;
+  for (let k = 0; k < M; k++) { const x = E.sigmaHat(E.draw(g, r).data).Sig[0][1]; m += x; m2 += x * x; }
+  const v = m2 / M - (m / M) ** 2;
+  assert.ok(Math.abs(v / Vg[0][1] - 1) < 0.08 && v > 1.25 * E.sigmaHatVar(g.w, gc, 0)[0][1], `MC ${v} vs ${Vg[0][1]}`);
+  // covTheta with the true table: θ* = Σs²/(Σs² + ΣV) (Damping.bestTheta), in (0, 1); κ lowers it.
+  const d = E.draw(g, r).data, t0 = E.covTheta(d, 0, { cov: gc }).theta, t3 = E.covTheta(d, 3, { cov: gc }).theta;
+  assert.ok(t0 > t3 && t3 > 0 && t0 < 1);
+  assert.ok(E.fitCorr(d, { thetaRule: 'cov' }).thetaFit <= 0.999);
+});

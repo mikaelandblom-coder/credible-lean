@@ -345,3 +345,35 @@ of the blend floor; "best fixed ρ" sweeps the taper as an oracle.
     each distance to average over (n_d grows with J).
 
 App: fit "BLUP taper" (`fitBLUPTaper`), for ordered regions with many of them; not a default.
+
+## The exact `V` in the damping rule (`damping-cumulant.js`, output `damping-cumulant.out.txt`, 2026-11-23)
+
+G2 asked to plug the proved variance of `Σ̂ᵢⱼ` into `θ* = Σs²/(Σs² + ΣV)` (`Damping.bestTheta`) in
+covariance form. The app's `Σ̂ᵢⱼ` (eq. (39)) carries `√(wᵢₜwⱼₜ)`, so its exact variance is
+`Cumulants.variance_sum_mul_lin` with the residual coefficients `√wᵢₜ(δₜₛ − aᵢₛ)`; with unit
+weights it is `variance_crossResid` (Node test). Engine: `sigmaHatVar`, `covTheta`,
+`fitCorr(data, { thetaRule: 'cov', kappa })`. Plug-ins as S3 (one common r̄, σ̂ⱼ); `κ` the excess
+kurtosis of the common year shock (`kₛᵢⱼᵢⱼ = κ covᵢⱼ²/(wᵢₛwⱼₛ)`), 0 or the world's true 3 (testing
+only). Oracle: `θ*` from the true table. 32 worlds, 1000 draws, MSE in % of the floor.
+
+- S38. *[exact + numerical]* **The formula is right and the kurtosis term is large.** Monte Carlo
+    `Var Σ̂ᵢⱼ` (40 000 draws) agrees with `sigmaHatVar` within 1–3% with the true κ; normal theory
+    (κ = 0) is 30–45% too small in the gamma worlds. Exact: for `i ≠ j` only the *shared* shock's
+    kurtosis enters (region parts independent across regions), so the Lomax claims (α = 3, infinite
+    kurtosis of the region part) leave `Var Σ̂ᵢⱼ` unchanged (MC: same within 2%).
+- S39. *[numerical]* **The covariance-form θ̂ damps more than S3, and that hurts at high ρ.** Mean θ̂ at
+    ρ = 0.9, T = 10: S3 0.99, cov κ = 0 0.79, cov κ true 0.64, oracle θ* 0.65. Rates: S3 106–110,
+    cov κ = 0 107–114, cov κ true 110–117 (T = 5: 122 / 127 / 132). At ρ ≤ 0.6 all within ±2 points
+    (cov sometimes 1–2 better with σⱼ spread). κ true lands on the oracle θ* everywhere, so the
+    plug-ins are fine: the *target* is what is wrong, as in S12. Gamma and Lomax worlds behave the same.
+- S40. *[exact + hypothesis]* **Why S3 works: its V is the correlation's, not the covariance's.**
+    Balanced, normal: `Var ŝᵢⱼ/(σᵢσⱼ)² = (1 + ρ²)/(T−1)` (`variance_sampleCov`), `Var r̂ᵢⱼ ≈ (1 − ρ²)²/(T−1)`.
+    At ρ = 0.9 that is 1.81 against 0.036: dividing by σ̂ᵢσ̂ⱼ removes the noise the pair shares with
+    the variances. *[hypothesis]* GLS uses `K̂` through ratios (`b`, `z` are scale-free in `K̂`), so the
+    correlation-scale error is the one that matters, and the extra damping the covariance V asks for
+    throws away the in-sample shock (S13).
+
+**Consequence.** Keep S3 as the app's rule; `thetaRule: 'cov'` stays a studies option. An estimate
+`κ̂₄` from the residuals is *not* worth planning for G2: the true κ already makes the rule worse.
+The next candidate is the exact `Var r̂ᵢⱼ` (a ratio; delta method, needs `Var`/`Cov` of all three
+entries, which `variance_sum_mul_lin` gives) with κ, to see whether κ moves S3's θ̂ the right way.

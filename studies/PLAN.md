@@ -169,6 +169,11 @@ the floor line and in the tests.
   `|θ − θ*| ≤ min(θ*, 1 − θ*)` (`safe_iff`). The app's rule is the one-entry `θ*` with normal-theory
   `V` plugged in. Open: the rates' MSE (S12: they want less damping), and `θ̂` with estimated
   inputs. App: the damping note now names `bestTheta_optimal`; the badge stays (it is about `K̂ ≻ 0`).*
+  *Exact `V` tried 2026-11-23 (`studies/damping-cumulant.js`, S38–S40): `θ*` in covariance form with
+  the proved `Var Σ̂ᵢⱼ` (`variance_sum_mul_lin`, √w weights; `variance_crossResid` for unit weights),
+  κ = 0 or the true shock κ, matches the oracle `θ*` but damps more than S3 and costs up to 11 points
+  at ρ = 0.9 (gamma and Lomax worlds alike; ±2 at ρ ≤ 0.6). App: S3 stays; `thetaRule: 'cov'` is a
+  studies option. No `κ̂₄` for G2. Open: the exact `Var r̂ᵢⱼ` (correlation scale, delta method) with κ.*
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.
@@ -632,7 +637,8 @@ One chat per step; none needs Lean except step 5.
   rule. *Weighted `Shock.crossHat` proved 2026-11-23* (`Cumulants.variance_crossResid`): exact
   `Var Ĉᵢⱼ` for any cohort weights and volumes, from the year covariances `Nₛ` (shock + process
   noise) and the within-year fourth cumulants; the levels cancel. App: this is the `V` to plug into
-  `θ* = Σs²/(Σs² + ΣV)` (`Damping.bestTheta`) in covariance form, with `κ₄ = 0` as the default.
+  `θ* = Σs²/(Σs² + ΣV)` (`Damping.bestTheta`) in covariance form, with `κ₄ = 0` as the default. *Done 2026-11-23:
+  worse than S3 for the rates (S39), see G2.*
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like

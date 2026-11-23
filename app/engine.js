@@ -655,6 +655,75 @@
     return { rho: best, lags };
   }
 
+  /**
+   * Exact variance of the off-diagonal Σ̂ᵢⱼ of eq. (39) (sigmaHat) when the years are independent,
+   * from given second and fourth moments (Cumulants.variance_sum_mul_lin with the residual
+   * coefficients uᵢₜ(s) = cᵢₜ(δₜₛ − aᵢₛ), cᵢₜ = √wᵢₜ, aᵢₛ = wᵢₛ/wᵢ*; with every cᵢₜ = 1 it is
+   * Cumulants.variance_crossResid, the numerator of Shock.crossHat). Inputs, per vehicle-year:
+   * cov the J×J noise covariance (cell covariance in year s: covᵢⱼ/√(wᵢₛwⱼₛ)), and kappa the
+   * excess kurtosis of the common year shock, so that the within-year fourth cumulant of the pair
+   * is kₛᵢⱼᵢⱼ = κ·covᵢⱼ²/(wᵢₛwⱼₛ) (one shock ηₜ shared by all regions, the region parts independent
+   * across regions: their own kurtosis, e.g. the Lomax claims, does not enter for i ≠ j).
+   *   Var Σ̂ᵢⱼ = (Σₜₜ' [GⁱⁱGʲʲ + GⁱʲGʲⁱ]ₜₜ' + Σₛ (Σₜ uᵢₜ(s)uⱼₜ(s))² kₛᵢⱼᵢⱼ) / Dᵢⱼ²,
+   *   Gᵇᶜₜₜ' = Σₛ uᵦₜ(s) u꜀ₜ'(s) covᵦ꜀/√(wᵦₛw꜀ₛ),  Dᵢⱼ = Sᵢⱼ + (T−2)wᵢ* wⱼ* / Sᵢⱼ.
+   * Returns the J×J table (diagonal left 0).
+   */
+  function sigmaHatVar(w, cov, kappa, unit) {
+    const J = w.length, T = w[0].length, wt = w.map(sum);
+    const c = (i, t) => (unit ? 1 : Math.sqrt(w[i][t]));
+    const u = (i, t, s) => c(i, t) * ((t === s ? 1 : 0) - w[i][s] / wt[i]);
+    const G = (b, d) => {
+      const g = [];
+      for (let t = 0; t < T; t++) {
+        g.push([]);
+        for (let t2 = 0; t2 < T; t2++) {
+          let x = 0;
+          for (let s = 0; s < T; s++) x += u(b, t, s) * u(d, t2, s) * cov[b][d] / Math.sqrt(w[b][s] * w[d][s]);
+          g[t].push(x);
+        }
+      }
+      return g;
+    };
+    const Gd = w.map((_, i) => G(i, i)), V = w.map(() => new Array(J).fill(0));
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) {
+      const Gij = G(i, j);
+      let q = 0;
+      for (let t = 0; t < T; t++) for (let t2 = 0; t2 < T; t2++) q += Gd[i][t][t2] * Gd[j][t][t2] + Gij[t][t2] * Gij[t2][t];
+      if (kappa) for (let s = 0; s < T; s++) {
+        let m = 0;
+        for (let t = 0; t < T; t++) m += u(i, t, s) * u(j, t, s);
+        q += m * m * kappa * cov[i][j] ** 2 / (w[i][s] * w[j][s]);
+      }
+      let S = 0;
+      for (let t = 0; t < T; t++) S += unit ? 1 : Math.sqrt(w[i][t] * w[j][t]);
+      const D = unit ? 1 : S + (T - 2) * wt[i] * wt[j] / S;
+      V[i][j] = V[j][i] = q / (D * D);
+    }
+    return V;
+  }
+
+  /**
+   * θ̂ in covariance form (PLAN G2, Damping.bestTheta): θ̂ = Σᵢ<ⱼ sᵢⱼ² / Σᵢ<ⱼ (sᵢⱼ² + Vᵢⱼ), with sᵢⱼ the
+   * mean of Σ̂ᵢⱼ and Vᵢⱼ its exact variance (sigmaHatVar). Plug-ins as in S3: one common correlation
+   * r̄ (the average estimated one), so covᵢⱼ = r̄σ̂ᵢσ̂ⱼ (σ̂ⱼ² = wⱼ*Σ̂ⱼⱼ) and sᵢⱼ = covᵢⱼSᵢⱼ/(wᵢ*wⱼ*);
+   * kappa the shock's excess kurtosis (0: normal theory). opts.cov, opts.s: force the tables (tests,
+   * the oracle). Returns { theta, rbar }.
+   */
+  function covTheta(data, kappa, opts) {
+    const o = opts || {}, { wt, S, Sig } = sigmaHat(data), J = Sig.length;
+    let s = 0, n = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { s += Sig[i][j] / Math.sqrt(Sig[i][i] * Sig[j][j]); n++; }
+    const rbar = Math.max(-1, Math.min(1, s / n)), sd = Sig.map((row, j) => Math.sqrt(row[j] * wt[j]));
+    const cov = o.cov || sd.map((a, i) => sd.map((b, j) => (i === j ? a * a : rbar * a * b)));
+    const V = sigmaHatVar(data.w, cov, kappa || 0);
+    let num = 0, den = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) {
+      const m = cov[i][j] * S[i][j] / (wt[i] * wt[j]);
+      num += m * m; den += m * m + V[i][j];
+    }
+    return { theta: den > 0 ? num / den : 0, rbar };
+  }
+
   /** The old grid rule (opts.thetaRule = 'grid', kept for the studies): the largest of these with K̂ ≻ 0. */
   const THETAS = [0.95, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
 
@@ -667,6 +736,8 @@
    *   (taperRho with every pair at distance 1; studies/taper.js: up to 12 points better than the
    *   old fixed θ = 0.95), lowered in steps of 0.05 only if K̂ is not positive definite.
    *   opts.thetaRule = 'grid': the old rule, the largest of THETAS with K̂ ≻ 0.
+   *   opts.thetaRule = 'cov': θ̂ in covariance form with the exact variance (covTheta), opts.kappa the
+   *   shock's excess kurtosis (default 0; studies only, the app does not estimate it yet).
    * opts.taper = 'distance': instead of damping, taper by ρ^|i−j| over the region order
    *   (K̂ = R ⊙ (Σ̂ + τ̂²I), Lean: posDef_distTaper_hadamard), ρ̂ by taperRho (opts.rho forces it);
    *   lowered in steps of 0.05 only if K̂ is not positive definite.
@@ -703,7 +774,7 @@
       }
       thetaFit = o.theta != null ? o.theta : THETAS[0];
     } else {
-      thetaFit = Math.min(taperRho(Sig, T, () => 1).rho, 0.999);   // below 1 so posDef_shrinkOffDiag applies (θ̂ = 1 iff r̄ = ±1, e.g. T = 2)
+      thetaFit = Math.min(o.thetaRule === 'cov' ? Math.round(covTheta(data, o.kappa || 0).theta * 1000) / 1000 : taperRho(Sig, T, () => 1).rho, 0.999);   // below 1 so posDef_shrinkOffDiag applies (θ̂ = 1 iff r̄ = ±1, e.g. T = 2)
       for (let x = thetaFit; ; x = Math.max(0, Math.round((x - 0.05) * 1000) / 1000)) {
         const Kt = addDiag(shrinkOffDiag(x, Sig), tau2);
         if (cholesky(Kt)) { theta = x; K = Kt; break; }
@@ -1378,7 +1449,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, lomaxMoments, claimNoise, claimRate,
   };
