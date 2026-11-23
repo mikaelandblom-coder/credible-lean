@@ -88,8 +88,9 @@ may need a paragraph.)
   variances need cumulants, and the assumptions that cut their number (independent sources, a
   variance function). Write once the source corollary is proved. The source corollary and the
   variance-function version (law of total cumulance, `VarianceFunction.lean`, 2026-11-23) are in.
-- §8 damping (2026-11-23, studies S38–S40): the exact variance of `Σ̂ᵢⱼ` in the damping rule
-  makes it worse for the rates; why the correlation-scale rule works. One paragraph.
+- §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
+  makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
+  variance is enough (S41) and safer under heavy tails (S42). One paragraph.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

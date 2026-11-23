@@ -173,7 +173,10 @@ the floor line and in the tests.
   the proved `Var Σ̂ᵢⱼ` (`variance_sum_mul_lin`, √w weights; `variance_crossResid` for unit weights),
   κ = 0 or the true shock κ, matches the oracle `θ*` but damps more than S3 and costs up to 11 points
   at ρ = 0.9 (gamma and Lomax worlds alike; ±2 at ρ ≤ 0.6). App: S3 stays; `thetaRule: 'cov'` is a
-  studies option. No `κ̂₄` for G2. Open: the exact `Var r̂ᵢⱼ` (correlation scale, delta method) with κ.*
+  studies option. No `κ̂₄` for G2. *Correlation scale done 2026-11-23 (`studies/damping-corr-exact.js`,
+  S41–S42): the exact delta-method `Var r̂ᵢⱼ` with κ = 0 is S3; with the true cumulants θ̂ moves by
+  ≤ 0.05 and the MSE by ≤ 1 point; with infinite kurtosis (Lomax α = 3) it gives θ̂ = 0 and costs up to
+  40 points. S3 stays; the κ̂₄ question is closed for G2.*
 - **G6. Forecasting.** The same `z` is optimal for next year's outcome
   (MSE grows by next year's noise). Then the app can show a premium, not
   only a level.

@@ -377,3 +377,27 @@ only). Oracle: `θ*` from the true table. 32 worlds, 1000 draws, MSE in % of the
 `κ̂₄` from the residuals is *not* worth planning for G2: the true κ already makes the rule worse.
 The next candidate is the exact `Var r̂ᵢⱼ` (a ratio; delta method, needs `Var`/`Cov` of all three
 entries, which `variance_sum_mul_lin` gives) with κ, to see whether κ moves S3's θ̂ the right way.
+
+## S3 with the exact correlation variance (`damping-corr-exact.js`, output `damping-corr-exact.out.txt`, 2026-11-23)
+
+S40's next step: keep S3's correlation scale, `θ̂ = r̄²/(r̄² + V̄)`, but take `V̄` as the delta-method
+`Var r̂ᵢⱼ` from the exact covariances of `(Σ̂ᵢⱼ, Σ̂ᵢᵢ, Σ̂ⱼⱼ)` (`variance_sum_mul_lin` in covariance
+form; engine `sigmaHatMoments`, `corrVar`, `corrTheta`, `thetaRule: 'corr'`), with the fourth
+cumulants of the shock and of the region part 0 or the world's true ones (testing only).
+Oracle: true r, σⱼ and cumulants. 36 worlds, 1000 draws, MSE in % of the floor.
+
+- S41. *[exact + numerical]* **Normal theory reproduces S3, and the true cumulants hardly move it.**
+    With κ = 0 the delta method gives exactly `(1 − r²)²/(T − 1)` in a balanced world (Node test) and
+    the same θ̂ and MSE as S3 in every world. The true cumulants raise `Var r̂` by about 55% (gamma;
+    Monte Carlo agrees within 1–3%, 20% high with exponential noise), but θ̂ drops only 0.01–0.05 and
+    the MSE changes by 0–1 point (gamma, Lomax α = 5). The oracle is 0–2 points better than S3. S3 is
+    already within 0–3 points of the best fixed θ, so there is little left to gain.
+- S42. *[exact + numerical]* **With infinite kurtosis the exact rule fails.** Lomax α = 3: the region
+    part has no fourth moment, so the delta-method `Var r̂` is ∞ and θ̂ = 0, costing up to 40 points
+    (161 against 121 at T = 5, ρ = 0.9). But `r̂ ∈ [−1, 1]` has a finite variance: the delta method,
+    not the correlation, breaks down. S3's normal-theory V is the robust choice.
+
+**Consequence for G2 (closes the κ̂₄ question).** No `κ̂₄` for the damping rule: with finite
+cumulants it buys ≤ 1 point, and under heavy tails, where it would differ most, the estimate
+would be unstable (literature §10l) and the rule breaks. S3 stays; `'cov'` and `'corr'` are studies
+options.
