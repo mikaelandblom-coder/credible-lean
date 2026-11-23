@@ -27,7 +27,8 @@ voice, then trim towards 8 pages.
   for the shock model (`Cumulants.variance_crossResid`): same entry.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
-  cross-fit (even against odd years). Add when step 2 (skew correction) is settled.
+  cross-fit (even against odd years). Add when step 2 (skew correction) is settled. The "why":
+  `cov(σ̂², μ̂) = Σₛ aₛκₛ Σₜ cₜ(δₜₛ − aₛ)²` (`Cumulants.covariance_resVar_mean`, 2026-11-23).
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.

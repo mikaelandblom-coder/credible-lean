@@ -586,8 +586,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    are. (b) exact (proved, `Core.Estimates.integral_portfolio_sub_of_balanced`): an
    exposure-balanced fit (`Σⱼ wⱼ*rateⱼ = Σⱼ wⱼ*μ̂ⱼ` in every draw, `bs_balance`; the G7
    corrections, `Core.Estimates.correct_balanced`) has portfolio bias 0 in every world.
-   (c) first order (argued, not formalized): `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
-   a third moment (for iid cells `cov(sample mean, sample variance) = κ₃/T`): 0 under symmetry,
+   (c) first order (argued; its ingredient proved): `d̂ = d(θ̂)` with `θ̂` quadratic in the data, so `cov(d̂ᵢ, μ̂ᵢ) ≈ Σₖ ∂ₖdᵢ·cov(θ̂ₖ, μ̂ᵢ)`,
+   a third moment (exact for any weights, `Cumulants.covariance_resVar_mean`, 2026-11-23:
+   `cov(Σₜcₜrₜ², μ̂) = Σₛ aₛκₛ Σₜ cₜ(δₜₛ − aₛ)²`; for iid cells `κ₃/T`): 0 under symmetry,
    and with right skew (`κ₃ > 0`, every claims world) a region with high draws gets a high mean
    and a high `σ̂ⱼ²` together, so less weight (`∂dᵢ/∂σᵢ² < 0`; in the app mostly through the GLS
    portfolio weights `bᵢ`, i.e. the other regions' terms of `Σᵢ cov`, not the own weight): under-pricing of order

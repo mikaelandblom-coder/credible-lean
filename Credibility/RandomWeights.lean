@@ -14,8 +14,9 @@ with no distribution assumed (Finding 35):
   is, `bs_balance`, and the balanced corrections `Estimates.correct`), its portfolio bias
   `E Σⱼ uⱼ(θ̂ⱼ - μⱼ)` is `0`, however `θ̂` is built (`Estimates.integral_portfolio_sub_of_balanced`).
 
-How large the covariances in (a) are is a third-moment question (Finding 35 (c), not formalized):
-`0` under symmetric noise (`PlugInSymmetric.lean`), negative under right skew.
+How large the covariances in (a) are is a third-moment question (Finding 35 (c), first order):
+`0` under symmetric noise (`PlugInSymmetric.lean`), negative under right skew. Its ingredient, the
+exact `cov(σ̂², μ̂)` under skew, is `Cumulants.covariance_resVar_mean`.
 -/
 
 open Finset Matrix MeasureTheory ProbabilityTheory

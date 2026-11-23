@@ -888,6 +888,110 @@ theorem kappaHat_unbiased (e : ι → Ω → ℝ) (L : Ω → ℝ) (hL : ∀ t, 
   rw [mul_sum, mul_sum, mul_sum]
   exact sum_congr rfl fun s _ => by ring
 
+/-- **The skew channel of Finding 35 (c).** Cells `Xₜ = L + eₜ` with any level `L` in `L³` and
+centred noise in `L³` whose third moments vanish off the diagonal (e.g. independent over years),
+`E eₜ³ = kₜ`, and whose squares are uncorrelated with the level (`E[eₜeᵤ(L − EL)] = 0`, e.g. noise
+independent of the level). For weights `Σ aₜ = 1`, the mean `μ̂ = Σ aₛXₛ`, residuals
+`rₜ = Xₜ − μ̂` and any `cₜ` (e.g. `σ̂² = Σ wₜrₜ²/(T − 1)`),
+`cov(Σₜ cₜrₜ², μ̂) = Σₛ aₛ kₛ Σₜ cₜ(δₜₛ − aₛ)²`. Zero for symmetric noise; positive under right skew,
+so a fitted variance rises with the fitted mean. -/
+theorem covariance_resVar_mean (e : ι → Ω → ℝ) (L : Ω → ℝ) (hL : ∀ t, MemLp (e t) 3 P)
+    (hLv : MemLp L 3 P) (h0 : ∀ t, ∫ ω, e t ω ∂P = 0) (k : ι → ℝ)
+    (h3 : ∀ t u v, ∫ ω, e t ω * e u ω * e v ω ∂P = if t = u ∧ u = v then k t else 0)
+    (hlev : ∀ t u, ∫ ω, e t ω * e u ω * (L ω - ∫ ω', L ω' ∂P) ∂P = 0)
+    (a c : ι → ℝ) (ha : ∑ t, a t = 1) :
+    covariance (fun ω => ∑ t, c t * (L ω + e t ω - ∑ s, a s * (L ω + e s ω)) ^ 2)
+      (fun ω => ∑ s, a s * (L ω + e s ω)) P
+      = ∑ s, a s * k s * ∑ t, c t * ((if t = s then 1 else 0) - a s) ^ 2 := by
+  set D : ι → ι → ℝ := fun t s => (if t = s then 1 else 0) - a s with hD
+  set m : ℝ := ∫ ω, L ω ∂P
+  set ℓ : Ω → ℝ := fun ω => L ω - m with hℓ
+  have hr : ∀ t ω, L ω + e t ω - ∑ s, a s * (L ω + e s ω) = ∑ s, D t s * e s ω := fun t ω => by
+    simp only [hD, sub_mul, sum_sub_distrib, ite_mul, one_mul, zero_mul, sum_ite_eq, mem_univ,
+      ite_true, mul_add, sum_add_distrib, ← sum_mul, ha]
+    ring
+  set T2 : ι → ι → ℝ := fun s s' => ∑ t, c t * D t s * D t s' with hT2
+  have hQ : ∀ ω, ∑ t, c t * (L ω + e t ω - ∑ s, a s * (L ω + e s ω)) ^ 2
+      = ∑ s, ∑ s', T2 s s' * (e s ω * e s' ω) := fun ω => by
+    simp only [hr, sq, mul_sum, hT2, sum_mul]
+    rw [sum_congr rfl fun t _ => sum_comm, sum_comm]
+    refine sum_congr rfl fun s _ => ?_
+    rw [sum_comm]
+    exact sum_congr rfl fun s' _ => sum_congr rfl fun t _ => by ring
+  have i1 : ∀ s, Integrable (e s) P := fun s => (hL s).integrable (by norm_num)
+  have i2 : ∀ s s', Integrable (fun ω => e s ω * e s' ω) P := fun s s' =>
+    integrable_mul2_of_L3 (hL s) (hL s')
+  have hℓL : MemLp ℓ 3 P := hLv.sub (memLp_const _)
+  have i3 : ∀ s s' v, Integrable (fun ω => e s ω * e s' ω * e v ω) P := fun s s' v =>
+    integrable_mul3_of_L3 (hL s) (hL s') (hL v)
+  have i3ℓ : ∀ s s', Integrable (fun ω => e s ω * e s' ω * ℓ ω) P := fun s s' =>
+    integrable_mul3_of_L3 (hL s) (hL s') hℓL
+  have iLe : ∀ s, Integrable (fun ω => a s * (L ω + e s ω)) P := fun s =>
+    ((hLv.integrable (by norm_num)).add (i1 s)).const_mul _
+  have hlev' : ∀ s s', ∫ ω, e s ω * e s' ω * ℓ ω ∂P = 0 := fun s s' => hlev s s'
+  have hEM : ∫ ω, ∑ s, a s * (L ω + e s ω) ∂P = m := by
+    rw [integral_finsetSum _ fun s _ => iLe s]
+    simp only [integral_const_mul, integral_add (hLv.integrable (by norm_num)) (i1 _), h0,
+      add_zero, ← sum_mul, ha, one_mul]
+    rfl
+  have hMc : ∀ ω, ∑ s, a s * (L ω + e s ω) - m = ℓ ω + ∑ v, a v * e v ω := fun ω => by
+    simp only [hℓ, mul_add, sum_add_distrib, ← sum_mul, ha, one_mul]; ring
+  have hQi : Integrable (fun ω => ∑ s, ∑ s', T2 s s' * (e s ω * e s' ω)) P :=
+    integrable_finsetSum _ fun s _ => integrable_finsetSum _ fun s' _ => (i2 s s').const_mul _
+  have hGi : Integrable (fun ω => ℓ ω + ∑ v, a v * e v ω) P :=
+    (hℓL.integrable (by norm_num)).add (integrable_finsetSum _ fun v _ => (i1 v).const_mul _)
+  have hG0 : ∫ ω, ℓ ω + ∑ v, a v * e v ω ∂P = 0 := by
+    rw [integral_add (hℓL.integrable (by norm_num))
+      (integrable_finsetSum _ fun v _ => (i1 v).const_mul _),
+      integral_finsetSum _ fun v _ => (i1 v).const_mul _]
+    simp only [integral_const_mul, h0, mul_zero, sum_const_zero, add_zero, hℓ]
+    rw [integral_sub (hLv.integrable (by norm_num)) (integrable_const _), integral_const]
+    simp [m]
+  have hterm : ∀ s s', ∫ ω, T2 s s' * (e s ω * e s' ω) * (ℓ ω + ∑ v, a v * e v ω) ∂P
+      = T2 s s' * (if s = s' then a s * k s else 0) := fun s s' => by
+    have : (fun ω => T2 s s' * (e s ω * e s' ω) * (ℓ ω + ∑ v, a v * e v ω))
+        = fun ω => T2 s s' * (e s ω * e s' ω * ℓ ω + ∑ v, a v * (e s ω * e s' ω * e v ω)) :=
+      funext fun ω => by
+        rw [mul_add, mul_add, mul_sum, mul_sum]
+        congr 1
+        · ring
+        · exact sum_congr rfl fun v _ => by ring
+    rw [this, integral_const_mul, integral_add (i3ℓ s s')
+      (integrable_finsetSum _ fun v _ => (i3 s s' v).const_mul _),
+      integral_finsetSum _ fun v _ => (i3 s s' v).const_mul _]
+    simp only [integral_const_mul, h3, hlev' s s', mul_ite, mul_zero, ite_and, zero_add]
+    by_cases h : s = s'
+    · subst h; simp
+    · simp [h]
+  have hprod : ∀ s s', Integrable (fun ω => T2 s s' * (e s ω * e s' ω) * (ℓ ω + ∑ v, a v * e v ω)) P :=
+    fun s s' => by
+    have : (fun ω => T2 s s' * (e s ω * e s' ω) * (ℓ ω + ∑ v, a v * e v ω))
+        = fun ω => T2 s s' * (e s ω * e s' ω * ℓ ω + ∑ v, a v * (e s ω * e s' ω * e v ω)) :=
+      funext fun ω => by
+        rw [mul_add, mul_add, mul_sum, mul_sum]
+        congr 1
+        · ring
+        · exact sum_congr rfl fun v _ => by ring
+    rw [this]
+    exact ((i3ℓ s s').add (integrable_finsetSum _ fun v _ => (i3 s s' v).const_mul _)).const_mul _
+  unfold covariance
+  simp only [hEM, hMc, hQ]
+  have hsplit : ∀ ω, (∑ s, ∑ s', T2 s s' * (e s ω * e s' ω)
+        - ∫ ω', ∑ s, ∑ s', T2 s s' * (e s ω' * e s' ω') ∂P) * (ℓ ω + ∑ v, a v * e v ω)
+      = ∑ s, ∑ s', T2 s s' * (e s ω * e s' ω) * (ℓ ω + ∑ v, a v * e v ω)
+        - (∫ ω', ∑ s, ∑ s', T2 s s' * (e s ω' * e s' ω') ∂P) * (ℓ ω + ∑ v, a v * e v ω) :=
+    fun ω => by rw [sub_mul, sum_mul]; simp only [sum_mul]
+  simp only [hsplit]
+  rw [integral_sub (integrable_finsetSum _ fun s _ => integrable_finsetSum _ fun s' _ => hprod s s')
+    (hGi.const_mul _), integral_const_mul, hG0, mul_zero, sub_zero,
+    integral_finsetSum _ fun s _ => integrable_finsetSum _ fun s' _ => hprod s s']
+  refine sum_congr rfl fun s _ => ?_
+  rw [integral_finsetSum _ fun s' _ => hprod s s']
+  rw [sum_congr rfl fun s' _ => hterm s s']
+  simp only [mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true, hT2, hD]
+  rw [sum_mul, mul_sum]
+  exact sum_congr rfl fun t _ => by ring
+
 end ThirdCumulantEstimate
 
 section SampleCovariance

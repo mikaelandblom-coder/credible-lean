@@ -8073,6 +8073,26 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   Theorem~\ref{thm:integral_cubic_residuals} with $c_t = w_t^q$, $k_t = \kappa/w_t^q$.
 \end{proof}
 
+\begin{theorem}[Fitted variance and fitted mean under skew]\label{thm:covariance_resVar_mean}
+  \lean{Credibility.Cumulants.covariance_resVar_mean}
+  \leanok
+  Cells $X_t = L + e_t$ with any level $L\in L^3$ and centred noise in $L^3$ whose third moments
+  vanish off the diagonal, $\mathbb Ee_t^3 = k_t$, and whose squares are uncorrelated with the level.
+  For $\sum a_t = 1$, $\hat\mu = \sum_sa_sX_s$, $r_t = X_t - \hat\mu$ and any $c_t$,
+  $\operatorname{cov}(\sum_tc_tr_t^2, \hat\mu) = \sum_sa_sk_s\sum_tc_t(\delta_{ts} - a_s)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The level cancels in the residuals, and its part of $\hat\mu - \mathbb E\hat\mu$ meets only
+  products $e_te_u$; the noise part gives third moments, diagonal by assumption.
+\end{proof}
+\begin{remark}[Finding 35 (c)]
+  This is the ingredient of the skew channel: under right skew a cohort's fitted variance rises
+  with its fitted mean, so weights $\propto 1/\hat\sigma^2$ covary negatively with the estimates
+  and the fit under-prices (Finding 35 (a), Theorem~\ref{thm:Core_randomLin_bias}; first order
+  through $\partial d_i/\partial\hat\sigma_k^2$).
+\end{remark}
+
 \section{Independent sources}
 
 \begin{lemma}[Moments of independent centred sources]\label{lem:moments_indep}
