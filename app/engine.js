@@ -957,7 +957,8 @@
       return sum(u.map((x) => (x - sj) ** 2)) / (T * (T - 1));
     });
     // opts.perturb (skewBias, derivatives only): { own: [k, f] } scales σ̂ₖ² by f (and Wₖ by f², as scaling
-    // region k's residuals would) without touching the cross-products; { q: x } shifts ρ̂'s numerator by x·(its denominator).
+    // region k's residuals would) without touching the cross-products; { q: x } shifts ρ̂'s numerator by x·(its denominator);
+    // { tau: x } adds x to τ̂².
     const P = opts && opts.perturb;
     if (P && P.own) { own[P.own[0]] *= P.own[1]; W[P.own[0]] *= P.own[1] ** 2; }
     const pooled = sum(own) / J;
@@ -972,8 +973,8 @@
     if (P && P.q) qn += P.q * qa;
     const rhoRaw = qn / qa, rho = Math.min(Math.max(rhoRaw, 0), 1 - 1e-9);
     const Sig = S.map((row, i) => row.map((x, j) => (i === j ? s2[i] / wt[i] : rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
-    const tt = thesisTau(m, wt, Sig);
-    return { m, wt, S, own, pooled, W, betweenRaw, between, zeta, s2, qa, rhoRaw, rho, Sig, c: tt.c, tauRaw: tt.tau2, t2: Math.max(tt.tau2, 0) };
+    const tt = thesisTau(m, wt, Sig), tauRaw = tt.tau2 + (P && P.tau ? P.tau : 0);
+    return { m, wt, S, own, pooled, W, betweenRaw, between, zeta, s2, qa, rhoRaw, rho, Sig, c: tt.c, tauRaw, t2: Math.max(tauRaw, 0) };
   }
 
   /** K̂, the GLS blend and its known-parameter MSE g₁₂ⱼ for parameters p, on the design (wt, S) and means m. */
@@ -1458,25 +1459,47 @@
   function crossSkew(data) {
     const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data), w = data.w;
     const r = data.X.map((row, j) => row.map((x) => x - m[j]));
-    const sd = r.map((row, j) => Math.sqrt(sum(row.map((x, t) => w[j][t] * x * x)) / (T - 1)));
+    const sd0 = r.map((row, j) => Math.sqrt(sum(row.map((x, t) => w[j][t] * x * x)) / (T - 1)));
+    const sd = sd0.map((x) => new Array(T).fill(x));
     const u = (a, t, s) => (t === s ? 1 : 0) - w[a][s] / wt[a];
     let num = 0, den = 0;
     const add = (a, b, c) => {
-      let M = 0, coef = 0;
       for (let t = 0; t < T; t++) {
         const ct = Math.sqrt(w[a][t] * w[b][t] * w[c][t]);
-        M += ct * r[a][t] * r[b][t] * r[c][t];
         let e = 0;
         for (let s2 = 0; s2 < T; s2++) e += u(a, t, s2) * u(b, t, s2) * u(c, t, s2) / Math.sqrt(w[a][s2] * w[b][s2] * w[c][s2]);
-        coef += ct * e;
+        num += ct * r[a][t] * r[b][t] * r[c][t]; den += sd[a][t] * sd[b][t] * sd[c][t] * ct * e;
       }
-      num += M; den += sd[a] * sd[b] * sd[c] * coef;
     };
     for (let a = 0; a < J; a++) for (let b = 0; b < J; b++) if (a !== b) {
       add(a, a, b);
       for (let c = b + 1; c < J; c++) if (a < b) add(a, b, c);
     }
     return den !== 0 ? num / den : 0;
+  }
+
+  /**
+   * Unbiased third moments Kₐᵦ꜀ of the standardized cells across regions, one per triple not all equal:
+   * K̂ₐᵦ꜀ = Mₐᵦ꜀ / Σₜ cₜ Σₛ uₐ(t, s)uᵦ(t, s)u꜀(t, s)/√(wₐₛwᵦₛw꜀ₛ) (the k-statistic of crossSkew, without the
+   * σ̂ that make the pooled γ̂ read low: E σ̂ₐσ̂ᵦσ̂꜀ > σₐσᵦσ꜀ when a shared shock inflates them together).
+   * Noisy one by one; skewBias sums many of them. Returns K(a, b, c), symmetric.
+   */
+  function crossThird(data) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data), w = data.w;
+    const r = data.X.map((row, j) => row.map((x) => x - m[j]));
+    const u = (a, t, s) => (t === s ? 1 : 0) - w[a][s] / wt[a];
+    const tab = new Map(), key = (a, b, c) => [a, b, c].sort((x, y) => x - y).join(',');
+    const est = (a, b, c) => {
+      let M = 0, coef = 0;
+      for (let t = 0; t < T; t++) {
+        const ct = Math.sqrt(w[a][t] * w[b][t] * w[c][t]);
+        let e = 0;
+        for (let s2 = 0; s2 < T; s2++) e += u(a, t, s2) * u(b, t, s2) * u(c, t, s2) / Math.sqrt(w[a][s2] * w[b][s2] * w[c][s2]);
+        M += ct * r[a][t] * r[b][t] * r[c][t]; coef += ct * e;
+      }
+      return M / coef;
+    };
+    return (a, b, c) => { const k = key(a, b, c); if (!tab.has(k)) tab.set(k, est(a, b, c)); return tab.get(k); };
   }
 
   /**
@@ -1502,7 +1525,9 @@
     if (!weightsOf(fit(data))) return null;
     const gamma = o.gamma != null ? o.gamma : J > 2 ? crossSkew(data) : 0;
     const sd = D.regions.map((r) => Math.sqrt(r.s2));
-    const K3 = (a, b, c) => (a === b && b === c ? D.skew : gamma) * sd[a] * sd[b] * sd[c];
+    // Cross-region third moments: o.third === 'pooled' uses γ̂σ̂ₐσ̂ᵦσ̂꜀ (reads low); default: the unbiased K̂ₐᵦ꜀ per triple.
+    const KX = o.third === 'pooled' ? null : crossThird(data);
+    const K3 = (a, b, c) => (a === b && b === c ? D.skew * sd[a] ** 3 : KX ? KX(a, b, c) : gamma * sd[a] * sd[b] * sd[c]);
     const u = (a, t, s) => (t === s ? 1 : 0) - w[a][s] / wt[a];
     // cov(Σₜ cₜ rₐₜrᵦₜ, μ̂ₗ) = Σₜ cₜ Σₛ uₐ(t, s)uᵦ(t, s) aₗₛ Kₐᵦₗ/√(wₐₛwᵦₛwₗₛ)
     const covQ = (a, b, c, l) => {
@@ -1537,9 +1562,63 @@
         }
       }
     }
-    for (let j = 0; j < J; j++) region[j] = part.own[j] + part.cross[j];
+    // τ̂² channel (corrBS and its BLUPs): τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ)/n₀ is quadratic in the means, so
+    // cov(τ̂², μ̂ₗ) = Σⱼ (wⱼ*/n₀) Σᵢₖ gⱼᵢgⱼₖ κ(μ̂ᵢ, μ̂ₖ, μ̂ₗ) (covariance_quad_lin_of_cumulants; g annihilates
+    // the common mean), with the third cumulants of the means: δᵢₖₗκ_L (skewed levels) plus the noise part
+    // Σₛ aᵢₛaₖₛaₗₛ Kᵢₖₗ/√(wᵢₛwₖₛwₗₛ). κ̂_L by its moment equation (levelThird). The ĉⱼ move with the
+    // variance statistics, already counted above.
+    part.tau = new Array(J).fill(0);
+    let kL = 0;
+    if (VC) {
+      const base = vcEstimate(data, id === 'blupPool' ? { pooled: true } : {});
+      if (base.tauRaw > 0) {
+        const L3 = levelThird(data, K3);
+        kL = L3.kappa;
+        const dt = 1e-3 * base.tauRaw, Wp = weightsOf(fit(data, { perturb: { tau: dt } })), Wm = weightsOf(fit(data, { perturb: { tau: -dt } }));
+        const wall = sum(wt), n0 = wall - sum(wt.map((x) => x * x)) / wall;
+        for (let l = 0; l < J; l++) {
+          let c = 0;
+          for (let j = 0; j < J; j++) for (let i = 0; i < J; i++) for (let k = 0; k < J; k++) c += wt[j] / n0 * L3.g[j][i] * L3.g[j][k] * L3.kmean(i, k, l);
+          for (let j = 0; j < J; j++) part.tau[j] += (Wp[j][l] - Wm[j][l]) / (2 * dt) * c;
+        }
+      }
+    }
+    for (let j = 0; j < J; j++) region[j] = part.own[j] + part.cross[j] + part.tau[j];
     const pw = (v) => sum(v.map((x, j) => wt[j] * x)) / sum(wt);
-    return { region, portfolio: pw(region), own: pw(part.own), cross: pw(part.cross), gamma };
+    return { region, portfolio: pw(region), own: pw(part.own), cross: pw(part.cross), tau: pw(part.tau), gamma, kappaLevel: kL };
+  }
+
+  /**
+   * The third cumulant κ_L of the levels (iid over regions), by a moment equation on the means:
+   * dⱼ = μ̂ⱼ − μ̄ = Σᵢ gⱼᵢμ̂ᵢ (gⱼᵢ = δⱼᵢ − vᵢ, vᵢ = wᵢ* / w**, Σᵢ gⱼᵢ = 0), Z = Σⱼ vⱼdⱼ³,
+   * E Z = κ_L Σⱼ vⱼ Σᵢ gⱼᵢ³ + Σⱼ vⱼ Σᵢₖₗ gⱼᵢgⱼₖgⱼₗ κ(ēᵢ, ēₖ, ēₗ), with the noise part of the means
+   * κ(ēᵢ, ēₖ, ēₗ) = Σₛ aᵢₛaₖₛaₗₛ Kᵢₖₗ/√(wᵢₛwₖₛwₗₛ) from the cell third moments K (given). Unbiased if K is.
+   * Returns { kappa, g, kmean(i, k, l) } with kmean the third cumulants of the means (levels + noise).
+   */
+  function levelThird(data, K) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data), w = data.w, wall = sum(wt);
+    const v = wt.map((x) => x / wall), g = v.map((_, j) => v.map((vi, i) => (i === j ? 1 : 0) - vi));
+    const memo = new Map();
+    const knoise = (i, k, l) => {
+      const key = [i, k, l].sort((x, y) => x - y).join(',');
+      if (!memo.has(key)) {
+        let x = 0;
+        for (let s2 = 0; s2 < T; s2++) x += (w[i][s2] / wt[i]) * (w[k][s2] / wt[k]) * (w[l][s2] / wt[l]) / Math.sqrt(w[i][s2] * w[k][s2] * w[l][s2]);
+        memo.set(key, x * K(i, k, l));
+      }
+      return memo.get(key);
+    };
+    const mbar = sum(m.map((x, j) => v[j] * x));
+    let Z = 0, cL = 0, nz = 0;
+    for (let j = 0; j < J; j++) {
+      Z += v[j] * (m[j] - mbar) ** 3;
+      for (let i = 0; i < J; i++) {
+        cL += v[j] * g[j][i] ** 3;
+        for (let k = 0; k < J; k++) for (let l = 0; l < J; l++) nz += v[j] * g[j][i] * g[j][k] * g[j][l] * knoise(i, k, l);
+      }
+    }
+    const kappa = (Z - nz) / cL;
+    return { kappa, g, kmean: (i, k, l) => (i === k && k === l ? kappa : 0) + knoise(i, k, l) };
   }
 
   // ---------------------------------------------------------------- noise shape (moments only)
@@ -1669,6 +1748,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, lomaxMoments, claimNoise, claimRate,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate,
   };
 });
