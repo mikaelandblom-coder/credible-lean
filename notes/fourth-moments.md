@@ -11,7 +11,7 @@ third-moment question: it is the first half of this layer. Independent sources: 
 `E_a[conditional variance] + Var_a[conditional mean]` on `μ ⊗ₘ κ`, and
 `variance_quad_of_powerVariance` puts in the cumulants of `μᵖ`. `κ̂ⱼ` unbiased:
 `kappaHat_unbiased` (2026-11-23). G2 `V`, balanced case: `variance_sampleCov` (2026-11-23,
-`(VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T`); weighted `Shock.crossHat`: `variance_crossResid`
+`(VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T`, a corollary of the weighted one); weighted `Shock.crossHat`: `variance_crossResid`
 (2026-11-23), via `variance_sum_mul_lin` (`Var Σₜ (uₜ·e)(vₜ·e)`). Next: G4 weights, Finding 35
 with quadratic weights.
 
