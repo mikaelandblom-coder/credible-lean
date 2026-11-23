@@ -885,4 +885,224 @@ theorem kappaHat_unbiased (e : ι → Ω → ℝ) (L : Ω → ℝ) (hL : ∀ t, 
 
 end ThirdCumulantEstimate
 
+section SampleCovariance
+
+/-! ### The variance of a sample covariance over independent years (G2) -/
+
+open scoped Kronecker
+
+variable {J T : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+
+/-- The centering matrix over years, `Hₜᵤ = δₜᵤ − 1/|T|`. -/
+noncomputable def centering (T : Type*) [Fintype T] [DecidableEq T] : Matrix T T ℝ :=
+  of fun t u => (if t = u then 1 else 0) - 1 / (Fintype.card T : ℝ)
+
+/-- The symmetric pair matrix `Eᵢⱼ + Eⱼᵢ` of cohorts `i, j`. -/
+def pairMat (i j : J) : Matrix J J ℝ :=
+  of fun a b => (if a = i ∧ b = j then 1 else 0) + (if a = j ∧ b = i then 1 else 0)
+
+omit [Fintype J] [DecidableEq J] in
+/-- The rows of the centering matrix sum to `0`. -/
+lemma centering_rowSum (hT : 0 < Fintype.card T) (t : T) : ∑ u, centering T t u = 0 := by
+  simp only [centering, of_apply, sum_sub_distrib, sum_ite_eq, mem_univ, ite_true, sum_const,
+    card_univ, nsmul_eq_mul]
+  field_simp
+  simp
+
+omit [Fintype J] [DecidableEq J] in
+/-- `tr(H²) = |T| − 1`. -/
+lemma trace_centering_sq (hT : 0 < Fintype.card T) :
+    trace (centering T * centering T) = (Fintype.card T : ℝ) - 1 := by
+  have hn : (Fintype.card T : ℝ) ≠ 0 := by positivity
+  simp only [Matrix.trace, Matrix.diag, Matrix.mul_apply, centering, of_apply, sub_mul, mul_sub, ite_mul,
+    mul_ite, one_mul, mul_one, zero_mul, mul_zero, sum_sub_distrib, sum_ite_eq, sum_ite_eq',
+    mem_univ, ite_true, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+  ring
+
+omit [Fintype T] [DecidableEq T] in
+/-- `tr(SCSC) = 2(CᵢᵢCⱼⱼ + Cᵢⱼ²)` for `S = Eᵢⱼ + Eⱼᵢ` and symmetric `C`. -/
+lemma trace_pairMat_mul (C : Matrix J J ℝ) (hC : ∀ a b, C b a = C a b) (i j : J) :
+    trace (pairMat i j * C * pairMat i j * C) = 2 * (C i i * C j j + C i j ^ 2) := by
+  simp only [Matrix.trace, Matrix.diag, Matrix.mul_apply, pairMat, of_apply, add_mul, mul_add, ite_mul,
+    mul_ite, one_mul, mul_one, zero_mul, mul_zero, sum_add_distrib, ite_and]
+  simp [hC i j]
+  simp only [add_mul, ite_mul, zero_mul, sum_add_distrib, sum_ite_eq', mem_univ, ite_true]
+  rw [hC i j]
+  ring
+
+omit [Fintype J] [DecidableEq J] in
+/-- `Σₜ (xₜ − x̄)(yₜ − ȳ) = Σₜᵤ Hₜᵤ xₜ yᵤ`. -/
+lemma sum_centered_mul (x y : T → ℝ) :
+    ∑ t, (x t - (∑ u, x u) / Fintype.card T) * (y t - (∑ u, y u) / Fintype.card T)
+      = ∑ t, ∑ u, centering T t u * x t * y u := by
+  by_cases hT : Fintype.card T = 0
+  · have : IsEmpty T := Fintype.card_eq_zero_iff.mp hT
+    simp
+  have hn : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast hT
+  simp only [centering, of_apply, sub_mul, mul_sub, ite_mul, one_mul, zero_mul, sum_sub_distrib,
+    sum_ite_eq, mem_univ, ite_true, ← sum_mul, ← mul_sum, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+  ring
+
+omit [Fintype T] [DecidableEq T] in
+/-- `Σₐᵦ (Eᵢⱼ + Eⱼᵢ)ₐᵦ gₐᵦ = gᵢⱼ + gⱼᵢ`. -/
+lemma sum_pairMat (g : J → J → ℝ) (i j : J) :
+    ∑ a, ∑ b, pairMat i j a b * g a b = g i j + g j i := by
+  simp only [pairMat, of_apply, add_mul, ite_mul, one_mul, zero_mul, sum_add_distrib, ite_and,
+    sum_ite_irrel, sum_const_zero, sum_ite_eq', mem_univ, ite_true]
+
+omit [DecidableEq J] in
+/-- A fourth table that vanishes unless all four cells are in the same year. -/
+lemma sum_yearDiag (F : J × T → J × T → J × T → J × T → ℝ) (k : J → J → J → J → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, F p q r s
+      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
+      = ∑ t, ∑ a, ∑ b, ∑ d, ∑ e, F (a, t) (b, t) (d, t) (e, t) * k a b d e := by
+  simp only [Fintype.sum_prod_type, mul_ite, mul_zero, ite_and]
+  rw [sum_comm]
+  refine sum_congr rfl fun t _ => ?_
+  refine sum_congr rfl fun a _ => ?_
+  simp only [sum_ite_irrel, sum_const_zero, sum_ite_eq, mem_univ, ite_true]
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+
+/-- **Variance of a sample covariance over independent years** (the `V` of G2). Cells `Zₐₜ` in
+`L⁴` with means `μₐ`, covariance `V ⊗ I` (the cohorts correlate within a year, the years do not)
+and fourth cumulants that vanish unless all four cells are in the same year, where they are
+`kₐ_b_d_e` (e.g. independent years). With `T ≥ 2` years, the sample covariance
+`ŝᵢⱼ = Σₜ (Zᵢₜ − Z̄ᵢ)(Zⱼₜ − Z̄ⱼ)/(T − 1)` has
+`Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T − 1) + kᵢⱼᵢⱼ/T`, also for `i = j`. The first term is the normal-theory
+variance; skewness does not enter. No distribution is assumed. -/
+theorem variance_sampleCov (Z : J × T → Ω → ℝ) (μ : J → ℝ) (V : Matrix J J ℝ)
+    (k : J → J → J → J → ℝ) (hT : 2 ≤ Fintype.card T)
+    (hZ : ∀ p, MemLp (Z p) 4 P) (hm : ∀ p, ∫ ω, Z p ω ∂P = μ p.1)
+    (hc : ∀ p q, covariance (Z p) (Z q) P = (V ⊗ₖ (1 : Matrix T T ℝ)) p q)
+    (h4 : ∀ p q r s, ∫ ω, (Z p ω - μ p.1) * (Z q ω - μ q.1) * (Z r ω - μ r.1) * (Z s ω - μ s.1) ∂P
+      = (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
+        + (V ⊗ₖ (1 : Matrix T T ℝ)) p q * (V ⊗ₖ (1 : Matrix T T ℝ)) r s
+        + (V ⊗ₖ (1 : Matrix T T ℝ)) p r * (V ⊗ₖ (1 : Matrix T T ℝ)) q s
+        + (V ⊗ₖ (1 : Matrix T T ℝ)) p s * (V ⊗ₖ (1 : Matrix T T ℝ)) q r)
+    (i j : J) :
+    variance (fun ω => (∑ t, (Z (i, t) ω - (∑ u, Z (i, u) ω) / Fintype.card T)
+        * (Z (j, t) ω - (∑ u, Z (j, u) ω) / Fintype.card T)) / ((Fintype.card T : ℝ) - 1)) P
+      = (V i i * V j j + V i j ^ 2) / ((Fintype.card T : ℝ) - 1) + k i j i j / Fintype.card T := by
+  have hT0 : 0 < Fintype.card T := by omega
+  have hn2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hn : (Fintype.card T : ℝ) ≠ 0 := by positivity
+  have hn1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
+  set n : ℝ := (Fintype.card T : ℝ) with hndef
+  set c : ℝ := 1 / (2 * (n - 1)) with hcdef
+  set A : Matrix (J × T) (J × T) ℝ := (c • pairMat i j) ⊗ₖ centering T with hAdef
+  set C : Matrix (J × T) (J × T) ℝ := V ⊗ₖ (1 : Matrix T T ℝ) with hCdef
+  have hS : ∀ a b, pairMat i j b a = pairMat i j a b := fun a b => by
+    simp only [pairMat, of_apply]; rw [add_comm]; simp only [and_comm]
+  have hH : ∀ t u, centering T u t = centering T t u := fun t u => by
+    simp only [centering, of_apply, eq_comm (a := u)]
+  have hA : ∀ p q, A q p = A p q := fun ⟨a, t⟩ ⟨b, u⟩ => by
+    simp only [hAdef, kronecker_apply, Matrix.smul_apply, smul_eq_mul, hS, hH]
+  have hCs : ∀ p q, C q p = C p q := fun p q => by rw [← hc, ← hc, covariance_comm]
+  -- the statistic is the quadratic form `A`
+  have hrepr : (fun ω => (∑ t, (Z (i, t) ω - (∑ u, Z (i, u) ω) / n)
+      * (Z (j, t) ω - (∑ u, Z (j, u) ω) / n)) / (n - 1))
+      = fun ω => ∑ p, ∑ q, A p q * Z p ω * Z q ω := by
+    funext ω
+    rw [sum_centered_mul (fun t => Z (i, t) ω) (fun t => Z (j, t) ω)]
+    simp only [hAdef, Fintype.sum_prod_type, kronecker_apply, Matrix.smul_apply, smul_eq_mul]
+    have : ∀ a b, ∑ t, ∑ u, c * pairMat i j a b * centering T t u * Z (a, t) ω * Z (b, u) ω
+        = pairMat i j a b * (c * ∑ t, ∑ u, centering T t u * Z (a, t) ω * Z (b, u) ω) :=
+      fun a b => by
+        simp only [mul_sum]
+        exact sum_congr rfl fun t _ => sum_congr rfl fun u _ => by ring
+    rw [sum_congr rfl fun a _ => sum_comm]
+    simp only [this]
+    rw [sum_pairMat (fun a b => c * ∑ t, ∑ u, centering T t u * Z (a, t) ω * Z (b, u) ω)]
+    rw [sum_comm (f := fun t u => centering T t u * Z (j, t) ω * Z (i, u) ω)]
+    simp only [hcdef]
+    rw [div_eq_iff hn1]
+    have e : ∀ t u, centering T u t * Z (j, u) ω * Z (i, t) ω
+        = centering T t u * Z (i, t) ω * Z (j, u) ω := fun t u => by rw [hH]; ring
+    simp only [e]
+    field_simp
+    ring
+  rw [hrepr, variance_quad_of_cumulants Z A C (fun p => μ p.1)
+    (fun p q r => ∫ ω, (Z p ω - μ p.1) * (Z q ω - μ q.1) * (Z r ω - μ r.1) ∂P)
+    (fun p q r s => if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
+    hA hZ hm hc (fun _ _ _ => rfl) h4]
+  -- the mean term and the skew term vanish: `A` centres over years
+  have : Nonempty T := Fintype.card_pos_iff.mp hT0
+  have hAm : A *ᵥ (fun p => μ p.1) = 0 := by
+    funext ⟨a, t⟩
+    simp only [mulVec, dotProduct, hAdef, Fintype.sum_prod_type, kronecker_apply,
+      Matrix.smul_apply, smul_eq_mul, Pi.zero_apply]
+    have : ∀ b, ∑ u, c * pairMat i j a b * centering T t u * μ b
+        = c * pairMat i j a b * μ b * ∑ u, centering T t u := fun b => by
+      rw [mul_sum]; exact sum_congr rfl fun u _ => by ring
+    simp only [this, centering_rowSum hT0, mul_zero, sum_const_zero]
+  -- the trace term
+  have htr : trace (A * C * A * C) = c ^ 2 * (2 * (V i i * V j j + V i j ^ 2)) * (n - 1) := by
+    have hV : ∀ a b, V b a = V a b := fun a b => by
+      have := hCs (a, Classical.arbitrary T) (b, Classical.arbitrary T)
+      simpa [hCdef] using this
+    rw [hAdef, hCdef, ← mul_kronecker_mul, ← mul_kronecker_mul, ← mul_kronecker_mul,
+      trace_kronecker]
+    simp only [Matrix.mul_one, Matrix.smul_mul, Matrix.mul_smul, trace_smul, smul_eq_mul,
+      trace_pairMat_mul V hV, trace_centering_sq hT0]
+    ring
+  -- `k` is symmetric: the fourth moments and the pairings are
+  set t₀ : T := Classical.arbitrary T
+  have hk12 : ∀ a b d e, k b a d e = k a b d e := fun a b d e => by
+    have h1 := h4 (a, t₀) (b, t₀) (d, t₀) (e, t₀)
+    have h2 := h4 (b, t₀) (a, t₀) (d, t₀) (e, t₀)
+    have hI : ∫ ω, (Z (b, t₀) ω - μ b) * (Z (a, t₀) ω - μ a) * (Z (d, t₀) ω - μ d)
+          * (Z (e, t₀) ω - μ e) ∂P
+        = ∫ ω, (Z (a, t₀) ω - μ a) * (Z (b, t₀) ω - μ b) * (Z (d, t₀) ω - μ d)
+          * (Z (e, t₀) ω - μ e) ∂P := by
+      congr 1; funext ω; ring
+    simp only [and_self, ite_true] at h1 h2
+    rw [hI, hCs (a, t₀) (b, t₀)] at h2
+    linear_combination h1 - h2
+  have hk34 : ∀ a b d e, k a b e d = k a b d e := fun a b d e => by
+    have h1 := h4 (a, t₀) (b, t₀) (d, t₀) (e, t₀)
+    have h2 := h4 (a, t₀) (b, t₀) (e, t₀) (d, t₀)
+    have hI : ∫ ω, (Z (a, t₀) ω - μ a) * (Z (b, t₀) ω - μ b) * (Z (e, t₀) ω - μ e)
+          * (Z (d, t₀) ω - μ d) ∂P
+        = ∫ ω, (Z (a, t₀) ω - μ a) * (Z (b, t₀) ω - μ b) * (Z (d, t₀) ω - μ d)
+          * (Z (e, t₀) ω - μ e) ∂P := by
+      congr 1; funext ω; ring
+    simp only [and_self, ite_true] at h1 h2
+    rw [hI, hCs (d, t₀) (e, t₀)] at h2
+    linear_combination h1 - h2
+  -- the fourth-cumulant term
+  have hk4 : ∑ p, ∑ q, ∑ r, ∑ s, A p q * A r s
+      * (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
+      = c ^ 2 * (n * (1 - 1 / n) ^ 2) * (4 * k i j i j) := by
+    rw [sum_yearDiag (fun p q r s => A p q * A r s)]
+    have hin : ∀ a b, ∑ d, ∑ e, pairMat i j d e * k a b d e = k a b i j + k a b j i :=
+      fun a b => sum_pairMat (fun d e => k a b d e) i j
+    have hout : ∑ a, ∑ b, pairMat i j a b * (k a b i j + k a b j i) = 4 * k i j i j := by
+      rw [sum_pairMat (fun a b => k a b i j + k a b j i) i j, hk34 i j i j, hk12 i j i j,
+        (hk34 j i i j).trans (hk12 i j i j)]
+      ring
+    have ht : ∀ t, ∑ a, ∑ b, ∑ d, ∑ e, A (a, t) (b, t) * A (d, t) (e, t) * k a b d e
+        = (c * (1 - 1 / n)) ^ 2 * (4 * k i j i j) := fun t => by
+      rw [← hout, mul_sum]
+      refine sum_congr rfl fun a _ => ?_
+      rw [mul_sum]
+      refine sum_congr rfl fun b _ => ?_
+      rw [← hin, mul_sum, mul_sum]
+      refine sum_congr rfl fun d _ => ?_
+      rw [mul_sum, mul_sum]
+      refine sum_congr rfl fun e _ => ?_
+      simp only [hAdef, kronecker_apply, Matrix.smul_apply, smul_eq_mul, centering, of_apply,
+        ite_true, hndef]
+      ring
+    simp only [ht, sum_const, card_univ, nsmul_eq_mul, hndef]
+    ring
+  simp only [varQuad, hAm, Pi.zero_apply, mulVec_zero, dotProduct_zero, mul_zero, zero_mul,
+    sum_const_zero, add_zero, htr, hk4, hcdef]
+  field_simp
+  ring
+
+end SampleCovariance
+
 end Credibility.Cumulants

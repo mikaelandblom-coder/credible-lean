@@ -623,6 +623,11 @@ One chat per step; none needs Lean except step 5.
   `variance_quad_of_powerVariance`): the exact `Var` when the noise cumulants follow the random level
   through `μᵖ`. App: when the G2 `V` is replaced, compute it with the fitted `p` (averaging the
   cumulants over the fitted levels, not at the mean level) next to `p = 0`.
+  *G2 `V` proved 2026-11-23, balanced case* (`Cumulants.variance_sampleCov`): equal weights and
+  independent years, `Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T` exactly; the app's S3 rule uses the
+  first term only (in correlation form). App, pending: a kurtosis term needs a `κ̂₄ᵢⱼᵢⱼ` from the
+  residuals (cross-region, so not the dropped per-region kurtosis); default `κ₄ = 0` keeps today's
+  rule. Next in Lean: the weighted `Shock.crossHat` (year shock as a J-vector source).
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like

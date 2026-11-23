@@ -8123,6 +8123,44 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   Expand $(m_i + e_i)(m_j + e_j)$; the centred cells have mean $0$ and second moments $C$.
 \end{proof}
 
+\section{The variance of a sample covariance (G2)}
+
+\begin{lemma}[Centering and pair matrices]\label{lem:sampleCov_algebra}
+  \lean{Credibility.Cumulants.centering, Credibility.Cumulants.pairMat,
+        Credibility.Cumulants.centering_rowSum, Credibility.Cumulants.trace_centering_sq,
+        Credibility.Cumulants.trace_pairMat_mul, Credibility.Cumulants.sum_centered_mul,
+        Credibility.Cumulants.sum_pairMat, Credibility.Cumulants.sum_yearDiag}
+  \leanok
+  With $H = I - \mathbf 1\mathbf 1^\top/T$ and $S = E_{ij} + E_{ji}$: the rows of $H$ sum to $0$,
+  $\operatorname{tr}H^2 = T - 1$, $\operatorname{tr}(SCSC) = 2(C_{ii}C_{jj} + C_{ij}^2)$ for symmetric $C$,
+  $\sum_t(x_t - \bar x)(y_t - \bar y) = x^\top Hy$, and a table that vanishes off the year diagonal
+  sums over one year index.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+\begin{theorem}[Variance of a sample covariance]\label{thm:variance_sampleCov}
+  \lean{Credibility.Cumulants.variance_sampleCov}
+  \leanok
+  Cells $Z_{at}$ in $L^4$ with means $\mu_a$, covariance $V\otimes I$ and fourth cumulants that
+  vanish unless all four cells are in the same year, where they are $k_{abde}$ (e.g.\ independent
+  years). For $T\ge 2$ and
+  $\hat s_{ij} = \sum_t(Z_{it} - \bar Z_i)(Z_{jt} - \bar Z_j)/(T-1)$,
+  \[ \operatorname{Var}\hat s_{ij} = \frac{V_{ii}V_{jj} + V_{ij}^2}{T-1} + \frac{k_{ijij}}{T}, \]
+  also for $i = j$. The first term is the normal-theory variance; skewness does not enter.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, lem:sampleCov_algebra}
+  $\hat s_{ij} = Z^\top AZ$ with $A = \frac{1}{2(T-1)}S\otimes H$. Since $A\mu = 0$ the mean and
+  skew terms of Theorem~\ref{thm:variance_quad_of_cumulants} vanish;
+  $\operatorname{tr}(A(V\otimes I)A(V\otimes I)) = \frac{1}{4(T-1)^2}\operatorname{tr}(SVSV)\operatorname{tr}H^2$,
+  and the cumulant term is $\frac{1}{4(T-1)^2}\sum_tH_{tt}^2\cdot 4k_{ijij}$ ($k$ is symmetric,
+  since the fourth moments and their pairings are).
+\end{proof}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:

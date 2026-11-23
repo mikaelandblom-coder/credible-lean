@@ -21,6 +21,9 @@ voice, then trim towards 8 pages.
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):
   "mean of the conditional variance plus variance of the conditional mean"; watch out: the
   cumulants are averaged over the levels, not taken at the mean level. Same entry.
+  Sample covariance over independent years (2026-11-23, `Cumulants.variance_sampleCov`):
+  `Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T`; "watch out": heavy tails add `κ₄/T` to the
+  normal-theory variance the damping rule uses. Add with G2's handbook entry.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
   cross-fit (even against odd years). Add when step 2 (skew correction) is settled.
