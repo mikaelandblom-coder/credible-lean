@@ -25,6 +25,11 @@ def _state_init_above_ascii(self, asciiReadable=None, ttf=None):
         self.nextCode = 128
 TTFont.State.__init__ = _state_init_above_ascii
 
+# reportlab shifts sub- and superscripts by half the font size, so subscripts touch the next line.
+# Use the usual typeset shifts (about a quarter down, a third up).
+import reportlab.platypus.paraparser as _pp
+_pp.subFraction, _pp.supFraction = 0.24, 0.36
+
 _dv = "/usr/share/fonts/truetype/freefont/"
 try:
     for name, f in [("DV", "FreeSans.ttf"), ("DV-B", "FreeSansBold.ttf"),
