@@ -4,8 +4,9 @@ Status: approved (owner, 2026-11-22), with option (b) below. Built so far in `Cr
 the general lemma (`variance_quad_of_cumulants`) and the algebra of the independent-sources corollary
 (`varQuad_sources`: given the source form of the tables), and the third-moment pieces
 (`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`, `L³` only). This settles the
-third-moment question: it is the first half of this layer. Next: that independent sources give the
-source form of the tables, and the conditional version (b).
+third-moment question: it is the first half of this layer. Independent sources: `variance_quad_of_sources`
+(cells `m + Bξ`, one `κ₃`, `κ₄` per source). Next: the conditional version (b), and the corollaries
+(G2 `V`, G4 weights, `κ̂ⱼ` unbiased, Finding 35 with quadratic weights).
 
 ## Why
 

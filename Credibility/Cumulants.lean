@@ -516,4 +516,250 @@ theorem varQuad_sources (A C : Matrix ι ι ℝ) (m : ι → ℝ) (B : Matrix ι
 
 end Sources
 
+section IndependentSources
+
+/-! ### Independent sources give the source form of the tables -/
+
+variable {S : Type*} [DecidableEq S]
+
+omit [IsProbabilityMeasure P] in
+/-- A source that appears once makes a product of four centred independent sources vanish. -/
+lemma integral_mul4_indep_of_ne (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) {s t u w : S} (ht : s ≠ t) (hu : s ≠ u) (hw : s ≠ w) :
+    ∫ ω, ξ s ω * ξ t ω * ξ u ω * ξ w ω ∂P = 0 := by
+  have hd : Disjoint ({s} : Finset S) {t, u, w} := by simp [ht, hu, hw]
+  have hφ : Measurable fun x : ((i : ({s} : Finset S)) → ℝ) => x ⟨s, mem_singleton_self s⟩ :=
+    measurable_pi_apply _
+  have hψ : Measurable fun x : ((i : ({t, u, w} : Finset S)) → ℝ) =>
+      x ⟨t, by simp⟩ * x ⟨u, by simp⟩ * x ⟨w, by simp⟩ := by fun_prop
+  have h := (hind.indepFun_finset {s} {t, u, w} hd hmeas).comp hφ hψ
+  have := h.integral_fun_mul_eq_mul_integral (by fun_prop) (by fun_prop)
+  simp only [Function.comp] at this
+  have e : (fun ω => ξ s ω * ξ t ω * ξ u ω * ξ w ω)
+      = fun ω => ξ s ω * (ξ t ω * ξ u ω * ξ w ω) := by funext ω; ring
+  rw [e, this]
+  simp [h0 s]
+
+omit [IsProbabilityMeasure P] in
+/-- The same for three sources. -/
+lemma integral_mul3_indep_of_ne (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) {s t u : S} (ht : s ≠ t) (hu : s ≠ u) :
+    ∫ ω, ξ s ω * ξ t ω * ξ u ω ∂P = 0 := by
+  have hd : Disjoint ({s} : Finset S) {t, u} := by simp [ht, hu]
+  have hφ : Measurable fun x : ((i : ({s} : Finset S)) → ℝ) => x ⟨s, mem_singleton_self s⟩ :=
+    measurable_pi_apply _
+  have hψ : Measurable fun x : ((i : ({t, u} : Finset S)) → ℝ) =>
+      x ⟨t, by simp⟩ * x ⟨u, by simp⟩ := by fun_prop
+  have h := (hind.indepFun_finset {s} {t, u} hd hmeas).comp hφ hψ
+  have := h.integral_fun_mul_eq_mul_integral (by fun_prop) (by fun_prop)
+  simp only [Function.comp] at this
+  have e : (fun ω => ξ s ω * ξ t ω * ξ u ω) = fun ω => ξ s ω * (ξ t ω * ξ u ω) := by
+    funext ω; ring
+  rw [e, this]
+  simp [h0 s]
+
+omit [IsProbabilityMeasure P] [DecidableEq S] in
+/-- Independent centred sources are uncorrelated. -/
+lemma integral_mul2_indep_of_ne (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) {s t : S} (ht : s ≠ t) :
+    ∫ ω, ξ s ω * ξ t ω ∂P = 0 := by
+  rw [(hind.indepFun ht).integral_fun_mul_eq_mul_integral (hmeas s).aestronglyMeasurable
+    (hmeas t).aestronglyMeasurable]
+  simp [h0 s]
+
+omit [IsProbabilityMeasure P] [DecidableEq S] in
+/-- Two pairs of different independent sources. -/
+lemma integral_mul4_indep_pair (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    {s u : S} (hu : s ≠ u) :
+    ∫ ω, ξ s ω * ξ s ω * ξ u ω * ξ u ω ∂P
+      = (∫ ω, ξ s ω * ξ s ω ∂P) * ∫ ω, ξ u ω * ξ u ω ∂P := by
+  have hm : Measurable fun x : ℝ => x * x := by fun_prop
+  have h := (hind.indepFun hu).comp hm hm
+  have := h.integral_fun_mul_eq_mul_integral (by fun_prop) (by fun_prop)
+  simp only [Function.comp] at this
+  have e : (fun ω => ξ s ω * ξ s ω * ξ u ω * ξ u ω)
+      = fun ω => ξ s ω * ξ s ω * (ξ u ω * ξ u ω) := by funext ω; ring
+  rw [e, this]
+
+omit [IsProbabilityMeasure P] in
+/-- The fourth moments of independent centred sources. -/
+lemma integral_mul4_indep (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) (v c₄ : S → ℝ) (hv : ∀ s, ∫ ω, ξ s ω * ξ s ω ∂P = v s)
+    (h4 : ∀ s, ∫ ω, ξ s ω * ξ s ω * ξ s ω * ξ s ω ∂P = c₄ s + 3 * v s ^ 2) (s t u w : S) :
+    ∫ ω, ξ s ω * ξ t ω * ξ u ω * ξ w ω ∂P
+      = (if s = t ∧ t = u ∧ u = w then c₄ s else 0) + (if s = t ∧ u = w then v s * v u else 0)
+        + (if s = u ∧ t = w then v s * v t else 0) + (if s = w ∧ t = u then v s * v t else 0) := by
+  have L : ∀ {s t u w : S}, s ≠ t → s ≠ u → s ≠ w →
+      ∫ ω, ξ s ω * ξ t ω * ξ u ω * ξ w ω ∂P = 0 := fun h1 h2 h3 => integral_mul4_indep_of_ne ξ hind hmeas h0 h1 h2 h3
+  by_cases hst : s = t
+  · subst hst
+    by_cases hsu : s = u
+    · subst hsu
+      by_cases hsw : s = w
+      · subst hsw; rw [h4]; simp; ring
+      · have := L (s := w) (t := s) (u := s) (w := s) (Ne.symm hsw) (Ne.symm hsw) (Ne.symm hsw)
+        rw [show (fun ω => ξ s ω * ξ s ω * ξ s ω * ξ w ω)
+          = fun ω => ξ w ω * ξ s ω * ξ s ω * ξ s ω from funext fun ω => by ring, this]
+        simp [hsw]
+    · by_cases huw : u = w
+      · subst huw; rw [integral_mul4_indep_pair ξ hind hmeas hsu, hv, hv]; simp [hsu]
+      · have := L (s := u) (t := s) (u := s) (w := w) (Ne.symm hsu) (Ne.symm hsu) huw
+        rw [show (fun ω => ξ s ω * ξ s ω * ξ u ω * ξ w ω)
+          = fun ω => ξ u ω * ξ s ω * ξ s ω * ξ w ω from funext fun ω => by ring, this]
+        simp [hsu, huw]
+  · by_cases hsu : s = u
+    · subst hsu
+      by_cases htw : t = w
+      · subst htw
+        rw [show (fun ω => ξ s ω * ξ t ω * ξ s ω * ξ t ω)
+          = fun ω => ξ s ω * ξ s ω * ξ t ω * ξ t ω from funext fun ω => by ring,
+          integral_mul4_indep_pair ξ hind hmeas hst, hv, hv]
+        simp [hst]
+      · have := L (s := t) (t := s) (u := s) (w := w) (Ne.symm hst) (Ne.symm hst) htw
+        rw [show (fun ω => ξ s ω * ξ t ω * ξ s ω * ξ w ω)
+          = fun ω => ξ t ω * ξ s ω * ξ s ω * ξ w ω from funext fun ω => by ring, this]
+        simp [hst, htw, Ne.symm hst]
+    · by_cases hsw : s = w
+      · subst hsw
+        by_cases htu : t = u
+        · subst htu
+          rw [show (fun ω => ξ s ω * ξ t ω * ξ t ω * ξ s ω)
+            = fun ω => ξ s ω * ξ s ω * ξ t ω * ξ t ω from funext fun ω => by ring,
+            integral_mul4_indep_pair ξ hind hmeas hst, hv, hv]
+          simp [hst]
+        · have := L (s := t) (t := s) (u := u) (w := s) (Ne.symm hst) htu (Ne.symm hst)
+          rw [show (fun ω => ξ s ω * ξ t ω * ξ u ω * ξ s ω)
+            = fun ω => ξ t ω * ξ s ω * ξ u ω * ξ s ω from funext fun ω => by ring, this]
+          simp [hst, hsu, htu]
+      · rw [L hst hsu hsw]; simp [hst, hsu, hsw]
+
+omit [IsProbabilityMeasure P] in
+/-- The third moments of independent centred sources. -/
+lemma integral_mul3_indep (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) (c₃ : S → ℝ)
+    (h3 : ∀ s, ∫ ω, ξ s ω * ξ s ω * ξ s ω ∂P = c₃ s) (s t u : S) :
+    ∫ ω, ξ s ω * ξ t ω * ξ u ω ∂P = if s = t ∧ t = u then c₃ s else 0 := by
+  have L : ∀ {s t u : S}, s ≠ t → s ≠ u → ∫ ω, ξ s ω * ξ t ω * ξ u ω ∂P = 0 :=
+    fun h1 h2 => integral_mul3_indep_of_ne ξ hind hmeas h0 h1 h2
+  by_cases hst : s = t
+  · subst hst
+    by_cases hsu : s = u
+    · subst hsu; simp [h3]
+    · rw [show (fun ω => ξ s ω * ξ s ω * ξ u ω) = fun ω => ξ u ω * ξ s ω * ξ s ω from
+        funext fun ω => by ring, L (Ne.symm hsu) (Ne.symm hsu)]
+      simp [hsu]
+  · by_cases hsu : s = u
+    · subst hsu
+      rw [show (fun ω => ξ s ω * ξ t ω * ξ s ω) = fun ω => ξ t ω * ξ s ω * ξ s ω from
+        funext fun ω => by ring, L (Ne.symm hst) (Ne.symm hst)]
+      simp [hst]
+    · rw [L hst hsu]; simp [hst]
+
+omit [IsProbabilityMeasure P] in
+/-- The second moments of independent centred sources. -/
+lemma integral_mul2_indep (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s))
+    (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0) (v : S → ℝ) (hv : ∀ s, ∫ ω, ξ s ω * ξ s ω ∂P = v s)
+    (s t : S) : ∫ ω, ξ s ω * ξ t ω ∂P = if s = t then v s else 0 := by
+  by_cases hst : s = t
+  · subst hst; simp [hv]
+  · rw [integral_mul2_indep_of_ne ξ hind hmeas h0 hst]; simp [hst]
+
+variable [Fintype S]
+
+/-- **Variance of a quadratic estimator under independent sources.** Let the cells be
+`Zᵢ = mᵢ + Σₛ Bᵢₛ ξₛ` for independent centred sources `ξₛ` in `L⁴` with variances `vₛ`, third
+moments `c₃ₛ` and fourth cumulants `c₄ₛ` (fourth moment `c₄ₛ + 3vₛ²`): e.g. the levels, each
+year's shock and each cell's noise, or the innovations of an AR(1) factor. With `C = B diag(v) Bᵀ`,
+`M = BᵀAB` and `a = BᵀAm`,
+`Var(Σ Aᵢⱼ ZᵢZⱼ) = 2 tr(ACAC) + 4 (Am)ᵀC(Am) + 4 Σₛ c₃ₛ Mₛₛ aₛ + Σₛ c₄ₛ Mₛₛ²`.
+Only one third and one fourth cumulant per source enter. -/
+theorem variance_quad_of_sources (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s)) (hL : ∀ s, MemLp (ξ s) 4 P) (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0)
+    (v c₃ c₄ : S → ℝ) (hv : ∀ s, ∫ ω, ξ s ω * ξ s ω ∂P = v s)
+    (h3 : ∀ s, ∫ ω, ξ s ω * ξ s ω * ξ s ω ∂P = c₃ s)
+    (h4 : ∀ s, ∫ ω, ξ s ω * ξ s ω * ξ s ω * ξ s ω ∂P = c₄ s + 3 * v s ^ 2)
+    (B : Matrix ι S ℝ) (m : ι → ℝ) (A : Matrix ι ι ℝ) (hA : ∀ i j, A j i = A i j) :
+    variance (fun ω => ∑ i, ∑ j, A i j * (m i + ∑ s, B i s * ξ s ω)
+      * (m j + ∑ s, B j s * ξ s ω)) P
+      = 2 * trace (A * (B * diagonal v * Bᵀ) * A * (B * diagonal v * Bᵀ))
+        + 4 * (A *ᵥ m) ⬝ᵥ ((B * diagonal v * Bᵀ) *ᵥ (A *ᵥ m))
+        + 4 * ∑ s, c₃ s * (Bᵀ * A * B) s s * (Bᵀ *ᵥ (A *ᵥ m)) s
+        + ∑ s, c₄ s * (Bᵀ * A * B) s s ^ 2 := by
+  set C : Matrix ι ι ℝ := B * diagonal v * Bᵀ with hCdef
+  have hC : ∀ i j, C i j = ∑ s, B i s * B j s * v s := fun i j => by
+    rw [hCdef, Matrix.mul_apply]
+    simp only [Matrix.mul_diagonal, transpose_apply]
+    exact sum_congr rfl fun s _ => by ring
+  let e : ι → Ω → ℝ := fun i ω => ∑ s, B i s * ξ s ω
+  let Z : ι → Ω → ℝ := fun i ω => m i + e i ω
+  have i2 : ∀ a b, Integrable (fun ω => ξ a ω * ξ b ω) P := fun a b =>
+    integrable_mul2 (hL a) (hL b)
+  have i3 : ∀ a b c, Integrable (fun ω => ξ a ω * ξ b ω * ξ c ω) P := fun a b c =>
+    integrable_mul3 (hL a) (hL b) (hL c)
+  have i4 : ∀ a b c d, Integrable (fun ω => ξ a ω * ξ b ω * (ξ c ω * ξ d ω)) P :=
+    fun a b c d => by simpa only [mul_assoc] using integrable_mul4 (hL a) (hL b) (hL c) (hL d)
+  have hpair : ∀ i j ω, e i ω * e j ω
+      = ∑ p : S × S, B i p.1 * B j p.2 * (ξ p.1 ω * ξ p.2 ω) := fun i j ω => by
+    simp only [e]; rw [sum_mul_sum_eq, ← Fintype.sum_prod_type']
+  have E1 : ∀ i, ∫ ω, e i ω ∂P = 0 := fun i => by
+    simp only [e]
+    rw [integral_finsetSum _ fun s _ => ((hL s).integrable (by norm_num)).const_mul _]
+    exact sum_eq_zero fun s _ => by rw [integral_const_mul, h0, mul_zero]
+  have E2 : ∀ i j, ∫ ω, e i ω * e j ω ∂P = C i j := fun i j => by
+    simp only [e]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ i2]
+    simp only [integral_mul2_indep ξ hind hmeas h0 v hv, mul_ite, mul_zero, sum_ite_eq,
+      mem_univ, ite_true, hC]
+  have E3 : ∀ i j k, ∫ ω, e i ω * e j ω * e k ω ∂P = ∑ s, c₃ s * B i s * B j s * B k s :=
+    fun i j k => by
+    simp only [hpair]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ fun p u => i3 p.1 p.2 u]
+    simp only [integral_mul3_indep ξ hind hmeas h0 c₃ h3, Fintype.sum_prod_type, mul_ite,
+      mul_zero, ite_and, sum_ite_irrel, sum_const_zero, sum_ite_eq, mem_univ, ite_true]
+    exact sum_congr rfl fun s _ => by ring
+  have E4 : ∀ i j k l, ∫ ω, e i ω * e j ω * e k ω * e l ω ∂P
+      = ∑ s, c₄ s * B i s * B j s * B k s * B l s + C i j * C k l + C i k * C j l
+        + C i l * C j k := fun i j k l => by
+    have : (fun ω => e i ω * e j ω * e k ω * e l ω) = fun ω => (e i ω * e j ω) * (e k ω * e l ω) :=
+      funext fun ω => by ring
+    rw [this]
+    simp only [hpair]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ fun p q => i4 p.1 p.2 q.1 q.2]
+    simp only [show ∀ a b c d, ∫ ω, ξ a ω * ξ b ω * (ξ c ω * ξ d ω) ∂P
+        = ∫ ω, ξ a ω * ξ b ω * ξ c ω * ξ d ω ∂P from fun a b c d => by simp only [mul_assoc],
+      integral_mul4_indep ξ hind hmeas h0 v c₄ hv h4, Fintype.sum_prod_type, hC]
+    simp only [mul_add, sum_add_distrib, mul_ite, mul_zero, ite_and, sum_ite_irrel,
+      sum_const_zero, sum_ite_eq, mem_univ, ite_true, sum_mul_sum]
+    refine congrArg₂ _ (congrArg₂ _ (congrArg₂ _ ?_ ?_) ?_) ?_
+    · exact sum_congr rfl fun s _ => by ring
+    all_goals exact sum_congr rfl fun s _ => sum_congr rfl fun t _ => by ring
+  have hZL : ∀ i, MemLp (Z i) 4 P := fun i =>
+    (memLp_const _).add (memLp_finsetSum _ fun s _ => (hL s).const_mul _)
+  have hm : ∀ i, ∫ ω, Z i ω ∂P = m i := fun i => by
+    simp only [Z]
+    rw [integral_add (integrable_const _) (integrable_finsetSum _ fun s _ =>
+      ((hL s).integrable (by norm_num)).const_mul _), E1]
+    simp
+  have hc : ∀ i j, covariance (Z i) (Z j) P = C i j := fun i j => by
+    simp only [covariance, hm]; simp only [Z, add_sub_cancel_left]; exact E2 i j
+  have h3' : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P
+      = ∑ s, c₃ s * B i s * B j s * B k s := fun i j k => by
+    simp only [Z, add_sub_cancel_left]; exact E3 i j k
+  have h4' : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
+      = ∑ s, c₄ s * B i s * B j s * B k s * B l s + C i j * C k l + C i k * C j l
+        + C i l * C j k := fun i j k l => by
+    simp only [Z, add_sub_cancel_left]; exact E4 i j k l
+  have := variance_quad_of_cumulants Z A C m _ _ hA hZL hm hc h3' h4'
+  rw [varQuad_sources A C m B c₃ c₄ _ _ (fun _ _ _ => rfl) (fun _ _ _ _ => rfl)] at this
+  exact this
+
+end IndependentSources
+
 end Credibility.Cumulants

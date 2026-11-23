@@ -8041,3 +8041,42 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   As for the variance: $Z^\top AZ - \mathbb E = U + W$ and $b^\top Z - \mathbb E = b^\top e$; then
   $\mathbb E[Ub^\top e]$ is a third moment and $\mathbb E[Wb^\top e] = 2(Am)^\top Cb$.
 \end{proof}
+
+\section{Independent sources}
+
+\begin{lemma}[Moments of independent centred sources]\label{lem:moments_indep}
+  \lean{Credibility.Cumulants.integral_mul4_indep_of_ne, Credibility.Cumulants.integral_mul3_indep_of_ne,
+        Credibility.Cumulants.integral_mul2_indep_of_ne, Credibility.Cumulants.integral_mul4_indep_pair,
+        Credibility.Cumulants.integral_mul4_indep, Credibility.Cumulants.integral_mul3_indep,
+        Credibility.Cumulants.integral_mul2_indep}
+  \leanok
+  For independent centred sources $\xi_s$ with variances $v_s$, third moments $c_{3,s}$ and fourth
+  moments $c_{4,s} + 3v_s^2$: $\mathbb E\xi_s\xi_t = \delta_{st}v_s$,
+  $\mathbb E\xi_s\xi_t\xi_u = \delta_{stu}c_{3,s}$ and
+  $\mathbb E\xi_s\xi_t\xi_u\xi_w = \delta_{stuw}c_{4,s} + \delta_{st}\delta_{uw}v_sv_u
+  + \delta_{su}\delta_{tw}v_sv_t + \delta_{sw}\delta_{tu}v_sv_t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A source that appears once is independent of the product of the others, so the expectation
+  is $0$. Otherwise the indices are all equal, or form two pairs of different sources, whose
+  squares are independent.
+\end{proof}
+
+\begin{theorem}[Variance under independent sources]\label{thm:variance_quad_of_sources}
+  \lean{Credibility.Cumulants.variance_quad_of_sources}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, thm:varQuad_sources}
+  Let $Z_i = m_i + \sum_s B_{is}\xi_s$ for independent centred sources $\xi_s$ in $L^4$ (levels,
+  shocks, cell noise, or AR(1) innovations), as in Lemma~\ref{lem:moments_indep}, and $A$
+  symmetric. With $C = B\operatorname{diag}(v)B^\top$, $M = B^\top AB$ and $a = B^\top Am$,
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = 2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am)
+     + 4\sum_s c_{3,s}M_{ss}a_s + \sum_s c_{4,s}M_{ss}^2. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, thm:varQuad_sources, lem:moments_indep, lem:cumulants_integrable}
+  By Lemma~\ref{lem:moments_indep}, pushed through $B$, the cells have covariance $C$ and the source
+  form of the cumulant tables; then Theorems~\ref{thm:variance_quad_of_cumulants}
+  and~\ref{thm:varQuad_sources}.
+\end{proof}
