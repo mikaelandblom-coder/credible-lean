@@ -1461,6 +1461,24 @@
    * σ̂² from the even years against μ̂ from the odd ones and vice versa (independent given the
    * levels). `powerSame` is the naive slope, for comparison. Needs T ≥ 4 and μ̂ > 0.
    */
+  /**
+   * The skew channel of Finding 35 (c) for one region with volumes w over the years:
+   * Cumulants.covariance_resVar_mean with aₛ = wₛ/w*, cₜ = wₜ/(n − 1) (σ̂², eq. (41)) and third
+   * moments kₛ = κ wₛ^(−q): cov(σ̂², μ̂) = Σₛ aₛkₛ Σₜ cₜ(δₜₛ − aₛ)². link: % rise of σ̂² per +1% of μ̂ from
+   * the noise alone, cov·μ / (σ²·Var(μ̂ | level)), Var(μ̂ | level) = σ² Σₛ aₛ²/wₛ.
+   */
+  function skewLink(w, kappa, q, s2, mu) {
+    const n = w.length, ws = sum(w), a = w.map((v) => v / ws);
+    let cov = 0;
+    for (let s = 0; s < n; s++) {
+      let e = 0;
+      for (let t = 0; t < n; t++) e += w[t] / (n - 1) * ((t === s ? 1 : 0) - a[s]) ** 2;
+      cov += a[s] * kappa * Math.pow(w[s], -q) * e;
+    }
+    const vMu = s2 * sum(a.map((v, k) => v * v / w[k]));
+    return { cov, link: cov * mu / (s2 * vMu) };
+  }
+
   function noiseDiagnostics(data, opts) {
     const q = (opts && opts.q) || 1.5;
     const J = data.X.length, T = data.X[0].length;
@@ -1476,6 +1494,8 @@
         for (let u = 0; u < n; u++) e += ((t === u ? 1 : 0) - a[u]) ** 3 * Math.pow(w[u], -q);
         c3 += c * e;
       }
+      // The skew channel of Finding 35 (c), Cumulants.covariance_resVar_mean with cₜ = wₜ/(n − 1) and the
+      // fitted third moments kₛ = κ̂ wₛ^(−q): cov(σ̂², μ̂) = Σₛ aₛkₛ Σₜ cₜ(δₜₛ − aₛ)².
       return { mu, s2, kappa: m3 / c3 };
     };
     const all = Array.from({ length: T }, (_, t) => t);
@@ -1518,7 +1538,20 @@
         power = { b, se: Math.sqrt(J / (J - 2) * sum(inf.map((v) => v * v))) / sxx };
       }
     }
-    return { q, regions, skew, skewSE, power, powerSame };
+    // The skew channel per region with the pooled ĝ (κ̂ⱼ alone is too noisy, and κ̂ⱼ/σ̂ⱼ⁴ reads low because
+    // σ̂ⱼ² rises with κ̂ⱼ under skew): third moment of a cell ĝσ̂ⱼ³ wₛ^(−3/2), as the standardized cell √w(X − μ)/σ.
+    regions.forEach((r, j) => { const sl = skewLink(data.w[j], skew * Math.pow(r.s2, 1.5), 1.5, r.s2, r.mu); r.covMu = sl.cov; r.link = sl.link; });
+    // Predicted skew bias of the same-years power: log σ̂ⱼ² and log μ̂ⱼ covary by ≈ cov(σ̂ⱼ², μ̂ⱼ)/(σ̂ⱼ²μ̂ⱼ)
+    // within a region (first order), against the spread of log μ̂ⱼ over the regions; the centring
+    // over regions keeps (1 − 1/J) of it. Data only; 0 under symmetric noise.
+    let powerSkewBias = null;
+    if (powerSame) {
+      const lx = regions.map((r) => Math.log(r.mu)), mx = sum(lx) / J, sxx = sum(lx.map((v) => (v - mx) ** 2));
+      powerSkewBias = (1 - 1 / J) * sum(regions.map((r) => r.covMu / (r.s2 * r.mu))) / sxx;
+    }
+    // Pooled skew link: the mean over regions; proportional to ĝ, so its SE is ĝ's scaled.
+    const link = sum(regions.map((r) => r.link)) / J, linkSE = Math.abs(link * skewSE / skew);
+    return { q, regions, skew, skewSE, power, powerSame, powerSkewBias, link, linkSE };
   }
 
   /** One draw's data as CSV: one row per region and year, the columns the fit sees. */
@@ -1535,6 +1568,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, lomaxMoments, claimNoise, claimRate,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, lomaxMoments, claimNoise, claimRate,
   };
 });

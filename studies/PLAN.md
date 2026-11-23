@@ -624,8 +624,14 @@ One chat per step; none needs Lean except step 5.
   `κ̂ⱼ` of `noiseDiagnostics` unbiased *proved 2026-11-23* (`Cumulants.kappaHat_unbiased`, any level,
   third moments diagonal over years; app badge "proved" on the Noise shape page). Finding 35 (c):
   the exact `cov(σ̂², μ̂) = Σₛ aₛκₛ Σₜ cₜ(δₜₛ − aₛ)²` *proved 2026-11-23*
-  (`Cumulants.covariance_resVar_mean`; noise squares uncorrelated with the level). App, pending: the
-  Noise shape page can show this predicted covariance from `κ̂ⱼ` next to the plug-in bias.
+  (`Cumulants.covariance_resVar_mean`; noise squares uncorrelated with the level). *Built 2026-11-23:* the
+  Noise shape page shows a per-region "skew link" (% rise of σ̂ⱼ² per +1% of μ̂ⱼ from the noise,
+  `Engine.skewLink`, with the pooled ĝ: κ̂ⱼ alone has SD ≈ 3 per region, and κ̂ⱼ/σ̂ⱼ⁴ reads ~40% low as
+  σ̂ⱼ² rises with κ̂ⱼ), its mean over regions against the world's (5–20% high), and the predicted skew
+  bias of the same-years power (0–25% high without correlation, 0 under normal noise; overstated
+  with a common year shock, ρ = 0.6: 2.4 against 0.7, since the shared part cancels between regions).
+  Node test: cov against Monte Carlo. Open: the plug-in *portfolio* bias itself needs `∂d̂/∂σ̂ⱼ²`
+  (first order), not attempted.
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).

@@ -924,3 +924,18 @@ test('G2: delta-method Var r̂ᵢⱼ (corrVar) from the exact covariances of Σ�
   const d = E.draw(world, E.rng(9)).data, t = E.corrTheta(d), rb = t.rbar;
   if (rb > 0) close(t.theta, rb * rb / (rb * rb + (1 - rb * rb) ** 2 / 9), 1e-9, 'κ = 0: S3');
 });
+
+test('Noise shape: the skew channel cov(σ̂ⱼ², μ̂ⱼ) = Σₛ aₛkₛ Σₜ cₜ(δₜₛ − aₛ)² (Cumulants.covariance_resVar_mean) against Monte Carlo; 0 for normal noise', () => {
+  const world = E.makeWorld({}), j = 2, s2 = world.truth.sigmaj2[j], k = Math.pow(s2, 1.5) * 2 / Math.sqrt(world.params.noiseShape);
+  const pred = E.skewLink(world.w[j], k, 1.5, s2, 1).cov, r = E.rng(17), N = 20000;
+  let sx = 0, sy = 0, sxy = 0;
+  for (let n = 0; n < N; n++) {
+    const d = E.draw(world, r).data, w = d.w[j], x = d.X[j], ws = sum(w), mu = sum(x.map((v, t) => w[t] * v)) / ws;
+    const v = sum(x.map((y, t) => w[t] * (y - mu) ** 2)) / (x.length - 1);
+    sx += v; sy += mu; sxy += v * mu;
+  }
+  const mc = sxy / N - sx * sy / N / N;
+  assert.ok(Math.abs(mc / pred - 1) < 0.1, `MC ${mc} vs ${pred}`);
+  const D = E.noiseDiagnostics(E.draw(E.makeWorld({ normal: true }), r).data);
+  assert.ok(Number.isFinite(D.link) && Number.isFinite(D.powerSkewBias));
+});
