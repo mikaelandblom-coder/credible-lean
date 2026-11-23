@@ -724,6 +724,88 @@
     return { theta: den > 0 ? num / den : 0, rbar };
   }
 
+  /**
+   * Exact covariances of the entries of Σ̂ (eq. (39)) over independent years, for a noise with one
+   * common correlation r: eₐₛ = σₐ/√wₐₛ (√r ηₛ + √(1−r) ξₐₛ), shock ηₛ shared, region parts ξ
+   * independent. Fourth cumulants: kShock (excess kurtosis of η) and kRegion(a, s) (of ξₐₛ; may
+   * depend on the cell, e.g. the Lomax claims, ∞ for α ≤ 4). Cumulants.variance_sum_mul_lin in its
+   * covariance form: cov(Σₜ UᵃUᵇ, Σₜ UᶜUᵈ) = Σₜₜ' [GᵃᶜGᵇᵈ + GᵃᵈGᵇᶜ]ₜₜ' + Σₛ mₐᵦ(s) m꜀ᵈ(s) kₛ(a, b, c, d),
+   * mₐᵦ(s) = Σₜ uₐₜ(s)uᵦₜ(s), divided by DₐᵦD꜀ᵈ. Returns { cv(a, b, c, d), mean(a, b) }.
+   */
+  function sigmaHatMoments(w, sd, r, kShock, kRegion) {
+    const J = w.length, T = w[0].length, wt = w.map(sum);
+    const cov = (a, b) => sd[a] * sd[b] * (a === b ? 1 : r);
+    const u = (i, t, s) => Math.sqrt(w[i][t]) * ((t === s ? 1 : 0) - w[i][s] / wt[i]);
+    const key = (a, b) => a * J + b, Gs = new Map(), Ms = new Map();
+    const G = (a, b) => {
+      if (!Gs.has(key(a, b))) {
+        const g = [];
+        for (let t = 0; t < T; t++) {
+          g.push(new Float64Array(T));
+          for (let t2 = 0; t2 < T; t2++) {
+            let x = 0;
+            for (let s = 0; s < T; s++) x += u(a, t, s) * u(b, t2, s) / Math.sqrt(w[a][s] * w[b][s]);
+            g[t][t2] = x * cov(a, b);
+          }
+        }
+        Gs.set(key(a, b), g);
+      }
+      return Gs.get(key(a, b));
+    };
+    const m = (a, b) => {
+      if (!Ms.has(key(a, b))) Ms.set(key(a, b), Array.from({ length: T }, (_, s) => { let x = 0; for (let t = 0; t < T; t++) x += u(a, t, s) * u(b, t, s); return x; }));
+      return Ms.get(key(a, b));
+    };
+    const S = (a, b) => { let x = 0; for (let t = 0; t < T; t++) x += Math.sqrt(w[a][t] * w[b][t]); return x; };
+    const D = (a, b) => { const x = S(a, b); return x + (T - 2) * wt[a] * wt[b] / x; };
+    const k4 = (s, a, b, c, d) => {
+      let k = kShock ? kShock * r * r * sd[a] * sd[b] * sd[c] * sd[d] / Math.sqrt(w[a][s] * w[b][s] * w[c][s] * w[d][s]) : 0;
+      if (kRegion && a === b && b === c && c === d) k += kRegion(a, s) * (1 - r) ** 2 * sd[a] ** 4 / (w[a][s] ** 2);
+      return k;
+    };
+    const cv = (a, b, c, d) => {
+      const Gac = G(a, c), Gbd = G(b, d), Gad = G(a, d), Gbc = G(b, c);
+      let q = 0;
+      for (let t = 0; t < T; t++) for (let t2 = 0; t2 < T; t2++) q += Gac[t][t2] * Gbd[t][t2] + Gad[t][t2] * Gbc[t][t2];
+      if (kShock || kRegion) { const mab = m(a, b), mcd = m(c, d); for (let s = 0; s < T; s++) q += mab[s] * mcd[s] * k4(s, a, b, c, d); }
+      return q / (D(a, b) * D(c, d));
+    };
+    const mean = (a, b) => cov(a, b) * S(a, b) / (wt[a] * wt[b]);
+    return { cv, mean };
+  }
+
+  /**
+   * Var r̂ᵢⱼ of the estimated correlation r̂ = Σ̂ᵢⱼ/√(Σ̂ᵢᵢΣ̂ⱼⱼ) by the delta method from the exact
+   * covariances of (Σ̂ᵢⱼ, Σ̂ᵢᵢ, Σ̂ⱼⱼ) (sigmaHatMoments): gᵀCg with g = (1, −x/2y, −x/2z)/√(yz) at the
+   * means. Balanced, normal: (1 − r²)²/(T − 1) to first order, S3's variance.
+   */
+  function corrVar(M, i, j) {
+    const x = M.mean(i, j), y = M.mean(i, i), z = M.mean(j, j), q = 1 / Math.sqrt(y * z);
+    const g = [q, -x * q / (2 * y), -x * q / (2 * z)], P = [[i, j], [i, i], [j, j]];
+    let v = 0;
+    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) v += g[a] * g[b] * M.cv(P[a][0], P[a][1], P[b][0], P[b][1]);
+    return v;
+  }
+
+  /**
+   * S3 with the exact variance: θ̂ = r̄²/(r̄² + V̄), V̄ the average of corrVar over the pairs at the
+   * plug-ins r̄, σ̂ⱼ (or opts.r, opts.sd: the truth, for the studies); opts.kShock, opts.kRegion the
+   * fourth cumulants (default 0: normal theory). Returns { theta, rbar, V }.
+   */
+  function corrTheta(data, opts) {
+    const o = opts || {}, { wt, Sig } = sigmaHat(data), J = Sig.length;
+    let s = 0, n = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { s += Sig[i][j] / Math.sqrt(Sig[i][i] * Sig[j][j]); n++; }
+    const rbar = Math.max(-1, Math.min(1, s / n));
+    const r = o.r != null ? o.r : Math.max(0, rbar), sd = o.sd || Sig.map((row, j) => Math.sqrt(row[j] * wt[j]));
+    const M = sigmaHatMoments(data.w, sd, r, o.kShock || 0, o.kRegion || null);
+    let V = 0;
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) V += corrVar(M, i, j);
+    V /= n;
+    const r2 = rbar * rbar;
+    return { theta: r2 + V > 0 && isFinite(V) ? r2 / (r2 + V) : 0, rbar, V };
+  }
+
   /** The old grid rule (opts.thetaRule = 'grid', kept for the studies): the largest of these with K̂ ≻ 0. */
   const THETAS = [0.95, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0];
 
@@ -738,6 +820,8 @@
    *   opts.thetaRule = 'grid': the old rule, the largest of THETAS with K̂ ≻ 0.
    *   opts.thetaRule = 'cov': θ̂ in covariance form with the exact variance (covTheta), opts.kappa the
    *   shock's excess kurtosis (default 0; studies only, the app does not estimate it yet).
+   *   opts.thetaRule = 'corr': S3 with the exact delta-method Var r̂ᵢⱼ (corrTheta; opts.kShock,
+   *   opts.kRegion; studies only).
    * opts.taper = 'distance': instead of damping, taper by ρ^|i−j| over the region order
    *   (K̂ = R ⊙ (Σ̂ + τ̂²I), Lean: posDef_distTaper_hadamard), ρ̂ by taperRho (opts.rho forces it);
    *   lowered in steps of 0.05 only if K̂ is not positive definite.
@@ -774,7 +858,7 @@
       }
       thetaFit = o.theta != null ? o.theta : THETAS[0];
     } else {
-      thetaFit = Math.min(o.thetaRule === 'cov' ? Math.round(covTheta(data, o.kappa || 0).theta * 1000) / 1000 : taperRho(Sig, T, () => 1).rho, 0.999);   // below 1 so posDef_shrinkOffDiag applies (θ̂ = 1 iff r̄ = ±1, e.g. T = 2)
+      thetaFit = Math.min(o.thetaRule === 'cov' ? Math.round(covTheta(data, o.kappa || 0).theta * 1000) / 1000 : o.thetaRule === 'corr' ? Math.round(corrTheta(data, o).theta * 1000) / 1000 : taperRho(Sig, T, () => 1).rho, 0.999);   // below 1 so posDef_shrinkOffDiag applies (θ̂ = 1 iff r̄ = ±1, e.g. T = 2)
       for (let x = thetaFit; ; x = Math.max(0, Math.round((x - 0.05) * 1000) / 1000)) {
         const Kt = addDiag(shrinkOffDiag(x, Sig), tau2);
         if (cholesky(Kt)) { theta = x; K = Kt; break; }
@@ -1449,7 +1533,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, lomaxMoments, claimNoise, claimRate,
   };

@@ -911,3 +911,16 @@ test('G2 V: exact Var Σ̂ᵢⱼ (sigmaHatVar); unit weights give variance_cross
   assert.ok(t0 > t3 && t3 > 0 && t0 < 1);
   assert.ok(E.fitCorr(d, { thetaRule: 'cov' }).thetaFit <= 0.999);
 });
+
+test('G2: delta-method Var r̂ᵢⱼ (corrVar) from the exact covariances of Σ̂; normal theory gives S3’s (1 − r²)²/(T − 1) when balanced; κ raises it', () => {
+  const world = E.makeWorld({ J: 5, T: 10, rho: 0.6, spread: 0, growth: 0 }), sd = world.truth.sigmaj2.map(Math.sqrt);
+  const M0 = E.sigmaHatMoments(world.w, sd, 0.6, 0, null);
+  close(E.corrVar(M0, 0, 1), (1 - 0.36) ** 2 / 9, 1e-9, 'balanced normal = S3');
+  const cov = sd.map((a, i) => sd.map((b, j) => (i === j ? a * a : 0.6 * a * b)));
+  const M = E.sigmaHatMoments(world.w, sd, 0.6, 3, () => 3);
+  close(M.cv(0, 1, 0, 1), E.sigmaHatVar(world.w, cov, 3)[0][1], 1e-10, 'cv = sigmaHatVar for i ≠ j');
+  assert.ok(E.corrVar(M, 0, 1) > 1.3 * E.corrVar(M0, 0, 1));
+  // corrTheta with κ = 0 is S3's θ̂ in a balanced world.
+  const d = E.draw(world, E.rng(9)).data, t = E.corrTheta(d), rb = t.rbar;
+  if (rb > 0) close(t.theta, rb * rb / (rb * rb + (1 - rb * rb) ** 2 / 9), 1e-9, 'κ = 0: S3');
+});
