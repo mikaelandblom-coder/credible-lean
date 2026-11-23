@@ -15,6 +15,16 @@ from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.fonts import addMapping
+
+# reportlab puts the first non-ASCII characters of a TrueType subset at codes 1-31 (tab, line feed,
+# carriage return, ...). Many phone and Mac viewers draw those as black boxes. Start them at 128.
+_state_init = TTFont.State.__init__
+def _state_init_above_ascii(self, asciiReadable=None, ttf=None):
+    _state_init(self, asciiReadable, ttf)
+    if not self.frozen and self.nextCode == 1 and len(self.subsets[0]) == 128:
+        self.nextCode = 128
+TTFont.State.__init__ = _state_init_above_ascii
+
 _dv = "/usr/share/fonts/truetype/freefont/"
 try:
     for name, f in [("DV", "FreeSans.ttf"), ("DV-B", "FreeSansBold.ttf"),
