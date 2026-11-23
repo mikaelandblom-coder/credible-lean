@@ -88,6 +88,9 @@ may need a paragraph.)
   variances need cumulants, and the assumptions that cut their number (independent sources, a
   variance function). Write once the source corollary is proved. The source corollary and the
   variance-function version (law of total cumulance, `VarianceFunction.lean`, 2026-11-23) are in.
+- Finding 35 (2026-11-23, `studies/skew-bias.js`): the plug-in bias predicted from one data set
+  to first order (skew channel), within 20–35% of the simulated bias without correlation. A sentence
+  where Finding 35 is explained.
 - §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
   makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
   variance is enough (S41) and safer under heavy tails (S42). One paragraph.

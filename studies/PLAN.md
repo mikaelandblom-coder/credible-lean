@@ -630,8 +630,14 @@ One chat per step; none needs Lean except step 5.
   σ̂ⱼ² rises with κ̂ⱼ), its mean over regions against the world's (5–20% high), and the predicted skew
   bias of the same-years power (0–25% high without correlation, 0 under normal noise; overstated
   with a common year shock, ρ = 0.6: 2.4 against 0.7, since the shared part cancels between regions).
-  Node test: cov against Monte Carlo. Open: the plug-in *portfolio* bias itself needs `∂d̂/∂σ̂ⱼ²`
-  (first order), not attempted.
+  Node test: cov against Monte Carlo. *Plug-in portfolio bias predicted 2026-11-23* (`Engine.skewBias`,
+  `studies/skew-bias.js`, 1500 draws): first order `Σᵢ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ)`, the derivative by
+  refitting with region i's residuals scaled. Mean prediction against simulated (vs BS on the same
+  draws): default −0.37 / −0.31%, T = 4 shape 1 −1.75 / −2.15%, σⱼ spread −1.06 / −0.78%, J = 20
+  −0.28 / −0.31%, Lomax α = 4 −0.18 / −0.16%, normal and pooled BLUP 0 / 0; misses the ρ̂ channel
+  (ρ = 0.6: −0.15 / −0.27%, pooled BLUP 0 / −0.33%). One data set's value is rough (SD ≈ mean).
+  Noise shape page: a row per unbalanced fit/reference. Open: the ρ̂ channel (cross-region third
+  moments of the shared shock).
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).

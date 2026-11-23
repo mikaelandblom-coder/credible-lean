@@ -939,3 +939,18 @@ test('Noise shape: the skew channel cov(σ̂ⱼ², μ̂ⱼ) = Σₛ aₛkₛ Σ�
   const D = E.noiseDiagnostics(E.draw(E.makeWorld({ normal: true }), r).data);
   assert.ok(Number.isFinite(D.link) && Number.isFinite(D.powerSkewBias));
 });
+
+test('Finding 35: the first-order skew bias (skewBias) predicts the plug-in under-pricing of corrBS; 0 for the pooled BLUP', () => {
+  const world = E.makeWorld({ T: 6 }), r = E.rng(23), wt = world.w.map(sum), wall = sum(wt);
+  let sim = 0, pred = 0, pool = 0;
+  const N = 300;
+  for (let n = 0; n < N; n++) {
+    const { data } = E.draw(world, r), f = E.fitVC(data), g = E.fitBS(data);
+    sim += sum(f.rates.map((x, j) => wt[j] * (x - g.rates[j]))) / wall;   // BS is balanced: portfolio bias 0
+    pred += E.skewBias('vc', data).portfolio;
+    pool += Math.abs(E.skewBias('blupPool', data).portfolio);
+  }
+  sim /= N; pred /= N;
+  assert.ok(sim < 0 && pred < 0 && Math.abs(pred / sim - 1) < 0.5, `predicted ${pred} vs simulated ${sim}`);
+  assert.ok(pool / N < 0.1 * Math.abs(sim), `pooled σ̂²: only the 1/J share, ${pool / N}`);
+});

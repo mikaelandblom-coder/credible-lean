@@ -1441,6 +1441,33 @@
     return null;
   }
 
+  /**
+   * The plug-in bias of a fit from the skew channel (Finding 35 (a) + (c)), predicted from one data
+   * set. Exactly, E(rateⱼ − μⱼ) = Σᵢ cov(d̂ⱼᵢ, μ̂ᵢ) (Core.Estimates.integral_randomLin_sub). To first
+   * order in region i's variance statistic, cov(d̂ⱼᵢ, μ̂ᵢ) ≈ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ), with the cov from
+   * the pooled skewness (skewLink, Cumulants.covariance_resVar_mean) and the derivative numerical:
+   * refit with region i's residuals Xᵢₜ − μ̂ᵢ scaled by √(1 ± h) (σ̂ᵢ² × (1 ± h), μ̂ᵢ kept; the
+   * region's other residual statistics, e.g. corrBS's Wᵢ, move with it). Leaves out: the cross-region
+   * terms a common year shock adds (ρ > 0: cov(σ̂ₖ², μ̂ᵢ), the ρ̂ channel) and the dependence through
+   * the means (τ̂²). Returns { region: [biasⱼ], portfolio } (exposure-weighted), in rate units.
+   */
+  function skewBias(id, data, opts) {
+    const h = (opts && opts.h) || 0.05, fit = (opts && opts.fit) || MODELS[id].fit;
+    const D = (opts && opts.diag) || noiseDiagnostics(data), J = data.X.length, wt = data.w.map(sum);
+    const dW = (i, sg) => {
+      const r = D.regions[i], c = Math.sqrt(1 + sg * h);
+      const X = data.X.map((row, k) => (k === i ? row.map((x) => r.mu + c * (x - r.mu)) : row));
+      return weightsOf(fit({ w: data.w, X }));
+    };
+    const region = new Array(J).fill(0);
+    if (!weightsOf(fit(data))) return null;
+    for (let i = 0; i < J; i++) {
+      const Wp = dW(i, 1), Wm = dW(i, -1), g = D.regions[i].covMu / (2 * h * D.regions[i].s2);
+      for (let j = 0; j < J; j++) region[j] += (Wp[j][i] - Wm[j][i]) * g;
+    }
+    return { region, portfolio: sum(region.map((x, j) => wt[j] * x)) / sum(wt) };
+  }
+
   // ---------------------------------------------------------------- noise shape (moments only)
 
   /**
@@ -1568,6 +1595,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, lomaxMoments, claimNoise, claimRate,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, lomaxMoments, claimNoise, claimRate,
   };
 });
