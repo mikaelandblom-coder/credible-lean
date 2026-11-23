@@ -12,6 +12,7 @@
 \titlespacing*{\section}{0pt}{8pt}{3pt}
 \titlespacing*{\subsection}{0pt}{6pt}{2pt}
 \usepackage{booktabs, array}
+\newcommand{\rowsep}{\specialrule{0.2pt}{3pt}{3pt}}
 \usepackage{xr-hyper}
 \usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
 \externaldocument[H-]{../../handbook/handbook}
@@ -110,17 +111,17 @@ in Section~1, steps 1--5 in Results \hb{res:invVar}, \hb{res:gls}, \hb{res:z},
 \begin{center}\small
 \begin{tabular}{>{\raggedright}p{4.9cm} >{\raggedright}p{5.4cm} >{\raggedright\arraybackslash}p{4.4cm}}
   \toprule
-  The 2023 assumption & Why it can fail & Extension \\
+  \textbf{The 2023 assumption} & \textbf{Why it can fail} & \textbf{Extension} \\
   \midrule
-  All cohorts observed in all periods & Products start and stop & E1 Entry and exit \\
-  Correlation between cohorts falls with volume & A demand shock hits large and small cohorts alike & E2 A shock that does not shrink \\
-  The target is a cohort's level, the predictor a blend & One wants next year's total; better linear predictors exist & E3 The best linear predictor \\
-  One level per cohort and period & Monthly data have a season & E4 Season \\
-  Periods are independent & Demand persists over months and years & E5 A persistent common factor \\
-  One ratio per cohort & Frequency and severity behave differently & E6 Frequency and severity \\
-  The common movement is unobserved & A public index (e.g.\ passenger numbers) tracks it & E7 A known demand index \\
-  Parameters are known & They are estimated from the same, skewed data & E8 The price of estimation \\
-  Cohort levels are unrelated & Cards of one country are alike & E9 Cards grouped by country \\
+  All cohorts observed in all periods & Products start and stop & \textbf{E1 Entry and exit} \\ \rowsep
+  Correlation between cohorts falls with volume & A demand shock hits large and small cohorts alike & \textbf{E2 A shock that does not shrink} \\ \rowsep
+  The target is a cohort's level, the predictor a blend & One wants next year's total; better linear predictors exist & \textbf{E3 The best linear predictor} \\ \rowsep
+  One level per cohort and period & Monthly data have a season & \textbf{E4 Season} \\ \rowsep
+  Periods are independent & Demand persists over months and years & \textbf{E5 A persistent common factor} \\ \rowsep
+  One ratio per cohort & Frequency and severity behave differently & \textbf{E6 Frequency and severity} \\ \rowsep
+  The common movement is unobserved & A public index (e.g.\ passenger numbers) tracks it & \textbf{E7 A known demand index} \\ \rowsep
+  Parameters are known & They are estimated from the same, skewed data & \textbf{E8 The price of estimation} \\ \rowsep
+  Cohort levels are unrelated & Cards of one country are alike & \textbf{E9 Cards grouped by country} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -358,16 +359,16 @@ reproduced without the company data.
 \begin{tabular}{>{\raggedright}p{3.6cm} >{\raggedright\arraybackslash}p{11.2cm}}
   \toprule
   \href{\site handbook.pdf}{Handbook} & Each result with its formula, when to use it, what to watch
-    out for, and why it holds. Result numbers in this proposal refer to it. \\
+    out for, and why it holds. Result numbers in this proposal refer to it. \\ \rowsep
   \href{\site paper/}{Paper} & The up-to-date version of the 2023 thesis: concepts and intuition,
-    organized for lookup. \\
+    organized for lookup. \\ \rowsep
   \href{\site app/}{App} & Simulated worlds: draw data, fit models that never see the truth,
-    compare with the best possible fit. ``Monthly cohorts'' is a world like the card data. \\
-  \href{\repo}{Repository} & Everything below, with its history. \\
+    compare with the best possible fit. ``Monthly cohorts'' is a world like the card data. \\ \rowsep
+  \href{\repo}{Repository} & Everything below, with its history. \\ \rowsep
   \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} & Gaps and surprises, each with a counterexample
-    or proof. \\
+    or proof. \\ \rowsep
   \href{\repo/blob/main/studies/literature.md}{Literature notes} & Credibility, small-area
-    estimation, covariance shrinkage; \S10 for monthly card data. \\
+    estimation, covariance shrinkage; \S10 for monthly card data. \\ \rowsep
   \href{\site}{Blueprint} (optional) & Every statement with its full proof and a dependency graph. \\
   \bottomrule
 \end{tabular}
