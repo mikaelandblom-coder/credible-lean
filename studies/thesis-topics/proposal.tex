@@ -120,7 +120,7 @@ in Section~1, steps 1--5 in Results \hb{res:invVar}, \hb{res:gls}, \hb{res:z},
   One ratio per cohort & Frequency and severity behave differently & E6 Frequency and severity \\
   The common movement is unobserved & A public index (e.g.\ passenger numbers) tracks it & E7 A known demand index \\
   Parameters are known & They are estimated from the same, skewed data & E8 The price of estimation \\
-  Cohort levels are unrelated & Cards of one country, or one tier, are alike & E9 Countries and tiers \\
+  Cohort levels are unrelated & Cards of one country are alike & E9 Cards grouped by country \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -243,19 +243,24 @@ true moments.}
 in accuracy?}
 {Results \hb{res:randomWeights}, \hb{res:plugIn}, \hb{res:valid_tables}}{medium}
 
-\ext{E9. Countries and card tiers}
-{Cards come from several countries and in several tiers (e.g.\ classic, gold, platinum). Cards of
-one country share something, and so do cards of one tier. Hierarchical credibility handles nested
-levels (tiers within a country); here country and tier are crossed.}
-{$\mu_j = \mu + a_{c(j)} + g_{k(j)} + \tau\eta_j$ with uncorrelated random effects for country $c$
-and tier $k$, so the levels covary:
-$\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \sigma_g^2[k(i) = k(j)] + \tau^2\delta_{ij}$.}
-{\item $K$ and $\cov(\hmu, \mu_j)$; the best predictor of $\mu_j$ through E3.
- \item Unbiased moment estimators of $\sigma_a^2$, $\sigma_g^2$, $\tau^2$, and which designs
-   identify them (does every tier appear in several countries?).
- \item The nested case (one group level) against the handbook; the crossed case is new ground.}
-{Do country and tier explain differences between cards beyond each card's own experience?}
-{Results \hb{res:phi}--\hb{res:est_groups} (nested groups); crossed: not in the repository}{medium to large}
+\ext{E9. Cards grouped by country}
+{Cards come from several countries. Cards of one country share its market, distribution and claims
+handling. Card tiers (e.g.\ classic, gold) are products of their country and not comparable across
+countries, so cards are nested within countries: hierarchical credibility, with correlated cohorts
+on top.}
+{A country effect shared by its cards, $\mu_j = \mu + a_{c(j)} + \tau\eta_j$, with uncorrelated
+country effects of variance $\sigma_a^2$, so
+$\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \tau^2\delta_{ij}$; noise as in E2.}
+{\item $K$ and $\cov(\hmu_i, \mu_j)$; the best predictor of $\mu_j$ through E3. How much does a
+   small card borrow from its own country, and how much from the rest?
+ \item The same as two stages: a country estimate, then the portfolio.
+ \item Unbiased moment estimators of $\sigma_a^2$ and $\tau^2$, and why the 2023 $\hat\tau^2$ is
+   biased when cards share a country level.
+ \item Tier within a country as a known difference (a fixed effect) or as part of the card's own
+   level? If some tiers do turn out comparable across countries, a crossed tier effect is new
+   ground.}
+{Do cards of one country resemble each other beyond their own experience?}
+{Results \hb{res:phi}--\hb{res:est_groups}}{medium}
 
 \medskip
 \textit{Other directions in the handbook, not needed for the card data:} a known claim trend
@@ -312,7 +317,7 @@ month there are cards in force, claim counts and paid amounts. The task is to pr
 the next underwriting year. Classical credibility treats the cards as independent, but travel
 demand moves them all at once, with the pandemic as the extreme case. The business is seasonal,
 volumes differ widely between cards, cards start and stop within the window, and they come from
-several countries and tiers. The pricing questions map to the extensions:
+several countries, each with its own tiers. The pricing questions map to the extensions:
 \begin{itemize}\setlength{\itemsep}{1pt}
   \item Does the correlation between cards shrink with volume, or is it a common shock? (E2, E5)
   \item Does the common movement persist, do cards load on it equally, and does a public index
@@ -320,7 +325,7 @@ several countries and tiers. The pricing questions map to the extensions:
   \item Monthly data with an estimated season, or annual totals? (E3, E4)
   \item Frequency and severity combined, separate or joint? (E6)
   \item How should new and closed cards enter the fit? (E1)
-  \item How much do country and tier say about a card? (E9)
+  \item How much does a card borrow from the other cards of its country? (E9)
 \end{itemize}
 \textit{Left to the student:} the number of factors, the treatment of the pandemic, reporting delay
 (simplest: use developed months only), and whether new cardholders behave differently.
@@ -375,7 +380,7 @@ reproduced without the company data.
     rederive Section~2 above. Review this proposal.
   \item \textbf{Choose} extensions and derive their results, checking against the handbook.
   \item \textbf{Data.} Descriptive analysis: volumes, season, correlations between cards by lag,
-    country and tier, the pandemic.
+    differences between countries, the pandemic.
   \item \textbf{Simulation check.} Does the comparison of Section~\ref{sec:method} have the power to
     separate your alternatives?
   \item \textbf{Comparison on data} and recommendations for pricing card products, with a list of

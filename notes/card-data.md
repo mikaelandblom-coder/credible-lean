@@ -369,7 +369,7 @@ another with coefficients near 700 and explodes.
 ### Step 8. Documents, then the proposal
 **Status (2026-11-23):** draft for discussion in TeX (`studies/thesis-topics/proposal.tex`, built by CI after the
 handbook, whose result numbers it cites): the 2023 model on one page, extensions E1–E9 to derive
-(E9 countries × tiers, crossed: not in the repo), results to review, the card data as the application.
+(E9 cards nested in countries: tiers are not comparable across countries, owner 2026-11-23), results to review, the card data as the application.
 Earlier: draft v2 (`make_pdf.py`, removed): the
 student's main document, with extensions A–H to test on data and a guide to the repo. Steps 4, 6
 and 7b appear there as planned (4 and 6 now done: update D and F); update its items D, F and C when they are done. Handbook and paper
