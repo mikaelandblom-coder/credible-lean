@@ -951,11 +951,16 @@
         S[i].push(s); Q[i].push(q);
       }
     }
-    const own = Q.map((row, j) => row[j] / (T - 1)), pooled = sum(own) / J;
+    const own = Q.map((row, j) => row[j] / (T - 1));
     const W = own.map((sj, j) => {
       const u = data.X[j].map((x, t) => data.w[j][t] * (x - m[j]) ** 2 * T / (T - 1));
       return sum(u.map((x) => (x - sj) ** 2)) / (T * (T - 1));
     });
+    // opts.perturb (skewBias, derivatives only): { own: [k, f] } scales σ̂ₖ² by f (and Wₖ by f², as scaling
+    // region k's residuals would) without touching the cross-products; { q: x } shifts ρ̂'s numerator by x·(its denominator).
+    const P = opts && opts.perturb;
+    if (P && P.own) { own[P.own[0]] *= P.own[1]; W[P.own[0]] *= P.own[1] ** 2; }
+    const pooled = sum(own) / J;
     const betweenRaw = sum(own.map((x) => (x - pooled) ** 2)) / (J - 1) - sum(W) / J;
     const between = Math.max(0, betweenRaw);
     // opts.pooled: one noise variance for all regions (ζⱼ = 0), the Finding 35 remedy.
@@ -964,10 +969,11 @@
     const sd = s2.map(Math.sqrt);
     let qn = 0, qa = 0;
     for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { qn += Q[i][j]; qa += sd[i] * sd[j] * ((T - 2) + S[i][j] ** 2 / (wt[i] * wt[j])); }
+    if (P && P.q) qn += P.q * qa;
     const rhoRaw = qn / qa, rho = Math.min(Math.max(rhoRaw, 0), 1 - 1e-9);
     const Sig = S.map((row, i) => row.map((x, j) => (i === j ? s2[i] / wt[i] : rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
     const tt = thesisTau(m, wt, Sig);
-    return { m, wt, S, own, pooled, W, betweenRaw, between, zeta, s2, rhoRaw, rho, Sig, c: tt.c, tauRaw: tt.tau2, t2: Math.max(tt.tau2, 0) };
+    return { m, wt, S, own, pooled, W, betweenRaw, between, zeta, s2, qa, rhoRaw, rho, Sig, c: tt.c, tauRaw: tt.tau2, t2: Math.max(tt.tau2, 0) };
   }
 
   /** K̂, the GLS blend and its known-parameter MSE g₁₂ⱼ for parameters p, on the design (wt, S) and means m. */
@@ -1442,30 +1448,98 @@
   }
 
   /**
-   * The plug-in bias of a fit from the skew channel (Finding 35 (a) + (c)), predicted from one data
-   * set. Exactly, E(rateⱼ − μⱼ) = Σᵢ cov(d̂ⱼᵢ, μ̂ᵢ) (Core.Estimates.integral_randomLin_sub). To first
-   * order in region i's variance statistic, cov(d̂ⱼᵢ, μ̂ᵢ) ≈ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ), with the cov from
-   * the pooled skewness (skewLink, Cumulants.covariance_resVar_mean) and the derivative numerical:
-   * refit with region i's residuals Xᵢₜ − μ̂ᵢ scaled by √(1 ± h) (σ̂ᵢ² × (1 ± h), μ̂ᵢ kept; the
-   * region's other residual statistics, e.g. corrBS's Wᵢ, move with it). Leaves out: the cross-region
-   * terms a common year shock adds (ρ > 0: cov(σ̂ₖ², μ̂ᵢ), the ρ̂ channel) and the dependence through
-   * the means (τ̂²). Returns { region: [biasⱼ], portfolio } (exposure-weighted), in rate units.
+   * The pooled cross-region third moment γ̂ of the standardized cells (a year shock shared by the
+   * regions: γ = ρ^(3/2)·skew(η) in the app's world, 0 without one). For triples of regions (a, b, c),
+   * not all equal, Mₐᵦ꜀ = Σₜ cₜ rₐₜrᵦₜr꜀ₜ with cₜ = √(wₐₜwᵦₜw꜀ₜ) has, for noise independent over years
+   * with third moments Kₐᵦ꜀/√(wₐₛwᵦₛw꜀ₛ), E M = Kₐᵦ꜀ Σₜ cₜ Σₛ uₐ(t, s)uᵦ(t, s)u꜀(t, s)/√(wₐₛwᵦₛw꜀ₛ),
+   * uₐ(t, s) = δₜₛ − aₐₛ (k-statistic style, as κ̂ⱼ). Pooled as Σ M / Σ σ̂ₐσ̂ᵦσ̂꜀·coef over the triples
+   * a < b < c and the pairs (a, a, b), a ≠ b. Data only.
+   */
+  function crossSkew(data) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data), w = data.w;
+    const r = data.X.map((row, j) => row.map((x) => x - m[j]));
+    const sd = r.map((row, j) => Math.sqrt(sum(row.map((x, t) => w[j][t] * x * x)) / (T - 1)));
+    const u = (a, t, s) => (t === s ? 1 : 0) - w[a][s] / wt[a];
+    let num = 0, den = 0;
+    const add = (a, b, c) => {
+      let M = 0, coef = 0;
+      for (let t = 0; t < T; t++) {
+        const ct = Math.sqrt(w[a][t] * w[b][t] * w[c][t]);
+        M += ct * r[a][t] * r[b][t] * r[c][t];
+        let e = 0;
+        for (let s2 = 0; s2 < T; s2++) e += u(a, t, s2) * u(b, t, s2) * u(c, t, s2) / Math.sqrt(w[a][s2] * w[b][s2] * w[c][s2]);
+        coef += ct * e;
+      }
+      num += M; den += sd[a] * sd[b] * sd[c] * coef;
+    };
+    for (let a = 0; a < J; a++) for (let b = 0; b < J; b++) if (a !== b) {
+      add(a, a, b);
+      for (let c = b + 1; c < J; c++) if (a < b) add(a, b, c);
+    }
+    return den !== 0 ? num / den : 0;
+  }
+
+  /**
+   * The plug-in bias of a fit from the skew of the noise (Finding 35 (a) + (c)), predicted from one
+   * data set. Exactly, E(rateⱼ − μⱼ) = Σₗ cov(d̂ⱼₗ, μ̂ₗ) (Core.Estimates.integral_randomLin_sub). To first
+   * order in the fit's variance statistics q (level-free quadratic forms of the residuals),
+   * cov(d̂ⱼₗ, μ̂ₗ) ≈ Σ_q ∂d̂ⱼₗ/∂q · cov(q, μ̂ₗ), and cov(q, μ̂ₗ) = Σ Aᵢⱼ bₖ κ₃ᵢⱼₖ
+   * (Cumulants.covariance_quad_lin_of_cumulants; Am = 0 for residuals) from the third moments.
+   * Third moments: ĝσ̂ₖ³ per standardized cell within a region (pooled ĝ, noiseDiagnostics) and
+   * γ̂σ̂ₐσ̂ᵦσ̂꜀ across regions (crossSkew, a shared year shock).
+   * For corrBS and its BLUPs (ids vc, blup, blupPool) the statistics are the σ̂ₖ² (with their Wₖ) and
+   * ρ̂'s numerator Σᵢ<ⱼ Qᵢⱼ, each perturbed alone (vcEstimate's perturb hook): both channels.
+   * For other fits: the own-variance channel only, the derivative by refitting with region k's
+   * residuals scaled by √(1 ± h) (which also moves its cross-products).
+   * Leaves out the dependence through the means (τ̂²). Returns { region, portfolio, own, cross }
+   * (exposure-weighted portfolio; own/cross: the portfolio parts through the σ̂ₖ² and through ρ̂), rate units.
    */
   function skewBias(id, data, opts) {
-    const h = (opts && opts.h) || 0.05, fit = (opts && opts.fit) || MODELS[id].fit;
-    const D = (opts && opts.diag) || noiseDiagnostics(data), J = data.X.length, wt = data.w.map(sum);
-    const dW = (i, sg) => {
-      const r = D.regions[i], c = Math.sqrt(1 + sg * h);
-      const X = data.X.map((row, k) => (k === i ? row.map((x) => r.mu + c * (x - r.mu)) : row));
-      return weightsOf(fit({ w: data.w, X }));
-    };
-    const region = new Array(J).fill(0);
+    const o = opts || {}, h = o.h || 0.05;
+    const D = o.diag || noiseDiagnostics(data), J = data.X.length, T = data.X[0].length, wt = data.w.map(sum), w = data.w;
+    const VC = { vc: (d, p) => fitVC(d, p), blup: (d, p) => fitBLUP(d, p), blupPool: (d, p) => fitBLUP(d, Object.assign({ pooled: true }, p)) }[id];
+    const fit = o.fit || ((d, p) => (VC ? VC(d, p) : MODELS[id].fit(d)));
     if (!weightsOf(fit(data))) return null;
-    for (let i = 0; i < J; i++) {
-      const Wp = dW(i, 1), Wm = dW(i, -1), g = D.regions[i].covMu / (2 * h * D.regions[i].s2);
-      for (let j = 0; j < J; j++) region[j] += (Wp[j][i] - Wm[j][i]) * g;
+    const gamma = o.gamma != null ? o.gamma : J > 2 ? crossSkew(data) : 0;
+    const sd = D.regions.map((r) => Math.sqrt(r.s2));
+    const K3 = (a, b, c) => (a === b && b === c ? D.skew : gamma) * sd[a] * sd[b] * sd[c];
+    const u = (a, t, s) => (t === s ? 1 : 0) - w[a][s] / wt[a];
+    // cov(Σₜ cₜ rₐₜrᵦₜ, μ̂ₗ) = Σₜ cₜ Σₛ uₐ(t, s)uᵦ(t, s) aₗₛ Kₐᵦₗ/√(wₐₛwᵦₛwₗₛ)
+    const covQ = (a, b, c, l) => {
+      let x = 0;
+      for (let t = 0; t < T; t++) for (let s = 0; s < T; s++) x += c(t) * u(a, t, s) * u(b, t, s) * (w[l][s] / wt[l]) / Math.sqrt(w[a][s] * w[b][s] * w[l][s]);
+      return x * K3(a, b, l);
+    };
+    const region = new Array(J).fill(0), part = { own: new Array(J).fill(0), cross: new Array(J).fill(0) };
+    const ownCov = (k, l) => (VC || l === k ? covQ(k, k, (t) => w[k][t] / (T - 1), l) : 0);
+    for (let k = 0; k < J; k++) {
+      let Wp, Wm;
+      if (VC) {
+        Wp = weightsOf(fit(data, { perturb: { own: [k, 1 + h] } })); Wm = weightsOf(fit(data, { perturb: { own: [k, 1 - h] } }));
+      } else {
+        const r = D.regions[k], sc = (sg) => ({ w: data.w, X: data.X.map((row, i) => (i === k ? row.map((x) => r.mu + Math.sqrt(1 + sg * h) * (x - r.mu)) : row)) });
+        Wp = weightsOf(fit(sc(1))); Wm = weightsOf(fit(sc(-1)));
+      }
+      const ds = 2 * h * D.regions[k].s2;
+      for (let l = 0; l < J; l++) {
+        const c = ownCov(k, l);
+        if (c) for (let j = 0; j < J; j++) part.own[j] += (Wp[j][l] - Wm[j][l]) / ds * c;
+      }
     }
-    return { region, portfolio: sum(region.map((x, j) => wt[j] * x)) / sum(wt) };
+    if (VC && gamma) {
+      const base = vcEstimate(data, id === 'blupPool' ? { pooled: true } : {}), dq = 2e-3 * base.qa;
+      if (base.rhoRaw > 0 && base.rhoRaw < 1) {
+        const Wp = weightsOf(fit(data, { perturb: { q: 1e-3 } })), Wm = weightsOf(fit(data, { perturb: { q: -1e-3 } }));
+        for (let l = 0; l < J; l++) {
+          let c = 0;
+          for (let a = 0; a < J; a++) for (let b = a + 1; b < J; b++) c += covQ(a, b, (t) => Math.sqrt(w[a][t] * w[b][t]), l);
+          for (let j = 0; j < J; j++) part.cross[j] += (Wp[j][l] - Wm[j][l]) / dq * c;
+        }
+      }
+    }
+    for (let j = 0; j < J; j++) region[j] = part.own[j] + part.cross[j];
+    const pw = (v) => sum(v.map((x, j) => wt[j] * x)) / sum(wt);
+    return { region, portfolio: pw(region), own: pw(part.own), cross: pw(part.cross), gamma };
   }
 
   // ---------------------------------------------------------------- noise shape (moments only)
@@ -1595,6 +1669,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, lomaxMoments, claimNoise, claimRate,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, lomaxMoments, claimNoise, claimRate,
   };
 });

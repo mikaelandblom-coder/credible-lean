@@ -948,9 +948,24 @@ test('Finding 35: the first-order skew bias (skewBias) predicts the plug-in unde
     const { data } = E.draw(world, r), f = E.fitVC(data), g = E.fitBS(data);
     sim += sum(f.rates.map((x, j) => wt[j] * (x - g.rates[j]))) / wall;   // BS is balanced: portfolio bias 0
     pred += E.skewBias('vc', data).portfolio;
-    pool += Math.abs(E.skewBias('blupPool', data).portfolio);
+    pool += E.skewBias('blupPool', data).portfolio;
   }
   sim /= N; pred /= N;
   assert.ok(sim < 0 && pred < 0 && Math.abs(pred / sim - 1) < 0.5, `predicted ${pred} vs simulated ${sim}`);
-  assert.ok(pool / N < 0.1 * Math.abs(sim), `pooled σ̂²: only the 1/J share, ${pool / N}`);
+  assert.ok(Math.abs(pool / N) < 0.2 * Math.abs(sim), `pooled σ̂²: small on average, ${pool / N}`);
+});
+
+test('Finding 35, ρ̂ channel: the pooled cross-region third moment γ̂ (crossSkew) is ≈ 0 without a shared shock and tends to ρ^(3/2)·skew(η) with many years; vcEstimate’s perturb hook moves one statistic', () => {
+  const r = E.rng(29);
+  let g0 = 0;
+  const w0 = E.makeWorld({ rho: 0 });
+  for (let n = 0; n < 200; n++) g0 += E.crossSkew(E.draw(w0, r).data);
+  assert.ok(Math.abs(g0 / 200) < 0.03, `γ̂ at ρ = 0: ${g0 / 200}`);
+  const w6 = E.makeWorld({ rho: 0.6, T: 100, growth: 0 });
+  let g6 = 0;
+  for (let n = 0; n < 100; n++) g6 += E.crossSkew(E.draw(w6, r).data);
+  close(g6 / 100, Math.pow(0.6, 1.5) * Math.SQRT2, 0.1, 'γ̂ at ρ = 0.6, T = 100');
+  const d = E.draw(E.makeWorld({ rho: 0.6 }), r).data, a = E.vcEstimate(d), b = E.vcEstimate(d, { perturb: { own: [2, 1.1] } }), c = E.vcEstimate(d, { perturb: { q: 0.01 } });
+  close(b.own[2], 1.1 * a.own[2], 1e-12, 'own scaled'); close(b.own[3], a.own[3], 1e-12, 'others kept');
+  close(c.rhoRaw, a.rhoRaw + 0.01, 1e-9, 'ρ̂ shifted'); close(c.own[0], a.own[0], 1e-12, 'variances kept');
 });
