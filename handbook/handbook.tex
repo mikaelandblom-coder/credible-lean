@@ -732,6 +732,10 @@ $\sigma^2_{ij}$ summed over the shared periods $T_i \cap T_j$.
 \end{result}
 \use This is weaker than $\rho \succeq 0$: cohorts that never share a
 period can have any correlation, since it never acts.
+\why $\hmu_j$ only uses cohort $j$'s own periods, so the noise part of $K$ is a sum over
+periods $t$ of the noise table of the cohorts observed at $t$, each weighted by their cell
+weights: a sum of positive semidefinite pieces. The level variance $\tau^2 I$ makes the sum
+definite.
 
 \begin{result}[Unequal lengths: estimation]\label{res:unequal_est}
   The estimators of Section~\ref{sec:estimation} stay unbiased if the
@@ -755,6 +759,9 @@ period can have any correlation, since it never acts.
   The naive $|T_i\cap T_j| - 2$ is biased unless the two cohorts have the same
   periods. $\omega_i$ is the share of cohort $i$'s volume in the overlap.
 \end{caveat}
+\why As in Result~\ref{res:estimation}: the expected cross-product of deviations is
+$\sigma^2_{ij}\rho_{ij}$ times a known factor. Each cohort's mean subtracts noise from the shared
+periods in proportion to its volume share there, which is where $\omega_i$ comes from.
 
 \subsection*{A known common trend}
 
@@ -820,6 +827,10 @@ process noise that does shrink:
 correlation between cohorts now \emph{rises} with volume, as the process noise
 fades and the shock remains. If each cohort's volume is constant over time, this
 is the model of Section~1; with growing or shifting volumes it is not.
+\why $K_{ij} = \sum_{t,s} a_{it}a_{js}\cov(\mu_{it}, \mu_{js})$. The shock acts only within a
+period ($t = s$), the process noise only within a cell, the level on every pair of cells of one
+cohort. $C \succeq 0$ gives a positive semidefinite part; positive process noise or $\tau^2$ on
+the diagonal makes $K$ definite.
 
 \begin{result}[Estimating shock and process noise]\label{res:shock_est}
   With residuals $r_{jt} = \mu_{jt} - \hmu_j$ and
@@ -922,6 +933,11 @@ year's twelve months.
 \use Fit the season as fixed effects (Result~\ref{res:blup}), or divide by a known seasonal index
 $c_t$ and weight each cell by its expected claims $c_t w_{jt}$, not its exposure.
 \lean{Credibility.Unequal.a_eq_of_volume}
+\why With a season the unbiasedness condition $X^\top d = x_0$ of Result~\ref{res:blup} is one
+equation per calendar month: the weights in month $m$ must sum to the target's share $c_m$. The
+one-mean predictor only makes the total sum to one. It is the seasonal predictor exactly when it
+happens to meet all twelve conditions; otherwise its expectation $\sum_m S_m(d)\beta_m$ misses
+the target's $\sum_m c_m\beta_m$.
 \begin{caveat}
   Whole years are not enough. With seasonal volume the one-mean predictor leans on the busy
   months: one cohort, two years of two months, twice the volume in the first gives weights
@@ -950,6 +966,10 @@ the shock model, AR(1) is $\gamma\phi^{|t-s|}$, a break at known dates is a bloc
 \end{result}
 \use This is why the general target is needed: the factor links past and future months, so the
 target is not one of the levels.
+\why $\Gamma$ is a covariance, so $\lambda\lambda^\top \otimes \Gamma$ is positive semidefinite;
+the shock adds another such part, and the process noise $s_i^2/w_{it} > 0$ on every observed cell
+makes the sum definite, whichever cells are observed. Future months share no shock or noise with
+the data, so only the factor and the level enter $\ell$.
 \begin{caveat}
   The best weights can be negative even with positive autocorrelation: on a balanced panel with
   $\phi = \tfrac12$ another cohort's first month gets $-\tfrac1{30}$ (Finding 25). Its change from
@@ -978,6 +998,12 @@ target is not one of the levels.
 \end{result}
 \use Estimate $\phi$ (profile it, or take it from a long external index), then MINQUE given $\phi$,
 then constrain the tables (Result~\ref{res:valid_tables}).
+\why A difference twelve months apart removes the cohort's mean and season; shock and noise are
+independent across months, so at lag $h \ge 1$ the cross-products of two cohorts see only the
+factor. Any quadratic form $x^\top A x$ that ignores the means has expectation
+$\sum_k \theta_k \operatorname{tr}(AV_k)$, linear in the parameters $\theta_k$ (Result~\ref{res:integral_quad}):
+equating as many forms as parameters to their observed values gives linear equations, unbiased
+whenever they are nonsingular.
 \begin{caveat}
   Many systems are singular, whatever the forms:
   \begin{itemize}
