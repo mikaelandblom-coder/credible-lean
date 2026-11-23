@@ -5,7 +5,11 @@ the general lemma (`variance_quad_of_cumulants`) and the algebra of the independ
 (`varQuad_sources`: given the source form of the tables), and the third-moment pieces
 (`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`, `L³` only). This settles the
 third-moment question: it is the first half of this layer. Independent sources: `variance_quad_of_sources`
-(cells `m + Bξ`, one `κ₃`, `κ₄` per source). Next: the conditional version (b), and the corollaries
+(cells `m + Bξ`, one `κ₃`, `κ₄` per source). The conditional version (b) (2026-11-23,
+`Credibility/VarianceFunction.lean`): levels `a ~ μ`, noise given the levels with law `κ a`
+(independent sources, cumulants functions of `a`); `variance_quad_of_conditional_sources` is
+`E_a[conditional variance] + Var_a[conditional mean]` on `μ ⊗ₘ κ`, and
+`variance_quad_of_powerVariance` puts in the cumulants of `μᵖ`. Next: the corollaries
 (G2 `V`, G4 weights, `κ̂ⱼ` unbiased, Finding 35 with quadratic weights).
 
 ## Why

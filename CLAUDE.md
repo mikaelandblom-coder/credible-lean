@@ -87,7 +87,9 @@ tactics.
   exists and is unique for `H ≻ 0` (`studies/PLAN.md`, `constrainPSD`) → `Credibility/ConeProjection.lean`
 - moment layer, order four: the variance of any quadratic estimator from the mean, covariance and
   third and fourth cumulant tables (`varQuad`, `variance_quad_of_cumulants`; distribution-free,
-  `notes/fourth-moments.md`) → `Credibility/Cumulants.lean`
+  `notes/fourth-moments.md`) → `Credibility/Cumulants.lean`; noise cumulants that depend on the random
+  level (option (b): levels `μ`, noise kernel `κ`, law of total variance on `μ ⊗ₘ κ`), the variance
+  function `μᵖ` (Tweedie) as its corollary (distribution layer) → `Credibility/VarianceFunction.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: damping as shrinkage (PLAN G2): the table-optimal `θ* = Σs²/(Σs² + ΣV)` for given
   means and variances, and the safe range of `θ` → `Credibility/Damping.lean`

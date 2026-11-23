@@ -8080,3 +8080,98 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   form of the cumulant tables; then Theorems~\ref{thm:variance_quad_of_cumulants}
   and~\ref{thm:varQuad_sources}.
 \end{proof}
+
+\begin{theorem}[Mean under independent sources]\label{thm:integral_quad_of_sources}
+  \lean{Credibility.Cumulants.integral_quad_of_sources}
+  \leanok
+  With the cells of Theorem~\ref{thm:variance_quad_of_sources} and any $A$,
+  $\operatorname{E}\sum A_{ij}Z_iZ_j = \sum A_{ij}(m_im_j + C_{ij})$, $C = B\operatorname{diag}(v)B^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:moments_indep, lem:cumulants_integrable}
+  Expand $(m_i + e_i)(m_j + e_j)$; the centred cells have mean $0$ and second moments $C$.
+\end{proof}
+
+\section{Under a variance function (distribution layer)}
+
+Under a variance function the noise cumulants depend on the cell's own mean, which is random:
+the noise is uncorrelated with the level but not independent of it. The levels are a random
+point $a\sim\mu$; given them the noise has the law $\kappa(a)$. The joint law is $\mu\otimes\kappa$.
+This section assumes a noise family (\texttt{VarianceFunction.lean}); nothing in the core uses it.
+
+\begin{theorem}[Law of total variance]\label{thm:variance_compProd}
+  \lean{Credibility.VarianceFunction.variance_compProd}
+  \leanok
+  For $f\in L^2(\mu\otimes\kappa)$ with every section $f(a,\cdot)\in L^2(\kappa(a))$,
+  $\operatorname{Var} f = \operatorname{E}_a\operatorname{Var}(f\mid a) + \operatorname{Var}_a\operatorname{E}(f\mid a)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\operatorname{Var}f = \operatorname{E}f^2 - (\operatorname{E}f)^2$, integrate in two steps, and
+  $\operatorname{E}(f\mid a)^2 \le \operatorname{E}(f^2\mid a)$ makes the conditional mean square integrable.
+\end{proof}
+
+\begin{lemma}[Quadratic forms of $L^4$ cells]\label{lem:memLp_quad}
+  \lean{Credibility.VarianceFunction.holder442, Credibility.VarianceFunction.memLp_quad}
+  \leanok
+  A quadratic form in $L^4$ cells is in $L^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  H\"older, $\tfrac14+\tfrac14=\tfrac12$, term by term.
+\end{proof}
+
+\begin{theorem}[Variance with level-dependent noise cumulants]\label{thm:variance_quad_of_conditional_sources}
+  \lean{Credibility.VarianceFunction.variance_quad_of_conditional_sources}
+  \leanok
+  Given the levels $a$, let the cells be $Z = m(a) + B\xi$ with sources independent and centred
+  under $\kappa(a)$, with variances $v_s(a)$, third moments $c_{3,s}(a)$ and fourth cumulants
+  $c_{4,s}(a)$, and let the estimator be in $L^2(\mu\otimes\kappa)$. With $C(a) = B\operatorname{diag}(v(a))B^\top$
+  and $M = B^\top AB$, $A$ symmetric,
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = \operatorname{E}_a\Bigl[2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am)
+     + 4\sum_s c_{3,s}M_{ss}(B^\top Am)_s + \sum_s c_{4,s}M_{ss}^2\Bigr]
+     + \operatorname{Var}_a\Bigl(\sum A_{ij}(m_im_j + C_{ij})\Bigr). \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_compProd, lem:memLp_quad, thm:variance_quad_of_sources, thm:integral_quad_of_sources}
+  The law of total variance (cumulance); given $a$, Theorems~\ref{thm:variance_quad_of_sources}
+  and~\ref{thm:integral_quad_of_sources} under $\kappa(a)$.
+\end{proof}
+
+\begin{definition}[Cumulants of the variance function $\mu^p$]\label{def:tweedie}
+  \lean{Credibility.VarianceFunction.tweedieVar, Credibility.VarianceFunction.tweedieκ₃,
+        Credibility.VarianceFunction.tweedieκ₄}
+  \leanok
+  For dispersion $\varphi/w$ and mean $\mu$: $V = \tfrac{\varphi}{w}\mu^p$,
+  $\kappa_3 = (\tfrac{\varphi}{w})^2p\,\mu^{2p-1}$, $\kappa_4 = (\tfrac{\varphi}{w})^3p(2p-1)\,\mu^{3p-2}$,
+  from $\kappa_{n+1} = \tfrac{\varphi}{w}V(\mu)\,d\kappa_n/d\mu$ (Tweedie). $p = 0$: normal; $p = 1$: Poisson-like.
+\end{definition}
+
+\begin{lemma}[Trace with a diagonal covariance]\label{lem:trace_mul_diagonal}
+  \lean{Credibility.VarianceFunction.trace_mul_diagonal_mul_diagonal}
+  \leanok
+  For symmetric $A$, $\operatorname{tr}(ADAD) = \sum_{ij}A_{ij}^2d_id_j$ with $D = \operatorname{diag}(d)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand the trace.
+\end{proof}
+
+\begin{theorem}[Variance under the variance function $\mu^p$]\label{thm:variance_quad_of_powerVariance}
+  \lean{Credibility.VarianceFunction.variance_quad_of_powerVariance}
+  \leanok
+  \uses{def:tweedie, thm:variance_quad_of_conditional_sources}
+  Given the levels, let the cell noises be independent and centred with the cumulants of
+  Definition~\ref{def:tweedie} at their own mean $m_i(a)$, and $A$ symmetric. Then
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = \operatorname{E}_a\Bigl[2\sum_{ij}A_{ij}^2V_iV_j
+     + 4\sum_i V_i(Am)_i^2 + 4\sum_i\kappa_{3,i}A_{ii}(Am)_i + \sum_i\kappa_{4,i}A_{ii}^2\Bigr]
+     + \operatorname{Var}_a\Bigl(m^\top Am + \sum_i A_{ii}V_i\Bigr). \]
+  The cumulants are averaged over the levels exactly, not taken at the mean level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_conditional_sources, lem:trace_mul_diagonal}
+  Theorem~\ref{thm:variance_quad_of_conditional_sources} with the cells as sources ($B = 1$).
+\end{proof}

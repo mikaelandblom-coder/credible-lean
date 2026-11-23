@@ -760,6 +760,56 @@ theorem variance_quad_of_sources (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
   rw [varQuad_sources A C m B c₃ c₄ _ _ (fun _ _ _ => rfl) (fun _ _ _ _ => rfl)] at this
   exact this
 
+/-- **Expectation of a quadratic estimator under independent sources**: with the cells
+`Zᵢ = mᵢ + Σₛ Bᵢₛ ξₛ` as in `variance_quad_of_sources`, `E[Σ Aᵢⱼ ZᵢZⱼ] = Σ Aᵢⱼ (mᵢmⱼ + Cᵢⱼ)`,
+`C = B diag(v) Bᵀ`. -/
+theorem integral_quad_of_sources (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
+    (hmeas : ∀ s, Measurable (ξ s)) (hL : ∀ s, MemLp (ξ s) 4 P) (h0 : ∀ s, ∫ ω, ξ s ω ∂P = 0)
+    (v : S → ℝ) (hv : ∀ s, ∫ ω, ξ s ω * ξ s ω ∂P = v s)
+    (B : Matrix ι S ℝ) (m : ι → ℝ) (A : Matrix ι ι ℝ) :
+    ∫ ω, ∑ i, ∑ j, A i j * (m i + ∑ s, B i s * ξ s ω) * (m j + ∑ s, B j s * ξ s ω) ∂P
+      = ∑ i, ∑ j, A i j * (m i * m j + (B * diagonal v * Bᵀ) i j) := by
+  let e : ι → Ω → ℝ := fun i ω => ∑ s, B i s * ξ s ω
+  have i2 : ∀ a b, Integrable (fun ω => ξ a ω * ξ b ω) P := fun a b =>
+    integrable_mul2 (hL a) (hL b)
+  have ie : ∀ i, Integrable (e i) P := fun i =>
+    integrable_finsetSum _ fun s _ => ((hL s).integrable (by norm_num)).const_mul _
+  have iee : ∀ i j, Integrable (fun ω => e i ω * e j ω) P := fun i j =>
+    integrable_sum_mul_sum _ _ _ _ _ _ i2
+  have E1 : ∀ i, ∫ ω, e i ω ∂P = 0 := fun i => by
+    simp only [e]
+    rw [integral_finsetSum _ fun s _ => ((hL s).integrable (by norm_num)).const_mul _]
+    exact sum_eq_zero fun s _ => by rw [integral_const_mul, h0, mul_zero]
+  have E2 : ∀ i j, ∫ ω, e i ω * e j ω ∂P = (B * diagonal v * Bᵀ) i j := fun i j => by
+    simp only [e]
+    rw [integral_sum_mul_sum _ _ _ _ _ _ i2, Matrix.mul_apply]
+    simp only [integral_mul2_indep ξ hind hmeas h0 v hv, mul_ite, mul_zero, sum_ite_eq,
+      mem_univ, ite_true, Matrix.mul_diagonal, transpose_apply]
+    exact sum_congr rfl fun s _ => by ring
+  have term : ∀ i j, ∫ ω, A i j * (m i + e i ω) * (m j + e j ω) ∂P
+      = A i j * (m i * m j + (B * diagonal v * Bᵀ) i j) := fun i j => by
+    have : (fun ω => A i j * (m i + e i ω) * (m j + e j ω)) = fun ω => A i j *
+        (m i * m j + (m i * e j ω + (m j * e i ω + e i ω * e j ω))) := funext fun ω => by ring
+    rw [this, integral_const_mul, integral_add, integral_add, integral_add]
+    · simp [integral_const_mul, E1, E2]
+    all_goals repeat' first
+      | with_reducible exact iee _ _ | with_reducible exact ie _
+      | with_reducible exact integrable_const _
+      | with_reducible apply Integrable.fun_add | with_reducible apply Integrable.const_mul
+  have iT : ∀ i j, Integrable (fun ω => A i j * (m i + e i ω) * (m j + e j ω)) P := fun i j => by
+    have : (fun ω => A i j * (m i + e i ω) * (m j + e j ω)) = fun ω => A i j *
+        (m i * m j + (m i * e j ω + (m j * e i ω + e i ω * e j ω))) := funext fun ω => by ring
+    rw [this]
+    repeat' first
+      | with_reducible exact iee _ _ | with_reducible exact ie _
+      | with_reducible exact integrable_const _
+      | with_reducible apply Integrable.fun_add | with_reducible apply Integrable.const_mul
+  change ∫ ω, ∑ i, ∑ j, A i j * (m i + e i ω) * (m j + e j ω) ∂P = _
+  rw [integral_finsetSum _ fun i _ => integrable_finsetSum _ fun j _ => iT i j]
+  refine sum_congr rfl fun i _ => ?_
+  rw [integral_finsetSum _ fun j _ => iT i j]
+  exact sum_congr rfl fun j _ => term i j
+
 end IndependentSources
 
 end Credibility.Cumulants

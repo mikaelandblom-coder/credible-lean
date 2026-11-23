@@ -40,3 +40,4 @@ import Credibility.FreqSev
 import Credibility.Shock
 import Credibility.ShockMoments
 import Credibility.Cumulants
+import Credibility.VarianceFunction

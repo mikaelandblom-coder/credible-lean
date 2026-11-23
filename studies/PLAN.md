@@ -618,6 +618,10 @@ One chat per step; none needs Lean except step 5.
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).
+  *Conditional version (b) proved 2026-11-23* (`VarianceFunction.variance_quad_of_conditional_sources`,
+  `variance_quad_of_powerVariance`): the exact `Var` when the noise cumulants follow the random level
+  through `μᵖ`. App: when the G2 `V` is replaced, compute it with the fitted `p` (averaging the
+  cumulants over the fitted levels, not at the mean level) next to `p = 0`.
 - [ ] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
   noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
   it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like
