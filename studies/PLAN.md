@@ -613,8 +613,9 @@ One chat per step; none needs Lean except step 5.
   conditional version (b). *General lemma proved 2026-11-22 (`Cumulants.variance_quad_of_cumulants`).*
   App: nothing yet; the G2 `V` and the G4 weights will use it once the source corollary is in.
   *Third moments proved 2026-11-22* (`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`):
-  next, `κ̂ⱼ` of `noiseDiagnostics` unbiased as a corollary (its weights as a cubic form `T`), then its
-  badge can say "proved"; and the Finding 35 bias with quadratic weights `d̂`.
+  `κ̂ⱼ` of `noiseDiagnostics` unbiased *proved 2026-11-23* (`Cumulants.kappaHat_unbiased`, any level,
+  third moments diagonal over years; app badge "proved" on the Noise shape page); next, the Finding 35
+  bias with quadratic weights `d̂`.
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).

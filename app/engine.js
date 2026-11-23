@@ -1296,7 +1296,7 @@
    * the app's world; q = 2: the ratio is a mean over wⱼₜ independent units, as in real portfolios).
    * Then, exactly (k-statistic style):
    *   E Σₜ wₜ rₜ² = (T − 1)σⱼ²,   E Σₜ cₜ rₜ³ = κⱼ Σₜ cₜ Σₛ (δₜₛ − aₛ)³ wₛ^(−q),   cₜ = wₜ^q,
-   * so σ̂ⱼ² and κ̂ⱼ are unbiased; the skewness gⱼ = κⱼ/σⱼ³ (of one unit of volume) is estimated by
+   * so σ̂ⱼ² and κ̂ⱼ are unbiased (κ̂ⱼ proved: Cumulants.kappaHat_unbiased); the skewness gⱼ = κⱼ/σⱼ³ (of one unit of volume) is estimated by
    * the ratio κ̂ⱼ/σ̂ⱼ³ (not unbiased), and pooled as Σκ̂ⱼ / Σσ̂ⱼ³ with SE from the spread over regions.
    * Common year shocks (ρ > 0) stay in rₜ and count as noise.
    *

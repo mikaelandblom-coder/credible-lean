@@ -581,7 +581,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       : (a ** 3 + b ** 3) * 2 / Math.sqrt(pr.noiseShape);
     const pm = (v, se, d) => `${v.toFixed(d)}${Number.isFinite(se) ? ` ± ${se.toFixed(d)}` : ''}`;
     const pw = D.power ? pm(D.power.b, D.power.se, 2) : data.X[0].length < 4 ? 'needs T ≥ 4' : 'undefined: some half-sample μ̂ⱼ ≤ 0';
-    $('t-noise').innerHTML = `<p class="sub" style="margin:6px 0">No distribution is fitted: only the third moment and how the variance moves with the mean, from the residuals Xⱼₜ − μ̂ⱼ (noise independent over years). Third cumulant κ̂ⱼ is unbiased for any distribution; the skewness ĝⱼ = κ̂ⱼ/σ̂ⱼ³ of a standardized cell √w(X − μ)/σ is a ratio, so noisy with ${data.X[0].length} years.</p>
+    $('t-noise').innerHTML = `<p class="sub" style="margin:6px 0">No distribution is fitted: only the third moment and how the variance moves with the mean, from the residuals Xⱼₜ − μ̂ⱼ (noise independent over years). Third cumulant κ̂ⱼ is unbiased for any distribution <span class="badge proved">proved</span> ${lean('Cumulants.kappaHat_unbiased')}; the skewness ĝⱼ = κ̂ⱼ/σ̂ⱼ³ of a standardized cell √w(X − μ)/σ is a ratio, so noisy with ${data.X[0].length} years.</p>
       <table><thead><tr><th>Summary</th><th>This draw</th><th>World</th></tr></thead><tbody>
       <tr><td>Pooled skewness ĝ (± jackknife SE over regions)</td><td>${pm(D.skew, D.skewSE, 2)}</td><td>${Number.isFinite(trueSkew) ? trueSkew.toFixed(2) + (pr.lomax ? ' (middle volume)' : '') : '∞ (α ≤ 3)'}</td></tr>
       <tr><td>Variance power p in σⱼ² ∝ μⱼᵖ, cross-fitted (even vs odd years)</td><td>${pw}</td><td>0</td></tr>

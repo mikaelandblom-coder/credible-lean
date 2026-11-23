@@ -8042,6 +8042,36 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   $\mathbb E[Ub^\top e]$ is a third moment and $\mathbb E[Wb^\top e] = 2(Am)^\top Cb$.
 \end{proof}
 
+\begin{theorem}[Third moment of residuals]\label{thm:integral_cubic_residuals}
+  \lean{Credibility.Cumulants.integral_cubic_residuals}
+  \leanok
+  Let $X_t = L + e_t$ with any common level $L$ and centred noise in $L^3$ whose third moments
+  vanish off the diagonal (e.g.\ independent over years), $\mathbb E e_t^3 = k_t$. For weights
+  $\sum a_t = 1$, residuals $r_t = X_t - \sum_s a_sX_s$ and any $c_t$,
+  $\mathbb E\sum_t c_tr_t^3 = \sum_t c_t\sum_s(\delta_{ts} - a_s)^3k_s$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_cubic_of_cumulants}
+  The level cancels: $r_t = \sum_s(\delta_{ts} - a_s)e_s$, so $\sum c_tr_t^3$ is a cubic form in the
+  centred noise. Theorem~\ref{thm:integral_cubic_of_cumulants} with mean $0$ and a diagonal table.
+\end{proof}
+
+\begin{theorem}[The app's third-cumulant estimate is unbiased]\label{thm:kappaHat_unbiased}
+  \lean{Credibility.Cumulants.kappaHat_unbiased}
+  \leanok
+  In one region with volumes $w_t > 0$, third cumulant $\kappa/w_t^q$ of the noise,
+  $a_t = w_t/\sum w$, the estimate
+  $\hat\kappa = \sum_t w_t^qr_t^3 / \sum_t w_t^q\sum_s(\delta_{ts} - a_s)^3w_s^{-q}$
+  (\texttt{noiseDiagnostics} in the app) has $\mathbb E\hat\kappa = \kappa$ whenever the denominator is not $0$.
+  No distribution is assumed, and nothing about the level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_cubic_residuals}
+  Theorem~\ref{thm:integral_cubic_residuals} with $c_t = w_t^q$, $k_t = \kappa/w_t^q$.
+\end{proof}
+
 \section{Independent sources}
 
 \begin{lemma}[Moments of independent centred sources]\label{lem:moments_indep}

@@ -812,4 +812,77 @@ theorem integral_quad_of_sources (ξ : S → Ω → ℝ) (hind : iIndepFun ξ P)
 
 end IndependentSources
 
+section ThirdCumulantEstimate
+
+/-! ### The app's third-cumulant estimate `κ̂ⱼ` is unbiased (`Engine.noiseDiagnostics`) -/
+
+variable [DecidableEq ι]
+
+/-- **Third moment of residuals.** Cells `Xₜ = L + eₜ` with any common level `L` (random or
+not) and centred noise `eₜ` in `L³` whose third moments vanish off the diagonal (e.g. independent
+over years), `E eₜ³ = kₜ`. With weights `aₜ` summing to `1`, residuals `rₜ = Xₜ − Σ aₛXₛ` and any
+`cₜ`, `E Σ cₜ rₜ³ = Σₜ cₜ Σₛ (δₜₛ − aₛ)³ kₛ`. The level cancels, so nothing is assumed about it. -/
+theorem integral_cubic_residuals (e : ι → Ω → ℝ) (L : Ω → ℝ) (hL : ∀ t, MemLp (e t) 3 P)
+    (h0 : ∀ t, ∫ ω, e t ω ∂P = 0) (k : ι → ℝ)
+    (h3 : ∀ t u v, ∫ ω, e t ω * e u ω * e v ω ∂P = if t = u ∧ u = v then k t else 0)
+    (a c : ι → ℝ) (ha : ∑ t, a t = 1) :
+    ∫ ω, ∑ t, c t * (L ω + e t ω - ∑ s, a s * (L ω + e s ω)) ^ 3 ∂P
+      = ∑ t, c t * ∑ s, ((if t = s then 1 else 0) - a s) ^ 3 * k s := by
+  set D : ι → ι → ℝ := fun t s => (if t = s then 1 else 0) - a s with hD
+  have hr : ∀ t ω, L ω + e t ω - ∑ s, a s * (L ω + e s ω) = ∑ s, D t s * e s ω := fun t ω => by
+    simp only [hD, sub_mul, sum_sub_distrib, ite_mul, one_mul, zero_mul, sum_ite_eq, mem_univ,
+      ite_true, mul_add, sum_add_distrib, ← sum_mul, ha]
+    ring
+  set T : ι → ι → ι → ℝ := fun u v w => ∑ t, c t * D t u * D t v * D t w with hT
+  have hcube : ∀ ω, ∑ t, c t * (L ω + e t ω - ∑ s, a s * (L ω + e s ω)) ^ 3
+      = ∑ u, ∑ v, ∑ w, T u v w * e u ω * e v ω * e w ω := fun ω => by
+    have h3s : ∀ f : ι → ℝ, (∑ s, f s) ^ 3 = ∑ u, ∑ v, ∑ w, f w * f v * f u := fun f => by
+      simp only [pow_succ, pow_zero, one_mul, sum_mul, mul_sum]
+    simp only [hr, h3s, mul_sum, hT, sum_mul]
+    rw [← sum_comm_last3]
+    exact sum_congr rfl fun u _ => sum_congr rfl fun v _ => sum_congr rfl fun w _ =>
+      sum_congr rfl fun t _ => by ring
+  simp only [hcube]
+  rw [integral_cubic_of_cumulants e T (fun u v => covariance (e u) (e v) P) 0
+    (fun t u v => if t = u ∧ u = v then k t else 0) hL h0 (fun _ _ => rfl)
+    (by simpa only [Pi.zero_apply, sub_zero] using h3)]
+  have hdiag : ∀ u, ∑ v, ∑ w, T u v w * (if u = v ∧ v = w then k u else 0) = T u u u * k u :=
+    fun u => by
+    rw [sum_eq_single u (fun v _ hv => sum_eq_zero fun w _ => by simp [Ne.symm hv]) (by simp),
+      sum_eq_single u (fun w _ hw => by simp [Ne.symm hw]) (by simp)]
+    simp
+  simp only [eCubic, Pi.zero_apply, zero_mul, mul_zero, add_zero]
+  rw [sum_congr rfl fun u _ => hdiag u]
+  simp only [hT, sum_mul]
+  rw [sum_comm]
+  refine sum_congr rfl fun t _ => ?_
+  rw [mul_sum]
+  exact sum_congr rfl fun s _ => by ring
+/-- **The app's `κ̂ⱼ` is unbiased** (`Engine.noiseDiagnostics`). In one region, cells
+`Xₜ = L + eₜ` with volumes `wₜ > 0`, any level `L` and centred noise whose third moments vanish
+off the diagonal (e.g. independent over years) with third cumulant `κ/wₜ^q`. With
+`μ̂ = Σ aₜXₜ`, `aₜ = wₜ/Σw`, residuals `rₜ = Xₜ − μ̂` and
+`D = Σₜ wₜ^q Σₛ (δₜₛ − aₛ)³ wₛ^(−q) ≠ 0`, the estimate `κ̂ = Σₜ wₜ^q rₜ³ / D` has `E κ̂ = κ`. -/
+theorem kappaHat_unbiased (e : ι → Ω → ℝ) (L : Ω → ℝ) (hL : ∀ t, MemLp (e t) 3 P)
+    (h0 : ∀ t, ∫ ω, e t ω ∂P = 0) (w : ι → ℝ) (hw : ∀ t, 0 < w t) (q κ : ℝ)
+    (h3 : ∀ t u v, ∫ ω, e t ω * e u ω * e v ω ∂P = if t = u ∧ u = v then κ / w t ^ q else 0)
+    (hD : ∑ t, w t ^ q * ∑ s, ((if t = s then 1 else 0) - w s / ∑ r, w r) ^ 3 / w s ^ q ≠ 0) :
+    ∫ ω, (∑ t, w t ^ q * (L ω + e t ω - ∑ s, (w s / ∑ r, w r) * (L ω + e s ω)) ^ 3)
+        / (∑ t, w t ^ q * ∑ s, ((if t = s then 1 else 0) - w s / ∑ r, w r) ^ 3 / w s ^ q) ∂P
+      = κ := by
+  have hpos : 0 < ∑ r, w r := by
+    have : Nonempty ι := by
+      by_contra h
+      rw [not_nonempty_iff] at h
+      exact hD (by simp)
+    exact sum_pos (fun r _ => hw r) univ_nonempty
+  have ha : ∑ t, w t / ∑ r, w r = 1 := by rw [← sum_div, div_self hpos.ne']
+  rw [integral_div, integral_cubic_residuals e L hL h0 (fun t => κ / w t ^ q) h3 _ _ ha]
+  rw [div_eq_iff hD, mul_sum]
+  refine sum_congr rfl fun t _ => ?_
+  rw [mul_sum, mul_sum, mul_sum]
+  exact sum_congr rfl fun s _ => by ring
+
+end ThirdCumulantEstimate
+
 end Credibility.Cumulants
