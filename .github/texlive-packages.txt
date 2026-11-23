@@ -12,3 +12,4 @@ fontspec
 unicode-math
 lm
 lm-math
+titlesec

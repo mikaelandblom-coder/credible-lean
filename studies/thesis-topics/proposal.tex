@@ -1,0 +1,407 @@
+% Master thesis proposal: extensions of the 2023 thesis, tested on card data (notes/card-data.md, Step 8).
+% Written for a student who knows neither the 2023 thesis nor the repository. Each extension says
+% what to derive and points to the handbook (formula and proof idea) to check against.
+% Built by CI (xelatex) after the handbook, to /thesis-proposal.pdf. Handbook result numbers come
+% from handbook/handbook.aux (package xr), so build the handbook first:
+%   (cd handbook && latexmk -xelatex handbook.tex) && (cd studies/thesis-topics && latexmk -xelatex proposal.tex)
+\documentclass[10pt]{article}
+
+\usepackage{amssymb, amsmath}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{8pt}{3pt}
+\titlespacing*{\subsection}{0pt}{6pt}{2pt}
+\usepackage{booktabs, array}
+\usepackage{xr-hyper}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+\externaldocument[H-]{../../handbook/handbook}
+
+\newcommand{\site}{https://mikaelandblom-coder.github.io/credible-lean/}
+\newcommand{\repo}{https://github.com/mikaelandblom-coder/credible-lean}
+% \hb{label}: the number of a handbook result (no link: the handbook is a separate PDF).
+\newcommand{\hb}[1]{\ref*{H-#1}}
+\newcommand{\Handbook}{\href{\site handbook.pdf}{Handbook}}
+\newcommand{\hmu}{\hat\mu}
+\newcommand{\cov}{\operatorname{cov}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\bu}{\mathbf 1}
+
+% One extension: \ext{title}{idea}{model}{derive items}{data question}{check against}{size}
+\newcommand{\ext}[7]{%
+  \subsection*{#1}
+  \textit{Idea.} #2\par\smallskip
+  \textit{A suggested model.} #3\par\smallskip
+  \textit{Derive.}
+  \begin{enumerate}\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}#4\end{enumerate}
+  \textit{Data question.} #5\par\smallskip
+  {\small\textit{Check against:} Handbook #6 \quad\textperiodcentered\quad \textit{Size:} #7}\par}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\title{Correlated credibility: extensions, tested on card data\\[2pt]
+  {\large Master thesis proposal in actuarial mathematics}}
+\author{\vspace{-2em}}
+\date{Draft for discussion, \today}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\section{Aim}
+
+Credibility theory prices a segment of a portfolio (a \emph{cohort}: a region, a product, an
+underwriting year) by blending its own experience with the portfolio's. The classical
+Bühlmann--Straub model assumes that cohorts are independent. A master thesis (Andblom, 2023) dropped
+that assumption: cohorts may be correlated, as when one storm or one drop in demand hits them all.
+Since then the model has been extended in several directions.
+
+This thesis takes some of those extensions, derives their formulas, and tests them on real data.
+You derive the formulas yourself, then check them against the handbook (Section~\ref{sec:where}),
+which states each result with the idea of its proof. Deriving is the best way to learn the subject,
+and it makes the thesis less dependent on mathematics generated with AI tools. The theory is
+general; the data are monthly claims of a travel insurance sold through payment cards
+(Section~\ref{sec:cards}), where each extension answers a concrete pricing question.
+
+\textbf{Status.} This is a draft, shared early to discuss the ideas. The formulation itself is
+part of the work: review it, and propose changes where the models, the questions or the scope can
+be better. The repository behind it is still developing. When the thesis starts, its state will be
+frozen as a release, and the thesis will cite that release.
+
+\section{The starting point: credibility for correlated cohorts (2023)}
+
+\textbf{Data.} Cohorts $j = 1, \dots, J$ are observed in periods $t = 1, \dots, T$: a volume
+$w_{jt}$ (e.g.\ insured years) and an observed ratio $\mu_{jt}$ (claims per unit of volume). Each
+cohort has a true level $\mu_j$, which we want to estimate.
+
+\textbf{Model.} Only first and second moments are assumed, no distribution:
+\[
+  \mu_{jt} = \mu_j + \sigma_{jt}\,\varepsilon_{jt},
+  \qquad \mu_j = \mu + \tau\eta_j,
+  \qquad \sigma_{jt}^2 = \frac{\sigma_j^2}{w_{jt}},
+  \qquad \cov(\varepsilon_{it}, \varepsilon_{js}) = \rho_{ij}\,\delta_{ts}.
+\]
+The cohort effects $\eta_j$ and the noise $\varepsilon_{jt}$ are centred with unit variance, and
+the cohort effects are uncorrelated with each other and with the noise. The new assumption is the
+last one: noise in the same period is correlated across cohorts. With $\rho_{ij} = \delta_{ij}$
+(no correlation) and a common $\sigma_j = \sigma$ this is Bühlmann--Straub.
+
+\textbf{The recipe.} Every result follows from one matrix.
+\begin{enumerate}\setlength{\itemsep}{1pt}
+  \item Within a cohort, the volume-weighted mean $\hmu_j = \sum_t w_{jt}\mu_{jt} / w_{j\ast}$ is
+    optimal ($w_{j\ast} = \sum_t w_{jt}$).
+  \item $K_{ij} = \cov(\hmu_i, \hmu_j) = \sigma_i\sigma_j\rho_{ij}\,S_{ij}/(w_{i\ast}w_{j\ast}) +
+    \tau^2\delta_{ij}$ with $S_{ij} = \sum_t \sqrt{w_{it}w_{jt}}$. It must be positive definite.
+  \item The portfolio estimate $\hmu = \sum_j b_j\hmu_j$ uses the GLS weights
+    $b = K^{-1}\bu / \bu^{\mathsf T}K^{-1}\bu$. A cohort that moves with many others gets less weight.
+  \item The blend $z_j\hmu_j + (1 - z_j)\hmu$ has the best credibility factor
+    $z_j = (1 - b_j)\tau^2 / (K_{jj} - 1/\bu^{\mathsf T}K^{-1}\bu)$.
+  \item $\tau^2$ and $\sigma_i\sigma_j\rho_{ij}$ have unbiased moment estimators, built from
+    cross-products of deviations from the cohort means.
+\end{enumerate}
+Every extension below keeps steps 3--4. It changes \emph{how $K$ is built} (step 2), and sometimes
+what is predicted. So each extension asks for the same work: build its $K$, show that it is
+positive definite, and find estimators for the new parameters. \Handbook: the model and the recipe
+in Section~1, steps 1--5 in Results \hb{res:invVar}, \hb{res:gls}, \hb{res:z},
+\hb{res:estimation}.
+
+\section{Which assumptions the extensions relax}
+
+\begin{center}\small
+\begin{tabular}{>{\raggedright}p{4.9cm} >{\raggedright}p{5.4cm} >{\raggedright\arraybackslash}p{4.4cm}}
+  \toprule
+  The 2023 assumption & Why it can fail & Extension \\
+  \midrule
+  All cohorts observed in all periods & Products start and stop & E1 Entry and exit \\
+  Correlation between cohorts falls with volume & A demand shock hits large and small cohorts alike & E2 A shock that does not shrink \\
+  The target is a cohort's level, the predictor a blend & One wants next year's total; better linear predictors exist & E3 The best linear predictor \\
+  One level per cohort and period & Monthly data have a season & E4 Season \\
+  Periods are independent & Demand persists over months and years & E5 A persistent common factor \\
+  One ratio per cohort & Frequency and severity behave differently & E6 Frequency and severity \\
+  The common movement is unobserved & A public index (e.g.\ passenger numbers) tracks it & E7 A known demand index \\
+  Parameters are known & They are estimated from the same, skewed data & E8 The price of estimation \\
+  Cohort levels are unrelated & Cards of one country, or one tier, are alike & E9 Countries and tiers \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Each model below is a \emph{suggestion}: change it if the data or the literature call for
+something else. The scope is flexible and follows the ambition of the thesis. E3 is a natural
+first chapter for E4--E7 and E9; from there one can go deep on one or two extensions or cover more,
+and the review of Section~\ref{sec:review} can be a part of its own. Whatever the choice, it needs
+the method of Section~\ref{sec:method}.
+
+\section{The extensions}
+
+\ext{E1. Cohorts that enter and leave}
+{In 2023 every cohort was observed in every period. In practice products are launched and closed,
+and a closed cohort's history still says something about the others.}
+{Cohort $j$ is observed in the periods $T_j$, with the 2023 moments on the observed cells.}
+{\item $K_{ij}$ when correlation acts only on the periods two cohorts share.
+ \item A condition for $K \succ 0$ that involves only cohorts observed at the same time.
+ \item An unbiased estimator of $\sigma_i\sigma_j\rho_{ij}$ for a pair that shares only some
+   periods: what replaces $T - 2$?}
+{Does keeping the history of closed cards improve the prediction for the open ones? The exact
+results assume exits unrelated to the claims. What if a card was closed for its results?}
+{Results \hb{res:unequal}, \hb{res:unequal_est}}{small}
+
+\ext{E2. A common shock that does not shrink with volume}
+{In 2023 the covariance between two cohorts falls like $1/\sqrt{w_{it}w_{jt}}$: double the volume
+and the shared shock halves. A real shock (a storm, a drop in travel demand) hits a cohort's ratio
+whatever its size.}
+{A period shock with covariance $C$ plus process noise,
+ $\cov(\mu_{it}, \mu_{js}) = \delta_{ts}\bigl(C_{ij} + \delta_{ij}s_i^2/w_{it}\bigr) + \tau^2\delta_{ij}$.}
+{\item $K$ for volume-weighted means, and $K \succ 0$.
+ \item Unbiased estimators of $C$ and $s^2$.
+ \item Why $s^2$ is identified only when volumes vary over time, and when this model and the 2023
+   model coincide.}
+{Does the covariance between cards' monthly ratios shrink with volume?}
+{Results \hb{res:shock}, \hb{res:shock_est}}{medium}
+
+\ext{E3. The best linear predictor of any target}
+{The blend is one linear predictor among many, and it targets the level $\mu_j$. A price is for
+next year's total, and the best predictor may weight each cohort separately.}
+{Data $x$ with $\cov(x) = K$, a target $Y$ with $\ell = \cov(x, Y)$ and $v = \Var Y$, and unknown
+means $Ex = X\beta$, $EY = x_0^{\mathsf T}\beta$.}
+{\item For which $d$ is $d^{\mathsf T}x$ unbiased for every $\beta$?
+ \item The best such $d^*$ (Lagrange multipliers) and its error. Which part of the error is the
+   price of estimating $\beta$?
+ \item Any other unbiased $d$ loses exactly $(d - d^*)^{\mathsf T}K(d - d^*)$. When is the 2023
+   blend the best predictor?
+ \item Next year's outcome instead of the level: why $z$ stays the same.}
+{On the data, how much does the best predictor gain over the blend?}
+{Results \hb{res:blup}, \hb{res:forecast}}{small to medium}
+
+\ext{E4. Monthly data and the season}
+{Monthly data have a season. The usual shortcut is to add up whole years and hope the season drops
+out. It does not when volumes are seasonal: a cohort sold mainly in summer leans on summer months.}
+{$E\mu_{jt} = \beta_{m(t)}$, one unknown mean per calendar month (or per cohort and month), as fixed
+effects in E3; the target is the next 12 months.}
+{\item The unbiasedness conditions: one per calendar month.
+ \item When the predictor that ignores the season equals the seasonal one, and its bias otherwise.
+   Try one cohort, two years of two months, twice the volume in the first month.
+ \item With known covariances, aggregating to annual totals never helps. What can change once the
+   season must be estimated?}
+{Does a monthly fit with an estimated season beat annual totals once everything is estimated?}
+{Results \hb{res:blup}, \hb{res:season}}{medium}
+
+\ext{E5. A persistent common factor}
+{A period shock is gone the next month. Travel demand persists over months and years, and in the
+pandemic it broke. Then past months say something about future ones, through the factor.}
+{Add $\lambda_i\lambda_j\Gamma_{ts}$ to E2, with loadings $\lambda_j$ and a covariance $\Gamma$ over
+months, e.g.\ AR(1), $\Gamma_{ts} = \gamma\phi^{|t-s|}$, or a block $\Gamma$ with a break at known
+dates.}
+{\item $K$ and $\ell$ for the next 12 months, and $K \succ 0$ for any observed cells.
+ \item A small example where a best weight is negative although $\phi > 0$. Why is it not an error?
+ \item Products of two cohorts' 12-month changes at lag $\ge 1$: unbiased for the factor, and free
+   of the shock and the season?
+ \item Why loadings need three cohorts. When do relative prices between cohorts not depend on the
+   factor?}
+{Are lagged products between cards different from zero? Does the factor model predict better than
+the shock model? Which treatment of the pandemic predicts the later years best?}
+{Results \hb{res:factor}, \hb{res:factor_est}, \hb{res:factor_extra}, \hb{res:relativity_factor}}{large}
+
+\ext{E6. Frequency and severity}
+{A ratio is frequency times severity, and the two may need different credibility. The levels become
+vectors and $z$ becomes a matrix.}
+{A level vector (frequency, severity) per cohort, a joint $K$ over cohorts $\times$ components,
+frequency weighted by volume and severity by claim counts.}
+{\item The best credibility matrix $Z_j$ (a matrix parabola).
+ \item Joint and separate prediction coincide when the components do not covary. Is the converse
+   true?
+ \item The bias of the pure premium as a product of two predictions,
+   $E[\hat f\hat s] - E[fs]$.}
+{Do frequency and severity residuals covary, and does a joint fit predict better?}
+{Results \hb{res:vector}, \hb{res:freqsev_joint}, \hb{res:prodBias}}{medium}
+
+\ext{E7. A known demand index}
+{If a public series (passenger statistics) tracks demand, use it as a covariate with a
+cohort-specific sensitivity. This is Hachemeister's regression credibility, with demand in place of
+time.}
+{$\mu_{jt} = \alpha_j + \beta_j D_t + \text{noise}$, with $(\alpha_j, \beta_j)$ random around a
+common mean and cohorts correlated as in E2.}
+{\item Hachemeister's credibility matrix as an instance of E6's $Z_j$, with correlated cohorts.
+ \item Equal sensitivities: when does the index act as a plain exposure adjustment?}
+{Given the index, how much correlation between cards remains?}
+{Result \hb{res:vector}}{medium}
+
+\ext{E8. The price of estimation}
+{Formulas with known $K$ are the oracle. In practice $K$ is estimated from the same data, and claims
+are skewed. That can bias the premium and cost accuracy.}
+{Any fit whose weights $\hat d$ are computed from the data, against the best weights $d^*$ for the
+true moments.}
+{\item The error of the plug-in predictor is $\mathrm{mse}(d^*) + EB^2 + 2E[AB]$, with $A$ the
+   oracle's error and $B$ the plug-in's distance from it. Under normal noise $E[AB] = 0$ (a result
+   that assumes a distribution: say so).
+ \item The bias of estimated weights, $\sum_i \cov(\hat d_i, \hmu_i)$: why it is negative for
+   right-skewed claims, and why balancing the total premium removes it at portfolio level.
+ \item An estimated table need not be positive definite. Projecting it onto valid tables never
+   increases the error.
+ \item Standard errors of the moment estimators: their variance needs third and fourth moments
+   (the repository has the general formula; not yet in the handbook).}
+{How skewed and how heavy-tailed are the residuals, and what does balancing the total premium cost
+in accuracy?}
+{Results \hb{res:randomWeights}, \hb{res:plugIn}, \hb{res:valid_tables}}{medium}
+
+\ext{E9. Countries and card tiers}
+{Cards come from several countries and in several tiers (e.g.\ classic, gold, platinum). Cards of
+one country share something, and so do cards of one tier. Hierarchical credibility handles nested
+levels (tiers within a country); here country and tier are crossed.}
+{$\mu_j = \mu + a_{c(j)} + g_{k(j)} + \tau\eta_j$ with uncorrelated random effects for country $c$
+and tier $k$, so the levels covary:
+$\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \sigma_g^2[k(i) = k(j)] + \tau^2\delta_{ij}$.}
+{\item $K$ and $\cov(\hmu, \mu_j)$; the best predictor of $\mu_j$ through E3.
+ \item Unbiased moment estimators of $\sigma_a^2$, $\sigma_g^2$, $\tau^2$, and which designs
+   identify them (does every tier appear in several countries?).
+ \item The nested case (one group level) against the handbook; the crossed case is new ground.}
+{Do country and tier explain differences between cards beyond each card's own experience?}
+{Results \hb{res:phi}--\hb{res:est_groups} (nested groups); crossed: not in the repository}{medium to large}
+
+\medskip
+\textit{Other directions in the handbook, not needed for the card data:} a known claim trend
+(Result \hb{res:trend}), when to merge cohorts and how to choose them (Results \hb{res:merge},
+\hb{res:pool_intervals}, \hb{res:blend_intervals}), and balance (Results \hb{res:balance}--\hb{res:commonShift}).
+
+\section{Results to review}\label{sec:review}
+
+The continuation found results that seem to be new, often gaps in the 2023 thesis itself. For any
+of them, check: is it correct, is it already known (a reference is as good an outcome as a
+confirmation), and does it matter in practice? Each is in the \Handbook{} with its proof idea, and
+in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with an example.
+\begin{enumerate}\setlength{\itemsep}{1pt}
+  \item \textbf{The 2023 model makes a common shock shrink with volume} (Finding 23, Result
+    \hb{res:shock}). With a fixed $\rho_{ij}$ the shared shock falls like $1/\sqrt{w_{it}w_{jt}}$;
+    the fix is E2.
+  \item \textbf{Whole years do not remove the season} when volumes are seasonal (Finding 24,
+    Result \hb{res:season}): one cohort, two years of two months and twice the volume in the
+    first month give weights $\tfrac43$, $\tfrac23$ and a bias $(\beta_1 - \beta_2)/3$.
+  \item \textbf{Positive autocorrelation does not keep the best weights positive} (Finding 25,
+    Result \hb{res:factor}): with an AR(1) factor and $\phi = \tfrac12$ a weight of $-\tfrac1{30}$
+    is optimal.
+  \item \textbf{Estimated weights under-price skewed portfolios} (Finding 35, Result
+    \hb{res:randomWeights}): the bias is exactly $\sum_i\cov(\hat d_i, \hmu_i)$, negative when a
+    high draw also raises the cohort's estimated variance; balancing on exposure removes it for
+    the portfolio. Compare with inverse-variance weighting in meta-analysis.
+  \item \textbf{Optimal groups of cohorts are intervals} (Finding 14, Results
+    \hb{res:pool_intervals}, \hb{res:blend_intervals}): pooling cohorts is weighted $k$-means in
+    one dimension, and with a common variance the same holds for the blend.
+  \item \textbf{The own-data weight stays bounded} where $z_j$ explodes (Finding 17, Result
+    \hb{res:z}): near the two-cohort singularity $z_j$ is large or negative, but
+    $c_j = b_j + z_j(1 - b_j)$ is not.
+\end{enumerate}
+
+\section{Comparing models on data}\label{sec:method}
+
+The theory says what is best \emph{if} a model holds, not which model holds. Decide on the data by
+out-of-sample prediction. Use a rolling origin with no look-ahead: at each month, refit every
+alternative on the past only, predict each cohort's next 12 months, and score the squared error.
+Compare two alternatives by their \emph{paired} loss differences, so the target year's common
+shock cancels, with a Diebold--Mariano test, a HAC variance with lag 11 and the
+Harvey--Leybourne--Newbold correction. Do not use shuffled $K$-fold: the common factor correlates
+held-out months with the training months.
+
+First check the power in simulation: in a world the size of the data, how often does the test find
+a real difference? (The app's first answer: with 6--8 years a 30\% gap is found in only 15--23\% of
+draws.) ``No evidence of a difference'' is then a result in itself, and so is finding that a
+statement in the handbook is wrong or of little practical use.
+
+\section{The application: travel insurance on payment cards}\label{sec:cards}
+
+A travel insurance is sold through several card products. For each card product (a cohort) and
+month there are cards in force, claim counts and paid amounts. The task is to price each card for
+the next underwriting year. Classical credibility treats the cards as independent, but travel
+demand moves them all at once, with the pandemic as the extreme case. The business is seasonal,
+volumes differ widely between cards, cards start and stop within the window, and they come from
+several countries and tiers. The pricing questions map to the extensions:
+\begin{itemize}\setlength{\itemsep}{1pt}
+  \item Does the correlation between cards shrink with volume, or is it a common shock? (E2, E5)
+  \item Does the common movement persist, do cards load on it equally, and does a public index
+    capture it? (E5, E7)
+  \item Monthly data with an estimated season, or annual totals? (E3, E4)
+  \item Frequency and severity combined, separate or joint? (E6)
+  \item How should new and closed cards enter the fit? (E1)
+  \item How much do country and tier say about a card? (E9)
+\end{itemize}
+\textit{Left to the student:} the number of factors, the treatment of the pandemic, reporting delay
+(simplest: use developed months only), and whether new cardholders behave differently.
+\textit{Data and publication:} aggregated or anonymized company data by agreement; the thesis text
+is public. The analysis must also run on simulated data (the app can produce it), so it can be
+reproduced without the company data.
+
+\section{How to work}
+
+\begin{itemize}\setlength{\itemsep}{1pt}
+  \item \textbf{Derive first, then check.} Derive the listed results by hand, then compare with the
+    handbook, which gives the formula, a practical note and the proof idea. Where you disagree, find
+    out who is right.
+  \item \textbf{Guidance, not authority.} The continuation was developed with extensive AI
+    assistance. Its proofs are machine-checked, so a stated result follows from its definitions. A
+    machine cannot check whether the definitions say what is intended, whether a model fits real
+    data, or whether a result is already known.
+  \item \textbf{No Lean needed.} Every handbook result links to its machine-checked proof in the
+    proof assistant Lean. Reading it is optional.
+  \item \textbf{Your own code} (R or Python) for estimation and back-testing. The app is for
+    intuition and for checking the method, not a dependency.
+  \item \textbf{Moments, not distributions.} The core model assumes first and second moments only.
+    A result that assumes a distribution (normal noise, gamma amounts) is fine if stated as such.
+  \item \textbf{No hand-set tuning.} Every parameter of a fitted model is estimated from the data.
+\end{itemize}
+
+\section{Where to find things}\label{sec:where}
+
+\begin{center}\small
+\begin{tabular}{>{\raggedright}p{3.6cm} >{\raggedright\arraybackslash}p{11.2cm}}
+  \toprule
+  \href{\site handbook.pdf}{Handbook} & Each result with its formula, when to use it, what to watch
+    out for, and why it holds. Result numbers in this proposal refer to it. \\
+  \href{\site paper/}{Paper} & The up-to-date version of the 2023 thesis: concepts and intuition,
+    organized for lookup. \\
+  \href{\site app/}{App} & Simulated worlds: draw data, fit models that never see the truth,
+    compare with the best possible fit. ``Monthly cohorts'' is a world like the card data. \\
+  \href{\repo}{Repository} & Everything below, with its history. \\
+  \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} & Gaps and surprises, each with a counterexample
+    or proof. \\
+  \href{\repo/blob/main/studies/literature.md}{Literature notes} & Credibility, small-area
+    estimation, covariance shrinkage; \S10 for monthly card data. \\
+  \href{\site}{Blueprint} (optional) & Every statement with its full proof and a dependency graph. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{Suggested phases}
+
+\begin{enumerate}\setlength{\itemsep}{1pt}
+  \item \textbf{Background.} Read the 2023 thesis (or the paper) and Bühlmann--Gisler ch.~4;
+    rederive Section~2 above. Review this proposal.
+  \item \textbf{Choose} extensions and derive their results, checking against the handbook.
+  \item \textbf{Data.} Descriptive analysis: volumes, season, correlations between cards by lag,
+    country and tier, the pandemic.
+  \item \textbf{Simulation check.} Does the comparison of Section~\ref{sec:method} have the power to
+    separate your alternatives?
+  \item \textbf{Comparison on data} and recommendations for pricing card products, with a list of
+    statements checked, corrected or found already known.
+\end{enumerate}
+
+\textbf{Prerequisites.} Linear and mixed models (variance components), credibility theory, time
+series basics, simulation, R or Python.
+
+\section*{Starting references}
+{\small
+\begin{itemize}\setlength{\itemsep}{0pt}
+  \item Andblom, M. (2023). \emph{Generalized Bühlmann--Straub credibility theory for correlated
+    data}. Master Thesis in Actuarial Mathematics 2023:2, Stockholm University.
+  \item \emph{credible-lean: correlated credibility theory, formalized in Lean} (2026),
+    \url{\repo}. A release will be frozen when the thesis starts.
+  \item Bühlmann, H. and Gisler, A. (2005). \emph{A Course in Credibility Theory and its
+    Applications}. Springer (chapters 4, 6, 8 and 9).
+  \item Goldberger, A. S. (1962). Best linear unbiased prediction in the generalized linear
+    regression model. \emph{JASA} 57, 369--375.
+  \item Hachemeister, C. A. (1975). Credibility for regression models with application to trend. In
+    \emph{Credibility: Theory and Applications}, Academic Press.
+  \item Frees, E. W. (2004). \emph{Longitudinal and Panel Data}. Cambridge University Press.
+  \item Rao, J. N. K. and Molina, I. (2015). \emph{Small Area Estimation}, 2nd ed. Wiley.
+  \item Diebold, F. X. and Mariano, R. S. (1995). Comparing predictive accuracy. \emph{JBES} 13,
+    253--263.
+\end{itemize}}
+
+\end{document}

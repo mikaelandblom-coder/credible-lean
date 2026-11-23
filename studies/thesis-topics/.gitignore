@@ -1,0 +1,9 @@
+# LaTeX build output (CI builds the PDFs)
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.xdv
+*.out
+*.toc
+proposal.pdf
