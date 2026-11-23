@@ -641,7 +641,13 @@ One chat per step; none needs Lean except step 5.
   from `covariance_quad_lin_of_cumulants` with a pooled cross-region third moment γ̂ (`crossSkew`, a
   ratio: 0.39 against 0.66 at ρ = 0.6, T = 10; → truth as T grows). ρ = 0.6: BLUP −0.42 / −0.41%,
   pooled BLUP −0.30 / −0.33%, corrBS −0.33 / −0.27%; T = 5 or J = 20: about half the BLUPs' bias
-  (γ̂ low). Open: a less biased γ̂ (e.g. split-sample denominators).
+  (γ̂ low). *Refined 2026-11-23:* γ̂'s low reading is the denominator (E σ̂ₐσ̂ᵦσ̂꜀ > σₐσᵦσ꜀ under a shared
+  shock; with the true σ it is exact; leave-one-year-out does not help), so the cross moments are now
+  per-triple unbiased k-statistics (`crossThird`); plus a τ̂² channel with the level third cumulant by a
+  moment equation (`levelThird`). Neither moves the prediction much (T = 5, ρ = 0.6: BLUP −0.78 against
+  −1.07%; J = 20: −0.47 against −0.74 ± 0.18%, −0.61 ± 0.15% with another seed). Level skew adds
+  ~0.1 point (`studies/level-skew-bias.js`). The rest at T ≤ 5 is beyond first order. Stop here: the
+  prediction gets sign and size (within ~30%), and the balance switch removes the portfolio part anyway.
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).
