@@ -636,8 +636,12 @@ One chat per step; none needs Lean except step 5.
   draws): default −0.37 / −0.31%, T = 4 shape 1 −1.75 / −2.15%, σⱼ spread −1.06 / −0.78%, J = 20
   −0.28 / −0.31%, Lomax α = 4 −0.18 / −0.16%, normal and pooled BLUP 0 / 0; misses the ρ̂ channel
   (ρ = 0.6: −0.15 / −0.27%, pooled BLUP 0 / −0.33%). One data set's value is rough (SD ≈ mean).
-  Noise shape page: a row per unbalanced fit/reference. Open: the ρ̂ channel (cross-region third
-  moments of the shared shock).
+  Noise shape page: a row per unbalanced fit/reference. *ρ̂ channel added 2026-11-23:* for corrBS and
+  its BLUPs each σ̂ₖ² and ρ̂'s numerator Σ Qᵢⱼ perturbed alone (`vcEstimate` perturb hook), covariances
+  from `covariance_quad_lin_of_cumulants` with a pooled cross-region third moment γ̂ (`crossSkew`, a
+  ratio: 0.39 against 0.66 at ρ = 0.6, T = 10; → truth as T grows). ρ = 0.6: BLUP −0.42 / −0.41%,
+  pooled BLUP −0.30 / −0.33%, corrBS −0.33 / −0.27%; T = 5 or J = 20: about half the BLUPs' bias
+  (γ̂ low). Open: a less biased γ̂ (e.g. split-sample denominators).
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
   normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).
