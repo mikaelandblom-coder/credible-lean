@@ -106,6 +106,8 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   Evenness is not needed for the MSE identity, only for unbiasedness.
 - Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
+  Used 2026-11-24 (`studies/price-formula.js`, S53–S55): g₃ as the first-order price of a fitted
+  model against its oracle; reliable from about T = 10, overshooting with short histories.
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
   estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
   approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:

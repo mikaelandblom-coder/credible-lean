@@ -502,3 +502,50 @@ damped by S3's θ̂ ("corr"), the BLUP on corrBS's `K̂` and own means, on the s
     worse in 7 (all by ≤ 1.1), tied in 17 of 40 worlds. *For the owner:* on these numbers the BLUP is the
     better default for the rates. corrBS keeps the blend form `zμ̂ⱼ + (1 − z)μ̂` and its recipe. The
     balance and skew-bias trade-offs (Finding 35, "BLUP pooled") are not scored here.
+
+## Predicting the gaps from moments: oracle part + price (`price-formula.js`, output `price-formula.out.txt`, 2026-11-24)
+
+Purpose: conjecture and decide. Owner (2026-11-24): findings should depend less on simulation. Every
+comparison splits as MSE(fitted F) = **oracle part** (exact: the MSE of F's weights at its limiting
+parameters, `Core.linMse`; against the BLUP `CoreMoments.mse_blend_eq_blup_add`) + **price** (from
+estimating the parameters; `PlugIn.lean`'s exact identity, whose cross term vanishes under normal noise,
+`PlugInNormal`). With pooled variances, BS, corrBS and the BLUP on corrBS's `K̂` depend on the data only
+through three quadratic statistics s = (P, Qn, B): the pooled within-region variance, the cross-region
+residual products, and the spread of the means. Under normal data their means and covariances are
+trace formulas (B is exactly uncorrelated with P and Qn). Two price formulas, both from moments only:
+*first order* (Prasad–Rao g₃: Σ Cov(sₖ, sₗ) Gₖᵀ K Gₗ, Gₖ = ∂dⱼ/∂sₖ), and *integrated* (the exact
+clipped weights averaged over s by a 3-D Gauss–Hermite rule, P and B on matched gamma scales via
+Wilson–Hilferty; it ignores the dependence of s on μ̂, as g₃ does). Check: 2000 simulated draws of the
+engine's fits (the re-implementation equals the engine on a draw). 16 normal worlds (ρ × T × regime,
+J = 8, equal σⱼ).
+
+- S53. *[exact + numerical]* **The oracle part decides the sign.** Wherever the simulated gap is
+    outside 2 SE, the exact oracle gap has the same sign: 26 of 32 gaps, and none of the others has a
+    clear sign. At ρ = 0 it is exactly 0 for both pairs, and the simulated gaps are ≤ 0.4 points. Its
+    size is within a factor 0.7–1.5 in the app regime, but 2–4 times too small for BS − corrBS in the
+    thesis regime, where BS's price matters. **The first-order price** closes that: BS − corrBS
+    predicted at 0.7–0.85 of the simulated gap in the thesis regime and 1.1–1.2 at app T = 10, and the
+    BLUP gap within 1–5 points. It overshoots 2–3-fold at app T = 5 (BS, ρ = 0.9: 208 against 63),
+    where τ̂² is poorly determined and clipped. **The integrated price** fixes app T = 5 (72 against 63)
+    and predicts the BLUP gap within 4 points everywhere. But it overstates BS's gap in the thesis
+    regime (38 against 19): BS's τ̂² rises when the means spread, which helps it, and ignoring that
+    dependence overstates the price.
+- S54. *[numerical]* **Estimating one correlation is free; estimating J variances is not.** At ρ = 0,
+    pooled corrBS − BS is 0.1 ± 0.3 (gamma, T = 5) and −0.2 ± 0.2 (T = 10), 3000 draws. S6's cost of
+    corrBS at ρ = 0 is its variance-credibility step (σ̃ⱼ² per region when the σⱼ are equal): 8.0 ± 1.6
+    (gamma) and 4.3 ± 0.9 (normal) at T = 5, 1.2 ± 0.6 and 0.4 ± 0.3 at T = 10. The skew link of
+    Finding 35 doubles it. This is the price count of g₃: one ρ̂ pooled over J(J − 1)/2 pairs has a tiny
+    variance, while each σ̂ⱼ² has only T − 1 degrees of freedom (relative variance ≈ 2/(T − 1)).
+- S55. *[derived, to check]* **Why gaps shrink at high z.** With z = τ²/(τ² + v), ∂z/∂log v = −z(1 − z)
+    exactly. So the first-order price of a variance parameter, relative to the floor, is about
+    z(1 − z)·CV² of its estimate. It is largest at z = ½ and vanishes at z → 0 or 1, consistent with
+    S48 and S51. Not yet tested as a law.
+
+**Consequence.** The *direction* of a comparison is a formula: the exact oracle gap. Its size needs the
+price, and first order is reliable once each parameter has about 10 years of data or z is high. For
+the app this gives a decision rule with no tuning: the oracle gap from the fitted `K̂`, against the
+first-order price from the plug-in variances of the statistics (`PLAN.md` Pending, "gain against price").
+Lean candidates (in **lean**): the exact Var/Cov of P, Qn, B as corollaries of
+`Cumulants.variance_quad_of_cumulants`; cov(B, P) = cov(B, Qn) = 0 when third cumulants vanish; the
+exact MSE gap between two blends as a quadratic in z. The first-order price itself stays an
+approximation, checked here.
