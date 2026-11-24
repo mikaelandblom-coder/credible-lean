@@ -95,6 +95,7 @@ jobs:
         run: |
           python3 scripts/progress.py --check
           python3 scripts/blueprint_check.py
+          python3 scripts/blueprint_check.py --components
           python3 scripts/blueprint_check.py --decls > "$RUNNER_TEMP/decls.txt"
           lake env lean --run scripts/CheckDecls.lean "$RUNNER_TEMP/decls.txt"
           python3 scripts/handbook_check.py
