@@ -450,7 +450,7 @@ common) × ρ ∈ {0.3, 0.6, 0.9} × J ∈ {8, 20} × T ∈ {5, 10} × regime, 4
     equals BLUP on corrBS's `K̂` (whose lead there is 5–38 points). Over all 48 worlds auto is never
     more than 4 points worse than BLUP on corrBS (J = 8, T = 5: 134 against 130, ±3).
 - S47. *[numerical]* **…but timid where the taper matters.** In the ordered worlds with ρ = 0.9 it
-    tapers in only 13–61% of draws. The taper gains 7–29 points there with J = 20, and auto keeps 0–60% of
+    tapers in only 13–61% of draws. The taper gains 7–29 points there with J = 20, and auto keeps 0–70% of
     that (J = 20, T = 10, app: 114 against taper 103 and corrBS 132). Regret against the better of the
     two: mean 1.4, at most 13 (± 12) points; within 2 SE of 0 in 36 of 48 worlds. *[hypothesis]* The
     common table's loss ignores how strongly the pairs' errors are correlated (they share the T years),
