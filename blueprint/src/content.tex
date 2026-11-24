@@ -8684,6 +8684,99 @@ price needs their covariances.
   Insert the three moments in $\mathrm{zHatVar}$; algebra.
 \end{proof}
 
+\begin{lemma}[Two linear statistics times a sum of squares]\label{lem:integral_lin_lin_sumSq}
+  \lean{Credibility.Cumulants.lin_lin_sumSq_eq, Credibility.Cumulants.integrable_lin_lin_sumSq,
+        Credibility.Cumulants.integral_lin_lin_sumSq, Credibility.Cumulants.integral_lin_mul_lin}
+  \leanok
+  For $X$ in $L^4$ with second moments $C$ and fourth moments $\kappa_4 + CC + CC + CC$,
+  $\operatorname{E}[(a^\top X)(b^\top X)] = a^\top Cb$ and
+  \[ \operatorname{E}\Bigl[(a^\top X)(b^\top X)\sum_k c_k(u_k^\top X)^2\Bigr]
+     = \sum_k c_k\bigl((a^\top Cb)(u_k^\top Cu_k) + 2(a^\top Cu_k)(b^\top Cu_k) + \kappa_4(a, b, u_k, u_k)\bigr). \]
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand into fourfold products and integrate term by term.
+\end{proof}
+
+\begin{definition}[Levels and noise as primitives]\label{def:primCells}
+  \lean{Credibility.Cumulants.cellsOf, Credibility.Cumulants.pullCoef, Credibility.Cumulants.primVar, Credibility.Cumulants.primK4,
+        Credibility.Cumulants.predW, Credibility.Cumulants.spreadW, Credibility.Cumulants.errCoef, Credibility.Cumulants.spreadCoef,
+        Credibility.Cumulants.zHatLin}
+  \leanok
+  \uses{def:fitStats, lem:zHatVar}
+  The primitives $X = (L, e)$ on $J \sqcup (J\times T)$ give the cells $x_{jt} = \mu + L_j + e_{jt}$.
+  Second moments $\operatorname{diag}(\tau^2, \sigma^2/w)$; fourth cumulants $\kappa_L$, $\kappa_N/w^2$ on
+  the diagonal only. The error of the blend with the true $z$ is
+  $A = z\bar x_j + (1 - z)\bar x - (\mu + L_j)$, and the linearized error of $\hat z = 1 - \hat v/S^2$ at
+  $(v, s)$ is $-(\hat v - v)/s + (v/s^2)(S^2 - s)$, so $B = (\hat z - z)(\bar x_j - \bar x)$ at first order.
+\end{definition}
+
+\begin{lemma}[The primitives' algebra]\label{lem:primCells}
+  \lean{Credibility.Cumulants.dotProduct_cellsOf, Credibility.Cumulants.dotProduct_diagonal_primVar,
+        Credibility.Cumulants.sum_primK4, Credibility.Cumulants.regionMean_cellsOf,
+        Credibility.Cumulants.errCoef_dotProduct, Credibility.Cumulants.spreadCoef_dotProduct,
+        Credibility.Cumulants.pullCoef_resCoef_inl, Credibility.Cumulants.pullCoef_meanComb,
+        Credibility.Cumulants.statP_cellsOf, Credibility.Cumulants.statB_cellsOf, Credibility.Cumulants.sum_cell_fst,
+        Credibility.Cumulants.sum_spreadW, Credibility.Cumulants.sum_predW_spreadW,
+        Credibility.Cumulants.err_cov_spreadPull, Credibility.Cumulants.spreadCoef_eq, Credibility.Cumulants.err_cov_res}
+  \leanok
+  \uses{def:primCells}
+  $A$, $\bar x_j - \bar x$, the residuals and the spreads are linear in $(L, e)$; $P$ and $B$ are
+  sums of their squares. At the true $z$ ($zs = \tau^2$) the error is uncorrelated with every spread
+  $\sum_i\beta_i\bar x_i$ ($\sum\beta = 0$) and with every residual.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:fitStats_eval, lem:bsCov, lem:sum_bsK4}
+  Write each statistic through Lemma~\ref{lem:fitStats_eval} with equal shares (Lemma~\ref{lem:bsCov});
+  residuals sum to zero over a region (Lemma~\ref{lem:sum_bsK4}).
+\end{proof}
+
+\begin{lemma}[The error against $P$ and $B$]\label{lem:integral_err_spread}
+  \lean{Credibility.Cumulants.integral_err_spread, Credibility.Cumulants.integral_err_spread_statP,
+        Credibility.Cumulants.integral_err_spread_statB, Credibility.Cumulants.integral_err_spread_affine}
+  \leanok
+  \uses{def:primCells}
+  With $z = \tau^2/s$: $\operatorname{E}[A(\bar x_j - \bar x)] = 0$,
+  $\operatorname{E}[A(\bar x_j - \bar x)P] = \kappa_N(1 - 1/J)z/(wJT^2)$ and
+  $\operatorname{E}[A(\bar x_j - \bar x)B] = wT(1 - 1/J)^2\bigl(-(1 - z)\kappa_L + z\kappa_N/(w^2T^3)\bigr)$.
+  Only fourth cumulants survive; the levels and the noise of a region mean enter with opposite signs.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_lin_lin_sumSq, lem:primCells, lem:sum_bsK4}
+  Lemma~\ref{lem:integral_lin_lin_sumSq}: the $C$ terms vanish by Lemma~\ref{lem:primCells}; in the
+  $\kappa_4$ term $\sum_kr_k(c)^2 = 1 - 1/T$ and $\sum_k\beta_{ki}^2 = 1 - 1/J$ (Lemma~\ref{lem:sum_bsK4}).
+\end{proof}
+
+\begin{theorem}[The first-order cross term of the plug-in]\label{thm:crossTerm_balanced_cumulants}
+  \lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants,
+        Credibility.Cumulants.crossTerm_of_balanced_cumulants_known}
+  \leanok
+  \uses{def:primCells, thm:Blup_plugIn_mse}
+  In the balanced world with fourth cumulants, the first-order cross term $2\operatorname{E}[AB]$ of the
+  exact MSE (Theorem~\ref{thm:Blup_plugIn_mse}) for Bühlmann--Straub's fitted $\hat z$, relative to
+  $(1 - z)\tau^2$, is, with $\gamma_L = \kappa_L/\tau^4$ and $\gamma_N = \kappa_N/\sigma^4$,
+  \[ -2\Bigl(1 - \frac1J\Bigr)\frac{z(1 - z)}J\Bigl(\gamma_L + \frac{\gamma_N}T\Bigr)
+     \quad(D = \sigma^2/(wT)\text{ estimated by }\hat v), \qquad
+     2\Bigl(1 - \frac1J\Bigr)\frac{1 - z}J\Bigl(-z\gamma_L + (1 - z)\frac{\gamma_N}T\Bigr)
+     \quad(D\text{ known}). \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_err_spread}
+  The linearized $\hat z - z$ is affine in $\hat v$ and $S^2$; Lemma~\ref{lem:integral_err_spread}.
+\end{proof}
+
+\begin{remark}[Finding 38: estimating $D$ flips the noise part]
+  With $D$ known the result is Chen, Lahiri and Rao's $2g_4$ (up to $1 - 1/J$): heavy-tailed levels
+  lower the MSE, heavy-tailed noise raises it. With $D$ estimated from the same cells the noise part
+  changes sign and matches the level part. Added to the kurtosis terms of law (a)
+  (Theorem~\ref{thm:bsPrice_balanced_cumulants}), the total first-order effect of kurtosis is
+  $-(1 - 1/J)z(1 - z)(\gamma_L + \gamma_N/T)/J$: heavy tails of either kind lower the first-order MSE
+  of the plug-in.
+\end{remark}
+
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
   \lean{Credibility.Core.linMse_lineWeight, Credibility.Core.linMse_lineWeight_sub}
   \leanok

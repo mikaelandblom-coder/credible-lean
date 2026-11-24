@@ -956,9 +956,11 @@ Checked to exist; read from abstracts and listings only, not the full texts.
     So the level kurtosis' total first-order effect on the MSPE is `+z(1 − z)γL/J − 2z(1 − z)γL/J =
     −z(1 − z)γL/J`. Heavy-tailed levels *lower* the plug-in MSE at this order. With `D` known, the noise
     kurtosis raises it through `2g₄` (`+2(1 − z)²κ_e/m` relative). This agrees in sign with the app's
-    simulations (PLAN: `2E[AB]` −6% under gamma, +0.5% normal). Not proved here: the Lean target is
-    the first-order `2E[AB]` (`PlugIn.lean`'s cross term) in the balanced world with cumulants, `D`
-    estimated, next to `bsPrice_of_balanced_cumulants`. Printed check of the sign: eq. (6) is
+    simulations (PLAN: `2E[AB]` −6% under gamma, +0.5% normal). *Proved 2026-11-24*
+    (`Cumulants.crossTerm_of_balanced_cumulants`, Finding 38): with `D` estimated, `2E[AB]` relative is
+    `−2(1 − 1/J)z(1 − z)(γL + γN/T)/J`; with `D` known (`…_known`) it is their `2g₄` up to `1 − 1/J`.
+    The noise part flips sign when `D` is estimated, and the total kurtosis effect (law (a) plus the
+    cross term) is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`. Printed check of the sign: eq. (6) is
     `g₁ + g₂ + g₃ + 2g₄`, with `g₄ = ψDᵢ²/(m(ψ + Dᵢ)³)·[Dᵢκ_eᵢ − ψκ_v]·c`, `c = 1` for PR. So the true
     MSPE's `κ_v` part is `−ψ²D²κ_v/(m(ψ + D)³)`. In the estimator (8) `κ_v` cancels between `2g₃` and
     `2g₄` (the `2g₃` corrects the bias `−g₃` of `g₁(ψ̂)`), which is why (9) needs no `κ̂_v`.

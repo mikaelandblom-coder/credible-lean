@@ -344,6 +344,12 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- [ ] Cross term with kurtosis (2026-11-24, Finding 38, `Cumulants.crossTerm_of_balanced_cumulants`):
+  the first-order `2E[AB]` of the BS plug-in, relative to `(1 − z)τ²`, is `−2(1 − 1/J)z(1 − z)(γL + γN/T)/J`
+  (`D` estimated). The "Noise shape" readout's price with γ̂N (law (a) only) adds
+  `+(1 − 1/J)z(1 − z)γN/(JT)`; with the cross term the kurtosis total is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`,
+  so the correction has the wrong sign. Next app chat: price = law (a) + cross term (show both), and
+  check against the simulated `2E[AB]` (−6% under gamma).
 - [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the

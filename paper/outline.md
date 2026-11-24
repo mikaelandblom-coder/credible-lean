@@ -84,6 +84,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Cross term of the plug-in with kurtosis (2026-11-24, Finding 38,
+  `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
+  ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,
+  heavy tails of levels or noise lower the plug-in's first-order MSE, `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.
 - *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
   and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
 - The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why

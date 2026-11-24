@@ -630,4 +630,23 @@ Gaps, extra hypotheses and new results found while formalizing.
    In the balanced world it is exactly `cov(B, P) = κN(J − 1)/(JT)` for noise of fourth cumulant `κN/w²`;
    the levels' cumulant does not enter (`covariance_statB_statP_of_balanced_cumulants`, 2026-11-24).
 
+38. **Estimating the noise variance flips the sign of the noise kurtosis in the plug-in's cross term
+   (new; `studies/literature.md` §10m; Lean: `Cumulants.crossTerm_of_balanced_cumulants`,
+   `crossTerm_of_balanced_cumulants_known`, in `FitStatistics.lean`).** Expected (Chen, Lahiri &
+   Rao 2025, `D` known): the first-order cross term `2E[AB]` of the Bühlmann–Straub plug-in, relative
+   to `(1 − z)τ²`, has the level part `−2z(1 − z)γL/J`. Found, balanced world, levels and noise with
+   fourth cumulants `κL`, `κN/w²` (`γL = κL/τ⁴`, `γN = κN/σ⁴`), `ẑ = 1 − v̂/S²` linearized:
+   - `D` estimated by `v̂`: `2E[AB] = −2(1 − 1/J) z(1 − z)(γL + γN/T)/J`.
+   - `D` known: `2(1 − 1/J)(1 − z)/J · (−zγL + (1 − z)γN/T)`, their `2g₄` up to `1 − 1/J` (`κ_e = γN/T`).
+   So the level part matches; the noise part changes sign and takes the form of the level part. Why:
+   `A = (1 − z)m̄ − uⱼ` (`m` the centred region means, `uⱼ = Lⱼ − zmⱼ` uncorrelated with the data)
+   meets `ẑ − z` only through fourth cumulants. Through `S²` the levels enter with `−(1 − z)` and the
+   mean noise with `+z`; through `v̂` (only with `D` estimated) the noise enters again with `−z/s` times
+   a larger weight, and the sum is negative. Consequence: adding law (a)'s kurtosis terms
+   (`bsPrice_of_balanced_cumulants`, `+(1 − 1/J)z(1 − z)(γL + γN/T)/J` relative), the total first-order
+   effect of kurtosis on the plug-in's MSE is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`: heavy tails of either
+   kind *lower* it at this order, and law (a) with its kurtosis terms alone has the sign wrong. This
+   agrees in sign with the app's simulations (`2E[AB]` −6% under gamma noise). Caveat: first order in
+   the delta method, balanced volumes, no third cumulants used (none enter at this order).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

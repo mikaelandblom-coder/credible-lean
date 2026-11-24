@@ -16,6 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Cross term of the plug-in (2026-11-24, `Cumulants.crossTerm_of_balanced_cumulants`, Finding 38):
+  with law (a); "watch out": law (a)'s kurtosis terms alone have the wrong sign for the total, the
+  kurtosis effect on the BS plug-in's first-order MSE is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):
