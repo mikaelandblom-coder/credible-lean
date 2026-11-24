@@ -1,5 +1,6 @@
 import Credibility.Cumulants
 import Credibility.Core
+import Credibility.BuhlmannStraub
 
 /-!
 # The statistics of the pooled fits: exact variances and covariances
@@ -19,6 +20,8 @@ variance) depend on the data only through three quadratic statistics
   the third cumulants vanish (so `cov(B, P) = cov(B, Qn) = 0` under normal cells);
   `meanCoef_dot_resCoef_eq_zero`: the means and the residuals are uncorrelated for a level
   covariance plus year noise `Dₜ` with `aᵢₜ Dₜᵢⱼ` constant in `t`;
+* `bsZ_bsTau2Hat_of_balanced`, `bsPrice_of_balanced`: with equal region volumes the fitted
+  Bühlmann–Straub factor is exactly `1 - v̂/S²`, and its first-order price has a closed form (S56);
 * `Core.linMse_lineWeight`, `Core.linMse_lineWeight_sub`: the mean squared error of a blend
   `z eⱼ + (1 - z) b` and the gap between two blends with the same `z`, as exact quadratics in `z`.
 
@@ -350,6 +353,115 @@ theorem variance_stat (Z : J × T → Ω → ℝ) (w : J → T → ℝ) (s : Sta
     covQuad_self]
 
 end Stats
+
+/-! ### The balanced world: Bühlmann–Straub's fitted factor and its first-order price (S56)
+
+Equal region volumes `Wⱼ = W₀`. Then the fitted factor is exactly `ẑ = 1 - v̂/S²` with
+`v̂ = P/W₀` and the sample variance `S² = B/((J - 1)W₀)` of the region means, and the first-order
+(delta-method) price of fitting it has a closed form (law (a) of `studies/damping-theta.md`). -/
+
+section Balanced
+
+universe uB
+
+variable {J T : Type uB} [Fintype J] [Fintype T]
+
+/-- Bühlmann–Straub's between-region estimator from the statistics:
+`τ̂² = (B - (J - 1)P) / (W - Σⱼ Wⱼ²/W)`, `W = Σⱼ Wⱼ` (`studies/price-formula.js`). -/
+noncomputable def bsTau2Hat (w : J → T → ℝ) (P B : ℝ) : ℝ :=
+  (B - (Fintype.card J - 1) * P)
+    / (∑ j, ∑ t, w j t - (∑ j, (∑ t, w j t) ^ 2) / ∑ j, ∑ t, w j t)
+
+/-- **The balanced identity** (S56): with equal region volumes `W₀`, Bühlmann–Straub's fitted
+factor `ẑ = W₀/(W₀ + P/τ̂²)` is `1 - v̂/S²`, `v̂ = P/W₀`, `S² = B/((J - 1)W₀)`, whenever
+`τ̂² ≠ 0` and `B ≠ 0`. -/
+theorem bsZ_bsTau2Hat_of_balanced (w : J → T → ℝ) (W₀ : ℝ) (hW : ∀ j, ∑ t, w j t = W₀)
+    (hW0 : W₀ ≠ 0) (hJ : 2 ≤ Fintype.card J) (P B : ℝ) (hB : B ≠ 0)
+    (hτ : bsTau2Hat w P B ≠ 0) (j : J) :
+    bsZ (bsTau2Hat w P B) P w j = 1 - (P / W₀) / (B / ((Fintype.card J - 1) * W₀)) := by
+  have hn : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
+  have hn1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
+  have hn0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
+  have hc0 : ∑ j, ∑ t, w j t - (∑ j, (∑ t, w j t) ^ 2) / ∑ j, ∑ t, w j t
+      = (Fintype.card J - 1) * W₀ := by
+    simp only [hW, sum_const, card_univ, nsmul_eq_mul]
+    field_simp
+  have hτ' : B - (Fintype.card J - 1) * P ≠ 0 := by
+    intro h; apply hτ; rw [bsTau2Hat, h, zero_div]
+  have hτ3 : P - P * Fintype.card J + B ≠ 0 := by
+    convert hτ' using 1; ring
+  rw [bsZ, bsTau2Hat, hc0, hW]
+  have hden : W₀ + P / ((B - (Fintype.card J - 1) * P) / ((Fintype.card J - 1) * W₀))
+      = W₀ * B / (B - (Fintype.card J - 1) * P) := by
+    field_simp
+    linear_combination (-1 : ℝ) * mul_inv_cancel₀ hτ3
+  rw [hden, div_div_eq_mul_div]
+  field_simp
+
+/-- With equal volumes, `B = W₀ Σⱼ (x̄ⱼ - x̄)²` with the plain average `x̄ = Σⱼ x̄ⱼ / J`, so
+`B/((J - 1)W₀)` is the sample variance of the region means. -/
+theorem statB_of_balanced (w : J → T → ℝ) (W₀ : ℝ) (hW : ∀ j, ∑ t, w j t = W₀)
+    (hW0 : W₀ ≠ 0) [Nonempty J] (x : J × T → ℝ) :
+    statB w x = W₀ * ∑ j, (regionMean w x j - (∑ i, regionMean w x i) / Fintype.card J) ^ 2 := by
+  have hn0 : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  simp only [statB, hW, sum_const, card_univ, nsmul_eq_mul, ← mul_sum]
+  congr 1
+  refine sum_congr rfl fun j _ => ?_
+  congr 2
+  field_simp
+
+/-- The first-order (delta-method) variance of `ẑ = 1 - v̂/S²` at `(v, s)`: with gradient
+`(-1/s, v/s²)`, `(1/s)² Var v̂ - 2 (1/s)(v/s²) cov(v̂, S²) + (v/s²)² Var S²`. -/
+noncomputable def zHatVar (v s Vv VS Cvs : ℝ) : ℝ :=
+  (1 / s) ^ 2 * Vv - 2 * (1 / s) * (v / s ^ 2) * Cvs + (v / s ^ 2) ^ 2 * VS
+
+/-- With `cov(v̂, S²) = 0` (`covariance_statB_eq_zero`), the first-order variance of `ẑ` is
+`(1 - z)² (CV²(v̂) + CV²(S²))`, `z = 1 - v/s`. -/
+theorem zHatVar_eq (v s Vv VS : ℝ) (hv : v ≠ 0) (hs : s ≠ 0) :
+    zHatVar v s Vv VS 0 = (1 - (1 - v / s)) ^ 2 * (Vv / v ^ 2 + VS / s ^ 2) := by
+  unfold zHatVar; field_simp; ring
+
+/-- **Law (a), the first-order price of fitting Bühlmann–Straub** (S56). In the balanced world
+with `n = J` regions, `T` years, `s = τ² + v`, `z = τ²/s`, normal-theory coefficients of variation
+`CV²(v̂) = 2/(J(T - 1))` and `CV²(S²) = 2/(J - 1)` (`Cumulants.variance_sampleCov` with `κ₄ = 0`)
+and `cov(v̂, S²) = 0`, the curvature `(1 - 1/J)s` of the blend's error (`BlendMoments.errVar_eq`)
+times the first-order variance of `ẑ`, relative to `(1 - z)τ²`, is
+`(2/J)(1 + (J - 1)/(J(T - 1)))(1 - z)/z`. -/
+theorem bsPrice_of_balanced (n T τ2 v : ℝ) (hn : 2 ≤ n) (hT : 2 ≤ T) (hτ : 0 < τ2) (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v)
+        * zHatVar v (τ2 + v) (2 / (n * (T - 1)) * v ^ 2) (2 / (n - 1) * (τ2 + v) ^ 2) 0
+        / ((1 - τ2 / (τ2 + v)) * τ2)
+      = 2 / n * (1 + (n - 1) / (n * (T - 1))) * (1 - τ2 / (τ2 + v)) / (τ2 / (τ2 + v)) := by
+  have hs : τ2 + v ≠ 0 := by positivity
+  have hn1 : n - 1 ≠ 0 := by linarith
+  have hT1 : T - 1 ≠ 0 := by linarith
+  have hn0 : n ≠ 0 := by linarith
+  have hv0 : v ≠ 0 := hv.ne'
+  rw [zHatVar_eq v _ _ _ hv.ne' hs]
+  field_simp
+  linear_combination (n * T - 1) * v * (mul_inv_cancel₀ hv0)
+
+/-- …which is at most `(2/J)·T/(T - 1)·(1 - z)/z`, the form of law (a) in the study. -/
+theorem bsPrice_le_of_balanced (n T τ2 v : ℝ) (hn : 2 ≤ n) (hT : 2 ≤ T) (hτ : 0 < τ2)
+    (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v)
+        * zHatVar v (τ2 + v) (2 / (n * (T - 1)) * v ^ 2) (2 / (n - 1) * (τ2 + v) ^ 2) 0
+        / ((1 - τ2 / (τ2 + v)) * τ2)
+      ≤ 2 / n * (T / (T - 1)) * (1 - τ2 / (τ2 + v)) / (τ2 / (τ2 + v)) := by
+  rw [bsPrice_of_balanced n T τ2 v hn hT hτ hv]
+  have hz : 0 ≤ (1 - τ2 / (τ2 + v)) / (τ2 / (τ2 + v)) := by
+    have : τ2 / (τ2 + v) ≤ 1 := (div_le_one (by positivity)).mpr (by linarith)
+    exact div_nonneg (by linarith) (by positivity)
+  have hk : 1 + (n - 1) / (n * (T - 1)) ≤ T / (T - 1) := by
+    have hT1 : 0 < T - 1 := by linarith
+    rw [show T / (T - 1) = 1 + 1 / (T - 1) by field_simp; ring]
+    have : (n - 1) / (n * (T - 1)) ≤ 1 / (T - 1) := by
+      rw [div_le_div_iff₀ (by positivity) hT1]; nlinarith
+    linarith
+  rw [mul_div_assoc, mul_div_assoc]
+  exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hk (by positivity)) hz
+
+end Balanced
 
 /-! ### Means and residuals: only the fourth cumulant links them -/
 

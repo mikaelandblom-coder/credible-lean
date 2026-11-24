@@ -574,6 +574,12 @@ J ∈ {8, 20} × T ∈ {5, 10} × five volumes (z from 0.12 to 0.97), 4000 draws
     1/σ̂ⱼ² is strongly biased, which first order misses. Reading: the cost of fitting BS falls like
     (1 − z)/(Jz), more regions or more credibility both help. The cost of own variances is at most
     about z(1 − z)·2/(T − 1), i.e. ≤ 1/(2(T − 1)): 12% at T = 5, 6% at T = 10.
+    *Lean (2026-11-24, `FitStatistics.lean`):* the balanced identity ẑ = 1 − v̂/S² is exact
+    (`Cumulants.bsZ_bsTau2Hat_of_balanced`, with `statB_of_balanced` for S²). Law (a)'s first-order
+    price, relative to (1 − z)τ², is exactly (2/J)(1 + (J − 1)/(J(T − 1)))(1 − z)/z, at most the
+    study's (2/J)·T/(T − 1)·(1 − z)/z (`bsPrice_of_balanced`, `bsPrice_le_of_balanced`; inputs: the
+    normal-theory CVs and cov(v̂, S²) = 0, `covariance_statB_eq_zero`). The exact blend floor in this
+    world is (1 − z)τ² + (1 − z)²s/J, so "relative to the floor" is a further first-order step.
 
 ## Choosing the variances by gain against price (`gain-price.js`, output `gain-price.out.txt`, 2026-11-24)
 

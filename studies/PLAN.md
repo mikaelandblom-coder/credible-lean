@@ -364,7 +364,11 @@ One chat per step; none needs Lean except step 5.
   B from `Cumulants` *(done 2026-11-24, `FitStatistics.lean`: `covariance_stat`; cov(B, P) = 0 needs also
   κ₄ = 0 and means uncorrelated with residuals, Finding 37; the app's exact moments of s may assume
   normal cells, but should not assume cov(B, ·) = 0 with non-proportional volumes)*; the balanced identity ẑ = 1 − v̂/S² and law (a)'s
-  first-order variance.
+  first-order variance *(done 2026-11-24: `Cumulants.bsZ_bsTau2Hat_of_balanced`, `bsPrice_of_balanced`:
+  exact first-order price (2/J)(1 + (J − 1)/(J(T − 1)))(1 − z)/z; `engine.js` `priceFit` uses the upper
+  bound (2/J)·T/(T − 1)·(1 − z)/z (`bsPrice_le_of_balanced`), within a factor T/(T − 1) of it; switch to
+  the exact form at the next app chat, and relabel law (a) in the formula panel as proved in the
+  balanced world)*.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

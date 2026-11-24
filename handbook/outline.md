@@ -29,7 +29,10 @@ voice, then trim towards 8 pages.
 - Moments of the fit statistics (2026-11-24, `Cumulants.covariance_stat`, `covariance_statB_eq_zero`,
   `Core.linMse_lineWeight_sub`): exact Var/Cov of `P`, `Qn`, `B`; "watch out": `B` is uncorrelated
   with `P`, `Qn` only for normal cells and region means uncorrelated with residuals (Finding 37).
-  Add with the "gain against price" entry once the app step lands.
+  Same entry: the balanced identity `ẑ = 1 − v̂/S²` and law (a), the price of fitting BS,
+  `(2/J)(1 + (J−1)/(J(T−1)))(1 − z)/z ≤ (2/J)·T/(T−1)·(1 − z)/z` (`Cumulants.bsPrice_le_of_balanced`):
+  "use it" to judge whether BS's fit costs more than it gains. Add with the "gain against price" entry
+  once the app step lands.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
   cross-fit (even against odd years). Add when step 2 (skew correction) is settled. The "why":

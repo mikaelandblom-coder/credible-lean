@@ -8407,6 +8407,56 @@ price needs their covariances.
   with non-proportional volumes. See \texttt{FINDINGS.md}.
 \end{remark}
 
+\begin{definition}[Bühlmann--Straub's $\hat\tau^2$ from the statistics]\label{def:bsTau2Hat}
+  \lean{Credibility.Cumulants.bsTau2Hat}
+  \leanok
+  \uses{def:fitStats}
+  $\hat\tau^2 = (B - (J - 1)P)/(W - \sum_j W_j^2/W)$ with $W = \sum_j W_j$.
+\end{definition}
+
+\begin{theorem}[The balanced identity]\label{thm:bsZ_balanced}
+  \lean{Credibility.Cumulants.bsZ_bsTau2Hat_of_balanced, Credibility.Cumulants.statB_of_balanced}
+  \leanok
+  \uses{def:bsTau2Hat, def:bsZ}
+  With equal region volumes $W_j = W_0$, $B = W_0\sum_j(\bar x_j - \bar x)^2$ with the plain average,
+  and the fitted factor $W_0/(W_0 + P/\hat\tau^2)$ is exactly $\hat z = 1 - \hat v/S^2$ with
+  $\hat v = P/W_0$ and $S^2 = B/((J - 1)W_0)$, the sample variance of the region means
+  (when $\hat\tau^2 \ne 0$ and $B \ne 0$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $W - \sum_jW_j^2/W = (J - 1)W_0$, so $\hat\tau^2 = S^2 - \hat v$.
+\end{proof}
+
+\begin{lemma}[First-order variance of $\hat z$]\label{lem:zHatVar}
+  \lean{Credibility.Cumulants.zHatVar, Credibility.Cumulants.zHatVar_eq}
+  \leanok
+  The delta-method variance of $\hat z = 1 - \hat v/S^2$ at $(v, s)$ is
+  $s^{-2}\Var\hat v - 2vs^{-3}\cov(\hat v, S^2) + v^2s^{-4}\Var S^2$; with
+  $\cov(\hat v, S^2) = 0$ (Theorem~\ref{thm:covariance_statB}) it is
+  $(1 - z)^2(\mathrm{CV}^2(\hat v) + \mathrm{CV}^2(S^2))$, $z = 1 - v/s$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Algebra.
+\end{proof}
+
+\begin{theorem}[Law (a): the first-order price of fitting Bühlmann--Straub]\label{thm:bsPrice_balanced}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced, Credibility.Cumulants.bsPrice_le_of_balanced}
+  \leanok
+  \uses{lem:zHatVar}
+  Balanced world, $J$ regions, $T$ years, $s = \tau^2 + v$, $z = \tau^2/s$, normal-theory
+  $\mathrm{CV}^2(\hat v) = 2/(J(T - 1))$ and $\mathrm{CV}^2(S^2) = 2/(J - 1)$
+  (Theorem~\ref{thm:variance_sampleCov} with $\kappa_4 = 0$). The curvature $(1 - 1/J)s$ of the
+  blend's error times the first-order variance of $\hat z$, relative to $(1 - z)\tau^2$, is
+  \[ \frac2J\Bigl(1 + \frac{J - 1}{J(T - 1)}\Bigr)\frac{1 - z}{z} \le \frac2J\,\frac T{T - 1}\,\frac{1 - z}z. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:zHatVar}
+  Lemma~\ref{lem:zHatVar}; $(1 - 1/J)\cdot 2/(J - 1) = 2/J$ and $(J - 1)/J \le 1$.
+\end{proof}
+
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
   \lean{Credibility.Core.linMse_lineWeight, Credibility.Core.linMse_lineWeight_sub}
   \leanok
