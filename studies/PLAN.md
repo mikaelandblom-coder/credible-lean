@@ -406,7 +406,11 @@ One chat per step; none needs Lean except step 5.
   non-normality the cross term `2E[AB]` is first order too. For the levels it is `−2z(1 − z)γL/J`
   (with D known), so the γL sensitivity row overstates; the net effect of level kurtosis is
   `−z(1 − z)γL/J`. Once the cross term is proved (Lean target in §10m), show the net price, or add a
-  watch-out to the γL row.
+  watch-out to the γL row. *Also (literature §10n, Datta–Lahiri 2000):* with spread volumes the price
+  of `τ̂²` depends on its estimator (ANOVA: arithmetic mean of `(τ² + vⱼ)²`; REML or a
+  precision-weighted Fay–Herriot moment equation: harmonic mean, far smaller). Candidate: a FH
+  moment `τ̂²` as a corrBS option, checked against the app's simulations. Law (a) applied region by
+  region is exact only balanced.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

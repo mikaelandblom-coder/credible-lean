@@ -1013,3 +1013,37 @@ AI4SLT (arXiv 2602.02285), FormalSLT.
 - Not pursued: partial Fay–Herriot with PLS (Schirripa Spagnolo, Salvati & Fabrizi; for many correlated
   covariates, which our models do not have yet), differential privacy (Das & Drechsler), and
   variance-inflated Fay–Herriot for non-probability samples. Unconfirmed: "Double-robust SAE", JASA (2026 DOI).
+
+### 10n. The variance-component estimator and the mean model (owner's pointers, 2026-11-24)
+- Datta & Lahiri (2000), "A unified measure of uncertainty of estimated best linear unbiased
+  predictors in small area estimation problems", *Statistica Sinica* 10, 613–627. *Read in full
+  (PDF text) 2026-11-24.* General mixed linear **normal** model; ψ̂ by ML or REML.
+  - MSE = g₁ + g₂ + g₃ + o(m⁻¹), the same for ML and REML (their (5)). The MSE estimator is
+    `g₁(ψ̂) + g₂(ψ̂) + 2g₃(ψ̂) − b_ψ̂(ψ̂)·∇g₁(ψ̂)` (§5). REML's bias is o(m⁻¹), so the last term drops.
+    ML's bias in Fay–Herriot is negative, so Prasad–Rao's form underestimates with ML.
+  - Fay–Herriot, ML/REML: `g₃ = 2Dᵢ²(A + Dᵢ)⁻³ [Σᵤ(A + Dᵤ)⁻²]⁻¹`, a harmonic mean of `(A + Dᵤ)²`.
+    The ANOVA (Prasad–Rao) estimator gives `2Dᵢ²(A + Dᵢ)⁻³ Σᵤ(A + Dᵤ)²/m²`, an arithmetic mean (Remark 2).
+    They are equal when balanced and grow apart with spread volumes. Their simulation (m = 30,
+    x = 1, `Dᵢ` from 0.1 to 4) shows REML's EBLUP MSE well below ANOVA's for small `Dᵢ`
+    (9.3 vs 12.3, ×100). The Prasad–Rao MSE estimate there overestimates by up to 144%.
+  - **For us.** Law (a) is exact only balanced, where the estimators agree. The app applies it region
+    by region on unbalanced data, a heuristic: there the price depends on how `τ̂²` is estimated. BS's
+    `τ̂²` and thesis eq. (39) are exposure-weighted ANOVA-type moment equations, between the two
+    extremes. A precision-weighted moment equation (Fay–Herriot's `Σ(μ̂ⱼ − μ̂)²/(τ² + vⱼ) = J − 1`,
+    distribution-free, no likelihood) should get most of REML's gain with spread volumes. That is a
+    candidate for the `τ̂²` step (PLAN G1), to test in the app. Chen–Lahiri–Rao (§10m) warn that the
+    FH estimator's MSPE needs the level kurtosis `κ_v`, while the ANOVA form does not.
+- Jiang, Nguyen & Rao (2011), "Best predictive small area estimation", *JASA* 106(494), 732–745,
+  doi 10.1198/jasa.2011.tm10221. *Not read*: paywalled. The NSF PAR copy found
+  (par.nsf.gov/servlets/purl/10095079) is a different paper (Sun, Jiang, Nguyen & Luan 2018, BLAP).
+  From the abstract: estimate the fixed effects (our collective mean `μ̂`) and `A` by minimising an
+  estimate of the MSPE itself (best predictive estimator, BPE), giving the observed best predictor
+  (OBP). It beats the EBLUP when the mean model is misspecified and matches it with many areas when
+  the model is right. Follow-up: Jiang, Nguyen & Rao (2015), *Survey Methodology* 41(1), 37–55 (unit
+  level, misspecified mean and variance).
+  - **For us** (to verify against the full text): with `x = 1`, OBP replaces the GLS weights
+    `bⱼ ∝ zⱼ` by weights that favour the regions whose prediction leans most on the mean (from memory:
+    `∝ (1 − zⱼ)²`). That would break exposure balance (§2.9), the thesis' reason for `b ∝ z`. Relevant
+    when the levels are not exchangeable, e.g. a level trend with volume (Finding 14's k-means world).
+    The owner can supply the PDF; check the BPE formula, the criterion (design-based MSPE,
+    conditional on θ) and the OBP MSPE estimator.
