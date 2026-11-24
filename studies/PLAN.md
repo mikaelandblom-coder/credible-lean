@@ -347,10 +347,16 @@ One chat per step; none needs Lean except step 5.
 - [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the
-  statistics (Prasad–Rao g₃). It decides the sign in all clear cases of S53. Next: extend beyond pooled
-  fits (the ζⱼ step: S54 says it is the costly one), test S55's z(1 − z) law, then a page panel "what the
-  richer fit can gain / what it costs". Lean: Var/Cov of P, Qn, B from `Cumulants`; cov(B, P) = 0 without
-  third cumulants.
+  statistics (Prasad–Rao g₃). It decides the sign in all clear cases of S53. *2026-11-24:* closed-form
+  laws (S56): fitting BS costs ≈ (2/J)·T/(T − 1)·(1 − z)/z, own variances ≈ z(1 − z)·2/(T − 1), valid for
+  z ≥ 0.6. `Engine.gainPrice` (Node test) chooses region against pooled variances by exact gain against
+  law (b). Regret ≤ 3.3, 1.2 points better than corrBS on average (S57). Page panel (to build): for the
+  fitted data, three rows "corrBS over BS", "BLUP over the blend", "region variances over pooled", each with
+  its gain (exact on K̂, badge "proved" via `CoreMoments.mse_blend_eq_blup_add`) and its price (S56 law,
+  badge "not proved yet", shown only where `valid` ≥ ½), and the verdict. Then a fit "corrBS, variances
+  by gain against price" once recipes can hold a conditional step (as "BLUP auto"). Lean: Var/Cov of P, Qn,
+  B from `Cumulants`; cov(B, P) = 0 without third cumulants; the balanced identity ẑ = 1 − v̂/S² and law (a)'s
+  first-order variance.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

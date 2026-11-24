@@ -995,3 +995,19 @@ test('leave-one-year-out loss (S49): own means score worse than the blend on ave
   const ref = f.loyo.preferTaper ? E.fitBLUPTaper(data) : E.fitBLUP(data);
   f.rates.forEach((x, j) => close(x, ref.rates[j], 1e-12, `rate ${j}`));
 });
+
+test('gain against price (S56–S57): exact plug-in gains on corrBS’s K̂; region variances chosen with a σⱼ spread, pooled mostly without', () => {
+  const r = E.rng(81);
+  const { data } = E.draw(E.makeWorld({ rho: 0.6 }), r), g = E.gainPrice(data);
+  assert.ok(g.gain.corrBSoverBS >= -1e-12 && g.gain.blupOverBlend >= -1e-12 && g.gain.regionVariances >= -1e-12, 'the floor is optimal on K̂ (Core.bestZ_eq, blupWeight_optimal)');
+  assert.ok(g.price.regionVariances > 0 && g.price.fitBS > 0);
+  let reg0 = 0, reg2 = 0, n0 = 0, n2 = 0;
+  const w0 = E.makeWorld({ T: 10 }), w2 = E.makeWorld({ T: 10, noiseSpread: 2 });
+  for (let k = 0; k < 60; k++) {
+    const a = E.gainPrice(E.draw(w0, r).data), b = E.gainPrice(E.draw(w2, r).data);
+    if (a) { n0++; if (a.verdict === 'region') reg0++; }
+    if (b) { n2++; if (b.verdict === 'region') reg2++; }
+  }
+  assert.ok(reg0 / n0 < 0.4, `equal σⱼ: region ${reg0}/${n0}`);
+  assert.ok(reg2 / n2 > 0.6, `σⱼ spread: region ${reg2}/${n2}`);
+});

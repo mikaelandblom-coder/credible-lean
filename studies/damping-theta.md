@@ -536,10 +536,11 @@ J = 8, equal σⱼ).
     (gamma) and 4.3 ± 0.9 (normal) at T = 5, 1.2 ± 0.6 and 0.4 ± 0.3 at T = 10. The skew link of
     Finding 35 doubles it. This is the price count of g₃: one ρ̂ pooled over J(J − 1)/2 pairs has a tiny
     variance, while each σ̂ⱼ² has only T − 1 degrees of freedom (relative variance ≈ 2/(T − 1)).
-- S55. *[derived, to check]* **Why gaps shrink at high z.** With z = τ²/(τ² + v), ∂z/∂log v = −z(1 − z)
+- S55. *[derived]* **Why gaps shrink at high z.** With z = τ²/(τ² + v), ∂z/∂log v = −z(1 − z)
     exactly. So the first-order price of a variance parameter, relative to the floor, is about
     z(1 − z)·CV² of its estimate. It is largest at z = ½ and vanishes at z → 0 or 1, consistent with
-    S48 and S51. Not yet tested as a law.
+    S48 and S51. *Refined by S56:* this holds for each region's own variance. The price of τ̂² goes
+    like (1 − z)/z instead, because τ̂²'s own CV grows as z falls.
 
 **Consequence.** The *direction* of a comparison is a formula: the exact oracle gap. Its size needs the
 price, and first order is reliable once each parameter has about 10 years of data or z is high. For
@@ -549,3 +550,45 @@ Lean candidates (in **lean**): the exact Var/Cov of P, Qn, B as corollaries of
 `Cumulants.variance_quad_of_cumulants`; cov(B, P) = cov(B, Qn) = 0 when third cumulants vanish; the
 exact MSE gap between two blends as a quadratic in z. The first-order price itself stays an
 approximation, checked here.
+
+## Two price laws in closed form (`price-laws.js`, output `price-laws.out.txt`, 2026-11-24)
+
+Purpose: conjecture. In a balanced world (equal volumes, ρ = 0, equal σ, normal noise) the BS factor
+is exactly ẑ = 1 − v̂/S², with v̂ = σ̂²/(wT) and S² the sample variance of the J region means. To first
+order, with z = τ²/(τ² + v) and the floor ≈ (1 − z)τ²:
+  (a) **fitting BS** (τ̂², σ̂²): relative price ≈ (2/J)·T/(T − 1)·(1 − z)/z
+      (Var ẑ ≈ (1 − z)²[2/(J − 1) + 2/(J(T − 1))], times (1 − 1/J)(τ² + v));
+  (b) **own variances** σ̂ⱼ² instead of one σ̂²: extra relative price ≈ z(1 − z)·2/(T − 1)
+      (∂zⱼ/∂log vⱼ = −z(1 − z), Var log σ̂ⱼ² ≈ 2/(T − 1)).
+J ∈ {8, 20} × T ∈ {5, 10} × five volumes (z from 0.12 to 0.97), 4000 draws.
+
+- S56. *[derived + numerical]* **The laws hold for z ≥ 0.6, and reverse below.** (a) is within 30% of the
+    simulated price for z ≥ 0.58 (J = 8: 10.0 against 11.6 at z = 0.74, T = 10), within 10% at J = 20.
+    It equals the exact first-order price (`price-formula.js`) there. Below z ≈ 0.4 it overstates 2–6×
+    (225 against 37 at z = 0.12): clipping τ̂² at 0 caps the loss at the pooled tariff's. (b) overstates
+    1.1–2× for z ≥ 0.58 (4.3 against 2.0 at z = 0.74, J = 8, T = 10), so it leans toward pooling.
+    It understates up to 5× below z ≈ 0.3 (5.4 against 25.8 at z = 0.12, J = 20, T = 5): with few years
+    1/σ̂ⱼ² is strongly biased, which first order misses. Reading: the cost of fitting BS falls like
+    (1 − z)/(Jz), more regions or more credibility both help. The cost of own variances is at most
+    about z(1 − z)·2/(T − 1), i.e. ≤ 1/(2(T − 1)): 12% at T = 5, 6% at T = 10.
+
+## Choosing the variances by gain against price (`gain-price.js`, output `gain-price.out.txt`, 2026-11-24)
+
+Purpose: decide. `Engine.gainPrice(data)`: on corrBS's fitted `K̂`, the exact oracle gain of region
+variances σ̃ⱼ² over one pooled σ̄² (same table, σ̄² in every region), against S56 (b)'s price. Verdict
+'region' when the gain is larger. No tuning. It also returns the gains of corrBS over BS and of the BLUP
+over the blend. Those carry no verdict: estimating ρ is nearly free (S54), and the BLUP uses the same `K̂`.
+"auto" = corrBS pooled unless the verdict is 'region'. 24 worlds (σⱼ spread × ρ × T × regime, J = 8,
+gamma noise), 600 draws, paired.
+
+- S57. *[numerical]* **The verdict picks the better variances.** Regret against the better of corrBS and
+    corrBS pooled: mean −0.5, at most 3.3 ± 4.9 points, within 2 SE of 0 in 16 of 24 worlds. It beats
+    both fixed choices on average because it chooses per data set: with σⱼ spread 1, T = 5, it is 136
+    against 144 and 145. With equal σⱼ it picks region variances in 1–23% of draws, with a spread in
+    67–100%. Against today's default corrBS: 1.2 points better on average, from 7.5 better to 3.3 worse
+    (within noise). Compared with S54: it recovers most of corrBS's cost at ρ = 0 (116 against 123 and
+    113), without giving up region variances where they pay.
+
+**Consequence.** The first decision rule built from formulas instead of a simulated threshold. Candidate
+for the app's recommended fit: corrBS with the variance step chosen by `gainPrice`. It needs its own
+recipe, a conditional step like "BLUP auto". `PLAN.md` Pending, "Gain against price".

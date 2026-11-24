@@ -675,6 +675,51 @@
   }
 
   /**
+   * Gain against price (studies/PLAN.md Pending; damping-theta.md S53–S56), from the data only. On
+   * corrBS's fitted table K̂, τ̂² (taken as the truth), the exact oracle gains in MSE, as fractions of the
+   * best blend's MSE (`floor`):
+   *   corrBS over BS (BS's weights at its limiting σ², τ² under K̂), BLUP over the blend, and region
+   *   variances σ̃ⱼ² over one pooled σ̄² (the same K̂ with σ̄² in every region);
+   * and the first-order prices of S56 (relative to the floor, per region, floor-weighted):
+   *   fitting BS at all ≈ (2/J)·T/(T − 1)·(1 − zⱼ)/zⱼ,  own variances ≈ zⱼ(1 − zⱼ)·2/(T − 1).
+   * Estimating one ρ is nearly free (S54), and the BLUP uses the same K̂ as the blend, so the only real
+   * trade-off is the variances: verdict 'region' when their gain exceeds their price, else 'pooled'.
+   * `valid`: share of the volume in regions with ẑⱼ ≥ 0.5, where the price laws hold (S56).
+   * Returns null when τ̂² = 0 (no credibility to trade).
+   */
+  function gainPrice(data) {
+    const f = fitVC(data), J = f.means.length, T = data.X[0].length, wt = data.w.map(sum), wall = sum(wt);
+    const K = f.K, t2 = f.tau2;
+    if (!(t2 > 0)) return null;
+    const blendRows = (Kx) => { const { b, z } = bestBlendWeights(Kx, t2); return z.map((zj, j) => b.map((bi, i) => (i === j ? zj : 0) + (1 - zj) * bi)); };
+    const avg = (D) => sum(D.map((d, j) => wt[j] * linMse(K, t2, j, d))) / wall;
+    const floorJ = blendRows(K).map((d, j) => linMse(K, t2, j, d)), floor = sum(floorJ.map((x, j) => wt[j] * x)) / wall;
+    const blup = avg(K.map((_, j) => blupWeight(K, t2, j)));
+    // BS at its limits under K̂: σ²_BS = mean σ̃ⱼ² (within-region residuals are unbiased for each σⱼ²),
+    // τ²_BS = (E B − (J − 1)σ²_BS)/c₀ with E B = Σ wⱼ* Kⱼⱼ − wᵀKw/w**.
+    const s2BS = sum(f.sigma2) / J, c0 = wall - sum(wt.map((x) => x * x)) / wall;
+    const EB = sum(wt.map((x, j) => x * K[j][j])) - sum(wt.map((x, i) => sum(wt.map((y, j) => x * y * K[i][j])))) / wall;
+    const t2BS = (EB - (J - 1) * s2BS) / c0;
+    const zBS = wt.map((x) => (t2BS > 0 ? x / (x + s2BS / t2BS) : 0)), zs = sum(zBS);
+    const bBS = zs > 0 ? zBS.map((x) => x / zs) : wt.map((x) => x / wall);
+    const bs = avg(zBS.map((zj, j) => bBS.map((bi, i) => (i === j ? zj : 0) + (1 - zj) * bi)));
+    // One pooled variance in the same table: diagonal σ̄²/wⱼ* + τ̂², off-diagonal scaled by σ̄²/(σ̃ᵢσ̃ⱼ).
+    const sd = f.sigma2.map(Math.sqrt), sbar = sum(f.sigma2) / J;
+    const Kp = K.map((row, i) => row.map((x, j) => (i === j ? sbar / wt[i] + t2 : x * sbar / (sd[i] * sd[j]))));
+    const pooled = avg(blendRows(Kp));
+    const z = f.z.map((x) => Math.min(Math.max(x, 1e-6), 1 - 1e-6));
+    const pf = (g) => sum(z.map((zj, j) => wt[j] * g(zj) * floorJ[j])) / wall / floor;
+    const priceFit = pf((zj) => (2 / J) * T / (T - 1) * (1 - zj) / zj), priceVar = pf((zj) => zj * (1 - zj) * 2 / (T - 1));
+    const gainVar = (pooled - floor) / floor;
+    return {
+      floor, gain: { corrBSoverBS: (bs - floor) / floor, blupOverBlend: (floor - blup) / floor, regionVariances: gainVar },
+      price: { fitBS: priceFit, regionVariances: priceVar },
+      valid: sum(f.z.map((zj, j) => (zj >= 0.5 ? wt[j] : 0))) / wall,
+      verdict: gainVar > priceVar ? 'region' : 'pooled',
+    };
+  }
+
+  /**
    * Leave-one-year-out loss of a fit (studies/taper-signal.js, S49): for each year s, refit on the
    * other T − 1 years and score the rates against the held-out cell rates, volume-weighted:
    *   L = Σₛ Σⱼ wⱼₛ (rateⱼ⁽⁻ˢ⁾ − Xⱼₛ)² / Σₛⱼ wⱼₛ.
@@ -1798,7 +1843,7 @@
   }
 
   return {
-    taperSignal, fitBLUPAuto, loyoLoss, fitBLUPLoyo,
+    taperSignal, fitBLUPAuto, loyoLoss, fitBLUPLoyo, gainPrice,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
