@@ -386,6 +386,11 @@ One chat per step; none needs Lean except step 5.
   checks quoted on the page (skew link, skew bias, gamma tests) would need rerunning. Open: make it
   the default after that recheck (owner asked for it, 2026-11-24); the fits' skew machinery
   (`skewLink`, `skewBias`: third moments ∝ w^−3/2) then needs the power w^−2 or a fitted power.
+  *Caveat (2026-11-24, literature §10m, Chen–Lahiri–Rao):* law (a) prices `E B²` only. Under
+  non-normality the cross term `2E[AB]` is first order too. For the levels it is `−2z(1 − z)γL/J`
+  (with D known), so the γL sensitivity row overstates; the net effect of level kurtosis is
+  `−z(1 − z)γL/J`. Once the cross term is proved (Lean target in §10m), show the net price, or add a
+  watch-out to the γL row.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

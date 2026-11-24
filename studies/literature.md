@@ -929,7 +929,34 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   as recalled, are not verified). The same split as here: normality is safe for the noise,
   not for the levels. Its MSE estimator is second-order; law (a) is first order but exact in
   `γL`, so the level kurtosis shows up there where Lahiri–Rao's robustness says it cancels at their
-  order. Worth a closer read before claiming more.
+  order. Worth a closer read before claiming more. *Read 2026-11-24, see the next item:* that
+  guess was wrong. The kurtosis does not cancel inside g₃; it cancels between g₃ and the cross term.
+- Chen, Lahiri & Rao, "Mean squared prediction error estimators of EBLUP of a small area mean under
+  a semi-parametric Fay–Herriot model", arXiv:2409.16409v2 (2025). Read from the HTML (main text
+  verbatim; appendix proofs only in summary, unverified). Model `Yᵢ = xᵢ'β + vᵢ + eᵢ`, `vᵢ ~ [0, ψ, κ_v]`,
+  `eᵢ ~ [0, Dᵢ, κ_eᵢ]` (κ = excess kurtosis), `Dᵢ` and `κ_eᵢ` known, `E|v|^(8+δ) < ∞`, m → ∞.
+  Prasad–Rao moment `ψ̂`: `var ψ̂ = 2m⁻²Σ(ψ + Dⱼ)² + m⁻¹(κ_v ψ² + m⁻¹Σκ_eⱼDⱼ²)`;
+  `AMSPE = g₁ + g₂ + g₃ + 2g₄`, `g₃ = D²/(ψ + D)³ · var ψ̂`, cross term
+  `g₄ = ψD²/(m(ψ + D)³) · (Dκ_e − ψκ_v)` (0 under normality: Kackar–Harville). Lahiri–Rao (1995),
+  per this paper: normal `eᵢ`, moment conditions on `vᵢ`, and the PR `ψ̂`; then the normal-theory MSPE
+  estimator stays second-order unbiased. It fails for `κ_e ≠ 0` and for the Fay–Herriot `ψ̂`.
+  **Against law (a)** (balanced, `m = J`, `ψ = τ²`, `D = σ²/(wT)`, `z = ψ/(ψ + D)`), relative to `(1 − z)τ²`:
+  - `g₃` is law (a)'s quantity (`E B²`, the variance of `ẑ` through the blend). Its normal part
+    `(1 − z)/z · 2/m` matches `(1 − 1/J)(1 − z)/z · 2/(J − 1) = (1 − z)/z · 2/J`. Our extra
+    `2/(J(T − 1))` is the price of estimating `D` (they know it).
+  - Level kurtosis: their `(1 − z)/z · κ_v z²/m` = our `γL z²/J` term. **Matches.**
+  - Noise kurtosis: with `D` known they get `(1 − z)/z · γN(1 − z)²/(JT)` (`κ_e = γN/T`, a mean of T
+    cells). We get `γN z²/(JT)`. **Different, and consistent:** we estimate `D` from the same cells.
+    A heavy-tailed noise draw inflates both `v̂` and `S²`, and `ẑ = 1 − v̂/S²` sees only their ratio.
+    The delta method gives `Var ẑ ∝ γN(1 − z)²z²/(JT)` against `γN(1 − z)⁴/(JT)` with `D` known.
+  - **The cross term, which law (a) leaves out.** Relative, `2g₄` has the level part `−2z(1 − z)κ_v/m`.
+    So the level kurtosis' total first-order effect on the MSPE is `+z(1 − z)γL/J − 2z(1 − z)γL/J =
+    −z(1 − z)γL/J`. Heavy-tailed levels *lower* the plug-in MSE at this order. With `D` known, the noise
+    kurtosis raises it through `2g₄` (`+2(1 − z)²κ_e/m` relative). This agrees in sign with the app's
+    simulations (PLAN: `2E[AB]` −6% under gamma, +0.5% normal). Not proved here: the Lean target is
+    the first-order `2E[AB]` (`PlugIn.lean`'s cross term) in the balanced world with cumulants, `D`
+    estimated, next to `bsPrice_of_balanced_cumulants`. Possible typo in their eq. (9) (factor 2 vs 4
+    on the normal `g₃` part) not checked against the PDF.
 - Used: the app's world switch "Noise shape shrinks with volume" (`params.shrink`, gamma shape
   `k·w/500`); `Engine.noiseShape` recovers the fall (J = 8, T = 10, 600 draws: skew 1.16, 0.42,
   0.14 and `γ̂N` 4.0, 0.40, 0.08 at volume 500, 5 000, 50 000).
