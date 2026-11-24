@@ -11,6 +11,7 @@ Whether the \\lean names really exist is checked by scripts/CheckDecls.lean.
     python3 scripts/blueprint_check.py
     python3 scripts/blueprint_check.py --uses  # input for scripts/CheckUses.lean
     python3 scripts/blueprint_check.py --decls # input for scripts/CheckDecls.lean
+    python3 scripts/blueprint_check.py --components  # islands of the dependency graph
 
 `--uses` prints one line per proved blueprint statement whose proof \\uses
 other results: `thm₁|thm₂ label=name₁|name₂ …` (its \\lean names, then each
@@ -21,6 +22,12 @@ marked as a corollary of a general result is one in Lean too.
 `--decls` prints every \\lean name in the blueprint, one per line: the list
 `leanblueprint web` writes to blueprint/lean_decls, without needing TeX (CI
 checks in the docs job that the two lists agree).
+
+`--components` lists the parts of the dependency graph not connected to the
+main one (nodes: definitions, theorems, lemmas, propositions, corollaries, as
+the site draws them; edges: every \\uses in a statement or its proof) and
+fails if there are any. Join an island only by a real edge: a result whose
+proof uses it, or a definition its statement uses.
 """
 import re
 import sys
@@ -78,6 +85,43 @@ def uses_edges():
     return out
 
 
+def components():
+    """Connected components of the dependency graph, largest first."""
+    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    adj, line = {}, {}
+    for m in ENV.finditer(text):
+        body = m.group(2)
+        lab = re.search(r"\\label\{([^}]*)\}", body)
+        if not lab:
+            continue
+        label = lab[1]
+        line[label] = text.count("\n", 0, m.start()) + 1
+        p = PROOF.match(text, m.end()) if m.group(1) != "definition" else None
+        src = body + (p.group(1) if p else "")
+        adj.setdefault(label, set())
+        for g in re.findall(r"\\uses\{([^}]*)\}", src):
+            for u in (u.strip() for u in g.split(",")):
+                if u:
+                    adj[label].add(u)
+                    adj.setdefault(u, set()).add(label)
+    seen, comps = set(), []
+    for start in line:
+        if start in seen:
+            continue
+        seen.add(start)
+        comp, todo = [], [start]
+        while todo:
+            v = todo.pop()
+            comp.append(v)
+            for w in adj[v]:
+                if w in line and w not in seen:
+                    seen.add(w)
+                    todo.append(w)
+        comps.append(sorted(comp, key=line.get))
+    comps.sort(key=len, reverse=True)
+    return comps, line
+
+
 def decls():
     """Every \\lean name in the blueprint, in order, without repeats."""
     text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
@@ -93,6 +137,12 @@ def main() -> int:
         for thms, reqs in uses_edges():
             print("|".join(thms), " ".join(f"{u}={'|'.join(ns)}" for u, ns in reqs))
         return 0
+    if "--components" in sys.argv:
+        comps, line = components()
+        print(f"{len(line)} nodes, {len(comps)} component(s); main one has {len(comps[0]) if comps else 0}")
+        for c in comps[1:]:
+            print(f"island ({len(c)}): " + ", ".join(f"{v} (line {line[v]})" for v in c))
+        return 1 if len(comps) > 1 else 0
     bp, errors = blueprint()
     for f in sorted(SRC.glob("*.lean")):
         for r in scan(f)[1]:
