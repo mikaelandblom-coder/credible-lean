@@ -460,9 +460,35 @@ common) × ρ ∈ {0.3, 0.6, 0.9} × J ∈ {8, 20} × T ∈ {5, 10} × regime, 4
     the gap between BLUP taper and BLUP on corrBS averages 4.5 points (max 12), against 13.7 (max 42)
     at the app default. One ranking flips: J = 8, T = 10, ordered ρ = 0.9 gives corrBS 107 against taper
     109 (app), and 101 against 97 (thesis). Studies run only at the app default overstate every gap
-    between fits about threefold for a portfolio as credible as the thesis's.
+    between fits about threefold for a portfolio with high volumes and equal σⱼ (corrected by S51:
+    with the thesis's spread in σⱼ the gaps stay large).
 
 **Consequence.** Keep "BLUP taper" as an option, and use `fitBLUPAuto` in studies. It goes on the page
 once the recipe can show a conditional step. Earlier studies in this file ran at the app default only,
-so their gaps are upper ends for credible portfolios. S36's "taper pays with many ordered regions"
+so their gaps are upper ends for high-volume portfolios with similar noise (not for the thesis's own
+shape, S51). S36's "taper pays with many ordered regions"
 holds in both regimes (J = 20, ρ = 0.9: 103 against 132 in the app regime, 96 against 103 in the thesis regime).
+
+## The headline recommendations across regimes (`regime-check.js`, output `regime-check.out.txt`, 2026-11-24)
+
+Purpose: decide. Are S3, S5, S6 and S16 artefacts of the app's default world? BS, corrBS, the full `K̂`
+damped by S3's θ̂ ("corr"), the BLUP on corrBS's `K̂` and own means, on the same draws. Grid: ρ ∈ {0, 0.3,
+0.6, 0.9} × σⱼ spread × T ∈ {5, 10} × three regimes (`lib.regimes`: app; thesis = volume 4400; thesisShape
+= volume 4400, volumes nearly equal, σⱼ² × 1/16–16 as the thesis's lognormal(16, √2)), J = 8, 40 worlds,
+600 draws, paired differences against corrBS.
+
+- S50. *[numerical]* **corrBS's lead holds in every regime.** BS is worse than corrBS in 36 of 40 worlds
+    (by 4–86 points of the floor). It is better only at ρ = 0 with equal σⱼ: 10 ± 5 (T = 5) and 2 ± 1
+    (T = 10) in the app regime, 2 ± 2 and 0 ± 1 in the thesis regime (S6, smaller). The full `K̂` damped
+    by S3 is never better than corrBS beyond 2 SE, and worse in 28 of 40 worlds (S5, S16 hold).
+- S51. *[numerical]* **The thesis's own shape keeps the gaps large.** Volume alone shrinks them (thesis
+    regime: BS − corrBS 0–36 against 2–69 in the app regime), but the thesis's spread in σⱼ² brings z
+    down to 0.27 for the noisiest cohorts, and the gaps return (BS − corrBS 43–86). S48's "about
+    threefold smaller" holds for volume only. With the thesis's own σⱼ spread, the gaps are as large as
+    at the app default, so S36–S47 are not overstated for that portfolio.
+- S52. *[numerical]* **The BLUP on corrBS's `K̂` beats corrBS wherever ρ ≥ 0.6, in every regime**
+    (by 3–37 points; e.g. ρ = 0.9, T = 5: 80 against 118 in the app regime, 110 against 138 with the
+    thesis's shape). Elsewhere it is within 2 SE, or at most 1.1 ± 0.5 worse (ρ = 0). Better in 16,
+    worse in 7 (all by ≤ 1.1), tied in 17 of 40 worlds. *For the owner:* on these numbers the BLUP is the
+    better default for the rates. corrBS keeps the blend form `zμ̂ⱼ + (1 − z)μ̂` and its recipe. The
+    balance and skew-bias trade-offs (Finding 35, "BLUP pooled") are not scored here.

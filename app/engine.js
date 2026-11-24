@@ -674,6 +674,34 @@
     return { rho: tr.rho, rbar, lags, lossTaper, lossCommon, preferTaper: lossTaper < lossCommon };
   }
 
+  /**
+   * Leave-one-year-out loss of a fit (studies/taper-signal.js, S49): for each year s, refit on the
+   * other T − 1 years and score the rates against the held-out cell rates, volume-weighted:
+   *   L = Σₛ Σⱼ wⱼₛ (rateⱼ⁽⁻ˢ⁾ − Xⱼₛ)² / Σₛⱼ wⱼₛ.
+   * Years are independent, so E L = (MSE of the rates from T − 1 years) + (noise of the held-out
+   * cell), the second term the same for every fit: the difference of two fits' L estimates the
+   * difference of their MSEs, with no tuning. A refit that throws counts as the pooled mean.
+   */
+  function loyoLoss(data, fitFn) {
+    const T = data.X[0].length, J = data.X.length;
+    let num = 0, den = 0;
+    for (let s = 0; s < T; s++) {
+      const sub = { w: data.w.map((row) => row.filter((_, t) => t !== s)), X: data.X.map((row) => row.filter((_, t) => t !== s)) };
+      let rates;
+      try { rates = fitFn(sub).rates; } catch (e) { const m = cohortMeans(sub).m; rates = m.map(() => sum(m) / J); }
+      for (let j = 0; j < J; j++) { num += data.w[j][s] * (rates[j] - data.X[j][s]) ** 2; den += data.w[j][s]; }
+    }
+    return num / den;
+  }
+
+  /** The BLUP chosen by leave-one-year-out loss between BLUP taper and BLUP on corrBS's K̂ (S49). */
+  function fitBLUPLoyo(data) {
+    const lt = loyoLoss(data, fitBLUPTaper), lb = loyoLoss(data, fitBLUP), taper = lt < lb;
+    const f = taper ? fitBLUPTaper(data) : fitBLUP(data);
+    f.notes = (f.notes || []).concat([`Leave-one-year-out loss: taper ${lt.toPrecision(3)}, corrBS ${lb.toPrecision(3)}: ${taper ? 'BLUP taper' : 'BLUP on corrBS’s K̂'}.`]);
+    return Object.assign(f, { loyo: { taper: lt, corrBS: lb, preferTaper: taper } });
+  }
+
   /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/taper-signal.js). */
   function fitBLUPAuto(data) {
     const sig = taperSignal(data), f = sig.preferTaper ? fitBLUPTaper(data) : fitBLUP(data);
@@ -1770,7 +1798,7 @@
   }
 
   return {
-    taperSignal, fitBLUPAuto,
+    taperSignal, fitBLUPAuto, loyoLoss, fitBLUPLoyo,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,

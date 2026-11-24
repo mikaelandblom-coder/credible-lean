@@ -5,7 +5,9 @@
 //   pm(m, se, scale)    — "m ± 2SE" scaled (e.g. to % of a floor), for the tables;
 //   regimes             — the credibility regimes every engine study should report (z of the floor):
 //                         'app' (volume 500: z ≈ 0.2–0.9, the app default) and 'thesis' (volume 4400:
-//                         z ≈ 0.7–1.0, the regime of the thesis's expert-judgement study, §4 Table 4.1).
+//                         z ≈ 0.7–1.0, the regime of the thesis's expert-judgement study, §4 Table 4.1);
+//                         'thesisShape' adds that table's shape: volumes nearly equal (wⱼ sd 1%) and σⱼ²
+//                         spread like lognormal(16, √2) (noiseSpread 2: σⱼ² × 1/16–16).
 'use strict';
 const sum = (a) => a.reduce((s, x) => s + x, 0);
 
@@ -18,6 +20,6 @@ function meanSE(x) {
 }
 const paired = (a, b) => meanSE(a.map((x, i) => x - b[i]));
 const pm = (r, scale) => `${(r.m * (scale || 1)).toFixed(1)} ± ${(2 * r.se * (scale || 1)).toFixed(1)}`;
-const regimes = { app: { volume: 500 }, thesis: { volume: 4400 } };
+const regimes = { app: { volume: 500 }, thesis: { volume: 4400 }, thesisShape: { volume: 4400, spread: 0.05, noiseSpread: 2 } };
 
 module.exports = { sum, grid, meanSE, paired, pm, regimes };

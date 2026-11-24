@@ -30,12 +30,23 @@ complex the *fitted model* is, and see what happens when they differ.
 ### Study conventions (2026-11-24, after `studies/taper-signal.js`)
 
 The simulation studies (`studies/*.js`, numbered observations S1–S48 in `damping-theta.md`) are cheap
-(seconds to minutes) but answer only for the worlds they visit. Rules for new ones (helpers in
-`studies/lib.js`):
-1. **Two credibility regimes.** Report each world at the app default (volume 500, z ≈ 0.2–0.9) and
-   in the thesis regime (volume 4400, z ≈ 0.7–1.0: the expert-judgement parameters of the thesis
-   simulation, §4 Table 4.1: τ = 0.6, σⱼ² lognormal(16, √2), wⱼ ≈ 3·10⁷). Gaps between fits shrink
-   about threefold from the first to the second (S48), and a ranking can flip.
+(seconds to minutes) but answer only for the worlds they visit. Each study states its purpose in its
+header, since the rules differ (of S1–S48: 43 numerical, 12 exact, 6 hypotheses):
+- **Decide** (most of them): which fit or rule the app recommends (S3's θ̂, corrBS, the taper signal).
+  Needs realistic regimes and honest error bars: rules 1–3 below. Outcome: a recipe or default, and its
+  conditions (the worlds where it loses).
+- **Conjecture** (pre-step for Lean): find a statement and try to break it. Extreme and adversarial
+  worlds are welcome, regimes are not needed, exact computation beats simulation (rule 4), and a
+  counterexample is worth more than an average. Outcome: a candidate theorem or a Finding with its
+  counterexample.
+- **Illustrate**: the app's pages simulate live, so they need no study script. A script is needed only
+  to check that the page's message holds beyond its default world.
+Rules (helpers in `studies/lib.js`):
+1. **Three regimes** (`lib.regimes`). The app default (volume 500, z ≈ 0.2–0.9); "thesis" (volume 4400,
+   z ≈ 0.7–1.0: the credibility level of the thesis simulation, §4 Table 4.1: τ = 0.6, σⱼ²
+   lognormal(16, √2), wⱼ ≈ 3·10⁷); and "thesisShape" (the same, plus that table's nearly equal volumes
+   and σⱼ² × 1/16–16, which brings the noisiest cohorts back to z ≈ 0.3). Volume alone shrinks the gaps
+   between fits about threefold and can flip a ranking (S48). The thesis's σⱼ spread restores them (S51).
 2. **Paired standard errors.** Same draws for every fit (common random numbers), and report
    differences as `m ± 2SE` of the paired difference (`lib.paired`), not two means side by side.
    "About even" needs an SE: at 600 draws it is ±1–6 points of the floor.

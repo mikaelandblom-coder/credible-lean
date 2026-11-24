@@ -985,3 +985,13 @@ test('taper signal (studies/taper-signal.js): almost never tapers a common ρ; t
   a.rates.forEach((x, j) => close(x, ref.rates[j], 1e-12, `rate ${j}`));
   assert.equal(a.notes.length, 1);
 });
+
+test('leave-one-year-out loss (S49): own means score worse than the blend on average; fitBLUPLoyo is the chosen fit', () => {
+  const r = E.rng(71), w = E.makeWorld({ T: 6 });
+  let own = 0, bs = 0;
+  for (let k = 0; k < 40; k++) { const { data } = E.draw(w, r); own += E.loyoLoss(data, E.fitOwn); bs += E.loyoLoss(data, E.fitBS); }
+  assert.ok(bs < own, `BS ${bs} vs own ${own}`);
+  const { data } = E.draw(E.makeWorld({ J: 10, T: 6, rho: 0.8, ordered: true }), r), f = E.fitBLUPLoyo(data);
+  const ref = f.loyo.preferTaper ? E.fitBLUPTaper(data) : E.fitBLUP(data);
+  f.rates.forEach((x, j) => close(x, ref.rates[j], 1e-12, `rate ${j}`));
+});
