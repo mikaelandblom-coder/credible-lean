@@ -644,7 +644,8 @@ One chat per step; none needs Lean except step 5.
   common-ρ world in 0–2% of draws, never costs more than 4 points against BLUP) but timid (tapers 13–61%
   of draws in ordered ρ = 0.9 worlds, where the taper gains up to 29 points; regret up to 13).
   Not on the page yet: its two branches need a recipe with a conditional step (the recipe test wants
-  one fixed list). Open: a sharper signal (e.g. leave-one-year-out loss of the two BLUPs).
+  one fixed list). Leave-one-year-out (`Engine.loyoLoss`, `fitBLUPLoyo`, S49) was tried: bolder in ordered worlds, but
+  tapers a common ρ in 26–45% of draws (up to 13 points); mean regret 2.0 against 1.4. Keep the plug-in signal.
 - [x] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. *Done 2026-11-24*
   (`studies/ewma-decay.js`, S43–S45 in `damping-theta.md`): EWMA of own annual means is a predictor

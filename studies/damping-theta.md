@@ -469,6 +469,16 @@ so their gaps are upper ends for high-volume portfolios with similar noise (not 
 shape, S51). S36's "taper pays with many ordered regions"
 holds in both regimes (J = 20, ρ = 0.9: 103 against 132 in the app regime, 96 against 103 in the thesis regime).
 
+- S49. *[numerical]* **Leave-one-year-out is bolder but noisier, and not better overall.** Choosing by
+    `Engine.loyoLoss` (refit without year s, score against year s; the noise term is the same for both
+    fits, so the difference is unbiased for the MSE difference, with no tuning) picks the taper in
+    41–68% of draws in the ordered worlds. It keeps more of the taper's gain there, at times beating both
+    fits by choosing per draw (J = 20, T = 5, ρ = 0.9, app: 123 against 130 and 143). But it also picks the
+    taper in 26–45% of draws with one common ρ, costing up to 13.5 ± 3.9 points (J = 20, T = 5,
+    ρ = 0.6). Mean regret 2.0 against the plug-in signal's 1.4; within 2 SE of 0 in 27 against 36 of 48
+    worlds. One held-out year per refit is too noisy a score next to the MSE gap it must detect.
+    Keep the plug-in signal (S46). LOYO costs T refits per fit, for no gain.
+
 ## The headline recommendations across regimes (`regime-check.js`, output `regime-check.out.txt`, 2026-11-24)
 
 Purpose: decide. Are S3, S5, S6 and S16 artefacts of the app's default world? BS, corrBS, the full `K̂`
