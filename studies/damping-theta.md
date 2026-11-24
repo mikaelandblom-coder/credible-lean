@@ -583,6 +583,11 @@ J ∈ {8, 20} × T ∈ {5, 10} × five volumes (z from 0.12 to 0.97), 4000 draws
     The CV inputs are now derived from the cells (`variance_statP_of_balanced`: Var P = 2σ⁴/(J(T − 1));
     `variance_statB_of_balanced`: Var B = 2(wT)²s²(J − 1)), so `bsPrice_of_balanced_cells` takes only
     τ², σ², w, J, T (no third and fourth cumulants).
+    *With fourth cumulants* (`bsPrice_of_balanced_cumulants`): levels κL, noise κN/w² per cell, no
+    skew. Var P gains κN/(JT), Var B a term in κL + κN/(w²T³), and cov(B, P) = κN(J − 1)/(JT). The
+    price relative to (1 − z)τ² becomes (1 − 1/J)(1 − z)/z·[2/(J(T − 1)) + 2/(J − 1) + κL/(Js²) +
+    γN z²/(JT)], γN = κN/σ⁴. So the share of noise kurtosis in the price grows like z² (at low z the positive
+    covariance cancels most of it), and the levels' kurtosis adds κL/(Js²) however many years.
 
 ## Choosing the variances by gain against price (`gain-price.js`, output `gain-price.out.txt`, 2026-11-24)
 

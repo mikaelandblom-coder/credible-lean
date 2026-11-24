@@ -8501,23 +8501,82 @@ price needs their covariances.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:variance_sum_sq_lin, lem:bsCov, lem:fitStats_eval}
-  Lemma~\ref{lem:variance_sum_sq_lin} with the residual and spread vectors, and Lemma~\ref{lem:bsCov}.
+  \uses{thm:variance_stat_balanced_cumulants}
+  Theorem~\ref{thm:variance_stat_balanced_cumulants} with $\kappa_L = \kappa_N = 0$.
 \end{proof}
 
 \begin{theorem}[Law (a) from the cells]\label{thm:bsPrice_balanced_cells}
   \lean{Credibility.Cumulants.bsPrice_of_balanced_cells}
   \leanok
-  \uses{thm:bsPrice_balanced, thm:variance_stat_balanced, thm:covariance_statB}
+  \uses{thm:bsPrice_balanced}
   In the balanced world with no third and fourth cumulants, the first-order price of
   Bühlmann--Straub's fitted factor, computed from the actual variances and covariance of $\hat v$
   and $S^2$, is $(2/J)(1 + (J - 1)/(J(T - 1)))(1 - z)/z$ relative to $(1 - z)\tau^2$.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:bsPrice_balanced, thm:variance_stat_balanced, thm:covariance_statB, lem:bsCov, lem:meanResid_uncorr}
-  Theorem~\ref{thm:variance_stat_balanced} gives the variances, Theorem~\ref{thm:covariance_statB}
-  with Lemma~\ref{lem:meanResid_uncorr} the zero covariance; then Theorem~\ref{thm:bsPrice_balanced}.
+  \uses{thm:bsPrice_balanced_cumulants}
+  Theorem~\ref{thm:bsPrice_balanced_cumulants} with $\kappa_L = \kappa_N = 0$.
+\end{proof}
+
+\begin{definition}[Fourth cumulants of balanced cells]\label{def:bsK4}
+  \lean{Credibility.Cumulants.bsK4}
+  \leanok
+  \uses{lem:bsCov}
+  Cells $\mu + L_j + e_{jt}$ with independent levels of fourth cumulant $\kappa_L$ and independent
+  noise of fourth cumulant $\kappa_N/w^2$: $\kappa_{4,pqrs} = \kappa_L$ when the four cells are in one
+  region, plus $\kappa_N/w^2$ when they are one cell.
+\end{definition}
+
+\begin{lemma}[The fourth-cumulant term]\label{lem:sum_bsK4}
+  \lean{Credibility.Cumulants.sum_mul4_indicator, Credibility.Cumulants.sum4_sum_comm,
+        Credibility.Cumulants.sum_bsK4, Credibility.Cumulants.sum_symQuad_mul_symQuad,
+        Credibility.Cumulants.sum_resCoef_region, Credibility.Cumulants.sum_resCoef_sq,
+        Credibility.Cumulants.sum_centering_sq_col}
+  \leanok
+  \uses{def:bsK4, lem:symQuad}
+  $\sum u_pu_qu'_ru'_s\kappa_{4,pqrs} = \kappa_L\sum_i(\sum_tu_{it})^2(\sum_tu'_{it})^2
+  + (\kappa_N/w^2)\sum_c u_c^2u'^2_c$. Residuals sum to zero over a region, so levels drop out of
+  every residual statistic; $\sum_k r_k(c)^2 = 1 - 1/T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Each indicator product factors into four sums.
+\end{proof}
+
+\begin{theorem}[Var $P$, Var $B$ and $\cov(B, P)$ with fourth cumulants]\label{thm:variance_stat_balanced_cumulants}
+  \lean{Credibility.Cumulants.variance_statP_of_balanced_cumulants,
+        Credibility.Cumulants.variance_statB_of_balanced_cumulants,
+        Credibility.Cumulants.covariance_statB_statP_of_balanced_cumulants}
+  \leanok
+  \uses{def:bsK4, lem:bsCov, def:fitStats}
+  Balanced table, common mean, fourth cumulants $\kappa_L$, $\kappa_N/w^2$ (and no third cumulants
+  for the covariance):
+  $\Var P = 2\sigma^4/(J(T - 1)) + \kappa_N/(JT)$,
+  $\Var B = 2(wT)^2s^2(J - 1) + (wT)^2(\kappa_L + \kappa_N/(w^2T^3))(J - 1)^2/J$,
+  $\cov(B, P) = \kappa_N(J - 1)/(JT)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:variance_sum_sq_lin, lem:sum_bsK4, lem:bsCov, lem:fitStats_eval, thm:covariance_statB}
+  Lemma~\ref{lem:variance_sum_sq_lin} (Theorem~\ref{thm:covariance_statB} for the covariance), then
+  Lemma~\ref{lem:sum_bsK4} for the $\kappa_4$ terms and Lemma~\ref{lem:bsCov} for the rest.
+\end{proof}
+
+\begin{theorem}[Law (a) with fourth cumulants: the corrected price]\label{thm:bsPrice_balanced_cumulants}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced_cumulants}
+  \leanok
+  \uses{lem:zHatVar, thm:variance_stat_balanced_cumulants}
+  With $\gamma_N = \kappa_N/\sigma^4$ the excess kurtosis of the noise, the first-order price relative to
+  $(1 - z)\tau^2$ is
+  \[ \Bigl(1 - \frac1J\Bigr)\frac{1 - z}z\Bigl(\frac2{J(T - 1)} + \frac2{J - 1} + \frac{\kappa_L}{Js^2}
+     + \frac{\gamma_Nz^2}{JT}\Bigr). \]
+  Noise kurtosis raises $\Var\hat v$, $\Var S^2$ and $\cov(\hat v, S^2)$; together they leave $\gamma_Nz^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_stat_balanced_cumulants}
+  Insert the three moments in $\mathrm{zHatVar}$; algebra.
 \end{proof}
 
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}

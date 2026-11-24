@@ -1257,7 +1257,10 @@ pooled over all cells, with standard errors of about $\sqrt{6/N}$ and $\sqrt{24/
 $N$ cells (an unbiased third cumulant:
 \lean{Credibility.Cumulants.kappaHat_unbiased}). If the corrected price of estimation
 differs materially from the normal-theory one, use the corrected one; no threshold needs
-to be set by hand. The cumulants of the levels cannot be checked with a handful of
+to be set by hand. For Bühlmann--Straub's factor in the balanced case it is proved: the noise
+kurtosis $\gamma_N$ adds a term in $\gamma_N z^2$, so its share of the price grows with credibility, and the
+levels' kurtosis adds a term that does not shrink with more years
+(\lean{Credibility.Cumulants.bsPrice_of_balanced_cumulants}). The cumulants of the levels cannot be checked with a handful of
 cohorts; treat them as a sensitivity. As a rule of thumb, a cell is an average of many
 claims, so its skewness shrinks like one over the square root of the claims per cell and
 its excess kurtosis like one over the claims per cell. Normal theory is fair for large

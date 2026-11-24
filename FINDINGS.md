@@ -627,5 +627,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    when the means and residuals are uncorrelated, and the fourth cumulant links any two quadratic
    forms sharing cells. Consequence for the price formula: the zero is exact in the study's worlds,
    small elsewhere, and under heavy tails the `κ₄` term is the one to add (`covariance_stat` gives it).
+   In the balanced world it is exactly `cov(B, P) = κN(J − 1)/(JT)` for noise of fourth cumulant `κN/w²`;
+   the levels' cumulant does not enter (`covariance_statB_statP_of_balanced_cumulants`, 2026-11-24).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

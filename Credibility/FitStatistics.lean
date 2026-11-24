@@ -750,18 +750,123 @@ lemma sum_centering_mul [Nonempty J] (j j' : J) :
   · subst h; simp
   · simp [h, Ne.symm h]
 
-/-- **The variance of `P` in the balanced world**: equal volumes `w`, independent regions,
-level variance `τ²`, noise variance `σ²/w` uncorrelated across years, cells in `L⁴` with a
-common mean and no fourth cumulants: `Var P = 2σ⁴/(J(T - 1))`. -/
-theorem variance_statP_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 σsq w μ : ℝ)
-    (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
+
+end BalancedMoments
+
+/-! ### The balanced world with fourth cumulants (the corrected price) -/
+
+section BalancedCumulants
+
+universe uK
+
+variable {J T : Type uK} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+
+/-- The fourth-cumulant table of balanced cells `xⱼₜ = μ + Lⱼ + eⱼₜ` with independent levels of
+fourth cumulant `κL` and independent noise of fourth cumulant `κN/w²` per cell:
+`κL` when all four cells are in one region, plus `κN/w²` when they are one cell. -/
+noncomputable def bsK4 (κL κN w : ℝ) (p q r s : J × T) : ℝ :=
+  ∑ i : J, κL * ((if p.1 = i then 1 else 0) * (if q.1 = i then 1 else 0)
+      * (if r.1 = i then 1 else 0) * (if s.1 = i then 1 else 0))
+    + ∑ c : J × T, κN / w ^ 2 * ((if p = c then 1 else 0) * (if q = c then 1 else 0)
+      * (if r = c then 1 else 0) * (if s = c then 1 else 0))
+
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+/-- `Σ_{pqrs} aₚ b_q c_r d_s fₚf_qf_rf_s = (a·f)(b·f)(c·f)(d·f)`. -/
+lemma sum_mul4_indicator {ι : Type*} [Fintype ι] (a b c d f : ι → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, a p * b q * c r * d s * (f p * f q * f r * f s)
+      = (∑ p, a p * f p) * (∑ q, b q * f q) * (∑ r, c r * f r) * (∑ s, d s * f s) := by
+  have e : ∀ p q r s, a p * b q * c r * d s * (f p * f q * f r * f s)
+      = (a p * f p) * ((b q * f q) * ((c r * f r) * (d s * f s))) := fun _ _ _ _ => by ring
+  simp only [e, ← mul_sum, ← sum_mul]
+  ring
+
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+/-- Move an inner sum out of four outer ones. -/
+lemma sum4_sum_comm {ι κ : Type*} [Fintype ι] [Fintype κ] (F : ι → ι → ι → ι → κ → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, ∑ i, F p q r s i = ∑ i, ∑ p, ∑ q, ∑ r, ∑ s, F p q r s i := by
+  rw [sum_congr rfl fun p _ => sum_congr rfl fun q _ => sum_congr rfl fun r _ => sum_comm]
+  rw [sum_congr rfl fun p _ => sum_congr rfl fun q _ => sum_comm]
+  rw [sum_congr rfl fun p _ => sum_comm]
+  rw [sum_comm]
+
+/-- **The fourth-cumulant term of `bsK4`**:
+`Σ u u u' u' κ₄ = κL Σᵢ (Σₜ uᵢₜ)²(Σₜ u'ᵢₜ)² + (κN/w²) Σ_c u_c² u'_c²`. -/
+lemma sum_bsK4 (κL κN w : ℝ) (u u' : J × T → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, u p * u q * u' r * u' s * bsK4 κL κN w p q r s
+      = κL * ∑ i, (∑ t, u (i, t)) ^ 2 * (∑ t, u' (i, t)) ^ 2
+        + κN / w ^ 2 * ∑ c, u c ^ 2 * u' c ^ 2 := by
+  simp only [bsK4, mul_add, sum_add_distrib, mul_sum]
+  rw [sum4_sum_comm, sum4_sum_comm]
+  have h1 : ∀ i : J, ∑ p, ∑ q, ∑ r, ∑ s, u p * u q * u' r * u' s
+      * (κL * ((if p.1 = i then 1 else 0) * (if q.1 = i then 1 else 0)
+        * (if r.1 = i then 1 else 0) * (if s.1 = i then 1 else 0)))
+      = κL * ((∑ t, u (i, t)) ^ 2 * (∑ t, u' (i, t)) ^ 2) := fun i => by
+    have := sum_mul4_indicator u u u' u' (fun p : J × T => if p.1 = i then 1 else 0)
+    have hf : ∀ v : J × T → ℝ, ∑ p, v p * (if p.1 = i then 1 else 0) = ∑ t, v (i, t) :=
+      fun v => by
+        simp only [Fintype.sum_prod_type, mul_ite, mul_one, mul_zero]
+        rw [sum_comm]; simp
+    rw [hf, hf] at this
+    rw [show κL * ((∑ t, u (i, t)) ^ 2 * (∑ t, u' (i, t)) ^ 2)
+      = κL * ((∑ t, u (i, t)) * (∑ t, u (i, t)) * (∑ t, u' (i, t)) * (∑ t, u' (i, t))) by ring,
+      ← this, mul_sum]
+    exact sum_congr rfl fun p _ => by
+      rw [mul_sum]; exact sum_congr rfl fun q _ => by
+        rw [mul_sum]; exact sum_congr rfl fun r _ => by
+          rw [mul_sum]; exact sum_congr rfl fun s _ => by ring
+  have h2 : ∀ c : J × T, ∑ p, ∑ q, ∑ r, ∑ s, u p * u q * u' r * u' s
+      * (κN / w ^ 2 * ((if p = c then 1 else 0) * (if q = c then 1 else 0)
+        * (if r = c then 1 else 0) * (if s = c then 1 else 0)))
+      = κN / w ^ 2 * (u c ^ 2 * u' c ^ 2) := fun c => by
+    have := sum_mul4_indicator u u u' u' (fun p : J × T => if p = c then 1 else 0)
+    have hf : ∀ v : J × T → ℝ, ∑ p, v p * (if p = c then 1 else 0) = v c :=
+      fun v => by simp [mul_ite]
+    rw [hf, hf] at this
+    rw [show κN / w ^ 2 * (u c ^ 2 * u' c ^ 2) = κN / w ^ 2 * (u c * u c * u' c * u' c) by ring,
+      ← this, mul_sum]
+    exact sum_congr rfl fun p _ => by
+      rw [mul_sum]; exact sum_congr rfl fun q _ => by
+        rw [mul_sum]; exact sum_congr rfl fun r _ => by
+          rw [mul_sum]; exact sum_congr rfl fun s _ => by ring
+  simp only [h1, h2, ← mul_sum]
+
+omit [Fintype J] in
+/-- A residual sums to zero over the years of any region. -/
+lemma sum_resCoef_region (a : J → T → ℝ) (ha : ∀ j, ∑ t, a j t = 1) (j i : J) (t : T) :
+    ∑ u, resCoef a j t (i, u) = 0 := by
+  simp only [resCoef]
+  split_ifs with h
+  · subst h; simp only [sum_sub_distrib, sum_ite_eq, mem_univ, ite_true, ha, sub_self]
+  · simp
+
+/-- `Σ_{(j,t)} rⱼₜ(c)² = 1 - 1/|T|` for equal shares. -/
+lemma sum_resCoef_sq [Nonempty T] (c : J × T) :
+    ∑ k : J × T, resCoef (fun _ _ => 1 / (Fintype.card T : ℝ)) k.1 k.2 c ^ 2
+      = ((Fintype.card T : ℝ) - 1) / Fintype.card T := by
+  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  simp only [resCoef, Fintype.sum_prod_type, ite_pow, ne_eq, OfNat.ofNat_ne_zero,
+    not_false_eq_true, zero_pow, sum_ite_irrel, sum_const_zero, sum_ite_eq, mem_univ, ite_true]
+  simp only [sub_sq, ite_pow, one_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    mul_ite, ite_mul, mul_one, mul_zero, zero_mul, sum_add_distrib, sum_sub_distrib,
+    sum_ite_eq', mem_univ, ite_true, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+  ring
+
+/-- **The variance of `P` in the balanced world with fourth cumulants** (`bsK4`: levels `κL`,
+noise `κN/w²` per cell), no other distributional assumption:
+`Var P = 2σ⁴/(J(T - 1)) + κN/(JT)`. The levels cancel. -/
+theorem variance_statP_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω → ℝ)
+    (τ2 σsq w μ κL κN : ℝ) (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
     (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+      = bsK4 κL κN w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
         + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
     variance (fun ω => statP (fun _ _ => w) fun i => Z i ω) P
-      = 2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) := by
+      = 2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
+        + κN / (Fintype.card J * Fintype.card T) := by
   have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
   have hn2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
   have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
@@ -770,37 +875,72 @@ theorem variance_statP_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2
   set a : J → T → ℝ := fun _ _ => 1 / (Fintype.card T : ℝ)
   have ha : ∀ j, ∑ t, a j t = 1 := fun j => by
     simp only [a, sum_const, card_univ, nsmul_eq_mul]; field_simp
+  set c0 : ℝ := w / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
   have e : (fun ω => statP (fun _ _ => w) fun i => Z i ω)
-      = fun ω => ∑ k : J × T, w / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
-          * (resCoef a k.1 k.2 ⬝ᵥ fun i => Z i ω) ^ 2 := by
+      = fun ω => ∑ k : J × T, c0 * (resCoef a k.1 k.2 ⬝ᵥ fun i => Z i ω) ^ 2 := by
     funext ω
     rw [show statP (fun _ _ => w) (fun i => Z i ω)
       = Stat.P.eval (fun _ _ => w) (fun i => Z i ω) from rfl, Stat.eval_eq]
-    simp only [Stat.coef, Stat.left, Stat.right, shares_const w hw, sq, mul_assoc, a]
-  rw [e, variance_sum_sq_lin Z (bsCov τ2 σsq w) (fun _ => μ) (fun _ _ _ _ => 0) hZ hm hc
-    (fun i j k l => by rw [h4]; ring) (fun (_ : J × T) => w / (Fintype.card J * ((Fintype.card T : ℝ) - 1)))
-    (fun (k : J × T) => resCoef a k.1 k.2)
+    simp only [Stat.coef, Stat.left, Stat.right, shares_const w hw, sq, mul_assoc, a, c0]
+  rw [e, variance_sum_sq_lin Z (bsCov τ2 σsq w) (fun _ => μ) (bsK4 κL κN w) hZ hm hc h4
+    (fun (_ : J × T) => c0) (fun (k : J × T) => resCoef a k.1 k.2)
     (fun (k : J × T) => resCoef_dotProduct_regionConst a ha (fun _ => μ) k.1 k.2)]
-  simp only [a, resCoef_dotProduct_bsCov, mul_zero, sum_const_zero, add_zero,
-    Fintype.sum_prod_type, ite_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
-    mul_ite, sum_ite_irrel, sum_const_zero, sum_ite_eq, mem_univ, ite_true, mul_pow]
-  have hs := sum_centering_sq (T := T) (by omega)
-  simp only [← mul_sum, hs, sum_const, card_univ, nsmul_eq_mul]
-  field_simp
+  simp only [mul_add, sum_add_distrib]
+  have g : ∑ k : J × T, ∑ k' : J × T, c0 * c0
+      * (2 * (resCoef a k.1 k.2 ⬝ᵥ (bsCov τ2 σsq w *ᵥ resCoef a k'.1 k'.2)) ^ 2)
+      = 2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) := by
+    simp only [a, resCoef_dotProduct_bsCov, Fintype.sum_prod_type, ite_pow, ne_eq,
+      OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mul_zero, mul_ite, sum_ite_irrel,
+      sum_const_zero, sum_ite_eq, mem_univ, ite_true, mul_pow]
+    have hs := sum_centering_sq (T := T) (by omega)
+    simp only [← mul_sum, hs, sum_const, card_univ, nsmul_eq_mul, c0]
+    field_simp
+  have k4 : ∑ k : J × T, ∑ k' : J × T, c0 * c0
+      * ∑ p, ∑ q, ∑ r, ∑ s, resCoef a k.1 k.2 p * resCoef a k.1 k.2 q * resCoef a k'.1 k'.2 r
+        * resCoef a k'.1 k'.2 s * bsK4 κL κN w p q r s
+      = κN / (Fintype.card J * Fintype.card T) := by
+    simp only [sum_bsK4, sum_resCoef_region a ha, ne_eq, OfNat.ofNat_ne_zero,
+      not_false_eq_true, zero_pow, sum_const_zero, mul_zero, zero_add, mul_sum]
+    rw [sum_congr rfl fun k _ => sum_comm, sum_comm]
+    have hA := sum_resCoef_sq (J := J) (T := T)
+    have : ∀ x : J × T, ∑ k : J × T, ∑ k' : J × T, c0 * c0 * (κN / w ^ 2
+        * (resCoef a k.1 k.2 x ^ 2 * resCoef a k'.1 k'.2 x ^ 2))
+        = c0 * c0 * (κN / w ^ 2) * (((Fintype.card T : ℝ) - 1) / Fintype.card T) ^ 2 := by
+      intro x
+      rw [sq (((Fintype.card T : ℝ) - 1) / Fintype.card T), ← hA x, sum_mul_sum, mul_sum]
+      exact sum_congr rfl fun k _ => by
+        rw [mul_sum]; exact sum_congr rfl fun k' _ => by ring
+    simp only [this, sum_const, card_univ, nsmul_eq_mul, Fintype.card_prod, Nat.cast_mul, c0]
+    field_simp
+  rw [g, k4]
 
-/-- **The variance of `B` in the balanced world** (same assumptions):
-`Var B = 2 (wT)² (τ² + σ²/(wT))² (J - 1)`, so the sample variance `S² = B/((J - 1)wT)` of the
-region means has `Var S² = 2 s²/(J - 1)`, `s = τ² + σ²/(wT)`. -/
-theorem variance_statB_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 σsq w μ : ℝ)
-    (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
+/-- `Σⱼ (δᵢⱼ - 1/|J|)² = 1 - 1/|J|`. -/
+lemma sum_centering_sq_col [Nonempty J] (i : J) :
+    ∑ j : J, ((if i = j then (1 : ℝ) else 0) - 1 / Fintype.card J) ^ 2
+      = ((Fintype.card J : ℝ) - 1) / Fintype.card J := by
+  have hn : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  simp only [sub_sq, ite_pow, one_pow, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    mul_ite, ite_mul, mul_one, mul_zero, zero_mul, sum_add_distrib, sum_sub_distrib,
+    sum_ite_eq, mem_univ, ite_true, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+  ring
+
+/-- **The variance of `B` in the balanced world with fourth cumulants** (`bsK4`):
+`Var B = 2(wT)²s²(J - 1) + (wT)²(κL + κN/(w²T³))(J - 1)²/J`, `s = τ² + σ²/(wT)`; `κL + κN/(w²T³)`
+is the fourth cumulant of a region mean. So `Var S² = 2s²/(J - 1) + (κL + κN/(w²T³))/J`. -/
+theorem variance_statB_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω → ℝ)
+    (τ2 σsq w μ κL κN : ℝ) (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
     (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+      = bsK4 κL κN w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
         + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
     variance (fun ω => statB (fun _ _ => w) fun i => Z i ω) P
       = 2 * (Fintype.card T * w) ^ 2 * (τ2 + σsq / (w * Fintype.card T)) ^ 2
-        * ((Fintype.card J : ℝ) - 1) := by
+          * ((Fintype.card J : ℝ) - 1)
+        + (Fintype.card T * w) ^ 2 * (κL + κN / (w ^ 2 * Fintype.card T ^ 3))
+          * ((Fintype.card J : ℝ) - 1) ^ 2 / Fintype.card J := by
   have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
   have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
   have hT0 : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
@@ -826,13 +966,254 @@ theorem variance_statB_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2
         nsmul_eq_mul]; field_simp; ring
     rw [meanComb_dotProduct]
     simp only [hmc, ← sum_mul, hβ0, zero_mul]
-  rw [e, variance_sum_sq_lin Z (bsCov τ2 σsq w) (fun _ => μ) (fun _ _ _ _ => 0) hZ hm hc
-    (fun i j k l => by rw [h4]; ring) (fun (_ : J) => Fintype.card T * w) (fun (j : J) => meanComb a (β j)) hu]
-  simp only [a, meanComb_dotProduct_bsCov, β, sum_centering_mul, mul_zero, sum_const_zero,
-    add_zero, mul_pow]
-  have hs := sum_centering_sq (T := J) Fintype.card_pos
-  simp only [← mul_sum, hs]
+  rw [e, variance_sum_sq_lin Z (bsCov τ2 σsq w) (fun _ => μ) (bsK4 κL κN w) hZ hm hc h4
+    (fun (_ : J) => Fintype.card T * w) (fun (j : J) => meanComb a (β j)) hu]
+  simp only [mul_add, sum_add_distrib]
+  have g : ∑ j : J, ∑ j' : J, Fintype.card T * w * (Fintype.card T * w)
+      * (2 * (meanComb a (β j) ⬝ᵥ (bsCov τ2 σsq w *ᵥ meanComb a (β j'))) ^ 2)
+      = 2 * (Fintype.card T * w) ^ 2 * (τ2 + σsq / (w * Fintype.card T)) ^ 2
+          * ((Fintype.card J : ℝ) - 1) := by
+    simp only [a, meanComb_dotProduct_bsCov, β, sum_centering_mul, mul_pow]
+    have hs := sum_centering_sq (T := J) Fintype.card_pos
+    simp only [← mul_sum, hs]
+    ring
+  have hreg : ∀ j i, ∑ t, meanComb a (β j) (i, t) = β j i := fun j i => by
+    simp only [meanComb, a, sum_const, card_univ, nsmul_eq_mul]; field_simp
+  have hcell : ∀ j j', ∑ x : J × T, meanComb a (β j) x ^ 2 * meanComb a (β j') x ^ 2
+      = 1 / (Fintype.card T : ℝ) ^ 3 * ∑ i, β j i ^ 2 * β j' i ^ 2 := fun j j' => by
+    simp only [meanComb, a, Fintype.sum_prod_type, sum_const, card_univ, nsmul_eq_mul, mul_sum]
+    refine sum_congr rfl fun i _ => ?_
+    field_simp
+  have k4 : ∑ j : J, ∑ j' : J, Fintype.card T * w * (Fintype.card T * w)
+      * ∑ p, ∑ q, ∑ r, ∑ s, meanComb a (β j) p * meanComb a (β j) q * meanComb a (β j') r
+        * meanComb a (β j') s * bsK4 κL κN w p q r s
+      = (Fintype.card T * w) ^ 2 * (κL + κN / (w ^ 2 * Fintype.card T ^ 3))
+          * ((Fintype.card J : ℝ) - 1) ^ 2 / Fintype.card J := by
+    simp only [sum_bsK4, hreg, hcell]
+    have hb : ∀ j j' : J, Fintype.card T * w * (Fintype.card T * w)
+        * (κL * ∑ i, β j i ^ 2 * β j' i ^ 2
+          + κN / w ^ 2 * (1 / (Fintype.card T : ℝ) ^ 3 * ∑ i, β j i ^ 2 * β j' i ^ 2))
+        = ∑ i, Fintype.card T * w * (Fintype.card T * w)
+          * ((κL + κN / (w ^ 2 * Fintype.card T ^ 3)) * (β j i ^ 2 * β j' i ^ 2)) :=
+      fun j j' => by
+        simp only [← mul_sum]
+        field_simp
+    rw [sum_congr rfl fun j _ => sum_congr rfl fun j' _ => hb j j']
+    rw [sum_congr rfl fun j _ => sum_comm, sum_comm]
+    have hcol : ∀ i, ∑ j, β j i ^ 2 = ((Fintype.card J : ℝ) - 1) / Fintype.card J :=
+      fun i => sum_centering_sq_col i
+    have : ∀ i : J, ∑ j : J, ∑ j' : J, Fintype.card T * w * (Fintype.card T * w)
+        * ((κL + κN / (w ^ 2 * Fintype.card T ^ 3)) * (β j i ^ 2 * β j' i ^ 2))
+        = (Fintype.card T * w) ^ 2 * (κL + κN / (w ^ 2 * Fintype.card T ^ 3))
+          * (((Fintype.card J : ℝ) - 1) / Fintype.card J) ^ 2 := fun i => by
+      rw [sq (((Fintype.card J : ℝ) - 1) / Fintype.card J), ← hcol i, sum_mul_sum, mul_sum]
+      exact sum_congr rfl fun j _ => by
+        rw [mul_sum]; exact sum_congr rfl fun j' _ => by ring
+    simp only [this, sum_const, card_univ, nsmul_eq_mul]
+    field_simp
+  rw [g, k4]
   ring
+
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+/-- `Σ A A' κ₄` for `A = Σₖ cₖuₖuₖᵀ`, `A' = Σₗ c'ₗu'ₗu'ₗᵀ` is `Σₖₗ cₖc'ₗ κ₄(uₖ, uₖ, u'ₗ, u'ₗ)`. -/
+lemma sum_symQuad_mul_symQuad {ι K K' : Type*} [Fintype ι] [Fintype K] [Fintype K']
+    (c : K → ℝ) (u : K → ι → ℝ) (c' : K' → ℝ) (u' : K' → ι → ℝ)
+    (κ : ι → ι → ι → ι → ℝ) :
+    ∑ p, ∑ q, ∑ r, ∑ s, symQuad c u u p q * symQuad c' u' u' r s * κ p q r s
+      = ∑ k, ∑ l, c k * c' l
+          * ∑ p, ∑ q, ∑ r, ∑ s, u k p * u k q * u' l r * u' l s * κ p q r s := by
+  have hsK : ∀ p q, symQuad c u u p q = ∑ k, c k * (u k p * u k q) := fun p q => by
+    simp only [symQuad, of_apply]
+    exact sum_congr rfl fun k _ => by ring
+  have hsK' : ∀ p q, symQuad c' u' u' p q = ∑ l, c' l * (u' l p * u' l q) := fun p q => by
+    simp only [symQuad, of_apply]
+    exact sum_congr rfl fun k _ => by ring
+  conv_lhs => simp only [hsK, hsK', sum_mul, mul_sum]
+  rw [sum4_sum_comm, sum_congr rfl fun l _ => sum4_sum_comm _, sum_comm]
+  refine sum_congr rfl fun k _ => ?_
+  refine sum_congr rfl fun l _ => ?_
+  simp only [mul_sum]
+  exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => sum_congr rfl fun r _ =>
+    sum_congr rfl fun s _ => by ring
+
+/-- **`cov(B, P)` in the balanced world with fourth cumulants** (`bsK4`; no third cumulants):
+`κN (J - 1)/(JT)`. It vanishes exactly when the noise has no fourth cumulant (Finding 37); the
+levels do not enter. -/
+theorem covariance_statB_statP_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω → ℝ)
+    (τ2 σsq w μ κL κN : ℝ) (hw : 0 < w) (hT : 2 ≤ Fintype.card T)
+    (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
+    (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
+    (h3 : ∀ i j k, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) ∂P = 0)
+    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsK4 κL κN w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    covariance (fun ω => statB (fun _ _ => w) fun i => Z i ω)
+      (fun ω => statP (fun _ _ => w) fun i => Z i ω) P
+      = κN * ((Fintype.card J : ℝ) - 1) / (Fintype.card J * Fintype.card T) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hn2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
+  have hw0 : w ≠ 0 := hw.ne'
+  have ha : ∀ j, ∑ t, (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) j t = 1 := fun j => by
+    simp only [sum_const, card_univ, nsmul_eq_mul]; field_simp
+  set β : J → J → ℝ := fun j i => (if i = j then 1 else 0) - 1 / Fintype.card J
+  have hres : ∀ i j t, meanCoef (shares (fun (_ : J) (_ : T) => w)) i
+      ⬝ᵥ (bsCov τ2 σsq w *ᵥ resCoef (shares (fun (_ : J) (_ : T) => w)) j t) = 0 := by
+    rw [shares_const w hw0]
+    exact meanCoef_dotProduct_resCoef_eq_zero _ ha
+      (fun i j => if i = j then τ2 else 0) (fun _ i j => if i = j then σsq / w else 0)
+      (fun i j => 1 / Fintype.card T * (if i = j then σsq / w else 0)) (fun _ _ _ => rfl)
+      _ (fun _ _ => rfl)
+  rw [show (fun ω => statB (fun _ _ => w) fun i => Z i ω)
+      = fun ω => Stat.B.eval (fun _ _ => w) fun i => Z i ω from rfl,
+    show (fun ω => statP (fun _ _ => w) fun i => Z i ω)
+      = fun ω => Stat.P.eval (fun _ _ => w) fun i => Z i ω from rfl,
+    covariance_statB_eq Z (fun _ _ => w)
+      (fun j => by simp only [sum_const, card_univ, nsmul_eq_mul]; positivity) Stat.P (by decide)
+      (bsCov τ2 σsq w) (fun _ => μ) (bsK4 κL κN w) hZ hm hc h3 h4 hres]
+  have hβ : spreadWeight (fun (_ : J) (_ : T) => w) = β := by
+    funext j i; exact spreadWeight_const w hw0 j i
+  simp only [Stat.mat, Stat.coef, Stat.left, Stat.right, shares_const w hw0, hβ,
+    sum_const, card_univ, nsmul_eq_mul]
+  rw [sum_symQuad_mul_symQuad]
+  simp only [sum_bsK4, sum_resCoef_region _ ha, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+    zero_pow, mul_zero, sum_const_zero, zero_add, mul_sum]
+  rw [sum_congr rfl fun j _ => sum_comm, sum_comm]
+  have hA := sum_resCoef_sq (J := J) (T := T)
+  have hG : ∀ x : J × T, ∑ j, meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) (β j) x ^ 2
+      = ((Fintype.card J : ℝ) - 1) / Fintype.card J / (Fintype.card T : ℝ) ^ 2 := fun x => by
+    simp only [meanComb, mul_pow, ← sum_mul, sum_centering_sq_col x.1, β]
+    field_simp
+  have : ∀ x : J × T, ∑ j : J, ∑ k : J × T, Fintype.card T * w
+      * (w / (Fintype.card J * ((Fintype.card T : ℝ) - 1)))
+      * (κN / w ^ 2 * (meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) (β j) x ^ 2 * resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) k.1 k.2 x ^ 2))
+      = Fintype.card T * w * (w / (Fintype.card J * ((Fintype.card T : ℝ) - 1))) * (κN / w ^ 2)
+        * ((((Fintype.card J : ℝ) - 1) / Fintype.card J / (Fintype.card T : ℝ) ^ 2)
+          * (((Fintype.card T : ℝ) - 1) / Fintype.card T)) := fun x => by
+    rw [← hG x, ← hA x, sum_mul_sum, mul_sum]
+    exact sum_congr rfl fun j _ => by
+      rw [mul_sum]; exact sum_congr rfl fun k _ => by ring
+  simp only [this, sum_const, card_univ, nsmul_eq_mul, Fintype.card_prod, Nat.cast_mul]
+  field_simp
+
+/-- **Law (a) with fourth cumulants: the corrected price** (S56). In the balanced world with
+levels of fourth cumulant `κL`, noise of fourth cumulant `κN/w²` per cell and no third
+cumulants, the first-order price of Bühlmann–Straub's fitted factor, from the actual moments of
+`v̂ = P/(wT)` and `S² = B/((J - 1)wT)`, is, relative to `(1 - z)τ²`,
+`(1 - 1/J)(1 - z)/z · [2/(J(T - 1)) + 2/(J - 1) + κL/(J s²) + γN z²/(JT)]`, `γN = κN/σ⁴` the
+excess kurtosis of the noise, `s = τ² + σ²/(wT)`, `z = τ²/s`. Noise kurtosis enters through
+`Var v̂`, `Var S²` and `cov(v̂, S²)`, which together leave `γN z²`. -/
+theorem bsPrice_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 σsq w μ κL κN : ℝ)
+    (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w) (hJ : 2 ≤ Fintype.card J)
+    (hT : 2 ≤ Fintype.card T)
+    (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
+    (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
+    (h3 : ∀ i j k, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) ∂P = 0)
+    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsK4 κL κN w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    (1 - 1 / (Fintype.card J : ℝ)) * (τ2 + σsq / (w * Fintype.card T))
+        * zHatVar (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+          (variance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w)) P)
+          (variance (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
+            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P)
+          (covariance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w))
+            (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
+              / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P)
+        / ((1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * τ2)
+      = (1 - 1 / (Fintype.card J : ℝ)) * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
+          / (τ2 / (τ2 + σsq / (w * Fintype.card T)))
+        * (2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) + 2 / ((Fintype.card J : ℝ) - 1)
+          + κL / (Fintype.card J * (τ2 + σsq / (w * Fintype.card T)) ^ 2)
+          + κN / σsq ^ 2 * (τ2 / (τ2 + σsq / (w * Fintype.card T))) ^ 2
+            / (Fintype.card J * Fintype.card T)) := by
+  have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
+  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
+  have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
+  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
+  have hw0 : w ≠ 0 := hw.ne'
+  have hσ0 : σsq ≠ 0 := hσ.ne'
+  have hτ0 : τ2 ≠ 0 := hτ.ne'
+  have hs0 : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
+  have hVP := variance_statP_of_balanced_cumulants Z τ2 σsq w μ κL κN hw0 hT hZ hm hc h4
+  have hVB := variance_statB_of_balanced_cumulants Z τ2 σsq w μ κL κN hw0 hT hZ hm hc h4
+  have hBP := covariance_statB_statP_of_balanced_cumulants Z τ2 σsq w μ κL κN hw hT hZ hm hc h3 h4
+  have hv : variance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w)) P
+      = (2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
+        + κN / (Fintype.card J * Fintype.card T)) / (Fintype.card T * w) ^ 2 := by
+    simp_rw [div_eq_mul_inv _ ((Fintype.card T : ℝ) * w)]
+    rw [variance_mul_const, hVP, inv_pow, div_eq_mul_inv _ (((Fintype.card T : ℝ) * w) ^ 2)]
+  have hS : variance (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
+        / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P
+      = (2 * (Fintype.card T * w) ^ 2 * (τ2 + σsq / (w * Fintype.card T)) ^ 2
+          * ((Fintype.card J : ℝ) - 1)
+        + (Fintype.card T * w) ^ 2 * (κL + κN / (w ^ 2 * Fintype.card T ^ 3))
+          * ((Fintype.card J : ℝ) - 1) ^ 2 / Fintype.card J)
+        / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)) ^ 2 := by
+    simp_rw [div_eq_mul_inv _ (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))]
+    rw [variance_mul_const, hVB, inv_pow,
+      div_eq_mul_inv _ ((((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)) ^ 2)]
+  have hcov : covariance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w))
+      (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
+        / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P
+      = κN * ((Fintype.card J : ℝ) - 1) / (Fintype.card J * Fintype.card T)
+        / ((Fintype.card T * w) * (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) := by
+    simp_rw [div_eq_mul_inv _ ((Fintype.card T : ℝ) * w),
+      div_eq_mul_inv _ (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))]
+    rw [covariance_mul_const_left, covariance_mul_const_right, covariance_comm, hBP]
+    field_simp
+  have hz : 1 - τ2 / (τ2 + σsq / (w * Fintype.card T))
+      = σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) := by
+    field_simp; ring
+  rw [hv, hS, hcov, hz]
+  unfold zHatVar
+  field_simp
+  ring
+
+/-- **The variance of `P` in the balanced world**: equal volumes `w`, independent regions,
+level variance `τ²`, noise variance `σ²/w` uncorrelated across years, cells in `L⁴` with a
+common mean and no fourth cumulants: `Var P = 2σ⁴/(J(T - 1))`. -/
+theorem variance_statP_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 σsq w μ : ℝ)
+    (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
+    (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
+    (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
+    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    variance (fun ω => statP (fun _ _ => w) fun i => Z i ω) P
+      = 2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) := by
+  have h4' : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsK4 0 0 w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k := fun i j k l => by rw [h4]; simp [bsK4]
+  rw [variance_statP_of_balanced_cumulants Z τ2 σsq w μ 0 0 hw hT hZ hm hc h4']
+  simp
+
+/-- **The variance of `B` in the balanced world** (same assumptions):
+`Var B = 2 (wT)² (τ² + σ²/(wT))² (J - 1)`, so the sample variance `S² = B/((J - 1)wT)` of the
+region means has `Var S² = 2 s²/(J - 1)`, `s = τ² + σ²/(wT)`. -/
+theorem variance_statB_of_balanced [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 σsq w μ : ℝ)
+    (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
+    (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
+    (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
+    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    variance (fun ω => statB (fun _ _ => w) fun i => Z i ω) P
+      = 2 * (Fintype.card T * w) ^ 2 * (τ2 + σsq / (w * Fintype.card T)) ^ 2
+        * ((Fintype.card J : ℝ) - 1) := by
+  have h4' : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsK4 0 0 w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k := fun i j k l => by rw [h4]; simp [bsK4]
+  rw [variance_statB_of_balanced_cumulants Z τ2 σsq w μ 0 0 hw hT hZ hm hc h4']
+  simp
 
 /-- **Law (a) from the cells** (S56). In the balanced world (equal volumes `w`, independent
 regions, level variance `τ²`, noise variance `σ²/w` uncorrelated across years, a common mean, no
@@ -862,55 +1243,21 @@ theorem bsPrice_of_balanced_cells [Nonempty J] (Z : J × T → Ω → ℝ) (τ2 
           / (Fintype.card J * ((Fintype.card T : ℝ) - 1)))
         * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
         / (τ2 / (τ2 + σsq / (w * Fintype.card T))) := by
-  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have h4' : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
+      = bsK4 0 0 w i j k l
+        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
+        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k := fun i j k l => by rw [h4]; simp [bsK4]
   have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
   have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
   have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
   have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
   have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
-  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
-  have hw0 : w ≠ 0 := hw.ne'
-  -- the variances of `v̂` and `S²`
-  have hVP := variance_statP_of_balanced Z τ2 σsq w μ hw0 hT hZ hm hc h4
-  have hVB := variance_statB_of_balanced Z τ2 σsq w μ hw0 hT hZ hm hc h4
-  have hv : variance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w)) P
-      = 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) * (σsq / (w * Fintype.card T)) ^ 2 := by
-    simp_rw [div_eq_mul_inv _ ((Fintype.card T : ℝ) * w)]
-    rw [variance_mul_const, hVP]
-    field_simp
-  have hS : variance (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
-        / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P
-      = 2 / ((Fintype.card J : ℝ) - 1) * (τ2 + σsq / (w * Fintype.card T)) ^ 2 := by
-    simp_rw [div_eq_mul_inv _ (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))]
-    rw [variance_mul_const, hVB]
-    field_simp
-  -- `cov(B, P) = 0`
-  have hres : ∀ i j t, meanCoef (shares (fun (_ : J) (_ : T) => w)) i
-      ⬝ᵥ (bsCov τ2 σsq w *ᵥ resCoef (shares (fun (_ : J) (_ : T) => w)) j t) = 0 := by
-    rw [shares_const w hw0]
-    refine meanCoef_dotProduct_resCoef_eq_zero _ (fun j => by
-      simp only [sum_const, card_univ, nsmul_eq_mul]; field_simp)
-      (fun i j => if i = j then τ2 else 0) (fun _ i j => if i = j then σsq / w else 0)
-      (fun i j => 1 / Fintype.card T * (if i = j then σsq / w else 0)) (fun _ _ _ => rfl)
-      _ (fun _ _ => rfl)
-  have hBP := covariance_statB_eq_zero Z (fun _ _ => w)
-    (fun j => by simp only [sum_const, card_univ, nsmul_eq_mul]; positivity) Stat.P (by decide)
-    (bsCov τ2 σsq w) (fun _ => μ) hZ hm hc h3 (fun i j k l => by rw [h4]) hres
-  have hcov : covariance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w))
-      (fun ω => (statB (fun _ _ => w) fun i => Z i ω)
-        / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) P = 0 := by
-    simp_rw [div_eq_mul_inv _ ((Fintype.card T : ℝ) * w),
-      div_eq_mul_inv _ (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))]
-    rw [covariance_mul_const_left, covariance_mul_const_right, covariance_comm]
-    rw [show (fun ω => statB (fun _ _ => w) fun i => Z i ω)
-      = fun ω => Stat.B.eval (fun _ _ => w) fun i => Z i ω from rfl,
-      show (fun ω => statP (fun _ _ => w) fun i => Z i ω)
-      = fun ω => Stat.P.eval (fun _ _ => w) fun i => Z i ω from rfl, hBP]
-    ring
-  rw [hv, hS, hcov]
-  exact bsPrice_of_balanced _ _ τ2 _ hn2 hT2 hτ (by positivity)
+  rw [bsPrice_of_balanced_cumulants Z τ2 σsq w μ 0 0 hτ hσ hw hJ hT hZ hm hc h3 h4']
+  simp only [zero_div, zero_mul, add_zero]
+  field_simp
+  ring
 
-end BalancedMoments
+end BalancedCumulants
 
 end Credibility.Cumulants
 

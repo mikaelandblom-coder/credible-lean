@@ -368,7 +368,10 @@ One chat per step; none needs Lean except step 5.
   exact first-order price (2/J)(1 + (J − 1)/(J(T − 1)))(1 − z)/z; `engine.js` `priceFit` uses the upper
   bound (2/J)·T/(T − 1)·(1 − z)/z (`bsPrice_le_of_balanced`), within a factor T/(T − 1) of it; switch to
   the exact form at the next app chat, and relabel law (a) in the formula panel as proved in the
-  balanced world)*.
+  balanced world)*. *Corrected for kurtosis (2026-11-24, `bsPrice_of_balanced_cumulants`):* add
+  κL/(Js²) + γN z²/(JT) inside the bracket, γN the pooled residual excess kurtosis (estimable), κL/s²
+  the levels' (not estimable with few regions: a sensitivity). Candidate for the "noise shape"
+  readout: price with and without the kurtosis terms.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

@@ -30,7 +30,8 @@ voice, then trim towards 8 pages.
   `Core.linMse_lineWeight_sub`): exact Var/Cov of `P`, `Qn`, `B`; "watch out": `B` is uncorrelated
   with `P`, `Qn` only for normal cells and region means uncorrelated with residuals (Finding 37).
   Same entry: the balanced identity `ẑ = 1 − v̂/S²` and law (a), the price of fitting BS,
-  `(2/J)(1 + (J−1)/(J(T−1)))(1 − z)/z ≤ (2/J)·T/(T−1)·(1 − z)/z` (`Cumulants.bsPrice_le_of_balanced`; from the cells alone: `bsPrice_of_balanced_cells`):
+  `(2/J)(1 + (J−1)/(J(T−1)))(1 − z)/z ≤ (2/J)·T/(T−1)·(1 − z)/z` (`Cumulants.bsPrice_le_of_balanced`; from the cells alone: `bsPrice_of_balanced_cells`; corrected for kurtosis, `+ κL/(Js²) + γN z²/(JT)` in
+  the bracket: `bsPrice_of_balanced_cumulants`):
   "use it" to judge whether BS's fit costs more than it gains. Add with the "gain against price" entry
   once the app step lands.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
