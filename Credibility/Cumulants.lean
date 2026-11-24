@@ -110,6 +110,14 @@ lemma integral_sum_mul_sum {α β : Type*} (s : Finset α) (t : Finset β) (a : 
   rw [integral_finsetSum _ fun q _ => (hgh p q).const_mul _]
   exact sum_congr rfl fun q _ => integral_const_mul _ _
 
+/-- A quadratic form in cells in `L⁴` is in `L²`. -/
+lemma memLp_quadForm {Z : ι → Ω → ℝ} (hZ : ∀ i, MemLp (Z i) 4 P) (A : Matrix ι ι ℝ) :
+    MemLp (fun ω => ∑ i, ∑ j, A i j * Z i ω * Z j ω) 2 P := by
+  have := holder442
+  refine memLp_finsetSum _ fun i _ => memLp_finsetSum _ fun j _ => ?_
+  have h : MemLp (fun ω => Z i ω * Z j ω) 2 P := (hZ i).mul (hZ j) (p := 4) (q := 4) (r := 2)
+  simpa [mul_assoc] using h.const_mul (A i j)
+
 variable [IsProbabilityMeasure P]
 
 /-- **Variance of a quadratic estimator** from moments up to order four. For random cells

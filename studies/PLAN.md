@@ -361,7 +361,9 @@ One chat per step; none needs Lean except step 5.
   its gain (exact on K̂, badge "proved" via `CoreMoments.mse_blend_eq_blup_add`) and its price (S56 law,
   badge "not proved yet", shown only where `valid` ≥ ½), and the verdict. Then a fit "corrBS, variances
   by gain against price" once recipes can hold a conditional step (as "BLUP auto"). Lean: Var/Cov of P, Qn,
-  B from `Cumulants`; cov(B, P) = 0 without third cumulants; the balanced identity ẑ = 1 − v̂/S² and law (a)'s
+  B from `Cumulants` *(done 2026-11-24, `FitStatistics.lean`: `covariance_stat`; cov(B, P) = 0 needs also
+  κ₄ = 0 and means uncorrelated with residuals, Finding 37; the app's exact moments of s may assume
+  normal cells, but should not assume cov(B, ·) = 0 with non-proportional volumes)*; the balanced identity ẑ = 1 − v̂/S² and law (a)'s
   first-order variance.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,

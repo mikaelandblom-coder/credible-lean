@@ -5,7 +5,7 @@
 //     CoreMoments.mse_blend_eq_blup_add for the gap to the BLUP);
 //   "integrated": E over s of the exact MSE of the (clipped) weights d(s), s with the exact mean and
 //     covariance (P and B on matched gamma scales by Wilson–Hilferty, Qn Gaussian given P; B is exactly
-//     uncorrelated with P and Qn), by a 3-D Gauss–Hermite rule: deterministic, moments only; it ignores the
+//     uncorrelated with P and Qn here: normal cells, proportional volumes; Finding 37), by a 3-D Gauss–Hermite rule: deterministic, moments only; it ignores the
 //     dependence of s and μ̂ beyond that, as g₃ does;
 //   price (first order, Prasad–Rao g₃): Σₖₗ Cov(sₖ, sₗ) Gₖᵀ K Gₗ, Gₖ = ∂dⱼ/∂sₖ, for the
 //     quadratic statistics s the fit depends on; the cross term vanishes under normal noise for even,

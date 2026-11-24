@@ -89,7 +89,9 @@ tactics.
   third and fourth cumulant tables (`varQuad`, `variance_quad_of_cumulants`; distribution-free,
   `notes/fourth-moments.md`) → `Credibility/Cumulants.lean`; noise cumulants that depend on the random
   level (option (b): levels `μ`, noise kernel `κ`, law of total variance on `μ ⊗ₘ κ`), the variance
-  function `μᵖ` (Tweedie) as its corollary (distribution layer) → `Credibility/VarianceFunction.lean`
+  function `μᵖ` (Tweedie) as its corollary (distribution layer) → `Credibility/VarianceFunction.lean`; the covariance of two quadratic
+  forms and the statistics `P`, `Qn`, `B` of the pooled fits (S53: exact Var/Cov, `cov(B, P) = 0`
+  conditions, Finding 37), the gap between two blends as a quadratic in `z` → `Credibility/FitStatistics.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: damping as shrinkage (PLAN G2): the table-optimal `θ* = Σs²/(Σs² + ΣV)` for given
   means and variances, and the safe range of `θ` → `Credibility/Damping.lean`

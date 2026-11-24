@@ -91,6 +91,10 @@ may need a paragraph.)
 - Finding 35 (2026-11-23, `studies/skew-bias.js`): the plug-in bias predicted from one data set
   to first order (skew channel), within 20–35% of the simulated bias without correlation. A sentence
   where Finding 35 is explained.
+- Gain against price (2026-11-24, studies S53–S57, `FitStatistics.lean`, Finding 37): the comparison
+  of two fits splits into an exact oracle gap (a quadratic in `z` for two blends) and a price from
+  the moments of three statistics, and when those are uncorrelated (Finding 37). One paragraph
+  with the app's "gain against price" step.
 - §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
   makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
   variance is enough (S41) and safer under heavy tails (S42). One paragraph.

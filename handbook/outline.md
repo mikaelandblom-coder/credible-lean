@@ -26,6 +26,10 @@ voice, then trim towards 8 pages.
   normal-theory variance of `ŝᵢⱼ`. But don't feed it to the damping rule in covariance form:
   it damps too much for the rates (studies S39); the app's rule is on the correlation scale. Add with G2's handbook entry. Weighted version
   for the shock model (`Cumulants.variance_crossResid`): same entry.
+- Moments of the fit statistics (2026-11-24, `Cumulants.covariance_stat`, `covariance_statB_eq_zero`,
+  `Core.linMse_lineWeight_sub`): exact Var/Cov of `P`, `Qn`, `B`; "watch out": `B` is uncorrelated
+  with `P`, `Qn` only for normal cells and region means uncorrelated with residuals (Finding 37).
+  Add with the "gain against price" entry once the app step lands.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
   cross-fit (even against odd years). Add when step 2 (skew correction) is settled. The "why":

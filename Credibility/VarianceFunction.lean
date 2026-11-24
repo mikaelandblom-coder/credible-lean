@@ -66,9 +66,7 @@ lemma memLp_quad {ν : Measure β} (ξ : S → β → ℝ) (hL : ∀ s, MemLp (�
       * (m j + ∑ s, B j s * ξ s b)) 2 ν := by
   have hZ : ∀ i, MemLp (fun b => m i + ∑ s, B i s * ξ s b) 4 ν := fun i =>
     (memLp_const _).add (memLp_finsetSum _ fun s _ => (hL s).const_mul _)
-  have := Cumulants.holder442
-  refine memLp_finsetSum _ fun i _ => memLp_finsetSum _ fun j _ => ?_
-  exact ((hZ i).const_mul (A i j)).mul (hZ j) (p := 4) (q := 4) (r := 2)
+  exact Cumulants.memLp_quadForm hZ A
 
 /-- **Variance of a quadratic estimator when the noise cumulants depend on the levels.** Levels
 `a ~ μ` give the cell means `m a`; given them, the cells are `m a + Bξ` for sources `ξₛ` that are

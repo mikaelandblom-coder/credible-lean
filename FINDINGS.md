@@ -609,4 +609,23 @@ Gaps, extra hypotheses and new results found while formalizing.
    Caveat: this is for a fixed `z` against the true error curve; for an estimated `ẑ` that depends on
    the same data the error in a draw is a different parabola, and nothing is claimed.
 
+37. **The spread of the means `B` is uncorrelated with `P` and `Qn` only under three conditions (new;
+   `studies/damping-theta.md` S53; Lean: `Cumulants.covariance_statB_eq`, `covariance_statB_eq_zero`,
+   `meanCoef_dotProduct_resCoef_eq_zero`, all in `FitStatistics.lean`).** Expected (S53, Lean candidate):
+   `cov(B, P) = cov(B, Qn) = 0` when the third cumulants vanish. Found: exactly,
+   `cov(B, R) = Σ A_B A_R κ₄` for `R = P` or `Qn` whenever (i) the cell means are constant within
+   regions, (ii) there are no third cumulants, and (iii) the region means are uncorrelated with the
+   residuals; so `0` needs also (iv) no fourth cumulants. Neither (iii) nor (iv) can be dropped.
+   (iv): `J = T = 2`, unit volumes, independent cells with fourth cumulant `κ₄`: `cov(B, P) = κ₄/4`
+   (checked by simulation with Exp(1) cells, `κ₄ = 6`: 1.505 against 1.5). (iii) holds for a level
+   covariance plus year noise `Dₜ` with `aᵢₜDₜᵢⱼ` constant in `t`: uncorrelated regions with
+   `Dₜᵢᵢ = σᵢ²/wᵢₜ`, or `Dₜᵢⱼ = Vᵢⱼ/√(wᵢₜwⱼₜ)` with proportional volumes `wᵢₜ = Wᵢvₜ`, as in every
+   world of `price-formula.js` (so S53's numbers stand). With correlated regions and
+   non-proportional volumes it fails: `ρ = 0.6`, app world with volumes × (1 + ½((j + t) mod 3)),
+   normal cells: corr(P, B) = 0.007, corr(Qn, B) = 0.006 (0 at `ρ = 0`). Why: `P` and `Qn` are
+   functions of the residuals, `B` of the region means; normal theory makes them independent only
+   when the means and residuals are uncorrelated, and the fourth cumulant links any two quadratic
+   forms sharing cells. Consequence for the price formula: the zero is exact in the study's worlds,
+   small elsewhere, and under heavy tails the `κ₄` term is the one to add (`covariance_stat` gives it).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -885,6 +885,9 @@ Checked to exist; read from abstracts and listings only, not the full texts.
 - Variance of a quadratic form beyond normality (2026-11-22, from memory, standard): with cumulant
   tensors `κ₃`, `κ₄` of the centred cells, `Var(xᵀAx) = 2tr(AΣAΣ) + 4μᵀAΣAμ + 4Σ(Aμ)ᵢAⱼₖκ₃ᵢⱼₖ +
   ΣAᵢⱼAₖₗκ₄ᵢⱼₖₗ`. Independent components: Atiqullah (1962, JRSS B 24); Seber & Lee (2003), Thm 1.6.
+  Covariance of two quadratic forms (used in `FitStatistics.lean`, 2026-11-24): polarization of the
+  variance, `2 tr(ACBC) + 4 (Am)ᵀC(Bm) + κ₃ terms + ΣAᵢⱼBₖₗκ₄ᵢⱼₖₗ`; the normal case is Searle (1971),
+  *Linear Models*, ch. 2; no new derivation.
   Gaussian case: Searle (1971) §2.5; Searle, Casella & McCulloch (1992), App. S. MINQUE variance
   with kurtosis: Rao & Kleffe (1988), ch. 5. Products of forms via cumulants: Bao & Ullah
   (https://eml.berkeley.edu/~webfac/bgraham/secnf/Ullah.pdf). Proposed use: `notes/fourth-moments.md`

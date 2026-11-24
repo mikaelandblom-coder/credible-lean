@@ -8229,6 +8229,201 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   $(1 - 1/T)^2$.
 \end{proof}
 
+\section{The statistics of the pooled fits: covariances (S53)}
+
+The pooled fits (Bühlmann--Straub, corrBS, the BLUP on corrBS's $\hat K$) depend on the data
+only through three quadratic statistics: the pooled within-region variance $P$, the
+cross-region residual products $Q_n$ and the spread of the region means $B$. Their first-order
+price needs their covariances.
+
+\begin{definition}[Covariance of two quadratic forms]\label{def:covQuad}
+  \lean{Credibility.Cumulants.covQuad}
+  \leanok
+  \uses{def:varQuad}
+  $\mathrm{cov}(A, B) = 2\operatorname{tr}(ACBC) + 4(Am)^\top C(Bm)
+  + 2\sum A_{ij}(Bm)_k\kappa_{3,ijk} + 2\sum B_{ij}(Am)_k\kappa_{3,ijk}
+  + \sum A_{ij}B_{kl}\kappa_{4,ijkl}$.
+\end{definition}
+
+\begin{lemma}[Polarization]\label{lem:varQuad_add}
+  \lean{Credibility.Cumulants.varQuad_add, Credibility.Cumulants.covQuad_self}
+  \leanok
+  \uses{def:covQuad}
+  $\mathrm{cov}(A, A) = V(A)$. For symmetric $C$ and $\kappa_{4,klij} = \kappa_{4,ijkl}$,
+  $V(A + B) = V(A) + 2\,\mathrm{cov}(A, B) + V(B)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:covQuad}
+  Expand; $\operatorname{tr}(BCAC) = \operatorname{tr}(ACBC)$ by cyclicity.
+\end{proof}
+
+\begin{lemma}[Quadratic forms are square integrable]\label{lem:Cumulants_memLp_quadForm}
+  \lean{Credibility.Cumulants.memLp_quadForm}
+  \leanok
+  A quadratic form in cells in $L^4$ is in $L^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable}
+  Hölder with exponents $4, 4, 2$.
+\end{proof}
+
+\begin{theorem}[The covariance of two quadratic estimators]\label{thm:covariance_quad_of_cumulants}
+  \lean{Credibility.Cumulants.covariance_quad_of_cumulants}
+  \leanok
+  \uses{def:covQuad}
+  Under the hypotheses of Theorem~\ref{thm:variance_quad_of_cumulants}, for symmetric $A$, $B$:
+  $\cov(Z^\top AZ, Z^\top BZ) = \mathrm{cov}(A, B)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, lem:varQuad_add, lem:Cumulants_memLp_quadForm}
+  $\Var(X + Y) = \Var X + 2\cov(X, Y) + \Var Y$ with $X + Y = Z^\top(A + B)Z$, and
+  Lemma~\ref{lem:varQuad_add}; $C$ and $\kappa_4$ are symmetric as moments.
+\end{proof}
+
+\begin{lemma}[Sums of products of linear statistics]\label{lem:symQuad}
+  \lean{Credibility.Cumulants.symQuad, Credibility.Cumulants.symQuad_symm,
+        Credibility.Cumulants.sum_symQuad, Credibility.Cumulants.symQuad_mulVec}
+  \leanok
+  $\sum_k c_k(u_k^\top x)(v_k^\top x) = x^\top Ax$ with the symmetric
+  $A = \sum_k c_k(u_kv_k^\top + v_ku_k^\top)/2$, and
+  $Ay = \sum_k (c_k/2)((v_k^\top y)u_k + (u_k^\top y)v_k)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange finite sums.
+\end{proof}
+
+\begin{theorem}[Covariance of sums of products]\label{thm:covariance_symQuad}
+  \lean{Credibility.Cumulants.covariance_symQuad}
+  \leanok
+  \uses{lem:symQuad, def:covQuad}
+  Two statistics $\sum_k c_k(u_k^\top Z)(v_k^\top Z)$ have the covariance $\mathrm{cov}(A, A')$
+  of their matrices.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:symQuad, thm:covariance_quad_of_cumulants}
+  Lemma~\ref{lem:symQuad} and Theorem~\ref{thm:covariance_quad_of_cumulants}.
+\end{proof}
+
+\begin{definition}[The statistics $P$, $Q_n$, $B$]\label{def:fitStats}
+  \lean{Credibility.Cumulants.shares, Credibility.Cumulants.regionMean,
+        Credibility.Cumulants.meanCoef, Credibility.Cumulants.meanComb,
+        Credibility.Cumulants.statP, Credibility.Cumulants.statQn, Credibility.Cumulants.statB,
+        Credibility.Cumulants.spreadWeight, Credibility.Cumulants.Stat,
+        Credibility.Cumulants.Stat.eval, Credibility.Cumulants.Stat.Idx,
+        Credibility.Cumulants.Stat.coef, Credibility.Cumulants.Stat.left,
+        Credibility.Cumulants.Stat.right, Credibility.Cumulants.Stat.mat}
+  \leanok
+  \uses{lem:symQuad}
+  Cells $x_{jt}$ with volumes $w_{jt}$, $W_j = \sum_t w_{jt}$, $a_{jt} = w_{jt}/W_j$, region means
+  $\bar x_j = \sum_t a_{jt}x_{jt}$, residuals $r_{jt} = x_{jt} - \bar x_j$:
+  $P = \sum_{jt} w_{jt}r_{jt}^2/(J(T - 1))$,
+  $Q_n = \sum_{i<j}\sum_t\sqrt{w_{it}w_{jt}}\,r_{it}r_{jt}$,
+  $B = \sum_j W_j(\bar x_j - \bar x)^2$ with $\bar x = \sum_j W_j\bar x_j/\sum_j W_j$.
+  Each is $\sum_k c_k(u_k^\top x)(v_k^\top x)$, with matrix $A_s$.
+\end{definition}
+
+\begin{lemma}[The statistics as sums of products]\label{lem:fitStats_eval}
+  \lean{Credibility.Cumulants.resCoef_dotProduct, Credibility.Cumulants.meanComb_dotProduct,
+        Credibility.Cumulants.meanComb_spread_dotProduct, Credibility.Cumulants.Stat.eval_eq}
+  \leanok
+  \uses{def:fitStats}
+  $r_{jt}$ and $\bar x_j - \bar x$ are linear in the cells, so each statistic is its sum of
+  products.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand the coefficient vectors.
+\end{proof}
+
+\begin{theorem}[Exact variances and covariances of $P$, $Q_n$, $B$]\label{thm:covariance_stat}
+  \lean{Credibility.Cumulants.covariance_stat, Credibility.Cumulants.variance_stat}
+  \leanok
+  \uses{def:fitStats, def:covQuad}
+  For cells in $L^4$ with any moment tables $m$, $C$, $\kappa_3$, $\kappa_4$, any two of the
+  statistics have $\cov(s, s') = \mathrm{cov}(A_s, A_{s'})$, and $\Var s = V(A_s)$. Under normal
+  cells these are the trace formulas $2\operatorname{tr}(A_sCA_{s'}C) + 4(A_sm)^\top C(A_{s'}m)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:fitStats_eval, thm:covariance_symQuad}
+  Lemma~\ref{lem:fitStats_eval} and Theorem~\ref{thm:covariance_symQuad}.
+\end{proof}
+
+\begin{lemma}[When the region means and the residuals are uncorrelated]\label{lem:meanResid_uncorr}
+  \lean{Credibility.Cumulants.resCoef_dotProduct_regionConst,
+        Credibility.Cumulants.meanCoef_dotProduct_resCoef_eq_zero}
+  \leanok
+  \uses{def:fitStats}
+  With $\sum_t a_{jt} = 1$, residuals annihilate region-constant vectors. If
+  $C_{(it),(ju)} = \Lambda_{ij} + \delta_{tu}D_{t,ij}$ (a level covariance plus year noise) and
+  $a_{it}D_{t,ij}$ does not depend on $t$, then $\cov(\bar x_i, r_{jt}) = 0$. This holds for
+  uncorrelated regions with $D_{t,ii} = \sigma_i^2/w_{it}$, and for
+  $D_{t,ij} = V_{ij}/\sqrt{w_{it}w_{jt}}$ with proportional volumes $w_{it} = W_iv_t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Cr_{jt})_{(i,u)} = D_{u,ij}(\delta_{tu} - a_{ju})$, so
+  $\cov(\bar x_i, r_{jt}) = c_{ij} - c_{ij}\sum_u a_{ju} = 0$.
+\end{proof}
+
+\begin{theorem}[Means and residuals covary only through $\kappa_4$]\label{thm:covariance_meanStat_resStat}
+  \lean{Credibility.Cumulants.covariance_meanStat_resStat}
+  \leanok
+  \uses{def:fitStats, lem:symQuad}
+  Cells with region-constant means, no third cumulants and region means uncorrelated with the
+  residuals. Then a statistic $S$ of the region means and a statistic $R$ of the residuals
+  (sums of products) have $\cov(S, R) = \sum A_{S,ij}A_{R,kl}\kappa_{4,ijkl}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_symQuad, lem:symQuad, lem:fitStats_eval, lem:meanResid_uncorr}
+  $A_Rm = 0$, because residuals annihilate region-constant means; this removes the mean term and one
+  skewness term, and $\kappa_3 = 0$ removes the other. $A_RCy$ is uncorrelated with every region
+  mean, so $A_SCA_R = 0$ and the trace term vanishes.
+\end{proof}
+
+\begin{theorem}[$\cov(B, P) = \cov(B, Q_n) = 0$]\label{thm:covariance_statB}
+  \lean{Credibility.Cumulants.covariance_statB_eq, Credibility.Cumulants.covariance_statB_eq_zero}
+  \leanok
+  \uses{thm:covariance_stat}
+  Under the conditions of Theorem~\ref{thm:covariance_meanStat_resStat} (positive region volumes),
+  $\cov(B, P)$ and $\cov(B, Q_n)$ are the fourth-cumulant term alone, hence $0$ when the fourth
+  cumulants vanish too (e.g.\ normal cells).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_meanStat_resStat}
+  Theorem~\ref{thm:covariance_meanStat_resStat} with $S = B$ and $R = P$ or $Q_n$.
+\end{proof}
+
+\begin{remark}[{Finding 37: $B$ is uncorrelated with $P$ and $Q_n$ only under three conditions}]\label{rem:covB}
+  The study's claim (S53) needs more than vanishing third cumulants: also vanishing fourth
+  cumulants, and region means uncorrelated with the residuals, which fails for correlated regions
+  with non-proportional volumes. See \texttt{FINDINGS.md}.
+\end{remark}
+
+\begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
+  \lean{Credibility.Core.linMse_lineWeight, Credibility.Core.linMse_lineWeight_sub}
+  \leanok
+  \uses{def:Core_blup}
+  For symmetric $K$, any collective weights $b$ and $c = e_j - b$:
+  $\mathrm{mse}_j(ze_j + (1 - z)b) = \mathrm{mse}_j(b) + 2z\,c^\top(Kb - \ell) + z^2c^\top Kc$.
+  So the gap between two blends with collective weights $b$, $b'$ and the same $z$ is
+  $\Delta_0 + 2z\Delta_1 + z^2\Delta_2$ with $\Delta_0 = \mathrm{mse}_j(b) - \mathrm{mse}_j(b')$,
+  $\Delta_1 = c^\top(Kb - \ell) - c'^\top(Kb' - \ell)$, $\Delta_2 = c^\top Kc - c'^\top Kc'$; it is
+  $0$ at $z = 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_linMse_pythagoras}
+  $ze_j + (1 - z)b = b + zc$; expand and use $b^\top Kc = c^\top Kb$.
+\end{proof}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:
@@ -8255,7 +8450,8 @@ This section assumes a noise family (\texttt{VarianceFunction.lean}); nothing in
 \end{lemma}
 \begin{proof}
   \leanok
-  H\"older, $\tfrac14+\tfrac14=\tfrac12$, term by term.
+  \uses{lem:Cumulants_memLp_quadForm}
+  Lemma~\ref{lem:Cumulants_memLp_quadForm} for the cells $m + B\xi$.
 \end{proof}
 
 \begin{theorem}[Variance with level-dependent noise cumulants]\label{thm:variance_quad_of_conditional_sources}

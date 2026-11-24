@@ -546,10 +546,13 @@ J = 8, equal σⱼ).
 price, and first order is reliable once each parameter has about 10 years of data or z is high. For
 the app this gives a decision rule with no tuning: the oracle gap from the fitted `K̂`, against the
 first-order price from the plug-in variances of the statistics (`PLAN.md` Pending, "gain against price").
-Lean candidates (in **lean**): the exact Var/Cov of P, Qn, B as corollaries of
-`Cumulants.variance_quad_of_cumulants`; cov(B, P) = cov(B, Qn) = 0 when third cumulants vanish; the
-exact MSE gap between two blends as a quadratic in z. The first-order price itself stays an
-approximation, checked here.
+Lean (2026-11-24, `Credibility/FitStatistics.lean`): the exact Var/Cov of P, Qn, B for any moment
+tables (`Cumulants.covariance_stat`, `variance_stat`); cov(B, P) = cov(B, Qn) is the fourth-cumulant
+term alone when the means are region-constant, the third cumulants vanish and the region means are
+uncorrelated with the residuals, so 0 under normal cells (`covariance_statB_eq`, `_eq_zero`). The
+last condition holds for ρ = 0 or proportional volumes (all worlds here), not in general (Finding 37).
+The MSE gap between two blends with the same z is an exact quadratic in z
+(`Core.linMse_lineWeight_sub`). The first-order price itself stays an approximation, checked here.
 
 ## Two price laws in closed form (`price-laws.js`, output `price-laws.out.txt`, 2026-11-24)
 
