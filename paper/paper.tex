@@ -1232,6 +1232,38 @@ The app therefore calls the floor ``the best fixed blend''.
     (\file{studies/damping-theta.md}, S7, S21).
 \end{itemize}
 
+\paragraph{What ``normal'' means here.}
+
+Where a result says ``under normal noise'' or ``normal theory'', it assumes no
+distribution. It assumes that the third and fourth cumulants vanish: no skewness and no
+excess kurtosis. Every theorem holds for any distribution with those moments, and the
+general versions carry the extra terms when they do not vanish
+(\lean{Credibility.Cumulants.variance_quad_of_cumulants},
+\lean{Credibility.Cumulants.covariance_stat}). The condition enters in two places. The
+\emph{noise} within a cohort decides how precise the variance estimate is. The
+\emph{cohort means}, level plus averaged noise, decide how precise their spread, and so
+$\hat\tau^2$, is. For example, a sample variance over $T$ years has its normal-theory
+variance plus $\kappa_4/T$ (\lean{Credibility.Cumulants.variance_sampleCov}). Some results
+also need conditions that are not distributional at all. The cohort spread is uncorrelated
+with the pooled noise variance only if, in addition, the cohort means are uncorrelated
+with the residuals: uncorrelated cohorts, or volumes proportional across periods, which
+the exposure table shows (\finding{37}, \lean{Credibility.Cumulants.covariance_statB_eq_zero}).
+
+On real data, do not test for normality. With many cells such a test rejects departures
+that do not matter, with few it has no power, and the formulas need only the cumulants
+anyway. Estimate them instead and use the exact formulas: the skewness and excess
+kurtosis of the within-cohort residuals, scaled by the square root of the volume and
+pooled over all cells, with standard errors of about $\sqrt{6/N}$ and $\sqrt{24/N}$ for
+$N$ cells (an unbiased third cumulant:
+\lean{Credibility.Cumulants.kappaHat_unbiased}). If the corrected price of estimation
+differs materially from the normal-theory one, use the corrected one; no threshold needs
+to be set by hand. The cumulants of the levels cannot be checked with a handful of
+cohorts; treat them as a sensitivity. As a rule of thumb, a cell is an average of many
+claims, so its skewness shrinks like one over the square root of the claims per cell and
+its excess kurtosis like one over the claims per cell. Normal theory is fair for large
+cells and poor for small ones. Skewness is the part that matters most for claims: it
+biases fits with a separate variance per cohort (\finding{35}).
+
 \see \hb{res:mse}{24}, \hb{res:forecast}{25}, \hb{res:integral_quad}{26},
 \hb{res:exists}{27} ·
 \lean{Credibility.Core.Estimates.portEst_optimal},

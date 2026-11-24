@@ -84,6 +84,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
+  and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
 - The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why
   variances need cumulants, and the assumptions that cut their number (independent sources, a
   variance function). Write once the source corollary is proved. The source corollary and the
