@@ -586,7 +586,13 @@ J ∈ {8, 20} × T ∈ {5, 10} × five volumes (z from 0.12 to 0.97), 4000 draws
     *With fourth cumulants* (`bsPrice_of_balanced_cumulants`): levels κL, noise κN/w² per cell, no
     skew. Var P gains κN/(JT), Var B a term in κL + κN/(w²T³), and cov(B, P) = κN(J − 1)/(JT). The
     price relative to (1 − z)τ² becomes (1 − 1/J)(1 − z)/z·[2/(J(T − 1)) + 2/(J − 1) + κL/(Js²) +
-    γN z²/(JT)], γN = κN/σ⁴. So the share of noise kurtosis in the price grows like z² (at low z the positive
+    γN z²/(JT)], γN = κN/σ⁴.
+    *Law (b) in Lean (2026-11-24, `ownPrice_sub_pooled_of_balanced`):* with τ² fixed, ∂z/∂log v =
+    −z(1 − z), the curvature (1 − 1/J)s and the pooled v̂'s own CV² 2/(J(T − 1)), the extra price is
+    exactly (1 − 1/J)²·z(1 − z)·2/(T − 1). The law as stated drops both factors 1 − 1/J: 1.31× at
+    J = 8, 1.11× at J = 20, part of its overstatement at z ≥ 0.6 (J = 8: 4.3 → 3.3 against 2.0
+    simulated). Against law (a) (`ownPrice_eq_sq_mul_bsPrice`): the same noise in v̂ costs an own
+    factor at fixed τ² z² times what it costs BS's ẑ = 1 − v̂/S² at fixed S². So the share of noise kurtosis in the price grows like z² (at low z the positive
     covariance cancels most of it), and the levels' kurtosis adds κL/(Js²) however many years.
 
 ## Choosing the variances by gain against price (`gain-price.js`, output `gain-price.out.txt`, 2026-11-24)

@@ -463,6 +463,87 @@ theorem bsPrice_le_of_balanced (n T τ2 v : ℝ) (hn : 2 ≤ n) (hT : 2 ≤ T) (
   rw [mul_div_assoc, mul_div_assoc]
   exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hk (by positivity)) hz
 
+/-- The first-order (delta-method) variance of a region's own factor `ẑ = τ²/(τ² + v̂)` at `v`
+(`τ²` held fixed): with derivative `-τ²/(τ² + v)²`, `(τ²/(τ² + v)²)² Var v̂`. -/
+noncomputable def zOwnVar (τ2 v Vv : ℝ) : ℝ := (τ2 / (τ2 + v) ^ 2) ^ 2 * Vv
+
+/-- `∂z/∂log v = -z(1 - z)`: the first-order variance of the own factor is
+`z²(1 - z)² CV²(v̂)`, `z = τ²/(τ² + v)`. -/
+theorem zOwnVar_eq (τ2 v Vv : ℝ) (hs : τ2 + v ≠ 0) (hv : v ≠ 0) :
+    zOwnVar τ2 v Vv
+      = (τ2 / (τ2 + v)) ^ 2 * (1 - τ2 / (τ2 + v)) ^ 2 * (Vv / v ^ 2) := by
+  unfold zOwnVar; field_simp; ring
+
+/-- The first-order price of a region's own factor when its `v̂` has `CV²(v̂) = c`: the curvature
+`(1 - 1/J)s` of the blend's error (`BlendMoments.errVar_eq`) times `zOwnVar`, relative to
+`(1 - z)τ²`, is `(1 - 1/J)·z(1 - z)·c`. -/
+theorem ownPrice_eq (n τ2 v c : ℝ) (hτ : 0 < τ2) (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (c * v ^ 2) / ((1 - τ2 / (τ2 + v)) * τ2)
+      = (1 - 1 / n) * (τ2 / (τ2 + v)) * (1 - τ2 / (τ2 + v)) * c := by
+  have hs : τ2 + v ≠ 0 := by positivity
+  have h1 : 1 - τ2 / (τ2 + v) = v / (τ2 + v) := by field_simp; ring
+  rw [zOwnVar_eq τ2 v _ hs hv.ne', h1]
+  field_simp
+
+/-- **An own factor against Bühlmann–Straub's.** The price of the noise in `v̂` (`CV²(v̂) = c`) for an
+own factor at fixed `τ²` is `z²` times its price in law (a), where `ẑ = 1 - v̂/S²` at fixed `S²`
+(`zHatVar` with `Var S² = 0`): `∂z/∂log v` is `-z(1 - z)` against `-(1 - z)`. -/
+theorem ownPrice_eq_sq_mul_bsPrice (n τ2 v c : ℝ) (hτ : 0 < τ2) (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (c * v ^ 2) / ((1 - τ2 / (τ2 + v)) * τ2)
+      = (τ2 / (τ2 + v)) ^ 2 * ((1 - 1 / n) * (τ2 + v) * zHatVar v (τ2 + v) (c * v ^ 2) 0 0
+          / ((1 - τ2 / (τ2 + v)) * τ2)) := by
+  have hs : τ2 + v ≠ 0 := by positivity
+  have h1 : 1 - τ2 / (τ2 + v) = v / (τ2 + v) := by field_simp; ring
+  rw [ownPrice_eq n τ2 v c hτ hv, zHatVar_eq v _ _ _ hv.ne' hs, h1]
+  have h2 : 1 - (1 - v / (τ2 + v)) = v / (τ2 + v) := by ring
+  rw [h2]
+  field_simp
+  ring
+
+/-- **Law (b), the price of own variances** (S56). In the balanced world with `n = J` regions
+and `T` years, each region's own `v̂ⱼ` has the normal-theory `CV² = 2/(T - 1)`, one pooled `v̂`
+has `CV² = 2/(J(T - 1))`. The extra first-order price of own factors over pooled ones, relative to
+`(1 - z)τ²`, is exactly `(1 - 1/J)²·z(1 - z)·2/(T - 1)`. -/
+theorem ownPrice_sub_pooled_of_balanced (n T τ2 v : ℝ) (hn : 2 ≤ n) (hτ : 0 < τ2)
+    (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (2 / (T - 1) * v ^ 2) / ((1 - τ2 / (τ2 + v)) * τ2)
+      - (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (2 / (n * (T - 1)) * v ^ 2)
+          / ((1 - τ2 / (τ2 + v)) * τ2)
+      = (1 - 1 / n) ^ 2 * (τ2 / (τ2 + v)) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1)) := by
+  have hn0 : n ≠ 0 := by linarith
+  rw [ownPrice_eq n τ2 v _ hτ hv, ownPrice_eq n τ2 v _ hτ hv]
+  field_simp
+
+/-- …which is at most the study's `z(1 - z)·2/(T - 1)`, itself at most `1/(2(T - 1))`. -/
+theorem ownPrice_sub_pooled_le_of_balanced (n T τ2 v : ℝ) (hn : 2 ≤ n) (hT : 2 ≤ T)
+    (hτ : 0 < τ2) (hv : 0 < v) :
+    (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (2 / (T - 1) * v ^ 2) / ((1 - τ2 / (τ2 + v)) * τ2)
+      - (1 - 1 / n) * (τ2 + v) * zOwnVar τ2 v (2 / (n * (T - 1)) * v ^ 2)
+          / ((1 - τ2 / (τ2 + v)) * τ2)
+      ≤ (τ2 / (τ2 + v)) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1))
+    ∧ (τ2 / (τ2 + v)) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1)) ≤ 1 / (2 * (T - 1)) := by
+  rw [ownPrice_sub_pooled_of_balanced n T τ2 v hn hτ hv]
+  have hT1 : 0 < T - 1 := by linarith
+  have hz0 : 0 ≤ τ2 / (τ2 + v) := by positivity
+  have hz1 : τ2 / (τ2 + v) ≤ 1 := (div_le_one (by positivity)).mpr (by linarith)
+  have hzz : 0 ≤ τ2 / (τ2 + v) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1)) :=
+    mul_nonneg (mul_nonneg hz0 (by linarith)) (by positivity)
+  have hn0 : 0 < 1 / n := by have : (0 : ℝ) < n := by linarith
+                             positivity
+  have hn1 : 0 ≤ 1 - 1 / n := by
+    rw [sub_nonneg, div_le_one (by linarith)]; linarith
+  have hn2 : (1 - 1 / n) ^ 2 ≤ 1 := by nlinarith
+  refine ⟨?_, ?_⟩
+  · have := mul_le_mul_of_nonneg_right hn2 hzz
+    calc (1 - 1 / n) ^ 2 * (τ2 / (τ2 + v)) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1))
+        = (1 - 1 / n) ^ 2 * (τ2 / (τ2 + v) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1))) := by ring
+      _ ≤ _ := by linarith
+  · have hq : τ2 / (τ2 + v) * (1 - τ2 / (τ2 + v)) ≤ 1 / 4 := by
+      nlinarith [sq_nonneg (τ2 / (τ2 + v) - 1 / 2)]
+    calc τ2 / (τ2 + v) * (1 - τ2 / (τ2 + v)) * (2 / (T - 1))
+        ≤ 1 / 4 * (2 / (T - 1)) := mul_le_mul_of_nonneg_right hq (by positivity)
+      _ = 1 / (2 * (T - 1)) := by field_simp; ring
+
 end Balanced
 
 /-! ### Means and residuals: only the fourth cumulant links them -/

@@ -32,6 +32,9 @@ voice, then trim towards 8 pages.
   Same entry: the balanced identity `ẑ = 1 − v̂/S²` and law (a), the price of fitting BS,
   `(2/J)(1 + (J−1)/(J(T−1)))(1 − z)/z ≤ (2/J)·T/(T−1)·(1 − z)/z` (`Cumulants.bsPrice_le_of_balanced`; from the cells alone: `bsPrice_of_balanced_cells`; corrected for kurtosis, `+ κL/(Js²) + γN z²/(JT)` in
   the bracket: `bsPrice_of_balanced_cumulants`):
+  Law (b), own variances over a pooled one: `(1 − 1/J)²·z(1 − z)·2/(T − 1) ≤ z(1 − z)·2/(T − 1) ≤ 1/(2(T − 1))`
+  (`Cumulants.ownPrice_sub_pooled_le_of_balanced`); "why": an own factor at fixed `τ²` pays `z²` times
+  BS's price for the same noise in `v̂` (`ownPrice_eq_sq_mul_bsPrice`).
   "use it" to judge whether BS's fit costs more than it gains. Add with the "gain against price" entry
   once the app step lands.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of

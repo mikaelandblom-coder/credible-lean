@@ -8512,6 +8512,57 @@ price needs their covariances.
   Lemma~\ref{lem:zHatVar}; $(1 - 1/J)\cdot 2/(J - 1) = 2/J$ and $(J - 1)/J \le 1$.
 \end{proof}
 
+\begin{lemma}[First-order price of an own factor]\label{lem:ownPrice}
+  \lean{Credibility.Cumulants.zOwnVar, Credibility.Cumulants.zOwnVar_eq,
+        Credibility.Cumulants.ownPrice_eq}
+  \leanok
+  For a region's own factor $\hat z = \tau^2/(\tau^2 + \hat v)$ ($\tau^2$ fixed), the delta-method
+  variance at $v$ is $(\tau^2/s^2)^2\Var\hat v = z^2(1 - z)^2\,\mathrm{CV}^2(\hat v)$
+  ($\partial z/\partial\log v = -z(1 - z)$). With $\mathrm{CV}^2(\hat v) = c$, the curvature
+  $(1 - 1/J)s$ times it, relative to $(1 - z)\tau^2$, is $(1 - 1/J)\,z(1 - z)\,c$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Algebra, with $1 - z = v/s$ and $sz = \tau^2$.
+\end{proof}
+
+\begin{theorem}[Law (b): the price of own variances]\label{thm:ownPrice_balanced}
+  \lean{Credibility.Cumulants.ownPrice_sub_pooled_of_balanced,
+        Credibility.Cumulants.ownPrice_sub_pooled_le_of_balanced}
+  \leanok
+  \uses{lem:ownPrice}
+  Balanced world, $J$ regions, $T$ years. With the normal-theory $\mathrm{CV}^2 = 2/(T - 1)$ of a
+  region's own $\hat v_j$ and $2/(J(T - 1))$ of one pooled $\hat v$, the extra first-order price of
+  own factors over pooled ones, relative to $(1 - z)\tau^2$, is
+  \[ \Bigl(1 - \frac1J\Bigr)^2 z(1 - z)\,\frac2{T - 1} \;\le\; z(1 - z)\,\frac2{T - 1}
+     \;\le\; \frac1{2(T - 1)}. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:ownPrice}
+  Lemma~\ref{lem:ownPrice} with $c = 2/(T - 1)$ minus $c = 2/(J(T - 1))$:
+  $(1 - 1/J)(1 - 1/J)$. Then $(1 - 1/J)^2 \le 1$ and $z(1 - z) \le 1/4$.
+\end{proof}
+\begin{corollary}[An own factor against Bühlmann--Straub's]\label{cor:ownPrice_vs_bsPrice}
+  \lean{Credibility.Cumulants.ownPrice_eq_sq_mul_bsPrice}
+  \leanok
+  \uses{lem:ownPrice, lem:zHatVar}
+  For the same $\mathrm{CV}^2(\hat v) = c$, the price of the noise in $\hat v$ for an own factor at
+  fixed $\tau^2$, $(1 - 1/J)z(1 - z)c$, is $z^2$ times its price in law (a), where
+  $\hat z = 1 - \hat v/S^2$ at fixed $S^2$: $(1 - 1/J)\frac{1 - z}{z}c$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:ownPrice, lem:zHatVar}
+  Lemmas~\ref{lem:ownPrice} and~\ref{lem:zHatVar} (with $\Var S^2 = 0$):
+  $\partial z/\partial\log v$ is $-z(1 - z)$ against $-(1 - z)$.
+\end{proof}
+\begin{remark}[Law (b) overstates by $(1 - 1/J)^{-2}$]
+  The study's law (b), $z(1 - z)\cdot 2/(T - 1)$, drops two factors $1 - 1/J$: one from the blend's
+  curvature $\Var(\hmu_j - \hmu)$, one because the pooled $\hat v$ is noisy too. At $J = 8$ that is a
+  factor $1.31$, part of the overstatement $1.1$--$2\times$ seen for $z \ge 0.6$ (study S56).
+\end{remark}
+
 \begin{lemma}[Variance of a sum of squared linear statistics]\label{lem:variance_sum_sq_lin}
   \lean{Credibility.Cumulants.variance_sum_sq_lin}
   \leanok

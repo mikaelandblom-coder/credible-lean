@@ -386,6 +386,12 @@ One chat per step; none needs Lean except step 5.
   checks quoted on the page (skew link, skew bias, gamma tests) would need rerunning. Open: make it
   the default after that recheck (owner asked for it, 2026-11-24); the fits' skew machinery
   (`skewLink`, `skewBias`: third moments ∝ w^−3/2) then needs the power w^−2 or a fitted power.
+  *Law (b) proved (2026-11-24, `Cumulants.ownPrice_sub_pooled_of_balanced`):* the exact first-order
+  extra price of own variances over a pooled one is (1 − 1/J)²·z(1 − z)·2/(T − 1); `engine.js` `priceVar`
+  uses the study's z(1 − z)·2/(T − 1), its upper bound (`ownPrice_sub_pooled_le_of_balanced`), 1.31× at
+  J = 8. Switching to the exact form makes the 'region' verdict more likely; S56 saw (b) overstate
+  1.1–2× for z ≥ 0.6 but understate up to 5× below z ≈ 0.3 (bias of 1/σ̂ⱼ², not first order), so
+  recheck the regret table of S57 before switching; relabel (b) "proved in the balanced world".
   *Caveat (2026-11-24, literature §10m, Chen–Lahiri–Rao):* law (a) prices `E B²` only. Under
   non-normality the cross term `2E[AB]` is first order too. For the levels it is `−2z(1 − z)γL/J`
   (with D known), so the γL sensitivity row overstates; the net effect of level kurtosis is

@@ -96,7 +96,8 @@ may need a paragraph.)
 - Gain against price (2026-11-24, studies S53–S57, `FitStatistics.lean`, Finding 37): the comparison
   of two fits splits into an exact oracle gap (a quadratic in `z` for two blends) and a price from
   the moments of three statistics, and when those are uncorrelated (Finding 37). One paragraph
-  with the app's "gain against price" step.
+  with the app's "gain against price" step. Both price laws are proved in the balanced world
+  (`Cumulants.bsPrice_of_balanced`, `ownPrice_sub_pooled_of_balanced`).
 - §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
   makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
   variance is enough (S41) and safer under heavy tails (S42). One paragraph.
