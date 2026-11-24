@@ -436,3 +436,33 @@ inside it. Engine: `targetMoments`, `predMse`, `ewmaYears`, `ownYearsBest`; roll
 λ fitted"), not a recommendation: it never beats the plug-in BLUP, and its exact loss at a fixed λ is
 the aggregation excess. Morris's λ by size is explained by the second-moment model; a likelihood fit
 of λ would belong in the distribution layer and is not needed for this.
+
+## A data-side signal for the BLUP taper (`taper-signal.js`, output `taper-signal.out.txt`, 2026-11-24)
+
+S36–S37 left open how a practitioner, who cannot see the world, knows when to taper. `Engine.taperSignal`
+judges both candidate correlation tables by S3's plug-in loss per pair: the taper (each r̂ᵢⱼ times
+ρ̂^d) by S3's own loss, one common r̄ (as corrBS) by `Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]₊`. It prefers the
+smaller loss, with no tuning constant. `fitBLUPAuto` is the BLUP on the preferred table. First study with
+the conventions of `PLAN.md` §1 (factorial grid, paired SEs, two regimes): structure (ordered or
+common) × ρ ∈ {0.3, 0.6, 0.9} × J ∈ {8, 20} × T ∈ {5, 10} × regime, 48 worlds, 600 draws.
+
+- S46. *[numerical]* **The signal is safe.** With one common ρ it tapers in 0–2% of draws, so auto
+    equals BLUP on corrBS's `K̂` (whose lead there is 5–38 points). Over all 48 worlds auto is never
+    more than 4 points worse than BLUP on corrBS (J = 8, T = 5: 134 against 130, ±3).
+- S47. *[numerical]* **…but timid where the taper matters.** In the ordered worlds with ρ = 0.9 it
+    tapers in only 13–61% of draws. The taper gains 7–29 points there with J = 20, and auto keeps 0–60% of
+    that (J = 20, T = 10, app: 114 against taper 103 and corrBS 132). Regret against the better of the
+    two: mean 1.4, at most 13 (± 12) points; within 2 SE of 0 in 36 of 48 worlds. *[hypothesis]* The
+    common table's loss ignores how strongly the pairs' errors are correlated (they share the T years),
+    so it is too optimistic. A sharper signal would score the two BLUPs directly, e.g. by
+    leaving out one year.
+- S48. *[numerical]* **The regime matters as much as the method.** In the thesis regime (z ≈ 0.7–1.0)
+    the gap between BLUP taper and BLUP on corrBS averages 4.5 points (max 12), against 13.7 (max 42)
+    at the app default. One ranking flips: J = 8, T = 10, ordered ρ = 0.9 gives corrBS 107 against taper
+    109 (app), and 101 against 97 (thesis). Studies run only at the app default overstate every gap
+    between fits about threefold for a portfolio as credible as the thesis's.
+
+**Consequence.** Keep "BLUP taper" as an option, and use `fitBLUPAuto` in studies. It goes on the page
+once the recipe can show a conditional step. Earlier studies in this file ran at the app default only,
+so their gaps are upper ends for credible portfolios. S36's "taper pays with many ordered regions"
+holds in both regimes (J = 20, ρ = 0.9: 103 against 132 in the app regime, 96 against 103 in the thesis regime).

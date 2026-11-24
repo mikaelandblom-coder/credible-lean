@@ -969,3 +969,19 @@ test('Finding 35, ρ̂ channel: the pooled cross-region third moment γ̂ (cross
   close(b.own[2], 1.1 * a.own[2], 1e-12, 'own scaled'); close(b.own[3], a.own[3], 1e-12, 'others kept');
   close(c.rhoRaw, a.rhoRaw + 0.01, 1e-9, 'ρ̂ shifted'); close(c.own[0], a.own[0], 1e-12, 'variances kept');
 });
+
+test('taper signal (studies/taper-signal.js): almost never tapers a common ρ; tapers a clear distance decay; auto = the chosen fit', () => {
+  const r = E.rng(61);
+  let common = 0, ordered = 0;
+  const wc = E.makeWorld({ J: 20, T: 10, rho: 0.6 }), wo = E.makeWorld({ J: 20, T: 20, rho: 0.9, ordered: true });
+  for (let k = 0; k < 60; k++) {
+    if (E.taperSignal(E.draw(wc, r).data).preferTaper) common++;
+    if (E.taperSignal(E.draw(wo, r).data).preferTaper) ordered++;
+  }
+  assert.ok(common <= 3, `common world tapered ${common}/60`);
+  assert.ok(ordered >= 40, `ordered world tapered ${ordered}/60`);
+  const { data } = E.draw(wo, r), a = E.fitBLUPAuto(data);
+  const ref = a.signal.preferTaper ? E.fitBLUPTaper(data) : E.fitBLUP(data);
+  a.rates.forEach((x, j) => close(x, ref.rates[j], 1e-12, `rate ${j}`));
+  assert.equal(a.notes.length, 1);
+});

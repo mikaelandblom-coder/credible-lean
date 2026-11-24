@@ -656,6 +656,34 @@
   }
 
   /**
+   * Data-side signal for the BLUP taper (studies/taper-signal.js): does the estimated correlation
+   * fall with distance? Both candidate tables are judged by S3's plug-in loss per pair of the
+   * correlation table, with the same two parameters per lag (r̄_d, V_d = (1 − r̄_d²)²/(T − 1)):
+   *   taper  (each r̂ᵢⱼ times ρ̂^d, ρ̂ = taperRho):  Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²], R = ρ̂^d;
+   *   common (each r̂ᵢⱼ replaced by r̄, as corrBS):  Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]₊,
+   * r̄ the mean over all pairs (the noise of r̄_d removed from the squared gap, pairs taken as
+   * independent). Prefers the taper when its loss is smaller. No tuning constant.
+   */
+  function taperSignal(data) {
+    const est = sigmaHat(data), Sig = est.Sig, T = data.X[0].length;
+    const tr = taperRho(Sig, T, (i, j) => Math.abs(i - j)), lags = tr.lags;
+    const np = sum(lags.map((g) => g.n)), rbar = sum(lags.map((g) => g.n * g.r)) / np;
+    const V = (r) => (1 - r * r) ** 2 / (T - 1);
+    const lossTaper = sum(lags.map((g) => { const R = Math.pow(tr.rho, g.d), S = g.r * g.r; return g.n * (R * R * (S + V(g.r)) - 2 * R * S + S); }));
+    const lossCommon = sum(lags.map((g) => g.n * Math.max((rbar - g.r) ** 2 - V(g.r) / g.n, 0)));
+    return { rho: tr.rho, rbar, lags, lossTaper, lossCommon, preferTaper: lossTaper < lossCommon };
+  }
+
+  /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/taper-signal.js). */
+  function fitBLUPAuto(data) {
+    const sig = taperSignal(data), f = sig.preferTaper ? fitBLUPTaper(data) : fitBLUP(data);
+    f.notes = (f.notes || []).concat([sig.preferTaper
+      ? `The estimated correlation falls with distance (taper loss ${sig.lossTaper.toFixed(2)} < common ${sig.lossCommon.toFixed(2)}): BLUP taper, ρ̂ = ${sig.rho.toFixed(2)}.`
+      : `No clear fall of the correlation with distance (taper loss ${sig.lossTaper.toFixed(2)} ≥ common ${sig.lossCommon.toFixed(2)}): BLUP on corrBS’s K̂.`]);
+    return Object.assign(f, { signal: sig });
+  }
+
+  /**
    * Exact variance of the off-diagonal Σ̂ᵢⱼ of eq. (39) (sigmaHat) when the years are independent,
    * from given second and fourth moments (Cumulants.variance_sum_mul_lin with the residual
    * coefficients uᵢₜ(s) = cᵢₜ(δₜₛ − aᵢₛ), cᵢₜ = √wᵢₜ, aᵢₛ = wᵢₛ/wᵢ*; with every cᵢₜ = 1 it is
@@ -1742,6 +1770,7 @@
   }
 
   return {
+    taperSignal, fitBLUPAuto,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,

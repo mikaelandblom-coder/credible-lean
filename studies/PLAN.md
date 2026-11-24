@@ -27,6 +27,26 @@ complex the *fitted model* is, and see what happens when they differ.
 6. **Every new extension of the framework gets a switch.** The app is
    built so that adding one is a small, local change (section 6).
 
+### Study conventions (2026-11-24, after `studies/taper-signal.js`)
+
+The simulation studies (`studies/*.js`, numbered observations S1–S48 in `damping-theta.md`) are cheap
+(seconds to minutes) but answer only for the worlds they visit. Rules for new ones (helpers in
+`studies/lib.js`):
+1. **Two credibility regimes.** Report each world at the app default (volume 500, z ≈ 0.2–0.9) and
+   in the thesis regime (volume 4400, z ≈ 0.7–1.0: the expert-judgement parameters of the thesis
+   simulation, §4 Table 4.1: τ = 0.6, σⱼ² lognormal(16, √2), wⱼ ≈ 3·10⁷). Gaps between fits shrink
+   about threefold from the first to the second (S48), and a ranking can flip.
+2. **Paired standard errors.** Same draws for every fit (common random numbers), and report
+   differences as `m ± 2SE` of the paired difference (`lib.paired`), not two means side by side.
+   "About even" needs an SE: at 600 draws it is ±1–6 points of the floor.
+3. **A factorial design**, not hand-picked cells (`lib.grid`): every combination of the axes, so a
+   conclusion is a statement over the grid and its edge is visible. Name the ranges in the output.
+4. **Exact where possible.** Oracle MSEs, restricted predictors and floors come from the formulas
+   (as `ewma-decay.js` Part A), and simulation only for what depends on fitted parameters.
+5. **Say where the ranges come from.** Engine worlds: anchored by the thesis regime above. The
+   monthly card world (`app/monthly.js`: γ, s², w0) has no anchor yet; its ratios s²/(wγ) and φ should
+   be set from the owner's card data (summary moments only) before its studies are cited as practice.
+
 ## 2. What the user sees
 
 **World** (the truth; a switch or slider per feature):
@@ -607,8 +627,13 @@ One chat per step; none needs Lean except step 5.
   θ̂ (old grid rule kept as `thetaRule: 'grid'`); fit "BLUP taper" (`fitBLUPTaper`, `blupOn`),
   Node tests. **Seen** (`studies/taper-blup.js`, S36–S37): with J = 20 ordered regions the BLUP on
   the tapered `K̂` is 9–28 points (of the blend floor) better than BLUP on corrBS's `K̂`; about even at
-  J = 8, T = 10; worse with T = 5 or a common ρ. Open: a data-side signal for when to prefer it (e.g. r̄_d falling with
-  d), since a practitioner cannot see the world.
+  J = 8, T = 10; worse with T = 5 or a common ρ. *Data-side signal 2026-11-24* (`studies/taper-signal.js`,
+  S46–S48): `Engine.taperSignal` compares S3's plug-in loss of the tapered correlation table with that
+  of one common r̄, no tuning; `fitBLUPAuto` takes the BLUP on the preferred table. Safe (tapers a
+  common-ρ world in 0–2% of draws, never costs more than 4 points against BLUP) but timid (tapers 13–61%
+  of draws in ordered ρ = 0.9 worlds, where the taper gains up to 29 points; regret up to 13).
+  Not on the page yet: its two branches need a recipe with a conditional step (the recipe test wants
+  one fixed list). Open: a sharper signal (e.g. leave-one-year-out loss of the two BLUPs).
 - [x] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. *Done 2026-11-24*
   (`studies/ewma-decay.js`, S43–S45 in `damping-theta.md`): EWMA of own annual means is a predictor

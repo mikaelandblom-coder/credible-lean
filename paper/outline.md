@@ -98,6 +98,9 @@ may need a paragraph.)
   2026) is a restricted predictor (aggregated data, `Blup.predMse_aggregate_eq_blup_add`); its best
   λ shortens with volume, and the BLUP beats it by reading the common factor from all cohorts. One
   paragraph.
+- §8 tapering (2026-11-24, studies S46–S48): when to taper is decided from the data
+  (`Engine.taperSignal`, safe but conservative), and every gap between fits is about three times
+  smaller at the credibility level of the thesis's own study. One sentence each.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are
