@@ -792,3 +792,8 @@ One chat per step; none needs Lean except step 5.
   cells, use pooled variances (BS, BLUP pooled) or the balance switch, as for Finding 35. No new Finding:
   no theorem's statement is affected.
   *Rule shown in the app 2026-11-22* (note under the Lomax slider).
+- [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
+  (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
+  This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A
+  possible app step: "group the cohorts" before the blend, with group sizes and `τ²` per group fitted
+  (no hand-set number of groups, §1). Read the paper first; no Lean target yet.

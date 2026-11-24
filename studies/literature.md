@@ -960,3 +960,42 @@ Checked to exist; read from abstracts and listings only, not the full texts.
 - Used: the app's world switch "Noise shape shrinks with volume" (`params.shrink`, gamma shape
   `k·w/500`); `Engine.noiseShape` recovers the fall (J = 8, T = 10, 600 draws: skew 1.16, 0.42,
   0.14 and `γ̂N` 4.0, 0.40, 0.08 at volume 500, 5 000, 50 000).
+
+### 10n. Lean formalizations and recent small-area papers (owner's question, 2026-11-24)
+*Lean.* No Lean project on small-area estimation or kriging was found. The nearest is **Stat-Lean**
+(github.com/StatLean/Stat-Lean, Apache 2.0, Lean/Mathlib v4.35.0, so older than ours), folder
+`StatLean/StatisticalModels/MixedEffects/`. Its four files were read as raw text (2026-11-24). No `sorry`
+was seen there, but nothing was built and the files they import were not checked.
+- `Marginal.lean`, `covMatrix_lmmLaw`: `Cov Y = Z G Zᵀ + R` for any laws of `b`, `ε` with second moments.
+- `BLUP.lean`, `blupRisk_eq_add` and `blupRisk_le`: `risk(A) = risk(A*) + tr((A − A*)V(A − A*)ᵀ)` with
+  `A* = G Zᵀ V⁻¹`, for any centred laws. This is our `Blup.lean` optimality in mixed-model form. Also the
+  Gaussian conditional mean equals the BLUP (`condMeanMatrix_lmm`, `compProd_lmmJointLaw`).
+- `Henderson.lean` (finite matrices only): `pushThrough`, `G Zᵀ(ZGZᵀ + R)⁻¹ = (ZᵀR⁻¹Z + G⁻¹)⁻¹ZᵀR⁻¹`,
+  and `hendersonMME`: Henderson's mixed-model equations ⇔ BLUP at the GLS `β̂`.
+- Not there: REML or any estimation of variance components (our `Expectation`/`Estimation`/
+  `FactorEstimation` go further).
+Used: not as a dependency, because the toolchains differ and its measure-based `covMatrix` does not fit
+our moment tables (`Core.Target`). *Candidate port* (in **lean**, with an attribution comment):
+`pushThrough` and `hendersonMME`. They give the small form of `K⁻¹` for the hierarchical files
+(`Hierarchical.lean`, `K = ZGZᵀ + R` with few groups) and the app's engine. Its Gaussian
+conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,
+AI4SLT (arXiv 2602.02285), FormalSLT.
+
+*Papers (arXiv, from the owner's search; not yet read here, so the descriptions are the owner's summaries):*
+- Maranzano, Mattera & Sugasawa (2026-08), spatially clustered Fay–Herriot: contiguous regions found
+  from the data, each with its own coefficients and random-effect variance, i.e. its own collective mean
+  and `τ²`. **Best fit.** It is the 2-D form of `KMeansBridge.lean` (Finding 14: optimal pooled cohorts
+  are intervals), with a variance per group added. Read first; app candidate (PLAN, Pending).
+- Reluga, Salvati, Tzavidis, van der Laan et al. (2026-10), *Small area learning*: any ML predictor as
+  the synthetic part and a residual correction with a bias–variance trade-off. The size of the
+  correction is a credibility factor, so eq. (7)/`bestZ` should give the optimal one from second moments
+  alone. Check whether they derive it or only tune it.
+- J.N.K. Rao & J.S. Rao (2026-11), *Inferential issues in model-based SAE*: review since 2015 (robust and
+  semi-parametric area-level models, outlier-robust unit level, EBLUP vs EB vs HB). Use it to find gaps
+  next to Lahiri & Rao (1995) and Chen, Lahiri & Rao (§10m).
+- Bhadra & Polson (2026-06), horseshoe prior for spatial SAE: heavy-tailed shrinkage, posterior
+  contraction. Distribution layer only (a full prior); a note next to robust credibility (Künsch 1992,
+  Gisler & Reinhard 1993, Zhao & Poudyal 2026, §10l), not a new direction.
+- Not pursued: partial Fay–Herriot with PLS (Schirripa Spagnolo, Salvati & Fabrizi; for many correlated
+  covariates, which our models do not have yet), differential privacy (Das & Drechsler), and
+  variance-inflated Fay–Herriot for non-probability samples. Unconfirmed: "Double-robust SAE", JASA (2026 DOI).
