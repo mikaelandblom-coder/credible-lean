@@ -580,6 +580,9 @@ J ∈ {8, 20} × T ∈ {5, 10} × five volumes (z from 0.12 to 0.97), 4000 draws
     study's (2/J)·T/(T − 1)·(1 − z)/z (`bsPrice_of_balanced`, `bsPrice_le_of_balanced`; inputs: the
     normal-theory CVs and cov(v̂, S²) = 0, `covariance_statB_eq_zero`). The exact blend floor in this
     world is (1 − z)τ² + (1 − z)²s/J, so "relative to the floor" is a further first-order step.
+    The CV inputs are now derived from the cells (`variance_statP_of_balanced`: Var P = 2σ⁴/(J(T − 1));
+    `variance_statB_of_balanced`: Var B = 2(wT)²s²(J − 1)), so `bsPrice_of_balanced_cells` takes only
+    τ², σ², w, J, T (no third and fourth cumulants).
 
 ## Choosing the variances by gain against price (`gain-price.js`, output `gain-price.out.txt`, 2026-11-24)
 

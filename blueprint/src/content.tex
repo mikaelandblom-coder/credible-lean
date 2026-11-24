@@ -8356,6 +8356,7 @@ price needs their covariances.
 
 \begin{lemma}[When the region means and the residuals are uncorrelated]\label{lem:meanResid_uncorr}
   \lean{Credibility.Cumulants.resCoef_dotProduct_regionConst,
+        Credibility.Cumulants.mulVec_resCoef,
         Credibility.Cumulants.meanCoef_dotProduct_resCoef_eq_zero}
   \leanok
   \uses{def:fitStats}
@@ -8455,6 +8456,68 @@ price needs their covariances.
   \leanok
   \uses{lem:zHatVar}
   Lemma~\ref{lem:zHatVar}; $(1 - 1/J)\cdot 2/(J - 1) = 2/J$ and $(J - 1)/J \le 1$.
+\end{proof}
+
+\begin{lemma}[Variance of a sum of squared linear statistics]\label{lem:variance_sum_sq_lin}
+  \lean{Credibility.Cumulants.variance_sum_sq_lin}
+  \leanok
+  If each $u_k$ annihilates the mean, then
+  $\Var\sum_k c_k(u_k^\top Z)^2 = \sum_{kk'} c_kc_{k'}\bigl(2(u_k^\top Cu_{k'})^2
+  + \kappa_4(u_k, u_k, u_{k'}, u_{k'})\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_mul_lin}
+  Centre the cells; Theorem~\ref{thm:variance_sum_mul_lin} with $u = cu$, $v = u$.
+\end{proof}
+
+\begin{lemma}[The balanced table]\label{lem:bsCov}
+  \lean{Credibility.Cumulants.bsCov, Credibility.Cumulants.shares_const,
+        Credibility.Cumulants.resCoef_dotProduct_bsCov,
+        Credibility.Cumulants.meanComb_dotProduct_bsCov,
+        Credibility.Cumulants.spreadWeight_const, Credibility.Cumulants.sum_centering_mul,
+        Credibility.Cumulants.sum_centering_sq}
+  \leanok
+  \uses{def:fitStats}
+  Equal volumes $w$, independent regions, $\cov(x_{it}, x_{ju}) = \delta_{ij}(\tau^2 + \delta_{tu}\sigma^2/w)$.
+  Then $\cov(r_{jt}, r_{j't'}) = \delta_{jj'}(\sigma^2/w)(\delta_{tt'} - 1/T)$,
+  $\cov(\sum_i\beta_i\bar x_i, \sum_i\gamma_i\bar x_i) = (\tau^2 + \sigma^2/(wT))\sum_i\beta_i\gamma_i$,
+  the spread weights are $\delta_{ij} - 1/J$, and $\sum_{tt'}(\delta_{tt'} - 1/T)^2 = T - 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:meanResid_uncorr}
+  Lemma~\ref{lem:meanResid_uncorr} for $C r_{jt}$; finite sums.
+\end{proof}
+
+\begin{theorem}[Exact variances of $P$ and $B$ in the balanced world]\label{thm:variance_stat_balanced}
+  \lean{Credibility.Cumulants.variance_statP_of_balanced,
+        Credibility.Cumulants.variance_statB_of_balanced}
+  \leanok
+  \uses{lem:bsCov, def:fitStats}
+  With the balanced table, a common mean and no fourth cumulants,
+  $\Var P = 2\sigma^4/(J(T - 1))$ and $\Var B = 2(wT)^2s^2(J - 1)$ with $s = \tau^2 + \sigma^2/(wT)$;
+  so $\mathrm{CV}^2(\hat v) = 2/(J(T - 1))$ and $\mathrm{CV}^2(S^2) = 2/(J - 1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:variance_sum_sq_lin, lem:bsCov, lem:fitStats_eval}
+  Lemma~\ref{lem:variance_sum_sq_lin} with the residual and spread vectors, and Lemma~\ref{lem:bsCov}.
+\end{proof}
+
+\begin{theorem}[Law (a) from the cells]\label{thm:bsPrice_balanced_cells}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced_cells}
+  \leanok
+  \uses{thm:bsPrice_balanced, thm:variance_stat_balanced, thm:covariance_statB}
+  In the balanced world with no third and fourth cumulants, the first-order price of
+  Bühlmann--Straub's fitted factor, computed from the actual variances and covariance of $\hat v$
+  and $S^2$, is $(2/J)(1 + (J - 1)/(J(T - 1)))(1 - z)/z$ relative to $(1 - z)\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bsPrice_balanced, thm:variance_stat_balanced, thm:covariance_statB, lem:bsCov, lem:meanResid_uncorr}
+  Theorem~\ref{thm:variance_stat_balanced} gives the variances, Theorem~\ref{thm:covariance_statB}
+  with Lemma~\ref{lem:meanResid_uncorr} the zero covariance; then Theorem~\ref{thm:bsPrice_balanced}.
 \end{proof}
 
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
