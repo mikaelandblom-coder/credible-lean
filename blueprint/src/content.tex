@@ -6308,6 +6308,21 @@ $\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
   the rates want less damping (S12), so the link to the rates' error stays numerical.
 \end{remark}
 
+\begin{corollary}[The optimally damped table is valid]\label{cor:shrinkOffDiag_bestTheta}
+  \lean{Credibility.Damping.posSemidef_shrinkOffDiag_bestTheta,
+        Credibility.Damping.posDef_shrinkOffDiag_bestTheta}
+  \leanok
+  \uses{thm:bestTheta, thm:shrinkOffDiag_posDef}
+  If $A \succeq 0$ and all $V_i \ge 0$, then $A^{\theta^*} \succeq 0$. If moreover
+  $\sum V_i > 0$ and $A_{ii} > 0$ for all $i$, then $A^{\theta^*} \succ 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:bestTheta, thm:shrinkOffDiag_posDef}
+  $\theta^* \in [0, 1]$ (Theorem~\ref{thm:bestTheta}), and $\theta^* < 1$ when $\sum V > 0$;
+  then Theorem~\ref{thm:shrinkOffDiag_posDef}.
+\end{proof}
+
 \section{The distance taper}
 
 \begin{definition}[Distance taper]\label{def:distTaper}

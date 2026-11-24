@@ -1017,7 +1017,8 @@ $\theta$ is to make $\hat K$ as close as possible to the true $K$. That is
 the wrong target. That target has an exact answer: the $\theta$ minimising the
 expected squared error of the damped table is $\sum s^2/(\sum s^2 + \sum V)$, signal over
 signal plus noise, and the app's rule is its plug-in (\hb{res:bestTheta}{9},
-\lean{Credibility.Damping.bestTheta_optimal}). But the rates want \emph{less} damping than the best estimate
+\lean{Credibility.Damping.bestTheta_optimal}); damping a valid table by it keeps it valid
+(\lean{Credibility.Damping.posDef_shrinkOffDiag_bestTheta}). But the rates want \emph{less} damping than the best estimate
 of $K$ would get, most of all under heavy tails (S12). The reason, a
 hypothesis so far: $\hat K$ is computed from the same years as the cohort
 means, so a hard winter in this data set shows up in $\hat K$ and the GLS

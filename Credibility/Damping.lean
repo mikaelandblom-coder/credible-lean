@@ -1,4 +1,4 @@
-import Mathlib.Tactic
+import Credibility.OffDiagonal
 
 /-!
 # Damping as shrinkage (PLAN G2)
@@ -100,5 +100,21 @@ a sample correlation this is the app's rule `θ̂ = r̄²/(r̄² + (1 - r̄²)²
 `ρ`. -/
 theorem bestTheta_single (i : ι) : bestTheta {i} s V = s i ^ 2 / (s i ^ 2 + V i) := by
   simp [bestTheta, signal, noise]
+
+/-- **The optimally damped table is valid.** Damping a positive semidefinite table `A` with the
+optimal intensity `θ*` keeps it positive semidefinite (`θ* ∈ [0, 1]`, nonnegative variances), and
+positive definite if the noise `ΣV` is positive (then `θ* < 1`) and the diagonal of `A` is. -/
+theorem posSemidef_shrinkOffDiag_bestTheta {n : Type*} [Fintype n] [DecidableEq n]
+    {A : Matrix n n ℝ} (hA : A.PosSemidef) (hV : ∀ i ∈ S, 0 ≤ V i) :
+    (shrinkOffDiag (bestTheta S s V) A).PosSemidef :=
+  posSemidef_shrinkOffDiag hA (bestTheta_mem S s V hV).1 (bestTheta_mem S s V hV).2
+
+/-- …and positive definite when `ΣV > 0` and `A` has a positive diagonal. -/
+theorem posDef_shrinkOffDiag_bestTheta {n : Type*} [Fintype n] [DecidableEq n]
+    {A : Matrix n n ℝ} (hA : A.PosSemidef) (hV : ∀ i ∈ S, 0 ≤ V i) (hn : 0 < noise S V)
+    (hd : ∀ i, 0 < A i i) : (shrinkOffDiag (bestTheta S s V) A).PosDef := by
+  have hs : 0 ≤ signal S s := sum_nonneg fun i _ => sq_nonneg (s i)
+  have h1 : bestTheta S s V < 1 := (div_lt_one (by linarith)).mpr (by linarith)
+  exact posDef_shrinkOffDiag hA (bestTheta_mem S s V hV).1 h1 hd
 
 end Credibility.Damping

@@ -265,8 +265,11 @@ each pair; with few cohorts it costs (study S36--S37).
   minimising $\mathbb{E}\sum(\theta\hat s_{ij} - s_{ij})^2$ is
   $\theta^* = \sum s_{ij}^2/(\sum s_{ij}^2 + \sum V_{ij}) \in [0, 1]$. A $\theta$ beats both no
   damping and dropping the correlations exactly when $|\theta - \theta^*| \le \min(\theta^*, 1-\theta^*)$.
+  Damping a valid table by $\theta^*$ keeps it valid ($\succeq 0$; $\succ 0$ if $\sum V_{ij} > 0$
+  and the diagonal is positive).
   \lean{Credibility.Damping.bestTheta_optimal}
   \lean{Credibility.Damping.safe_iff}
+  \lean{Credibility.Damping.posDef_shrinkOffDiag_bestTheta}
 \end{result}
 \use The rule $\hat\theta = \bar r^2/(\bar r^2 + (1-\bar r^2)^2/(T-1))$ is $\theta^*$ for one
 correlation with its normal-theory variance plugged in.
