@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REPO = "https://github.com/mikaelandblom-coder/credible-lean/blob/main"
 DECL = re.compile(
     r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+)?(?:noncomputable\s+)?"
-    r"(?:theorem|lemma|def|abbrev|structure|instance)\s+([^\s:({\[]+)"
+    r"(?:theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s:({\[]+)"
 )
 
 
