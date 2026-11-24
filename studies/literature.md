@@ -908,3 +908,28 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   is why winsorizing (Zhao & Poudyal 2026) exists. The tail index is normally estimated from
   individual claims (Hill 1975, Ann. Stat. 3). Out of scope for now (owner, 2026-11-22): only cell
   totals are fitted. Not yet used.
+
+### 10m. Does normality hold asymptotically? (owner's question, 2026-11-24)
+- **Noise: yes, with volume.** A cell is a sum of claims, and cumulants of independent pieces add.
+  So with `n ∝ w` claims the cell's skewness is `E Y³/(√n (E Y²)^(3/2))` (falls like `1/√n`)
+  and its excess kurtosis is `E Y⁴/(n (E Y²)²)` (falls like `1/n`), given finite third and
+  fourth claim moments. This is the cumulant form of the central limit theorem; Edgeworth
+  expansions refine it (Hall 1992, *The Bootstrap and Edgeworth Expansion*; collective risk model:
+  Klugman, Panjer & Willmot, *Loss Models*, as in §10l). Exceptions: claim tails with an infinite
+  fourth moment (Lomax `α ≤ 4`); skewness converges only like `1/√claims`; a shared year shock is one
+  draw per year, not a sum, and keeps its shape.
+- **Levels: no.** The levels' excess kurtosis `γL = κL/τ⁴` belongs to the population of regions.
+  Neither volume nor years move it. In law (a) (`Cumulants.bsPrice_of_balanced_cumulants`) its term
+  `γL z²/J` has the same order `1/J` as the normal part `2/(J − 1)`, so it never becomes negligible
+  relative to it. The noise term `γN z²/(JT)` is smaller by `1/T` even at fixed `γN`.
+- Lahiri & Rao (1995), "Robust estimation of mean squared error of small area estimators",
+  *JASA* 90(430), 758–766 (doi 10.1080/01621459.1995.10476570): the Prasad–Rao MSE estimator of
+  the EBLUP (Fay–Herriot model) is robust to non-normal area (random) effects; the sampling errors
+  are kept normal. Checked from abstracts only (the exact moment conditions, finite eighth moments
+  as recalled, are not verified). The same split as here: normality is safe for the noise,
+  not for the levels. Its MSE estimator is second-order; law (a) is first order but exact in
+  `γL`, so the level kurtosis shows up there where Lahiri–Rao's robustness says it cancels at their
+  order. Worth a closer read before claiming more.
+- Used: the app's world switch "Noise shape shrinks with volume" (`params.shrink`, gamma shape
+  `k·w/500`); `Engine.noiseShape` recovers the fall (J = 8, T = 10, 600 draws: skew 1.16, 0.42,
+  0.14 and `γ̂N` 4.0, 0.40, 0.08 at volume 500, 5 000, 50 000).

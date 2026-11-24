@@ -151,6 +151,7 @@
     noiseShape: 2,   // gamma shape of the noise draws
     normal: false,   // normal levels and noise instead of gamma (the plug-in cross term vanishes: plugIn_mse_of_normal)
     lomax: 0,        // 0: off; α > 2: the region part of the noise is a sum of Lomax claims with tail index α (literature §10l)
+    shrink: false,   // the gamma region part of a cell's noise has shape k·w/500 (a sum of claims; SHRINK_W0): skewness ∝ 1/√w, excess kurtosis ∝ 1/w; the year shock keeps shape k
     noiseSpread: 0,  // region-specific σⱼ = σ·4^(s((j mod 4)/3 − ½)): 0 equal, 1 = ×0.5–2 (studies' spread worlds)
   };
 
@@ -209,6 +210,9 @@
     const M = lomaxMoments(world.params.lomax), mu = world.truth.mu;
     return mu * mu * (M.m2 / (M.m1 * M.m1)) / world.truth.sigmaj2[j];
   }
+
+  /** Reference volume of the shrinking noise shape (params.shrink): a cell of w₀ vehicle-years has shape k. */
+  const SHRINK_W0 = 500;
 
   /** Factor of region j's noise: σⱼ = σ·noiseFactor(j, s); cycles over 4 regions, so not tied to volume. */
   const noiseFactor = (j, s) => Math.pow(4, s * ((j % 4) / 3 - 0.5));
@@ -283,18 +287,24 @@
 
   /**
    * The region part ξ of region j's noise in a cell of volume w: a standardized sum of Lomax
-   * claims when `params.lomax` (expected claims λⱼw), else the world's gamma or normal draw.
+   * claims when `params.lomax` (expected claims λⱼw), else the world's gamma or normal draw. With
+   * `params.shrink` the gamma shape is k·w/w₀ (w₀ = SHRINK_W0 = 500 vehicle-years, the default middle
+   * volume), as for a sum of claims in proportion to w: the cell's cumulants then scale as
+   * κₙ ∝ w^−(n−1) (skewness 2/√(kw/w₀), excess kurtosis 6/(kw/w₀)), so the noise turns normal as the
+   * volume grows (the central limit theorem in cumulant form; literature §10m).
    */
   function regionDraw(world, r, j, w) {
     const p = world.params;
-    return p.lomax ? claimNoise(r, claimRate(world, j) * w, p.lomax) : r.unit(p.noiseShape, p.normal);
+    if (p.lomax) return claimNoise(r, claimRate(world, j) * w, p.lomax);
+    return r.unit(p.shrink ? p.noiseShape * w / SHRINK_W0 : p.noiseShape, p.normal);
   }
 
   /**
    * One data set from the world: the levels μⱼ (truth) and the table { w, X }.
    * Xⱼₜ = μⱼ + σⱼ/√wⱼₜ · εⱼₜ with εⱼₜ = √ρ·ηₜ + √(1-ρ)·ξⱼₜ, so corr(εᵢₜ, εⱼₜ) = ρ; with
    * `params.ordered` εₜ = orderedNoise (corr ρ^|i−j|). All draws skewed (gamma), or normal with
-   * `params.normal`. With `params.lomax` the region part ξⱼₜ (the AR(1) innovations when
+   * `params.normal`. With `params.shrink` the region part's gamma shape grows with the volume
+   * (regionDraw). With `params.lomax` the region part ξⱼₜ (the AR(1) innovations when
    * ordered) is a standardized sum of Lomax claims (claimNoise); the year shock ηₜ is not.
    */
   function draw(world, r) {
@@ -1955,6 +1965,6 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate,
+    nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate, SHRINK_W0,
   };
 });

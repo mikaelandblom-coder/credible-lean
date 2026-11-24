@@ -1075,3 +1075,17 @@ test('gain against price: law (a) with and without the kurtosis terms; γL a sen
   assert.ok(Math.abs(g3.price.fitBS - p.fitBS - 3 * p.fitBSPerGammaL) < 1e-12, 'linear in γL');
   assert.equal(g3.verdict, g0.verdict, 'law (a) does not enter the variance verdict');
 });
+
+test('shrinking noise shape (params.shrink): skewness ∝ 1/√w, excess kurtosis ∝ 1/w; the noise turns normal with volume', () => {
+  const avg = (volume) => {
+    const w = E.makeWorld({ shrink: true, volume }), r = E.rng(7); let sk = 0, ku = 0;
+    for (let k = 0; k < 600; k++) { const s = E.noiseShape(E.draw(w, r).data); sk += s.skew; ku += s.kurt; }
+    return { skew: sk / 600, kurt: ku / 600 };
+  };
+  const a = avg(5000), b = avg(50000);
+  assert.ok(b.kurt < a.kurt / 3 && b.kurt < 0.25, `kurtosis falls ~1/w: ${a.kurt} → ${b.kurt}`);
+  assert.ok(b.skew < a.skew / 2 && b.skew < 0.25, `skewness falls ~1/√w: ${a.skew} → ${b.skew}`);
+  const world = E.makeWorld({ volume: 50000 }), r = E.rng(7);
+  let ku = 0; for (let k = 0; k < 300; k++) ku += E.noiseShape(E.draw(world, r).data).kurt;
+  assert.ok(ku / 300 > 2, `without shrink the shape stays (kurtosis 3): ${ku / 300}`);
+});

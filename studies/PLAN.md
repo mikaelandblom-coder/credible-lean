@@ -379,7 +379,13 @@ One chat per step; none needs Lean except step 5.
   the normal-case SE is far too small for skewed noise (gamma, kurtosis 3, J = 8, T = 10: one draw's
   γ̂N mean 2.8, median 1.5, SD ≈ 4.5 against 0.55; T = 5: mean 5.3); skewness reads ~20% low. The
   noise term γN z²/(JT) moves the price by < 1 point in the default world; γL adds ≈ 2 points per unit.
-  Open: an SE for γ̂N from the data (eighth moments, or a jackknife over regions).
+  Open: an SE for γ̂N from the data (eighth moments, or a jackknife over regions). *World switch
+  2026-11-24:* "Noise shape shrinks with volume" (`params.shrink`, literature §10m): the gamma region
+  part has shape k·w/500, so the noise turns normal with volume; the year shock and levels keep
+  theirs. Off by default: on, the default world's small regions get shape ≈ 0.4 and the simulation
+  checks quoted on the page (skew link, skew bias, gamma tests) would need rerunning. Open: make it
+  the default after that recheck (owner asked for it, 2026-11-24); the fits' skew machinery
+  (`skewLink`, `skewBias`: third moments ∝ w^−3/2) then needs the power w^−2 or a fitted power.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch
