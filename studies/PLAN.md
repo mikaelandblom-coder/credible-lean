@@ -350,7 +350,13 @@ One chat per step; none needs Lean except step 5.
   statistics (Prasad–Rao g₃). It decides the sign in all clear cases of S53. *2026-11-24:* closed-form
   laws (S56): fitting BS costs ≈ (2/J)·T/(T − 1)·(1 − z)/z, own variances ≈ z(1 − z)·2/(T − 1), valid for
   z ≥ 0.6. `Engine.gainPrice` (Node test) chooses region against pooled variances by exact gain against
-  law (b). Regret ≤ 3.3, 1.2 points better than corrBS on average (S57). Page panel (to build): for the
+  law (b). Regret ≤ 3.3, 1.2 points better than corrBS on average (S57). *Built 2026-11-24:* the panel
+  "Gain against price" in the card "Is correlation worth modelling?" (`renderGainPrice`), and the fit
+  "corrBS g/p" (`fitVCGP`). Conditional recipes: a step may carry `branch` (labels in `RECIPES[id].branches`),
+  the fit reports the `branch` it took, and `recipeSteps(id, { branch })`, the recipe test, the page
+  ("Only if …", "Taken because …") and the copied text filter or mark by it; a Node test reaches every
+  branch of both fits. Open: which fit the app recommends (owner: corrBS today; candidates BLUP, S52, and
+  corrBS g/p, S57). Spec as built: for the
   fitted data, three rows "corrBS over BS", "BLUP over the blend", "region variances over pooled", each with
   its gain (exact on K̂, badge "proved" via `CoreMoments.mse_blend_eq_blup_add`) and its price (S56 law,
   badge "not proved yet", shown only where `valid` ≥ ½), and the verdict. Then a fit "corrBS, variances
@@ -656,8 +662,7 @@ One chat per step; none needs Lean except step 5.
   of one common r̄, no tuning; `fitBLUPAuto` takes the BLUP on the preferred table. Safe (tapers a
   common-ρ world in 0–2% of draws, never costs more than 4 points against BLUP) but timid (tapers 13–61%
   of draws in ordered ρ = 0.9 worlds, where the taper gains up to 29 points; regret up to 13).
-  Not on the page yet: its two branches need a recipe with a conditional step (the recipe test wants
-  one fixed list). Leave-one-year-out (`Engine.loyoLoss`, `fitBLUPLoyo`, S49) was tried: bolder in ordered worlds, but
+  *On the page 2026-11-24:* fit "BLUP auto" (`blupA`), with a conditional recipe (below). Leave-one-year-out (`Engine.loyoLoss`, `fitBLUPLoyo`, S49) was tried: bolder in ordered worlds, but
   tapers a common ρ in 26–45% of draws (up to 13 points); mean regret 2.0 against 1.4. Keep the plug-in signal.
 - [x] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. *Done 2026-11-24*

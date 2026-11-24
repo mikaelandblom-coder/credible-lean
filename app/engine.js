@@ -500,6 +500,8 @@
     blupD: 'd̂ = K̂⁻¹ℓ + (1 − 1ᵀK̂⁻¹ℓ) b,  ℓ = τ̂² eⱼ;  shown: own-data weight d̂ⱼⱼ',
     blupRates: 'rateⱼ = Σᵢ d̂ᵢ μ̂ᵢ',
     vcPooled: 'σ̃ⱼ² = σ̂² for every region (pooled)',
+    taperSignal: 'taper when Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²] < Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]⁺, R = ρ̂^d, V_d = (1 − r̄_d²)²/(T − 1)',
+    gainPrice: 'region variances when (MSE on K̂ with one pooled σ̂² − MSE on K̂) / MSE on K̂ > Σⱼ wⱼ* ẑⱼ(1 − ẑⱼ)·2/(T − 1)·MSEⱼ / Σⱼ wⱼ* MSEⱼ',
     balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
   };
@@ -720,6 +722,24 @@
   }
 
   /**
+   * corrBS with the variance step chosen by gain against price (studies S57): corrBS up to K̂, then
+   * Engine.gainPrice on that K̂; if its verdict is 'pooled', σ̃ⱼ², ρ̂, τ̂² and K̂ are redone with one pooled
+   * σ̂² (fitVC pooled). b, z and the rates come from the chosen table.
+   */
+  function fitVCGP(data) {
+    const full = fitVC(data), g = gainPrice(data), branch = g && g.verdict === 'pooled' ? 'pooled' : 'region';
+    const f = branch === 'pooled' ? fitVC(data, { pooled: true }) : full;
+    const upto = full.steps.findIndex((x) => x.name === 'K̂') + 1;
+    const choice = { name: 'variances: gain against price', formula: F.gainPrice, values: g ? [g.gain.regionVariances, g.price.regionVariances] : [0, 0], badge: 'not proved yet', gap: 'G1',
+      note: `the gain is exact on K̂ (mse_blend_eq_blup_add form), the price a first-order law (studies S56, holds for ẑ ≥ 0.6)${g ? `; ${branch === 'pooled' ? 'gain below price: one pooled σ̂²' : 'gain above price: region variances'}` : '; τ̂² = 0: nothing to trade, region variances kept'}` };
+    const redo = branch === 'pooled'
+      ? f.steps.filter((x) => ['σ̃ⱼ²', 'ρ̂', 'τ̂²', 'K̂'].includes(x.name)).map((x) => Object.assign({}, x, { name: `${x.name} (pooled)`, branch }))
+      : [];
+    const steps = full.steps.slice(0, upto).concat([choice], redo, f.steps.filter((x) => ['b', 'z', 'rates'].includes(x.name)));
+    return Object.assign({}, f, { steps, branch, gainPrice: g });
+  }
+
+  /**
    * Leave-one-year-out loss of a fit (studies/taper-signal.js, S49): for each year s, refit on the
    * other T − 1 years and score the rates against the held-out cell rates, volume-weighted:
    *   L = Σₛ Σⱼ wⱼₛ (rateⱼ⁽⁻ˢ⁾ − Xⱼₛ)² / Σₛⱼ wⱼₛ.
@@ -749,7 +769,12 @@
 
   /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/taper-signal.js). */
   function fitBLUPAuto(data) {
-    const sig = taperSignal(data), f = sig.preferTaper ? fitBLUPTaper(data) : fitBLUP(data);
+    const sig = taperSignal(data), branch = sig.preferTaper ? 'taper' : 'corrBS', f = sig.preferTaper ? fitBLUPTaper(data) : fitBLUP(data);
+    const choice = { name: 'taper signal', formula: F.taperSignal, values: [sig.lossTaper, sig.lossCommon], badge: 'not proved yet', gap: 'G2',
+      note: `r̄_d: the average estimated correlation (thesis Σ̂) of the pairs at distance d, n_d of them, r̄ over all pairs; ${sig.preferTaper ? 'falls with distance: BLUP taper' : 'no clear fall: BLUP on corrBS’s K̂'} (studies S46)` };
+    const tail = new Set(['b', 'BLUP weights', 'rates']);
+    f.steps = [f.steps[0], choice].concat(f.steps.slice(1).map((x) => (tail.has(x.name) ? x : Object.assign({}, x, { branch }))));
+    f.branch = branch;
     f.notes = (f.notes || []).concat([sig.preferTaper
       ? `The estimated correlation falls with distance (taper loss ${sig.lossTaper.toFixed(2)} < common ${sig.lossCommon.toFixed(2)}): BLUP taper, ρ̂ = ${sig.rho.toFixed(2)}.`
       : `No clear fall of the correlation with distance (taper loss ${sig.lossTaper.toFixed(2)} ≥ common ${sig.lossCommon.toFixed(2)}): BLUP on corrBS’s K̂.`]);
@@ -1235,6 +1260,8 @@
     blup: { name: 'Best linear predictor on corrBS’s K̂ (plug-in BLUP)', short: 'BLUP', fit: (data) => fitBLUP(data), ready: true },
     blupPool: { name: 'BLUP, one pooled noise variance (no under-pricing by skew)', short: 'BLUP pooled', fit: (data) => fitBLUP(data, { pooled: true }), ready: true },
     blupT: { name: 'BLUP on the full K̂ tapered by ρ̂^|i−j| (ordered regions, many of them)', short: 'BLUP taper', fit: (data) => fitBLUPTaper(data), ready: true },
+    blupA: { name: 'BLUP, tapered only when the data show the correlation falling with distance (ordered regions)', short: 'BLUP auto', fit: (data) => fitBLUPAuto(data), ready: true },
+    vcGP: { name: 'Correlated BS, variances chosen by gain against price', short: 'corrBS g/p', fit: (data) => fitVCGP(data), ready: true },
     corr: { name: 'Thesis model with correlation (full K̂, damped)', short: 'corr', fit: (data) => fitCorr(data), ready: true },
     corrT: { name: 'Thesis model with correlation, distance taper ρ̂^|i−j| (ordered regions)', short: 'corr taper', fit: (data) => fitCorr(data, { taper: 'distance' }), ready: true },
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
@@ -1348,7 +1375,7 @@
 
   /** A recipe's steps, with the balance step before the premium when opts.balance. */
   function recipeSteps(id, opts) {
-    const st = RECIPES[id].steps;
+    const br = opts && opts.branch, st = br ? RECIPES[id].steps.filter((x) => !x.branch || x.branch === br) : RECIPES[id].steps;
     if (!(opts && opts.balance) || MODELS[id].balanced) return st;
     const k = st.findIndex((x) => x.name === 'premium');
     return k < 0 ? st.concat([BALANCE_STEP]) : st.slice(0, k).concat([BALANCE_STEP], st.slice(k));
@@ -1396,6 +1423,29 @@
     steps: RECIPES.corrT.steps.filter((x) => !['b', 'z', 'rates', 'premium'].includes(x.name)).concat(BLUP_TAIL),
   };
 
+  RECIPES.blupA = {
+    intro: 'The plug-in BLUP on a table chosen by the data: tapered by ρ̂^|i−j| when the estimated correlation falls with distance (BLUP taper), else corrBS’s one-ρ̂ K̂ (BLUP). The choice compares the two tables’ plug-in losses, no tuning (studies S46–S47: never more than 4 points worse than BLUP, keeps part of the taper’s gain).',
+    branches: { taper: 'the correlation falls with distance', corrBS: 'no clear fall with distance' },
+    steps: [RECIPES.blupT.steps[0],
+      { name: 'taper signal', formula: F.taperSignal, badge: 'not proved yet', gap: 'G2', note: 'r̄_d: the average estimated correlation (thesis Σ̂) of the pairs at distance d, n_d of them, r̄ over all pairs' }]
+      .concat(RECIPES.blupT.steps.slice(1).filter((x) => !['b', 'BLUP weights', 'rates', 'premium'].includes(x.name)).map((x) => Object.assign({}, x, { branch: 'taper' })))
+      .concat(RECIPES.blup.steps.slice(1).filter((x) => !['b', 'BLUP weights', 'rates', 'premium'].includes(x.name)).map((x) => Object.assign({}, x, { branch: 'corrBS' })))
+      .concat(BLUP_TAIL),
+  };
+  {
+    const upto = RECIPES.vc.steps.findIndex((x) => x.name === 'K̂') + 1;
+    const pooledRedo = RECIPES.blupPool.steps.filter((x) => ['σ̃ⱼ²', 'ρ̂', 'τ̂²', 'K̂'].includes(x.name)).map((x) => Object.assign({}, x, { name: `${x.name} (pooled)`, branch: 'pooled' }));
+    RECIPES.vcGP = {
+      intro: 'Correlated Bühlmann–Straub, with the variance step decided by the data: region variances σ̃ⱼ² when their exact gain on K̂ exceeds their first-order price, else one pooled σ̂² (studies S56–S57: regret at most 3 points against the better of the two, 1.2 points better than corrBS on average). Nothing to tune.',
+      branches: { pooled: 'the gain of region variances is below their price' },
+      steps: RECIPES.vc.steps.slice(0, upto).concat(
+        [{ name: 'variances: gain against price', formula: F.gainPrice, badge: 'not proved yet', gap: 'G1', note: 'the gain is exact for the fitted K̂ (CoreMoments.mse_blend_eq_blup_add); the price is a first-order law, studies S56 (holds for ẑ ≥ 0.6)' }],
+        pooledRedo,
+        RECIPES.vc.steps.filter((x) => ['b', 'z', 'rates'].includes(x.name)),
+        [premiumStep(`K̂ from the chosen branch; ${BLEND_MSE}`)]),
+    };
+  }
+
   /** The notation a recipe needs: entries marked always, and those its text mentions. */
   function recipeNotation(id) {
     const text = RECIPES[id].steps.map((s) => [s.formula, s.rule || '', s.note || ''].join(' ')).join(' ');
@@ -1408,7 +1458,7 @@
     for (const n of recipeNotation(id)) out.push(`  ${n.sym}: ${n.text}`);
     out.push('', 'Steps');
     recipeSteps(id, opts).forEach((s, k) => {
-      out.push(`${k + 1}. ${s.name}: ${s.formula}`);
+      out.push(`${k + 1}. ${s.name}${s.branch && r.branches ? ` (only if ${r.branches[s.branch]})` : ''}: ${s.formula}`);
       if (s.rule) out.push(`   rule: ${s.rule}`);
       if (s.note) out.push(`   note: ${s.note}`);
       out.push(`   ${s.badge === 'proved' ? 'proved: ' + s.lean.replace(/^Credibility\./, '') : 'not proved yet' + (s.gap ? ' (' + s.gap + ')' : '')}`);
@@ -1843,7 +1893,7 @@
   }
 
   return {
-    taperSignal, fitBLUPAuto, loyoLoss, fitBLUPLoyo, gainPrice,
+    taperSignal, fitBLUPAuto, fitVCGP, loyoLoss, fitBLUPLoyo, gainPrice,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,

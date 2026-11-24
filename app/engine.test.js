@@ -606,9 +606,12 @@ test('Recipes match the fits: same steps, formulas and badges (one formula table
       const fit = m.fit(data), pr = E.premium(fit, data, E.nextVolumes(data));
       const steps = fit.steps.concat(pr ? [pr.step] : []);
       if (!steps.length) continue;   // own, pool: no estimation steps on the page
-      assert.deepEqual(r.steps.map((s) => s.name).sort(), steps.map((s) => s.name).sort(), `${id}: step names`);
+      // A fit with a conditional step reports the branch it took; the recipe is compared on that path.
+      const rsteps = E.recipeSteps(id, { branch: fit.branch });
+      if (fit.branch) assert.ok(r.branches && (r.branches[fit.branch] || r.steps.every((x) => x.branch !== fit.branch)), `${id}: unknown branch ${fit.branch}`);
+      assert.deepEqual(rsteps.map((s) => s.name).sort(), steps.map((s) => s.name).sort(), `${id}: step names${fit.branch ? ` (branch ${fit.branch})` : ''}`);
       for (const s of steps) {
-        const rs = r.steps.find((x) => x.name === s.name);
+        const rs = rsteps.find((x) => x.name === s.name);
         assert.ok(s.formula.startsWith(rs.formula), `${id}/${s.name}: formula differs from the recipe`);
         if (!rs.varies) {
           assert.equal(rs.badge, s.badge, `${id}/${s.name}: badge`);
@@ -733,7 +736,7 @@ test('Balance switch: any fit shifted by one D is exposure-balanced, linear weig
     assert.ok(!f.flags.offBalance && !f.warnings.concat(f.notes).some((t) => /off-balance/.test(t)), `${id}: no off-balance message`);
     if (f.weights) f.weights.forEach((d, j) => { close(sum(d), 1, 1e-12, `${id} sum`); close(sum(d.map((x, i) => x * m[i])), f.rates[j], 1e-10, `${id} linear`);
       if (raw.K) close(f.levelMSE[j], E.linMse(raw.K, raw.tau2, j, d), 1e-12, `${id} MSE`); });
-    const names = f.steps.map((x) => x.name), rs = E.recipeSteps(id, { balance: true }).map((x) => x.name);
+    const names = f.steps.map((x) => x.name), rs = E.recipeSteps(id, { balance: true, branch: raw.branch }).map((x) => x.name);
     assert.equal(names[names.length - 1], 'balance');
     assert.deepEqual(rs.filter((x) => x !== 'premium').sort(), names.slice().sort(), `${id}: recipe steps`);
     assert.ok(E.recipeText(id, { balance: true }).includes(E.F.balance));
@@ -1010,4 +1013,29 @@ test('gain against price (S56–S57): exact plug-in gains on corrBS’s K̂; reg
   }
   assert.ok(reg0 / n0 < 0.4, `equal σⱼ: region ${reg0}/${n0}`);
   assert.ok(reg2 / n2 > 0.6, `σⱼ spread: region ${reg2}/${n2}`);
+});
+
+test('Conditional recipes: every branch of BLUP auto and corrBS g/p is reached, and its steps match the recipe on that path', () => {
+  const cases = { blupA: [{ J: 20, T: 20, rho: 0.9, ordered: true }, { J: 20, rho: 0.6 }], vcGP: [{ T: 5 }, { T: 10, noiseSpread: 2 }] };
+  for (const [id, worlds] of Object.entries(cases)) {
+    const seen = new Set();
+    for (const params of worlds) {
+      const world = E.makeWorld(params), r = E.rng(91);
+      for (let k = 0; k < 30; k++) {
+        const { data } = E.draw(world, r), fit = E.MODELS[id].fit(data), pr = E.premium(fit, data, E.nextVolumes(data));
+        if (seen.has(fit.branch)) continue;
+        seen.add(fit.branch);
+        const steps = fit.steps.concat(pr ? [pr.step] : []), rs = E.recipeSteps(id, { branch: fit.branch });
+        assert.deepEqual(rs.map((s) => s.name).sort(), steps.map((s) => s.name).sort(), `${id}/${fit.branch}: step names`);
+        for (const s of steps) {
+          const x = rs.find((y) => y.name === s.name);
+          assert.ok(s.formula.startsWith(x.formula), `${id}/${fit.branch}/${s.name}: formula`);
+          if (!x.varies) assert.equal(x.badge, s.badge, `${id}/${fit.branch}/${s.name}: badge`);
+        }
+        assert.ok(E.recipeText(id).includes('(only if'), `${id}: the text marks the conditional steps`);
+      }
+    }
+    const want = id === 'blupA' ? ['taper', 'corrBS'] : ['pooled', 'region'];
+    for (const b of want) assert.ok(seen.has(b), `${id}: branch ${b} reached`);
+  }
 });

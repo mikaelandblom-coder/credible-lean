@@ -198,7 +198,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="row">
       <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
     </div>
-    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>; “corr taper” tapers it by <i>ρ̂</i><sup>|i−j|</sup> for regions in an order, <i>ρ̂</i> from the data, and “BLUP taper” plugs that <i>K̂</i> into the BLUP: worth it with many regions whose correlation fades with distance. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
+    <p class="sub" style="margin:10px 0 0"><b>corrBS</b> (the default reference): Bühlmann–Straub with one correlation <i>ρ̂</i> and region variances shrunk towards the pooled one by their own credibility; every parameter by a moment equation, no damping, nothing to tune, <i>K̂</i> ≻ 0 by a theorem. “BLUP” plugs corrBS’s <i>K̂</i> into the best linear unbiased predictor, which uses every other region individually instead of only through <i>μ̂</i>. “BLUP pooled” uses one noise variance for all regions: with the balance switch, two remedies for the under-pricing that region-specific variances cause under skewed claims (Finding 35; see Bias under Many draws). Bühlmann–Straub, own and pool are balanced already. “corr” uses the thesis estimators (37)–(41) with a damped <i>K̂</i>; “corr taper” tapers it by <i>ρ̂</i><sup>|i−j|</sup> for regions in an order, <i>ρ̂</i> from the data, and “BLUP taper” plugs that <i>K̂</i> into the BLUP: worth it with many regions whose correlation fades with distance. “BLUP auto” tapers only when the data show the correlation falling with distance. “corrBS g/p” keeps region variances only when their exact gain beats their price (see Gain against price below); otherwise one pooled variance. “common” (one covariance for all pairs) is not recommended: with unequal volumes its <i>z</i> explode. Unequal lengths and group levels come next.</p>
   </section>
 
   <section class="card" aria-labelledby="h-draw">
@@ -227,6 +227,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   <section class="card" aria-labelledby="h-price">
     <h2 id="h-price">Is correlation worth modelling?</h2>
     <div id="price-data"></div>
+    <div id="gp-data"></div>
     <div id="price-world"></div>
     <details><summary>Per region (true parameters)</summary><div class="tablewrap" id="t-price"></div></details>
   </section>
@@ -473,6 +474,22 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       p.best.map((b, j) => `<tr><td>R${j + 1}</td><td>${pct(Math.sqrt(b), 2)}</td><td>${pct(p.blend[j] / b - 1, 1)}</td><td>${pct(p.ignore[j] / b - 1, 1)}</td></tr>`).join('') + '</tbody></table>';
   }
 
+  // ---------- gain against price (this draw, data only; studies S53–S57)
+  function renderGainPrice(data) {
+    const g = E.gainPrice(data);
+    if (!g) { $('gp-data').innerHTML = '<p class="sub" style="margin:10px 0 0"><b>Gain against price</b> (this draw): τ̂² = 0, so there is no credibility to trade and no choice to make.</p>'; return; }
+    const ok = g.valid >= 0.5, pr = (x) => (ok ? '≈ ' + pct(x, 1) : 'outside the law’s range');
+    const rows = [
+      ['corrBS over BS (model the correlation)', g.gain.corrBSoverBS, '≈ 0: one ρ̂ pooled over all pairs (S54)', 'corrBS'],
+      ['BLUP over the blend (use each region individually)', g.gain.blupOverBlend, 'none extra: the same K̂', 'BLUP'],
+      ['Region variances over one pooled σ̂²', g.gain.regionVariances, pr(g.price.regionVariances), g.verdict === 'region' ? 'region variances' : 'pooled σ̂²'],
+    ];
+    $('gp-data').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>Gain against price</b> (this draw, data only): what each richer choice gains, exactly, if the fitted K̂ and τ̂² were the truth, against what estimating its extra parameters costs to first order. In % of the best blend’s MSE. Gains <span class="badge proved">proved</span> for a given table (${lean('Core.Estimates.mse_blend_eq_blup_add')}); prices <span class="badge open">not proved yet</span> (studies S56, z(1 − z)·2/(T − 1) for the variances).</p>
+      <div class="tablewrap"><table><thead><tr><th>Choice</th><th>Gain</th><th>Price</th><th>Verdict</th></tr></thead><tbody>` +
+      rows.map((r) => `<tr><td>${r[0]}</td><td>${pct(r[1], 1)}</td><td>${r[2]}</td><td>${r[1] < 5e-4 ? 'no difference' : r[3]}</td></tr>`).join('') +
+      `</tbody></table></div><p class="sub" style="margin:6px 0 0">The price laws hold where ẑ ≥ 0.6: ${pct(g.valid, 0)} of the volume in this draw. ${ok ? `Fitting credibility at all costs about ${pct(g.price.fitBS, 1)} of the floor here (S56 (a): (2/J)·T/(T − 1)·(1 − z)/z).` : 'Below half, the variance verdict still uses the law, which there understates the price (S56).'} The fit “corrBS g/p” applies the last row’s verdict. Gains on an estimated K̂ are themselves estimates: with no real correlation or spread they come out a little above 0.</p>`;
+  }
+
   // ---------- download the data the fit sees
   let lastData = null;
   function download(name, text) {
@@ -558,6 +575,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     renderSteps({ fit: withPremium(fit, pFit), ref: withPremium(ref, pRef) });
     renderRecipe();
     renderPrice(data, [[state.fit, fit], [state.ref, ref]]);
+    renderGainPrice(data);
     renderNoise(data);
     $('w-draw').insertAdjacentHTML('afterbegin', `<p class="sub" style="margin:6px 0 0">This draw: fit error ${pct(Math.sqrt(errFit), 2)}, reference ${pct(Math.sqrt(errRef), 2)}. Dashed line: the fit's portfolio level μ̂. Rows: regions, smallest first, with total vehicle-years.</p>${typ ? `<p class="sub" style="margin:4px 0 0"><b>Typ. err.</b>: the typical error of the ${tShort} rate, estimated from this draw alone (jackknife MSEP, deleting one year at a time). It is the root of the average squared error over data sets like this one, <i>not</i> an interval that covers the true level in this draw: the actual error of one draw can be much smaller or larger.</p>` : ''}`);
     const spreadOn = world.params.noiseSpread > 0;
@@ -615,7 +633,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const ids = [['fit', `Fit: ${E.MODELS[state.fit].short}`], ['ref', `Reference: ${E.MODELS[state.ref].short}`]];
     tabs.innerHTML = ids.map(([k, lab]) => `<button type="button" data-k="${k}" aria-pressed="${state.stepsOf === k}">${esc(lab)}</button>`).join('');
     tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { state.stepsOf = b.dataset.k; renderSteps(lastFits); }));
-    const steps = fits[state.stepsOf].steps;
+    const steps = fits[state.stepsOf].steps, rb = (E.RECIPES[state[state.stepsOf]] || {}).branches;
     if (!steps.length) { $('steps').innerHTML = '<p class="sub">No estimation: this model uses no parameters.</p>'; return; }
     $('steps').innerHTML = steps.map((s) => {
       let vals;
@@ -628,6 +646,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
         : `<span class="badge open">not proved yet${s.gap ? ' · ' + s.gap : ''}</span>`;
       const link = s.lean ? `<a href="../find/#doc/${esc(s.lean)}" target="_blank" rel="noopener">${esc(s.lean.replace(/^Credibility\./, ''))}</a>` : '';
       return `<div class="step"><div class="step-head"><span class="step-name">${esc(s.name)}</span>${badge}</div>
+        ${s.branch && rb ? `<div class="rule"><b>Taken because</b> ${esc(rb[s.branch])}</div>` : ''}
         <div class="formula">${esc(s.formula)}</div><div class="vals">${vals}</div>
         ${s.note || link ? `<div class="sub">${s.note ? esc(s.note) : ''}${s.note && link ? ' · ' : ''}${link}</div>` : ''}</div>`;
     }).join('');
@@ -647,6 +666,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
         : `<span class="badge open">not proved yet${s.gap ? ' · ' + s.gap : ''}</span>`;
       const link = s.lean ? `<a href="../find/#doc/${esc(s.lean)}" target="_blank" rel="noopener">${esc(s.lean.replace(/^Credibility\./, ''))}</a>` : '';
       return `<li><div class="step-head"><span class="step-name">${esc(s.name)}</span>${badge}</div>
+        ${s.branch && r.branches ? `<div class="rule"><b>Only if</b> ${esc(r.branches[s.branch])}</div>` : ''}
         <div class="formula">${esc(s.formula)}</div>
         ${s.rule ? `<div class="rule"><b>Rule:</b> ${esc(s.rule)}</div>` : ''}
         ${s.note || link ? `<div class="sub">${s.note ? esc(s.note) : ''}${s.note && link ? ' · ' : ''}${link}</div>` : ''}</li>`;
