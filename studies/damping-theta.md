@@ -401,3 +401,38 @@ Oracle: true r, σⱼ and cumulants. 36 worlds, 1000 draws, MSE in % of the floo
 cumulants it buys ≤ 1 point, and under heavy tails, where it would differ most, the estimate
 would be unstable (literature §10l) and the rule breaks. S3 stays; `'cov'` and `'corr'` are studies
 options.
+
+## Temporal decay: EWMA years against the BLUP (`ewma-decay.js`, output `ewma-decay.out.txt`, 2026-11-24)
+
+PLAN "Temporal decay" (literature §10l, Morris 2026) in the monthly card world (`app/monthly.js`:
+AR(1) factor with φ per month, shock C, process noise s²/w, cohort × calendar-month season as fixed
+effects; J = 4, Y = 5). EWMA weights each cohort's own annual means by λ^age (sum 1, so unbiased
+under the season). At a fixed λ it is a predictor from aggregated data, so its excess over the BLUP
+is exact: `(Ac − d*)ᵀK(Ac − d*)` (`Blup.predMse_aggregate_eq_blup_add`; Node test). "Own years" is
+the best predictor from the same annual means (no hyperparameter); EWMA is a one-parameter family
+inside it. Engine: `targetMoments`, `predMse`, `ewmaYears`, `ownYearsBest`; rolling-origin fit `ewma`.
+
+- S43. *[exact]* **EWMA loses because it sees only its own cohort.** With the true tables and the
+    best λ*, EWMA costs 0–4% over the BLUP when the factor forgets within a year (φ = 0.6, φ¹² ≈ 0)
+    and 6–31% at φ = 0.9–0.97, growing with volume. The best own-years weights recover only 1–6 points
+    of that. The BLUP's own-cohort weights stay nearly flat over years (0.23–0.49 on the last year),
+    while the best own-years weights put up to 0.93 there (and negative weights on older years). The
+    BLUP gets its recency from the other cohorts: the factor is common, and their month-by-month
+    contrasts (weights summing to 0 per calendar month) estimate it.
+- S44. *[exact]* **A size-dependent λ comes out of the model for free.** λ* falls with the cohort's
+    noise s²ⱼ/wⱼ relative to the factor variance γ: at φ = 0.97, λ* = 0.50–0.69 at w0 = 100,
+    0.16–0.29 at 1000 and 0.06–0.08 at 10 000; at φ = 0.9 it goes from 0.68–0.79 to 0.48. Within a
+    portfolio the cohort with the lower s²/w (bigger, or less noisy) gets the shorter memory. At
+    φ = 0.6 λ* ≈ 0.92 for every size: no decay to fit when the factor forgets within the year. So
+    Morris's λ by account size is the trade of noise (more years) against drift (recent years), set
+    by s²/w, γ and φ; it needs no extra parameter.
+- S45. *[numerical]* **Fitted, the plug-in BLUP stays best** (2000 draws, MSE in % of the oracle
+    BLUP): BLUP 110–123, EWMA λ̂ 110–136, own years 110–131, last year 127–166; EWMA ties the BLUP
+    only at φ = 0.6 and nearly at w0 = 100 (117 against 115). λ̂ keeps the order of λ* by size but is
+    pulled towards 0.5–0.6 where λ* is small (φ = 0.97, w0 = 1000: 0.49–0.56 against 0.16–0.29, from
+    the noisy φ̂), and there the last-year mean (131) does as well as own years and better than EWMA (135).
+
+**Consequence for the app.** EWMA years is a rolling-origin fit for comparison ("EWMA of own years,
+λ fitted"), not a recommendation: it never beats the plug-in BLUP, and its exact loss at a fixed λ is
+the aggregation excess. Morris's λ by size is explained by the second-moment model; a likelihood fit
+of λ would belong in the distribution layer and is not needed for this.

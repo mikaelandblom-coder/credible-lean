@@ -609,12 +609,16 @@ One chat per step; none needs Lean except step 5.
   the tapered `K̂` is 9–28 points (of the blend floor) better than BLUP on corrBS's `K̂`; about even at
   J = 8, T = 10; worse with T = 5 or a common ρ. Open: a data-side signal for when to prefer it (e.g. r̄_d falling with
   d), since a practitioner cannot see the world.
-- [ ] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
-  years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. Does the BLUP's
-  implied decay depend on volume the way Morris's λ does by account size? If EWMA is a
-  restricted predictor, its excess MSE is exact (`Blup.lean` restricted predictors). It could be
-  a fit option ("EWMA years") next to the BLUP. Lean: none needed beyond existing results, unless
-  a Finding comes out.
+- [x] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
+  years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. *Done 2026-11-24*
+  (`studies/ewma-decay.js`, S43–S45 in `damping-theta.md`): EWMA of own annual means is a predictor
+  from aggregated data, exact excess `Blup.predMse_aggregate_eq_blup_add` (Node test). Oracle λ* costs
+  0–31% over the BLUP: it sees only its own cohort, while the BLUP reads the common factor from all
+  cohorts. λ* falls with s²ⱼ/wⱼ (bigger cohorts, shorter memory; φ = 0.97: 0.5–0.7 at w0 = 100,
+  0.06–0.08 at 10 000), so Morris's size-dependent λ comes out of the model. Fitted: BLUP 110–123%
+  of the oracle, EWMA λ̂ 110–136, last year 127–166. App: rolling-origin fit `ewma` ("EWMA of own
+  years, λ fitted", `Monthly.ewmaYears`, `ownYearsBest`) for comparison, not a recommendation.
+  Lean: nothing new (no Finding).
 - [ ] Fourth-moment layer (2026-11-22, `notes/fourth-moments.md`): one lemma for `Var` of a quadratic
   form with third and fourth cumulants (G1 `Wⱼ`, `β²`; G2 `V`; G4 pair weights), plus the third-moment
   pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Approved (owner); assumptions 1 + 6 with the

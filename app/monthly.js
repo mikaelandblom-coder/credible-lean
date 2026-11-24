@@ -552,16 +552,48 @@
    * vector under these tables, dᵀKd − 2dᵀℓ + v (`Factor.predMse_blup`). Returns null when K is not
    * positive definite (possible for unbiased tables).
    */
-  function predictor(J, Y, w, tab, wFuture) {
-    const T = w[0].length, n = J * T, q = 12 * J, { phi, A, C, s2 } = tab;
+  /**
+   * The second moments of the prediction problem for the tables { phi, A, C, s2 }: K over the
+   * cells, ℓ(j0) = cov(cells, Y_j0) and, with `wFuture`, v(j0) = Var Y_j0 (Lean `Factor.ell`,
+   * `Factor.var`; τ² left out as in `predictor`). Shared by `predictor` and the restricted
+   * predictors (`ewmaYears`, `ownYearsBest`).
+   */
+  function targetMoments(J, w, tab, wFuture) {
+    const T = w[0].length, n = J * T, { phi, A, C, s2 } = tab;
     const pw = Array.from({ length: T + 12 }, (_, k) => Math.pow(phi, k));
-    const cl = Int32Array.from({ length: n }, (_, p) => Math.floor(p / T) * 12 + ((p % T) % 12)); // season column of cell p
     const K = Array.from({ length: n }, () => new Array(n).fill(0));
     for (let i = 0; i < J; i++) for (let t = 0; t < T; t++) for (let j = 0; j < J; j++) for (let s = 0; s < T; s++) {
       let v = A[i][j] * pw[Math.abs(t - s)];
       if (t === s) v += C[i][j] + (i === j ? s2[i] / w[i][t] : 0);
       K[i * T + t][j * T + s] = v;
     }
+    const futB = Array.from({ length: T }, (_, t) => { let s = 0; for (let u = T; u < T + 12; u++) s += pw[u - t] / 12; return s; });
+    const ell = (j0) => Array.from({ length: n }, (_, p) => A[Math.floor(p / T)][j0] * futB[p % T]);
+    const v = (j0) => {
+      if (!wFuture) return 0;
+      let x = 0;
+      for (let u = 0; u < 12; u++) for (let u2 = 0; u2 < 12; u2++) x += A[j0][j0] * pw[Math.abs(u - u2)] / 144;
+      for (let u = 0; u < 12; u++) x += (C[j0][j0] + s2[j0] / wFuture[j0][u]) / 144;
+      return x;
+    };
+    return { J, T, n, K, ell, v };
+  }
+
+  /**
+   * The exact MSE dᵀKd − 2dᵀℓ + v of weights d for cohort j0's target (`Blup.predMse`; without
+   * wFuture in `mom`, v = 0: the part that depends on d, enough to compare weights). Skips zero weights.
+   */
+  function predMse(mom, j0, d, ell) {
+    const l = ell || mom.ell(j0), nz = [];
+    for (let p = 0; p < mom.n; p++) if (d[p] !== 0) nz.push(p);
+    let q = 0, lin = 0;
+    for (const p of nz) { lin += d[p] * l[p]; const Kp = mom.K[p]; for (const p2 of nz) q += d[p] * Kp[p2] * d[p2]; }
+    return q - 2 * lin + mom.v(j0);
+  }
+
+  function predictor(J, Y, w, tab, wFuture) {
+    const mom = targetMoments(J, w, tab, wFuture), { T, n, K } = mom, q = 12 * J;
+    const cl = Int32Array.from({ length: n }, (_, p) => Math.floor(p / T) * 12 + ((p % T) % 12)); // season column of cell p
     // Cholesky K = LLᵀ, L stored by rows in one flat array (speed: the rolling origin calls this often).
     const L = new Float64Array(n * n);
     for (let i = 0; i < n; i++) {
@@ -582,26 +614,97 @@
     const Xt = (v) => { const out = new Array(q).fill(0); for (let p = 0; p < n; p++) out[cl[p]] += v[p]; return out; };
     const KiX = Array.from({ length: q }, (_, c) => sol(Array.from({ length: n }, (__, p) => (cl[p] === c ? 1 : 0)))); // columns of K⁻¹X
     const G = KiX.map(Xt); // XᵀK⁻¹X
-    const futB = (t) => { let s = 0; for (let u = T; u < T + 12; u++) s += pw[u - t] / 12; return s; };
     const weights = [], mse = [];
     for (let j0 = 0; j0 < J; j0++) {
-      const ell = Array.from({ length: n }, (_, p) => A[Math.floor(p / T)][j0] * futB(p % T));
+      const ell = mom.ell(j0);
       const Kl = sol(ell), x0 = Array.from({ length: q }, (_, c) => (Math.floor(c / 12) === j0 ? 1 / 12 : 0));
       const rv = Xt(Kl).map((x, c) => x0[c] - x), g = solve(G, rv);
       const d = Kl.map((x, p) => x + KiX.reduce((s, a, c) => s + a[p] * g[c], 0));
       weights.push(d);
-      if (wFuture) {
-        let v = 0;
-        for (let u = 0; u < 12; u++) for (let u2 = 0; u2 < 12; u2++) v += A[j0][j0] * Math.pow(phi, Math.abs(u - u2)) / 144;
-        for (let u = 0; u < 12; u++) v += (C[j0][j0] + s2[j0] / wFuture[j0][u]) / 144;
-        let dKd = 0;
-        for (let p = 0; p < n; p++) { let s = 0; for (let p2 = 0; p2 < n; p2++) s += K[p][p2] * d[p2]; dKd += d[p] * s; }
-        mse.push(dKd - 2 * d.reduce((s, x, p) => s + x * ell[p], 0) + v);
-      }
+      if (wFuture) mse.push(predMse(mom, j0, d, ell));
     }
     const predict = (X) => weights.map((d) => { let s = 0; for (let p = 0; p < n; p++) s += d[p] * X[Math.floor(p / T)][p % T]; return s; });
     return { weights, mse, predict };
   }
+
+  // ---------------------------------------------------------------- restricted predictors: weights on own years
+
+  /**
+   * Predictors from cohort j0's own annual means m_y (y = 0…Y−1, oldest first): ŷ = Σ_y c_y m_y with
+   * Σ c_y = 1, which is unbiased under the cohort season (each year holds every calendar month once).
+   * "Years" are the blocks of 12 months counted back from the last month (Y = ⌊T/12⌋; a partial
+   * oldest block is left out), so a rolling origin need not sit on a calendar year.
+   * They are predictors from aggregated data Aᵀx (`Blup.predMse_mulVec`), so never better than the
+   * BLUP and worse by exactly (Ac − d*)ᵀK(Ac − d*) (`Blup.predMse_aggregate_eq_blup_add`).
+   * `yearMoments` gives the aggregated K_a = AᵀKA (Y × Y), ℓ_a = Aᵀℓ and v; `yearCells` maps c to
+   * the cell weights Ac (1/12 · c_y on each month of year y of cohort j0).
+   */
+  function yearMoments(mom, j0) {
+    const T = mom.T, Y = Math.floor(T / 12), l = mom.ell(j0), base = j0 * T + T - 12 * Y;
+    const Ka = Array.from({ length: Y }, (_, y) => Array.from({ length: Y }, (__, z) => {
+      let x = 0;
+      for (let m = 0; m < 12; m++) { const Kp = mom.K[base + 12 * y + m]; for (let m2 = 0; m2 < 12; m2++) x += Kp[base + 12 * z + m2]; }
+      return x / 144;
+    }));
+    const la = Array.from({ length: Y }, (_, y) => { let x = 0; for (let m = 0; m < 12; m++) x += l[base + 12 * y + m]; return x / 12; });
+    return { Y, Ka, la, v: mom.v(j0) };
+  }
+  const yearMse = (ym, c) => {
+    let q = 0, lin = 0;
+    for (let y = 0; y < ym.Y; y++) { lin += c[y] * ym.la[y]; for (let z = 0; z < ym.Y; z++) q += c[y] * ym.Ka[y][z] * c[z]; }
+    return q - 2 * lin + ym.v;
+  };
+  function yearCells(mom, j0, c) {
+    const d = new Array(mom.n).fill(0), base = j0 * mom.T + mom.T % 12;
+    c.forEach((cy, y) => { for (let m = 0; m < 12; m++) d[base + 12 * y + m] = cy / 12; });
+    return d;
+  }
+
+  /** EWMA year weights c_y ∝ λ^(Y−1−y), summing to 1 (λ = 0: last year only; λ = 1: equal years). */
+  function ewmaWeights(Y, lam) {
+    const raw = Array.from({ length: Y }, (_, y) => (y === Y - 1 ? 1 : Math.pow(lam, Y - 1 - y)));
+    const S = raw.reduce((a, x) => a + x, 0);
+    return raw.map((x) => x / S);
+  }
+
+  /**
+   * λ for each cohort by the plug-in criterion: the λ on a 0.01 grid over [0, 1] that minimizes the
+   * MSE of the EWMA predictor under the tables `tab` (fitted, or true for the oracle λ*). Needs no
+   * future volumes (v does not depend on λ). Returns per cohort { lam, c, mse } (mse under `tab`).
+   */
+  function ewmaYears(J, w, tab, wFuture) {
+    const mom = targetMoments(J, w, tab, wFuture), Y = Math.floor(mom.T / 12);
+    return Array.from({ length: J }, (_, j0) => {
+      const ym = yearMoments(mom, j0);
+      let best = null;
+      for (let k = 0; k <= 100; k++) {
+        const lam = k / 100, c = ewmaWeights(Y, lam), e = yearMse(ym, c);
+        if (!best || e < best.mse) best = { lam, c, mse: e };
+      }
+      return best;
+    });
+  }
+
+  /**
+   * The best predictor from own annual means (the BLUP of the aggregated data, no hyperparameter):
+   * c = K_a⁻¹(ℓ_a + μ1), μ = (1 − 1ᵀK_a⁻¹ℓ_a)/(1ᵀK_a⁻¹1). EWMA is the one-parameter family inside it.
+   */
+  function ownYearsBest(J, w, tab, wFuture) {
+    const mom = targetMoments(J, w, tab, wFuture);
+    return Array.from({ length: J }, (_, j0) => {
+      const ym = yearMoments(mom, j0), one = new Array(ym.Y).fill(1);
+      const a = solve(ym.Ka, ym.la), b = solve(ym.Ka, one);
+      const mu = (1 - a.reduce((s, x) => s + x, 0)) / b.reduce((s, x) => s + x, 0);
+      const c = a.map((x, y) => x + mu * b[y]);
+      return { c, mse: yearMse(ym, c) };
+    });
+  }
+
+  /** Cohort j0's own annual means, oldest first (blocks of 12 months back from the last month). */
+  const annualMeans = (data, j0) => {
+    const T = data.X[j0].length, o = T % 12;
+    return Array.from({ length: Math.floor(T / 12) }, (_, y) => data.X[j0].slice(o + 12 * y, o + 12 * y + 12).reduce((a, x) => a + x, 0) / 12);
+  };
 
   /**
    * Cohorts whose fitted ŝⱼ² is 0 (clipped by `constrainPSD`). With every ŝⱼ² > 0 the fitted
@@ -690,6 +793,8 @@
    *   moment   — φ̂ from year-on-year cross-products, valid MINQUE tables, the BLUP (`predictor`);
    *   profile  — the same with φ̂ by profiling (slow: about 70 MINQUE solves per origin);
    *   index    — φ̂ from the external index (needs one);
+   *   ewma     — EWMA of each cohort's own annual means, λ̂ per cohort by the plug-in criterion on the
+   *              moment fit's tables (`ewmaYears`; studies/ewma-decay.js: never better than the BLUP);
    *   oracle   — the BLUP with the true tables (a reference, not a fit: it uses the truth).
    */
   const ROLL_FITS = {
@@ -697,6 +802,7 @@
     moment: 'BLUP, φ by year-on-year',
     profile: 'BLUP, φ by profile',
     index: 'BLUP, φ from the index',
+    ewma: 'EWMA of own years, λ fitted',
     oracle: 'BLUP, true tables (oracle)',
   };
 
@@ -729,10 +835,14 @@
       const t = world.truth;
       tab = { phi: t.phi, A: t.A, C: t.C, s2: t.s2 };
     } else {
-      const f = fit(sub, { phiMethod: key, psd: true });
-      if (f.singular || f.phiMethod !== key) return last();
+      const method = key === 'ewma' ? 'moment' : key, f = fit(sub, { phiMethod: method, psd: true });
+      if (f.singular || f.phiMethod !== method) return last();
       tab = { phi: f.phi, A: f.A, C: f.C, s2: f.s2 };
       if (degenerateTable(tab)) return last();
+      if (key === 'ewma') {
+        const ew = ewmaYears(sub.J, sub.w, tab);
+        return { pred: ew.map((e, j) => annualMeans(sub, j).reduce((a, m, y) => a + e.c[y] * m, 0)), fallback: false };
+      }
     }
     const P = predictor(sub.J, sub.Y, sub.w, tab);
     return P ? { pred: P.predict(sub.X), fallback: false } : last();
@@ -883,5 +993,5 @@
     return { d, dm, wpe, verdict, verdictWpe, meanA, meanB };
   }
 
-  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, lastYear, truthTheta, hNormCheck, sZeroCohorts, zeroVarianceCohorts, truncate, ROLL_FITS, degenerateTable, rollPredict, rollingOrigin, betaInc, tCdf, dmTest, wpeTest, dmSize, compareFits };
+  return { DEFAULTS, rng, solve, cholesky, eigSym, makeWorld, covTable, draw, basis, prepare, minque, minqueDense, yoyPooled, yoyShape, phiHat, phiProfile, phiIndex, toCSV, diagnose, fit, eigSymVec, clipPSD, constrainPSD, drawFuture, predictor, targetMoments, predMse, yearMoments, yearCells, ewmaWeights, ewmaYears, ownYearsBest, annualMeans, lastYear, truthTheta, hNormCheck, sZeroCohorts, zeroVarianceCohorts, truncate, ROLL_FITS, degenerateTable, rollPredict, rollingOrigin, betaInc, tCdf, dmTest, wpeTest, dmSize, compareFits };
 });

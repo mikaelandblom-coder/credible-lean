@@ -387,3 +387,49 @@ test('power: the oracle beats the last-year mean on average, and the test sees i
   assert.ok(s < 0, `mean difference ${s / N}`);
   assert.ok(picksOracle >= 1 && picksLast <= 1, `oracle picked ${picksOracle}, last picked ${picksLast} of ${N}`);
 });
+
+test('EWMA years: a predictor from aggregated data, exact excess over the BLUP (Blup.predMse_aggregate_eq_blup_add)', () => {
+  for (const par of [{ Y: 4, phi: 0.9 }, { Y: 3, phi: 0.6, J: 3 }]) {
+    const wd = M.makeWorld(par), t = wd.truth, tab = { phi: t.phi, A: t.A, C: t.C, s2: t.s2 };
+    const mom = M.targetMoments(wd.J, wd.w, tab, wd.wFuture), P = M.predictor(wd.J, wd.Y, wd.w, tab, wd.wFuture);
+    const ew = M.ewmaYears(wd.J, wd.w, tab, wd.wFuture), ob = M.ownYearsBest(wd.J, wd.w, tab, wd.wFuture);
+    for (let j = 0; j < wd.J; j++) {
+      const ym = M.yearMoments(mom, j), d = M.yearCells(mom, j, ew[j].c);
+      close(M.predMse(mom, j, d), ew[j].mse, 1e-10, 'aggregated MSE = MSE of the cell weights Ac (Blup.predMse_mulVec)');
+      close(M.predMse(mom, j, P.weights[j]), P.mse[j], 1e-10, 'predMse = predictor mse');
+      const e = d.map((x, p) => x - P.weights[j][p]);
+      let ex = 0;
+      for (let p = 0; p < mom.n; p++) for (let q = 0; q < mom.n; q++) ex += e[p] * mom.K[p][q] * e[q];
+      close(ew[j].mse, P.mse[j] + ex, 1e-9, 'excess (Ac − d*)ᵀK(Ac − d*)');
+      assert.ok(P.mse[j] <= ob[j].mse + 1e-12 && ob[j].mse <= ew[j].mse + 1e-12, 'BLUP ≤ own years ≤ EWMA');
+      close(ob[j].c.reduce((a, x) => a + x, 0), 1, 1e-12, 'unbiased: Σ c = 1');
+      assert.ok(ym.Y === wd.Y);
+    }
+  }
+  const r = M.rng(41), wd = M.makeWorld({ Y: 3 }), data = M.draw(wd, r), last = M.lastYear(data);
+  for (let j = 0; j < wd.J; j++) {
+    const c = M.ewmaWeights(3, 0), m = M.annualMeans(data, j);
+    close(c.reduce((a, x, y) => a + x * m[y], 0), last[j], 1e-12, 'λ = 0 is the last-12-month mean');
+  }
+});
+
+test('rolling origin: the EWMA fit runs on truncated data (λ̂ from the moment fit)', () => {
+  const w = M.makeWorld({ J: 3, Y: 5, phi: 0.9 }), d = M.draw(w, M.rng(43));
+  const ro = M.rollingOrigin(d, { fits: ['ewma', 'last'], burn: 36, step: 6 });
+  assert.equal(ro.loss.ewma.length, ro.origins.length);
+  assert.ok(ro.loss.ewma.every(Number.isFinite));
+  assert.ok(ro.fallback.ewma <= 1, `fallbacks ${ro.fallback.ewma}`);
+});
+
+test('own years counted back from the last month: exact identity when T is not whole years', () => {
+  const wd = M.makeWorld({ J: 2, Y: 4, phi: 0.9 }), t = wd.truth, tab = { phi: t.phi, A: t.A, C: t.C, s2: t.s2 };
+  const sub = M.truncate(M.draw(wd, M.rng(44)), 42), mom = M.targetMoments(2, sub.w, tab);
+  const ew = M.ewmaYears(2, sub.w, tab), P = M.predictor(2, sub.Y, sub.w, tab);
+  for (let j = 0; j < 2; j++) {
+    const d = M.yearCells(mom, j, ew[j].c);
+    close(M.predMse(mom, j, d), ew[j].mse, 1e-10, 'aggregated = cell MSE');
+    assert.ok(M.predMse(mom, j, P.weights[j]) <= ew[j].mse + 1e-12, 'BLUP ≤ EWMA');
+    const m = M.annualMeans(sub, j), pred = ew[j].c.reduce((a, c, y) => a + c * m[y], 0);
+    close(pred, d.reduce((a, x, p) => a + x * sub.X[Math.floor(p / 42)][p % 42], 0), 1e-12, 'prediction = dᵀx');
+  }
+});

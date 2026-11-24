@@ -849,9 +849,10 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   CAS Schedule P data). The credibility weight is a logistic function of account characteristics
   in place of one `K`, and older years are discounted by an EWMA weight λ. All of it is fitted
   jointly by likelihood, and it nests Bühlmann–Straub. Reports a λ that depends on account size.
-  Not yet used. For us, the decay over years should follow from the covariance over time (AR(1)
-  `Γ`, `Factor.lean`), with volume entering through `s²/wᵢₜ`. Question: is EWMA a restricted
-  predictor of our BLUP, and does a size-dependent λ come out of the BLUP for free? (PLAN Pending.)
+  Used 2026-11-24 (`studies/ewma-decay.js`, S43–S45): EWMA of own years is a restricted predictor
+  (aggregated data, exact excess `Blup.predMse_aggregate_eq_blup_add`), and the best λ falls with
+  `s²/wⱼ` against the AR(1) factor (`Factor.lean`), so a size-dependent λ comes out of the
+  second-moment model; the BLUP beats EWMA by pooling the common factor across cohorts.
   A likelihood fit belongs in the distribution layer.
 - Wen & Liu (2026), *A new credibility estimation of process variance with applications*,
   ASTIN Bull. 56(3), 1036–1065, doi 10.1017/asb.2026.10094. Gives each risk a credibility
