@@ -994,7 +994,10 @@ types instead of `Fin n`, `X`, `Z` instead of `LMMDesign`): `pushThrough`, `hend
 binomial inverse (`inv_mul_mul_transpose_add`, made public) in `Credibility/Henderson.lean`. They
 give the small form of `K_G⁻¹` (`Unequal.KG_inv_eq`, also with errors correlated across groups). They
 do not shorten the existing hierarchical proofs: those use a rank-one term along `1` with `c ≥ 0`
-(`φ = 0` allowed, where `G = φτ²I` is not invertible) and block-diagonal `K`, both already short. Its Gaussian
+(`φ = 0` allowed, where `G = φτ²I` is not invertible) and block-diagonal `K`, both already short.
+Added on top: the MME solution is `Core.blup` of each random effect (`Core.hendersonMME_eq_blup`,
+Henderson 1963's result in our universal-kriging form) and its group case
+(`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`). Its Gaussian
 conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,
 AI4SLT (arXiv 2602.02285), FormalSLT.
 

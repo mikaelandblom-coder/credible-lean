@@ -1,4 +1,5 @@
 import Mathlib
+import Credibility.Blup
 
 /-!
 # The push-through identity and Henderson's mixed-model equations
@@ -164,3 +165,83 @@ theorem hendersonMME (X : Matrix m p ℝ) (Z : Matrix m q ℝ) {G : Matrix q q �
     exact ⟨(main hT1).mpr hT2, hE2.mpr hT1⟩
 
 end Matrix
+
+/-! ### The mixed-model solution is the best linear unbiased predictor
+
+Henderson's result in the language of `Blup.lean`: with `V = Z G Zᵀ + R` the covariance of the
+data `y`, `E y = Xβ`, and random effects `b` with `Cov(b) = G`, `Cov(y, b_k) = (Z G)ₖ` (the `k`-th
+column) and `E b_k = 0` (so `x₀ = 0`), the `b̂` of the mixed-model equations is the best linear
+unbiased predictor of each `b_k`. -/
+
+namespace Credibility.Core
+
+variable {m q p : Type*} [Fintype m] [DecidableEq m] [Fintype q] [DecidableEq q] [Fintype p]
+  [DecidableEq p]
+
+omit [DecidableEq m] [DecidableEq q] in
+/-- `u ⬝ (Aᵀ w) = (A u) ⬝ w`. -/
+lemma dotProduct_transpose_mulVec (A : Matrix m q ℝ) (u : q → ℝ) (w : m → ℝ) :
+    u ⬝ᵥ (Aᵀ *ᵥ w) = (A *ᵥ u) ⬝ᵥ w := by
+  rw [dotProduct_mulVec, vecMul_transpose]
+
+omit [DecidableEq m] in
+/-- For a symmetric `S`: `u ⬝ (S v) = (S u) ⬝ v`. -/
+lemma dotProduct_mulVec_of_symm {S : Matrix m m ℝ} (hS : Sᵀ = S) (u v : m → ℝ) :
+    u ⬝ᵥ (S *ᵥ v) = (S *ᵥ u) ⬝ᵥ v := by
+  conv_lhs => rw [← hS]
+  exact dotProduct_transpose_mulVec S u v
+
+omit [DecidableEq m] in
+lemma transpose_eq_of_posDef {S : Matrix m m ℝ} (hS : S.PosDef) : Sᵀ = S := by
+  rw [← conjTranspose_eq_transpose_of_trivial]; exact hS.isHermitian
+
+/-- `(β̂, b̂)` solves Henderson's mixed-model equations for data `y` (the left side of
+`Matrix.hendersonMME`). -/
+def MMESolution (X : Matrix m p ℝ) (Z : Matrix m q ℝ) (G : Matrix q q ℝ) (R : Matrix m m ℝ)
+    (βh : p → ℝ) (bh : q → ℝ) (y : m → ℝ) : Prop :=
+  (Xᵀ * R⁻¹ * X) *ᵥ βh + (Xᵀ * R⁻¹ * Z) *ᵥ bh = (Xᵀ * R⁻¹) *ᵥ y
+    ∧ (Zᵀ * R⁻¹ * X) *ᵥ βh + (Zᵀ * R⁻¹ * Z + G⁻¹) *ᵥ bh = (Zᵀ * R⁻¹) *ᵥ y
+
+/-- **Henderson's equations give the BLUP.** If `X` has full column rank and `(β̂, b̂)` solves
+the mixed-model equations, then `b̂_k = d*ᵀy` with `d*` the best linear unbiased predictor
+(`Core.blup`) of `b_k`: `ℓ = Z G e_k`, `x₀ = 0`, `K = Z G Zᵀ + R`. -/
+theorem hendersonMME_eq_blup (X : Matrix m p ℝ) (hX : Function.Injective X.mulVec)
+    (Z : Matrix m q ℝ) {G : Matrix q q ℝ} {R : Matrix m m ℝ} (hG : G.PosDef) (hR : R.PosDef)
+    {βh : p → ℝ} {bh : q → ℝ} {y : m → ℝ}
+    (h : MMESolution X Z G R βh bh y) (k : q) :
+    bh k = blup (Z * G * Zᵀ + R) X (Z *ᵥ (G *ᵥ Pi.single k 1)) 0 ⬝ᵥ y := by
+  set V := Z * G * Zᵀ + R
+  have hV : V.PosDef := PosDef.mul_mul_transpose_add hG hR
+  have hM : (Xᵀ * V⁻¹ * X).PosDef := info_posDef hV hX
+  have hMd := (Matrix.isUnit_iff_isUnit_det _).mp hM.isUnit
+  have hVs : V⁻¹ᵀ = V⁻¹ := transpose_eq_of_posDef hV.inv
+  have hMs : (Xᵀ * V⁻¹ * X)⁻¹ᵀ = (Xᵀ * V⁻¹ * X)⁻¹ := transpose_eq_of_posDef hM.inv
+  have hGs : Gᵀ = G := transpose_eq_of_posDef hG
+  obtain ⟨hb, hβ⟩ := (hendersonMME X Z hG hR βh bh y).mp h
+  set M := Xᵀ * V⁻¹ * X
+  set ℓ := Z *ᵥ (G *ᵥ Pi.single k 1)
+  -- `β̂` is the GLS estimate
+  have hβ' : M⁻¹ *ᵥ (Xᵀ *ᵥ (V⁻¹ *ᵥ y)) = βh := by
+    rw [mulVec_mulVec, mulVec_mulVec, Matrix.mul_assoc, ← mulVec_mulVec, ← hβ, mulVec_mulVec,
+      nonsing_inv_mul _ hMd, one_mulVec]
+  -- both sides are `ℓᵀ V⁻¹ (y - Xβ̂)`
+  have lhs : bh k = ℓ ⬝ᵥ (V⁻¹ *ᵥ (y - X *ᵥ βh)) := by
+    calc bh k = Pi.single k 1 ⬝ᵥ (G *ᵥ (Zᵀ *ᵥ (V⁻¹ *ᵥ (y - X *ᵥ βh)))) := by
+          rw [single_one_dotProduct, hb, mulVec_mulVec, mulVec_mulVec, Matrix.mul_assoc]
+      _ = ℓ ⬝ᵥ (V⁻¹ *ᵥ (y - X *ᵥ βh)) := by
+          rw [dotProduct_mulVec_of_symm hGs, dotProduct_transpose_mulVec]
+  have rhs : blup V X ℓ 0 ⬝ᵥ y = ℓ ⬝ᵥ (V⁻¹ *ᵥ (y - X *ᵥ βh)) := by
+    calc blup V X ℓ 0 ⬝ᵥ y
+        = ℓ ⬝ᵥ (V⁻¹ *ᵥ y) + (M⁻¹ *ᵥ (0 - Xᵀ *ᵥ (V⁻¹ *ᵥ ℓ))) ⬝ᵥ (Xᵀ *ᵥ (V⁻¹ *ᵥ y)) := by
+          rw [blup, ← dotProduct_mulVec_of_symm hVs, add_dotProduct,
+            ← dotProduct_transpose_mulVec X]
+      _ = ℓ ⬝ᵥ (V⁻¹ *ᵥ y) - (Xᵀ *ᵥ (V⁻¹ *ᵥ ℓ)) ⬝ᵥ βh := by
+          rw [zero_sub, mulVec_neg, neg_dotProduct, ← dotProduct_mulVec_of_symm hMs, hβ',
+            sub_eq_add_neg]
+      _ = ℓ ⬝ᵥ (V⁻¹ *ᵥ (y - X *ᵥ βh)) := by
+          rw [mulVec_sub, dotProduct_sub, dotProduct_comm (Xᵀ *ᵥ _) βh,
+            dotProduct_transpose_mulVec, dotProduct_mulVec_of_symm hVs ℓ (X *ᵥ βh),
+            dotProduct_comm (X *ᵥ βh)]
+  rw [lhs, rhs]
+
+end Credibility.Core

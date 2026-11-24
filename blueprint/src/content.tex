@@ -6254,6 +6254,36 @@ form of $V^{-1}$ when the number of random effects is small.
   $X^TR^{-1}Z\,GZ^TV^{-1}$ into $X^TR^{-1} - X^TV^{-1}$, so the first row is the GLS equation.
 \end{proof}
 
+\begin{lemma}[Symmetric forms]\label{lem:mme_dot}
+  \lean{Credibility.Core.dotProduct_transpose_mulVec, Credibility.Core.dotProduct_mulVec_of_symm,
+        Credibility.Core.transpose_eq_of_posDef, Credibility.Core.MMESolution}
+  \leanok
+  $u^T(A^Tw) = (Au)^Tw$; for $S = S^T$, $u^T(Sv) = (Su)^Tv$; a positive definite matrix is
+  symmetric. $\mathrm{MME}(\hat\beta, \hat b; y)$ denotes the system of
+  Theorem~\ref{thm:hendersonMME}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Transposition.
+\end{proof}
+
+\begin{theorem}[The mixed-model solution is the BLUP]\label{thm:hendersonMME_eq_blup}
+  \lean{Credibility.Core.hendersonMME_eq_blup}
+  \leanok
+  \uses{thm:hendersonMME, def:Blup}
+  Let $X$ have full column rank, $G \succ 0$, $R \succ 0$. If $(\hat\beta, \hat b)$ solves the
+  mixed-model equations for $y$, then $\hat b_k = d^{*T}y$ with $d^*$ the best linear unbiased
+  predictor of Theorem~\ref{thm:Blup_optimal} for $K = ZGZ^T + R$, $\ell = ZGe_k$, $x_0 = 0$:
+  the prediction of a random effect $b_k$ with $\cov(b) = G$, $\cov(y, b_k) = ZGe_k$, $E b_k = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hendersonMME, lem:mme_posDef, lem:mme_dot, lem:Blup_foc}
+  By Theorem~\ref{thm:hendersonMME}, $\hat b = GZ^TV^{-1}(y - X\hat\beta)$ with $\hat\beta$ the GLS
+  estimate, so $\hat b_k = \ell^TV^{-1}(y - X\hat\beta)$. Expanding $d^*$ with $x_0 = 0$ gives
+  $d^{*T}y = \ell^TV^{-1}y - \ell^TV^{-1}X(X^TV^{-1}X)^{-1}X^TV^{-1}y$, the same.
+\end{proof}
+
 \section{Damping}
 
 \begin{definition}[Damped matrix]\label{def:shrinkOffDiag}
@@ -7500,13 +7530,25 @@ that of Definition~\ref{def:U_Noise} plus the group component.
   Lemma~\ref{lem:U_errCov_posSemidef}.
 \end{proof}
 
-\begin{theorem}[Small form of $K_G^{-1}$]\label{thm:U_KG_inv_eq}
-  \lean{Credibility.Unequal.KG_inv_eq, Credibility.Unequal.grpDesign,
+\begin{lemma}[$K_G$ as a mixed-model covariance]\label{lem:U_KG_mixed}
+  \lean{Credibility.Unequal.KG_eq_mixed, Credibility.Unequal.grpDesign,
         Credibility.Unequal.sameGroup_eq_grpDesign}
   \leanok
-  \uses{def:U_KG, thm:inv_mul_mul_transpose_add}
-  Let $Z$ be the $J \times G$ group design, $Z_{jg} = [g(j) = g]$, so $S = ZZ^T$, and
-  $A = K(M_\phi)$. If every block $R_t$ is positive semidefinite and $0 < \phi < 1$, then
+  \uses{def:U_KG}
+  With $Z$ the $J \times G$ group design, $Z_{jg} = [g(j) = g]$, $S = ZZ^T$, and for $\phi < 1$,
+  $K_G = Z(\phi\tau^2 I)Z^T + K(M_\phi)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_KG_eq}
+  Lemma~\ref{lem:U_KG_eq} and $S = ZZ^T$.
+\end{proof}
+
+\begin{theorem}[Small form of $K_G^{-1}$]\label{thm:U_KG_inv_eq}
+  \lean{Credibility.Unequal.KG_inv_eq}
+  \leanok
+  \uses{lem:U_KG_mixed, thm:inv_mul_mul_transpose_add}
+  Let $Z$ be the group design and $A = K(M_\phi)$ (Lemma~\ref{lem:U_KG_mixed}). If every block $R_t$ is positive semidefinite and $0 < \phi < 1$, then
   \[
     K_G^{-1} = A^{-1} - A^{-1}Z\bigl(Z^TA^{-1}Z + (\phi\tau^2)^{-1}I\bigr)^{-1}Z^TA^{-1}.
   \]
@@ -7515,9 +7557,29 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{lem:U_KG_eq, thm:U_K_posDef, thm:inv_mul_mul_transpose_add}
+  \uses{lem:U_KG_mixed, thm:U_K_posDef, thm:inv_mul_mul_transpose_add}
   $K_G = A + Z(\phi\tau^2 I)Z^T$ (Lemma~\ref{lem:U_KG_eq}), $A \succ 0$
   (Theorem~\ref{thm:U_K_posDef}), then Theorem~\ref{thm:inv_mul_mul_transpose_add}.
+\end{proof}
+
+\begin{theorem}[Hierarchical credibility by Henderson's equations]\label{thm:U_groupEffect_blup}
+  \lean{Credibility.Unequal.groupEffect_eq_blup, Credibility.Unequal.groupMean_eq_gls,
+        Credibility.Unequal.onesCol, Credibility.Unequal.onesCol_injective}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, lem:U_KG_mixed}
+  Under the hypotheses of Theorem~\ref{thm:U_KG_inv_eq}, let $(\hat m, \hat b)$ solve the
+  mixed-model equations for the cohort estimates $x$ with $X = \mathbf 1$, the group design
+  $Z$, $G = \phi\tau^2 I$ and $R = A$. Then $\hat b_g$ is the best linear unbiased predictor
+  of the group effect, with $K = K_G$ and $\cov(x, b_g) = \phi\tau^2\mathbf 1_g$, and
+  $\hat m = \sum_j b_j x_j$ with the GLS weights of $K_G$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, thm:hendersonMME, lem:U_KG_mixed, thm:U_K_posDef,
+        thm:U_KG_posDef, lem:mme_dot}
+  $K_G = Z(\phi\tau^2 I)Z^T + A$ (Lemma~\ref{lem:U_KG_mixed}) and $Z\phi\tau^2 e_g = \phi\tau^2\mathbf 1_g$,
+  so Theorem~\ref{thm:hendersonMME_eq_blup} applies. The fixed-effect row of
+  Theorem~\ref{thm:hendersonMME} is $(\mathbf 1^TK_G^{-1}\mathbf 1)\hat m = \mathbf 1^TK_G^{-1}x$.
 \end{proof}
 
 \begin{theorem}[Eq.\ (26) with group levels and unequal lengths]\label{thm:U_bestZ_G_eq}

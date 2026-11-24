@@ -86,7 +86,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Henderson's equations (2026-11-24, `Matrix.hendersonMME`, `Matrix.pushThrough`, ported from
   Stat-Lean): the hierarchical section may cite them as the link to mixed-model practice
-  (credibility = BLUP of the group effects); `Unequal.KG_inv_eq` for the computation.
+  (credibility = BLUP of the group effects); `Unequal.KG_inv_eq` for the computation. Now proved:
+  the MME solution is our BLUP (`Core.hendersonMME_eq_blup`); for groups, `b̂_g` is the BLUP of the
+  group effect and `m̂` the GLS mean of `K_G` (`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`).
 - Cross term of the plug-in with kurtosis (2026-11-24, Finding 38,
   `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
   ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,

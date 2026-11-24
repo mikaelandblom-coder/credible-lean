@@ -385,6 +385,16 @@ lemma sameGroup_eq_grpDesign [Fintype G] :
   ext i j
   simp [Model.sameGroup, grpDesign, Matrix.mul_apply, eq_comm]
 
+omit [Fintype T] in
+/-- `K_G` as a mixed-model covariance: `K_G = Z(φτ²·I)Zᵀ + A`, with `Z` the group design and
+`A = K` for `(1-φ)τ²`. -/
+lemma KG_eq_mixed [Fintype G] {φ : ℝ} (h1 : φ < 1) :
+    M.KG grp φ
+      = grpDesign grp * ((φ * M.τ2) • (1 : Matrix G G ℝ)) * (grpDesign grp)ᵀ
+        + (M.withLevel φ h1).K := by
+  rw [M.KG_eq_add_sameGroup grp h1, sameGroup_eq_grpDesign, Matrix.mul_smul, Matrix.mul_one,
+    Matrix.smul_mul, add_comm]
+
 /-- **The small form of `K_G⁻¹`** (Woodbury, via `Matrix.inv_mul_mul_transpose_add`): with
 `A = K` for `(1-φ)τ²` and `Z` the group design, `K_G = A + Z(φτ²·I)Zᵀ`, so
 `K_G⁻¹ = A⁻¹ - A⁻¹Z(ZᵀA⁻¹Z + (φτ²)⁻¹·I)⁻¹ZᵀA⁻¹`: one inverse of size `J` (that of `A`, cheap
@@ -398,14 +408,64 @@ theorem KG_inv_eq [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (
           + (φ * M.τ2)⁻¹ • (1 : Matrix G G ℝ))⁻¹
         * (grpDesign grp)ᵀ * (M.withLevel φ h1).K⁻¹ := by
   have hc : 0 < φ * M.τ2 := mul_pos h0 M.τ2_pos
-  have hG : ((φ * M.τ2) • (1 : Matrix G G ℝ)).PosDef := PosDef.one.smul hc
-  have hZ : (φ * M.τ2) • Model.sameGroup grp
-      = grpDesign grp * ((φ * M.τ2) • (1 : Matrix G G ℝ)) * (grpDesign grp)ᵀ := by
-    rw [sameGroup_eq_grpDesign, Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
   have hinv : ((φ * M.τ2) • (1 : Matrix G G ℝ))⁻¹ = (φ * M.τ2)⁻¹ • 1 :=
     Matrix.inv_eq_left_inv (by rw [smul_mul_smul, Matrix.one_mul, inv_mul_cancel₀ hc.ne', one_smul])
-  rw [M.KG_eq_add_sameGroup grp h1, hZ, add_comm,
-    Matrix.inv_mul_mul_transpose_add _ hG ((M.withLevel φ h1).K_posDef hρ), hinv]
+  rw [M.KG_eq_mixed grp h1, Matrix.inv_mul_mul_transpose_add _ (PosDef.one.smul hc)
+    ((M.withLevel φ h1).K_posDef hρ), hinv]
+
+/-- The column of ones: the design of one unknown collective mean. -/
+def onesCol (J : Type*) : Matrix J Unit ℝ := of fun _ _ => 1
+
+omit [Fintype J] [DecidableEq J] in
+lemma onesCol_injective [Fintype J] [Nonempty J] : Function.Injective (onesCol J).mulVec := by
+  intro a b h
+  funext u
+  simpa [onesCol, mulVec, dotProduct] using congrFun h (Classical.arbitrary J)
+
+/-- **Hierarchical credibility by Henderson's equations.** Solve the mixed-model equations
+with the collective mean as fixed effect (`X = 1`), the group effects as random effects
+(`Z` the group design, `Cov = φτ²·I`) and `R = A`, the covariance for the non-shared part
+`(1-φ)τ²`. Then each `b̂_g` is the best linear unbiased predictor (`Core.blup`) of the group
+effect from the cohort estimates `x`, with `K = K_G` and `Cov(x, b_g) = φτ²·1_g`. -/
+theorem groupEffect_eq_blup [Fintype G] [Nonempty J] (hρ : ∀ t, (M.block t).PosSemidef)
+    {φ : ℝ} (h0 : 0 < φ) (h1 : φ < 1) {m : Unit → ℝ} {b : G → ℝ} {x : J → ℝ}
+    (h : Core.MMESolution (onesCol J) (grpDesign grp) ((φ * M.τ2) • 1) (M.withLevel φ h1).K
+      m b x) (g : G) :
+    b g = Core.blup (M.KG grp φ) (onesCol J) ((φ * M.τ2) • grpOne grp g) 0 ⬝ᵥ x := by
+  have hℓ : (φ * M.τ2) • grpOne grp g
+      = grpDesign grp *ᵥ (((φ * M.τ2) • (1 : Matrix G G ℝ)) *ᵥ Pi.single g 1) := by
+    ext j
+    simp [grpDesign, grpOne, mulVec, dotProduct, Pi.single_apply, Matrix.one_apply]
+  rw [hℓ, M.KG_eq_mixed grp h1]
+  exact Core.hendersonMME_eq_blup _ onesCol_injective _
+    (PosDef.one.smul (mul_pos h0 M.τ2_pos)) ((M.withLevel φ h1).K_posDef hρ) h g
+
+/-- …and the fixed effect `m̂` is the GLS portfolio mean `Σⱼ bⱼ xⱼ` with the weights of
+`K_G` (`glsWeight_KG` when errors are uncorrelated across groups). -/
+theorem groupMean_eq_gls [Fintype G] [Nonempty J] (hρ : ∀ t, (M.block t).PosSemidef)
+    {φ : ℝ} (h0 : 0 < φ) (h1 : φ < 1) {m : Unit → ℝ} {b : G → ℝ} {x : J → ℝ}
+    (h : Core.MMESolution (onesCol J) (grpDesign grp) ((φ * M.τ2) • 1) (M.withLevel φ h1).K
+      m b x) :
+    m () = ∑ j, glsWeight (M.KG grp φ) j * x j := by
+  obtain ⟨-, hβ⟩ := (Matrix.hendersonMME _ _ (PosDef.one.smul (mul_pos h0 M.τ2_pos))
+    ((M.withLevel φ h1).K_posDef hρ) m b x).mp h
+  rw [← M.KG_eq_mixed grp h1] at hβ
+  set V := M.KG grp φ
+  have hV : V.PosDef := M.KG_posDef grp hρ h0.le h1
+  have hS := (invTotal_pos hV).ne'
+  have key : invTotal V * m () = 1 ⬝ᵥ (V⁻¹ *ᵥ x) := by
+    have := congrFun hβ ()
+    simp only [onesCol, mulVec, dotProduct, Matrix.mul_apply, transpose_apply, of_apply,
+      one_mul, mul_one, Finset.univ_unique, Finset.sum_singleton, invTotal, Pi.one_apply] at this ⊢
+    calc (∑ i, ∑ j, V⁻¹ i j) * m () = (∑ j, ∑ i, V⁻¹ i j) * m () := by rw [Finset.sum_comm]
+      _ = ∑ j, (∑ i, V⁻¹ i j) * x j := this
+      _ = ∑ i, ∑ j, V⁻¹ i j * x j := by simp_rw [Finset.sum_mul]; rw [Finset.sum_comm]
+  have hsum : ∑ j, glsWeight V j * x j = (1 ⬝ᵥ (V⁻¹ *ᵥ x)) / invTotal V := by
+    rw [Core.dotProduct_mulVec_of_symm (Core.transpose_eq_of_posDef hV.inv), dotProduct,
+      Finset.sum_div]
+    exact Finset.sum_congr rfl fun j _ => by rw [glsWeight]; ring
+  rw [hsum, ← key]
+  field_simp
 
 /-- The moments entering the blend for cohort `j` with group levels and unequal
 lengths: the Core blend for `K_G`, the level covariance `L_G` and
