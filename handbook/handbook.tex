@@ -600,7 +600,13 @@ on average, so the Bühlmann--Straub fit is a proper baseline.
   If fitted rates $\theta_j$ balance volumes $u_j$ in every draw,
   $\sum_j u_j\theta_j = \sum_j u_j\hmu_j$, then $\mathbb E\sum_j u_j(\theta_j - \mu_j) = 0$, however
   the $\theta_j$ are built. Both hold for every distribution with the model's moments.
+  For weights $\hat d_i = a_i + b_i\hat\sigma_i^2$ driven by fitted variances
+  $\hat\sigma_i^2 = \sum_t c_{it}r_{it}^2$ of $\hmu_i = \sum_s w_{is}X_{is}$, the bias is
+  $\sum_i b_i\operatorname{cov}(\hat\sigma_i^2, \hmu_i)
+  = \sum_i b_i\sum_s w_{is}k_{is}\sum_t c_{it}(\delta_{ts} - w_{is})^2$, with $k_{is}$ the noise's
+  third moments (independent years, noise uncorrelated with the level).
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
+  \lean{Credibility.Core.Estimates.integral_randomLin_resVar_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
 \end{result}
 \use Fixed weights never bias the premium; estimated weights bias it by exactly as much as

@@ -8127,6 +8127,26 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
   through $\partial d_i/\partial\hat\sigma_k^2$).
 \end{remark}
 
+\begin{corollary}[The bias of variance-driven weights]\label{cor:randomLin_resVar_bias}
+  \lean{Credibility.Core.Estimates.integral_randomLin_affine_sub,
+        Credibility.Core.Estimates.integral_randomLin_resVar_sub}
+  \leanok
+  \uses{thm:Core_randomLin_bias, thm:covariance_resVar_mean}
+  Let the weights be $\hat d_i = a_i + b_i\hat\sigma_i^2$ with $\hat\sigma_i^2 \in L^2$ and
+  $\sum_i\hat d_i = 1$ in every draw. Then $\mathbb E(\hat d^T\hmu - \mu_j)
+  = \sum_ib_i\cov(\hat\sigma_i^2, \hmu_i)$. If each $\hmu_i = \sum_sw_{is}X_{is}$ and
+  $\hat\sigma_i^2 = \sum_tc_{it}r_{it}^2$ come from cells as in
+  Theorem~\ref{thm:covariance_resVar_mean} (third moments $k_{it}$), the bias is
+  $\sum_ib_i\sum_sw_{is}k_{is}\sum_tc_{it}(\delta_{ts} - w_{is})^2$: zero under symmetric noise.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_randomLin_bias, thm:covariance_resVar_mean}
+  Theorem~\ref{thm:Core_randomLin_bias}; constants drop out of a covariance, so
+  $\cov(\hat d_i, \hmu_i) = b_i\cov(\hat\sigma_i^2, \hmu_i)$, which
+  Theorem~\ref{thm:covariance_resVar_mean} evaluates.
+\end{proof}
+
 \section{Independent sources}
 
 \begin{lemma}[Moments of independent centred sources]\label{lem:moments_indep}

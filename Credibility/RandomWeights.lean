@@ -1,4 +1,5 @@
 import Credibility.CoreMoments
+import Credibility.Cumulants
 
 /-!
 # Random weights: where the bias of a fitted blend comes from (extension, distribution-free)
@@ -74,6 +75,46 @@ theorem integral_portfolio_sub_of_balanced (u : J → ℝ) (θh : J → Ω → �
   rw [integral_sub (((E.est_memLp j).const_mul (u j)).integrable (by norm_num))
       (((E.level_memLp j).const_mul (u j)).integrable (by norm_num)),
     integral_const_mul, integral_const_mul, E.est_mean, E.level_mean, sub_self]
+
+/-- **Weights driven by fitted variances.** If the weights are affine in random statistics,
+`d̂ᵢ = aᵢ + bᵢσ̂ᵢ²` (a fitted variance, say), with `Σᵢ d̂ᵢ = 1` in every draw, the bias of
+Finding 35 (a) is `E(d̂ᵀμ̂ - μⱼ) = Σᵢ bᵢ cov(σ̂ᵢ², μ̂ᵢ)`. -/
+theorem integral_randomLin_affine_sub (σh : J → Ω → ℝ) (a b : J → ℝ)
+    (hσ : ∀ i, MemLp (σh i) 2 P) (hsum : ∀ ω, ∑ i, (a i + b i * σh i ω) = 1) (j : J) :
+    P[fun ω => E.randomLin (fun ω i => a i + b i * σh i ω) ω - E.level j ω]
+      = ∑ i, b i * cov[σh i, E.est i; P] := by
+  have hdh : ∀ i, MemLp (fun ω => a i + b i * σh i ω) 2 P := fun i =>
+    (memLp_const (a i)).add ((hσ i).const_mul (b i))
+  rw [E.integral_randomLin_sub (fun ω i => a i + b i * σh i ω) hdh hsum]
+  refine sum_congr rfl fun i _ => ?_
+  rw [covariance_const_add_left (((hσ i).const_mul _).integrable one_le_two),
+    covariance_const_mul_left]
+
+/-- **Finding 35 (c), the bias of variance-driven weights, exactly.** Let each cohort's estimate be
+a weighted mean `μ̂ᵢ = Σₛ wᵢₛXᵢₛ` (`Σₛ wᵢₛ = 1`) of cells `Xᵢₜ = Lᵢ + eᵢₜ` as in
+`Cumulants.covariance_resVar_mean` (centred noise in `L³`, third moments `kᵢₜ` on the diagonal
+only, squares uncorrelated with the level), and `σ̂ᵢ² = Σₜ cᵢₜ rᵢₜ²` from the residuals
+`rᵢₜ = Xᵢₜ - μ̂ᵢ`. Then weights `d̂ᵢ = aᵢ + bᵢσ̂ᵢ²` summing to one have bias
+`E(d̂ᵀμ̂ - μⱼ) = Σᵢ bᵢ Σₛ wᵢₛ kᵢₛ Σₜ cᵢₜ(δₜₛ - wᵢₛ)²`: zero under symmetric noise, of the sign of
+`bᵢ` under right skew. -/
+theorem integral_randomLin_resVar_sub {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (e : J → ι → Ω → ℝ) (Lv : J → Ω → ℝ) (k w c : J → ι → ℝ) (a b : J → ℝ)
+    (hL : ∀ i t, MemLp (e i t) 3 P) (hLv : ∀ i, MemLp (Lv i) 3 P)
+    (h0 : ∀ i t, ∫ ω, e i t ω ∂P = 0)
+    (h3 : ∀ i t u v, ∫ ω, e i t ω * e i u ω * e i v ω ∂P = if t = u ∧ u = v then k i t else 0)
+    (hlev : ∀ i t u, ∫ ω, e i t ω * e i u ω * (Lv i ω - ∫ ω', Lv i ω' ∂P) ∂P = 0)
+    (hw : ∀ i, ∑ t, w i t = 1)
+    (hest : ∀ i, E.est i = fun ω => ∑ s, w i s * (Lv i ω + e i s ω))
+    (σh : J → Ω → ℝ)
+    (hσh : ∀ i, σh i = fun ω => ∑ t, c i t * (Lv i ω + e i t ω - ∑ s, w i s * (Lv i ω + e i s ω)) ^ 2)
+    (hσ : ∀ i, MemLp (σh i) 2 P) (hsum : ∀ ω, ∑ i, (a i + b i * σh i ω) = 1) (j : J) :
+    P[fun ω => E.randomLin (fun ω i => a i + b i * σh i ω) ω - E.level j ω]
+      = ∑ i, b i * ∑ s, w i s * k i s * ∑ t, c i t * ((if t = s then 1 else 0) - w i s) ^ 2 := by
+  rw [E.integral_randomLin_affine_sub σh a b hσ hsum j]
+  refine sum_congr rfl fun i _ => ?_
+  rw [hσh i, hest i]
+  exact congrArg (b i * ·) (Cumulants.covariance_resVar_mean (e i) (Lv i) (hL i) (hLv i) (h0 i)
+    (k i) (h3 i) (hlev i) (w i) (c i) (hw i))
 
 omit [IsProbabilityMeasure P] in
 /-- The balanced corrections `θ̂ⱼ = μ̂ⱼᵇ + cⱼD` with `Σⱼ uⱼcⱼ = 1` (G7) are exposure balanced. -/
