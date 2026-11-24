@@ -207,4 +207,22 @@ theorem isClosed_setOf_posSemidef [Finite ι] {κ : Type*} {m : κ → Type*} [�
   exact isClosed_iInter fun k =>
     (isClosed_setOfPred_posSemidef (n := m k) (R := ℝ)).preimage (A k).continuous_of_finiteDimensional
 
+/-- **Projecting onto valid tables.** Let `S = {θ | ∀ k, A k θ ⪰ 0}` be the parameters whose
+tables are positive semidefinite, and let it contain the true `θ`. For positive definite `H`, every
+estimate `θ̂` has an `H`-projection `p` onto `S`; it is unique, and its `H`-error is at most the
+estimate's: `‖p - θ‖²_H ≤ ‖θ̂ - θ‖²_H`. -/
+theorem existsUnique_proj_posSemidef {κ : Type*} {m : κ → Type*} [∀ k, Fintype (m k)]
+    (A : ∀ k, (ι → ℝ) →ₗ[ℝ] Matrix (m k) (m k) ℝ) {H : Matrix ι ι ℝ} (hH : H.PosDef)
+    {θ : ι → ℝ} (hθ : ∀ k, (A k θ).PosSemidef) (θhat : ι → ℝ) :
+    ∃ p, (p ∈ {x : ι → ℝ | ∀ k, (A k x).PosSemidef}
+        ∧ ∀ y ∈ {x : ι → ℝ | ∀ k, (A k x).PosSemidef}, hsq H (p - θhat) ≤ hsq H (y - θhat))
+      ∧ (∀ p', (p' ∈ {x : ι → ℝ | ∀ k, (A k x).PosSemidef}
+          ∧ ∀ y ∈ {x : ι → ℝ | ∀ k, (A k x).PosSemidef}, hsq H (p' - θhat) ≤ hsq H (y - θhat))
+          → p' = p)
+      ∧ hsq H (p - θ) ≤ hsq H (θhat - θ) := by
+  have hS := convex_setOf_posSemidef A
+  obtain ⟨p, hp, hmin⟩ := exists_hsq_proj hH (isClosed_setOf_posSemidef A) ⟨θ, hθ⟩ θhat
+  exact ⟨p, ⟨hp, hmin⟩, fun p' ⟨hp', hmin'⟩ => hsq_proj_unique hH hS hp' hp hmin' hmin,
+    hsq_proj_le hH.posSemidef hS hθ hp hmin⟩
+
 end Credibility.ConeProjection

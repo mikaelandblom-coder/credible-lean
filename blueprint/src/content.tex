@@ -6530,6 +6530,24 @@ criterion, so the constrained fit is this projection.
   (finite-dimensional) linear maps.
 \end{proof}
 
+\begin{theorem}[Projecting onto valid tables]\label{thm:proj_posSemidef}
+  \lean{Credibility.ConeProjection.existsUnique_proj_posSemidef}
+  \leanok
+  \uses{lem:convex_setOf_posSemidef, lem:isClosed_setOf_posSemidef, thm:hsq_proj_exists_unique,
+    thm:hsq_proj_le}
+  Let $S = \{\theta : A_k\theta \succeq 0 \text{ for all } k\}$ contain the true $\theta$, and
+  $H \succ 0$. Every estimate $\hat\theta$ has an $H$-projection $p$ onto $S$; it is unique, and
+  $\|p - \theta\|_H^2 \le \|\hat\theta - \theta\|_H^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:convex_setOf_posSemidef, lem:isClosed_setOf_posSemidef, thm:hsq_proj_exists_unique,
+    thm:hsq_proj_le}
+  $S$ is closed (Lemma~\ref{lem:isClosed_setOf_posSemidef}), nonempty (it contains $\theta$) and
+  convex (Lemma~\ref{lem:convex_setOf_posSemidef}); then
+  Theorems~\ref{thm:hsq_proj_exists_unique} and~\ref{thm:hsq_proj_le}.
+\end{proof}
+
 \chapter{Extension: a shared group level}\label{ch:hierarchical}
 % Not in the thesis: first bridge to two-level credibility (Finding 6).
 % Lean: Credibility/Hierarchical.lean; rank-one and block-diagonal K in Core.lean,
