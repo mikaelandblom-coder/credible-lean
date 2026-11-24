@@ -646,7 +646,18 @@ Gaps, extra hypotheses and new results found while formalizing.
    (`bsPrice_of_balanced_cumulants`, `+(1 − 1/J)z(1 − z)(γL + γN/T)/J` relative), the total first-order
    effect of kurtosis on the plug-in's MSE is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`: heavy tails of either
    kind *lower* it at this order, and law (a) with its kurtosis terms alone has the sign wrong. This
-   agrees in sign with the app's simulations (`2E[AB]` −6% under gamma noise). Caveat: first order in
-   the delta method, balanced volumes, no third cumulants used (none enter at this order).
+   agrees in sign with the app's simulations (`2E[AB]` −6% under gamma noise). Caveat: proved only for
+   equal volumes `wⱼₜ = w` (the one case where `ẑ = 1 − v̂/S²` is the same for every region and the
+   result has a closed form), first order in the delta method; no third cumulants enter at this order.
+   *Unequal volumes, checked numerically (2026-11-24, `studies/cross-term.js`, not proved):* the same
+   first-order term for any `wⱼₜ`, exact from the moment tables (`integral_lin_lin_sumSq` holds for any
+   weights), reproduces the closed form to all digits when balanced. With region sizes 16× apart and
+   years 1–2×, it is negative in every world and every region, for levels and for noise, and the
+   simulated exact `2E[AB]` (100 000 draws, fitBS with truncation) agrees: noise part −1.98% against
+   −1.96 ± 0.16% (J = 8, T = 5), −0.58% against −0.61 ± 0.04% (J = 30). The level part's first order
+   overstates at small J (−9.0% against −6.6 ± 0.2% at J = 8; −2.5% against −2.3% at J = 30), as a
+   delta method should; gamma (skewed) and Laplace (symmetric) shapes of equal kurtosis give nearly
+   the same. So the sign and the size carry over to unequal volumes; a Lean proof for general weights
+   is open.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

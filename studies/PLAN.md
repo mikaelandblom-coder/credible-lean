@@ -353,7 +353,11 @@ One chat per step; none needs Lean except step 5.
   (`D` estimated). The "Noise shape" readout's price with γ̂N (law (a) only) adds
   `+(1 − 1/J)z(1 − z)γN/(JT)`; with the cross term the kurtosis total is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`,
   so the correction has the wrong sign. Next app chat: price = law (a) + cross term (show both), and
-  check against the simulated `2E[AB]` (−6% under gamma).
+  check against the simulated `2E[AB]` (−6% under gamma). *Unequal volumes (2026-11-24,
+  `studies/cross-term.js`):* the first-order term for any `wⱼₜ` from the moment tables (`firstOrder` there:
+  linearize the fit's weights in (P, B), then the `integral_lin_lin_sumSq` identity) matches simulation,
+  noise part within SE, level part ~30% too large at J = 8 (fine at J = 30). Use that general form in the
+  engine rather than the balanced closed form; γL stays a sensitivity.
 - [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the
