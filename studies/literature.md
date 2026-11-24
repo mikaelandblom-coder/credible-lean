@@ -932,8 +932,11 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   order. Worth a closer read before claiming more. *Read 2026-11-24, see the next item:* that
   guess was wrong. The kurtosis does not cancel inside g₃; it cancels between g₃ and the cross term.
 - Chen, Lahiri & Rao, "Mean squared prediction error estimators of EBLUP of a small area mean under
-  a semi-parametric Fay–Herriot model", arXiv:2409.16409v2 (2025). Read from the HTML (main text
-  verbatim; appendix proofs only in summary, unverified). Model `Yᵢ = xᵢ'β + vᵢ + eᵢ`, `vᵢ ~ [0, ψ, κ_v]`,
+  a semi-parametric Fay–Herriot model", arXiv:2409.16409v2 (2025); published in *Survey Methodology*
+  51(1) (Statistics Canada 12-001-X, 2025001, article 00005). *Checked 2026-11-24 against the arXiv v2
+  PDF text* (pdftotext). The formulas below are as printed there. The journal PDF sits behind a
+  browser check that automated fetches can't pass, so it is unchecked; the owner can compare
+  eq. (9) there. The proofs (Appendix) rest on Lemma C.4 of Lahiri & Rao (1995, p. 765). Model `Yᵢ = xᵢ'β + vᵢ + eᵢ`, `vᵢ ~ [0, ψ, κ_v]`,
   `eᵢ ~ [0, Dᵢ, κ_eᵢ]` (κ = excess kurtosis), `Dᵢ` and `κ_eᵢ` known, `E|v|^(8+δ) < ∞`, m → ∞.
   Prasad–Rao moment `ψ̂`: `var ψ̂ = 2m⁻²Σ(ψ + Dⱼ)² + m⁻¹(κ_v ψ² + m⁻¹Σκ_eⱼDⱼ²)`;
   `AMSPE = g₁ + g₂ + g₃ + 2g₄`, `g₃ = D²/(ψ + D)³ · var ψ̂`, cross term
@@ -955,8 +958,17 @@ Checked to exist; read from abstracts and listings only, not the full texts.
     kurtosis raises it through `2g₄` (`+2(1 − z)²κ_e/m` relative). This agrees in sign with the app's
     simulations (PLAN: `2E[AB]` −6% under gamma, +0.5% normal). Not proved here: the Lean target is
     the first-order `2E[AB]` (`PlugIn.lean`'s cross term) in the balanced world with cumulants, `D`
-    estimated, next to `bsPrice_of_balanced_cumulants`. Possible typo in their eq. (9) (factor 2 vs 4
-    on the normal `g₃` part) not checked against the PDF.
+    estimated, next to `bsPrice_of_balanced_cumulants`. Printed check of the sign: eq. (6) is
+    `g₁ + g₂ + g₃ + 2g₄`, with `g₄ = ψDᵢ²/(m(ψ + Dᵢ)³)·[Dᵢκ_eᵢ − ψκ_v]·c`, `c = 1` for PR. So the true
+    MSPE's `κ_v` part is `−ψ²D²κ_v/(m(ψ + D)³)`. In the estimator (8) `κ_v` cancels between `2g₃` and
+    `2g₄` (the `2g₃` corrects the bias `−g₃` of `g₁(ψ̂)`), which is why (9) needs no `κ̂_v`.
+    Eq. (9) as printed: `mspe_N = g₁(ψ̂) + g₂(ψ̂) + 2D²/(m²(ψ̂ + D)³) Σ(ψ̂ + Dⱼ)²`. With
+    `var_N(ψ̂_PR) = 2m⁻²Σ(ψ + Dⱼ)²` (their eq. (4)) and `2g₃`, the coefficient should be 4 (Prasad–Rao 1990).
+    Likely a typo in arXiv v2. The kurtosis part of (9), `2D²/(m(ψ̂ + D)³)[ψ̂Dκ_e + m⁻¹tr(D²Φ)]`, checks
+    out. Simulations (their Table 1, balanced, κ ∈ {0, 3, 6}): the normal-theory PR estimator is right
+    for normal `e` whatever `κ_v`, and underestimates by up to 8–10% when `κ_e > 0`. The moment
+    condition `E|v|^(8+δ) < ∞`, `0 < δ < 1` (r.3) is this paper's; Lahiri–Rao's own conditions are
+    still unread ("certain moment conditions").
 - Used: the app's world switch "Noise shape shrinks with volume" (`params.shrink`, gamma shape
   `k·w/500`); `Engine.noiseShape` recovers the fall (J = 8, T = 10, 600 draws: skew 1.16, 0.42,
   0.14 and `γ̂N` 4.0, 0.40, 0.08 at volume 500, 5 000, 50 000).
