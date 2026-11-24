@@ -344,6 +344,10 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
+- [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
+  with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
+  `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use
+  it if the engine inverts `K_G` for many cohorts.
 - [ ] Cross term with kurtosis (2026-11-24, Finding 38, `Cumulants.crossTerm_of_balanced_cumulants`):
   the first-order `2E[AB]` of the BS plug-in, relative to `(1 − z)τ²`, is `−2(1 − 1/J)z(1 − z)(γL + γN/T)/J`
   (`D` estimated). The "Noise shape" readout's price with γ̂N (law (a) only) adds

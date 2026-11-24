@@ -26,6 +26,7 @@ import Credibility.UnequalEstimation
 import Credibility.Moments
 import Credibility.UnequalMoments
 import Credibility.OffDiagonal
+import Credibility.Henderson
 import Credibility.Damping
 import Credibility.ConeProjection
 import Credibility.GroupWeights

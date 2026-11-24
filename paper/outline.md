@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Henderson's equations (2026-11-24, `Matrix.hendersonMME`, `Matrix.pushThrough`, ported from
+  Stat-Lean): the hierarchical section may cite them as the link to mixed-model practice
+  (credibility = BLUP of the group effects); `Unequal.KG_inv_eq` for the computation.
 - Cross term of the plug-in with kurtosis (2026-11-24, Finding 38,
   `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
   ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,

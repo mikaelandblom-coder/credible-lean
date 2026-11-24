@@ -93,6 +93,8 @@ tactics.
   forms and the statistics `P`, `Qn`, `B` of the pooled fits (S53: exact Var/Cov, `cov(B, P) = 0`
   conditions, Finding 37), the balanced identity `ẑ = 1 − v̂/S²` and law (a) of S56 (first-order price of
   fitting BS), the gap between two blends as a quadratic in `z` → `Credibility/FitStatistics.lean`
+- general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,
+  binomial inverse (small form of `V⁻¹`), Henderson's mixed-model equations → `Credibility/Henderson.lean`
 - extension: damping off-diagonal entries keeps PSD/PD (README small lemma (b)) → `Credibility/OffDiagonal.lean`
 - extension: damping as shrinkage (PLAN G2): the table-optimal `θ* = Σs²/(Σs² + ΣV)` for given
   means and variances, and the safe range of `θ` → `Credibility/Damping.lean`

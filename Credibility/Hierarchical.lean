@@ -1,6 +1,7 @@
 import Credibility.Estimation
 import Credibility.OffDiagonal
 import Credibility.GroupWeights
+import Credibility.Henderson
 
 /-!
 # Bridge to hierarchical credibility: a shared group level
@@ -373,6 +374,38 @@ theorem KG_posDef [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (
     ((posDef_shrinkOffDiag (Model.sameGroup_posSemidef grp) h0 h1
       fun _ => by simp [Model.sameGroup]).smul M.τ2_pos)
     (M.errCov_posSemidef hρ)
+
+/-- The group design `Z`: `Z_jg = 1` if cohort `j` is in group `g`, `0` otherwise. -/
+def grpDesign : Matrix J G ℝ := of fun j g => if grp j = g then 1 else 0
+
+omit [DecidableEq J] in
+/-- `[g(i) = g(j)] = Z Zᵀ`. -/
+lemma sameGroup_eq_grpDesign [Fintype G] :
+    Model.sameGroup grp = grpDesign grp * (grpDesign grp)ᵀ := by
+  ext i j
+  simp [Model.sameGroup, grpDesign, Matrix.mul_apply, eq_comm]
+
+/-- **The small form of `K_G⁻¹`** (Woodbury, via `Matrix.inv_mul_mul_transpose_add`): with
+`A = K` for `(1-φ)τ²` and `Z` the group design, `K_G = A + Z(φτ²·I)Zᵀ`, so
+`K_G⁻¹ = A⁻¹ - A⁻¹Z(ZᵀA⁻¹Z + (φτ²)⁻¹·I)⁻¹ZᵀA⁻¹`: one inverse of size `J` (that of `A`, cheap
+when errors are uncorrelated) and one of size the number of groups. No block-diagonal
+errors needed; `φ > 0` so that the group covariance is invertible. -/
+theorem KG_inv_eq [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (h0 : 0 < φ)
+    (h1 : φ < 1) :
+    (M.KG grp φ)⁻¹ = (M.withLevel φ h1).K⁻¹
+      - (M.withLevel φ h1).K⁻¹ * grpDesign grp
+        * ((grpDesign grp)ᵀ * (M.withLevel φ h1).K⁻¹ * grpDesign grp
+          + (φ * M.τ2)⁻¹ • (1 : Matrix G G ℝ))⁻¹
+        * (grpDesign grp)ᵀ * (M.withLevel φ h1).K⁻¹ := by
+  have hc : 0 < φ * M.τ2 := mul_pos h0 M.τ2_pos
+  have hG : ((φ * M.τ2) • (1 : Matrix G G ℝ)).PosDef := PosDef.one.smul hc
+  have hZ : (φ * M.τ2) • Model.sameGroup grp
+      = grpDesign grp * ((φ * M.τ2) • (1 : Matrix G G ℝ)) * (grpDesign grp)ᵀ := by
+    rw [sameGroup_eq_grpDesign, Matrix.mul_smul, Matrix.mul_one, Matrix.smul_mul]
+  have hinv : ((φ * M.τ2) • (1 : Matrix G G ℝ))⁻¹ = (φ * M.τ2)⁻¹ • 1 :=
+    Matrix.inv_eq_left_inv (by rw [smul_mul_smul, Matrix.one_mul, inv_mul_cancel₀ hc.ne', one_smul])
+  rw [M.KG_eq_add_sameGroup grp h1, hZ, add_comm,
+    Matrix.inv_mul_mul_transpose_add _ hG ((M.withLevel φ h1).K_posDef hρ), hinv]
 
 /-- The moments entering the blend for cohort `j` with group levels and unequal
 lengths: the Core blend for `K_G`, the level covariance `L_G` and

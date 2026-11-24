@@ -6191,6 +6191,69 @@ $\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
   Theorem~\ref{thm:posDef_hadamard_of_diag_pos} with $A = K$, $B = R$.
 \end{proof}
 
+\section{Mixed-model algebra: Henderson's equations}
+
+General matrix lemmas for $V = ZGZ^T + R$, ported from Stat-Lean (Apache 2.0). They give a small
+form of $V^{-1}$ when the number of random effects is small.
+
+\begin{lemma}[Positive definite blocks]\label{lem:mme_posDef}
+  \lean{Matrix.PosDef.mul_mul_transpose_add, Matrix.PosDef.transpose_mul_inv_mul_add_inv}
+  \leanok
+  If $G \succ 0$ and $R \succ 0$, then $ZGZ^T + R \succ 0$ and $Z^TR^{-1}Z + G^{-1} \succ 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A congruence of a positive definite matrix is positive semidefinite; add a positive definite one.
+\end{proof}
+
+\begin{theorem}[Push-through identity]\label{thm:pushThrough}
+  \lean{Matrix.pushThrough}
+  \leanok
+  \uses{lem:mme_posDef}
+  If $G \succ 0$ and $R \succ 0$, then
+  $GZ^T(ZGZ^T + R)^{-1} = (Z^TR^{-1}Z + G^{-1})^{-1}Z^TR^{-1}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef}
+  $(Z^TR^{-1}Z + G^{-1})\,GZ^T = Z^TR^{-1}(ZGZ^T + R)$; multiply by the two inverses.
+\end{proof}
+
+\begin{theorem}[Binomial inverse]\label{thm:inv_mul_mul_transpose_add}
+  \lean{Matrix.inv_mul_mul_transpose_add}
+  \leanok
+  \uses{lem:mme_posDef}
+  If $G \succ 0$ and $R \succ 0$, then
+  $(ZGZ^T + R)^{-1} = R^{-1} - R^{-1}Z(Z^TR^{-1}Z + G^{-1})^{-1}Z^TR^{-1}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef}
+  Multiply the right side by $ZGZ^T + R$ on the left: $(ZGZ^T + R)R^{-1}Z = ZG(Z^TR^{-1}Z + G^{-1})$,
+  so the product is $I$.
+\end{proof}
+
+\begin{theorem}[Henderson's mixed-model equations]\label{thm:hendersonMME}
+  \lean{Matrix.hendersonMME}
+  \leanok
+  \uses{thm:pushThrough}
+  Let $G \succ 0$, $R \succ 0$, $V = ZGZ^T + R$. Then $(\hat\beta, \hat b)$ solves
+  \[
+    \begin{pmatrix} X^TR^{-1}X & X^TR^{-1}Z \\ Z^TR^{-1}X & Z^TR^{-1}Z + G^{-1}\end{pmatrix}
+    \begin{pmatrix}\hat\beta \\ \hat b\end{pmatrix}
+    = \begin{pmatrix} X^TR^{-1}y \\ Z^TR^{-1}y\end{pmatrix}
+  \]
+  if and only if $\hat b = GZ^TV^{-1}(y - X\hat\beta)$ (the BLUP) and
+  $X^TV^{-1}X\hat\beta = X^TV^{-1}y$ (GLS).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef, thm:pushThrough, thm:inv_mul_mul_transpose_add}
+  By the push-through identity the second block row is $(Z^TR^{-1}Z + G^{-1})(\hat b - \text{BLUP}) = 0$,
+  and the precision block is invertible. Given that, the binomial inverse turns
+  $X^TR^{-1}Z\,GZ^TV^{-1}$ into $X^TR^{-1} - X^TV^{-1}$, so the first row is the GLS equation.
+\end{proof}
+
 \section{Damping}
 
 \begin{definition}[Damped matrix]\label{def:shrinkOffDiag}
@@ -7435,6 +7498,26 @@ that of Definition~\ref{def:U_Noise} plus the group component.
   $S \succeq 0$ has unit diagonal, so $S^\phi \succ 0$ by
   Theorem~\ref{thm:shrinkOffDiag_posDef}, and $\Sigma \succeq 0$ by
   Lemma~\ref{lem:U_errCov_posSemidef}.
+\end{proof}
+
+\begin{theorem}[Small form of $K_G^{-1}$]\label{thm:U_KG_inv_eq}
+  \lean{Credibility.Unequal.KG_inv_eq, Credibility.Unequal.grpDesign,
+        Credibility.Unequal.sameGroup_eq_grpDesign}
+  \leanok
+  \uses{def:U_KG, thm:inv_mul_mul_transpose_add}
+  Let $Z$ be the $J \times G$ group design, $Z_{jg} = [g(j) = g]$, so $S = ZZ^T$, and
+  $A = K(M_\phi)$. If every block $R_t$ is positive semidefinite and $0 < \phi < 1$, then
+  \[
+    K_G^{-1} = A^{-1} - A^{-1}Z\bigl(Z^TA^{-1}Z + (\phi\tau^2)^{-1}I\bigr)^{-1}Z^TA^{-1}.
+  \]
+  Besides $A^{-1}$ (diagonal when errors are uncorrelated) only a matrix of the size of the
+  number of groups is inverted, and errors may be correlated across groups.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_KG_eq, thm:U_K_posDef, thm:inv_mul_mul_transpose_add}
+  $K_G = A + Z(\phi\tau^2 I)Z^T$ (Lemma~\ref{lem:U_KG_eq}), $A \succ 0$
+  (Theorem~\ref{thm:U_K_posDef}), then Theorem~\ref{thm:inv_mul_mul_transpose_add}.
 \end{proof}
 
 \begin{theorem}[Eq.\ (26) with group levels and unequal lengths]\label{thm:U_bestZ_G_eq}

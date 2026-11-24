@@ -989,9 +989,12 @@ was seen there, but nothing was built and the files they import were not checked
 - Not there: REML or any estimation of variance components (our `Expectation`/`Estimation`/
   `FactorEstimation` go further).
 Used: not as a dependency, because the toolchains differ and its measure-based `covMatrix` does not fit
-our moment tables (`Core.Target`). *Candidate port* (in **lean**, with an attribution comment):
-`pushThrough` and `hendersonMME`. They give the small form of `K⁻¹` for the hierarchical files
-(`Hierarchical.lean`, `K = ZGZᵀ + R` with few groups) and the app's engine. Its Gaussian
+our moment tables (`Core.Target`). **Ported** (2026-11-24, attribution comment, any finite index
+types instead of `Fin n`, `X`, `Z` instead of `LMMDesign`): `pushThrough`, `hendersonMME` and the
+binomial inverse (`inv_mul_mul_transpose_add`, made public) in `Credibility/Henderson.lean`. They
+give the small form of `K_G⁻¹` (`Unequal.KG_inv_eq`, also with errors correlated across groups). They
+do not shorten the existing hierarchical proofs: those use a rank-one term along `1` with `c ≥ 0`
+(`φ = 0` allowed, where `G = φτ²I` is not invertible) and block-diagonal `K`, both already short. Its Gaussian
 conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,
 AI4SLT (arXiv 2602.02285), FormalSLT.
 
