@@ -1004,6 +1004,9 @@ test('gain against price (S56–S57): exact plug-in gains on corrBS’s K̂; reg
   const { data } = E.draw(E.makeWorld({ rho: 0.6 }), r), g = E.gainPrice(data);
   assert.ok(g.gain.corrBSoverBS >= -1e-12 && g.gain.blupOverBlend >= -1e-12 && g.gain.regionVariances >= -1e-12, 'the floor is optimal on K̂ (Core.bestZ_eq, blupWeight_optimal)');
   assert.ok(g.price.regionVariances > 0 && g.price.fitBS > 0);
+  const J = data.X.length, ge = E.gainPrice(data, { lawB: 'exact' });
+  assert.ok(Math.abs(ge.price.regionVariances - (1 - 1 / J) ** 2 * g.price.regionVariances) < 1e-12 * g.price.regionVariances,
+    'law (b): exact = (1 − 1/J)² · bound (Cumulants.ownPrice_sub_pooled_of_balanced, _le_of_balanced)');
   let reg0 = 0, reg2 = 0, n0 = 0, n2 = 0;
   const w0 = E.makeWorld({ T: 10 }), w2 = E.makeWorld({ T: 10, noiseSpread: 2 });
   for (let k = 0; k < 60; k++) {

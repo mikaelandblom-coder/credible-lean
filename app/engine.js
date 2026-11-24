@@ -742,7 +742,10 @@
    * and the first-order prices of S56 (relative to the floor, per region, floor-weighted):
    *   fitting BS at all: law (a) in its exact balanced form, bsPriceLaw (with the noise kurtosis γ̂N of
    *   noiseShape and the level kurtosis `opts.gammaL`, a sensitivity, default 0); `fitBSNormal` without
-   *   the kurtosis terms;  own variances ≈ zⱼ(1 − zⱼ)·2/(T − 1) (law (b), not proved yet).
+   *   the kurtosis terms;  own variances ≈ zⱼ(1 − zⱼ)·2/(T − 1) (law (b): the proved upper bound,
+   *   Cumulants.ownPrice_sub_pooled_le_of_balanced; the exact balanced form is (1 − 1/J)² times it,
+   *   Cumulants.ownPrice_sub_pooled_of_balanced, `opts.lawB = 'exact'`; S57 kept the bound: same mean
+   *   regret, worst case 3.3 against 4.9, the slack offsetting the law's understatement at low z).
    * Estimating one ρ is nearly free (S54), and the BLUP uses the same K̂ as the blend, so the only real
    * trade-off is the variances: verdict 'region' when their gain exceeds their price, else 'pooled'.
    * `valid`: share of the volume in regions with ẑⱼ ≥ 0.5, where the price laws hold (S56).
@@ -772,7 +775,8 @@
     const z = f.z.map((x) => Math.min(Math.max(x, 1e-6), 1 - 1e-6));
     const pf = (g) => sum(z.map((zj, j) => wt[j] * g(zj) * floorJ[j])) / wall / floor;
     const shape = noiseShape(data), gN = shape ? shape.kurt : 0;
-    const priceFit = pf((zj) => bsPriceLaw(zj, J, T, gammaL, gN)), priceVar = pf((zj) => zj * (1 - zj) * 2 / (T - 1));
+    const priceFit = pf((zj) => bsPriceLaw(zj, J, T, gammaL, gN)), lawB = opts && opts.lawB === 'exact' ? (1 - 1 / J) ** 2 : 1,
+      priceVar = pf((zj) => lawB * zj * (1 - zj) * 2 / (T - 1));
     const priceNormal = pf((zj) => bsPriceLaw(zj, J, T, 0, 0));
     // The kurtosis terms are linear in γL and γN: their parts, and the price per unit of γL.
     const perGammaL = pf((zj) => bsPriceLaw(zj, J, T, 1, 0)) - priceNormal;
@@ -796,7 +800,7 @@
     const f = branch === 'pooled' ? fitVC(data, { pooled: true }) : full;
     const upto = full.steps.findIndex((x) => x.name === 'K̂') + 1;
     const choice = { name: 'variances: gain against price', formula: F.gainPrice, values: g ? [g.gain.regionVariances, g.price.regionVariances] : [0, 0], badge: 'not proved yet', gap: 'G1',
-      note: `the gain is exact on K̂ (mse_blend_eq_blup_add form), the price a first-order law (studies S56, holds for ẑ ≥ 0.6)${g ? `; ${branch === 'pooled' ? 'gain below price: one pooled σ̂²' : 'gain above price: region variances'}` : '; τ̂² = 0: nothing to trade, region variances kept'}` };
+      note: `the gain is exact on K̂ (mse_blend_eq_blup_add form), the price a first-order law, proved in the balanced world as an upper bound (Cumulants.ownPrice_sub_pooled_le_of_balanced; studies S56, holds for ẑ ≥ 0.6)${g ? `; ${branch === 'pooled' ? 'gain below price: one pooled σ̂²' : 'gain above price: region variances'}` : '; τ̂² = 0: nothing to trade, region variances kept'}` };
     const redo = branch === 'pooled'
       ? f.steps.filter((x) => ['σ̃ⱼ²', 'ρ̂', 'τ̂²', 'K̂'].includes(x.name)).map((x) => Object.assign({}, x, { name: `${x.name} (pooled)`, branch }))
       : [];
@@ -1504,7 +1508,7 @@
       intro: 'Correlated Bühlmann–Straub, with the variance step decided by the data: region variances σ̃ⱼ² when their exact gain on K̂ exceeds their first-order price, else one pooled σ̂² (studies S56–S57: regret at most 3 points against the better of the two, 1.2 points better than corrBS on average). Nothing to tune.',
       branches: { pooled: 'the gain of region variances is below their price' },
       steps: RECIPES.vc.steps.slice(0, upto).concat(
-        [{ name: 'variances: gain against price', formula: F.gainPrice, badge: 'not proved yet', gap: 'G1', note: 'the gain is exact for the fitted K̂ (CoreMoments.mse_blend_eq_blup_add); the price is a first-order law, studies S56 (holds for ẑ ≥ 0.6)' }],
+        [{ name: 'variances: gain against price', formula: F.gainPrice, badge: 'not proved yet', gap: 'G1', note: 'the gain is exact for the fitted K̂ (CoreMoments.mse_blend_eq_blup_add); the price is a first-order law, studies S56 (holds for ẑ ≥ 0.6), proved in the balanced world as an upper bound (Cumulants.ownPrice_sub_pooled_le_of_balanced)' }],
         pooledRedo,
         RECIPES.vc.steps.filter((x) => ['b', 'z', 'rates'].includes(x.name)),
         [premiumStep(`K̂ from the chosen branch; ${BLEND_MSE}`)]),

@@ -392,6 +392,10 @@ One chat per step; none needs Lean except step 5.
   J = 8. Switching to the exact form makes the 'region' verdict more likely; S56 saw (b) overstate
   1.1–2× for z ≥ 0.6 but understate up to 5× below z ≈ 0.3 (bias of 1/σ̂ⱼ², not first order), so
   recheck the regret table of S57 before switching; relabel (b) "proved in the balanced world".
+  *Done 2026-11-24 (S58):* the exact form keeps the mean regret (−0.5) but worsens the worst world (equal
+  σⱼ, ρ = 0, T = 5: 2.8 → 4.9), so `priceVar` keeps the bound, now cited as proved
+  (`ownPrice_sub_pooled_le_of_balanced`); `opts.lawB = 'exact'` for comparison, Node test exact = (1 − 1/J)²·bound;
+  page and recipe relabelled "proved in the balanced world". Next, if any: a price for the low-z bias of 1/σ̂ⱼ².
   *Caveat (2026-11-24, literature §10m, Chen–Lahiri–Rao):* law (a) prices `E B²` only. Under
   non-normality the cross term `2E[AB]` is first order too. For the levels it is `−2z(1 − z)γL/J`
   (with D known), so the γL sensitivity row overstates; the net effect of level kurtosis is

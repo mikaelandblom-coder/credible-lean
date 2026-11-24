@@ -2,12 +2,12 @@
 // plug-in oracle gain against the first-order price z(1 − z)·2/(T − 1), S56) pick the better corrBS?
 // "auto" = corrBS with pooled variances when the verdict is 'pooled', else corrBS. Same draws for all
 // (paired), factorial over σⱼ spread × ρ × T × regime, gamma noise (the app's default). MSE in % of the floor.
-// Run: node studies/gain-price.js [draws]
+// Run: node studies/gain-price.js [draws] [bound|exact]  (law (b) form; exact output in gain-price.exact.out.txt, S58)
 'use strict';
 const E = require('../app/engine.js');
 const L = require('./lib.js');
-const N = +(process.argv[2] || 600);
-console.log(`J = 8, gamma noise, ${N} draws; MSE in % of the blend floor; regret = auto − better of corrBS / corrBS pooled (± 2 SE)`);
+const N = +(process.argv[2] || 600), lawB = process.argv[3] || 'bound'; // 'exact': (1 − 1/J)² times it (S58)
+console.log(`J = 8, gamma noise, ${N} draws, law (b) ${lawB}; MSE in % of the blend floor; regret = auto − better of corrBS / corrBS pooled (± 2 SE)`);
 console.log('world                         | z range   | corrBS | pooled | auto | picks region | regret');
 const rows = [];
 for (const p of L.grid({ regime: ['app', 'thesis'], noiseSpread: [0, 1, 2], rho: [0, 0.6], T: [5, 10] })) {
@@ -17,7 +17,7 @@ for (const p of L.grid({ regime: ['app', 'thesis'], noiseSpread: [0, 1, 2], rho:
   for (let k = 0; k < N; k++) {
     const { levels, data } = E.draw(world, r), se = (x) => E.weightedSE(data, x, levels);
     F.push(se(fl.apply(data).rates));
-    const a = se(E.fitVC(data).rates), b = se(E.fitVC(data, { pooled: true }).rates), g = E.gainPrice(data);
+    const a = se(E.fitVC(data).rates), b = se(E.fitVC(data, { pooled: true }).rates), g = E.gainPrice(data, { lawB });
     const reg = g ? g.verdict === 'region' : false;
     A.push(a); B.push(b); C.push(reg ? a : b);
     if (reg) region++;

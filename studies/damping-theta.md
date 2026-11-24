@@ -615,3 +615,21 @@ gamma noise), 600 draws, paired.
 **Consequence.** The first decision rule built from formulas instead of a simulated threshold. Candidate
 for the app's recommended fit: corrBS with the variance step chosen by `gainPrice`. It needs its own
 recipe, a conditional step like "BLUP auto". `PLAN.md` Pending, "Gain against price".
+
+## The exact law (b) in the verdict (`studies/gain-price.js … exact`, 2026-11-24)
+
+Purpose: decide. Law (b) is now proved in the balanced world: the exact first-order price is
+(1 − 1/J)²·z(1 − z)·2/(T − 1) (`Cumulants.ownPrice_sub_pooled_of_balanced`), and the study's form is its
+upper bound (`ownPrice_sub_pooled_le_of_balanced`), 1.31× at J = 8. Same 24 worlds and draws as S57, the
+verdict priced with the exact form.
+
+- S58. *[numerical]* **The bound decides better than the exact form.** Mean regret unchanged (−0.5), but
+    the worst world gets worse: equal σⱼ, ρ = 0, T = 5 (z 0.13–0.76) goes from 2.8 ± 2.3 to 4.9 ± 2.6
+    (region picked in 34% of draws against 23%); within 2 SE of 0 in 15 of 24 against 16. It helps only
+    in the thesis regime with a σⱼ spread at T = 5 (1.2 → 0.5, 1.0 → 0.5). Against corrBS: −1.1 against
+    −1.2. Why: below z ≈ 0.3 law (b) understates the true price up to 5× (S56, the bias of 1/σ̂ⱼ², not
+    first order), and the bound's slack partly offsets it.
+
+**Consequence.** `Engine.gainPrice` keeps the bound (now proved as a bound), `opts.lawB = 'exact'` for
+comparison; the app labels (b) "proved in the balanced world". A price that tracks the low-z bias would be
+the next improvement, not the exact first-order form.
