@@ -484,10 +484,28 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       ['BLUP over the blend (use each region individually)', g.gain.blupOverBlend, 'none extra: the same K̂', 'BLUP'],
       ['Region variances over one pooled σ̂²', g.gain.regionVariances, pr(g.price.regionVariances), g.verdict === 'region' ? 'region variances' : 'pooled σ̂²'],
     ];
-    $('gp-data').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>Gain against price</b> (this draw, data only): what each richer choice gains, exactly, if the fitted K̂ and τ̂² were the truth, against what estimating its extra parameters costs to first order. In % of the best blend’s MSE. Gains <span class="badge proved">proved</span> for a given table (${lean('Core.Estimates.mse_blend_eq_blup_add')}); prices <span class="badge open">not proved yet</span> (studies S56, z(1 − z)·2/(T − 1) for the variances).</p>
+    $('gp-data').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>Gain against price</b> (this draw, data only): what each richer choice gains, exactly, if the fitted K̂ and τ̂² were the truth, against what estimating its extra parameters costs to first order. In % of the best blend’s MSE. Gains <span class="badge proved">proved</span> for a given table (${lean('Core.Estimates.mse_blend_eq_blup_add')}); the price of the variances <span class="badge open">not proved yet</span> (studies S56 law (b), z(1 − z)·2/(T − 1)).</p>
       <div class="tablewrap"><table><thead><tr><th>Choice</th><th>Gain</th><th>Price</th><th>Verdict</th></tr></thead><tbody>` +
       rows.map((r) => `<tr><td>${r[0]}</td><td>${pct(r[1], 1)}</td><td>${r[2]}</td><td>${r[1] < 5e-4 ? 'no difference' : r[3]}</td></tr>`).join('') +
-      `</tbody></table></div><p class="sub" style="margin:6px 0 0">The price laws hold where ẑ ≥ 0.6: ${pct(g.valid, 0)} of the volume in this draw. ${ok ? `Fitting credibility at all costs about ${pct(g.price.fitBS, 1)} of the floor here (S56 (a): (2/J)·T/(T − 1)·(1 − z)/z).` : 'Below half, the variance verdict still uses the law, which there understates the price (S56).'} The fit “corrBS g/p” applies the last row’s verdict. Gains on an estimated K̂ are themselves estimates: with no real correlation or spread they come out a little above 0.</p>`;
+      `</tbody></table></div><p class="sub" style="margin:6px 0 0">The price laws hold where ẑ ≥ 0.6: ${pct(g.valid, 0)} of the volume in this draw. ${ok ? `Fitting credibility at all costs about ${pct(g.price.fitBS, 1)} of the floor here (law (a), below).` : 'Below half, the variance verdict still uses the law, which there understates the price (S56).'} The fit “corrBS g/p” applies the last row’s verdict. Gains on an estimated K̂ are themselves estimates: with no real correlation or spread they come out a little above 0.</p>` + renderNoiseShape(g);
+  }
+
+  // ---------- noise shape and law (a) with its kurtosis terms (Cumulants.bsPrice_of_balanced_cumulants)
+  function renderNoiseShape(g) {
+    const sh = g.noiseShape, p = g.price, f2 = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2);
+    const shapeTxt = sh
+      ? `residual skewness ${f2(sh.skew)} ± ${sh.skewSE.toFixed(2)}, excess kurtosis γ̂N = ${f2(sh.kurt)} ± ${sh.kurtSE.toFixed(2)} (N = ${sh.N} residuals; ± the standard errors under normal noise, √(6/N) and √(24/N); 0 and 0 for normal noise)`
+      : 'too few years to read it (T < 3)';
+    const lvl = [3, 6].map((gl) => `γL = ${gl}: ${pct(p.fitBS + gl * p.fitBSPerGammaL, 1)}`).join(', ');
+    const head = `<p class="sub" style="margin:10px 0 4px"><b>Noise shape</b> (this draw, data only): ${shapeTxt}. Read from the pooled within-region residuals scaled by √w, by unbiased moment equations per region (the fourth moments of a quadratic form).</p>`;
+    if (g.valid < 0.5) return head + `<p class="sub" style="margin:6px 0 0">Law (a), the price of fitting BS with its kurtosis terms (${lean('Cumulants.bsPrice_of_balanced_cumulants')}), is not shown: less than half the volume has ẑ ≥ 0.6, where the first-order law holds.</p>`;
+    return head + `
+      <div class="tablewrap"><table><thead><tr><th>Price of fitting BS (law (a))</th><th>% of floor</th></tr></thead><tbody>
+      <tr><td>Normal noise and levels (no kurtosis terms)</td><td>${pct(p.fitBSNormal, 2)}</td></tr>
+      <tr><td>With the noise kurtosis γ̂N z²/(JT)</td><td>${pct(p.fitBSNormal + p.fitBSNoiseKurt, 2)}</td></tr>
+      <tr><td>Level kurtosis γL (sensitivity, per unit)</td><td>+${pct(p.fitBSPerGammaL, 2)}</td></tr>
+      </tbody></table></div>
+      <p class="sub" style="margin:6px 0 0">Law (a): (1 − 1/J)(1 − z)/z · [2/(J(T − 1)) + 2/(J − 1) + γL z²/J + γN z²/(JT)], per region at ẑⱼ, floor-weighted. <span class="badge proved">proved</span> in the balanced world (equal volumes, one σ², no correlation; any distribution with zero third cumulants): ${lean('Cumulants.bsPrice_of_balanced_cumulants')}; with unequal volumes it is applied region by region. γL, the levels’ excess kurtosis, cannot be estimated from a handful of regions, so it is a sensitivity: ${lvl}. <b>Use it:</b> the noise term carries 1/T and rarely moves the price; heavy-tailed levels (a few extreme regions) do. <b>Watch out:</b> the standard errors hold for normal noise only: with skewed noise one draw’s γ̂N spreads far wider (default world, gamma noise with kurtosis 3: mean 2.8, median 1.5, SD about 4.5 against √(24/N) = 0.55), so a single readout mostly says “clearly not normal” or not; the skewness reads about 20% low (a skewed draw raises σ̂ⱼ with it), γ̂N runs high for T ≤ 5, and shared year shocks make the SEs smaller still than the truth.</p>`;
   }
 
   // ---------- download the data the fit sees

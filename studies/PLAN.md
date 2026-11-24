@@ -371,7 +371,15 @@ One chat per step; none needs Lean except step 5.
   balanced world)*. *Corrected for kurtosis (2026-11-24, `bsPrice_of_balanced_cumulants`):* add
   κL/(Js²) + γN z²/(JT) inside the bracket, γN the pooled residual excess kurtosis (estimable), κL/s²
   the levels' (not estimable with few regions: a sensitivity). Candidate for the "noise shape"
-  readout: price with and without the kurtosis terms.
+  readout: price with and without the kurtosis terms. *Built 2026-11-24:* `priceFit` is the exact law
+  (a) with γ̂N (`Engine.bsPriceLaw`, `gainPrice(data, { gammaL })`), `Engine.noiseShape` (unbiased
+  per-region moment equations for σ⁴, κ₄ of the √w-scaled residuals, pooled as ratios); the "Noise
+  shape" readout under Gain against price (skew, γ̂N with normal-case SEs √(6/N), √(24/N); price
+  without, with γ̂N, and per unit γL; γL = 3, 6), law (a) badged proved in the balanced world. **Seen:**
+  the normal-case SE is far too small for skewed noise (gamma, kurtosis 3, J = 8, T = 10: one draw's
+  γ̂N mean 2.8, median 1.5, SD ≈ 4.5 against 0.55; T = 5: mean 5.3); skewness reads ~20% low. The
+  noise term γN z²/(JT) moves the price by < 1 point in the default world; γL adds ≈ 2 points per unit.
+  Open: an SE for γ̂N from the data (eighth moments, or a jackknife over regions).
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch

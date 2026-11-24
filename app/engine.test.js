@@ -1039,3 +1039,39 @@ test('Conditional recipes: every branch of BLUP auto and corrBS g/p is reached, 
     for (const b of want) assert.ok(seen.has(b), `${id}: branch ${b} reached`);
   }
 });
+
+test('law (a) exact form (Cumulants.bsPrice_of_balanced_cumulants): κ = 0 gives bsPrice_of_balanced, below the old bound; kurtosis terms as in Lean', () => {
+  for (const [J, T] of [[2, 2], [8, 10], [30, 4]]) for (const z of [0.3, 0.6, 0.9]) {
+    const exact0 = (2 / J) * (1 + (J - 1) / (J * (T - 1))) * (1 - z) / z;
+    assert.ok(Math.abs(E.bsPriceLaw(z, J, T, 0, 0) - exact0) < 1e-12, 'bsPrice_of_balanced');
+    assert.ok(E.bsPriceLaw(z, J, T, 0, 0) <= (2 / J) * T / (T - 1) * (1 - z) / z + 1e-12, 'bsPrice_le_of_balanced');
+    // Lean's bracket: κL/(J s²) + κN/σ⁴ · z²/(JT), s = τ² + σ²/(wT); here τ² = 1, σ²/(wT) = 1/z − 1.
+    const tau2 = 1, s = tau2 / z, gL = 1.7, gN = 2.3, kL = gL * tau2 * tau2;
+    const lean = (1 - 1 / J) * (1 - z) / z * (2 / (J * (T - 1)) + 2 / (J - 1) + kL / (J * s * s) + gN * z * z / (J * T));
+    assert.ok(Math.abs(E.bsPriceLaw(z, J, T, gL, gN) - lean) < 1e-12, 'kurtosis terms');
+  }
+});
+
+test('noise shape: pooled √w-scaled residuals recover the noise excess kurtosis (gamma shape k: 6/k), ≈ 0 when normal; skewness reads low', () => {
+  const avg = (params, n) => {
+    const w = E.makeWorld(params), r = E.rng(17); let sk = 0, ku = 0, m = 0;
+    for (let k = 0; k < n; k++) { const s = E.noiseShape(E.draw(w, r).data); if (s) { sk += s.skew; ku += s.kurt; m++; } }
+    return { skew: sk / m, kurt: ku / m };
+  };
+  const nrm = avg({ normal: true }, 300), gam = avg({ noiseShape: 2 }, 1000);
+  assert.ok(Math.abs(nrm.kurt) < 0.25 && Math.abs(nrm.skew) < 0.1, `normal: ${JSON.stringify(nrm)}`);
+  assert.ok(Math.abs(gam.kurt - 3) < 0.5, `gamma(2) kurtosis 3 (one draw's SD ≈ 4.5, mean ≈ 2.8): ${gam.kurt}`);
+  assert.ok(gam.skew > 0.9 && gam.skew < Math.SQRT2, `gamma(2) skewness √2, read low: ${gam.skew}`);
+  const s = E.noiseShape(E.draw(E.makeWorld({}), E.rng(1)).data);
+  assert.ok(Math.abs(s.skewSE - Math.sqrt(6 / s.N)) < 1e-12 && Math.abs(s.kurtSE - Math.sqrt(24 / s.N)) < 1e-12 && s.N === 80);
+});
+
+test('gain against price: law (a) with and without the kurtosis terms; γL a sensitivity, linear', () => {
+  const { data } = E.draw(E.makeWorld({}), E.rng(81));
+  const g0 = E.gainPrice(data), g3 = E.gainPrice(data, { gammaL: 3 }), p = g0.price;
+  assert.ok(g0.noiseShape && p.fitBSNormal > 0 && p.fitBSPerGammaL > 0);
+  assert.ok(Math.abs(p.fitBS - (p.fitBSNormal + p.fitBSNoiseKurt)) < 1e-12, 'γL = 0: normal + noise term');
+  assert.equal(Math.sign(p.fitBSNoiseKurt), Math.sign(g0.noiseShape.kurt), 'the noise term has the sign of γ̂N');
+  assert.ok(Math.abs(g3.price.fitBS - p.fitBS - 3 * p.fitBSPerGammaL) < 1e-12, 'linear in γL');
+  assert.equal(g3.verdict, g0.verdict, 'law (a) does not enter the variance verdict');
+});

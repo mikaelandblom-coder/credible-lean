@@ -677,19 +677,69 @@
   }
 
   /**
+   * Law (a), the first-order price of fitting Bühlmann–Straub's z, relative to (1 − z)τ², exact in the
+   * balanced world with fourth cumulants (Cumulants.bsPrice_of_balanced_cumulants):
+   *   (1 − 1/J)(1 − z)/z · [2/(J(T − 1)) + 2/(J − 1) + γL z²/J + γN z²/(JT)],
+   * γN = κN/σ⁴ the excess kurtosis of the noise, γL = κL/τ⁴ that of the levels (κL/(Js²) = γL z²/J,
+   * s = τ² + σ²/(wT) = τ²/z). With γL = γN = 0 it is (2/J)(1 + (J − 1)/(J(T − 1)))(1 − z)/z
+   * (bsPrice_of_balanced), below the old bound (2/J)·T/(T − 1)·(1 − z)/z (bsPrice_le_of_balanced).
+   */
+  function bsPriceLaw(z, J, T, gammaL, gammaN) {
+    return (1 - 1 / J) * (1 - z) / z * (2 / (J * (T - 1)) + 2 / (J - 1) + (gammaL || 0) * z * z / J + (gammaN || 0) * z * z / (J * T));
+  }
+
+  /**
+   * Noise shape from the pooled within-region residuals scaled by √w: rⱼₜ = √wⱼₜ(Xⱼₜ − μ̂ⱼ) = (Mε)ₜ with
+   * εₜ = √wⱼₜ·noise (variance σⱼ², third and fourth cumulants κ₃ⱼ, κ₄ⱼ) and M = I − vvᵀ, vₜ = √aₜ,
+   * aₜ = wⱼₜ/wⱼ*. For independent years (Cumulants: moments of quadratic forms)
+   *   E Σₜ rₜ⁴ = 3σ⁴ Σₜ Mₜₜ² + κ₄ Σₜₛ Mₜₛ⁴,  E (Σₜ rₜ²)² = σ⁴((T − 1)² + 2(T − 1)) + κ₄ Σₜ Mₜₜ²,
+   *   E Σₜ rₜ³ = κ₃ Σₜₛ Mₜₛ³,
+   * solved per region for unbiased σ⁴ⱼ, κ₄ⱼ (and κ₃ⱼ, σ̂ⱼ² = Σrₜ²/(T − 1)); pooled as ratios of sums:
+   *   skew = Σⱼ κ̂₃ⱼ / Σⱼ σ̂ⱼ³,  kurt (excess, γ̂N) = Σⱼ κ̂₄ⱼ / Σⱼ σ̂⁴ⱼ.
+   * Standard errors of the normal case √(6/N), √(24/N), N = JT residuals: under skewed noise one draw's
+   * γ̂N spreads far wider (gamma noise with kurtosis 3, J = 8, T = 10: mean 2.8, median 1.5, SD ≈ 4.5;
+   * T = 5: mean 5.3), and the skewness reads about 20% low (σ̂ⱼ rises with a skewed draw). Year shocks shared across
+   * regions are part of each region's noise here (they make the residuals of different regions
+   * dependent, so the SEs are then too small). Null when T < 3 or the pooled σ⁴ is not positive.
+   */
+  function noiseShape(data) {
+    const J = data.X.length, T = data.X[0].length, { wt, m } = cohortMeans(data);
+    if (T < 3) return null;
+    let k3 = 0, s3 = 0, k4 = 0, s4 = 0;
+    for (let j = 0; j < J; j++) {
+      const a = data.w[j].map((x) => x / wt[j]), r = data.X[j].map((x, t) => Math.sqrt(data.w[j][t]) * (x - m[j]));
+      const M = (t, s) => (t === s ? 1 : 0) - Math.sqrt(a[t] * a[s]);
+      let mm = 0, c4 = 0, c3 = 0;
+      for (let t = 0; t < T; t++) { mm += M(t, t) ** 2; for (let s = 0; s < T; s++) { c4 += M(t, s) ** 4; c3 += M(t, s) ** 3; } }
+      const A = sum(r.map((x) => x ** 4)), R2 = sum(r.map((x) => x * x)), B = R2 * R2, n2 = (T - 1) * (T - 1) + 2 * (T - 1);
+      const det = 3 * mm * mm - c4 * n2;
+      s4 += (A * mm - c4 * B) / det;
+      k4 += (3 * mm * B - n2 * A) / det;
+      k3 += sum(r.map((x) => x ** 3)) / c3;
+      s3 += Math.pow(R2 / (T - 1), 1.5);
+    }
+    if (!(s4 > 0) || !(s3 > 0)) return null;
+    const N = J * T;
+    return { N, skew: k3 / s3, skewSE: Math.sqrt(6 / N), kurt: k4 / s4, kurtSE: Math.sqrt(24 / N) };
+  }
+
+  /**
    * Gain against price (studies/PLAN.md Pending; damping-theta.md S53–S56), from the data only. On
    * corrBS's fitted table K̂, τ̂² (taken as the truth), the exact oracle gains in MSE, as fractions of the
    * best blend's MSE (`floor`):
    *   corrBS over BS (BS's weights at its limiting σ², τ² under K̂), BLUP over the blend, and region
    *   variances σ̃ⱼ² over one pooled σ̄² (the same K̂ with σ̄² in every region);
    * and the first-order prices of S56 (relative to the floor, per region, floor-weighted):
-   *   fitting BS at all ≈ (2/J)·T/(T − 1)·(1 − zⱼ)/zⱼ,  own variances ≈ zⱼ(1 − zⱼ)·2/(T − 1).
+   *   fitting BS at all: law (a) in its exact balanced form, bsPriceLaw (with the noise kurtosis γ̂N of
+   *   noiseShape and the level kurtosis `opts.gammaL`, a sensitivity, default 0); `fitBSNormal` without
+   *   the kurtosis terms;  own variances ≈ zⱼ(1 − zⱼ)·2/(T − 1) (law (b), not proved yet).
    * Estimating one ρ is nearly free (S54), and the BLUP uses the same K̂ as the blend, so the only real
    * trade-off is the variances: verdict 'region' when their gain exceeds their price, else 'pooled'.
    * `valid`: share of the volume in regions with ẑⱼ ≥ 0.5, where the price laws hold (S56).
    * Returns null when τ̂² = 0 (no credibility to trade).
    */
-  function gainPrice(data) {
+  function gainPrice(data, opts) {
+    const gammaL = (opts && opts.gammaL) || 0;
     const f = fitVC(data), J = f.means.length, T = data.X[0].length, wt = data.w.map(sum), wall = sum(wt);
     const K = f.K, t2 = f.tau2;
     if (!(t2 > 0)) return null;
@@ -711,11 +761,16 @@
     const pooled = avg(blendRows(Kp));
     const z = f.z.map((x) => Math.min(Math.max(x, 1e-6), 1 - 1e-6));
     const pf = (g) => sum(z.map((zj, j) => wt[j] * g(zj) * floorJ[j])) / wall / floor;
-    const priceFit = pf((zj) => (2 / J) * T / (T - 1) * (1 - zj) / zj), priceVar = pf((zj) => zj * (1 - zj) * 2 / (T - 1));
+    const shape = noiseShape(data), gN = shape ? shape.kurt : 0;
+    const priceFit = pf((zj) => bsPriceLaw(zj, J, T, gammaL, gN)), priceVar = pf((zj) => zj * (1 - zj) * 2 / (T - 1));
+    const priceNormal = pf((zj) => bsPriceLaw(zj, J, T, 0, 0));
+    // The kurtosis terms are linear in γL and γN: their parts, and the price per unit of γL.
+    const perGammaL = pf((zj) => bsPriceLaw(zj, J, T, 1, 0)) - priceNormal;
     const gainVar = (pooled - floor) / floor;
     return {
       floor, gain: { corrBSoverBS: (bs - floor) / floor, blupOverBlend: (floor - blup) / floor, regionVariances: gainVar },
-      price: { fitBS: priceFit, regionVariances: priceVar },
+      price: { fitBS: priceFit, fitBSNormal: priceNormal, fitBSNoiseKurt: priceFit - priceNormal - gammaL * perGammaL, fitBSPerGammaL: perGammaL, gammaL, regionVariances: priceVar },
+      noiseShape: shape,
       valid: sum(f.z.map((zj, j) => (zj >= 0.5 ? wt[j] : 0))) / wall,
       verdict: gainVar > priceVar ? 'region' : 'pooled',
     };
@@ -1893,7 +1948,7 @@
   }
 
   return {
-    taperSignal, fitBLUPAuto, fitVCGP, loyoLoss, fitBLUPLoyo, gainPrice,
+    taperSignal, fitBLUPAuto, fitVCGP, loyoLoss, fitBLUPLoyo, gainPrice, bsPriceLaw, noiseShape,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
