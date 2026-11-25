@@ -1181,7 +1181,7 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     `Σⱼ uⱼ(1 − zⱼ)²(m − θⱼ)²` is `m = Σuⱼ(1 − zⱼ)²θⱼ / Σuⱼ(1 − zⱼ)²`, and the BPE is its unbiased-risk plug-in.
     Averaged over exchangeable levels, `b ∝ z` wins (proved). Together these say when each one is right.
 
-### 10q. Novelty check of the paper's "New here" (2026-11-25, citation search; full texts not yet read)
+### 10q. Novelty check of the paper's "New here" (2026-11-25, citation search; Poon 2013 and WASJ 2013 read in full)
 Goal: check paper §1 "What this paper contributes" and §9 against Yeo & Valdez (2006), Wen, Wu &
 Zhou (2009), Ebrahimzadeh et al. (2012), Huang & Wu (2015), Zhang, Cui & Chen (2017) and their
 citing papers. Method: OpenAlex `cites:` lists (YV06: 43 citing, WWZ09: 41, EIJK12: 3, HW15: 5,
@@ -1236,9 +1236,68 @@ ZCC17: 4), abstracts read for every credibility paper among them. Semantic Schol
 - *Spatial line, for later:* Poon & Lu (2015) is cited by few; no further spatial credibility found
   in these lists.
 
-**Blocked (2026-11-25).** The web-fetch tool cannot resolve these hosts even after they were added
-to the environment, and a direct download from the container was refused by the session's
-permission classifier. Next: read (1) Poon (2013) / Poon & Lu (2015), (2) EIJK12 accepted
-manuscript, (3) Ebrahimzadeh's thesis, (4) Yeo & Valdez (2006), or the owner supplies PDFs/photos.
-Until then the paper's "New here" stays as is, with Poon & Lu (2015) as the open risk.
+**Full texts read (2026-11-25, second pass; `scripts/fetch_paper.sh`).**
 
+*Poon (2013), SFU MSc project (basis of Poon & Lu 2015, NAAJ 19(4); the article itself is on a
+publisher site and was not read, so what follows is the thesis).* **It is the thesis model.**
+- *Noise correlated across risks within one period only:* **yes.** Assumption 3.1/4.1: given the
+  risk parameters `Θ`, the cross-sections `X⁽ᵘ⁾ = (X₁ᵤ, …, X_Kᵤ)` are i.i.d. over periods `u` with
+  conditional covariance `W⁽ᵘ⁾^{-1/2} Σ(Θ) W⁽ᵘ⁾^{-1/2}`, so `cov(X_iu, X_jv) = a_ij + δ_uv v_ij/√(w_iu w_jv)`
+  (Lemma 4.1). With `σ_jt = σ_j/√w_jt` this is our `ρ_ij σ_i σ_j/√(w_it w_jt)` exactly; their
+  levels have any covariance `A` (Wen & Wu 2011), ours `τ²I` (Hierarchical/groups and `Core`'s `L`
+  are their `A`). All risks share the same `n` periods ("simplifies derivations when conditional
+  cross-sectional dependence is present"): unequal histories (`Unequal.lean`, Finding 9) are not
+  there. The Bühlmann (equal-volume) form goes back to **Schnapp et al. (2000), CAS Forum** (`X_iu = m + R_i + Q_iu`, `Q` spatially correlated within a period, i.i.d.
+  across periods; predictor by normal equations, no estimation). Not fetched (casact.org is allowed;
+  next pass if needed).
+- *Predictor:* the full BLUP, not the blend. Bühlmann case (Thm 3.2): `X̂ = Z X̄ + (I − Z)µ` with the
+  credibility **matrix** `Z = A(V/n + A)⁻¹`, MSE `(I − Z)A + V`. Homogeneous (Thm 3.3): `µ̂ =
+  1ᵀ(V/n + A)⁻¹X̄ / 1ᵀ(V/n + A)⁻¹1`, i.e. our GLS weights `K⁻¹1` with `K = A + V/n`, plus the extra
+  MSE term `(I − Z)11ᵀ(I − Z)ᵀ / 1ᵀK⁻¹1`. BS case (Thms 4.2–4.3): `Z_i = (A⁻¹ + S)⁻¹S_i` with
+  `S_ij = v⁽⁻¹⁾_ij Σ_u √(w_iu w_ju)` and per-risk weighted means `X̄_i^(bs)` for each partner; every
+  risk's premium uses all risks' data. No scalar factor `z_j` on the own mean, so the blend form,
+  its best factor for any PD `K` (`bestZ`), and the price of the blend form (Finding 18) are not
+  there. Our `Core.blupWeight_optimal` / `Blup.lean` are their Lemma 2.1 for this covariance.
+- *Factors outside `[0, 1]`:* not mentioned; only `Z → I` as `n → ∞` (Remark 3.1).
+- *Estimators from same-period cross products:* **yes, the same ones.** Remark 3.5: `v̂_ij =
+  Σ_u (X_iu − X̄_i)(X_ju − X̄_j)/(n − 1)` unbiased for `v_ij`. Thm 4.5 (with volumes): `Σ_u √(w_iu w_ju)
+  (X_iu − X̄*_i)(X_ju − X̄*_j) / n*_ij` with any weights `p` in the means and `n*_ij = n − 2 +
+  Σ_u √(w_iu w_ju) · Σ_v p_iv p_jv/√(w_iv w_jv) / (Σ p_i Σ p_j)`. With `p = w` this is
+  `n − 2 + S_ij²/(w_i· w_j·)`, our `E Q_ij` (handbook `res:pooled`, `Model.qHat_unbiased`), so our
+  `σ̂²ρ̂_ij` (thesis §2.8, eqs. (37)–(41)) is theirs. They pool pairs by distance class (step covariogram), like
+  our one common covariance `ĉ` per class; our pooled common *correlation* `ρ̂` and the per-pair
+  count with unequal lengths `n_ij` (Finding 9) are not there. Choice of `p` "left open". Levels:
+  `A` needs stationarity, a step covariogram and a cutoff distance with `f = 0`, estimated by a
+  semivariogram of the cohort means minus the noise part (Thm 3.6/4.6), biased unless means are
+  equal; our `τ̂²` is the `A = τ²I` case of the same idea (spread of the means minus the noise
+  share) without a spatial structure. PSD repair: least-squares fit of a parametric covariogram
+  (WLS, not GLS, "fourth moments would be needed"), against our damping/projection
+  (`OffDiagonal`, `Damping`, `ConeProjection`). Simulation (normal): estimators have large CV; a
+  misspecified model can do worse than the sample mean, no exact price of ignoring correlation
+  (our Findings 19/20 stay new).
+- *Price of the blend form, balance:* nothing. Premiums unbiased by construction; no portfolio
+  total, no exposure balance.
+
+*Ebrahimzadeh, Ibrahim, Jemain & Kilicman (2013), WASJ 27(12).* Permanent common effect `Λ` for all
+risks and all periods, plus equicorrelation `ρ` of one risk's errors over time; given `Λ` risks are
+independent (A2). So **no** within-period noise across risks. Predictor `z₁X̄_i + z₂X̄ + (1 − z₁ − z₂)µ₁`
+(inhomogeneous, `µ₁` known), a three-term blend with the plain portfolio mean `X̄`; BS version with
+weights. No estimators (structural parameters taken as known), no balance, no price of the form;
+"`Z`, value between 0 and 1" stated as classical background only. Illustrations assume normal
+common effects. Its introduction describes Yeo & Valdez (2006) as "simultaneous dependence of claims
+across individuals for a fixed time period and across time periods for a fixed individual"; whether
+YV06 has a per-period common effect (our equicorrelated case) cannot be settled without the text.
+
+**Not read (blocked).** EIJK (2012) accepted manuscript: `www.emis.de` redirects to `zbmath.org`,
+refused by the egress proxy. Yeo & Valdez (2006): CiteSeerX redirects to `web.archive.org`, refused
+by the proxy. Proposing both hosts for Default was rejected by the environments service (nothing
+changed). Ebrahimzadeh (2012) thesis: `psasir.upm.edu.my` answers HTTP 503 (server-side) on both
+`http` and `https`; retry later.
+
+**Moved in the paper (2026-11-25).** §1 item 1 and "Classical, and used as such" now credit the
+model, its BLUP and the pair estimators to Poon & Lu (2015); §9 cites Poon (2013), Poon & Lu (2015)
+and Schnapp et al. (2000), moves "correlated noise within a period in the BS form" and "pair
+estimators" to *Used*, and names Poon & Lu, not EIJK12, as the closest prior art for §5. Still *New
+here*, pending YV06 and EIJK12: the blend's factor for any PD `K`, `z ∉ [0, 1]` (Findings 3, 17),
+the price of the blend form (18), balance, unequal histories and their pair counts (9), the group
+model with correlated noise (13), the exact price of ignoring correlation (19, 20).

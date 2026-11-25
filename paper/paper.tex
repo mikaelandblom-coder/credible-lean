@@ -147,6 +147,9 @@ the version with volumes that most insurers use. The paper adds three things.
     correlated within a period: a cold winter or a surge in travel moves all
     the cards at once. Everything is read off the covariance matrix $K$ of the
     cohort estimates, and Bühlmann--Straub is the case of zero correlation.
+    The model, its best linear predictor and the noise covariance estimators
+    from same-period cross products are Poon and Lu's (2015); what is built on
+    them here is the blend.
     \emph{New:} the credibility factor for any positive definite $K$, when it
     leaves $[0, 1]$ and what to report instead, the exact price of ignoring the
     correlation, which volumes balance a blend, and the exact price of the
@@ -164,7 +167,8 @@ the version with volumes that most insurers use. The paper adds three things.
     collected in Appendix~\ref{app:changes}.
 \end{enumerate}
 \emph{Classical, and used as such:} the blend and the best factor, the GLS
-weights, the best linear unbiased predictor (Goldberger 1962), the error split
+weights, the best linear unbiased predictor (Goldberger 1962), correlated noise
+within a period in the Bühlmann--Straub model (Poon and Lu 2015), the error split
 of a fitted predictor (Kackar and Harville 1984), and hierarchical credibility.
 Section~\ref{sec:related} maps the results to the literature one by one, and
 Section~\ref{sec:conclusion} sums up what changes in practice.
@@ -2233,8 +2237,7 @@ Yeo and Valdez (2006) and Wen, Wu and Zhou (2009), who derive credibility
 estimators under general dependence by orthogonal projection, and by Zhang
 and Chen (2018) for equal dependence over risks and time. Ebrahimzadeh, Ibrahim, Jemain and
 Kilicman (2012) give unbiased estimators of the structural parameters with
-common effects and are probably the closest prior art to
-Section~\ref{sec:estimation}; Yang and Wang (2024) give likelihood-based and
+common effects; Yang and Wang (2024) give likelihood-based and
 linear-Bayes ones. Hierarchical credibility (Jewell 1975, Taylor 1979;
 Bühlmann and Gisler 2005, ch.~6) is the target shape of
 Section~\ref{sec:groups}, and crossed classification (Dannenburg, Kaas and
@@ -2252,7 +2255,21 @@ claims over time; risks are linked equally in every pair of periods, never
 in the same period only. Huang and Wu (2015) combine correlated levels with
 a correlation of each risk's claims over time, and survey the field as
 these two strands; noise correlated across risks within a period is in
-neither. They also note that under dependence the best premium need not
+neither. That noise is the model of Poon and Lu (2015), from Poon (2013):
+Bühlmann--Straub with any covariance between the levels (Wen and Wu 2011)
+and noise covariances $v_{ij}/\sqrt{w_{it}w_{jt}}$ within a period,
+independent across periods, every risk observed in the same periods; for
+equal volumes the model is Schnapp et al.\ (2000), who derive the predictor
+but no estimators. Poon (2013) derives the best linear predictor (a
+credibility matrix that mixes all risks' means, with the GLS mean in its
+homogeneous form) and unbiased noise covariances from same-period cross
+products; with the volumes as weights their bias correction is the one of
+Section~\ref{sec:estimation}, so they are the closest prior art there.
+The level covariances need a spatial structure (a step covariogram and a
+distance beyond which levels are uncorrelated) and are repaired by fitting
+a parametric covariogram. They do not restrict the predictor to the blend,
+so the scalar factor, its range, the price of the blend form and balance
+are not there, nor are unequal histories. They also note that under dependence the best premium need not
 have the blend form, the gap that \finding{18} makes exact. Outside
 credibility the assumption is standard: errors correlated within a period
 and independent across periods are the seemingly unrelated regressions of
@@ -2267,11 +2284,13 @@ Harville 1976), of which credibility models are special cases (Frees, Young
 and Luo 1999). The actuarial work on correlated errors (Cossette and Luong
 2003; Lo, Fung and Zhu 2006; Fung and Xu 2009) correlates a risk's errors
 over time and keeps risks independent. \emph{Used:} the blend, Bühlmann--Straub as the special
-case, hierarchical credibility as the target. \emph{New here,} subject to
-reading those papers in full: correlated noise within a period in the
-Bühlmann--Straub form, the factor for any positive definite $K$, when it leaves $[0,1]$ and what to
+case, hierarchical credibility as the target, and from Poon and Lu (2015)
+correlated noise within a period in the Bühlmann--Straub form and the pair
+estimators of the noise covariances. \emph{New here,} subject to reading
+Yeo and Valdez (2006) and Ebrahimzadeh et al.\ (2012) in full: the blend's
+factor for any positive definite $K$, when it leaves $[0,1]$ and what to
 report instead (\finding{3}, \finding{17}), and the group model with
-correlated noise and pair estimators (\finding{13}).
+correlated noise (\finding{13}).
 
 \paragraph{Best linear unbiased prediction.}
 
