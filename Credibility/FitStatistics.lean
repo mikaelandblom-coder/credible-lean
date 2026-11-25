@@ -29,7 +29,8 @@ variance) depend on the data only through three quadratic statistics
   `-2(1 - 1/J)z(1 - z)(γL + γN/T)/J` relative to `(1 - z)τ²`; with `D` known
   (`crossTerm_of_balanced_cumulants_known`) the noise part changes sign (Finding 38);
   `crossTerm_bs_of_cumulants`: the same for any volumes `wᵢₜ`, as finite sums over the regions,
-  with `bsAlpha_hasDerivAt` (the first-order direction is the derivative of BS's weights);
+  with `bsAlpha_hasDerivAt` (the first-order direction is the derivative of BS's weights); both
+  balanced theorems are its equal-volumes corollaries;
 * `Core.linMse_lineWeight`, `Core.linMse_lineWeight_sub`: the mean squared error of a blend
   `z eⱼ + (1 - z) b` and the gap between two blends with the same `z`, as exact quadratics in `z`.
 
@@ -1479,236 +1480,6 @@ lemma dotProduct_cellsOf (μ : ℝ) (u : J × T → ℝ) (x : J ⊕ (J × T) →
     mul_add, sum_add_distrib, ← sum_mul, h1]
   ring
 
-/-- `xᵀ diag(primVar) y`, split into levels and noise. -/
-lemma dotProduct_diagonal_primVar (τ2 σsq w : ℝ) (x y : J ⊕ (J × T) → ℝ) :
-    x ⬝ᵥ (diagonal (primVar τ2 σsq w) *ᵥ y)
-      = τ2 * ∑ i, x (Sum.inl i) * y (Sum.inl i) + σsq / w * ∑ c, x (Sum.inr c) * y (Sum.inr c) := by
-  simp only [dotProduct, mulVec_diagonal, Fintype.sum_sum_type, primVar, Sum.elim_inl,
-    Sum.elim_inr, mul_sum]
-  congr 1 <;> exact sum_congr rfl fun _ _ => by ring
-
-omit [Fintype J] [Fintype T] in
-/-- The fourth-cumulant term of `primK4`: `κL Σᵢ aᵢbᵢuᵢ² + (κN/w²) Σ_c a_c b_c u_c²`. -/
-lemma sum_primK4 (κL κN w : ℝ) [Fintype J] [Fintype T] (a b u : J ⊕ (J × T) → ℝ) :
-    ∑ p, ∑ q, ∑ r, ∑ s, a p * b q * u r * u s * primK4 κL κN w p q r s
-      = κL * ∑ i, a (Sum.inl i) * b (Sum.inl i) * u (Sum.inl i) ^ 2
-        + κN / w ^ 2 * ∑ c, a (Sum.inr c) * b (Sum.inr c) * u (Sum.inr c) ^ 2 := by
-  simp only [primK4, mul_ite, mul_zero, sum_ite_eq', mem_univ, ite_true]
-  simp only [Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, mul_sum]
-  congr 1 <;> exact sum_congr rfl fun _ _ => by ring
-
-
-/-- Weights of `z x̄ⱼ + (1 - z) x̄` on the region means. -/
-noncomputable def predW (z : ℝ) (j : J) (i : J) : ℝ :=
-  z * (if i = j then 1 else 0) + (1 - z) / Fintype.card J
-
-/-- Weights of `x̄ⱼ - x̄` on the region means. -/
-noncomputable def spreadW (j : J) (i : J) : ℝ := (if i = j then 1 else 0) - 1 / Fintype.card J
-
-/-- The error `A = z x̄ⱼ + (1 - z) x̄ - (μ + Lⱼ)` on the primitives. -/
-noncomputable def errCoef (z : ℝ) (j : J) : J ⊕ (J × T) → ℝ :=
-  Sum.elim (fun i => predW z j i - if i = j then 1 else 0)
-    (fun c => predW z j c.1 / Fintype.card T)
-
-/-- `x̄ⱼ - x̄` on the primitives. -/
-noncomputable def spreadCoef (j : J) : J ⊕ (J × T) → ℝ :=
-  Sum.elim (spreadW j) (fun c => spreadW j c.1 / Fintype.card T)
-
-omit [Fintype J] [DecidableEq J] [DecidableEq T] in
-/-- With equal volumes, `x̄ᵢ = μ + Lᵢ + ēᵢ`. -/
-lemma regionMean_cellsOf [Nonempty T] (w : ℝ) (hw : w ≠ 0) (μ : ℝ) (y : J ⊕ (J × T) → ℝ)
-    (i : J) :
-    regionMean (fun _ _ => w) (cellsOf μ y) i
-      = μ + y (Sum.inl i) + (∑ t, y (Sum.inr (i, t))) / Fintype.card T := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp only [regionMean, shares_const w hw, cellsOf, mul_add, sum_add_distrib, ← mul_sum,
-    sum_const, card_univ, nsmul_eq_mul]
-  field_simp
-
-omit [DecidableEq T] in
-/-- The error `A` of the blend with the true `z` is `errCoef z j · (L, e)`. -/
-lemma errCoef_dotProduct [Nonempty J] [Nonempty T] (w : ℝ) (hw : w ≠ 0) (μ z : ℝ) (y : J ⊕ (J × T) → ℝ)
-    (j : J) :
-    z * regionMean (fun _ _ => w) (cellsOf μ y) j
-        + (1 - z) * (∑ i, regionMean (fun _ _ => w) (cellsOf μ y) i) / Fintype.card J
-        - (μ + y (Sum.inl j))
-      = errCoef z j ⬝ᵥ y := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp only [regionMean_cellsOf w hw, dotProduct, errCoef, predW, Fintype.sum_sum_type,
-    Sum.elim_inl, Sum.elim_inr, Fintype.sum_prod_type, sum_add_distrib, add_mul, sub_mul, mul_ite,
-    mul_one, mul_zero,
-    ite_mul, one_mul, zero_mul, sum_sub_distrib, sum_ite_eq',
-    mem_univ, ite_true,
-    sum_const, card_univ, nsmul_eq_mul, ← mul_sum, ← sum_div, div_mul_eq_mul_div]
-  have hs : ∀ f : J → T → ℝ, ∑ x, ∑ x1, (if x = j then f x x1 else 0) = ∑ x1, f j x1 := by
-    intro f; rw [sum_comm]; simp
-  simp only [hs, ← mul_sum]
-  field_simp
-  ring
-
-omit [DecidableEq T] in
-/-- `x̄ⱼ - x̄ = spreadCoef j · (L, e)`. -/
-lemma spreadCoef_dotProduct [Nonempty J] [Nonempty T] (w : ℝ) (hw : w ≠ 0) (μ : ℝ) (y : J ⊕ (J × T) → ℝ)
-    (j : J) :
-    regionMean (fun _ _ => w) (cellsOf μ y) j
-        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ y) i) / Fintype.card J
-      = spreadCoef j ⬝ᵥ y := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp only [regionMean_cellsOf w hw, dotProduct, spreadCoef, spreadW, Fintype.sum_sum_type,
-    Sum.elim_inl, Sum.elim_inr, Fintype.sum_prod_type, sum_add_distrib, sub_mul,
-    ite_mul, one_mul, zero_mul, sum_sub_distrib, sum_ite_eq',
-    mem_univ, ite_true,
-    sum_const, card_univ, nsmul_eq_mul, ← sum_div, div_mul_eq_mul_div]
-  have hs : ∀ f : J → T → ℝ, ∑ x, ∑ x1, (if x = j then f x x1 else 0) = ∑ x1, f j x1 := by
-    intro f; rw [sum_comm]; simp
-  rw [hs]
-  field_simp
-  ring
-
-
-omit [Fintype J] in
-/-- A residual does not load on the levels. -/
-lemma pullCoef_resCoef_inl [Nonempty T] (j : J) (t : T) (i : J) :
-    pullCoef (resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) j t) (Sum.inl i) = 0 := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have ha : ∀ j, ∑ t, (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) j t = 1 := fun j => by
-    simp only [sum_const, card_univ, nsmul_eq_mul]; field_simp
-  simp only [pullCoef, Sum.elim_inl]
-  exact sum_resCoef_region _ ha j i t
-
-omit [Fintype J] [DecidableEq J] [DecidableEq T] in
-/-- `Σᵢ βᵢ x̄ᵢ` loads `βᵢ` on `Lᵢ` and `βᵢ/T` on each `eᵢₜ`. -/
-lemma pullCoef_meanComb [Nonempty T] (β : J → ℝ) :
-    pullCoef (meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) β)
-      = Sum.elim β (fun c => β c.1 / Fintype.card T) := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  funext p
-  cases p with
-  | inl i => simp only [pullCoef, meanComb, Sum.elim_inl, sum_const, card_univ, nsmul_eq_mul]; field_simp
-  | inr c => simp only [pullCoef, meanComb, Sum.elim_inr]; ring
-
-/-- `P` as a sum of squared residuals of the primitives. -/
-lemma statP_cellsOf [Nonempty T] (w : ℝ) (hw : w ≠ 0) (μ : ℝ) (y : J ⊕ (J × T) → ℝ) :
-    statP (fun _ _ => w) (cellsOf μ y)
-      = ∑ k : J × T, w / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
-          * (pullCoef (resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) k.1 k.2) ⬝ᵥ y)
-            ^ 2 := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have ha : ∀ j, ∑ t, (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) j t = 1 := fun j => by
-    simp only [sum_const, card_univ, nsmul_eq_mul]; field_simp
-  rw [show statP (fun _ _ => w) (cellsOf μ y) = Stat.P.eval (fun _ _ => w) (cellsOf μ y) from rfl,
-    Stat.eval_eq]
-  simp only [Stat.coef, Stat.left, Stat.right, shares_const w hw, dotProduct_cellsOf]
-  refine sum_congr rfl fun k _ => ?_
-  have h0 : ∑ c : J × T, resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) k.1 k.2 c = 0 := by
-    rw [Fintype.sum_prod_type]
-    exact sum_eq_zero fun i _ => sum_resCoef_region _ ha k.1 i k.2
-  rw [h0]; ring
-
-/-- `B` as a sum of squared spreads of the primitives. -/
-lemma statB_cellsOf [Nonempty J] [Nonempty T] (w : ℝ) (hw : w ≠ 0) (μ : ℝ)
-    (y : J ⊕ (J × T) → ℝ) :
-    statB (fun _ _ => w) (cellsOf μ y)
-      = ∑ k : J, Fintype.card T * w
-          * (pullCoef (meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) (spreadW k))
-            ⬝ᵥ y) ^ 2 := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hβ : spreadWeight (fun (_ : J) (_ : T) => w) = fun k => spreadW k := by
-    funext k i; exact spreadWeight_const w hw k i
-  rw [show statB (fun _ _ => w) (cellsOf μ y) = Stat.B.eval (fun _ _ => w) (cellsOf μ y) from rfl,
-    Stat.eval_eq]
-  simp only [Stat.coef, Stat.left, Stat.right, shares_const w hw, hβ, dotProduct_cellsOf,
-    sum_const, card_univ, nsmul_eq_mul]
-  refine sum_congr rfl fun k _ => ?_
-  have h0 : ∑ c : J × T, meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) (spreadW k) c
-      = 0 := by
-    have hβ0 : ∑ i, spreadW k i = 0 := by
-      simp only [spreadW, sum_sub_distrib, sum_ite_eq', mem_univ, ite_true, sum_const, card_univ,
-        nsmul_eq_mul]
-      field_simp; ring
-    simp only [meanComb, Fintype.sum_prod_type, sum_const, card_univ, nsmul_eq_mul]
-    rw [← hβ0]
-    exact sum_congr rfl fun i _ => by field_simp
-  rw [h0]; ring
-
-
-omit [DecidableEq J] [DecidableEq T] in
-/-- `Σ_c f(c₁) = T Σᵢ f(i)`. -/
-lemma sum_cell_fst (f : J → ℝ) : ∑ c : J × T, f c.1 = Fintype.card T * ∑ i, f i := by
-  simp only [Fintype.sum_prod_type, sum_const, card_univ, nsmul_eq_mul, mul_sum]
-
-omit [Fintype T] [DecidableEq T] in
-/-- The spread weights sum to zero. -/
-lemma sum_spreadW [Nonempty J] (k : J) : ∑ i, spreadW k i = 0 := by
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp only [spreadW, sum_sub_distrib, sum_ite_eq', mem_univ, ite_true, sum_const, card_univ,
-    nsmul_eq_mul]
-  field_simp; ring
-
-omit [Fintype T] [DecidableEq T] in
-/-- `Σᵢ (zδᵢⱼ + (1 - z)/J)(δᵢⱼ - 1/J) = z(1 - 1/J)`. -/
-lemma sum_predW_spreadW [Nonempty J] (z : ℝ) (j : J) :
-    ∑ i, predW z j i * spreadW j i = z * (1 - 1 / Fintype.card J) := by
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have h0 := sum_spreadW j
-  have e : ∀ i, predW z j i * spreadW j i
-      = z * ((if i = j then 1 else 0) * spreadW j i) + (1 - z) / Fintype.card J * spreadW j i :=
-    fun i => by simp only [predW]; ring
-  rw [sum_congr rfl fun i _ => e i]
-  simp only [sum_add_distrib, ← mul_sum, h0, mul_zero, add_zero, ite_mul, one_mul, zero_mul,
-    sum_ite_eq', mem_univ, ite_true]
-  simp only [spreadW, ite_true]
-
-/-- The error and any spread `Σᵢ βᵢ x̄ᵢ` (`Σβ = 0`) are uncorrelated at the true `z`. -/
-lemma err_cov_spreadPull [Nonempty J] [Nonempty T] (τ2 σsq w z : ℝ)
-    (hz : z * (τ2 + σsq / (w * Fintype.card T)) = τ2) (j : J) (β : J → ℝ) (hβ : ∑ i, β i = 0) :
-    errCoef (T := T) z j ⬝ᵥ (diagonal (primVar τ2 σsq w) *ᵥ Sum.elim β (fun c => β c.1 / Fintype.card T))
-      = 0 := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hbr : ∀ i, τ2 * (predW z j i - if i = j then 1 else 0)
-      + σsq / (w * Fintype.card T) * predW z j i
-      = (1 - z) / Fintype.card J * (τ2 + σsq / (w * Fintype.card T)) := fun i => by
-    simp only [predW]
-    split_ifs
-    · linear_combination hz
-    · ring
-  rw [dotProduct_diagonal_primVar]
-  simp only [errCoef, Sum.elim_inl, Sum.elim_inr]
-  rw [sum_cell_fst (fun i => predW z j i / Fintype.card T * (β i / Fintype.card T))]
-  have : τ2 * ∑ i, (predW z j i - if i = j then 1 else 0) * β i
-      + σsq / w * (Fintype.card T * ∑ i, predW z j i / Fintype.card T * (β i / Fintype.card T))
-      = ∑ i, β i * (τ2 * (predW z j i - if i = j then 1 else 0)
-        + σsq / (w * Fintype.card T) * predW z j i) := by
-    simp only [mul_sum, ← sum_add_distrib]
-    refine sum_congr rfl fun i _ => ?_
-    by_cases hw : w = 0
-    · subst hw; simp; ring
-    · field_simp
-  rw [this]
-  simp only [hbr, ← sum_mul, hβ, zero_mul]
-
-omit [DecidableEq T] in
-/-- `spreadCoef` is `pullCoef` of the spread. -/
-lemma spreadCoef_eq (j : J) :
-    spreadCoef (T := T) j = Sum.elim (spreadW j) (fun c => spreadW j c.1 / Fintype.card T) := rfl
-
-
-/-- The error and the residuals are uncorrelated. -/
-lemma err_cov_res [Nonempty T] (τ2 σsq w z : ℝ) (j : J) (k : J × T) :
-    errCoef (T := T) z j ⬝ᵥ (diagonal (primVar τ2 σsq w)
-      *ᵥ pullCoef (resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) k.1 k.2)) = 0 := by
-  have hT : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have ha : ∀ j, ∑ t, (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) j t = 1 := fun j => by
-    simp only [sum_const, card_univ, nsmul_eq_mul]; field_simp
-  rw [dotProduct_diagonal_primVar]
-  simp only [mul_zero, sum_const_zero, errCoef, Sum.elim_inr, pullCoef,
-    Fintype.sum_prod_type, ← mul_sum, sum_resCoef_region _ ha]
-  simp
-
 end Prim
 
 section CrossIntegrals
@@ -1727,296 +1498,10 @@ lemma integral_lin_mul_lin {ι : Type*} [Fintype ι] (X : ι → Ω → ℝ) (hX
   simp only [h2, mulVec, dotProduct, mul_sum]
   exact sum_congr rfl fun p _ => sum_congr rfl fun q _ => by ring
 
-/-- `E[A(x̄ⱼ - x̄)] = 0` at the true `z`. -/
-theorem integral_err_spread [Nonempty J] [Nonempty T] (X : J ⊕ (J × T) → Ω → ℝ)
-    (hX : ∀ p, MemLp (X p) 4 P) (τ2 σsq w z : ℝ)
-    (h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
-    (hz : z * (τ2 + σsq / (w * Fintype.card T)) = τ2) (j : J) :
-    ∫ ω, (errCoef z j ⬝ᵥ fun p => X p ω) * (spreadCoef j ⬝ᵥ fun p => X p ω) ∂P = 0 := by
-  rw [integral_lin_mul_lin X hX _ h2, spreadCoef_eq]
-  exact err_cov_spreadPull τ2 σsq w z hz j _ (sum_spreadW j)
-
-omit [IsProbabilityMeasure P] in
-/-- `E[A(x̄ⱼ - x̄)P] = κN(1 - 1/J)z/(wJT²)`: only the noise kurtosis links the error and its
-spread to the residuals. -/
-theorem integral_err_spread_statP [Nonempty J] [Nonempty T] (X : J ⊕ (J × T) → Ω → ℝ)
-    (hX : ∀ p, MemLp (X p) 4 P) (τ2 σsq w μ z κL κN : ℝ) (hw : w ≠ 0)
-    (hT : 2 ≤ Fintype.card T) (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
-      = primK4 κL κN w p q r s
-        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
-        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
-        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r)
-    (hz : z * (τ2 + σsq / (w * Fintype.card T)) = τ2) (j : J) :
-    ∫ ω, (errCoef z j ⬝ᵥ fun p => X p ω) * (spreadCoef j ⬝ᵥ fun p => X p ω)
-        * statP (fun _ _ => w) (cellsOf μ fun p => X p ω) ∂P
-      = κN * (1 - 1 / Fintype.card J) * z / (w * Fintype.card J * Fintype.card T ^ 2) := by
-  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
-  have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
-  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
-  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp_rw [statP_cellsOf w hw μ]
-  rw [integral_lin_lin_sumSq X hX _ _ h4]
-  have hab : errCoef z j ⬝ᵥ (diagonal (primVar τ2 σsq w) *ᵥ spreadCoef j) = 0 :=
-    err_cov_spreadPull τ2 σsq w z hz j _ (sum_spreadW j)
-  simp only [hab, err_cov_res, sum_primK4, pullCoef_resCoef_inl, mul_zero, zero_mul, add_zero,
-    zero_add, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, sum_const_zero]
-  simp only [errCoef, spreadCoef, pullCoef, Sum.elim_inr, mul_sum]
-  rw [sum_comm]
-  have hA := sum_resCoef_sq (J := J) (T := T)
-  set K0 : ℝ := w / (Fintype.card J * ((Fintype.card T : ℝ) - 1)) * (κN / w ^ 2)
-    * (((Fintype.card T : ℝ) - 1) / Fintype.card T) / (Fintype.card T : ℝ) ^ 2 with hK0
-  have e : ∀ c : J × T, ∑ k : J × T, w / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
-      * (κN / w ^ 2 * (predW z j c.1 / Fintype.card T * (spreadW j c.1 / Fintype.card T)
-        * resCoef (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) k.1 k.2 c ^ 2))
-      = K0 * (predW z j c.1 * spreadW j c.1) := by
-    intro c
-    simp only [hK0]
-    rw [← hA c]
-    simp only [mul_sum, sum_div, sum_mul]
-    exact sum_congr rfl fun k _ => by field_simp
-  have e2 : ∑ c : J × T, K0 * (predW z j c.1 * spreadW j c.1)
-      = Fintype.card T * ∑ i, K0 * (predW z j i * spreadW j i) :=
-    sum_cell_fst (fun i => K0 * (predW z j i * spreadW j i))
-  rw [sum_congr rfl fun c _ => e c, e2, ← mul_sum, sum_predW_spreadW, hK0]
-  field_simp
-
-
-omit [IsProbabilityMeasure P] in
-/-- `E[A(x̄ⱼ - x̄)B] = wT(1 - 1/J)²(-(1 - z)κL + zκN/(w²T³))`: the levels and the region-mean
-noise enter with opposite signs. -/
-theorem integral_err_spread_statB [Nonempty J] [Nonempty T] (X : J ⊕ (J × T) → Ω → ℝ)
-    (hX : ∀ p, MemLp (X p) 4 P) (τ2 σsq w μ z κL κN : ℝ) (hw : w ≠ 0)
-    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
-      = primK4 κL κN w p q r s
-        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
-        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
-        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r)
-    (hz : z * (τ2 + σsq / (w * Fintype.card T)) = τ2) (j : J) :
-    ∫ ω, (errCoef z j ⬝ᵥ fun p => X p ω) * (spreadCoef j ⬝ᵥ fun p => X p ω)
-        * statB (fun _ _ => w) (cellsOf μ fun p => X p ω) ∂P
-      = Fintype.card T * w * (((Fintype.card J : ℝ) - 1) / Fintype.card J)
-        * (1 - 1 / Fintype.card J)
-        * (-(1 - z) * κL + z * κN / (w ^ 2 * Fintype.card T ^ 3)) := by
-  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
-  simp_rw [statB_cellsOf w hw μ]
-  rw [integral_lin_lin_sumSq X hX _ _ h4]
-  have hab : errCoef z j ⬝ᵥ (diagonal (primVar τ2 σsq w) *ᵥ spreadCoef j) = 0 :=
-    err_cov_spreadPull τ2 σsq w z hz j _ (sum_spreadW j)
-  have hk : ∀ k, errCoef z j ⬝ᵥ (diagonal (primVar τ2 σsq w) *ᵥ pullCoef
-      (meanComb (fun (_ : J) (_ : T) => 1 / (Fintype.card T : ℝ)) (spreadW k))) = 0 := fun k => by
-    rw [pullCoef_meanComb]; exact err_cov_spreadPull τ2 σsq w z hz j _ (sum_spreadW k)
-  simp only [hab, hk, sum_primK4, mul_zero, zero_mul, add_zero, zero_add]
-  simp only [pullCoef_meanComb, errCoef, spreadCoef, Sum.elim_inl, Sum.elim_inr]
-  set G : J → ℝ := fun i => Fintype.card T * w * (κL * ((predW z j i - if i = j then 1 else 0)
-    * spreadW j i) + κN / (w ^ 2 * Fintype.card T ^ 3) * (predW z j i * spreadW j i)) with hG
-  have e : ∀ k : J, (Fintype.card T : ℝ) * w
-      * (κL * ∑ i, (predW z j i - if i = j then 1 else 0) * spreadW j i * spreadW k i ^ 2
-        + κN / w ^ 2 * ∑ c : J × T, predW z j c.1 / Fintype.card T
-          * (spreadW j c.1 / Fintype.card T) * (spreadW k c.1 / Fintype.card T) ^ 2)
-      = ∑ i, spreadW k i ^ 2 * G i := fun k => by
-    have e2 : ∑ c : J × T, predW z j c.1 / Fintype.card T
-          * (spreadW j c.1 / Fintype.card T) * (spreadW k c.1 / Fintype.card T) ^ 2
-        = Fintype.card T * ∑ i, predW z j i / Fintype.card T
-          * (spreadW j i / Fintype.card T) * (spreadW k i / Fintype.card T) ^ 2 :=
-      sum_cell_fst (fun i => predW z j i / Fintype.card T
-          * (spreadW j i / Fintype.card T) * (spreadW k i / Fintype.card T) ^ 2)
-    rw [e2]
-    simp only [mul_sum, ← sum_add_distrib]
-    refine sum_congr rfl fun i _ => ?_
-    simp only [hG]
-    field_simp
-  rw [sum_congr rfl fun k _ => e k, sum_comm]
-  have hcol : ∀ i : J, ∑ k : J, spreadW k i ^ 2 = ((Fintype.card J : ℝ) - 1) / Fintype.card J :=
-    fun i => sum_centering_sq_col i
-  simp only [← sum_mul, hcol, ← mul_sum, hG, mul_add, sum_add_distrib, sub_mul, ite_mul, one_mul,
-    zero_mul, sum_sub_distrib, sum_ite_eq', mem_univ, ite_true, sum_predW_spreadW]
-  simp only [spreadW, ite_true]
-  field_simp
-  ring
-
 
 /-- The first-order (delta-method) error of `ẑ = 1 - v̂/S²` at `(v, s)`:
 `-(v̂ - v)/s + (v/s²)(S² - s)`; `zHatVar` is its variance. -/
 noncomputable def zHatLin (v s vh Sh : ℝ) : ℝ := -(vh - v) / s + v / s ^ 2 * (Sh - s)
-
-/-- The cross moment of `A·(x̄ⱼ - x̄)` with any affine function of `v̂ = P/(wT)` and
-`S² = B/((J - 1)wT)`. -/
-theorem integral_err_spread_affine [Nonempty J] (X : J ⊕ (J × T) → Ω → ℝ)
-    (τ2 σsq w μ κL κN α β γ : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w)
-    (hT : 2 ≤ Fintype.card T)
-    (hX : ∀ p, MemLp (X p) 4 P)
-    (h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
-    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
-      = primK4 κL κN w p q r s
-        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
-        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
-        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r) (j : J) :
-    ∫ ω, (τ2 / (τ2 + σsq / (w * Fintype.card T))
-          * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
-        - (μ + X (Sum.inl j) ω))
-      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
-      * (α * (statP (fun _ _ => w) (cellsOf μ fun p => X p ω) / (Fintype.card T * w))
-        + β * (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
-          / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) + γ) ∂P
-      = α * (κN * (1 - 1 / Fintype.card J) * (τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          / (w * Fintype.card J * Fintype.card T ^ 2)) / (Fintype.card T * w)
-        + β * (Fintype.card T * w * (((Fintype.card J : ℝ) - 1) / Fintype.card J)
-          * (1 - 1 / Fintype.card J)
-          * (-(1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * κL
-            + τ2 / (τ2 + σsq / (w * Fintype.card T)) * κN / (w ^ 2 * Fintype.card T ^ 3)))
-          / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)) := by
-  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
-  have hw0 : w ≠ 0 := hw.ne'
-  set z := τ2 / (τ2 + σsq / (w * Fintype.card T)) with hzdef
-  have hs : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
-  have hz : z * (τ2 + σsq / (w * Fintype.card T)) = τ2 := by
-    rw [hzdef, div_mul_cancel₀ _ hs]
-  set F : Ω → ℝ := fun ω => (errCoef z j ⬝ᵥ fun p => X p ω) * (spreadCoef j ⬝ᵥ fun p => X p ω)
-  have hpt : ∀ ω, (z * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        + (1 - z) * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i)
-          / Fintype.card J - (μ + X (Sum.inl j) ω))
-      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
-      * (α * (statP (fun _ _ => w) (cellsOf μ fun p => X p ω) / (Fintype.card T * w))
-        + β * (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
-          / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) + γ)
-      = α / (Fintype.card T * w) * (F ω * statP (fun _ _ => w) (cellsOf μ fun p => X p ω))
-        + β / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))
-          * (F ω * statB (fun _ _ => w) (cellsOf μ fun p => X p ω))
-        + γ * F ω := fun ω => by
-    rw [errCoef_dotProduct w hw0 μ z, spreadCoef_dotProduct w hw0 μ]
-    simp only [F]
-    ring
-  simp_rw [hpt]
-  have iP : Integrable (fun ω => F ω * statP (fun _ _ => w) (cellsOf μ fun p => X p ω)) P := by
-    simp only [F]; simp_rw [statP_cellsOf w hw0 μ]; exact integrable_lin_lin_sumSq X hX _ _ _ _
-  have iB : Integrable (fun ω => F ω * statB (fun _ _ => w) (cellsOf μ fun p => X p ω)) P := by
-    simp only [F]; simp_rw [statB_cellsOf w hw0 μ]; exact integrable_lin_lin_sumSq X hX _ _ _ _
-  have i0 : Integrable F P := by
-    simp only [F, dotProduct]
-    exact integrable_sum_mul_sum _ _ _ _ _ _ fun p q => integrable_mul2 (hX p) (hX q)
-  have e1 := integral_add ((iP.const_mul (α / (Fintype.card T * w))).add
-    (iB.const_mul (β / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))))) (i0.const_mul γ)
-  have e2 := integral_add (iP.const_mul (α / (Fintype.card T * w)))
-    (iB.const_mul (β / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))))
-  simp only [Pi.add_apply] at e1 e2
-  rw [e1, e2, integral_const_mul, integral_const_mul, integral_const_mul]
-  simp only [F]
-  rw [integral_err_spread_statP X hX τ2 σsq w μ z κL κN hw0 hT h4 hz,
-    integral_err_spread_statB X hX τ2 σsq w μ z κL κN hw0 h4 hz,
-    integral_err_spread X hX τ2 σsq w z h2 hz]
-  ring
-
-/-- **The first-order cross term of the Bühlmann–Straub plug-in** (`PlugIn.lean`'s `2E[AB]`), in the
-balanced world with fourth cumulants and `D = σ²/(wT)` estimated. Cells `xⱼₜ = μ + Lⱼ + eⱼₜ` from
-primitives `X = (L, e)` with second moments `diag(τ², σ²/w)` and fourth moments `primK4 κL κN w`
-plus the pairings (uncorrelated levels and noise, no other distributional assumption).
-With `A = z x̄ⱼ + (1 - z)x̄ - (μ + Lⱼ)` and `B ≈ (ẑ - z)(x̄ⱼ - x̄)`, `ẑ - z` linearized at `(v, s)`
-(`zHatLin`), relative to `(1 - z)τ²`:
-`2E[AB] = -2(1 - 1/J) z(1 - z)(γL + γN/T)/J`, `γL = κL/τ⁴`, `γN = κN/σ⁴`.
-The level part is Chen–Lahiri–Rao's; the noise part has the opposite sign of theirs, because
-`D` is estimated (Finding 38). -/
-theorem crossTerm_of_balanced_cumulants [Nonempty J] (X : J ⊕ (J × T) → Ω → ℝ)
-    (τ2 σsq w μ κL κN : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w)
-    (hJ : 2 ≤ Fintype.card J) (hT : 2 ≤ Fintype.card T) (hX : ∀ p, MemLp (X p) 4 P)
-    (h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
-    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
-      = primK4 κL κN w p q r s
-        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
-        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
-        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r) (j : J) :
-    2 * (∫ ω, (τ2 / (τ2 + σsq / (w * Fintype.card T))
-          * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
-        - (μ + X (Sum.inl j) ω))
-      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
-      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
-          (statP (fun _ _ => w) (cellsOf μ fun p => X p ω) / (Fintype.card T * w))
-          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
-            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) ∂P)
-        / ((1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * τ2)
-      = -2 * (1 - 1 / (Fintype.card J : ℝ)) * (τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) / Fintype.card J
-        * (κL / τ2 ^ 2 + κN / σsq ^ 2 / Fintype.card T) := by
-  have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
-  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
-  have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
-  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
-  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
-  have hw0 : w ≠ 0 := hw.ne'
-  have hσ0 : σsq ≠ 0 := hσ.ne'
-  have hτ0 : τ2 ≠ 0 := hτ.ne'
-  have hs0 : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
-  have e : ∀ vh Sh, zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T)) vh Sh
-      = -1 / (τ2 + σsq / (w * Fintype.card T)) * vh
-        + σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) ^ 2 * Sh + 0 :=
-    fun vh Sh => by unfold zHatLin; field_simp; ring
-  simp_rw [e]
-  rw [integral_err_spread_affine X τ2 σsq w μ κL κN _ _ _ hτ hσ hw hT hX h2 h4 j]
-  have hz : 1 - τ2 / (τ2 + σsq / (w * Fintype.card T))
-      = σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) := by
-    field_simp; ring
-  rw [hz]
-  field_simp
-  ring
-
-/-- …and with the noise variance `D = σ²/(wT)` known (`v̂ = v`, Chen–Lahiri–Rao's setting). -/
-theorem crossTerm_of_balanced_cumulants_known [Nonempty J] (X : J ⊕ (J × T) → Ω → ℝ)
-    (τ2 σsq w μ κL κN : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w)
-    (hJ : 2 ≤ Fintype.card J) (hT : 2 ≤ Fintype.card T) (hX : ∀ p, MemLp (X p) 4 P)
-    (h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
-    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
-      = primK4 κL κN w p q r s
-        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
-        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
-        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r) (j : J) :
-    2 * (∫ ω, (τ2 / (τ2 + σsq / (w * Fintype.card T))
-          * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
-        - (μ + X (Sum.inl j) ω))
-      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
-        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
-      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
-          (σsq / (w * Fintype.card T))
-          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
-            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) ∂P)
-        / ((1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * τ2)
-      = 2 * (1 - 1 / (Fintype.card J : ℝ)) * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
-          / Fintype.card J
-        * (-(τ2 / (τ2 + σsq / (w * Fintype.card T))) * (κL / τ2 ^ 2)
-          + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * (κN / σsq ^ 2 / Fintype.card T)) := by
-  have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
-  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
-  have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
-  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
-  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
-  have hw0 : w ≠ 0 := hw.ne'
-  have hσ0 : σsq ≠ 0 := hσ.ne'
-  have hτ0 : τ2 ≠ 0 := hτ.ne'
-  have hs0 : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
-  have e : ∀ Sh, zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
-        (σsq / (w * Fintype.card T)) Sh
-      = σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) ^ 2 * Sh
-        + -(σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T))) :=
-    fun Sh => by unfold zHatLin; field_simp; ring
-  simp_rw [e]
-  have L := integral_err_spread_affine X τ2 σsq w μ κL κN 0
-    (σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) ^ 2)
-    (-(σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)))) hτ hσ hw hT hX h2 h4 j
-  simp only [zero_mul, zero_add, zero_div] at L
-  rw [L]
-  have hz : 1 - τ2 / (τ2 + σsq / (w * Fintype.card T))
-      = σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) := by
-    field_simp; ring
-  rw [hz]
-  field_simp
 
 end CrossIntegrals
 
@@ -2343,6 +1828,26 @@ theorem bsAlpha_hasDerivAt [Nonempty J] (W : J → ℝ) (hW : ∀ i, 0 < W i) (k
     have hk0 := hk.ne'
     split_ifs <;> field_simp <;> ring
 
+/-- **At the true `z` the error is uncorrelated with every contrast** `Σγᵢx̄ᵢ` (`Σγ = 0`), any
+volumes: `errW α j` against `linW γ` vanishes for Bühlmann–Straub's weights `α` (`bsAlpha_mul_var`). -/
+lemma bsAlpha_errW_cov [Nonempty T] (τ2 σsq : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (w : J → T → ℝ)
+    (hw : ∀ i t, 0 < w i t) (j : J) (γ : J → ℝ) (hγ : ∑ i, γ i = 0) :
+    errW w (bsAlpha (fun i => ∑ t, w i t) (σsq / τ2) j) j
+      ⬝ᵥ (diagonal (primVarW τ2 σsq w) *ᵥ linW w γ) = 0 := by
+  have hWp : ∀ i, 0 < ∑ t, w i t := sum_pos_of_pos w hw
+  set W : J → ℝ := fun i => ∑ t, w i t with hWdef
+  set α := bsAlpha W (σsq / τ2) j
+  rw [errW_cov, linW_cov_linW τ2 σsq w hw]
+  have e : ∑ i, α i * γ i * (τ2 + σsq / ∑ t, w i t) - τ2 * linW w γ (Sum.inl j)
+      = ∑ i, γ i * (α i * (τ2 + σsq / W i) - τ2 * (if i = j then 1 else 0)) := by
+    simp only [linW, Sum.elim_inl, mul_sub, sum_sub_distrib, mul_ite, mul_one, mul_zero,
+      sum_ite_eq', mem_univ, ite_true, hWdef]
+    congr 1
+    · exact sum_congr rfl fun i _ => by ring
+    · ring
+  rw [e]
+  simp only [α, bsAlpha_mul_var W hWp τ2 σsq hτ hσ j, ← sum_mul, hγ, zero_mul]
+
 section Integrals
 
 variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
@@ -2488,18 +1993,7 @@ theorem crossTerm_bs_of_cumulants [Nonempty T] (X : J ⊕ (J × T) → Ω → �
   set β := bsLambda W (σsq / τ2) j
   have hα : ∑ i, α i = 1 := sum_bsAlpha W hWp _ hk j
   have hβ : ∑ i, β i = 0 := sum_bsLambda W hWp _ hk j
-  have hcov : ∀ γ : J → ℝ, ∑ i, γ i = 0 →
-      errW w α j ⬝ᵥ (diagonal (primVarW τ2 σsq w) *ᵥ linW w γ) = 0 := fun γ hγ => by
-    rw [errW_cov, linW_cov_linW τ2 σsq w hw]
-    have e : ∑ i, α i * γ i * (τ2 + σsq / ∑ t, w i t) - τ2 * linW w γ (Sum.inl j)
-        = ∑ i, γ i * (α i * (τ2 + σsq / W i) - τ2 * (if i = j then 1 else 0)) := by
-      simp only [linW, Sum.elim_inl, mul_sub, sum_sub_distrib, mul_ite, mul_one, mul_zero,
-        sum_ite_eq', mem_univ, ite_true, hWdef]
-      congr 1
-      · exact sum_congr rfl fun i _ => by ring
-      · ring
-    rw [e]
-    simp only [α, bsAlpha_mul_var W hWp τ2 σsq hτ hσ j, ← sum_mul, hγ, zero_mul]
+  have hcov := bsAlpha_errW_cov τ2 σsq hτ hσ w hw j
   have h0 := hcov β hβ
   have hB0 : ∀ k, errW w α j ⬝ᵥ (diagonal (primVarW τ2 σsq w) *ᵥ linW w (spreadWeight w k)) = 0 :=
     fun k => hcov _ (sum_spreadWeight w (sum_pos (fun i _ => hWp i) univ_nonempty).ne' k)
@@ -2515,7 +2009,7 @@ theorem crossTerm_bs_of_cumulants [Nonempty T] (X : J ⊕ (J × T) → Ω → �
     have ht : ∀ P' B', bsTau2Hat w P' B' = (B' - ((Fintype.card J : ℝ) - 1) * P') / cc :=
       fun _ _ => rfl
     simp only [F, bsEps, ht]
-    ring
+    ring_nf
   simp_rw [hpt]
   have iP : Integrable (fun ω => F ω * statP w (cellsOf μ fun p => X p ω)) P := by
     simp only [F]; simp_rw [statP_cellsOfW w hW μ]; exact integrable_lin_lin_sumSq X hX _ _ _ _
@@ -2531,6 +2025,279 @@ theorem crossTerm_bs_of_cumulants [Nonempty T] (X : J ⊕ (J × T) → Ω → �
 end Integrals
 
 end CrossGeneral
+
+section CrossBalanced
+
+universe uZ
+variable {J T : Type uZ} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+
+omit [Fintype T] [DecidableEq T] in
+/-- With equal volumes Bühlmann–Straub's weights are the plain blend: `αᵢ = zδᵢⱼ + (1 - z)/J`. -/
+lemma bsAlpha_const [Nonempty J] (W0 k : ℝ) (hW : 0 < W0) (hk : 0 < k) (j i : J) :
+    bsAlpha (fun _ : J => W0) k j i
+      = W0 / (W0 + k) * (if i = j then 1 else 0) + (1 - W0 / (W0 + k)) / Fintype.card J := by
+  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  have hz : W0 / (W0 + k) ≠ 0 := (div_pos hW (by linarith)).ne'
+  simp only [bsAlpha, bsZk, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+
+omit [Fintype T] [DecidableEq T] in
+/-- …and their direction is the spread: `λᵢ = -z(1 - z)(δᵢⱼ - 1/J)`. -/
+lemma bsLambda_const [Nonempty J] (W0 k : ℝ) (hW : 0 < W0) (hk : 0 < k) (j i : J) :
+    bsLambda (fun _ : J => W0) k j i
+      = -(W0 / (W0 + k) * (1 - W0 / (W0 + k)) * ((if i = j then 1 else 0) - 1 / Fintype.card J)) := by
+  have hJ : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  have hz : W0 / (W0 + k) ≠ 0 := (div_pos hW (by linarith)).ne'
+  simp only [bsLambda, bsZk, sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+  ring
+
+set_option linter.unusedSectionVars false in
+/-- **The first-order cross term of the Bühlmann–Straub plug-in** (`PlugIn.lean`'s `2E[AB]`), in the
+balanced world with fourth cumulants and `D = σ²/(wT)` estimated. Cells `xⱼₜ = μ + Lⱼ + eⱼₜ` from
+primitives `X = (L, e)` with second moments `diag(τ², σ²/w)` and fourth moments `primK4 κL κN w`
+plus the pairings (uncorrelated levels and noise, no other distributional assumption).
+With `A = z x̄ⱼ + (1 - z)x̄ - (μ + Lⱼ)` and `B ≈ (ẑ - z)(x̄ⱼ - x̄)`, `ẑ - z` linearized at `(v, s)`
+(`zHatLin`), relative to `(1 - z)τ²`:
+`2E[AB] = -2(1 - 1/J) z(1 - z)(γL + γN/T)/J`, `γL = κL/τ⁴`, `γN = κN/σ⁴`.
+The level part is Chen–Lahiri–Rao's; the noise part has the opposite sign of theirs, because
+`D` is estimated (Finding 38). The equal-volumes case of `crossTerm_bs_of_cumulants`. -/
+theorem crossTerm_of_balanced_cumulants [Nonempty J] (X : J ⊕ (J × T) → Ω → ℝ)
+    (τ2 σsq w μ κL κN : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w)
+    (hJ : 2 ≤ Fintype.card J) (hT : 2 ≤ Fintype.card T) (hX : ∀ p, MemLp (X p) 4 P)
+    (_h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
+    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
+      = primK4 κL κN w p q r s
+        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
+        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
+        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r) (j : J) :
+    2 * (∫ ω, (τ2 / (τ2 + σsq / (w * Fintype.card T))
+          * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
+          * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
+        - (μ + X (Sum.inl j) ω))
+      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
+      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+          (statP (fun _ _ => w) (cellsOf μ fun p => X p ω) / (Fintype.card T * w))
+          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
+            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) ∂P)
+        / ((1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * τ2)
+      = -2 * (1 - 1 / (Fintype.card J : ℝ)) * (τ2 / (τ2 + σsq / (w * Fintype.card T)))
+          * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) / Fintype.card J
+        * (κL / τ2 ^ 2 + κN / σsq ^ 2 / Fintype.card T) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
+  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
+  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
+  have hw0 : w ≠ 0 := hw.ne'
+  have hσ0 : σsq ≠ 0 := hσ.ne'
+  have hτ0 : τ2 ≠ 0 := hτ.ne'
+  have hs0 : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
+  have hk : 0 < σsq / τ2 := div_pos hσ hτ
+  have hW0 : 0 < (Fintype.card T : ℝ) * w := by positivity
+  have hWfun : (fun i : J => ∑ t, (fun (_ : J) (_ : T) => w) i t)
+      = fun _ => (Fintype.card T : ℝ) * w := by
+    funext i; simp only [sum_const, card_univ, nsmul_eq_mul]
+  set z := τ2 / (τ2 + σsq / (w * Fintype.card T)) with hzdef
+  have hzW : (Fintype.card T : ℝ) * w / ((Fintype.card T : ℝ) * w + σsq / τ2) = z := by
+    rw [hzdef]; field_simp
+  have hV : primVarW τ2 σsq (fun (_ : J) (_ : T) => w) = primVar τ2 σsq w := by
+    funext p; cases p <;> rfl
+  have hK : primK4W κL κN (fun (_ : J) (_ : T) => w) = primK4 κL κN w := rfl
+  have G := crossTerm_bs_of_cumulants X hX τ2 σsq κL κN μ hτ hσ (fun _ _ => w) (fun _ _ => hw)
+    (by rw [hV, hK]; exact h4) j
+  rw [hWfun] at G
+  simp only [bsAlpha_const _ _ hW0 hk, bsLambda_const _ _ hW0 hk, hzW] at G
+  have hA : ∀ x : J → ℝ, ∑ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
+      = z * x j + (1 - z) * (∑ i, x i) / Fintype.card J := fun x => by
+    have e : ∀ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
+        = (if i = j then z * x i else 0) + (1 - z) / Fintype.card J * x i := fun i => by
+      split_ifs <;> ring
+    rw [sum_congr rfl fun i _ => e i, sum_add_distrib, sum_ite_eq', ← mul_sum]
+    simp only [mem_univ, ↓reduceIte]
+    ring
+  have hL : ∀ x : J → ℝ, ∑ i, -(z * (1 - z) * ((if i = j then 1 else 0) - 1 / Fintype.card J)) * x i
+      = -(z * (1 - z)) * (x j - (∑ i, x i) / Fintype.card J) := fun x => by
+    have e : ∀ i, -(z * (1 - z) * ((if i = j then 1 else 0) - 1 / Fintype.card J)) * x i
+        = -(z * (1 - z)) * ((if i = j then x i else 0) - x i / Fintype.card J) := fun i => by
+      split_ifs <;> ring
+    rw [sum_congr rfl fun i _ => e i, ← mul_sum, sum_sub_distrib, sum_ite_eq', ← sum_div]
+    simp only [mem_univ, ↓reduceIte]
+  have hε : ∀ P' B' : ℝ, zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+        (P' / (Fintype.card T * w)) (B' / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)))
+      = -(z * (1 - z)) * bsEps (J := J) (T := T) (fun _ _ => w) τ2 σsq P' B' := fun P' B' => by
+    simp only [zHatLin, bsEps, bsTau2Hat, sum_const, card_univ, nsmul_eq_mul, hzdef]
+    field_simp
+    ring
+  have hpt : ∀ ω, (z * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        + (1 - z) * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
+        - (μ + X (Sum.inl j) ω))
+      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
+      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+          (statP (fun _ _ => w) (cellsOf μ fun p => X p ω) / (Fintype.card T * w))
+          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
+            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)))
+      = ((∑ x, ((z * if x = j then 1 else 0) + (1 - z) / Fintype.card J)
+            * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) x - (μ + X (Sum.inl j) ω))
+          * ∑ x, -(z * (1 - z) * ((if x = j then 1 else 0) - 1 / Fintype.card J))
+            * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) x)
+        * bsEps (fun _ _ => w) τ2 σsq (statP (fun _ _ => w) (cellsOf μ fun p => X p ω))
+            (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)) := fun ω => by
+    rw [hA, hL, hε]; ring
+  simp_rw [hpt]
+  simp only [G]
+  simp only [shares_const w hw0, sum_const, card_univ, nsmul_eq_mul, div_pow, one_pow]
+  have split : ∀ g : J → ℝ, ∑ x, g x = g j + ∑ x ∈ univ.erase j, g x := fun g =>
+    (add_sum_erase _ _ (mem_univ j)).symm
+  have hcard : ((univ.erase j).card : ℝ) = Fintype.card J - 1 := by
+    rw [card_erase_of_mem (mem_univ j), card_univ, Nat.cast_sub Fintype.card_pos]; simp
+  have off : ∀ g : J → ℝ, ∀ c : ℝ, (∀ x, x ≠ j → g x = c) →
+      ∑ x ∈ univ.erase j, g x = (Fintype.card J - 1) * c := fun g c hg => by
+    rw [sum_congr rfl fun x hx => hg x (ne_of_mem_erase hx), sum_const, nsmul_eq_mul, hcard]
+  rw [split, split, off _ _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl),
+    off _ _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl)]
+  simp only [ite_true]
+  have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
+  rw [hzdef]
+  field_simp
+  ring_nf
+  field_simp
+
+/-- …and with the noise variance `D = σ²/(wT)` known (`v̂ = v`, Chen–Lahiri–Rao's setting). -/
+theorem crossTerm_of_balanced_cumulants_known [Nonempty J] (X : J ⊕ (J × T) → Ω → ℝ)
+    (τ2 σsq w μ κL κN : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hw : 0 < w)
+    (hJ : 2 ≤ Fintype.card J) (hT : 2 ≤ Fintype.card T) (hX : ∀ p, MemLp (X p) 4 P)
+    (h2 : ∀ p q, ∫ ω, X p ω * X q ω ∂P = diagonal (primVar τ2 σsq w) p q)
+    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
+      = primK4 κL κN w p q r s
+        + diagonal (primVar τ2 σsq w) p q * diagonal (primVar τ2 σsq w) r s
+        + diagonal (primVar τ2 σsq w) p r * diagonal (primVar τ2 σsq w) q s
+        + diagonal (primVar τ2 σsq w) p s * diagonal (primVar τ2 σsq w) q r) (j : J) :
+    2 * (∫ ω, (τ2 / (τ2 + σsq / (w * Fintype.card T))
+          * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
+          * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
+        - (μ + X (Sum.inl j) ω))
+      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
+      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+          (σsq / (w * Fintype.card T))
+          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
+            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))) ∂P)
+        / ((1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * τ2)
+      = 2 * (1 - 1 / (Fintype.card J : ℝ)) * (1 - τ2 / (τ2 + σsq / (w * Fintype.card T)))
+          / Fintype.card J
+        * (-(τ2 / (τ2 + σsq / (w * Fintype.card T))) * (κL / τ2 ^ 2)
+          + (1 - τ2 / (τ2 + σsq / (w * Fintype.card T))) * (κN / σsq ^ 2 / Fintype.card T)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hn2 : (2 : ℝ) ≤ Fintype.card J := by exact_mod_cast hJ
+  have hT2 : (2 : ℝ) ≤ Fintype.card T := by exact_mod_cast hT
+  have hJ1 : (Fintype.card J : ℝ) - 1 ≠ 0 := by linarith
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by linarith
+  have hT0 : (Fintype.card T : ℝ) ≠ 0 := by linarith
+  have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
+  have hw0 : w ≠ 0 := hw.ne'
+  have hσ0 : σsq ≠ 0 := hσ.ne'
+  have hτ0 : τ2 ≠ 0 := hτ.ne'
+  have hs0 : τ2 + σsq / (w * Fintype.card T) ≠ 0 := by positivity
+  have hk : 0 < σsq / τ2 := div_pos hσ hτ
+  have hW0 : 0 < (Fintype.card T : ℝ) * w := by positivity
+  have hW : ∀ i, ∑ t, (fun (_ : J) (_ : T) => w) i t ≠ 0 := fun i => by
+    simp only [sum_const, card_univ, nsmul_eq_mul]; positivity
+  have hW' : ∑ i, ∑ t, (fun (_ : J) (_ : T) => w) i t ≠ 0 := by
+    simp only [sum_const, card_univ, nsmul_eq_mul]; positivity
+  have hWfun : (fun i : J => ∑ t, (fun (_ : J) (_ : T) => w) i t)
+      = fun _ => (Fintype.card T : ℝ) * w := by
+    funext i; simp only [sum_const, card_univ, nsmul_eq_mul]
+  set z := τ2 / (τ2 + σsq / (w * Fintype.card T)) with hzdef
+  have hzW : (Fintype.card T : ℝ) * w / ((Fintype.card T : ℝ) * w + σsq / τ2) = z := by
+    rw [hzdef]; field_simp
+  have hV : primVarW τ2 σsq (fun (_ : J) (_ : T) => w) = primVar τ2 σsq w := by
+    funext p; cases p <;> rfl
+  have hK : primK4W κL κN (fun (_ : J) (_ : T) => w) = primK4 κL κN w := rfl
+  set α : J → ℝ := fun i => (z * if i = j then 1 else 0) + (1 - z) / Fintype.card J with hαdef
+  set β : J → ℝ := fun i => (if i = j then 1 else 0) - 1 / Fintype.card J with hβdef
+  have hαb : bsAlpha (fun i => ∑ t, (fun (_ : J) (_ : T) => w) i t) (σsq / τ2) j = α := by
+    rw [hWfun]; funext i; rw [bsAlpha_const _ _ hW0 hk, hzW]
+  have hα1 : ∑ i, α i = 1 := by
+    rw [← hαb]
+    exact sum_bsAlpha (J := J) _ (fun _ => by simp only [sum_const, card_univ, nsmul_eq_mul]; positivity)
+      _ hk j
+  have hβ0 : ∑ i, β i = 0 := by
+    simp only [hβdef, sum_sub_distrib, sum_ite_eq', mem_univ, ↓reduceIte, sum_const, card_univ,
+      nsmul_eq_mul]
+    field_simp; ring
+  have hcov := bsAlpha_errW_cov τ2 σsq hτ hσ (fun (_ : J) (_ : T) => w) (fun _ _ => hw) j
+  rw [hαb] at hcov
+  have h0 := hcov β hβ0
+  have hB0 := fun k => hcov _ (sum_spreadWeight _ hW' k)
+  have h2' : ∀ p q, ∫ ω, X p ω * X q ω ∂P
+      = diagonal (primVarW τ2 σsq (fun (_ : J) (_ : T) => w)) p q := by rw [hV]; exact h2
+  have h4' := h4
+  rw [← hV, ← hK] at h4'
+  have hA : ∀ x : J → ℝ, z * x j + (1 - z) * (∑ i, x i) / Fintype.card J = ∑ i, α i * x i :=
+    fun x => by
+    have e : ∀ i, α i * x i
+        = (if i = j then z * x i else 0) + (1 - z) / Fintype.card J * x i := fun i => by
+      simp only [hαdef]; split_ifs <;> ring
+    rw [sum_congr rfl fun i _ => e i, sum_add_distrib, sum_ite_eq', ← mul_sum]
+    simp only [mem_univ, ↓reduceIte]
+    ring
+  have hD : ∀ x : J → ℝ, x j - (∑ i, x i) / Fintype.card J = ∑ i, β i * x i := fun x => by
+    have e : ∀ i, β i * x i = (if i = j then x i else 0) - x i / Fintype.card J := fun i => by
+      simp only [hβdef]; split_ifs <;> ring
+    rw [sum_congr rfl fun i _ => e i, sum_sub_distrib, sum_ite_eq', ← sum_div]
+    simp only [mem_univ, ↓reduceIte]
+  set F : Ω → ℝ := fun ω => (errW (fun _ _ => w) α j ⬝ᵥ fun p => X p ω)
+    * (linW (fun (_ : J) (_ : T) => w) β ⬝ᵥ fun p => X p ω)
+  have hpt : ∀ ω, (z * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        + (1 - z) * (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J
+        - (μ + X (Sum.inl j) ω))
+      * (regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
+        - (∑ i, regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) i) / Fintype.card J)
+      * zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
+          (σsq / (w * Fintype.card T))
+          (statB (fun _ _ => w) (cellsOf μ fun p => X p ω)
+            / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)))
+      = σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) ^ 2
+          / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w))
+          * (F ω * statB (fun _ _ => w) (cellsOf μ fun p => X p ω))
+        - σsq / (w * Fintype.card T) / (τ2 + σsq / (w * Fintype.card T)) * F ω := fun ω => by
+    rw [hA, hD, errW_dotProduct _ hW α hα1, sum_mul_regionMean_cellsOf _ hW, hβ0]
+    simp only [F, zHatLin]
+    field_simp
+    ring
+  simp_rw [hpt]
+  have iB : Integrable (fun ω => F ω * statB (fun _ _ => w) (cellsOf μ fun p => X p ω)) P := by
+    simp only [F]; simp_rw [statB_cellsOfW _ hW hW' μ]; exact integrable_lin_lin_sumSq X hX _ _ _ _
+  have i0 : Integrable F P := by
+    simp only [F, dotProduct]
+    exact integrable_sum_mul_sum _ _ _ _ _ _ fun p q => integrable_mul2 (hX p) (hX q)
+  rw [integral_sub (iB.const_mul _) (i0.const_mul _), integral_const_mul, integral_const_mul]
+  simp only [F]
+  rw [integral_errW_linW_statB X hX τ2 σsq κL κN μ _ (fun _ _ => hw) h4' α β j h0 hB0,
+    integral_lin_mul_lin X hX _ h2', h0]
+  simp only [shares_const w hw0, sum_const, card_univ, nsmul_eq_mul, div_pow, one_pow]
+  have split : ∀ g : J → ℝ, ∑ x, g x = g j + ∑ x ∈ univ.erase j, g x := fun g =>
+    (add_sum_erase _ _ (mem_univ j)).symm
+  have hcard : ((univ.erase j).card : ℝ) = Fintype.card J - 1 := by
+    rw [card_erase_of_mem (mem_univ j), card_univ, Nat.cast_sub Fintype.card_pos]; simp
+  have off : ∀ g : J → ℝ, ∀ c : ℝ, (∀ x, x ≠ j → g x = c) →
+      ∑ x ∈ univ.erase j, g x = (Fintype.card J - 1) * c := fun g c hg => by
+    rw [sum_congr rfl fun x hx => hg x (ne_of_mem_erase hx), sum_const, nsmul_eq_mul, hcard]
+  rw [split, off _ _ (fun x hx => by simp only [hαdef, hβdef, hx, ↓reduceIte]; rfl)]
+  simp only [hαdef, hβdef, ↓reduceIte]
+  rw [hzdef]
+  field_simp
+  ring_nf
+  field_simp
+
+end CrossBalanced
 
 end Credibility.Cumulants
 

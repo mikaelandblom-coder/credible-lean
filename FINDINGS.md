@@ -663,6 +663,6 @@ Gaps, extra hypotheses and new results found while formalizing.
    `λ = dα/d log k`; then `2E[AB] = 2((1/σ² + (J − 1)/(cτ²))T_P − T_B/(cτ²))` with
    `T_P = κN/(J(T − 1)) Σᵢ αᵢλᵢ(1 − hᵢ)/Wᵢ`, `T_B = Σᵢ λᵢ(1 − Wᵢ/W)(κL Wᵢ(αᵢ − δᵢⱼ) + κN hᵢαᵢ/Wᵢ)`,
    `hᵢ = Σₜ aᵢₜ²`. It matches `firstOrder` in the study to all printed digits. Not proved: the sign in
-   general (only numerically), and the balanced theorem is not yet derived from it in Lean.
+   general (only numerically). The balanced theorems are now its equal-volumes corollaries (2026-11-25).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
