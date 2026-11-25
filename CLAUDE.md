@@ -24,7 +24,8 @@ tactics.
 - distribution layer: the plug-in BLUP (estimated `K̂`, `ℓ̂`, even and translation invariant) is
   unbiased under symmetric noise (Kackar–Harville) → `Credibility/PlugInSymmetric.lean`; its exact
   MSE `mse(d*) + E B² + 2E[AB]` (distribution-free) → `Credibility/PlugIn.lean`; the cross term
-  vanishes under normal noise → `Credibility/PlugInNormal.lean`
+  vanishes under normal noise → `Credibility/PlugInNormal.lean`; with known mean the best linear predictor is `E[Y | x]` and best among all measurable
+  predictors under normal noise → `Credibility/BlupNormal.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);
   §2.9 balance → `Credibility/Balance.lean`

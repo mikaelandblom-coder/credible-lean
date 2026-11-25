@@ -3538,6 +3538,31 @@ This section assumes symmetric noise; nothing else depends on it.
   term of Theorem~\ref{thm:Blup_plugIn_mse} is $\mathbb E[d^{*T}x - Y]\cdot\mathbb E[\cdot] = 0$.
 \end{proof}
 
+\begin{theorem}[Under normal noise the best linear predictor is $\mathbb E(Y\mid x)$]\label{thm:Blup_condExp_normal}
+  % Lean: Credibility/BlupNormal.lean
+  \lean{Credibility.Core.Target.knownMeanPred, Credibility.Core.Target.knownMeanPred_eq,
+        Credibility.Core.Target.memLp_knownMeanPred,
+        Credibility.Core.Target.measurable_knownMeanPred_fun,
+        Credibility.Core.Target.integral_sub_knownMeanPred,
+        Credibility.Core.Target.indepFun_knownMeanPred_of_normal,
+        Credibility.Core.Target.condExp_eq_knownMeanPred_of_normal,
+        Credibility.Core.Target.knownMeanPred_mse_le_of_normal}
+  \leanok
+  \uses{def:Blup_Target}
+  Distribution layer. Let $(x, Y)$ be jointly normal with $K \succ 0$ and the mean known. Then
+  the error of $\hat Y = \mathbb EY + \ell^TK^{-1}(x - \mathbb Ex)$ is independent of $x$, so
+  $\mathbb E(Y\mid x) = \hat Y$ almost surely, and no measurable function $g(x)$ with
+  $\mathbb E g(x)^2 < \infty$ has a smaller mean squared error. With an unknown $\beta$
+  (Definition~\ref{def:Blup_Target} with $X \ne 0$ estimated) the best linear unbiased predictor is
+  not $\mathbb E(Y\mid x)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\cov(Y - \ell^TK^{-1}x, x_j) = \ell_j - (KK^{-1}\ell)_j = 0$; jointly normal and uncorrelated
+  means independent. So $\mathbb E(Y - \hat Y\mid x) = \mathbb E(Y - \hat Y) = 0$, and for any $g$
+  the cross term $\mathbb E[(g(x) - \hat Y)(\hat Y - Y)]$ factors and vanishes.
+\end{proof}
+
 \begin{definition}[Estimates and a level as data and target]\label{def:Core_toTarget}
   \lean{Credibility.Core.Estimates.toTarget}
   \leanok
