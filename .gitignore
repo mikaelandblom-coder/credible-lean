@@ -5,3 +5,4 @@ blueprint/lean_decls
 blueprint/src/*.paux
 __pycache__/
 paper/web/
+.papers/

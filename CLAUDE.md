@@ -182,6 +182,10 @@ and nothing in the core depends on them.
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
   get from the repo (open questions, dead ends tried).
+- Literature: fetch open-access copies (preprints, theses, repositories; never
+  library or publisher PDFs) with `bash scripts/fetch_paper.sh <url> [name]`
+  (saves to `.papers/`, gitignored, with a `.txt`). If its host is blocked,
+  propose adding that host to the environment.
 - No upstream contributions or posts. Mathlib's policy (2026-11-09) bans
   LLM-written comments on its Zulip and GitHub and expects code written by
   hand, and the owner works only through AI; their account was suspended for
