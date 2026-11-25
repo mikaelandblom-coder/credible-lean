@@ -1064,7 +1064,8 @@ AI4SLT (arXiv 2602.02285), FormalSLT.
     `∝ (1 − zⱼ)²`). That would break exposure balance (§2.9), the thesis' reason for `b ∝ z`. Relevant
     when the levels are not exchangeable, e.g. a level trend with volume (Finding 14's k-means world).
     The owner can supply the PDF; check the BPE formula, the criterion (design-based MSPE,
-    conditional on θ) and the OBP MSPE estimator.
+    conditional on θ) and the OBP MSPE estimator. *Formula and criterion settled 2026-11-25 from Zhang &
+    Jiang (2025), §10p: weights `∝ (1 − zⱼ)²`, criterion = SURE of the conditional MSE.*
 
 ### 10p. Three recent small-area papers, read (2026-11-25)
 Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was seen, it says so.
@@ -1145,4 +1146,35 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     from the other, which gives a design-unbiased EB and its MSE (the cross-fitting remedy again, cf. Finding 35).
     Lahiri & Salvati (2023) let model parameters vary by area, with pooled estimating equations,
     next to our own-against-pooled variances (law (b)).
-- *Still for the owner:* the Jiang–Nguyen–Rao (2011) PDF, to confirm the BPE weights and criterion.
+- *Settled 2026-11-25 without the 2011 PDF* (owner's upload, next item): the BPE criterion and weights.
+- **Zhang & Jiang (2025)**, "Modified observed best prediction strategies for small area estimation with
+  unit-level data", *Survey Methodology* 51(2), 381–398 (Statistics Canada 12-001-X; owner's PDF, read
+  as text 2026-11-25). Not Jiang–Nguyen–Rao (2011), but §2 restates its OBP for a "broader model" (each
+  area has its own mean, no linking model) and derives a model-based unit-level version (MB/UL OBP).
+  - *The criterion* (eqs. 2.14–2.15, read through garbled PDF symbols, structure checked by hand). Up to
+    a constant, the MSPE under the broader model is
+    `Σᵢ [(1 − aᵢ)²(ȳᵢ − x̄ᵢ'β)² − 2(1 − aᵢ)Dᵢ]` with `aᵢ = nᵢσᵥ²/(σₑ² + nᵢσᵥ²)` (our `zᵢ`) and
+    `Dᵢ = σₑ²/nᵢ`, taking an infinite population and sample covariate means equal to the population's.
+    The BPE minimises it. This is **SURE** (Stein's unbiased risk estimate) of the MSE *conditional on the
+    area means*: `E(1 − z)²(ȳ − β)² − 2(1 − z)D + D = z²D + (1 − z)²(θ − β)²`, the conditional MSE of
+    `zȳ + (1 − z)β`. So OBP = SURE shrinkage with both the location and `τ²` chosen by SURE (Xie, Kou &
+    Brown 2012, §5).
+  - **With `x = 1`, at fixed `τ²`: `β̂ = Σ(1 − zᵢ)²ȳᵢ / Σ(1 − zᵢ)²`, so the weights are `∝ (1 − zᵢ)²`.** This
+    confirms §10o's recollection and Rao & Rao's "more weight to areas with larger sampling variances".
+    Within the MB/UL criterion, `σₑ²` cannot be estimated (it is monotone in it), so they plug in REML.
+  - *Their findings.* The design-based unit-level OBP is numerically unstable, and the instability comes from its
+    variance components, not from `β`. Fixes: search only within ±5% of REML (a hand-set `δ`), or take
+    the variance components from the induced Fay–Herriot model and choose only `β` by OBP (FH/UL OBP,
+    the most stable). Every simulated world is misspecified: an intercept or a slope missing from the
+    working model. There the OBPs beat the EBLUP. No correctly specified world is reported.
+  - **For us.** (a) The formula is settled. In the thesis model (exchangeable levels) `b ∝ z` is best
+    (`Core.blupWeight_optimal`) and exposure-balanced (§2.9), and OBP's `(1 − z)²` gives up both. Our
+    `studies/sure.js` (B), which chooses only `τ²` by SURE, already costs 3–30 points against the moment fit
+    in every world there, consistent with OBP paying when the model is right. (b) OBP's case is a
+    misspecified collective mean, e.g. levels that trend with volume (Finding 14's world). Then the GLS
+    mean follows the large cohorts, while the small cohorts lean on it most (`1 − z` large). OBP aims the
+    collective mean at the cohorts that use it. (c) Their lesson matches ours: estimate the variance
+    components by moments or REML, and choose at most the location by risk. (d) A small Lean candidate,
+    not started: conditional on the levels `θ`, the fixed collective mean that minimises the total squared bias
+    `Σⱼ uⱼ(1 − zⱼ)²(m − θⱼ)²` is `m = Σuⱼ(1 − zⱼ)²θⱼ / Σuⱼ(1 − zⱼ)²`, and the BPE is its unbiased-risk plug-in.
+    Averaged over exchangeable levels, `b ∝ z` wins (proved). Together these say when each one is right.

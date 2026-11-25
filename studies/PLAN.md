@@ -837,6 +837,11 @@ One chat per step; none needs Lean except step 5.
   cohorts ordered by volume or time are grouped into intervals, so there is no `φ`, and `K` should come
   from gain against price with `K = 1` as reference. Open first (numerically, a small study): with its own `τ²` per
   group, are the optimal groups still intervals? Only then a Lean target.
+- [ ] OBP collective mean (2026-11-25, literature §10p, Zhang & Jiang): the observed best predictor's
+  collective mean is the `(1 − zⱼ)²`-weighted mean (SURE of the MSE given the levels). Possible study: a
+  world switch "levels trend with volume" (the collective mean is misspecified), comparing BS, BS with the OBP mean,
+  and grouping (KMeansBridge). Expect OBP to lose in the exchangeable worlds (`studies/sure.js` (B)). Not a
+  fit to recommend before that study.
 - [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a
