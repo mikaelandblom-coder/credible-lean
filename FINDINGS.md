@@ -657,7 +657,12 @@ Gaps, extra hypotheses and new results found while formalizing.
    −1.96 ± 0.16% (J = 8, T = 5), −0.58% against −0.61 ± 0.04% (J = 30). The level part's first order
    overstates at small J (−9.0% against −6.6 ± 0.2% at J = 8; −2.5% against −2.3% at J = 30), as a
    delta method should; gamma (skewed) and Laplace (symmetric) shapes of equal kurtosis give nearly
-   the same. So the sign and the size carry over to unequal volumes; a Lean proof for general weights
-   is open.
+   the same. So the sign and the size carry over to unequal volumes. *Proved for any volumes
+   (2026-11-25, `Cumulants.crossTerm_bs_of_cumulants`, with `bsAlpha_hasDerivAt`):* BS's weights depend
+   on `(σ̂², τ̂²)` only through `k = σ²/τ²`, so the first-order error is `ε̂·(λ·x̄)`, `ε̂ = σ̂²/σ² − τ̂²/τ²`,
+   `λ = dα/d log k`; then `2E[AB] = 2((1/σ² + (J − 1)/(cτ²))T_P − T_B/(cτ²))` with
+   `T_P = κN/(J(T − 1)) Σᵢ αᵢλᵢ(1 − hᵢ)/Wᵢ`, `T_B = Σᵢ λᵢ(1 − Wᵢ/W)(κL Wᵢ(αᵢ − δᵢⱼ) + κN hᵢαᵢ/Wᵢ)`,
+   `hᵢ = Σₜ aᵢₜ²`. It matches `firstOrder` in the study to all printed digits. Not proved: the sign in
+   general (only numerically), and the balanced theorem is not yet derived from it in Lean.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

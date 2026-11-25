@@ -8963,6 +8963,92 @@ price needs their covariances.
   of the plug-in.
 \end{remark}
 
+\begin{definition}[Any volumes: primitives, Bühlmann--Straub's weights and their direction]\label{def:primCellsW}
+  \lean{Credibility.Cumulants.primVarW, Credibility.Cumulants.diagK4, Credibility.Cumulants.primK4W, Credibility.Cumulants.linW, Credibility.Cumulants.errW,
+        Credibility.Cumulants.bsZk, Credibility.Cumulants.bsAlpha, Credibility.Cumulants.bsLambda, Credibility.Cumulants.bsEps}
+  \leanok
+  \uses{def:primCells, def:bsTau2Hat}
+  As in Definition~\ref{def:primCells} with noise variance $\sigma^2/w_{it}$ and fourth cumulant
+  $\kappa_N/w_{it}^2$ per cell. With $W_i = \sum_tw_{it}$ and $k = \sigma^2/\tau^2$: $z_i = W_i/(W_i + k)$,
+  $Z = \sum z_i$, $b = z/Z$, the prediction weights $\alpha_i = z_j\delta_{ij} + (1 - z_j)b_i$ on the region
+  means, $\lambda_i = -\bigl(z_j(1 - z_j)(\delta_{ij} - b_i) + (1 - z_j)(z_i(1 - z_i) - Sb_i)/Z\bigr)$ with
+  $S = \sum z(1 - z)$, and $\hat\varepsilon = \hat\sigma^2/\sigma^2 - \hat\tau^2/\tau^2$.
+\end{definition}
+
+\begin{lemma}[The primitives' algebra, any volumes]\label{lem:primCellsW}
+  \lean{Credibility.Cumulants.sum_diagK4, Credibility.Cumulants.dotProduct_diagonal_primVarW, Credibility.Cumulants.sum_shares,
+        Credibility.Cumulants.shares_div, Credibility.Cumulants.sum_mul_regionMean, Credibility.Cumulants.sum_meanComb,
+        Credibility.Cumulants.pullCoef_meanComb_shares, Credibility.Cumulants.sum_mul_regionMean_cellsOf,
+        Credibility.Cumulants.errW_dotProduct, Credibility.Cumulants.statP_cellsOfW, Credibility.Cumulants.sum_spreadWeight,
+        Credibility.Cumulants.statB_cellsOfW, Credibility.Cumulants.sum_pos_of_pos, Credibility.Cumulants.linW_cov_linW,
+        Credibility.Cumulants.linW_cov_res, Credibility.Cumulants.sum_mul_sum_diag, Credibility.Cumulants.errW_cov,
+        Credibility.Cumulants.sum_resCoef_sq_w, Credibility.Cumulants.sum_spreadWeight_sq}
+  \leanok
+  \uses{def:primCellsW}
+  $\operatorname{cov}(\sum\beta_i\bar x_i, \sum\gamma_i\bar x_i) = \sum_i\beta_i\gamma_i(\tau^2 + \sigma^2/W_i)$; region means and
+  residuals are uncorrelated; the cumulant weights of $P$ on a noise cell are $w_c(1 - a_c)/(J(T - 1))$,
+  those of $B$ are $W_i(1 - W_i/W)$ on $L_i$ and $a_{it}^2W_i(1 - W_i/W)$ on $e_{it}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:fitStats_eval, lem:sum_bsK4, lem:primCells}
+  As Lemma~\ref{lem:primCells}, with $a_{it}/w_{it} = 1/W_i$ in place of equal shares.
+\end{proof}
+
+\begin{lemma}[Bühlmann--Straub's weights and their derivative]\label{lem:bsAlpha}
+  \lean{Credibility.Cumulants.bsZk_pos, Credibility.Cumulants.sum_bsAlpha, Credibility.Cumulants.sum_bsLambda,
+        Credibility.Cumulants.bsAlpha_mul_var, Credibility.Cumulants.bsZk_hasDerivAt, Credibility.Cumulants.bsAlpha_hasDerivAt}
+  \leanok
+  \uses{def:primCellsW}
+  $\sum\alpha = 1$, $\sum\lambda = 0$, $d\alpha_i/dk = \lambda_i/k$, and at the true $k$,
+  $\alpha_i(\tau^2 + \sigma^2/W_i) - \tau^2\delta_{ij} = (1 - z_j)\tau^2/Z$ for every $i$: the error has the same
+  covariance with every region mean.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $z_i(\tau^2 + \sigma^2/W_i) = \tau^2$; $dz_i/dk = -z_i(1 - z_i)/k$ and the quotient rule.
+\end{proof}
+
+\begin{lemma}[The error and a spread against $P$ and $B$, any volumes]\label{lem:integral_errW}
+  \lean{Credibility.Cumulants.integral_errW_linW_statP, Credibility.Cumulants.integral_errW_linW_statB}
+  \leanok
+  \uses{def:primCellsW}
+  If $A = \alpha^\top\bar x - (\mu + L_j)$ is uncorrelated with $\lambda^\top\bar x$ (and, for $B$, with every
+  spread), then with $h_i = \sum_ta_{it}^2$:
+  $\operatorname{E}[A(\lambda^\top\bar x)P] = \frac{\kappa_N}{J(T - 1)}\sum_i\alpha_i\lambda_i(1 - h_i)/W_i$ and
+  $\operatorname{E}[A(\lambda^\top\bar x)B] = \sum_i\lambda_i(1 - W_i/W)\bigl(\kappa_LW_i(\alpha_i - \delta_{ij}) + \kappa_Nh_i\alpha_i/W_i\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_lin_lin_sumSq, lem:primCellsW}
+  Lemma~\ref{lem:integral_lin_lin_sumSq}; the $C$ terms vanish; Lemma~\ref{lem:primCellsW} for the $\kappa_4$ term.
+\end{proof}
+
+\begin{theorem}[The first-order cross term, any volumes]\label{thm:crossTerm_bs}
+  \lean{Credibility.Cumulants.crossTerm_bs_of_cumulants}
+  \leanok
+  \uses{def:primCellsW, thm:Blup_plugIn_mse}
+  Bühlmann--Straub's weights depend on $(\hat\sigma^2, \hat\tau^2)$ only through $k$, so at first order
+  $B = \hat\varepsilon\,\lambda^\top\bar x$ (Lemma~\ref{lem:bsAlpha}). With $c = W - \sum W_i^2/W$,
+  \[ 2\operatorname{E}[A\hat\varepsilon\,\lambda^\top\bar x] = 2\Bigl(\Bigl(\frac1{\sigma^2} + \frac{J - 1}{c\tau^2}\Bigr)T_P
+     - \frac{T_B}{c\tau^2}\Bigr), \]
+  $T_P$, $T_B$ the two moments of Lemma~\ref{lem:integral_errW}. Equal volumes give
+  Theorem~\ref{thm:crossTerm_balanced_cumulants} (checked numerically, \texttt{studies/cross-term.js}; not
+  derived in Lean).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_errW, lem:bsAlpha, lem:integral_lin_lin_sumSq}
+  $\hat\varepsilon$ is linear in $P$ and $B$; Lemma~\ref{lem:bsAlpha} gives the covariance conditions,
+  Lemma~\ref{lem:integral_errW} the two moments.
+\end{proof}
+
+\begin{remark}[Finding 38 for any volumes]
+  Every $\lambda_i$, $\alpha_i$ and weight in Theorem~\ref{thm:crossTerm_bs} is explicit; on unbalanced worlds
+  (region sizes $16\times$ apart) the term is negative in every region, for levels and for noise, and
+  matches simulation (\texttt{studies/cross-term.js}).
+\end{remark}
+
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
   \lean{Credibility.Core.linMse_lineWeight, Credibility.Core.linMse_lineWeight_sub}
   \leanok

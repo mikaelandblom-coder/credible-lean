@@ -361,6 +361,8 @@ One chat per step; none needs Lean except step 5.
   linearize the fit's weights in (P, B), then the `integral_lin_lin_sumSq` identity) matches simulation,
   noise part within SE, level part ~30% too large at J = 8 (fine at J = 30). Use that general form in the
   engine rather than the balanced closed form; γL stays a sensitivity.
+  *Proved 2026-11-25 (`Cumulants.crossTerm_bs_of_cumulants`):* the closed form for any volumes (finite
+  sums over regions, Finding 38); the engine can use it directly instead of the numeric `firstOrder`.
 - [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the
