@@ -17,11 +17,12 @@ data (shock, season, factor); trends and several quantities; appendix: a worked 
 cohorts, four years, every number checkable by hand). Labels unchanged (the thesis proposal and
 the paper cite them); numbers changed, so the paper was rerun with `paper_check.py --fix`.
 
-**One home per explanation** (owner, 2026-11-25): the handbook is a quick formula book. An entry
-keeps its statement, a short "use it", a one-line "why" and the "watch out"s a user needs at the
-formula; longer explanations, study details and the story live in the paper and are cited by
-title with `\paper{Title}` (checked by `handbook_check.py`: the title must be a heading or run-in
-paragraph of `paper/paper.tex`). The 6–8 page target is dropped: it is a reference, not a read.
+**One home per explanation** (owner, 2026-11-25): the handbook is the formula book and holds every
+formula. An entry is its statement, its Lean links, and at most two lines of "use it" and one short
+"watch out"; no "why". Each section opens with "Context:" and the paper's section, cited by title
+with `\paper{Title}` (checked by `handbook_check.py`: the title must be a heading or run-in paragraph
+of `paper/paper.tex`). The paper also displays its ~10 key formulas, so it stands alone. The 6–8
+page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)

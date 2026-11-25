@@ -221,11 +221,12 @@ still reads like the thesis; special cases are corollaries.
 
 ## Four documents, one home per kind of content (owner, 2026-11-16)
 - **App** (`app/`): shows the ideas and tools at work. Focus: application.
-- **Handbook** (`handbook/`): quick access to formulas, short notes on use.
+- **Handbook** (`handbook/`): every formula, each with at most two lines of
+  "use it" / "watch out"; no explanations (each section cites the paper's for context).
 - **Paper** (`paper/`, outline and status in `paper/outline.md`): the
   up-to-date version of the thesis and the first complete source for a
-  reader. Explains concepts, organized for lookup; few formulas (cites
-  handbook numbers), no proofs (gives Lean names).
+  reader. Explains concepts, organized for lookup; displays the ~10 formulas that
+  carry the story and cites handbook numbers for the rest; no proofs (gives Lean names).
 - **Blueprint**: the proof ledger (statements, proofs, dependency graph).
   Reached by link, not read front to back.
 The paper is `paper/paper.tex` (built by CI to `/paper/` and `paper.pdf`);

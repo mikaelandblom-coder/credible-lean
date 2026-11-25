@@ -1,5 +1,6 @@
 % The paper: the up-to-date version of the thesis, explained in words.
-% Concepts only: formulas live in the handbook (cited by number with \hb),
+% Concepts, and the ten or so formulas that carry them; every formula lives in
+% the handbook (cited by number with \hb),
 % proofs in Lean (cited by name with \lean) and the blueprint.
 % Outline, rules and status: paper/outline.md.
 % Built by CI as a PDF (xelatex) and a searchable web page (plasTeX),
@@ -63,8 +64,8 @@
   several quantities per segment, how to choose the segments, and what
   fitting the parameters from the same data costs, including what changes
   when claims are skewed or heavy-tailed. It is the up-to-date version of the
-  master thesis it grew out of. It explains; it does not prove or list
-  formulas. The formulas are in the
+  master thesis it grew out of. It explains, and gives the formulas that
+  carry the story; the full list of formulas is in the
   \href{\site/handbook.pdf}{handbook}, cited by number, and every result is
   machine-checked in Lean, cited by name; the
   \href{\site/}{blueprint} has the proofs.
@@ -204,10 +205,12 @@ The work comes in four documents, one for each kind of content.
   \item \emph{The paper} (this one) explains. It is the up-to-date version of
     the master thesis it grew out of (Andblom, Stockholm University, 2023:2)
     and the first thing to read or cite. Each topic is one concept: what
-    it is, the idea in plain words, and what to watch out for. It has few
-    formulas and no proofs.
-  \item \emph{The \href{\site/handbook.pdf}{handbook}} holds the formulas:
-    the key results, numbered, each with a short note on how to use it. The
+    it is, the idea in plain words, and what to watch out for. It displays
+    the formulas the story needs (the model, $K$, the weights, the factor,
+    the best linear predictor) and no proofs.
+  \item \emph{The \href{\site/handbook.pdf}{handbook}} holds all the formulas:
+    every result, numbered, with a line on how to use it and what to watch out
+    for, and no explanation. The
     paper cites them as ``Handbook~(5)''.
   \item \emph{The \href{\site/}{blueprint}} is the proof ledger: every
     statement with its proof and a graph of what depends on what. You reach
@@ -396,7 +399,12 @@ $K_{ij} = \cov(\hmu_i, \hmu_j)$. The recipe has three steps
     periods, plus $\tau^2$. An off-diagonal entry is how much two cohort
     estimates move together, which here happens only through shocks in the
     same period, so it is their averaged noise times $\rho_{ij}$
-    (\hb{res:posdef}{7}).
+    (\hb{res:posdef}{7}):
+    \[
+      K_{ij} = \sigma_{ij}^2\rho_{ij} + \tau^2\delta_{ij},
+      \qquad \sigma_{ij}^2 = \sum_t a_{it}a_{jt}\sigma_{it}\sigma_{jt},
+    \]
+    with $a_{jt}$ the weights that average cohort $j$'s periods.
   \item \emph{Check that $K$ is positive definite.}
   \item \emph{Read off the rest.} Invert $K$ once. The best portfolio
     weights, the variance of the portfolio estimate and every $z_j$ follow
@@ -496,7 +504,11 @@ unbiased estimate; the question is which give the most precise one.
 \paragraph{Within a cohort.}
 
 Within a cohort, weigh each period by the inverse of its noise
-variance (\hb{res:invVar}{2}). A year with twice the volume has half the
+variance (\hb{res:invVar}{2}):
+\[
+  a_{jt} = \frac{\sigma_{jt}^{-2}}{\sum_s \sigma_{js}^{-2}},
+  \qquad \hmu_j = \sum_t a_{jt}\mu_{jt}.
+\] A year with twice the volume has half the
 noise variance and counts twice. With $\sigma_{jt}^2 = \sigma^2/w_{jt}$ this
 is the volume-weighted mean, exactly as in Bühlmann--Straub. Correlation
 between cohorts does not change it: within one cohort the noise of
@@ -507,8 +519,12 @@ only shows up later, in $K$.
 
 Across cohorts, the variance of a weighted average
 $\sum_j c_j\hmu_j$ is a quadratic form in $K$, and the weights that make it
-smallest are $K^{-1}\mathbf 1$, scaled to sum to one
-(\hb{res:gls}{3}). Call them $b_j$, and the variance they reach $s^2$.
+smallest are $K^{-1}\mathbf 1$, scaled to sum to one (\hb{res:gls}{3}):
+\[
+  b = \frac{K^{-1}\mathbf 1}{\mathbf 1^\top K^{-1}\mathbf 1},
+  \qquad s^2 = \Var(\hmu) = \frac{1}{\mathbf 1^\top K^{-1}\mathbf 1},
+  \qquad \hmu = \sum_j b_j\hmu_j .
+\]
 Without correlation $K$ is diagonal and $b_j$ is proportional to
 $1/K_{jj} = 1/(\tau^2 + v_j)$, where $v_j$ is the noise variance of
 $\hmu_j$. Note the $\tau^2$: even a cohort measured without any noise
@@ -588,6 +604,11 @@ GLS weights in hand, both parts of that share are short
     ``every cohort covaries equally with the portfolio'' fact of
     Section~\ref{sec:weights}.
 \end{itemize}
+Together,
+\[
+  z_j = \frac{(1 - b_j)\,\tau^2}{\tau^2 + v_j - s^2}
+      = \frac{\cov(\hmu_j - \hmu,\ \mu_j)}{\Var(\hmu_j - \hmu)} .
+\]
 So the recipe is: compute $K$, invert it once, and every $z_j$ follows.
 Without correlation it collapses to $\tau^2/(\tau^2 + v_j)$, the
 Bühlmann--Straub factor (\hb{res:diag}{6}).
@@ -700,9 +721,12 @@ rescaled to sum to one.
 \paragraph{Bühlmann--Straub.}
 
 No correlation, and noise variance
-$\sigma^2$ over volume. Then $z_j = w_{j*}/(w_{j*} + \kappa)$ with
-$w_{j*}$ the cohort's total volume and $\kappa = \sigma^2/\tau^2$, and the
-portfolio weights are $b_j = z_j/z_*$ with $z_*$ the sum of the factors
+$\sigma^2$ over volume. Then
+\[
+  z_j = \frac{w_{j*}}{w_{j*} + \kappa}, \qquad \kappa = \frac{\sigma^2}{\tau^2},
+  \qquad b_j = \frac{z_j}{z_*},
+\]
+with $w_{j*}$ the cohort's total volume and $z_*$ the sum of the factors
 (\hb{res:bs}{8}). This is the classical model, recovered exactly; it needs
 at least two cohorts (\finding{2}). It is also balanced, a property
 Section~\ref{sec:balance} takes up.
@@ -710,8 +734,12 @@ Section~\ref{sec:balance} takes up.
 \paragraph{Two cohorts.}
 
 Bühlmann--Straub with $\sigma_1^2 - \sigma_1\sigma_2\rho$
-in place of $\sigma_1^2$, as in Section~\ref{sec:z}, and again
-$b_1 = z_1/(z_1 + z_2)$ (\hb{res:two}{12}). That second identity is not in
+in place of $\sigma_1^2$, as in Section~\ref{sec:z}, and again the weights are the
+factors rescaled (\hb{res:two}{12}):
+\[
+  z_1 = \frac{\tau^2}{\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho},
+  \qquad b_1 = \frac{z_1}{z_1 + z_2}.
+\] That second identity is not in
 the published thesis; it appeared on the defence slides (\finding{4}). It
 means that any split of a portfolio in two, such as the two levels of a
 binary rating factor, keeps the classical weight formula under
@@ -860,7 +888,15 @@ the quantity you want to predict, its variance, and a design that says how
 the unknown means are built (one common mean, a season, a mean per
 component). The best unbiased weights and their error follow, and the error
 splits into the part you would have with known means plus the price of
-estimating them (\hb{res:blup}{22}). The target need not be a cohort's level:
+estimating them (\hb{res:blup}{22}). With data $x$, $\cov(x) = K$, a target $Y$ with
+$\ell = \cov(x, Y)$ and $v = \Var Y$, and means $Ex = X\beta$, $EY = x_0^\top\beta$,
+\[
+  d^* = K^{-1}\ell + K^{-1}X(X^\top K^{-1}X)^{-1}r, \qquad r = x_0 - X^\top K^{-1}\ell,
+\]
+\[
+  E(d^{*\top}x - Y)^2 = v - \ell^\top K^{-1}\ell + r^\top(X^\top K^{-1}X)^{-1}r,
+\]
+and any other unbiased weights $d$ lose exactly $(d - d^*)^\top K(d - d^*)$. The target need not be a cohort's level:
 it can be next year's twelve months (Section~\ref{sec:factor}), a group
 effect (Section~\ref{sec:groups}, where Henderson's mixed-model equations
 give the same answer), or a vector of levels (Section~\ref{sec:vector}). The
@@ -937,7 +973,10 @@ survives cohorts observed over different periods (\finding{10}).
 
 Write the blend as
 $\hmu_j^b = z_j\hmu_j + (1 - z_j)\hmu$. The blended rates are balanced for
-volumes $u_j$ exactly when $u_j(1 - z_j)$ is proportional to $b_j$
+volumes $u_j$, $\sum_j u_j(\hmu_j - \hmu_j^b) = 0$ for all data, exactly when
+\[
+  u_j(1 - z_j) \propto b_j
+\]
 (\hb{res:balance}{9}). So every blend is balanced for one volume measure,
 $u_j \propto b_j/(1 - z_j)$, and the only question is whether that measure is
 one you care about. In Bühlmann--Straub $b_j = z_j/z_*$ and
@@ -1185,9 +1224,13 @@ estimates, so the fitted factor shrinks hardest exactly when the raw mean
 is most off (S21). For the Bühlmann--Straub fit this holds for heavy-tailed levels with
 any volumes (\lean{Credibility.Cumulants.crossTerm_bs_level_nonpos}); heavy-tailed noise can flip
 the sign when a cohort's volume sits in one year (Finding 39). That is how a fitted model can beat the best blend with
-fixed weights (S9). The split itself is exact for every distribution: the fitted
-predictor's error is the best predictor's, plus the mean square of the difference
-between the two, plus twice the cross term; under normal noise and a fit that is
+fixed weights (S9). The split itself is exact for every distribution: with $A$ the error
+of the best predictor $d^{*\top}x$ and $B = \hat d^\top x - d^{*\top}x$ the fitted predictor's
+distance from it,
+\[
+  E(\hat d^\top x - Y)^2 = E A^2 + E B^2 + 2E[AB].
+\]
+Under normal noise and a fit that is
 unbiased and translation invariant the cross term is zero, so estimating can only cost
 (\hb{res:plugIn}{29}). With symmetric noise and a fit on residuals the plug-in predictor
 is also unbiased.
@@ -2151,7 +2194,12 @@ a cohort's frequency and severity do. The portfolio estimate is the
 matrix version of GLS, and the blend is $\hmu + Z_j(\hmu_j - \hmu)$ with a
 matrix $Z_j$ that lets the frequency gap inform the severity estimate. The
 best $Z_j$ is the same formula as the scalar one, with matrices for numbers
-(\hb{res:vector}{51}). It is best in the strongest sense: for every premium
+(\hb{res:vector}{51}):
+\[
+  Z_j = \bigl(L_{jj} - (LW)_j\bigr)\bigl(K_{jj} - S\bigr)^{-1},
+\]
+with $L$ the covariance of the levels, $W$ the matrix GLS weights and $S$ the
+covariance of the portfolio estimate. It is best in the strongest sense: for every premium
 that is a linear combination of the components, so for a pure premium built
 to first order from frequency and severity as well as for each component on
 its own. With independent cohorts it is the multidimensional

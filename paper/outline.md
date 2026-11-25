@@ -12,15 +12,18 @@ the concepts; it does not carry the formulas or the proofs.
 | Content | Home | The paper does |
 |---|---|---|
 | Statement and proof | Lean + blueprint | gives the Lean name |
-| Formula | handbook | cites the handbook number |
+| Formula | handbook (all); the ~10 key ones also displayed in the paper | cites the handbook number |
 | Explanation, intuition, when to use, what can go wrong | **paper** | — |
 | Demonstration | app | names the step or switch to try |
 | Dated log of gaps and new results | `FINDINGS.md` | explains the finding where it belongs |
 
 Rules that keep this cheap to maintain:
-- A formula is displayed in the paper only when the explanation cannot be
-  read without it (the model, the blend, the credibility factor). Otherwise:
-  "Handbook (n)".
+- The formulas that carry the story are displayed in full (owner, 2026-11-25: the paper must
+  stand alone as a preprint): the model, `K`, the inverse-variance and GLS weights, `z`,
+  Bühlmann–Straub and two cohorts, the best linear predictor and its error, balance, the
+  fitted error split, the credibility matrix. Every other formula: "Handbook (n)". The
+  handbook holds all formulas, these included; the duplication is of formulas only, never of
+  explanations (the handbook has none: each section cites the paper's for context).
 - Sections are concepts, not results. A new result is normally a
   paragraph in an existing subsection.
 - No proofs. A proof idea in one or two sentences is welcome when it is the
