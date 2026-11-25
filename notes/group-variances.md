@@ -72,3 +72,7 @@ come from elsewhere: gain against price (S57).
   If the levels look heavy-tailed, treat outliers by robust credibility (literature §10l), not by a group.
 - In data the levels are unknown and the sort is by the estimates. The theorem is about true
   levels, as in Finding 14.
+- *Checked 2026-11-25 (`studies/obp-mean.js`, S61):* cutting the sorted estimates and choosing the cut by
+  SURE is 2–74% worse than one group, in every world tried. Sorting puts the noise into the groups and
+  SURE ignores the choice. The same cut of the true levels is −13 to +13%. So the step needs a
+  selection-aware criterion first.

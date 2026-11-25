@@ -19,10 +19,8 @@ voice, then trim towards 8 pages.
 - *Done 2026-11-25:* Finding 41 "watch out" in `res:blend_intervals` (common `τ²` keeps intervals,
   a `τ²` per group makes an outlier bin, number of groups by gain against price); the normal-noise
   "why" sentence in `res:blup` (`knownMeanPred_mse_le_of_normal`).
-- OBP collective mean (2026-11-25, `Core.condRisk_obpMean_le`, `Core.sure_obpMean_le`,
-  `Core.integral_sure_given_level`): given the levels the best collective mean has weights
-  `∝ uⱼ(1 − zⱼ)²`, not `∝ z`. A "watch out" next to the collective mean once the PLAN study
-  (levels trending with volume) says when it pays; not a fit to recommend before that.
+- *Done 2026-11-25 (later):* OBP collective mean "watch out" at `res:bs` (study S59–S62: don't use it; a volume
+  trend as a design column instead), and a line in the Finding 41 caveat: never cut sorted estimates by SURE (S61).
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):

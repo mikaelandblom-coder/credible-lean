@@ -839,14 +839,25 @@ One chat per step; none needs Lean except step 5.
   with its own `τ²` per group, no: a group that does not shrink collects the outliers of both tails, even with equal volumes.
   With own means and one common `τ²`, yes, for any volumes (weighted k-means with weights `u(1 − z)²`). So the
   app step fits own means and a common `τ²` by cuts of the sorted estimates (DP). Proved 2026-11-25:
-  `group_optimal_contiguous` (corollary of `kmeans_contiguous`).
-- [ ] OBP collective mean (2026-11-25, literature §10p, Zhang & Jiang): the observed best predictor's
+  `group_optimal_contiguous` (corollary of `kmeans_contiguous`). *Warning 2026-11-25 (S61):* do not choose the
+  cut of the sorted estimates by SURE: 2–74% worse than one group; the step needs a selection-aware
+  criterion (cross-fitting, or a price that includes the choice of the cut) before it is built.
+- [x] OBP collective mean (2026-11-25, literature §10p, Zhang & Jiang): the observed best predictor's
   collective mean is the `(1 − zⱼ)²`-weighted mean (SURE of the MSE given the levels). Possible study: a
   world switch "levels trend with volume" (the collective mean is misspecified), comparing BS, BS with the OBP mean,
   and grouping (KMeansBridge). Expect OBP to lose in the exchangeable worlds (`studies/sure.js` (B)). Not a
   fit to recommend before that study. *Proved 2026-11-25* (`Credibility/ObservedBest.lean`): the error
   given the level, its SURE, and that `Core.obpMean` minimises both the total error given the levels and
   its observed estimate. App: the study's "OBP mean" fit would use `obpMean` on the `x̄ⱼ`.
+  *Studied 2026-11-25 (`studies/obp-mean.js`, S59–S62 in `damping-theta.md`):* no. Fitted, it is ±1–5% of BS
+  (worse without a trend, better only with a trend of τ or more), it breaks balance, and with known per-cohort
+  variances it is up to 58% worse (its own noise). No app fit; a handbook "watch out" at `res:bs`.
+  Two side results: grouping by cuts of the sorted estimates chosen by SURE is 2–74% worse than BS (S61,
+  see "Grouping cohorts" above), and a volume trend as a design column `[1, log w]` (BLUP) gains 3–35% at a
+  trend ≥ τ for a price of 0.5–12% without one (S62).
+- [ ] Volume trend as a design column (2026-11-25, S62): a fit "BLUP with log volume" (`res:blup`, X = `[1, log w]`),
+  switched on by gain against price (S57) with the price of the column. Needs the price of an extra column in
+  `Engine.gainPrice` and a world switch "levels trend with volume" (`obp-mean.js` has both pieces).
 - [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a

@@ -1265,8 +1265,12 @@ with the smallest total error weights the levels by $u_j(1 - z_j)^2$, and the sa
 estimates minimise the estimated error: the collective mean of the observed best predictor (Jiang,
 Nguyen and Rao 2011; \file{studies/literature.md} §10p). The small cohorts count most, the opposite
 of the weights $\propto z_j$ that are best on average over interchangeable levels. Both are right,
-for different questions. Which pays on real portfolios, where levels may trend with volume, is not
-settled yet (\file{studies/PLAN.md}); the averaged answer remains the default.
+for different questions, but as a fit the averaged answer wins. Even when levels trend with
+volume, the plug-in gains at most a few per cent, it breaks balance, and with per-cohort variances it
+is much worse: the theorem holds the collective mean fixed, while as an estimate it is noisiest
+exactly where those weights put it. A trend in volume belongs in the design as a fixed effect
+(\hb{res:blup}{34}), which gains far more when the trend is there and has a visible price when
+it is not (\file{studies/damping-theta.md}, S59--S62).
 
 \watch
 \begin{itemize}
@@ -1770,7 +1774,10 @@ of fitting them (Section~\ref{sec:estimation}).
     that look close by chance get merged. That winner's curse is not
     quantified yet.
   \item \emph{The levels are unknown.} The interval results sort the true
-    levels; in practice you sort their estimates, which is a plug-in.
+    levels; in practice you sort their estimates, which is a plug-in. It is not a harmless one:
+    sorting puts the noise into the groups, and two groups cut from the sorted estimates, with the cut
+    chosen by SURE on the same data, were 2--74\% worse than one group in every world of a study
+    where the same cut of the true levels was about even (\file{studies/damping-theta.md}, S61).
   \item \emph{Correlated units are not covered} by the interval results:
     then a cohort's pooled noise depends on which units share it.
   \item \emph{Use the exposure-weighted loss} if you want the interval

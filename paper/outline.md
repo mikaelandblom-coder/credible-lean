@@ -87,7 +87,9 @@ may need a paragraph.)
 - *Done 2026-11-25 (later):* "Groups with their own collective mean" (§ Choosing the cohorts,
   Finding 41, contrast with Finding 14); "Given the levels" (error given the level, SURE, the OBP
   collective mean `∝ u(1 − z)²`, next to "What 'best' means"); normal noise with known mean
-  makes the best linear predictor `E[Y | x]` ("What 'normal' means here").
+  makes the best linear predictor `E[Y | x]` ("What 'normal' means here"). Then the OBP study (S59–S62):
+  "Given the levels" now says the averaged answer wins as a fit and a volume trend goes in the design.
+  S61 (cuts of sorted estimates chosen by SURE) in the watch-out of § Choosing the cohorts.
 - *Done 2026-11-25:* "Is a richer fit worth its price?" (§ Estimating the parameters: gain against
   price, laws (a) and (b), the cross term with Findings 37–40); one sentence on the cross term in
   "What 'normal' means here"; a watch-out in "What 'best' means" (MSE averaged over the collective,

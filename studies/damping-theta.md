@@ -633,3 +633,40 @@ verdict priced with the exact form.
 **Consequence.** `Engine.gainPrice` keeps the bound (now proved as a bound), `opts.lawB = 'exact'` for
 comparison; the app labels (b) "proved in the balanced world". A price that tracks the low-z bias would be
 the next improvement, not the exact first-order form.
+
+## The OBP collective mean and grouping when levels trend with volume (`obp-mean.js`, output `obp-mean.out.txt`, 2026-11-25)
+
+Purpose: decide (PLAN Pending, "OBP collective mean"). Does the observed best predictor's collective mean
+(weights `∝ uⱼ(1 − zⱼ)²`, `Core.obpMean`, literature §10p) or grouping with a common `τ²` (Finding 41) beat
+Bühlmann–Straub (`b ∝ z`) when the levels trend with volume? Grid: the three regimes × J ∈ {8, 20} ×
+T ∈ {5, 10} × trend β ∈ {0, 0.5, 1, 2} (levels `1 + τηⱼ − βτsⱼ`, `sⱼ` the standardized volume rank), ρ = 0,
+gamma levels and noise, 600 paired draws. Loss given the levels, exposure-weighted. Part A exact with the
+true `σⱼ²`, `τ²`; Part B fitted, as paired differences to BS in % of its loss.
+
+- S59. *[exact]* **With known parameters the OBP mean pays only under a trend, and fails with a σⱼ spread.**
+    In the app and thesis regimes it is 0.4–1.8% worse than `b ∝ z` at β = 0, even at β ≈ 0.5, and 2–15%
+    better at β = 1–2, where it is within 0.4 points of the best fixed `b`. In thesisShape (nearly equal
+    volumes, `σⱼ²` × 1/16–16) it is 14–58% *worse* at β = 0 and still 5–15% worse at β = 1. Why: the
+    theorem (`condRisk_obpMean_le`) holds the collective mean fixed; as an estimate its variance
+    `Σ bⱼ²Dⱼ` is largest where `(1 − zⱼ)²` puts the weight, on the noisiest cohorts.
+- S60. *[numerical]* **Fitted, the OBP mean is a wash.** BS's `ẑ` with the OBP mean: +0.3 to +1.4 at
+    β = 0, −0.5 to −5.2 at β = 2 (app, J = 20 best). In thesisShape ±0.2: BS pools `σ̂²`, so the `ẑⱼ`
+    are nearly equal and so are the weights (S59's failure needs per-cohort variances). The full OBP
+    (`τ²` too by the observed criterion, Jiang–Nguyen–Rao) is worse than that: up to +5.3 (app, J = 8),
+    like the SURE-chosen `τ²` in `sure.js` (B). Neither is balanced (`res:balance` needs `b ∝ u(1 − z)`).
+- S61. *[numerical]* **Never cut the sorted estimates by SURE.** Two groups, own means, one common `τ̂²`,
+    the cut of the sorted estimates with the smallest SURE: +2.5 to +74 against BS in every world, worst
+    at low credibility. SURE picks it over one group almost always (G-auto ≈ G2-est). Sorting puts the noise
+    into the groups: the within-group spread and so `τ̂²` shrink, and SURE for fixed groups does not see
+    that the groups were chosen on the same data. The same cut of the *true* level order (a reference)
+    is −13 to +13; the cut of the volume order +27 to −3, small gains (≤ 3.3) only at β ≥ 1.
+- S62. *[numerical]* **A trend is a fixed effect.** The BLUP with design columns `[1, log volume]`
+    (`res:blup`, moment `τ̂²` from the weighted-LS residuals as eq. (13)): −3 to −35 at β ≥ 1, −4 to +5
+    at β = 0.5, and +0.5 to +12 at β = 0 (the price of the column: largest at J = 8, T = 5, low z).
+    It beats every other fit wherever a trend of τ or more is present.
+
+**Consequence.** No OBP mean in the app, and no handbook recommendation for it: a "watch out" says why
+(`res:bs`). Grouping cohorts by cuts of their sorted estimates must not choose the cut by SURE; the app's
+planned grouping step (PLAN "Grouping cohorts") needs a selection-aware criterion (cross-fitting or the
+gain against price with the selection in the price) before it is built. A suspected trend in volume goes
+in as a design column, chosen by gain against price (S57), with its price visible at β = 0.

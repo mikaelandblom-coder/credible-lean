@@ -332,6 +332,18 @@ does not drop out, because the correlation acts on $\sqrt{v_j}$-scaled weights (
 premium would have matched total claims. It is an identity, so it holds
 whether or not the model is right. It also holds when cohorts are observed
 over different periods (Section~\ref{sec:beyond}).
+\begin{caveat}
+  Don't swap the collective mean for the one that is best given the levels. That one weights
+  the cohorts by $u_j(1 - z_j)^2$ (the observed best predictor), not by $z_j$. In a simulation
+  study it gains at most 5\% even when levels fall with volume by twice $\tau$, and costs about 1\%
+  when they don't. It also breaks balance, which needs $b_j \propto u_j(1 - z_j)$
+  (Result~\ref{res:balance}). With per-cohort variances it can be up to 58\% worse even with known
+  parameters: the theorem keeps the collective mean fixed, but as an estimate it is noisiest where
+  those weights sit. If levels trend with volume, add $\log w_{j*}$ as a design column
+  (Result~\ref{res:blup}): 3--35\% better with a trend of $\tau$ or more, a price of up to 12\%
+  without one. Let gain against price decide.
+  \lean{Credibility.Core.condRisk_obpMean_le}
+\end{caveat}
 
 \begin{result}[Which weights balance the blend]\label{res:balance}
   For any factors $z_j$ and weights $b_j$ with $\sum_j b_j = 1$, the blend
@@ -1376,7 +1388,9 @@ and if a cohort straddled another unit, one of the two swaps that would
   $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$: the best two groups are $\{-5, 5\}$ and the
   middle five (Finding 41). Unlike pooling there is no cost per group, so more groups never
   hurt with known levels: choose their number by the gain against the price of
-  fitting them (Result~\ref{res:bsPrice}), not by the loss.
+  fitting them (Result~\ref{res:bsPrice}), not by the loss. And with estimated levels, never choose
+  the cut of the sorted \emph{estimates} by SURE: sorting puts the noise into the groups, and the
+  result was 2--74\% worse than one group in a simulation study.
   \lean{Credibility.group_optimal_contiguous}
 \end{caveat}
 
