@@ -2983,12 +2983,15 @@ are assumed, and the collective mean $m$ is a fixed number.
   \lean{Credibility.Core.integral_quad_centred, Credibility.Core.integral_sq_blend_given_level,
         Credibility.Core.integral_sure_given_level}
   \leanok
+  \uses{def:errVar}
   If $\mathbb E\bar x = \theta$ and $\mathrm{Var}\,\bar x = D$ then for fixed $z$ and $m$
   \[
     \mathbb E\bigl(z\bar x + (1-z)m - \theta\bigr)^2 = z^2D + (1-z)^2(m-\theta)^2
     = \mathbb E\bigl[(1-z)^2(\bar x - m)^2 - 2(1-z)D + D\bigr].
   \]
   The bracket is Stein's unbiased risk estimate (SURE) of the error given the level.
+  This is the error \eqth{6} of Definition~\ref{def:errVar} with the level held fixed: the
+  collective mean's error becomes the bias $m - \theta$.
 \end{theorem}
 \begin{proof}
   \leanok
