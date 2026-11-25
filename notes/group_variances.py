@@ -92,19 +92,21 @@ if __name__ == "__main__":
     gens = {
         "normal levels, equal D": lambda n: ([random.gauss(0, 1) for _ in range(n)], [1] * n),
         "two regimes (+-1.5), equal D": lambda n: ([random.choice([-1.5, 1.5]) + random.gauss(0, .5) for _ in range(n)], [.5] * n),
+        "heavy tails (t3), equal D": lambda n: ([random.gauss(0, 1) / max(1e-3, (sum(random.gauss(0, 1) ** 2 for _ in range(3)) / 3) ** .5) for _ in range(n)], [1] * n),
         "normal levels, D spread": lambda n: ([random.gauss(0, 1) for _ in range(n)], [math.exp(random.uniform(-2, 2)) for _ in range(n)]),
     }
     print("Random cases, n = 7, k = 2 (share with a non-interval optimum):")
     for name, gen in gens.items():
         for crit in ["oracle", "ll"]:
-            bad = 0; N = 60
+            bad = 0; N = 150
             for _ in range(N):
                 th, D = gen(7)
                 b, bi = solve(th, D, [1] * 7, 2, crit)
-                if bi[0] - b[0] > 1e-6 * max(1, abs(b[0])): bad += 1
+                if not is_interval(th, b[1]) and bi[0] - b[0] > 1e-6 * max(1, abs(b[0])): bad += 1
             print(f"  {name:30s} {crit:6s} {bad}/{N}")
     print("Own means, one common tau2 (chosen jointly), D spread:")
-    grid = [math.exp(e / 8) for e in range(-48, 49)]; bad = 0; N = 100
+    random.seed(2)
+    grid = [math.exp(e / 8) for e in range(-48, 49)]; bad = 0; N = 300
     for _ in range(N):
         th = [random.gauss(0, 1) * random.choice([1, 3]) for _ in range(7)]
         D = [math.exp(random.uniform(-2, 2)) for _ in range(7)]
@@ -112,3 +114,4 @@ if __name__ == "__main__":
         bi = min(common_cost(th, D, lab, 2, t) for lab in labellings(7, 2) if is_interval(th, lab) for t in grid)
         if bi - best > 1e-9: bad += 1
     print(f"  non-interval optimum {bad}/{N}")
+
