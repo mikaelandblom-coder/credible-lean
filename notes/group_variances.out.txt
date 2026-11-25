@@ -1,0 +1,14 @@
+Counterexample, equal D = 1, k = 2:
+  oracle best 2.0211 (0, 1, 1, 1, 1, 1, 0)   best intervals 4.6634 (0, 0, 0, 0, 0, 0, 1)
+  ll     best 10.7014 (0, 1, 1, 1, 1, 1, 0)   best intervals 13.1813 (0, 0, 0, 0, 0, 0, 1)
+Random cases, n = 7, k = 2 (share with a non-interval optimum):
+  normal levels, equal D         oracle 1/150
+  normal levels, equal D         ll     0/150
+  two regimes (+-1.5), equal D   oracle 0/150
+  two regimes (+-1.5), equal D   ll     0/150
+  heavy tails (t3), equal D      oracle 12/150
+  heavy tails (t3), equal D      ll     1/150
+  normal levels, D spread        oracle 4/150
+  normal levels, D spread        ll     0/150
+Own means, one common tau2 (chosen jointly), D spread:
+  non-interval optimum 0/300

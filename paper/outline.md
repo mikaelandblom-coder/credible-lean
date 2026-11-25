@@ -84,6 +84,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- Finding 41 (2026-11-25, `notes/group-variances.md`): in § Choosing the cohorts, one paragraph on
+  grouping with a collective mean per group (spatially clustered Fay–Herriot). Use a common `τ²`; a `τ²` per
+  group turns one group into a bin of outliers. Wait for the Lean corollary.
 - *Done 2026-11-25:* "Is a richer fit worth its price?" (§ Estimating the parameters: gain against
   price, laws (a) and (b), the cross term with Findings 37–40); one sentence on the cross term in
   "What 'normal' means here"; a watch-out in "What 'best' means" (MSE averaged over the collective,

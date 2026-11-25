@@ -16,6 +16,9 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- Grouping with a `τ²` per group (2026-11-25, Finding 41, numerical): a "watch out" for
+  `res:blend_intervals`. Own `τ²` per group breaks intervals (a no-shrink group of outliers); own means
+  with a common `τ²` keep them. Add once `group_optimal_contiguous` is proved.
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):

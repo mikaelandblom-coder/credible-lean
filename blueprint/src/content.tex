@@ -8126,6 +8126,19 @@ not apply, but a swap argument does.
   ($d = x_j - x_l < 0$) gives $D > 0$ in the same way.
 \end{proof}
 
+\begin{remark}[Finding 41: a \texorpdfstring{$\tau^2$}{tau squared} per group breaks intervals]\label{rem:group_variances}
+  \uses{thm:blend_optimal_contiguous}
+  Now cohorts are not pooled: each keeps its estimate (level $\theta_j$, noise $D_j$) and is blended
+  towards its group's own mean $m_g$. If each group also has its own $\tau_g^2$, the optimal groups
+  need not be intervals, even with a common $D$. With $D = 1$,
+  $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$ and two groups, $\{-5, 5\}$ and the middle have
+  oracle MSE $2.021$ against $4.663$ for the best intervals. A group costs
+  $n D s^2/(s^2 + D) \le nD$, concave in its spread $s^2$, so a group that does not shrink collects the
+  outliers of both tails. With one common $\tau^2$ the loss for fixed $\tau^2$ is a weighted k-means
+  cost with weights $u_j(1 - z_j)^2$, and the optimal groups are intervals (numerically, not yet in
+  Lean; \texttt{notes/group-variances.md}).
+\end{remark}
+
 \begin{remark}[No cap needed]
   Swaps keep the set of used labels and all cohort sizes, so the theorem
   holds for exactly $k$, at most $k$, or any constraint on the sizes. It

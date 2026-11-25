@@ -710,4 +710,17 @@ Gaps, extra hypotheses and new results found while formalizing.
    `0.01², 37.1², 5.03², 5.01²`, τ² = 30, region 1: `+2.5·10⁻⁷` per unit γL), and the size grows with ρ
    (even years: at most `+0.002%` for ρ ≤ 0.5, `+0.2%` at 0.8, `+2.5%` at 0.999 with sizes 10⁶ apart).
 
+41. **With its own `τ²` per group, optimal groups need not be intervals, even with equal volumes (new;
+   numerical, `notes/group_variances.py`; not in Lean).** Question from the spatially clustered Fay–Herriot
+   model (literature §10p): cohorts with fixed levels `θⱼ` and noise `Dⱼ` are split into groups, and each
+   group gets its own collective mean and its own `τ²_g`. Counterexample, `D = 1`, two groups:
+   `θ = (−5, −0.2, −0.1, 0, 0.1, 0.2, 5)`. The best grouping is `{−5, 5}{middle}`: oracle MSE 2.021 against
+   4.663 for the best intervals, and normal likelihood −log L 10.70 against 13.18. Why: with equal `D` a group costs
+   `n·D·s²/(s² + D)`, concave in its spread and at most `nD`. A group can stop shrinking, so it pays at most
+   `D` per member and collects the outliers of both tails. Frequency (150 random cases, `n = 7`): 12 with
+   heavy-tailed levels, 0–4 otherwise. With own means and **one common `τ²`** the groups are intervals for any volumes (0 of 300).
+   For fixed `τ²` the loss is a weighted k-means cost with weights `uⱼ(1 − zⱼ)²`, so `kmeans_contiguous`
+   applies, a Lean target. Consequence: fit a grouping with a common `τ²`, by cuts of the sorted
+   estimates. Details: `notes/group-variances.md`.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

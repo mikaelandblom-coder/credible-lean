@@ -1089,7 +1089,7 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
   - **For us.** (a) In 1-D this is `KMeansBridge.lean` with a variance per group added. Finding 14 covers
     pooling with a common variance (optimal groups are intervals). With its own `τ²` per group the
     label step maximises a normal likelihood, not a weighted sum of squares. Whether the optimal groups
-    are still intervals is **open**: not claimed, and no counterexample searched yet. (b) Hand-set numbers
+    are still intervals: **no** (Finding 41, 2026-11-25; with a common `τ²` yes). (b) Hand-set numbers
     (`δ`, the `φ` grid, the `K` band) clash with PLAN §1. In 1-D, cohorts ordered by volume or time
     make contiguity automatic: groups are intervals, so there is no `φ`. `K` would come from the gain
     against price (S57), not BIC, because BIC over-clusters when there are no regimes. (c) Keep `K = 1`

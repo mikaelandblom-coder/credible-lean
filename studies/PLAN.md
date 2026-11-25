@@ -835,8 +835,11 @@ One chat per step; none needs Lean except step 5.
   (no hand-set number of groups, §1). *Read 2026-11-25 (literature §10p):* their `K` by BIC and the
   contiguity weight `φ` by a stability plateau are hand-set choices. BIC over-clusters with no regimes. In 1-D,
   cohorts ordered by volume or time are grouped into intervals, so there is no `φ`, and `K` should come
-  from gain against price with `K = 1` as reference. Open first (numerically, a small study): with its own `τ²` per
-  group, are the optimal groups still intervals? Only then a Lean target.
+  from gain against price with `K = 1` as reference. *Checked 2026-11-25 (Finding 41, `notes/group-variances.md`):*
+  with its own `τ²` per group, no: a group that does not shrink collects the outliers of both tails, even with equal volumes.
+  With own means and one common `τ²`, yes, for any volumes (weighted k-means with weights `u(1 − z)²`). So the
+  app step fits own means and a common `τ²` by cuts of the sorted estimates (DP). Lean target:
+  `group_optimal_contiguous` (corollary of `kmeans_contiguous`).
 - [ ] OBP collective mean (2026-11-25, literature §10p, Zhang & Jiang): the observed best predictor's
   collective mean is the `(1 − zⱼ)²`-weighted mean (SURE of the MSE given the levels). Possible study: a
   world switch "levels trend with volume" (the collective mean is misspecified), comparing BS, BS with the OBP mean,
