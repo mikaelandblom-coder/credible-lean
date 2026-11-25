@@ -11,7 +11,7 @@ the concepts; it does not carry the formulas or the proofs.
 
 | Content | Home | The paper does |
 |---|---|---|
-| Statement and proof | Lean + blueprint | gives the Lean name |
+| Statement and proof | Lean + blueprint | cites the handbook entry, which links Lean (Lean names only in the concordance, App. A; `paper_check.py` enforces) |
 | Formula | handbook (all); the ~10 key ones also displayed in the paper | cites the handbook number |
 | Explanation, intuition, when to use, what can go wrong | **paper** | — |
 | Demonstration | app | names the step or switch to try |
@@ -28,7 +28,7 @@ Rules that keep this cheap to maintain:
   paragraph in an existing subsection.
 - No proofs. A proof idea in one or two sentences is welcome when it is the
   explanation.
-- Every topic ends with a **See** line: handbook numbers, Lean names, app
+- Every topic ends with a **See** line: handbook numbers (not Lean names), app
   step, and the working note it came from.
 - Numbers from simulations cite the study script in `studies/` that
   produced them.
@@ -74,6 +74,7 @@ the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers
 | 8 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Monthly data with a common factor; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; shocks that do not shrink (Finding 23), season, factor, relativities under a factor (Finding 31); the matrix blend, Hachemeister, a known trend (Finding 21), Finding 22, frequency × severity and the pure-premium bias (Findings 32–33) | §10, §11, §12, new | draft |
 | 9 | Related work | what is used from where | §14 | draft |
 | 10 | Open directions | where to look first; crossed levels, winner's curse, fits, time, short classical extensions, XoL, distribution layer, multiplicative tariffs | §13 | draft |
+| 11 | Conclusion | what the framework establishes, what changes against BS, what to do differently, what is not settled | new (2026-11-25, external review) | draft |
 | A | Changes from the thesis | corrections, beyond the thesis, concordance | A | draft |
 | B | Concept index | term → meaning → section | B | draft |
 | C | Notation | symbols, Bühlmann–Straub translation | C | draft |
@@ -91,6 +92,11 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
+  classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
+  studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the
+  review: the novelty check against full texts (literature chat, OpenAlex/Semantic Scholar now
+  allowed in Default), figures for the main study results.
 - *Done 2026-11-25 (review):* the fourth-moment layer and the variance function (§7); Finding 35's
   first-order prediction (§5); damping S38–S42 and tapering S46–S48 (§5); recency weighting S43–S45
   (§3.4). "Given the levels" stays in §6: it is a statement about the true MSE (given the level), not

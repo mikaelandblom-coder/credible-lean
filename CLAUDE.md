@@ -226,7 +226,9 @@ still reads like the thesis; special cases are corollaries.
 - **Paper** (`paper/`, outline and status in `paper/outline.md`): the
   up-to-date version of the thesis and the first complete source for a
   reader. Explains concepts, organized for lookup; displays the ~10 formulas that
-  carry the story and cites handbook numbers for the rest; no proofs (gives Lean names).
+  carry the story and cites handbook numbers for the rest; no proofs and no Lean names
+  (the handbook entry links them; only the concordance in Appendix A lists Lean names,
+  and `paper_check.py` enforces it).
 - **Blueprint**: the proof ledger (statements, proofs, dependency graph).
   Reached by link, not read front to back.
 The paper is `paper/paper.tex` (built by CI to `/paper/` and `paper.pdf`);
@@ -263,6 +265,9 @@ Outline and status: `handbook/outline.md`. CI builds it to `handbook.pdf`
 on the site.
 - `scripts/handbook_check.py` (CI) fails if a handbook link is not a proved
   declaration. Renaming or moving a linked theorem means updating the link.
+- Every finding gets a line in the handbook's appendix "Findings" (statement or
+  counterexample, Lean links), in the same commit as its `FINDINGS.md` entry, so
+  no result lives only in Lean code.
 - When a result is proved, a finding logged, or a statement changed, ask:
   does the handbook need it? If so, add or update its entry (and the
   outline) in the same commit, or note it in `handbook/outline.md` under

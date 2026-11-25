@@ -26,6 +26,9 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- *Done 2026-11-25:* Appendix "Findings" (all 41, one line each, counterexamples included, with Lean
+  links); every Lean name the paper used is now linked from a handbook entry. New finding → add its
+  line there in the same commit.
 - *Done 2026-11-25:* Finding 41 "watch out" in `res:blend_intervals` (common `τ²` keeps intervals,
   a `τ²` per group makes an outlier bin, number of groups by gain against price); the normal-noise
   "why" sentence in `res:blup` (`knownMeanPred_mse_le_of_normal`).

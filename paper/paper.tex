@@ -56,20 +56,23 @@
 \maketitle
 
 \begin{abstract}
-  Credibility theory blends a segment's own experience with the portfolio's.
-  This paper explains one framework for doing that which assumes nothing but
-  means and covariances, lets segments be correlated, and contains classical
-  Bühlmann--Straub as a special case. Around that core it covers the best
-  linear predictor of any target, histories of different lengths, levels
-  shared within groups, monthly data with a persistent common factor,
-  several quantities per segment, how to choose the segments, and what
-  fitting the parameters from the same data costs, including what changes
-  when claims are skewed or heavy-tailed. It is the up-to-date version of the
-  master thesis it grew out of. It explains, and gives the formulas that
-  carry the story; the full list of formulas is in the
-  \href{\site/handbook.pdf}{handbook}, cited by number, and every result is
-  machine-checked in Lean, cited by name; the
-  \href{\site/}{blueprint} has the proofs.
+  Credibility blends a cohort's own experience with the portfolio's. Classical
+  Bühlmann--Straub credibility assumes that cohorts' errors are independent, yet a
+  storm, an inflation shock or a surge in demand moves every cohort in the same
+  period. This paper develops credibility for correlated cohorts from first and
+  second moments only. The portfolio weights, the credibility factor and the best
+  linear predictor are all read off one matrix, the covariance $K$ of the cohort
+  estimates, and Bühlmann--Straub is the case of zero correlation. With
+  correlation the best factor can exceed one or turn negative without anything
+  having gone wrong, ignoring the correlation costs at most a known factor, and no
+  positive volume measure balances the best blend. The paper then shows how to fit
+  the model without hand-set parameters and what fitting from the same data costs,
+  exactly and to first order, also for skewed and heavy-tailed claims. Further
+  situations (unequal histories, shared group levels, monthly data with a
+  persistent factor, several quantities per cohort) are new covariance matrices for
+  the same machinery. Every result is machine-checked in the proof assistant Lean;
+  formalizing the master thesis this grew out of turned up 41 gaps,
+  counterexamples and new results.
 \end{abstract}
 
 \tableofcontents
@@ -133,37 +136,38 @@ own estimate against portfolio, costs anything against a rule that uses
 every cohort separately is answered in Section~\ref{sec:blup}: nothing for
 two cohorts or without correlation, a little otherwise.
 
-\paragraph{What is new.}
+\paragraph{What this paper contributes.}
 
 This is the oldest idea in actuarial science that still has a name of its
 own. Bühlmann (1967) gave it its modern form and Bühlmann and Straub (1970)
-the version with volumes that most insurers use. What is new here is that
-cohorts may be \emph{correlated}: a cold winter or a surge in travel moves
-all the cards at once. Classical credibility assumes that away. This
-framework does not, and it gets Bühlmann--Straub back when the correlation
-is zero (Section~\ref{sec:special}).
-
-\paragraph{What else is here.}
-
-Formalizing the thesis led well beyond it, always along the same line: a new
-situation is a new covariance matrix, and the rest follows
-(Section~\ref{sec:K}). The paper covers
-\begin{itemize}
-  \item \emph{the best rule beyond the blend:} the best linear unbiased
-    predictor of any target, such as next year's twelve months, with means
-    given by a design (Section~\ref{sec:blup});
-  \item \emph{fitting:} unbiased estimators, a fit with no hand-set
-    parameters, the exact error split of a fitted model, and whether a
-    richer fit is worth its price (Section~\ref{sec:estimation});
-  \item \emph{beyond second moments:} what skewness and heavy tails do to
-    the precision and the bias of a fit, and what ``normal'' really assumes
-    (Section~\ref{sec:beyond});
-  \item \emph{extensions:} histories of different lengths, levels shared
-    within groups, choosing the cohorts, monthly data with a common factor
-    and a season, and several quantities per cohort
-    (Section~\ref{sec:extensions}).
-\end{itemize}
-Appendix~\ref{app:changes} lists what is new against the thesis.
+the version with volumes that most insurers use. The paper adds three things.
+\begin{enumerate}
+  \item \emph{Credibility for correlated cohorts, from second moments only}
+    (Sections~\ref{sec:modelpart}--\ref{sec:balance} and~\ref{sec:moments}). Cohorts may be
+    correlated within a period: a cold winter or a surge in travel moves all
+    the cards at once. Everything is read off the covariance matrix $K$ of the
+    cohort estimates, and Bühlmann--Straub is the case of zero correlation.
+    \emph{New:} the credibility factor for any positive definite $K$, when it
+    leaves $[0, 1]$ and what to report instead, the exact price of ignoring the
+    correlation, which volumes balance a blend, and the exact price of the
+    blend form against the best linear predictor.
+  \item \emph{Fitting it, and what fitting costs}
+    (Sections~\ref{sec:estimation} and~\ref{sec:beyond}). \emph{New:} a fit with
+    no hand-set parameters, the price of fitting Bühlmann--Straub in closed form
+    and a rule for when a richer fit pays, the exact bias of weights estimated
+    from skewed data, and the sign of the cross term under heavy tails.
+  \item \emph{One machinery for further situations, machine-checked}
+    (Section~\ref{sec:extensions}): unequal histories, levels shared within
+    groups, choosing the cohorts, monthly data with a common factor and a
+    season, and several quantities per cohort, each a new $K$. Every result is
+    proved in Lean, and the formalization found the gaps and counterexamples
+    collected in Appendix~\ref{app:changes}.
+\end{enumerate}
+\emph{Classical, and used as such:} the blend and the best factor, the GLS
+weights, the best linear unbiased predictor (Goldberger 1962), the error split
+of a fitted predictor (Kackar and Harville 1984), and hierarchical credibility.
+Section~\ref{sec:related} maps the results to the literature one by one, and
+Section~\ref{sec:conclusion} sums up what changes in practice.
 
 \watch
 \begin{itemize}
@@ -257,6 +261,19 @@ of the Lean code with the author, to believe it.
     example in Section~\ref{sec:special}).
 \end{itemize}
 
+\paragraph{Words used.}
+
+A \emph{cohort} is a unit whose rate is blended: a rating class, a region, a
+payment card, an underwriting year. The \emph{portfolio} is all cohorts
+together. A \emph{period} is a year or a month of data, and a cohort's
+\emph{volume} (exposure) in it is what its rate is per. A cohort's \emph{level}
+$\mu_j$ is its true expected rate; its \emph{estimate} $\hmu_j$ is what its data
+say. \emph{Noise} is the difference between one period's observation and the
+level. The \emph{target} is what is predicted: usually the level, sometimes
+next year's outcome. A \emph{group} is a set of cohorts that share part of
+their level (Section~\ref{sec:groups}). The concept index
+(Appendix~\ref{app:index}) has every other term.
+
 \paragraph{Findings.}
 
 Formalizing the thesis turned up gaps (a missing
@@ -337,6 +354,27 @@ the best $z_j$ to the unbiased estimators, needs only first and second
 moments, so it holds whatever the claims distribution. Results that do
 assume a noise family live apart, named as such, and nothing in the core
 depends on them (Section~\ref{sec:beyond}).
+
+\paragraph{The assumptions in one place.}
+
+The framework is \emph{distributionally weak but structurally specific}. It
+assumes no noise family, but it does assume a shape for the means and the
+covariances.
+\begin{center}
+\begin{tabular}{p{0.44\textwidth}p{0.46\textwidth}}
+  \toprule
+  Assumed & Relaxed where \\
+  \midrule
+  First and second moments exist; no distribution & results that need more say so (Section~\ref{sec:beyond}) \\
+  The same expected level for every cohort before its data are seen & means from a known design: a season, a trend (Sections~\ref{sec:blup}, \ref{sec:factor}) \\
+  Levels uncorrelated with each other and with the noise & levels shared within groups (Section~\ref{sec:groups}) \\
+  Noise uncorrelated across periods & a persistent monthly factor (Section~\ref{sec:factor}) \\
+  Noise correlated across cohorts only within a period, by a valid ($\succeq 0$) table & per period only, for unequal histories (Section~\ref{sec:unequal}) \\
+  Noise variance $\sigma_j^2/w_{jt}$, with known volumes & a shock that does not shrink with volume (Section~\ref{sec:factor}) \\
+  The target is the level, or next year's outcome with fresh noise & any target with known covariances (Section~\ref{sec:blup}) \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
 \paragraph{Bühlmann--Straub inside.}
 
@@ -1156,6 +1194,54 @@ correlation (\file{studies/variance-credibility.js}). The model, $K \succ 0$
 and the blend are proved; the estimators' unbiasedness under this structure
 is not yet in Lean, and the quality of the whole is numerical, as it is for
 the EBLUP in small-area estimation (\file{studies/literature.md} §2).
+
+\paragraph{Which fit to use.}
+
+The studies and theorems of this section and the next give a starting point
+for each data situation. ``S'' numbers are study findings
+(\file{studies/damping-theta.md}).
+\begin{center}
+\begin{tabular}{p{0.34\textwidth}p{0.36\textwidth}p{0.2\textwidth}}
+  \toprule
+  Situation & Start with & Evidence \\
+  \midrule
+  No sign of correlation & Bühlmann--Straub & S6, S50 \\
+  Correlation plausible & one correlation, variances by credibility (above) & S15--S17, 45 worlds \\
+  Strong correlation, $\hat\rho \gtrsim 0.6$ & the best linear predictor on the same $\hat K$ & S52 \\
+  Many ordered cohorts (about 20) & the predictor with a distance taper, if the data signal it & S36, S46--S47 \\
+  Exposure balance required & the fit, then a common shift of all rates & \finding{16} \\
+  Skewed claims & a pooled noise variance, or balance & \finding{35} \\
+  Several correlated quantities & the matrix best predictor, not the matrix blend & \finding{22} \\
+  Monthly data, persistent demand & the predictor on a constrained factor table, $\phi$ from a long index & Section~\ref{sec:factor} \\
+  Any richer fit & only if its gain exceeds its price & \hb{res:bsPrice}{30} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+For groups that share a level the model and its estimators are proved, but
+no fit has been tested yet (Section~\ref{sec:groups}).
+
+\paragraph{How the studies were run.}
+
+Numbers in this paper that are not theorems come from simulation studies, run
+under common conventions (\file{studies/PLAN.md}, ``Study conventions'').
+\begin{center}
+\begin{tabular}{p{0.2\textwidth}p{0.7\textwidth}}
+  \toprule
+  Worlds & the app's world (cohorts as regions, yearly or monthly data), in factorial grids of up to 48 worlds \\
+  Varied & correlation $0$--$0.9$ (common, pair-specific or decaying with distance), $J = 4$--$20$ cohorts, $T = 2$--$20$ periods, spread of volumes and of noise levels \\
+  Regimes & three credibility levels: the app's ($z \approx 0.2$--$0.9$), the thesis's ($z \approx 0.7$--$1.0$), and the thesis's with its spread of noise levels \\
+  Noise & gamma (skewed, the default), normal, exponential, Lomax (heavy tails) \\
+  Fits & Bühlmann--Straub, one correlation with credibility-weighted variances, the full $\hat K$ damped, own means, the best linear predictor on each $\hat K$, and the oracle with the true $K$ \\
+  Metric & exposure-weighted mean squared error of the rates against the true levels, in \% of the best fixed blend with true parameters (100) \\
+  Draws & 600--4000 per world, the same draws for every fit; differences reported with paired standard errors \\
+  Exact parts & oracle errors, floors and restricted predictors from the formulas, not simulated \\
+  \bottomrule
+\end{tabular}
+\end{center}
+Each study finding is labelled \emph{exact}, \emph{theory}, \emph{numerical} or
+\emph{hypothesis} by how far it can be trusted if the world changes. The
+monthly world is not yet anchored to real data, so its numbers illustrate
+rather than prescribe.
 
 \paragraph{The error of a fitted model.}
 
@@ -2404,6 +2490,45 @@ thesis nor this paper treats.
 \file{studies/PLAN.md} ·
 \file{studies/literature.md} §5.
 
+% ===========================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+\paragraph{What the framework establishes.}
+
+Credibility is a question about second moments. Once the covariance matrix $K$
+of the cohort estimates is written down and shown positive definite, the
+portfolio weights, the credibility factor, the best linear predictor and their
+true mean squared errors follow, for any distribution with those moments.
+Bühlmann--Straub is the case of a diagonal $K$; unequal histories, group levels,
+a monthly factor and several quantities per cohort are other matrices.
+
+\paragraph{What changes against Bühlmann--Straub.}
+
+With cohorts correlated within a period, a cohort's weight depends on what the
+others already say, the best factor can exceed one or turn negative while the
+blend stays smooth, ignoring the correlation costs up to a factor that depends
+only on the correlation table ($33\%$ for two cohorts at $\rho = 0.5$), balance
+is no longer free, and the blend form itself can lose a little against the best
+linear predictor.
+
+\paragraph{What to do differently.}
+
+Check for correlation with the bound of Section~\ref{sec:special}, using
+$\hat\rho$. If it matters, fit one correlation with credibility-weighted
+variances, and use the best linear predictor when the correlation is strong.
+Report the own-data weight $c_j$ next to $z_j$ and don't clip. If balance is
+required, shift all rates. Fit a richer model only when its gain exceeds its
+price, which can be computed from the data.
+
+\paragraph{What is not settled.}
+
+The claims of novelty rest on a literature search partly from abstracts
+(Section~\ref{sec:related}). The recommendations for fitted models rest on
+simulation in the worlds described in Section~\ref{sec:estimation}, not on
+theorems, and the monthly world is not anchored to real data. Crossed levels, a
+tested fit for the group model, and the cost of choosing cohorts from the same
+data are open (Section~\ref{sec:open}).
+
 \appendix
 
 \section{Changes from the thesis}\label{app:changes}
@@ -2622,7 +2747,7 @@ Each term with a one-line meaning and the section that explains it.
   \item[Bühlmann--Straub.] The classical model: no correlation between
     cohorts, noise variance over volume. \S\ref{sec:model},
     \S\ref{sec:special}.
-  \item[Cohort.] A segment whose rate is blended: a rating class, region,
+  \item[Cohort.] A unit whose rate is blended: a rating class, region,
     card. \S\ref{sec:model}.
   \item[Cohort effect $\eta_j$.] How far a cohort's true level is from the
     overall level, in units of $\tau$. \S\ref{sec:model}.
