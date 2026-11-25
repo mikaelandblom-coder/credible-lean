@@ -191,7 +191,7 @@ lemma dotProduct_mulVec_of_symm {S : Matrix m m ℝ} (hS : Sᵀ = S) (u v : m �
   conv_lhs => rw [← hS]
   exact dotProduct_transpose_mulVec S u v
 
-omit [DecidableEq m] in
+omit [Fintype m] [DecidableEq m] in
 lemma transpose_eq_of_posDef {S : Matrix m m ℝ} (hS : S.PosDef) : Sᵀ = S := by
   rw [← conjTranspose_eq_transpose_of_trivial]; exact hS.isHermitian
 

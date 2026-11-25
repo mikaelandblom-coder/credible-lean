@@ -50,8 +50,9 @@ tactics.
   → `Credibility/GroupWeights.lean`; its moment layer (group effects `γ_g`, `K_G` and `L_G` as actual
   covariances, true MSE: `Unequal.NoiseG`, a common component on top of `UnequalMoments` via
   `Core.Estimates.addCommon`; `Model.NoiseG` results are corollaries via `NoiseG.toUnequal`; likewise
-  `Model.KG`/`momentsG`/`bestZ_G_eq` in `Hierarchical.lean` via `Unequal.KG` and `KG_eq_toUnequal`)
-  → `Credibility/HierarchicalMoments.lean`
+  `Model.KG`/`momentsG`/`bestZ_G_eq` in `Hierarchical.lean` via `Unequal.KG` and `KG_eq_toUnequal`;
+  the group effects `b_g` as a `Core.Target`: Henderson's equations predict them best in true MSE,
+  `NoiseG.mme_groupEffect_mse_optimal`) → `Credibility/HierarchicalMoments.lean`
 - extension: a known common trend `g` (`notes/time-trends.md` §1 steps 1–2): `Unequal.scale`/`detrend`,
   `K̃ = (1+g)^(2n)K`, weights and `z` unchanged, trend-free relativities (Finding 21)
   → `Credibility/Trend.lean`

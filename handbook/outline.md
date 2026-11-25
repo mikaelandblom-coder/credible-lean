@@ -19,7 +19,8 @@ voice, then trim towards 8 pages.
 - Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`; general `Matrix.inv_mul_mul_transpose_add`,
   `Matrix.pushThrough`, `Matrix.hendersonMME` in `Henderson.lean`): computing tip for group levels
   ("use it": invert only a groups × groups matrix). Probably a one-line note, if any. With it:
-  the group effects from Henderson's equations are BLUPs (`Unequal.groupEffect_eq_blup`).
+  the group effects from Henderson's equations are BLUPs (`Unequal.groupEffect_eq_blup`), with true
+  error `NoiseG.mse_groupEffect_blup` (a candidate formula entry: the group effect and its error).
 - Cross term of the plug-in (2026-11-24, `Cumulants.crossTerm_of_balanced_cumulants`, Finding 38):
   with law (a); "watch out": law (a)'s kurtosis terms alone have the wrong sign for the total, the
   kurtosis effect on the BS plug-in's first-order MSE is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.

@@ -88,7 +88,8 @@ may need a paragraph.)
   Stat-Lean): the hierarchical section may cite them as the link to mixed-model practice
   (credibility = BLUP of the group effects); `Unequal.KG_inv_eq` for the computation. Now proved:
   the MME solution is our BLUP (`Core.hendersonMME_eq_blup`); for groups, `b̂_g` is the BLUP of the
-  group effect and `m̂` the GLS mean of `K_G` (`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`).
+  group effect and `m̂` the GLS mean of `K_G` (`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`),
+  best in true MSE for any distribution (`Unequal.NoiseG.mme_groupEffect_mse_optimal`).
 - Cross term of the plug-in with kurtosis (2026-11-24, Finding 38,
   `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
   ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,

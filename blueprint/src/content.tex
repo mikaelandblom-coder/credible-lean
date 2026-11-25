@@ -7678,6 +7678,47 @@ that of Definition~\ref{def:U_Noise} plus the group component.
   Lemma~\ref{lem:U_G_moments_lin}.
 \end{proof}
 
+\begin{lemma}[The group effects as a target]\label{lem:U_G_groupTarget}
+  \lean{Credibility.Unequal.NoiseG.groupEffect, Credibility.Unequal.NoiseG.memLp_groupEffect,
+        Credibility.Unequal.NoiseG.cov_cohortEst_groupEffect,
+        Credibility.Unequal.NoiseG.variance_groupEffect,
+        Credibility.Unequal.NoiseG.toGroupTarget}
+  \leanok
+  \uses{def:U_NoiseG, def:Blup_Target}
+  Let $0 \le \phi < 1$ and $b_g = \sqrt{\phi\tau^2}\gamma_g$. Then $\cov(\hmu_j, b_g) =
+  \phi\tau^2[g(j) = g]$ and $\Var b_g = \phi\tau^2$, so the cohort estimates and $b_g$ are data
+  and target as in Definition~\ref{def:Blup_Target} with $X = \mathbf 1$, $\beta = \mu$,
+  $x_0 = 0$, $K = K_G$, $\ell = \phi\tau^2\mathbf 1_g$, $v = \phi\tau^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin}
+  $\hmu_j$ is the estimate for $(1-\phi)\tau^2$, uncorrelated with every $\gamma$, plus
+  $\sqrt{\phi\tau^2}\gamma_{g(j)}$ (Lemma~\ref{lem:U_G_moments_lin}); the $\gamma_g$ are
+  uncorrelated with unit variance. Means and $K_G$ as in Theorem~\ref{thm:U_G_cov_obs}.
+\end{proof}
+
+\begin{theorem}[Henderson's equations predict the group effects best, in true MSE]\label{thm:U_G_groupEffect_mse}
+  \lean{Credibility.Unequal.NoiseG.groupEffect_mse_optimal,
+        Credibility.Unequal.NoiseG.mse_groupEffect_blup,
+        Credibility.Unequal.NoiseG.mme_groupEffect_mse_optimal}
+  \leanok
+  \uses{lem:U_G_groupTarget, thm:U_groupEffect_blup}
+  If $K_G \succ 0$, the best linear unbiased predictor of $b_g$ (weights $d$ with
+  $\sum_j d_j = 0$) for $K_G$ and $\ell = \phi\tau^2\mathbf 1_g$ has the smallest actual mean
+  squared error, equal to $\phi\tau^2 - \ell^TK_G^{-1}\ell + (\mathbf 1^TK_G^{-1}\ell)^2 /
+  \mathbf 1^TK_G^{-1}\mathbf 1$. With every block $R_t$ positive semidefinite and $0 < \phi$, the
+  $\hat b_g$ of the mixed-model equations of Theorem~\ref{thm:U_groupEffect_blup}, solved for
+  each draw, has this error: for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_groupTarget, thm:Blup_mse_true, thm:U_groupEffect_blup, thm:U_KG_posDef}
+  Theorem~\ref{thm:Blup_mse_true} for the target of Lemma~\ref{lem:U_G_groupTarget}; by
+  Theorem~\ref{thm:U_groupEffect_blup} the mixed-model solution is that predictor in every draw
+  ($K_G \succ 0$ by Theorem~\ref{thm:U_KG_posDef}).
+\end{proof}
+
 \begin{theorem}[Consistent iff every block is PSD, with group levels]\label{thm:U_G_exists_noise}
   \lean{Credibility.Unequal.exists_noiseG_iff, Credibility.Unequal.Noise.comp}
   \leanok

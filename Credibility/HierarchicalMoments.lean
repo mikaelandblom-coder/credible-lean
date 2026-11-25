@@ -263,6 +263,102 @@ theorem bestZ_mse_optimal (h0 : 0 ≤ φ) (hK : (M.KG grp φ).PosDef) (j : J)
   rw [N.mse_blend μ h0 hK j, N.mse_blend μ h0 hK j]
   exact (M.momentsG grp φ j).bestZ_optimal hgap z
 
+
+/-! ### Predicting the group effects (Henderson's equations in true MSE) -/
+
+/-- The group effect `b_g = √(φτ²) γ_g`: the shared part of the levels of group `g`. -/
+noncomputable def groupEffect (g : G) : Ω → ℝ := fun ω => Real.sqrt (φ * M.τ2) * N.γ g ω
+
+omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
+lemma memLp_groupEffect (g : G) : MemLp (N.groupEffect g) 2 P := (N.γ_memLp g).const_mul _
+
+omit [Fintype J] [Fintype T] in
+/-- `cov(μ̂ⱼ, b_g) = φτ²·[g(j) = g]`: a cohort estimate sees only its own group's effect. -/
+theorem cov_cohortEst_groupEffect (h0 : 0 ≤ φ) (j : J) (g : G) :
+    cov[N.cohortEst μ j, N.groupEffect g; P] = ((φ * M.τ2) • grpOne grp g) j := by
+  rw [N.cohortEst_eq]
+  change cov[N.toNoise.cohortEst μ j + N.common j, N.groupEffect g; P] = _
+  unfold groupEffect
+  rw [covariance_add_left (N.toNoise.memLp_cohortEst μ j) (N.memLp_common j)
+    ((N.γ_memLp g).const_mul _), covariance_const_mul_right,
+    covariance_comm, N.cov_γ_cohortEst, mul_zero, zero_add]
+  unfold common
+  rw [covariance_const_mul_left, covariance_const_mul_right, N.cov_γ_γ, ← mul_assoc,
+    Real.mul_self_sqrt (mul_nonneg h0 M.τ2_pos.le)]
+  simp [grpOne]
+
+omit [Fintype J] [Fintype T] [IsProbabilityMeasure P] in
+/-- `Var b_g = φτ²`. -/
+theorem variance_groupEffect (h0 : 0 ≤ φ) (g : G) : Var[N.groupEffect g; P] = φ * M.τ2 := by
+  rw [← covariance_self (N.memLp_groupEffect g).aestronglyMeasurable.aemeasurable]
+  unfold groupEffect
+  rw [covariance_const_mul_left, covariance_const_mul_right, N.cov_γ_γ, ite_eq_left rfl, mul_one,
+    Real.mul_self_sqrt (mul_nonneg h0 M.τ2_pos.le)]
+
+omit [Fintype T] in
+/-- The cohort estimates and a group effect as data and target (`Core.Target`): one common
+mean (`X = 1`, `β = μ`), target mean `0` (`x₀ = 0`), `K = K_G`, `ℓ = φτ²·1_g`, `v = φτ²`. -/
+noncomputable def toGroupTarget (h0 : 0 ≤ φ) (g : G) :
+    Core.Target (M.KG grp φ) ((φ * M.τ2) • grpOne grp g) (φ * M.τ2) (onesCol J) 0
+      (fun _ => μ) P where
+  x := N.cohortEst μ
+  Y := N.groupEffect g
+  x_memLp := (N.toEstimates μ h0).est_memLp
+  Y_memLp := N.memLp_groupEffect g
+  x_mean i := by
+    rw [show N.cohortEst μ i = (N.toEstimates μ h0).est i from rfl,
+      (N.toEstimates μ h0).est_mean i]
+    simp [onesCol, mulVec, dotProduct]
+  Y_mean := by simp [groupEffect, integral_const_mul, N.γ_mean]
+  cov_x := N.cov_cohortEst μ h0
+  cov_x_Y i := N.cov_cohortEst_groupEffect μ h0 i g
+  var_Y := N.variance_groupEffect h0 g
+
+omit [Fintype T] in
+/-- **The predicted group effect is the best one in true MSE**: among all linear predictors
+`Σⱼ dⱼμ̂ⱼ` of `b_g` with `Σⱼ dⱼ = 0` (unbiased for every `μ`), `Core.blup` for `K_G` and
+`ℓ = φτ²·1_g` has the smallest actual mean squared error. By `Unequal.groupEffect_eq_blup`
+it is the `b̂_g` of Henderson's equations. -/
+theorem groupEffect_mse_optimal [Fintype G] [Nonempty J] (h0 : 0 ≤ φ)
+    (hK : (M.KG grp φ).PosDef) (g : G) {d : J → ℝ} (hd : ∑ j, d j = 0) :
+    P[fun ω => (Core.portLin (N.cohortEst μ)
+        (Core.blup (M.KG grp φ) (onesCol J) ((φ * M.τ2) • grpOne grp g) 0) ω
+        - N.groupEffect g ω) ^ 2]
+      ≤ P[fun ω => (Core.portLin (N.cohortEst μ) d ω - N.groupEffect g ω) ^ 2] :=
+  (N.toGroupTarget μ h0 g).blup_mse_optimal hK onesCol_injective
+    (by ext u; simpa [onesCol, mulVec, dotProduct] using hd)
+
+omit [Fintype T] in
+/-- …with true error `φτ² - ℓᵀK_G⁻¹ℓ + rᵀ(1ᵀK_G⁻¹1)⁻¹r`, `ℓ = φτ²·1_g`, `r = -1ᵀK_G⁻¹ℓ`: the
+error with `μ` known, plus the price of estimating it (`Core.Target.mse_blup`). -/
+theorem mse_groupEffect_blup [Fintype G] [Nonempty J] (h0 : 0 ≤ φ)
+    (hK : (M.KG grp φ).PosDef) (g : G) :
+    P[fun ω => (Core.portLin (N.cohortEst μ)
+        (Core.blup (M.KG grp φ) (onesCol J) ((φ * M.τ2) • grpOne grp g) 0) ω
+        - N.groupEffect g ω) ^ 2]
+      = φ * M.τ2
+        - ((φ * M.τ2) • grpOne grp g) ⬝ᵥ ((M.KG grp φ)⁻¹ *ᵥ ((φ * M.τ2) • grpOne grp g))
+        + (0 - (onesCol J)ᵀ *ᵥ ((M.KG grp φ)⁻¹ *ᵥ ((φ * M.τ2) • grpOne grp g)))
+          ⬝ᵥ (((onesCol J)ᵀ * (M.KG grp φ)⁻¹ * onesCol J)⁻¹
+            *ᵥ (0 - (onesCol J)ᵀ *ᵥ ((M.KG grp φ)⁻¹ *ᵥ ((φ * M.τ2) • grpOne grp g)))) :=
+  (N.toGroupTarget μ h0 g).mse_blup hK onesCol_injective
+
+/-- **Henderson's equations in true MSE.** Solve the mixed-model equations of
+`Unequal.groupEffect_eq_blup` draw by draw, for the observed cohort estimates. The resulting
+`b̂_g` has the smallest actual mean squared error for the group effect among all linear
+predictors `Σⱼ dⱼμ̂ⱼ` with `Σⱼ dⱼ = 0`, for every distribution with these moments. -/
+theorem mme_groupEffect_mse_optimal [Fintype G] [Nonempty J] (hρ : ∀ t, (M.block t).PosSemidef)
+    (h0 : 0 < φ) {m : Ω → Unit → ℝ} {b : Ω → G → ℝ}
+    (hb : ∀ ω, Core.MMESolution (onesCol J) (grpDesign grp) ((φ * M.τ2) • 1)
+      (M.withLevel φ h1).K (m ω) (b ω) (fun j => N.cohortEst μ j ω))
+    (g : G) {d : J → ℝ} (hd : ∑ j, d j = 0) :
+    P[fun ω => (b ω g - N.groupEffect g ω) ^ 2]
+      ≤ P[fun ω => (Core.portLin (N.cohortEst μ) d ω - N.groupEffect g ω) ^ 2] := by
+  have key : ∀ ω, b ω g = Core.portLin (N.cohortEst μ)
+      (Core.blup (M.KG grp φ) (onesCol J) ((φ * M.τ2) • grpOne grp g) 0) ω := fun ω => by
+    rw [M.groupEffect_eq_blup grp hρ h0 h1 (hb ω) g]; rfl
+  simp_rw [key]
+  exact N.groupEffect_mse_optimal μ h0.le (M.KG_posDef grp hρ h0.le h1) g hd
 end NoiseG
 
 namespace Noise

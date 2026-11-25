@@ -378,14 +378,14 @@ theorem KG_posDef [Fintype G] (hρ : ∀ t, (M.block t).PosSemidef) {φ : ℝ} (
 /-- The group design `Z`: `Z_jg = 1` if cohort `j` is in group `g`, `0` otherwise. -/
 def grpDesign : Matrix J G ℝ := of fun j g => if grp j = g then 1 else 0
 
-omit [DecidableEq J] in
+omit [Fintype J] [DecidableEq J] in
 /-- `[g(i) = g(j)] = Z Zᵀ`. -/
 lemma sameGroup_eq_grpDesign [Fintype G] :
     Model.sameGroup grp = grpDesign grp * (grpDesign grp)ᵀ := by
   ext i j
   simp [Model.sameGroup, grpDesign, Matrix.mul_apply, eq_comm]
 
-omit [Fintype T] in
+omit [Fintype J] [Fintype T] in
 /-- `K_G` as a mixed-model covariance: `K_G = Z(φτ²·I)Zᵀ + A`, with `Z` the group design and
 `A = K` for `(1-φ)τ²`. -/
 lemma KG_eq_mixed [Fintype G] {φ : ℝ} (h1 : φ < 1) :
