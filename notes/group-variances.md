@@ -55,6 +55,15 @@ Finding 14: a cohort strictly between two members of a group joins it. The centr
 `Σ uz²D + kmeansCost(u(1 − z)², θ, c, m)`. A minimiser over `(c, m)` has interval groups. This is a corollary
 of `kmeans_contiguous`, like `pool_optimal_contiguous`.
 
+## How this differs from Finding 14 (`notes/kmeans-bridge.md`)
+Same engine (`kmeans_contiguous`), different problem. Finding 14 **pools** units into cohorts:
+weights are the exposures and each cohort costs `+1`, so the number of cohorts is traded off
+automatically. Here nothing is pooled: weights `uⱼ(1 − zⱼ)²`, so the noisy cohorts (which lean on
+the group mean most) count most; the group means are the `(1 − z)²`-weighted means (the OBP
+collective mean, `Core.obpMean`); `Dⱼ` may differ, `τ²` must be common. At the oracle more groups
+never hurt (one group per cohort gives the constant `Σ uz²D`), so the number of groups `K` must
+come from elsewhere: gain against price (S57).
+
 ## For the app and the plan
 - A "group the cohorts" step should fit **own means with a common `τ²`**. The groups are then intervals of the sorted
   estimates, found exactly by dynamic programming (`notes/kmeans-bridge.md`, "Finding the cuts"),

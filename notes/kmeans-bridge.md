@@ -153,6 +153,16 @@ k-means cost plus a constant per cohort, which also allows the faster
 `O(k n log n)` 1-D k-means algorithms; plain `O(k n²)` is enough for tariff
 sizes. Not formalised (an algorithm, not a credibility result).
 
+## Related: group means without pooling (Finding 41, 2026-11-25)
+`group_optimal_contiguous` (`notes/group-variances.md` §2) also reduces to `kmeans_contiguous`, but it
+is a different problem. Here cohorts are **pooled**: the pooled estimate replaces each unit's, the
+weights are the exposures `wᵢ`, and each cohort costs `+1` (its noise), so the number of cohorts is a
+real trade-off. There nothing is pooled: each cohort keeps its estimate and blends towards a free
+group mean, the weights are `uⱼ(1 − zⱼ)²` (noisy cohorts count most), any `Dⱼ` is allowed with one
+common `τ²`, and more groups never hurt at the oracle, so the result only says something for a
+fixed number of groups. It does not contradict the counterexample above (blend towards a known
+`μ` with unequal variances): there the cohorts are pooled and `μ` is fixed.
+
 ## For Lean (done 2026-11-11: `Credibility/KMeansBridge.lean`)
 
 1. `pool_mse_eq_kmeansCost`: the Proposition, for `Fintype ι`, labels `κ`,

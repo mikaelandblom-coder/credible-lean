@@ -87,7 +87,9 @@ may need a paragraph.)
 - Finding 41 (2026-11-25, `notes/group-variances.md`): in § Choosing the cohorts, one paragraph on
   grouping with a collective mean per group (spatially clustered Fay–Herriot). Use a common `τ²`; a `τ²` per
   group turns one group into a bin of outliers. Lean corollary proved 2026-11-25
-  (`group_optimal_contiguous`).
+  (`group_optimal_contiguous`). Contrast it with Finding 14 (pooling: exposure weights, a cost
+  per cohort) in the same section: weights `u(1 − z)²`, no cost per group, so the number of groups
+  is chosen by gain against price.
 - Given the levels (2026-11-25, `Credibility/ObservedBest.lean`): the blend's error for a fixed
   level `z²D + (1 − z)²(m − θ)²`, its unbiased estimate (SURE), and the observed best predictor's
   collective mean `∝ u(1 − z)²` against `∝ z` averaged over the levels. A paragraph next to the

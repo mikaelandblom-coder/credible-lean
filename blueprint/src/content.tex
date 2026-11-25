@@ -8047,7 +8047,7 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
 \end{proof}
 
 \begin{remark}[Finding 14: when optimal cohorts are intervals]\label{rem:kmeans_bridge}
-  \uses{cor:pool_optimal_contiguous, thm:blend_optimal_contiguous}
+  \uses{cor:pool_optimal_contiguous, thm:blend_optimal_contiguous, cor:group_optimal_contiguous}
   Units with fixed levels $x_i$ and uncorrelated estimates of variance $v_i$
   are grouped into at most $k$ cohorts, each pooled by inverse variance
   ($w_i = 1/v_i$). Then
@@ -8063,6 +8063,11 @@ and $\operatorname{Var} \bar X_a = 1/W_a$.
   noisy middle cohort sits at $\mu$ and is better served by the collective
   than by a neighbour. With a common variance the blend's optimal cohorts are
   intervals again (Theorem~\ref{thm:blend_optimal_contiguous}).
+  Not to be confused with Corollary~\ref{cor:group_optimal_contiguous} (Finding 41): there nothing
+  is pooled, each cohort keeps its estimate and is blended towards a free group mean, the k-means
+  weights are $u_j(1-z_j)^2$ (the noisy cohorts count most, not the large ones), any $D_j$ is
+  allowed but $\tau^2$ must be common, and there is no cost per group, so it only bites for a fixed
+  number of groups.
 \end{remark}
 
 \subsection{Common variance: the credibility blend}
@@ -8247,7 +8252,9 @@ not apply, but a swap argument does.
   $n D s^2/(s^2 + D) \le nD$, concave in its spread $s^2$, so a group that does not shrink collects the
   outliers of both tails. With one common $\tau^2$ the loss for fixed $\tau^2$ is a weighted k-means
   cost with weights $u_j(1 - z_j)^2$, and the optimal groups are intervals
-  (Corollary~\ref{cor:group_optimal_contiguous}; \texttt{notes/group-variances.md}).
+  (Corollary~\ref{cor:group_optimal_contiguous}; \texttt{notes/group-variances.md}). This is not
+  the pooling result of Remark~\ref{rem:kmeans_bridge}: the same k-means theorem, but other weights
+  and no cost per group.
 \end{remark}
 
 \begin{remark}[No cap needed]

@@ -20,7 +20,9 @@ voice, then trim towards 8 pages.
   linked to `Credibility.group_optimal_contiguous` (proved 2026-11-25). Own `τ²` per group breaks
   intervals (a no-shrink group collects the outliers of both tails); own means with one common `τ²`
   keep them (weighted k-means with weights `u(1 − z)²`), so fit groups with a common `τ²`, by cuts of
-  the sorted estimates. Ready to add.
+  the sorted estimates. Ready to add. Say how it differs from `res:blend_intervals` (pooling,
+  exposure weights, a cost per cohort): weights `u(1 − z)²`, no cost per group, so `K` comes from
+  gain against price (`notes/group-variances.md`, last section).
 - OBP collective mean (2026-11-25, `Core.condRisk_obpMean_le`, `Core.sure_obpMean_le`,
   `Core.integral_sure_given_level`): given the levels the best collective mean has weights
   `∝ uⱼ(1 − zⱼ)²`, not `∝ z`. A "watch out" next to the collective mean once the PLAN study
