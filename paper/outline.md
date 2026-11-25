@@ -32,10 +32,10 @@ Rules that keep this cheap to maintain:
 
 ## Structure (owner, 2026-11-20)
 
-Laid out like a paper: nine sections, a few subsections each, and the topics
+Laid out like a paper: ten sections, a few subsections each, and the topics
 inside as run-in paragraphs (`\paragraph{…}`), not headings of their own. A new
 result is normally a new paragraph in an existing subsection; a new extension
-is a subsection of §7. Each topic (a subsection, or a section without
+is a subsection of §8. Each topic (a subsection, or a section without
 subsections) follows the template:
 
 1. An opening sentence: what the concept is (`\oneline`, no heading).
@@ -54,19 +54,23 @@ drafted, then §7–9, then §10–11. 2026-11-17: §12–14 and B drafted, and
 paragraphs for Findings 18–20 in §5–6: the first draft is complete.
 2026-11-20: the 15 sections (old §0–14) and ~90 subsections regrouped into 9 sections
 with run-in paragraphs; the matrix blend added
-as §7.4.)
+as §7.4. 2026-11-25: review; new §3.4 "Beyond the blend" (the BLUP of any target, restricted
+predictors, recency weighting) and new §7 "Beyond second moments" (cumulants, variance function,
+normal theory, heavy tails), gathered from old §5–6 and §7.4; §9 rewritten (old §9 is now §10);
+the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers Findings 6–41.)
 
 | # | Section (subsections) | Covers | Was (before 2026-11-20) | Status |
 |---|---|---|---|---|
-| 1 | Introduction (How to read this paper) | what credibility is, the best factor, what is new; the four documents, machine-checked means what | §1, §0 | draft |
+| 1 | Introduction (How to read this paper) | what credibility is, the best factor, what is new, what else is here; the four documents, machine-checked means what | §1, §0 | draft |
 | 2 | The model (Cohorts, periods and error terms; From data to `K`) | error terms, correlation within a period, distribution-free, Bühlmann–Straub notation; the recipe, PD not PSD, two cohorts | §2, §3 | draft |
-| 3 | The best blend (The weights; The credibility factor; Special cases) | inverse-variance and GLS weights; the proposed `z`, `z > 1`, the sign flip, blend against BLUP; Bühlmann–Straub, two cohorts, equal covariances, ignoring or damping correlation | §4, §5, §6 | draft |
+| 3 | The best blend (The weights; The credibility factor; Special cases; Beyond the blend) | inverse-variance and GLS weights; the proposed `z`, `z > 1`, the sign flip; Bühlmann–Straub, two cohorts, equal covariances, ignoring or damping correlation; the BLUP of any target with a design, the price of the blend and of restricted rules, recency weighting (S43–S45) | §4, §5, §6 | draft |
 | 4 | Balance | when it holds for free, the cost of forcing it, how to balance | §7 | draft |
-| 5 | Estimating the parameters | unbiased estimators, plug-in `K̂`, damping, a fit with no tuning, error of a fitted model | §8 | draft |
-| 6 | Why the moments are real | true covariances and MSE; consistent iff `ρ ⪰ 0` | §9 | draft |
-| 7 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Monthly data with a common factor; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; relativities under a factor (Finding 31); the matrix blend, Hachemeister, Finding 22, frequency × severity and the pure-premium bias (Findings 32–33) | §10, §11, §12, new | draft |
-| 8 | Related work | what is used from where | §14 | draft |
-| 9 | Open directions | crossed levels, time, better fits, the distribution layer | §13 | draft |
+| 5 | Estimating the parameters | unbiased estimators, plug-in `K̂`, damping (S38–S42), tapering (S46–S48), a fit with no tuning, error of a fitted model, gain against price, estimated weights and skew (Finding 35, its first-order prediction) | §8 | draft |
+| 6 | Why the moments are real | true covariances and MSE; consistent iff `ρ ⪰ 0`; what "best" means, given the levels (SURE, OBP mean) | §9 | draft |
+| 7 | Beyond second moments | cumulants, independent sources, variance function (Tweedie), what "normal" means, when linear is enough, heavy tails and the cross term (Findings 38–40), symmetric and normal noise | new (from §5, §6) | draft |
+| 8 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Monthly data with a common factor; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; shocks that do not shrink (Finding 23), season, factor, relativities under a factor (Finding 31); the matrix blend, Hachemeister, a known trend (Finding 21), Finding 22, frequency × severity and the pure-premium bias (Findings 32–33) | §10, §11, §12, new | draft |
+| 9 | Related work | what is used from where | §14 | draft |
+| 10 | Open directions | where to look first; crossed levels, winner's curse, fits, time, short classical extensions, XoL, distribution layer, multiplicative tariffs | §13 | draft |
 | A | Changes from the thesis | corrections, beyond the thesis, concordance | A | draft |
 | B | Concept index | term → meaning → section | B | draft |
 | C | Notation | symbols, Bühlmann–Straub translation | C | draft |
@@ -84,6 +88,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- *Done 2026-11-25 (review):* the fourth-moment layer and the variance function (§7); Finding 35's
+  first-order prediction (§5); damping S38–S42 and tapering S46–S48 (§5); recency weighting S43–S45
+  (§3.4). "Given the levels" stays in §6: it is a statement about the true MSE (given the level), not
+  about higher moments.
 - *Done 2026-11-25 (later):* "Groups with their own collective mean" (§ Choosing the cohorts,
   Finding 41, contrast with Finding 14); "Given the levels" (error given the level, SURE, the OBP
   collective mean `∝ u(1 − z)²`, next to "What 'best' means"); normal noise with known mean
@@ -97,23 +105,6 @@ may need a paragraph.)
   (Henderson's equations, § Groups and shared levels).
 - *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
   and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
-- The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why
-  variances need cumulants, and the assumptions that cut their number (independent sources, a
-  variance function). Write once the source corollary is proved. The source corollary and the
-  variance-function version (law of total cumulance, `VarianceFunction.lean`, 2026-11-23) are in.
-- Finding 35 (2026-11-23, `studies/skew-bias.js`): the plug-in bias predicted from one data set
-  to first order (skew channel), within 20–35% of the simulated bias without correlation. A sentence
-  where Finding 35 is explained.
-- §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
-  makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
-  variance is enough (S41) and safer under heavy tails (S42). One paragraph.
-- §12 serial correlation (2026-11-24, studies S43–S45): recency weighting of years (EWMA, Morris
-  2026) is a restricted predictor (aggregated data, `Blup.predMse_aggregate_eq_blup_add`); its best
-  λ shortens with volume, and the BLUP beats it by reading the common factor from all cohorts. One
-  paragraph.
-- §8 tapering (2026-11-24, studies S46–S48): when to taper is decided from the data
-  (`Engine.taperSignal`, safe but conservative), and every gap between fits is about three times
-  smaller at the credibility level of the thesis's own study. One sentence each.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are
