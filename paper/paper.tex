@@ -1,7 +1,8 @@
 % The paper: the up-to-date version of the thesis, explained in words.
 % Concepts, and the ten or so formulas that carry them; every formula lives in
 % the handbook (cited by number with \hb),
-% proofs in Lean (cited by name with \lean) and the blueprint.
+% proofs in Lean and the blueprint (Lean names appear only in the concordance of
+% Appendix A; elsewhere the handbook entry links them).
 % Outline, rules and status: paper/outline.md.
 % Built by CI as a PDF (xelatex) and a searchable web page (plasTeX),
 % published next to the handbook. scripts/paper_check.py checks every
@@ -185,12 +186,9 @@ Appendix~\ref{app:changes} lists what is new against the thesis.
     squared error, and Section~\ref{sec:estimation} how to estimate them.
 \end{itemize}
 
-\see \hb{res:bestZ}{1}, \hb{res:z}{5} ·
-\lean{Credibility.BlendMoments.bestZ_optimal},
-\lean{Credibility.BlendMoments.bestZ_unique},
-\lean{Credibility.Core.bestZ_eq},
-\lean{Credibility.Core.Estimates.bestZ_mse_optimal} ·
-\app{One draw} · thesis §1, §2.1.
+\see \hb{res:bestZ}{1}, \hb{res:z}{5}, \hb{res:mse}{17} ·
+\app{One draw} ·
+thesis §1, §2.1.
 
 \subsection{How to read this paper}\label{sec:read}
 
@@ -220,9 +218,9 @@ The work comes in four documents, one for each kind of content.
     fitted models with the best blend for the true parameters. The fits see
     only the data.
 \end{itemize}
-Every topic ends with a \emph{See} line: the handbook results, the Lean
-names of the proofs, the app step to try, the findings it explains, and the
-thesis sections it replaces. Appendix~\ref{app:changes} lists what changed
+Every topic ends with a \emph{See} line: the handbook results (whose Lean
+links lead to the proofs), the app step to try, the findings it explains, and
+the thesis sections it replaces. Appendix~\ref{app:changes} lists what changed
 since the thesis, with a concordance from each thesis equation to its
 handbook number and Lean name; Appendix~\ref{app:notation} has the notation
 and its translation to Bühlmann--Straub.
@@ -232,8 +230,8 @@ and its translation to Bühlmann--Straub.
 Every result the paper states is a
 theorem in Lean, a proof assistant: a program that accepts a proof only if
 each step follows from the previous ones and from the axioms of mathematics.
-A Lean name such as \lean{Credibility.Core.bestZ_eq} links to the statement
-and its proof. Continuous integration rebuilds all proofs on every change
+Each result cites its handbook entry, such as \hb{res:z}{5}, whose Lean links
+go to the statement and its proof. Continuous integration rebuilds all proofs on every change
 and checks that none of them rests on an unfinished step or on an extra
 axiom. So if the paper says a result is proved, the statement as written in
 Lean is true; you do not need to trust the author, or the AI that wrote most
@@ -271,14 +269,16 @@ section.
 \begin{itemize}
   \item \emph{Equation numbers} such as ``eq.~(26)'' refer to the thesis as
     published; handbook numbers can change between versions, so cite the
-    handbook with its version or, better, the Lean name, which is stable.
+    handbook with its version or, better, the Lean name it links to, which is
+    stable.
   \item \emph{Only means and covariances are assumed} throughout, unless a
     result says otherwise in its name (Section~\ref{sec:model}).
 \end{itemize}
 
-\see \hbsec{sec:setting}{1} ·
-\lean{Credibility.Core.bestZ_eq} ·
-\app{World} · \file{FINDINGS.md}, \file{paper/outline.md} · thesis §1.
+\see \hbsec{sec:setting}{1}, \hb{res:z}{5} ·
+\app{World} ·
+\file{FINDINGS.md}, \file{paper/outline.md} ·
+thesis §1.
 
 % ===========================================================================
 \section{The model}\label{sec:modelpart}
@@ -377,9 +377,8 @@ there and read off.
 \end{itemize}
 
 \see \hbsec{sec:setting}{1}, \hb{res:bs}{8}, \hb{res:exists}{20} ·
-\lean{Credibility.bs_z},
-\lean{Credibility.Model.exists_noise_iff} ·
-\app{World} · thesis §2.3.
+\app{World} ·
+thesis §2.3.
 
 \subsection{From data to \texorpdfstring{$K$}{K}}\label{sec:K}
 
@@ -460,7 +459,7 @@ shrinkage.
     $(\hat\rho_{ij})$ can have a negative eigenvalue. Shrinking towards zero
     does not repair that for every amount of shrinkage: three cohorts with all
     correlations $-1$ stay indefinite unless at least half of each correlation
-    is removed (\lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff}). Repair
+    is removed (\hb{res:damped}{26}). Repair
     the table first (for example, clip its negative eigenvalues).
   \item \emph{Positive definite is not the same as well conditioned.} Close
     to singular, the credibility factors swing hard with small changes in
@@ -471,15 +470,10 @@ shrinkage.
     Section~\ref{sec:weights}.
 \end{itemize}
 
-\see \hbsec{sec:setting}{1}, \hb{res:gls}{3}, \hb{res:z}{5},
-\hb{res:posdef}{7}, \hb{res:damped}{26} ·
-\lean{Credibility.Model.K_apply},
-\lean{Credibility.Model.K_posDef},
-\lean{Credibility.Unequal.K_posDef},
-\lean{Credibility.Unequal.dampedK_posDef},
-\lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff},
-\lean{Credibility.Core.bestZ_eq} ·
-\app{Fitting steps} · \finding{1}, \finding{2} · thesis §2.3--2.5.
+\see \hbsec{sec:setting}{1}, \hb{res:gls}{3}, \hb{res:z}{5}, \hb{res:posdef}{7}, \hb{res:damped}{26}, \hb{res:unequal}{32} ·
+\app{Fitting steps} ·
+\finding{1}, \finding{2} ·
+thesis §2.3--2.5.
 
 % ===========================================================================
 \section{The best blend}\label{sec:blend}
@@ -572,14 +566,10 @@ care about (Section~\ref{sec:estimation}; \file{studies/literature.md}, §1).
     too (Section~\ref{sec:moments}).
 \end{itemize}
 
-\see \hb{res:invVar}{2}, \hb{res:gls}{3}, \hb{res:upsilon}{4} ·
-\lean{Credibility.invVarWeight_optimal},
-\lean{Credibility.invVarWeight_value},
-\lean{Credibility.glsWeight_optimal},
-\lean{Credibility.glsWeight_value},
-\lean{Credibility.mulVec_glsWeight},
-\lean{Credibility.Core.Estimates.portEst_optimal} ·
-\app{Models} · \file{studies/literature.md} §1 · thesis §2.5,
+\see \hb{res:invVar}{2}, \hb{res:gls}{3}, \hb{res:upsilon}{4}, \hb{res:mse}{17} ·
+\app{Models} ·
+\file{studies/literature.md} §1 ·
+thesis §2.5,
 eqs.~(23)--(25).
 
 \subsection{The credibility factor}\label{sec:z}
@@ -696,18 +686,9 @@ $z_j$ can still be large near it.
     for the historical level (\hb{res:forecast}{18}).
 \end{itemize}
 
-\see \hb{res:z}{5}, \hb{res:diag}{6}, \hb{res:two}{12},
-\hb{res:z1_range}{13}, \hb{res:forecast}{18} ·
-\lean{Credibility.Core.bestZ_eq},
-\lean{Credibility.Model.bestZ_eq},
-\lean{Credibility.TwoCohorts.z1_eq},
-\lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1},
-\lean{Credibility.Core.abs_bestZ_mul_one_sub_le_eigenvalues},
-\lean{Credibility.TwoCohorts.z1_gt_one_iff},
-\lean{Credibility.TwoCohorts.z1_neg_iff},
-\lean{Credibility.TwoCohorts.singularity_reachable_iff},
-\lean{Credibility.Core.Estimates.bestZ_forecast_optimal} ·
-\app{One draw} (the $z > 1$ warning) · \finding{3}, \finding{17} ·
+\see \hb{res:z}{5}, \hb{res:diag}{6}, \hb{res:two}{12}, \hb{res:z1_range}{13}, \hb{res:forecast}{18} ·
+\app{One draw} (the $z > 1$ warning) ·
+\finding{3}, \finding{17} ·
 \file{studies/literature.md} §3 ·
 thesis §2.5, eq.~(26); §2.7, eqs.~(32)--(34).
 
@@ -765,11 +746,11 @@ general. With three or more cohorts and unequal covariances it fails; in one
 random example the weights are $(0.536, 0.226, 0.238)$ against
 $z/z_* = (0.564, 0.177, 0.259)$ (\finding{4}). Two small three-cohort models in
 Lean make this exact: equal noise with one correlated pair
-(\lean{Credibility.Model.exists_b_ne_z}), and equal correlations with unequal
-noise levels (\lean{Credibility.Model.exists_b_ne_z_equalCorr}): equal
+(\hb{res:equalcov}{15}), and equal correlations with unequal
+noise levels (\hb{res:equalcov}{15}): equal
 correlations are not enough, the covariances must be equal. For exactly three
 cohorts (and no zero weight), equal covariances are also necessary
-(\lean{Credibility.Model.equalCov_of_b_eq_z}); from four cohorts on, other
+(\hb{res:equalcov}{15}); from four cohorts on, other
 structures work too, an example shown on paper (\finding{5}).
 
 \paragraph{What ignoring correlation costs.}
@@ -824,27 +805,12 @@ same bound covers every damping factor.
     in place of $\rho$.
 \end{itemize}
 
-\see \hb{res:diag}{6}, \hb{res:ignoreCorr}{16}, \hb{res:bs}{8},
-\hb{res:two}{12}, \hb{res:equalcov}{15} ·
-\lean{Credibility.bs_z},
-\lean{Credibility.Core.bestZ_of_diag},
-\lean{Credibility.TwoCohorts.b1_eq_z},
-\lean{Credibility.Core.b_eq_of_equalCov},
-\lean{Credibility.Core.bestZ_of_equalCov},
-\lean{Credibility.Model.bestZ_of_equalCov},
-\lean{Credibility.Model.equalCov_of_b_eq_z},
-\lean{Credibility.Model.exists_b_ne_z},
-\lean{Credibility.Model.exists_b_ne_z_equalCorr},
-\lean{Credibility.Core.blupWeight_diag_eq_blendWeight},
-\lean{Credibility.Core.linMse_blupWeight_working_le},
-\lean{Credibility.Core.linMse_ignoreCorr_le},
-\lean{Credibility.Core.linMse_ignoreCorr_le_of_offDiag},
-\lean{Credibility.Core.linMse_ignoreCorr_equicorr_le},
-\lean{Credibility.Core.linMse_damped_equicorr_le},
-\lean{Credibility.Core.Estimates.ignoreCorr_mse_le},
-\lean{Credibility.Core.Estimates.damped_mse_le} ·
-\app{Models} · \finding{2}, \finding{4}, \finding{5}, \finding{19},
-\finding{20} · \file{studies/literature.md} §3 · thesis §2.6, §2.7.
+\see \hb{res:diag}{6}, \hb{res:ignoreCorr}{16}, \hb{res:bs}{8}, \hb{res:two}{12}, \hb{res:equalcov}{15}, \hb{res:blup}{22} ·
+\app{Models} ·
+\finding{2}, \finding{4}, \finding{5}, \finding{19},
+\finding{20} ·
+\file{studies/literature.md} §3 ·
+thesis §2.6, §2.7.
 
 \subsection{Beyond the blend: the best linear predictor}\label{sec:blup}
 
@@ -909,8 +875,7 @@ Many practical rules are predictors from less than the full data: from
 annual totals instead of months, from a cohort's own years only, or from
 group averages. Each is the best predictor of a smaller data set, and its
 excess error over the full predictor is again an exact quadratic form in the
-weights (\lean{Credibility.Core.predMse_blup_le_aggregate},
-\lean{Credibility.Core.predMse_aggregate_eq_blup_add}). So aggregated data
+weights (\hb{res:blup}{22}). So aggregated data
 never beat the cells when the covariances are known, and the cost of
 aggregating is a formula, not a simulation.
 
@@ -940,18 +905,11 @@ stays ahead of the fitted $\lambda$ (S45).
 \end{itemize}
 
 \see \hb{res:blup}{22} ·
-\lean{Credibility.Core.blupWeight_optimal},
-\lean{Credibility.Core.errVar_eq_blupWeight_add},
-\lean{Credibility.Core.exists_blendWeight_eq_blupWeight_iff},
-\lean{Credibility.Core.Estimates.blup_mse_optimal},
-\lean{Credibility.Core.Estimates.mse_blend_eq_blup_add},
-\lean{Credibility.Core.blup_optimal},
-\lean{Credibility.Core.predMse_blup},
-\lean{Credibility.Core.predMse_blup_le_aggregate},
-\lean{Credibility.Core.predMse_aggregate_eq_blup_add} ·
 \app{Models} (``BLUP''), \app{Comparing fits on data} (``EWMA of own years'') ·
-\finding{18} · \file{studies/damping-theta.md} (S30--S32, S43--S45),
-\file{notes/card-data.md} Step~1 · thesis §2.5.
+\finding{18} ·
+\file{studies/damping-theta.md} (S30--S32, S43--S45),
+\file{notes/card-data.md} Step~1 ·
+thesis §2.5.
 
 % ===========================================================================
 \section{Balance}\label{sec:balance}
@@ -1068,21 +1026,12 @@ $D$. So the shift is the one to use.
     the off-balance as a note, not a warning (\app{Many draws}).
 \end{itemize}
 
-\see \hb{res:bs}{8}, \hb{res:balance}{9}, \hb{res:bestBalanced}{10},
-\hb{res:commonShift}{11} ·
-\lean{Credibility.bs_balance},
-\lean{Credibility.Unequal.balance_total},
-\lean{Credibility.Core.balanced_iff},
-\lean{Credibility.Core.balanced_iff_of_diag},
-\lean{Credibility.Core.bestBalanced_optimal},
-\lean{Credibility.Core.bestBalanced_cost},
-\lean{Credibility.Core.Estimates.bestBalanced_mse_optimal},
-\lean{Credibility.Core.bestCorrection_optimal},
-\lean{Credibility.Core.imbalanceCov_of_diag},
-\lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag} ·
-\app{Many draws} · \finding{10}, \finding{15}, \finding{16} ·
+\see \hb{res:bs}{8}, \hb{res:balance}{9}, \hb{res:bestBalanced}{10}, \hb{res:commonShift}{11} ·
+\app{Many draws} ·
+\finding{10}, \finding{15}, \finding{16} ·
 \file{studies/damping-theta.md} (S27--S29), \file{studies/vc-balance.js},
-\file{studies/exact-balance.js} · \file{studies/literature.md} §4 ·
+\file{studies/exact-balance.js} ·
+\file{studies/literature.md} §4 ·
 thesis §2.9.
 
 % ===========================================================================
@@ -1156,9 +1105,8 @@ The obvious way to choose
 $\theta$ is to make $\hat K$ as close as possible to the true $K$. That is
 the wrong target. That target has an exact answer: the $\theta$ minimising the
 expected squared error of the damped table is $\sum s^2/(\sum s^2 + \sum V)$, signal over
-signal plus noise, and the app's rule is its plug-in (\hb{res:bestTheta}{27},
-\lean{Credibility.Damping.bestTheta_optimal}); damping a valid table by it keeps it valid
-(\lean{Credibility.Damping.posDef_shrinkOffDiag_bestTheta}). But the rates want \emph{less} damping than the best estimate
+signal plus noise, and the app's rule is its plug-in (\hb{res:bestTheta}{27}); damping a valid table by it keeps it valid
+(\hb{res:bestTheta}{27}). But the rates want \emph{less} damping than the best estimate
 of $K$ would get, most of all under heavy tails (S12). The same shows when the exact
 variance of the estimated covariances, kurtosis included, is plugged into the rule: it
 damps more, and the rates get worse at high correlation (S38--S39). The app's rule works
@@ -1192,8 +1140,7 @@ gets there by giving the covariances fewer parameters
     The pooled moment estimator of $\rho$ (pair cross-products over their
     expected factors) is unbiased when the true $\sigma_j$ are used, and the
     average pair covariance is unbiased for a common covariance
-    (\hb{res:pooled}{24}, \lean{Credibility.Model.rhoPooled_unbiased},
-    \lean{Credibility.Model.commonCovHat_unbiased}); with estimated
+    (\hb{res:pooled}{24}); with estimated
     $\tilde\sigma_j$ plugged in, $\hat\rho$ is a ratio and its bias is not proved.
   \item \emph{Variances by credibility.} Each cohort's $\hat\sigma_j^2$ is
     blended with the pooled one by a credibility factor whose own parameters
@@ -1222,7 +1169,7 @@ normal noise the cross term vanishes; under heavy tails it is negative,
 because a large shock inflates both a cohort's deviation and the variance
 estimates, so the fitted factor shrinks hardest exactly when the raw mean
 is most off (S21). For the Bühlmann--Straub fit this holds for heavy-tailed levels with
-any volumes (\lean{Credibility.Cumulants.crossTerm_bs_level_nonpos}); heavy-tailed noise can flip
+any volumes (\hb{res:bsPrice}{30}); heavy-tailed noise can flip
 the sign when a cohort's volume sits in one year (Finding 39). That is how a fitted model can beat the best blend with
 fixed weights (S9). The split itself is exact for every distribution: with $A$ the error
 of the best predictor $d^{*\top}x$ and $B = \hat d^\top x - d^{*\top}x$ the fitted predictor's
@@ -1241,11 +1188,11 @@ A richer fit (correlation, a variance per cohort, the best linear predictor) is 
 only if what it gains with the true parameters exceeds what estimating its extra parameters
 costs. Both sides can be computed from one data set, without simulation. The gain is exact:
 on the fitted $\hat K$, the gap between any blend and the best predictor is a closed form
-(\lean{Credibility.Core.Estimates.mse_blend_eq_blup_add}). The price is the variance of the
+(\hb{res:blup}{22}). The price is the variance of the
 fitted factors, to first order. It follows from the moments of three statistics: the pooled
 within-cohort variance, its noise part, and the spread of the cohort means. Their exact
 variances and covariances are proved for any distribution
-(\lean{Credibility.Cumulants.covariance_stat}), and the spread is uncorrelated with the other
+(\hb{res:bsPrice}{30}), and the spread is uncorrelated with the other
 two only under conditions that the exposure table shows (\finding{37}). In the balanced case
 this gives two laws (\hb{res:bsPrice}{30}). Fitting Bühlmann--Straub costs about
 $\frac2J\frac{T}{T-1}\frac{1-z}{z}$ of the known-parameter error, and a variance per cohort
@@ -1272,7 +1219,7 @@ the fit uses them, so it cannot be read off $\hat K$. It can still be predicted 
 data set, to first order: refit with each cohort's residuals scaled to see how the weights
 respond to its variance estimate, and multiply by the covariance of that estimate with the
 cohort mean, a third moment
-(\lean{Credibility.Cumulants.covariance_resVar_mean}). That gets sign and size, within about
+(\hb{res:varQuad}{31}). That gets sign and size, within about
 30\% of the simulated bias, including the channel through $\hat\rho$; one data set's
 value is rough (\file{studies/skew-bias.js}). Two remedies need no estimate of
 it. A pooled variance removes most of it. Balance removes it at portfolio level in
@@ -1309,25 +1256,12 @@ sets like it (S26).
     world changes.
 \end{itemize}
 
-\see \hb{res:damped}{26}, \hb{res:estimation}{23}, \hb{res:bs_tau}{25},
-\hb{res:integral_quad}{19}, \hb{res:plugIn}{29}, \hb{res:randomWeights}{28} ·
-\lean{Credibility.Model.sigRhoHat_unbiased},
-\lean{Credibility.Model.tauHat_unbiased},
-\lean{Credibility.Model.KHat_unbiased},
-\lean{Credibility.Model.sigRhoHat_self},
-\lean{Credibility.Model.tauHatBS_unbiased},
-\lean{Credibility.Unequal.dampedK_posDef},
-\lean{Credibility.Unequal.K_posDef},
-\lean{Credibility.posDef_hadamard_of_corr},
-\lean{Credibility.Core.Target.integral_sq_plugIn},
-\lean{Credibility.Core.Target.plugIn_mse_of_normal},
-\lean{Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric},
-\lean{Credibility.Core.Estimates.integral_randomLin_sub},
-\lean{Credibility.Core.Estimates.integral_randomLin_resVar_sub},
-\lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced} ·
-\app{Models}, \app{Fitting steps} · \finding{7}, \finding{35} ·
+\see \hb{res:damped}{26}, \hb{res:estimation}{23}, \hb{res:bs_tau}{25}, \hb{res:integral_quad}{19}, \hb{res:plugIn}{29}, \hb{res:randomWeights}{28}, \hb{res:unequal}{32} ·
+\app{Models}, \app{Fitting steps} ·
+\finding{7}, \finding{35} ·
 \file{studies/damping-theta.md} (S1--S62),
-\file{studies/literature.md} §2, §4 · thesis §2.8, eqs.~(37)--(41).
+\file{studies/literature.md} §2, §4 ·
+thesis §2.8, eqs.~(37)--(41).
 
 % ===========================================================================
 \section{Why the moments are real}\label{sec:moments}
@@ -1442,26 +1376,11 @@ not (\file{studies/damping-theta.md}, S59--S62).
     study (Reluga et al.\ 2026, \file{studies/literature.md} §10p).
 \end{itemize}
 
-\see \hb{res:mse}{17}, \hb{res:forecast}{18}, \hb{res:integral_quad}{19},
-\hb{res:exists}{20} ·
-\lean{Credibility.Core.Estimates.portEst_optimal},
-\lean{Credibility.Core.Estimates.mse_blend},
-\lean{Credibility.Core.Estimates.bestZ_mse_optimal},
-\lean{Credibility.Core.Estimates.bestZ_forecast_optimal},
-\lean{Credibility.Model.Noise.mse_blend},
-\lean{Credibility.Model.Noise.bestZ_mse_optimal},
-\lean{Credibility.Model.Noise.integral_quad},
-\lean{Credibility.Model.integral_quad_of_cov},
-\lean{Credibility.Model.exists_noise_iff},
-\lean{Credibility.Unequal.Noise.bestZ_mse_optimal},
-\lean{Credibility.Unequal.exists_noise_iff},
-\lean{Credibility.Core.integral_sq_blend_given_level},
-\lean{Credibility.Core.integral_sure_given_level},
-\lean{Credibility.Core.condRisk_obpMean_le},
-\lean{Credibility.Core.sure_obpMean_le},
-\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal} ·
-\app{Many draws} (fit against the floor) · \finding{1}, \finding{11},
-\finding{12} · \file{studies/damping-theta.md} (S9).
+\see \hb{res:mse}{17}, \hb{res:forecast}{18}, \hb{res:integral_quad}{19}, \hb{res:exists}{20}, \hb{res:unequal}{32}, \hb{res:givenLevel}{21}, \hb{res:blup}{22} ·
+\app{Many draws} (fit against the floor) ·
+\finding{1}, \finding{11},
+\finding{12} ·
+\file{studies/damping-theta.md} (S9).
 
 % ===========================================================================
 \section{Beyond second moments}\label{sec:beyond}
@@ -1477,11 +1396,11 @@ Every estimator of the parameters is a quadratic form in the data: a sum of
 squared residuals, a sum of cross products. Its mean needs only the means and
 covariances (Section~\ref{sec:moments}). Its variance needs, in addition, the
 third and fourth cumulants of the cells, and the exact formula holds for any
-distribution (\lean{Credibility.Cumulants.variance_quad_of_cumulants}). In
+distribution (\hb{res:varQuad}{31}). In
 general that is a large table. Two assumptions cut it down to a few numbers.
 If the cells are built from independent sources (a shock per period, a level
 per cohort, noise per cell), only each source's own skewness and kurtosis
-enter (\lean{Credibility.Cumulants.variance_quad_of_sources}). And if the noise
+enter (\hb{res:varQuad}{31}). And if the noise
 follows a variance function, the next paragraph, the cumulants follow from the
 mean.
 
@@ -1495,9 +1414,9 @@ Such a family fixes all higher cumulants as functions of $\mu$ too. Since the
 levels are random, the variance of an estimator is then the law of total
 variance on two layers: the average over the levels of the variance given
 them, plus the variance over the levels of the mean given them
-(\lean{Credibility.VarianceFunction.variance_quad_of_conditional_sources}). For
+(\hb{res:varQuad}{31}). For
 the variance function $\mu^p$ every term is explicit
-(\lean{Credibility.VarianceFunction.variance_quad_of_powerVariance}). The
+(\hb{res:varQuad}{31}). The
 catch for practice: the cumulants are averaged over the levels, not taken at
 the average level. With a power above one the riskiest cohorts dominate, so
 plugging in the portfolio mean understates the variance. The core never needs
@@ -1512,23 +1431,23 @@ Where a result says ``under normal noise'' or ``normal theory'', it assumes no
 distribution. It assumes that the third and fourth cumulants vanish: no skewness and no
 excess kurtosis. Every theorem holds for any distribution with those moments, and the
 general versions carry the extra terms when they do not vanish
-(\lean{Credibility.Cumulants.variance_quad_of_cumulants},
-\lean{Credibility.Cumulants.covariance_stat}). The condition enters in two places. The
+(\hb{res:varQuad}{31},
+\hb{res:bsPrice}{30}). The condition enters in two places. The
 \emph{noise} within a cohort decides how precise the variance estimate is. The
 \emph{cohort means}, level plus averaged noise, decide how precise their spread, and so
 $\hat\tau^2$, is. For example, a sample variance over $T$ years has its normal-theory
-variance plus $\kappa_4/T$ (\lean{Credibility.Cumulants.variance_sampleCov}). Some results
+variance plus $\kappa_4/T$ (\hb{res:varQuad}{31}). Some results
 also need conditions that are not distributional at all. The cohort spread is uncorrelated
 with the pooled noise variance only if, in addition, the cohort means are uncorrelated
 with the residuals: uncorrelated cohorts, or volumes proportional across periods, which
-the exposure table shows (\finding{37}, \lean{Credibility.Cumulants.covariance_statB_eq_zero}).
+the exposure table shows (\finding{37}, \hb{res:bsPrice}{30}).
 
 \paragraph{When linear is enough.}
 
 Normal noise also settles whether linear predictors are enough. If data and target are jointly
 normal and the mean is known, the best linear predictor is the conditional expectation
 $E[Y \mid x]$, so no nonlinear function of the data predicts better
-(\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal}): linearity costs nothing. With
+(\hb{res:blup}{22}): linearity costs nothing. With
 the mean estimated from the same data, as in every fitted model, the best linear unbiased
 predictor is no longer $E[Y \mid x]$, and the result says nothing about nonlinear rivals.
 
@@ -1540,12 +1459,12 @@ anyway. Estimate them instead and use the exact formulas: the skewness and exces
 kurtosis of the within-cohort residuals, scaled by the square root of the volume and
 pooled over all cells, with standard errors of about $\sqrt{6/N}$ and $\sqrt{24/N}$ for
 $N$ cells (an unbiased third cumulant:
-\lean{Credibility.Cumulants.kappaHat_unbiased}). If the corrected price of estimation
+\hb{res:varQuad}{31}). If the corrected price of estimation
 differs materially from the normal-theory one, use the corrected one; no threshold needs
 to be set by hand. For Bühlmann--Straub's factor in the balanced case it is proved: the noise
 kurtosis $\gamma_N$ adds a term in $\gamma_N z^2$, so its share of the price grows with credibility, and the
 levels' excess kurtosis $\gamma_L$ adds a term that does not shrink with more years
-(\lean{Credibility.Cumulants.bsPrice_of_balanced_cumulants}). That is only half of the effect: the cross term of the error split
+(\hb{res:bsPrice}{30}). That is only half of the effect: the cross term of the error split
 reverses it, so in total heavy tails lower the price at first order, with exceptions
 (below, \finding{38}). The cumulants of the levels cannot be checked with a handful of
 cohorts; treat them as a sensitivity. As a rule of thumb, a cell is an average of many
@@ -1562,10 +1481,10 @@ that heavy tails raise the price (above). The cross term says the opposite and i
 large: with the noise variance estimated from the same cells, it adds
 $-2(1 - \frac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$, so in total heavy tails \emph{lower} the
 first-order error of the Bühlmann--Straub fit (\finding{38},
-\lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants}). The noise part has the opposite
+\hb{res:bsPrice}{30}). The noise part has the opposite
 sign to the small-area result with known sampling variances (Chen, Lahiri and Rao), because the
 noise variance is estimated from the same cells. With any volumes the term is a closed form over
-the cohorts (\lean{Credibility.Cumulants.crossTerm_bs_of_cumulants}). Its level part is never
+the cohorts (\hb{res:bsPrice}{30}). Its level part is never
 positive, but its noise part turns positive when a cohort's volume sits in one year
 (\finding{39}). For the best linear predictor on a correlated $\hat K$, even the level part can be
 slightly positive (\finding{40}). So the app shows the sign it computes and does not assume one.
@@ -1576,10 +1495,9 @@ Two exact statements need a little more than second moments. With symmetric
 noise and a fit that is even and translation invariant (any fit on residuals),
 the plug-in predictor is unbiased, whatever the estimates of the covariances
 (Kackar and Harville 1981;
-\lean{Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric}). Under normal
+\hb{res:plugIn}{29}). Under normal
 noise the cross term of the fitted error vanishes, so estimating the parameters
-can only cost (\lean{Credibility.Core.Target.plugIn_mse_of_normal},
-\hb{res:plugIn}{29}). Claims are skewed, and then neither holds: with estimated
+can only cost (\hb{res:plugIn}{29}). Claims are skewed, and then neither holds: with estimated
 weights the rate is biased by the covariances of the weights with what they
 weight (Section~\ref{sec:estimation}, \finding{35}).
 
@@ -1598,18 +1516,7 @@ weight (Section~\ref{sec:estimation}, \finding{35}).
     Treat them as a sensitivity, not a fitted number.
 \end{itemize}
 
-\see \hb{res:varQuad}{31}, \hb{res:plugIn}{29}, \hb{res:bsPrice}{30}, \hb{res:randomWeights}{28} ·
-\lean{Credibility.Cumulants.variance_quad_of_cumulants},
-\lean{Credibility.Cumulants.variance_quad_of_sources},
-\lean{Credibility.VarianceFunction.variance_quad_of_conditional_sources},
-\lean{Credibility.VarianceFunction.variance_quad_of_powerVariance},
-\lean{Credibility.Cumulants.variance_sampleCov},
-\lean{Credibility.Cumulants.covariance_stat},
-\lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants},
-\lean{Credibility.Cumulants.crossTerm_bs_of_cumulants},
-\lean{Credibility.Core.Target.plugIn_mse_of_normal},
-\lean{Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric},
-\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal} ·
+\see \hb{res:varQuad}{31}, \hb{res:plugIn}{29}, \hb{res:bsPrice}{30}, \hb{res:randomWeights}{28}, \hb{res:blup}{22} ·
 \finding{35}, \finding{37}--\finding{40} ·
 \file{notes/fourth-moments.md}, \file{studies/damping-theta.md} (S38--S42) ·
 \file{studies/literature.md} §10.
@@ -1727,25 +1634,11 @@ is observed in, because the thesis argument works cohort by cohort
 \end{itemize}
 
 \see \hb{res:unequal}{32}, \hb{res:unequal_est}{33} ·
-\lean{Credibility.Unequal.K_posDef},
-\lean{Credibility.Unequal.K_posDef_of_posSemidef},
-\lean{Credibility.Unequal.K_eq_of_full},
-\lean{Credibility.Unequal.bestZ_eq},
-\lean{Credibility.PartialCorr.K_extend},
-\lean{Credibility.PartialCorr.bestZ_extend},
-\lean{Credibility.PartialCorr.K_posDef},
-\lean{Credibility.Unequal.exists_noise_iff},
-\lean{Credibility.Unequal.Noise.bestZ_mse_optimal},
-\lean{Credibility.Unequal.sigRhoHat_unbiased},
-\lean{Credibility.Unequal.tauHat_unbiased},
-\lean{Credibility.Unequal.KHat_unbiased},
-\lean{Credibility.Unequal.KHat_observed},
-\lean{Credibility.Unequal.den_pos_of_two_le},
-\lean{Credibility.Unequal.den_of_overlap_singleton},
-\lean{Credibility.Unequal.balance},
-\lean{Credibility.Unequal.equalCov_eq_zero} ·
-\app{World} (soon) · \finding{8}, \finding{9}, \finding{10},
-\finding{12} · \file{notes/unequal-lengths.md} · not in the thesis.
+\app{World} (soon) ·
+\finding{8}, \finding{9}, \finding{10},
+\finding{12} ·
+\file{notes/unequal-lengths.md} ·
+not in the thesis.
 
 \subsection{Groups and shared levels}\label{sec:groups}
 
@@ -1814,7 +1707,7 @@ The thesis $\hat\tau^2$ compares cohort
 means with the portfolio mean. With several groups it measures something
 between the non-shared part and the full $\tau^2$: $\tau^2$ minus
 $\phi\tau^2$ times the volume-weighted share of same-group pairs
-(\lean{Credibility.Model.tauHat_unbiasedG}; \finding{13}; \hb{res:est_groups}{37}). So with one group it is exactly
+(\hb{res:est_groups}{37}; \finding{13}). So with one group it is exactly
 what the blend needs (above); with singleton groups it is $\tau^2$, also
 right; in between it fits neither the within-group nor the across-group
 part of $K$. Pairs separate them. The squared difference of two cohort
@@ -1831,13 +1724,13 @@ group effects are random effects with variance $\phi\tau^2$, and the rest of the
 the non-shared part. Henderson's mixed-model equations, which packages such as \texttt{lme4} and
 \texttt{PROC MIXED} solve, give the collective mean as the GLS portfolio mean of $K_G$, and each
 group's effect as its best linear unbiased predictor
-(\lean{Credibility.Unequal.groupMean_eq_gls}, \lean{Credibility.Unequal.groupEffect_eq_blup}).
+(\hb{res:groupEffect}{38}).
 That predictor is best in true mean squared error for any distribution with these moments, and
 its error is known, so ``how far is this group from the portfolio'' can be reported with an error
-bar (\lean{Credibility.Unequal.NoiseG.mme_groupEffect_mse_optimal}, \hb{res:groupEffect}{38}). The
+bar (\hb{res:groupEffect}{38}). The
 same algebra (Henderson 1963) inverts $K_G$ through a matrix of size the number of groups
-(\lean{Credibility.Unequal.KG_inv_eq}). The general lemmas are ported from Stat-Lean
-(\lean{Matrix.hendersonMME}, \lean{Credibility.Core.hendersonMME_eq_blup};
+(\hb{res:groupEffect}{38}). The general lemmas are ported from Stat-Lean
+(\hb{res:groupEffect}{38}, \hb{res:blup}{22};
 \file{studies/literature.md} §10n).
 
 \paragraph{Towards hierarchical credibility.}
@@ -1870,31 +1763,10 @@ a crossed structure, not a nested one (Section~\ref{sec:open}).
     levels'', marked ``soon'').
 \end{itemize}
 
-\see \hbsec{sec:groups}{9}, \hb{res:phi}{34}, \hb{res:groups}{35},
-\hb{res:twostage}{36}, \hb{res:est_groups}{37} ·
-\lean{Credibility.Model.Kφ_eq},
-\lean{Credibility.Model.Kφ_posDef},
-\lean{Credibility.Model.bestZ_φ_eq},
-\lean{Credibility.Model.tauHat_unbiasedφ},
-\lean{Credibility.Model.KHat_unbiasedφ},
-\lean{Credibility.Core.glsWeight_add_rankOne},
-\lean{Credibility.Model.KG_eq},
-\lean{Credibility.Model.KG_posDef},
-\lean{Credibility.Model.bestZ_G_eq},
-\lean{Credibility.Unequal.KG_posDef},
-\lean{Credibility.Unequal.bestZ_G_eq},
-\lean{Credibility.Model.NoiseG.bestZ_mse_optimal},
-\lean{Credibility.Unequal.NoiseG.bestZ_mse_optimal},
-\lean{Credibility.Model.exists_noiseG_iff},
-\lean{Credibility.Unequal.exists_noiseG_iff},
-\lean{Credibility.Core.glsWeight_blockDiag},
-\lean{Credibility.Model.glsWeight_KG},
-\lean{Credibility.Model.tauHat_unbiasedG},
-\lean{Credibility.Model.KHat_unbiasedG_iff},
-\lean{Credibility.Model.pairHat_unbiasedG},
-\lean{Credibility.Model.phiTauHat_unbiasedG},
-\lean{Credibility.Model.phiTauPooled_unbiasedG} ·
-\app{World} (soon) · \finding{13} · \file{studies/literature.md} §3 ·
+\see \hbsec{sec:groups}{9}, \hb{res:phi}{34}, \hb{res:groups}{35}, \hb{res:twostage}{36}, \hb{res:est_groups}{37} ·
+\app{World} (soon) ·
+\finding{13} ·
+\file{studies/literature.md} §3 ·
 not in the thesis.
 
 \subsection{Choosing the cohorts}\label{sec:cohorts}
@@ -2043,16 +1915,11 @@ of fitting them (Section~\ref{sec:estimation}).
   \item \emph{The app has no step for choosing cohorts yet.}
 \end{itemize}
 
-\see \hb{res:merge}{39}, \hb{res:pool_intervals}{40},
-\hb{res:blend_intervals}{41} ·
-\lean{Credibility.Merging.merge_iff},
-\lean{Credibility.kmeans_contiguous},
-\lean{Credibility.pool_mse_eq_kmeansCost},
-\lean{Credibility.pool_optimal_contiguous},
-\lean{Credibility.blend_optimal_contiguous},
-\lean{Credibility.group_optimal_contiguous} ·
-\finding{6}, \finding{14}, \finding{41} · \file{notes/merging-cohorts.md},
-\file{notes/kmeans-bridge.md}, \file{notes/group-variances.md} · not in the thesis.
+\see \hb{res:merge}{39}, \hb{res:pool_intervals}{40}, \hb{res:blend_intervals}{41} ·
+\finding{6}, \finding{14}, \finding{41} ·
+\file{notes/merging-cohorts.md},
+\file{notes/kmeans-bridge.md}, \file{notes/group-variances.md} ·
+not in the thesis.
 
 \subsection{Monthly data with a common factor}\label{sec:factor}
 
@@ -2084,11 +1951,10 @@ rises with volume (\hb{res:shock}{42}). Its parameters have unbiased estimators
 (\hb{res:shock_est}{43}), with one limit that is the point of the model: a
 squared residual mixes shock and process noise, and only volume that changes
 over time tells them apart. At a constant volume no estimator of $s_j^2$ is
-unbiased (\lean{Credibility.Shock.not_unbiased_s2_of_const}); with three periods
+unbiased (\hb{res:shock_est}{43}); with three periods
 or more any variation in volume is enough
-(\lean{Credibility.Shock.det_expo_neg}). The moment layer holds as before
-(\lean{Credibility.Shock.Cells.bestZ_mse_optimal},
-\lean{Credibility.Shock.Cells.integral_KHat}).
+(\hb{res:shock_est}{43}). The moment layer holds as before
+(\hb{res:shock_est}{43}).
 
 \paragraph{The factor model.} One covariance table covers the alternatives: the
 factor's covariance over all months, past and future, times the loadings, on top
@@ -2151,32 +2017,9 @@ the window.
     factor in the fit.
 \end{itemize}
 
-\see \hb{res:shock}{42}, \hb{res:shock_est}{43}, \hb{res:blup}{22}, \hb{res:season}{44}, \hb{res:factor}{45}, \hb{res:factor_est}{46},
-\hb{res:valid_tables}{47}, \hb{res:factor_extra}{48}, \hb{res:relativity_factor}{49} ·
-\lean{Credibility.Core.blup_optimal},
-\lean{Credibility.Core.predMse_blup},
-\lean{Credibility.Core.predMse_blup_le_aggregate},
-\lean{Credibility.Season.blup_eq_iff},
-\lean{Credibility.Season.blup_ne_of_volume},
-\lean{Credibility.Factor.K_posDef},
-\lean{Credibility.Factor.blup_neg_of_ar1},
-\lean{Credibility.Factor.yoy_unbiased_factor},
-\lean{Credibility.Factor.henderson_factor_unbiased},
-\lean{Credibility.Factor.crossHat_ar1_two},
-\lean{Credibility.Factor.minque_ar1_two_years_unbiased},
-\lean{Credibility.ConeProjection.hsq_proj_add_le},
-\lean{Credibility.ConeProjection.existsUnique_proj_posSemidef},
-\lean{Credibility.Factor.tableK_posDef},
-\lean{Credibility.Factor.tableK_posDef_iff},
-\lean{Credibility.Factor.quadTab_eq},
-\lean{Credibility.Factor.quadTab_shock_le},
-\lean{Credibility.Factor.quadTab_relCoef},
-\lean{Credibility.Factor.relCoef_factor_free},
-\lean{Credibility.Shock.expo_eq_of_proportional},
-\lean{Credibility.Factor.extra_profile},
-\lean{Credibility.Factor.extra_entry},
-\lean{Credibility.Factor.extra_loadings} ·
-\finding{23}--\finding{31}, \finding{34} · \file{notes/card-data.md} Steps~1--5, 7b,
+\see \hb{res:shock}{42}, \hb{res:shock_est}{43}, \hb{res:blup}{22}, \hb{res:season}{44}, \hb{res:factor}{45}, \hb{res:factor_est}{46}, \hb{res:valid_tables}{47}, \hb{res:factor_extra}{48}, \hb{res:relativity_factor}{49} ·
+\finding{23}--\finding{31}, \finding{34} ·
+\file{notes/card-data.md} Steps~1--5, 7b,
 \file{notes/time-trends.md}.
 
 \subsection{Several quantities per cohort}\label{sec:vector}
@@ -2282,26 +2125,8 @@ belong to the optional distribution layer.
 \end{itemize}
 
 \see \hb{res:trend}{50}, \hb{res:vector}{51}, \hb{res:freqsev_joint}{52}, \hb{res:prodBias}{53} ·
-\lean{Credibility.Unequal.K_detrend},
-\lean{Credibility.Unequal.bestZ_detrend},
-\lean{Credibility.Unequal.Noise.relativity_detrend},
-\lean{Credibility.CoreVector.moments_bestZ},
-\lean{Credibility.VecBlendMoments.bestZ_optimal_dotProduct},
-\lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler},
-\lean{Credibility.CoreVector.hachemeister_bestZ},
-\lean{Credibility.CoreVector.hachemeister_bestZ_of_blockDiag},
-\lean{Credibility.CoreVector.trace_linMse_blupW_le_separate},
-\lean{Credibility.CoreVector.blendW_eq_blupW_of_blockDiag},
-\lean{Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag},
-\lean{Credibility.CoreVector.vecBalanced_iff},
-\lean{Credibility.CoreVector.vecBalanced_buhlmannGisler},
-\lean{Credibility.CoreVector.VecEstimates.mse_blend},
-\lean{Credibility.CoreVector.VecEstimates.blup_mse_optimal},
-\lean{Credibility.FreqSev.blupW_eq_separate},
-\lean{Credibility.CoreVector.blupW_kronecker},
-\lean{Credibility.CoreVector.VecEstimates.integral_mul_pred_sub},
-\lean{Credibility.FreqSev.prodBias_sepW_eq_zero} ·
-\finding{21}, \finding{22}, \finding{32}, \finding{33} · \file{notes/time-trends.md} §1--3,
+\finding{21}, \finding{22}, \finding{32}, \finding{33} ·
+\file{notes/time-trends.md} §1--3,
 \file{notes/card-data.md} Step~6.
 % ===========================================================================
 \section{Related work}\label{sec:related}
@@ -2443,7 +2268,9 @@ for the blend with a common noise level (\finding{14}).
     study, is \file{studies/literature.md}.
 \end{itemize}
 
-\see \file{studies/literature.md} §1--5 · thesis §1, references.
+\see  ·
+\file{studies/literature.md} §1--5 ·
+thesis §1, references.
 
 % ===========================================================================
 \section{Open directions}\label{sec:open}
@@ -2571,10 +2398,11 @@ thesis nor this paper treats.
     positive definiteness, its moments) needs proving.
 \end{itemize}
 
-\see \lean{Credibility.Core.blup_optimal},
-\lean{Credibility.Core.hendersonMME_eq_blup} · \app{Models} (``BLUP'') ·
+\see \hb{res:blup}{22} ·
+\app{Models} (``BLUP'') ·
 \file{notes/crossed-2x2.md}, \file{notes/roadmap.md}, \file{notes/xol-blend.md},
-\file{studies/PLAN.md} · \file{studies/literature.md} §5.
+\file{studies/PLAN.md} ·
+\file{studies/literature.md} §5.
 
 \appendix
 
@@ -2612,7 +2440,7 @@ numbers refer to the published thesis.
     negative $z_1$ is still the best blend; clipping loses accuracy. In general clipping
     never hurts if and only if the best $z$ lies in $[0, 1]$, and clipping the best $z$ costs
     $\operatorname{Var}(\hmu_j - \hmu)$ times its squared distance to $[0, 1]$ (\finding{36},
-    \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}). Report
+    \hb{res:clipZ}{14}). Report
     the own-data weight $c_j$ next to $z_j$, which is bounded for any
     number of cohorts (\finding{17}; Section~\ref{sec:z}).
   \item[Weights from factors (§2.7.1).] The identity

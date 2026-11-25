@@ -64,6 +64,15 @@ def main():
     names = re.findall(r"\\lean\{([^}]+)\}", body)
     bad += [f"\\lean{{{n}}} is not a proved declaration"
             for n in names if n not in proved]
+    # Lean names only in the concordance (Appendix A); elsewhere cite the
+    # handbook entry, which links the proof.
+    conc = re.search(r"\\subsection\*\{Concordance\}(.*?)\\section\{", body, re.S)
+    outside = re.sub(r"\\subsection\*\{Concordance\}.*?(?=\\section\{)", "", body,
+                     flags=re.S)
+    bad += [f"\\lean{{{n}}} outside the concordance: cite its handbook entry"
+            for n in re.findall(r"\\lean\{([^}]+)\}", outside)]
+    if conc is None:
+        bad.append("no Concordance subsection found")
 
     nums = handbook_numbers()
     stale = {}
