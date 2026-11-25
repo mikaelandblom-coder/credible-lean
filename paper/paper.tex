@@ -1253,6 +1253,21 @@ data, so it is a non-linear estimator and is not bound by that floor; under
 heavy-tailed noise it can do slightly better (Section~\ref{sec:estimation}).
 The app therefore calls the floor ``the best fixed blend''.
 
+\paragraph{Given the levels.}
+
+The floor is also an average over the cohorts' levels. Fix the
+level $\theta_j$ of one cohort instead, with estimate of variance $D_j$ and a fixed collective mean
+$m$: the blend's error is $z_j^2D_j + (1 - z_j)^2(m - \theta_j)^2$, noise plus the squared bias
+towards the collective. Its second term is what the average hides. It has an unbiased estimate
+from the cohort's own data (Stein's unbiased risk estimate), so it can be reported per cohort. Asked
+given the levels, the best collective mean also changes. Over cohorts with volumes $u_j$, the $m$
+with the smallest total error weights the levels by $u_j(1 - z_j)^2$, and the same weights on the
+estimates minimise the estimated error: the collective mean of the observed best predictor (Jiang,
+Nguyen and Rao 2011; \file{studies/literature.md} §10p). The small cohorts count most, the opposite
+of the weights $\propto z_j$ that are best on average over interchangeable levels. Both are right,
+for different questions. Which pays on real portfolios, where levels may trend with volume, is not
+settled yet (\file{studies/PLAN.md}); the averaged answer remains the default.
+
 \watch
 \begin{itemize}
   \item \emph{Distribution-free is not assumption-free.} The layer needs
@@ -1290,6 +1305,13 @@ with the pooled noise variance only if, in addition, the cohort means are uncorr
 with the residuals: uncorrelated cohorts, or volumes proportional across periods, which
 the exposure table shows (\finding{37}, \lean{Credibility.Cumulants.covariance_statB_eq_zero}).
 
+Normal noise also settles whether linear predictors are enough. If data and target are jointly
+normal and the mean is known, the best linear predictor is the conditional expectation
+$E[Y \mid x]$, so no nonlinear function of the data predicts better
+(\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal}): linearity costs nothing. With
+the mean estimated from the same data, as in every fitted model, the best linear unbiased
+predictor is no longer $E[Y \mid x]$, and the result says nothing about nonlinear rivals.
+
 On real data, do not test for normality. With many cells such a test rejects departures
 that do not matter, with few it has no power, and the formulas need only the cumulants
 anyway. Estimate them instead and use the exact formulas: the skewness and excess
@@ -1322,7 +1344,12 @@ biases fits with a separate variance per cohort (\finding{35}).
 \lean{Credibility.Model.integral_quad_of_cov},
 \lean{Credibility.Model.exists_noise_iff},
 \lean{Credibility.Unequal.Noise.bestZ_mse_optimal},
-\lean{Credibility.Unequal.exists_noise_iff} ·
+\lean{Credibility.Unequal.exists_noise_iff},
+\lean{Credibility.Core.integral_sq_blend_given_level},
+\lean{Credibility.Core.integral_sure_given_level},
+\lean{Credibility.Core.condRisk_obpMean_le},
+\lean{Credibility.Core.sure_obpMean_le},
+\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal} ·
 \app{Many draws} (fit against the floor) · \finding{1}, \finding{11},
 \finding{12} · \file{studies/damping-theta.md} (S9).
 
@@ -1718,6 +1745,24 @@ noise than they lose in bias. It is the merging rule at work: with unequal
 noise, ``close'' is scaled pair by pair and is not a distance on the line.
 Pooling with an unweighted loss fails the same way.
 
+\paragraph{Groups with their own collective mean.}
+
+A third way to group keeps every cohort's
+own estimate and blends it towards its group's collective mean, as in spatially clustered
+small-area models. Give the groups their own means but one common $\tau^2$. Then every factor
+$z_j$ is fixed, and the loss given the levels is a constant plus a weighted $k$-means cost with
+weights $u_j(1 - z_j)^2$: the noisy cohorts, which lean most on the group mean, count most. So the
+best groups are intervals of the sorted levels again, for any noise levels
+(\hb{res:blend_intervals}{48}, \finding{41}). With a $\tau^2$ per group they are not. A group can
+then stop shrinking, which caps its cost at the noise of its members however spread they are,
+and its best use is to collect the outliers of \emph{both} tails: seven cohorts of equal volume at
+$-5$, $-0.2$, $-0.1$, $0$, $0.1$, $0.2$, $5$ split best into $\{-5, 5\}$ and the middle five. That is
+a bin for outliers, not a regime; heavy-tailed levels call for robust credibility, not a group.
+The contrast with pooling is the cost per group. Pooling charges one unit of noise per cohort, so
+the loss itself limits their number. Here, with known levels, more groups never hurt (one group
+per cohort leaves only the constant), so their number has to come from the gain against the price
+of fitting them (Section~\ref{sec:estimation}).
+
 \watch
 \begin{itemize}
   \item \emph{All of this is for a choice fixed in advance.} Deciding which
@@ -1740,9 +1785,10 @@ Pooling with an unweighted loss fails the same way.
 \lean{Credibility.kmeans_contiguous},
 \lean{Credibility.pool_mse_eq_kmeansCost},
 \lean{Credibility.pool_optimal_contiguous},
-\lean{Credibility.blend_optimal_contiguous} ·
-\finding{6}, \finding{14} · \file{notes/merging-cohorts.md},
-\file{notes/kmeans-bridge.md} · not in the thesis.
+\lean{Credibility.blend_optimal_contiguous},
+\lean{Credibility.group_optimal_contiguous} ·
+\finding{6}, \finding{14}, \finding{41} · \file{notes/merging-cohorts.md},
+\file{notes/kmeans-bridge.md}, \file{notes/group-variances.md} · not in the thesis.
 
 \subsection{Monthly data with a common factor}\label{sec:factor}
 

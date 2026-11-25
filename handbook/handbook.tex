@@ -955,6 +955,9 @@ $E Y = x_0^\top\beta$ for unknown $\beta$ (one mean; a season; a mean per compon
 blend as the readable form, the predictor when correlation matters.
 \why The last term of the error is the price of estimating $\beta$; the rest is the error with
 $\beta$ known. This is Goldberger's (1962) predictor, universal kriging in geostatistics.
+Under normal noise with $\beta$ known, $E Y + \ell^\top K^{-1}(x - E x)$ is $E[Y \mid x]$, so no
+nonlinear predictor beats it; with $\beta$ estimated the predictor is not $E[Y \mid x]$.
+\lean{Credibility.Core.Target.knownMeanPred_mse_le_of_normal}
 \begin{caveat}
   With known covariances, aggregating the data (annual totals) never helps, and an unneeded design
   column (a season that is not there) costs exactly $(d_2^* - d_1^*)^\top K(d_2^* - d_1^*)$. With
@@ -1363,6 +1366,18 @@ and if a cohort straddled another unit, one of the two swaps that would
   with $v = (16, 4, 16)$, $\tau^2 = 1$, $\mu = 0$, are $\{1,3\}$ and
   $\{2\}$, not intervals. Here ``close'' is not a distance on the line: it
   depends on the noise of the pair.
+\end{caveat}
+\begin{caveat}
+  Grouping cohorts without pooling them, each blended towards its group's own collective mean:
+  give the groups their own means but one common $\tau^2$. Then the loss is $k$-means with
+  weights $u_j(1 - z_j)^2$, so the best groups are again cuts of the sorted levels, for any
+  noise levels. With a $\tau^2$ per group they are not: a group that stops shrinking
+  collects the outliers of both tails. Equal volumes, $D = 1$,
+  $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$: the best two groups are $\{-5, 5\}$ and the
+  middle five (Finding 41). Unlike pooling there is no cost per group, so more groups never
+  hurt with known levels: choose their number by the gain against the price of
+  fitting them (Result~\ref{res:bsPrice}), not by the loss.
+  \lean{Credibility.group_optimal_contiguous}
 \end{caveat}
 
 \subsection*{Several quantities per cohort: the matrix blend}
