@@ -41,6 +41,9 @@ tactics.
   `Core.Estimates`, true MSE of the blend) → `Credibility/CoreMoments.lean`; random weights
   (Finding 35: bias `Σᵢ cov(d̂ᵢ, μ̂ᵢ)`, exposure balance keeps the portfolio unbiased)
   → `Credibility/RandomWeights.lean`
+- extension: the collective mean given the levels (literature §10p): the blend's error given
+  the level, its unbiased estimate (SURE), and the observed best predictor's collective mean,
+  weights `∝ uⱼ(1 − zⱼ)²` (`Core.obpMean`) → `Credibility/ObservedBest.lean`
 - extension: moment layer for unequal lengths → `Credibility/UnequalMoments.lean` (cell level;
   portfolio and blend results are corollaries of `CoreMoments` via `Noise.toEstimates`)
 - extension: moment layer (distribution-free random variables) → `Credibility/Moments.lean` (corollaries of `UnequalMoments` via `Noise.toUnequal`)

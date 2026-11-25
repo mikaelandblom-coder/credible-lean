@@ -2972,6 +2972,50 @@ Definition~\ref{def:Core_Estimates}.
   mean $0$. The corrections are balanced by Theorem~\ref{thm:Core_mse_correct}.
 \end{proof}
 
+\subsection*{The collective mean given the levels}
+
+Extension (literature \S10p). The results above average over the levels. Here the levels
+$\theta_j$ are fixed: only $\mathbb E\bar x_j = \theta_j$ and $\mathrm{Var}\,\bar x_j = D_j$
+are assumed, and the collective mean $m$ is a fixed number.
+
+\begin{theorem}[The blend's error given the level, and its unbiased estimate]\label{thm:Core_blend_given_level}
+  % Lean: Credibility/ObservedBest.lean
+  \lean{Credibility.Core.integral_quad_centred, Credibility.Core.integral_sq_blend_given_level,
+        Credibility.Core.integral_sure_given_level}
+  \leanok
+  If $\mathbb E\bar x = \theta$ and $\mathrm{Var}\,\bar x = D$ then for fixed $z$ and $m$
+  \[
+    \mathbb E\bigl(z\bar x + (1-z)m - \theta\bigr)^2 = z^2D + (1-z)^2(m-\theta)^2
+    = \mathbb E\bigl[(1-z)^2(\bar x - m)^2 - 2(1-z)D + D\bigr].
+  \]
+  The bracket is Stein's unbiased risk estimate (SURE) of the error given the level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The error is $z(\bar x - \theta) + (1-z)(m-\theta)$, and $\bar x - \theta$ has mean $0$ and
+  variance $D$. For the estimate, $\mathbb E(\bar x - m)^2 = D + (m-\theta)^2$ and
+  $(1-z)^2D - 2(1-z)D + D = z^2D$.
+\end{proof}
+
+\begin{theorem}[The observed best predictor's collective mean]\label{thm:Core_obpMean}
+  \lean{Credibility.Core.sum_mul_sq_sub_eq, Credibility.Core.obpMean,
+        Credibility.Core.condRisk_obpMean_le, Credibility.Core.sure_obpMean_le}
+  \leanok
+  \uses{thm:Core_blend_given_level}
+  Let $u_j$ be volumes with $\sum_j u_j(1-z_j)^2 > 0$ and
+  $m^*(a) = \sum_j u_j(1-z_j)^2a_j / \sum_j u_j(1-z_j)^2$. Then $m^*(\theta)$ minimises the
+  total error given the levels, $\sum_j u_j\bigl(z_j^2D_j + (1-z_j)^2(m-\theta_j)^2\bigr)$, and
+  $m^*(\bar x)$ minimises its unbiased estimate
+  $\sum_j u_j\bigl((1-z_j)^2(\bar x_j - m)^2 - 2(1-z_j)D_j + D_j\bigr)$: the collective mean of
+  the observed best predictor (Jiang, Nguyen and Rao 2011; Zhang and Jiang 2025).
+\end{theorem}
+\begin{proof}
+  \leanok
+  For weights $w_j$ with $\sum_j w_j \ne 0$,
+  $\sum_j w_j(m - a_j)^2 = \sum_j w_j(m^* - a_j)^2 + (\sum_j w_j)(m - m^*)^2$ with $m^*$ the
+  $w$-weighted mean. Take $w_j = u_j(1-z_j)^2$; the other terms do not depend on $m$.
+\end{proof}
+
 \subsection*{A general target with fixed effects}
 
 Extension (\texttt{notes/card-data.md}, Step 1). The data $x$ are indexed by observed
@@ -3312,6 +3356,16 @@ lost by not using the best of them all?
   (Lemma~\ref{lem:Core_blup_foc}); $x^TKx > 0$ for $x \ne 0$. Optimality is also
   Theorem~\ref{thm:Blup_optimal} with $X = 1$ (Lemma~\ref{lem:Core_blupWeight_eq_blup}).
 \end{proof}
+
+\begin{remark}[Given the levels, the collective mean weights are $(1-z)^2$]\label{rem:obp_weights}
+  \uses{thm:Core_blup_optimal, thm:Core_obpMean}
+  Theorem~\ref{thm:Core_blup_optimal} averages the error over interchangeable levels; there the
+  collective mean's weights $b \propto z$ (Bühlmann--Straub) are best and exposure balanced
+  (\S2.9). For given levels the best weights are $\propto u_j(1-z_j)^2$
+  (Theorem~\ref{thm:Core_obpMean}): the small cohorts, which lean on the collective mean most,
+  count most. The observed best predictor buys robustness to a misspecified collective mean
+  (levels trending with volume) at the price of both properties when the model is right.
+\end{remark}
 
 \begin{lemma}[The blend as a linear predictor]\label{lem:Core_blendWeight}
   \lean{Credibility.Core.sum_blendWeight, Credibility.Core.mulVec_blendWeight,
