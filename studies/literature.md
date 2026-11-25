@@ -1158,7 +1158,7 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     The BPE minimises it. This is **SURE** (Stein's unbiased risk estimate) of the MSE *conditional on the
     area means*: `E(1 − z)²(ȳ − β)² − 2(1 − z)D + D = z²D + (1 − z)²(θ − β)²`, the conditional MSE of
     `zȳ + (1 − z)β`. So OBP = SURE shrinkage with both the location and `τ²` chosen by SURE (Xie, Kou &
-    Brown 2012, §5).
+    Brown 2012 also choose the location by SURE; section not checked).
   - **With `x = 1`, at fixed `τ²`: `β̂ = Σ(1 − zᵢ)²ȳᵢ / Σ(1 − zᵢ)²`, so the weights are `∝ (1 − zᵢ)²`.** This
     confirms §10o's recollection and Rao & Rao's "more weight to areas with larger sampling variances".
     Within the MB/UL criterion, `σₑ²` cannot be estimated (it is monotone in it), so they plug in REML.
