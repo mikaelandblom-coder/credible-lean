@@ -7,7 +7,12 @@
 \usepackage{amssymb, amsmath, amsthm}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
-\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}
+\usepackage{xcolor}
+% Links as in the paper: internal ones (contents, results, sections) in the text
+% colour, external ones (Lean, the paper, the repository) in a muted dark blue.
+\definecolor{linkblue}{RGB}{30,60,110}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+  urlcolor=linkblue]{hyperref}
 
 \newtheorem{result}{Result}
 \theoremstyle{remark}
