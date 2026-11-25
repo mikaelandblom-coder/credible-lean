@@ -107,7 +107,7 @@ tactics.
 - extension: optimal 1-D weighted k-means groups are intervals (README small lemma (a)) → `Credibility/KMeans.lean`
 - extension: exposure-weighted pooling is weighted k-means, so optimal pooled cohorts are
   intervals; with a common variance the blend's optimal cohorts too (`notes/kmeans-bridge.md`,
-  Finding 14) → `Credibility/KMeansBridge.lean`
+  Finding 14); group means with one common `τ²` (`group_optimal_contiguous`, Finding 41) → `Credibility/KMeansBridge.lean`
 
 Plan for turning the results into practice: `studies/PLAN.md` (the app in
 `app/`: `engine.js` with Node tests `engine.test.js`, page `index.html`,

@@ -18,6 +18,9 @@ of cohort `a` predicted by the pooled estimate has MSE `(x̄ₐ - xᵢ)² + 1/W�
   nonempty cohorts.
 * `pool_optimal_contiguous`: hence an MSE-optimal labelling has interval
   cohorts, by `kmeans_contiguous` on the labels actually used.
+* `group_optimal_contiguous`: cohorts blended towards their group's mean with one common `τ²`
+  have a k-means oracle loss with weights `uⱼ(1 − zⱼ)²` (`groupLoss_eq`), so optimal groups are
+  intervals too (Finding 41; with a `τ²` per group they need not be).
 
 The pooled mean and variance use the inverse-variance weights eq. (23)
 (`invVarWeight`), and the blend's credibility factor is eq. (7) (`bestZ`).
@@ -399,5 +402,45 @@ theorem blend_optimal_contiguous [DecidableEq ι] {V τ2 μ : ℝ} {x : ι → �
   have e2 : 2 * (x j - x l) * D < 0 := by nlinarith [mul_pos hF (mul_pos_of_neg_of_neg d2 d2)]
   have : D < 0 := by nlinarith
   nlinarith
+
+/-! ## Group means with one common `τ²` (Finding 41)
+
+Cohorts are not pooled: each keeps its estimate, with fixed level `θⱼ` and noise `Dⱼ`, and is
+blended towards its group's mean `m_g` with `zⱼ = τ²/(τ² + Dⱼ)` and one fixed `τ² > 0`. By
+`Core.integral_sq_blend_given_level` cohort `j` then has error `zⱼ²Dⱼ + (1 − zⱼ)²(m_{c(j)} − θⱼ)²`
+(`notes/group-variances.md` §2). -/
+
+/-- The oracle loss of blending each cohort towards its group's mean `m (c j)`, with one common
+`τ²`: `Σⱼ uⱼ[zⱼ²Dⱼ + (1 − zⱼ)²(m_{c(j)} − θⱼ)²]`, `zⱼ = τ²/(τ² + Dⱼ)`. -/
+noncomputable def groupLoss (u D θ : ι → ℝ) (τ2 : ℝ) (c : ι → κ) (m : κ → ℝ) : ℝ :=
+  ∑ j, u j * ((τ2 / (τ2 + D j)) ^ 2 * D j + (1 - τ2 / (τ2 + D j)) ^ 2 * (m (c j) - θ j) ^ 2)
+
+omit [DecidableEq κ] in
+/-- **With one common `τ²` the group loss is a weighted k-means cost**, with weights
+`uⱼ(1 − zⱼ)²`, plus a term that does not depend on the groups. -/
+theorem groupLoss_eq (u D θ : ι → ℝ) (τ2 : ℝ) (c : ι → κ) (m : κ → ℝ) :
+    groupLoss u D θ τ2 c m
+      = ∑ j, u j * (τ2 / (τ2 + D j)) ^ 2 * D j
+        + kmeansCost (fun j => u j * (1 - τ2 / (τ2 + D j)) ^ 2) θ c m := by
+  unfold groupLoss kmeansCost
+  rw [← sum_add_distrib]
+  exact sum_congr rfl fun j _ => by ring
+
+/-- **Optimal groups with one common `τ²` are intervals** (Finding 41). For weights `uⱼ > 0`,
+noises `Dⱼ > 0` and `τ² > 0`, if the groups `c` and group means `m` jointly minimise the oracle
+loss, then a cohort whose level lies strictly between two cohorts of the same group is in that
+group. With a `τ²` per group this fails (Finding 41). -/
+theorem group_optimal_contiguous [DecidableEq ι] {u D θ : ι → ℝ} {τ2 : ℝ} {c : ι → κ}
+    {m : κ → ℝ} (hu : ∀ j, 0 < u j) (hD : ∀ j, 0 < D j) (hτ : 0 < τ2)
+    (hopt : ∀ (c' : ι → κ) (m' : κ → ℝ), groupLoss u D θ τ2 c m ≤ groupLoss u D θ τ2 c' m')
+    {i j l : ι} (hij : θ i < θ j) (hjl : θ j < θ l) (hil : c i = c l) :
+    c j = c i := by
+  have hw : ∀ k, 0 < u k * (1 - τ2 / (τ2 + D k)) ^ 2 := fun k => by
+    have hz : τ2 / (τ2 + D k) < 1 := (div_lt_one (by linarith [hD k])).2 (by linarith [hD k])
+    exact mul_pos (hu k) (pow_pos (by linarith) 2)
+  refine kmeans_contiguous (μ := m) hw (fun c' m' => ?_) hij hjl hil
+  have h := hopt c' m'
+  rw [groupLoss_eq, groupLoss_eq] at h
+  linarith
 
 end Credibility

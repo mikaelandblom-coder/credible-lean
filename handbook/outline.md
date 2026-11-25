@@ -16,9 +16,11 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Grouping with a `τ²` per group (2026-11-25, Finding 41, numerical): a "watch out" for
-  `res:blend_intervals`. Own `τ²` per group breaks intervals (a no-shrink group of outliers); own means
-  with a common `τ²` keep them. Add once `group_optimal_contiguous` is proved.
+- Grouping with a `τ²` per group (2026-11-25, Finding 41): a "watch out" for `res:blend_intervals`,
+  linked to `Credibility.group_optimal_contiguous` (proved 2026-11-25). Own `τ²` per group breaks
+  intervals (a no-shrink group collects the outliers of both tails); own means with one common `τ²`
+  keep them (weighted k-means with weights `u(1 − z)²`), so fit groups with a common `τ²`, by cuts of
+  the sorted estimates. Ready to add.
 - OBP collective mean (2026-11-25, `Core.condRisk_obpMean_le`, `Core.sure_obpMean_le`,
   `Core.integral_sure_given_level`): given the levels the best collective mean has weights
   `∝ uⱼ(1 − zⱼ)²`, not `∝ z`. A "watch out" next to the collective mean once the PLAN study

@@ -8208,8 +8208,37 @@ not apply, but a swap argument does.
   ($d = x_j - x_l < 0$) gives $D > 0$ in the same way.
 \end{proof}
 
+\begin{lemma}[With one common $\tau^2$ the group loss is a k-means cost]\label{lem:groupLoss_eq}
+  \lean{Credibility.groupLoss, Credibility.groupLoss_eq}
+  \leanok
+  \uses{def:kmeansCost, thm:Core_blend_given_level}
+  Cohorts keep their estimates (level $\theta_j$, noise $D_j$, weight $u_j$) and are blended
+  towards their group's mean $m_g$ with $z_j = \tau^2/(\tau^2 + D_j)$ and one fixed $\tau^2$. The
+  oracle loss (Theorem~\ref{thm:Core_blend_given_level})
+  $\sum_j u_j\bigl[z_j^2D_j + (1-z_j)^2(m_{c(j)} - \theta_j)^2\bigr]$ equals
+  $\sum_j u_jz_j^2D_j + \mathrm{cost}(u(1-z)^2, \theta, c, m)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Term by term; the first part does not depend on $(c, m)$.
+\end{proof}
+
+\begin{corollary}[Optimal groups with one common $\tau^2$ are intervals]\label{cor:group_optimal_contiguous}
+  \lean{Credibility.group_optimal_contiguous}
+  \leanok
+  \uses{lem:groupLoss_eq}
+  If all $u_j, D_j > 0$, $\tau^2 > 0$ and $(c, m)$ minimises the oracle loss, then
+  $\theta_i < \theta_j < \theta_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:groupLoss_eq, thm:kmeans_contiguous}
+  By Lemma~\ref{lem:groupLoss_eq}, $(c, m)$ minimises the k-means cost with weights
+  $u_j(1-z_j)^2 = u_jD_j^2/(\tau^2 + D_j)^2 > 0$; apply Theorem~\ref{thm:kmeans_contiguous}.
+\end{proof}
+
 \begin{remark}[Finding 41: a \texorpdfstring{$\tau^2$}{tau squared} per group breaks intervals]\label{rem:group_variances}
-  \uses{thm:blend_optimal_contiguous}
+  \uses{thm:blend_optimal_contiguous, cor:group_optimal_contiguous}
   Now cohorts are not pooled: each keeps its estimate (level $\theta_j$, noise $D_j$) and is blended
   towards its group's own mean $m_g$. If each group also has its own $\tau_g^2$, the optimal groups
   need not be intervals, even with a common $D$. With $D = 1$,
@@ -8217,8 +8246,8 @@ not apply, but a swap argument does.
   oracle MSE $2.021$ against $4.663$ for the best intervals. A group costs
   $n D s^2/(s^2 + D) \le nD$, concave in its spread $s^2$, so a group that does not shrink collects the
   outliers of both tails. With one common $\tau^2$ the loss for fixed $\tau^2$ is a weighted k-means
-  cost with weights $u_j(1 - z_j)^2$, and the optimal groups are intervals (numerically, not yet in
-  Lean; \texttt{notes/group-variances.md}).
+  cost with weights $u_j(1 - z_j)^2$, and the optimal groups are intervals
+  (Corollary~\ref{cor:group_optimal_contiguous}; \texttt{notes/group-variances.md}).
 \end{remark}
 
 \begin{remark}[No cap needed]

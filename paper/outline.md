@@ -86,7 +86,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - Finding 41 (2026-11-25, `notes/group-variances.md`): in § Choosing the cohorts, one paragraph on
   grouping with a collective mean per group (spatially clustered Fay–Herriot). Use a common `τ²`; a `τ²` per
-  group turns one group into a bin of outliers. Wait for the Lean corollary.
+  group turns one group into a bin of outliers. Lean corollary proved 2026-11-25
+  (`group_optimal_contiguous`).
 - Given the levels (2026-11-25, `Credibility/ObservedBest.lean`): the blend's error for a fixed
   level `z²D + (1 − z)²(m − θ)²`, its unbiased estimate (SURE), and the observed best predictor's
   collective mean `∝ u(1 − z)²` against `∝ z` averaged over the levels. A paragraph next to the

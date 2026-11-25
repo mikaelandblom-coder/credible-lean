@@ -43,7 +43,7 @@ where a "group of outliers" is tempting.
 
 ## 2. Own means, one common `τ²`: yes (0 of 300, volumes spread)
 
-*Argument (not yet in Lean).* For a fixed `τ²` every `zⱼ` is fixed, so the loss is the constant
+*Argument (in Lean: `KMeansBridge.groupLoss_eq`, `group_optimal_contiguous`).* For a fixed `τ²` every `zⱼ` is fixed, so the loss is the constant
 `Σ uⱼzⱼ²Dⱼ` plus `Σⱼ uⱼ(1 − zⱼ)²(m_{c(j)} − θⱼ)²`. That is a **weighted k-means** cost with weights
 `uⱼ(1 − zⱼ)² > 0` and centres `m_g`. So by `KMeans.kmeans_contiguous` an optimal labelling for that `τ²`
 has interval groups, and the jointly optimal `(τ², c)` does too, since `c` is optimal for its own `τ²`. Ties as in
@@ -51,7 +51,7 @@ Finding 14: a cohort strictly between two members of a group joins it. The centr
 `(1 − z)²`-weighted means of the levels, i.e. the collective mean of the observed best predictor
 (literature §10p). The same weights appear for a different reason here.
 
-*Lean target:* `group_optimal_contiguous`. For fixed `τ² > 0` and `Dⱼ > 0`, the oracle loss is
+*Lean (proved 2026-11-25):* `group_optimal_contiguous`. For fixed `τ² > 0` and `Dⱼ > 0`, the oracle loss is
 `Σ uz²D + kmeansCost(u(1 − z)², θ, c, m)`. A minimiser over `(c, m)` has interval groups. This is a corollary
 of `kmeans_contiguous`, like `pool_optimal_contiguous`.
 
