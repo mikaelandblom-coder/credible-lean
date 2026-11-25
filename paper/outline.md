@@ -87,6 +87,13 @@ may need a paragraph.)
 - Finding 41 (2026-11-25, `notes/group-variances.md`): in § Choosing the cohorts, one paragraph on
   grouping with a collective mean per group (spatially clustered Fay–Herriot). Use a common `τ²`; a `τ²` per
   group turns one group into a bin of outliers. Wait for the Lean corollary.
+- Given the levels (2026-11-25, `Credibility/ObservedBest.lean`): the blend's error for a fixed
+  level `z²D + (1 − z)²(m − θ)²`, its unbiased estimate (SURE), and the observed best predictor's
+  collective mean `∝ u(1 − z)²` against `∝ z` averaged over the levels. A paragraph next to the
+  watch-out in "What 'best' means" (conditional vs averaged MSE).
+- Normal noise, known mean (2026-11-25, `Credibility/BlupNormal.lean`): the best linear predictor
+  is `E[Y | x]` and beats every nonlinear one. A sentence in "What 'normal' means here": linearity
+  costs nothing under normal noise; with `β` estimated it is not the conditional expectation.
 - *Done 2026-11-25:* "Is a richer fit worth its price?" (§ Estimating the parameters: gain against
   price, laws (a) and (b), the cross term with Findings 37–40); one sentence on the cross term in
   "What 'normal' means here"; a watch-out in "What 'best' means" (MSE averaged over the collective,

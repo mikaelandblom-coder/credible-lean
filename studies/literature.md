@@ -1007,7 +1007,8 @@ which is not in Mathlib. **It does not shorten `PlugInNormal.lean`**: that proof
 "jointly normal and uncorrelated ⇒ independent", which Mathlib already has
 (`HasGaussianLaw.indepFun_of_covariance_eval`); the rest is our residual algebra. Not ported.
 `blupRisk_eq_add` is our `predMse_eq_blup_add` + `Target.mse_portLin` (distribution-free).
-Possible later distribution-layer result (not started): under normal noise with known `β`, the
+*Done 2026-11-25* (`Credibility/BlupNormal.lean`, `Target.condExp_eq_knownMeanPred_of_normal`,
+`Target.knownMeanPred_mse_le_of_normal`). Was: possible later distribution-layer result: under normal noise with known `β`, the
 BLUP is `E[Y | x]`, so best among *all* predictors; it would need conditional expectation, which
 Mathlib can give from independence of `Y − ℓᵀK⁻¹x` and `x` without porting the kernel. Its Gaussian
 conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,

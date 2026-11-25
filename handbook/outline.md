@@ -19,6 +19,13 @@ voice, then trim towards 8 pages.
 - Grouping with a `τ²` per group (2026-11-25, Finding 41, numerical): a "watch out" for
   `res:blend_intervals`. Own `τ²` per group breaks intervals (a no-shrink group of outliers); own means
   with a common `τ²` keep them. Add once `group_optimal_contiguous` is proved.
+- OBP collective mean (2026-11-25, `Core.condRisk_obpMean_le`, `Core.sure_obpMean_le`,
+  `Core.integral_sure_given_level`): given the levels the best collective mean has weights
+  `∝ uⱼ(1 − zⱼ)²`, not `∝ z`. A "watch out" next to the collective mean once the PLAN study
+  (levels trending with volume) says when it pays; not a fit to recommend before that.
+- Normal noise, known mean (2026-11-25, `Core.Target.knownMeanPred_mse_le_of_normal`): the best
+  linear predictor is `E[Y | x]`, so no nonlinear predictor beats it. One "why" sentence in
+  `res:blup`; with `β` estimated it is not `E[Y | x]`.
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):

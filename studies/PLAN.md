@@ -844,7 +844,9 @@ One chat per step; none needs Lean except step 5.
   collective mean is the `(1 − zⱼ)²`-weighted mean (SURE of the MSE given the levels). Possible study: a
   world switch "levels trend with volume" (the collective mean is misspecified), comparing BS, BS with the OBP mean,
   and grouping (KMeansBridge). Expect OBP to lose in the exchangeable worlds (`studies/sure.js` (B)). Not a
-  fit to recommend before that study.
+  fit to recommend before that study. *Proved 2026-11-25* (`Credibility/ObservedBest.lean`): the error
+  given the level, its SURE, and that `Core.obpMean` minimises both the total error given the levels and
+  its observed estimate. App: the study's "OBP mean" fit would use `obpMean` on the `x̄ⱼ`.
 - [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a
