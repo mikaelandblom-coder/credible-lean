@@ -720,7 +720,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    `D` per member and collects the outliers of both tails. Frequency (150 random cases, `n = 7`): 12 with
    heavy-tailed levels, 0–4 otherwise. With own means and **one common `τ²`** the groups are intervals for any volumes (0 of 300).
    For fixed `τ²` the loss is a weighted k-means cost with weights `uⱼ(1 − zⱼ)²`, so `kmeans_contiguous`
-   applies (proved: `group_optimal_contiguous`, via `groupLoss_eq`). Consequence: fit a grouping with a common `τ²`, by cuts of the sorted
-   estimates. Details: `notes/group-variances.md`.
+   applies (proved: `group_optimal_contiguous`, via `groupLoss_eq`). Consequence: a grouping should use a common `τ²`. But choosing the cut of
+   the sorted *estimates* by SURE on the same data is 2–74% worse than one group (S61, `studies/damping-theta.md`):
+   the fit needs a selection-aware criterion first. Details: `notes/group-variances.md`.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
