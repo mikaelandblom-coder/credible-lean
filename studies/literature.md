@@ -1181,7 +1181,7 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     `Σⱼ uⱼ(1 − zⱼ)²(m − θⱼ)²` is `m = Σuⱼ(1 − zⱼ)²θⱼ / Σuⱼ(1 − zⱼ)²`, and the BPE is its unbiased-risk plug-in.
     Averaged over exchangeable levels, `b ∝ z` wins (proved). Together these say when each one is right.
 
-### 10q. Novelty check of the paper's "New here" (2026-11-25, citation search; Poon 2013 and WASJ 2013 read in full)
+### 10q. Novelty check of the paper's "New here" (2026-11-25; Poon 2013, YV06, EIJK12, WASJ 2013 read in full)
 Goal: check paper §1 "What this paper contributes" and §9 against Yeo & Valdez (2006), Wen, Wu &
 Zhou (2009), Ebrahimzadeh et al. (2012), Huang & Wu (2015), Zhang, Cui & Chen (2017) and their
 citing papers. Method: OpenAlex `cites:` lists (YV06: 43 citing, WWZ09: 41, EIJK12: 3, HW15: 5,
@@ -1288,16 +1288,31 @@ common effects. Its introduction describes Yeo & Valdez (2006) as "simultaneous 
 across individuals for a fixed time period and across time periods for a fixed individual"; whether
 YV06 has a per-period common effect (our equicorrelated case) cannot be settled without the text.
 
-**Not read (blocked).** EIJK (2012) accepted manuscript: `www.emis.de` redirects to `zbmath.org`,
-refused by the egress proxy. Yeo & Valdez (2006): CiteSeerX redirects to `web.archive.org`, refused
-by the proxy. Proposing both hosts for Default was rejected by the environments service (nothing
-changed). Ebrahimzadeh (2012) thesis: `psasir.upm.edu.my` answers HTTP 503 (server-side) on both
-`http` and `https`; retry later.
+*Yeo & Valdez (2006), read as the 2004 UNSW preprint (owner's upload).* One **permanent** common
+effect `Λ` shared by all risks in all periods, and `Θ_i` per risk; given `Λ` and `Θ_i` claims are
+independent across risks and periods (A2, A7, A8). So risks are linked equally in every pair of
+periods, never in the same period only: this settles the question left open above (no per-period
+effect). The premium is `E(X_{i,T+1} | X)` under normal distributions, written in credibility form;
+no distribution-free version (that is Wen, Wu & Zhou 2009), no estimators (only a remark to split
+catastrophe and non-catastrophe claims), `Z` "between 0 and 1" as background, nothing on balance or
+the price of the form.
+
+*Ebrahimzadeh, Ibrahim, Jemain & Kilicman (2012), Bull. Malays. Math. Sci. Soc. (2) 35(4), 829–844
+(published version, owner's upload).* Two- and three-level permanent common effects (`Λ` per
+portfolio, `Γ` across portfolios), independence given them; predictors `Z₁X̄_i + Z₂X̄ + (1 − Z₁ − Z₂)µ`
+from Wen et al. Estimators (Thm 3.1–3.2, BS version §4) are Ohlsson/Bühlmann ANOVA estimators:
+`σ̂²_x` within risks, `σ̂²_θ` between risks, and `σ̂²_λ` from the spread of portfolio means over **R
+independent replicate portfolios**. So they estimate level variances in a hierarchy, not a noise
+covariance; no same-period cross products. Nothing on `z ∉ [0, 1]`, balance or the blend's price.
+"Probably the closest prior art" no longer holds: that is Poon (2013).
+
+*Ebrahimzadeh (2012) thesis:* not read (`psasir.upm.edu.my` 503); the two papers above and the WASJ
+2013 paper are its chapters as far as the abstracts say.
 
 **Moved in the paper (2026-11-25).** §1 item 1 and "Classical, and used as such" now credit the
 model, its BLUP and the pair estimators to Poon & Lu (2015); §9 cites Poon (2013), Poon & Lu (2015)
 and Schnapp et al. (2000), moves "correlated noise within a period in the BS form" and "pair
-estimators" to *Used*, and names Poon & Lu, not EIJK12, as the closest prior art for §5. Still *New
-here*, pending YV06 and EIJK12: the blend's factor for any PD `K`, `z ∉ [0, 1]` (Findings 3, 17),
+estimators" to *Used*, and names Poon & Lu, not EIJK12, as the closest prior art for §5. YV06 and EIJK12, read
+afterwards (owner's uploads), move nothing more. Still *New here*: the blend's factor for any PD `K`, `z ∉ [0, 1]` (Findings 3, 17),
 the price of the blend form (18), balance, unequal histories and their pair counts (9), the group
 model with correlated noise (13), the exact price of ignoring correlation (19, 20).

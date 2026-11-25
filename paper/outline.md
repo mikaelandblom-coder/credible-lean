@@ -92,9 +92,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- *Novelty check, rest (2026-11-25, `studies/literature.md` §10q):* Poon (2013) read, §1 and §9
-  updated. Yeo & Valdez (2006) and EIJK (2012) still unread (their hosts redirect to `zbmath.org` and
-  `web.archive.org`, blocked); read them before the remaining "New here" stands.
 - *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
   classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
   studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the
