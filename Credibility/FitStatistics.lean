@@ -1848,6 +1848,131 @@ lemma bsAlpha_errW_cov [Nonempty T] (τ2 σsq : ℝ) (hτ : 0 < τ2) (hσ : 0 < 
   rw [e]
   simp only [α, bsAlpha_mul_var W hWp τ2 σsq hτ hσ j, ← sum_mul, hγ, zero_mul]
 
+omit [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T] in
+/-- **Chebyshev's sum inequality, weighted**: if `a` and `z` are similarly ordered on `s` and
+`z ≥ 0`, then `(Σ z)(Σ a z²) ≥ (Σ a z)(Σ z²)`. -/
+lemma sum_mul_sum_sq_le_of_monovary {ι : Type*} (s : Finset ι) (a z : ι → ℝ)
+    (hz : ∀ i ∈ s, 0 ≤ z i) (ha : ∀ i ∈ s, ∀ l ∈ s, 0 ≤ (a i - a l) * (z i - z l)) :
+    (∑ i ∈ s, a i * z i) * (∑ i ∈ s, z i ^ 2)
+      ≤ (∑ i ∈ s, z i) * (∑ i ∈ s, a i * z i ^ 2) := by
+  have key : ∑ i ∈ s, ∑ l ∈ s, z i * z l * ((a i - a l) * (z i - z l))
+      = 2 * ((∑ i ∈ s, z i) * (∑ i ∈ s, a i * z i ^ 2)
+        - (∑ i ∈ s, a i * z i) * (∑ i ∈ s, z i ^ 2)) := by
+    have e : ∑ i ∈ s, ∑ l ∈ s, z i * z l * ((a i - a l) * (z i - z l))
+        = ∑ i ∈ s, ∑ l ∈ s, (z l * (a i * z i ^ 2) - a i * z i * z l ^ 2)
+          + ∑ i ∈ s, ∑ l ∈ s, (z i * (a l * z l ^ 2) - a l * z l * z i ^ 2) := by
+      rw [← sum_add_distrib]
+      refine sum_congr rfl fun i _ => ?_
+      rw [← sum_add_distrib]
+      exact sum_congr rfl fun l _ => by ring
+    rw [e, sum_comm (s := s) (t := s) (f := fun i l => z i * (a l * z l ^ 2) - a l * z l * z i ^ 2)]
+    simp only [sum_sub_distrib, ← sum_mul, ← mul_sum]
+    ring
+  have : 0 ≤ ∑ i ∈ s, ∑ l ∈ s, z i * z l * ((a i - a l) * (z i - z l)) :=
+    sum_nonneg fun i hi => sum_nonneg fun l hl =>
+      mul_nonneg (mul_nonneg (hz i hi) (hz l hl)) (ha i hi l hl)
+  linarith
+
+omit [Fintype T] [DecidableEq T] in
+/-- The exposure-spread weights `mᵢ = Wᵢ(1 - Wᵢ/W)` times the factors `zᵢ` are ordered as the
+factors: `(mᵢzᵢ - mₗzₗ)(zᵢ - zₗ) ≥ 0`. -/
+lemma bsZk_spread_monovary (W : J → ℝ) (hW : ∀ i, 0 < W i) (k : ℝ) (hk : 0 < k) (i l : J) :
+    0 ≤ (W i * (1 - W i / ∑ p, W p) * bsZk W k i - W l * (1 - W l / ∑ p, W p) * bsZk W k l)
+      * (bsZk W k i - bsZk W k l) := by
+  by_cases hil : i = l
+  · subst hil; simp
+  set S := ∑ p, W p
+  have hS : 0 < S := sum_pos (fun p _ => hW p) ⟨i, mem_univ i⟩
+  have hpair : W i + W l ≤ S := by
+    rw [← sum_pair hil]
+    exact sum_le_sum_of_subset_of_nonneg (subset_univ _) fun p _ _ => (hW p).le
+  have hi := hW i
+  have hl := hW l
+  have e1 : W i * (1 - W i / S) - W l * (1 - W l / S) = (W i - W l) * (S - W i - W l) / S := by
+    field_simp; ring
+  have e2 : bsZk W k i - bsZk W k l = k * (W i - W l) / ((W i + k) * (W l + k)) := by
+    simp only [bsZk]; field_simp; ring
+  have h1 : 0 ≤ (W i * (1 - W i / S) - W l * (1 - W l / S)) * (bsZk W k i - bsZk W k l) := by
+    rw [e1, e2, show (W i - W l) * (S - W i - W l) / S * (k * (W i - W l) / ((W i + k) * (W l + k)))
+      = (W i - W l) ^ 2 * (S - W i - W l) * k / (S * ((W i + k) * (W l + k))) by
+        field_simp]
+    exact div_nonneg (mul_nonneg (mul_nonneg (sq_nonneg _) (by linarith)) hk.le) (by positivity)
+  have hm : 0 ≤ W l * (1 - W l / S) := mul_nonneg hl.le (by
+    rw [sub_nonneg, div_le_one hS]; linarith)
+  have hz := bsZk_pos W hW k hk i
+  rw [show (W i * (1 - W i / S) * bsZk W k i - W l * (1 - W l / S) * bsZk W k l)
+      * (bsZk W k i - bsZk W k l)
+      = (W i * (1 - W i / S) - W l * (1 - W l / S)) * (bsZk W k i - bsZk W k l) * bsZk W k i
+        + W l * (1 - W l / S) * (bsZk W k i - bsZk W k l) ^ 2 by ring]
+  exact add_nonneg (mul_nonneg h1 hz.le) (mul_nonneg hm (sq_nonneg _))
+
+omit [Fintype T] [DecidableEq T] in
+/-- **The level part of the Bühlmann–Straub cross term has a sign**:
+`Σᵢ λᵢ (1 - Wᵢ/W) Wᵢ (αᵢ - δᵢⱼ) ≥ 0` for any positive volumes and `k > 0`. In `z`:
+`(1 - zⱼ)²/Z³ (mⱼzⱼR(R² + s') + Σᵢ≠ⱼ mᵢzᵢ²(Zzⱼ + Zzᵢ - Σz²))`, `R = Σᵢ≠ⱼ zᵢ`, `s' = Σᵢ≠ⱼ zᵢ²`,
+and the last sum is `zⱼΣᵢ≠ⱼ mᵢzᵢ²(R + zᵢ)` plus Chebyshev's `R Σ mᵢzᵢ³ - s' Σ mᵢzᵢ² ≥ 0`
+(`mᵢzᵢ` increases with `zᵢ`: `bsZk_spread_monovary`). -/
+theorem bsLevel_sum_nonneg (W : J → ℝ) (hW : ∀ i, 0 < W i) (k : ℝ) (hk : 0 < k) (j : J) :
+    0 ≤ ∑ i, bsLambda W k j i * (1 - W i / ∑ l, W l)
+      * (W i * (bsAlpha W k j i - if i = j then 1 else 0)) := by
+  have hzp := bsZk_pos W hW k hk
+  have hS : 0 < ∑ p, W p := sum_pos (fun p _ => hW p) ⟨j, mem_univ j⟩
+  have hm : ∀ i, 0 ≤ W i * (1 - W i / ∑ p, W p) := fun i => mul_nonneg (hW i).le (by
+    rw [sub_nonneg, div_le_one hS]; exact single_le_sum (fun p _ => (hW p).le) (mem_univ i))
+  simp only [bsLambda, bsAlpha]
+  set z := bsZk W k with hzdef
+  set S := ∑ p, W p
+  set Z := ∑ l, z l with hZdef
+  set Q := ∑ l, z l ^ 2 with hQdef
+  have hZ : 0 < Z := sum_pos (fun l _ => hzp l) ⟨j, mem_univ j⟩
+  have hZ0 := hZ.ne'
+  have hSS : ∑ l, z l * (1 - z l) = Z - Q := by
+    simp only [mul_sub, mul_one, sum_sub_distrib, sq, Z, Q]
+  set R := ∑ i ∈ univ.erase j, z i
+  set s' := ∑ i ∈ univ.erase j, z i ^ 2
+  have hZR : Z = z j + R := (add_sum_erase _ _ (mem_univ j)).symm
+  have hQs : Q = z j ^ 2 + s' := (add_sum_erase _ (fun i => z i ^ 2) (mem_univ j)).symm
+  have hR : 0 ≤ R := sum_nonneg fun i _ => (hzp i).le
+  rw [hSS, ← add_sum_erase _ _ (mem_univ j)]
+  have tj : -(z j * (1 - z j) * ((if j = j then (1 : ℝ) else 0) - z j / Z)
+        + (1 - z j) / Z * (z j * (1 - z j) - (Z - Q) * (z j / Z))) * (1 - W j / S)
+        * (W j * (z j * (if j = j then 1 else 0) + (1 - z j) * (z j / Z)
+          - if j = j then 1 else 0))
+      = (1 - z j) ^ 2 / Z ^ 3 * (W j * (1 - W j / S) * z j * (Z - z j)
+          * ((Z - z j) ^ 2 + (Q - z j ^ 2))) := by
+    simp only [ite_true]
+    field_simp
+    ring
+  have ti : ∀ i ∈ univ.erase j, -(z j * (1 - z j) * ((if i = j then (1 : ℝ) else 0) - z i / Z)
+        + (1 - z j) / Z * (z i * (1 - z i) - (Z - Q) * (z i / Z))) * (1 - W i / S)
+        * (W i * (z j * (if i = j then 1 else 0) + (1 - z j) * (z i / Z)
+          - if i = j then 1 else 0))
+      = (1 - z j) ^ 2 / Z ^ 3 * (W i * (1 - W i / S) * z i ^ 2 * (Z * z j + Z * z i - Q)) := by
+    intro i hi
+    simp only [ne_of_mem_erase hi, ite_false]
+    field_simp
+    ring
+  rw [tj, sum_congr rfl ti, ← mul_sum]
+  have hc : 0 ≤ (1 - z j) ^ 2 / Z ^ 3 := by positivity
+  refine add_nonneg (mul_nonneg hc ?_) (mul_nonneg hc ?_)
+  · have e1 : Z - z j = R := by linarith
+    have e2 : Q - z j ^ 2 = s' := by linarith
+    rw [e1, e2]
+    have : 0 ≤ s' := sum_nonneg fun i _ => sq_nonneg _
+    exact mul_nonneg (mul_nonneg (mul_nonneg (hm j) (hzp j).le) hR) (by positivity)
+  have e : ∑ i ∈ univ.erase j, W i * (1 - W i / S) * z i ^ 2 * (Z * z j + Z * z i - Q)
+      = ∑ i ∈ univ.erase j, (W i * (1 - W i / S) * z i ^ 2 * (z j * (R + z i))
+        + (R * (W i * (1 - W i / S) * z i * z i ^ 2) - W i * (1 - W i / S) * z i * z i * s')) :=
+    sum_congr rfl fun i _ => by rw [hZR, hQs]; ring
+  simp only [sum_add_distrib, sum_sub_distrib, ← mul_sum, ← sum_mul] at e
+  rw [e]
+  refine add_nonneg (sum_nonneg fun i _ => ?_) (sub_nonneg.mpr ?_)
+  · exact mul_nonneg (mul_nonneg (hm i) (sq_nonneg _))
+      (mul_nonneg (hzp j).le (by linarith [hzp i]))
+  · exact sum_mul_sum_sq_le_of_monovary _ (fun i => W i * (1 - W i / S) * z i) z
+      (fun i _ => (hzp i).le) fun i _ l _ => bsZk_spread_monovary W hW k hk i l
+
+
 section Integrals
 
 variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
@@ -2021,6 +2146,52 @@ theorem crossTerm_bs_of_cumulants [Nonempty T] (X : J ⊕ (J × T) → Ω → �
   simp only [F]
   rw [integral_errW_linW_statP X hX τ2 σsq κL κN μ w hw h4 α β j h0,
     integral_errW_linW_statB X hX τ2 σsq κL κN μ w hw h4 α β j h0 hB0]
+
+
+/-- **The level part of the cross term is `≤ 0`, any volumes**: with leptokurtic levels
+(`κL ≥ 0`) and mesokurtic noise (`κN = 0`), the first-order cross term `2E[AB]` of the
+Bühlmann–Straub plug-in (`crossTerm_bs_of_cumulants`) is `≤ 0` for any positive volumes `wᵢₜ`:
+its level part is `-2κL/(cτ²)` times the sum of `bsLevel_sum_nonneg`, and `c ≥ 0`. -/
+theorem crossTerm_bs_level_nonpos [Nonempty T] (X : J ⊕ (J × T) → Ω → ℝ)
+    (hX : ∀ p, MemLp (X p) 4 P) (τ2 σsq κL μ : ℝ) (hτ : 0 < τ2) (hσ : 0 < σsq) (hκ : 0 ≤ κL)
+    (w : J → T → ℝ) (hw : ∀ i t, 0 < w i t)
+    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
+      = primK4W κL 0 w p q r s
+        + diagonal (primVarW τ2 σsq w) p q * diagonal (primVarW τ2 σsq w) r s
+        + diagonal (primVarW τ2 σsq w) p r * diagonal (primVarW τ2 σsq w) q s
+        + diagonal (primVarW τ2 σsq w) p s * diagonal (primVarW τ2 σsq w) q r) (j : J) :
+    2 * ∫ ω, (∑ i, bsAlpha (fun i => ∑ t, w i t) (σsq / τ2) j i
+            * regionMean w (cellsOf μ fun p => X p ω) i - (μ + X (Sum.inl j) ω))
+        * (∑ i, bsLambda (fun i => ∑ t, w i t) (σsq / τ2) j i
+            * regionMean w (cellsOf μ fun p => X p ω) i)
+        * bsEps w τ2 σsq (statP w (cellsOf μ fun p => X p ω))
+            (statB w (cellsOf μ fun p => X p ω)) ∂P ≤ 0 := by
+  rw [crossTerm_bs_of_cumulants X hX τ2 σsq κL 0 μ hτ hσ w hw h4 j]
+  have hWp : ∀ i, 0 < ∑ t, w i t := sum_pos_of_pos w hw
+  set W : J → ℝ := fun i => ∑ t, w i t with hWdef
+  have hS : 0 < ∑ i, W i := sum_pos (fun i _ => hWp i) ⟨j, mem_univ j⟩
+  have hc : 0 ≤ ∑ i, W i - (∑ i, W i ^ 2) / ∑ i, W i := by
+    rw [sub_nonneg, div_le_iff₀ hS, mul_comm, mul_sum]
+    exact sum_le_sum fun i _ => by
+      rw [sq]; exact mul_le_mul_of_nonneg_right
+        (single_le_sum (fun p _ => (hWp p).le) (mem_univ i)) (hWp i).le
+  have hsum := bsLevel_sum_nonneg W hWp (σsq / τ2) (div_pos hσ hτ) j
+  have e : ∑ i, bsLambda W (σsq / τ2) j i * (1 - W i / ∑ l, W l)
+        * (κL * W i * (bsAlpha W (σsq / τ2) j i - if i = j then 1 else 0)
+          + 0 * (∑ t, shares w i t ^ 2) * bsAlpha W (σsq / τ2) j i / W i)
+      = κL * ∑ i, bsLambda W (σsq / τ2) j i * (1 - W i / ∑ l, W l)
+        * (W i * (bsAlpha W (σsq / τ2) j i - if i = j then 1 else 0)) := by
+    rw [mul_sum]; exact sum_congr rfl fun i _ => by ring
+  simp only [hWdef] at e hc hsum ⊢
+  rw [e]
+  simp only [zero_div, mul_zero, zero_mul, zero_sub]
+  have : 0 ≤ 1 / ((∑ i, ∑ t, w i t - (∑ i, (∑ t, w i t) ^ 2) / ∑ i, ∑ t, w i t) * τ2)
+      * (κL * ∑ i, bsLambda (fun i => ∑ t, w i t) (σsq / τ2) j i
+        * (1 - (∑ t, w i t) / ∑ l, ∑ t, w l t)
+        * ((∑ t, w i t) * (bsAlpha (fun i => ∑ t, w i t) (σsq / τ2) j i
+          - if i = j then 1 else 0))) :=
+    mul_nonneg (div_nonneg zero_le_one (mul_nonneg hc hτ.le)) (mul_nonneg hκ hsum)
+  linarith
 
 end Integrals
 

@@ -1074,7 +1074,9 @@ Harville 1984, Prasad and Rao 1990; \file{studies/literature.md} §4). Under
 normal noise the cross term vanishes; under heavy tails it is negative,
 because a large shock inflates both a cohort's deviation and the variance
 estimates, so the fitted factor shrinks hardest exactly when the raw mean
-is most off (S21). That is how a fitted model can beat the best blend with
+is most off (S21). For the Bühlmann--Straub fit this holds for heavy-tailed levels with
+any volumes (\lean{Credibility.Cumulants.crossTerm_bs_level_nonpos}); heavy-tailed noise can flip
+the sign when a cohort's volume sits in one year (Finding 39). That is how a fitted model can beat the best blend with
 fixed weights (S9). The split itself is exact for every distribution: the fitted
 predictor's error is the best predictor's, plus the mean square of the difference
 between the two, plus twice the cross term; under normal noise and a fit that is

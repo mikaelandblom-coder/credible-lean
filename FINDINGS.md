@@ -670,7 +670,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    `crossTerm_bs_noise_pos_value`, in `FitStatistics.lean`; `studies/cross-term.js` for the general
    term).** Expected (Finding 38, numerics with even years): the first-order cross term `2E[AB]` is
    ≤ 0 whenever `κL, κN ≥ 0`. Found: the *level* part is ≤ 0 in every world tried (random volumes,
-   J = 2–11, T = 2–11, 300 000 worlds × regions; not proved), but the *noise* part is not.
+   J = 2–11, T = 2–11, 300 000 worlds × regions; *proved 2026-11-25 for any volumes*,
+   `Cumulants.crossTerm_bs_level_nonpos`: Chebyshev's sum inequality, as `mᵢzᵢ = Wᵢ(1 − Wᵢ/W)zᵢ`
+   increases with `zᵢ`), but the *noise* part is not.
    Counterexample (proved): J = T = 2, volumes `(1, 8)` and `(10, 10)`, `τ² = 1`, `σ² = 20`
    (`z = 0.31, 0.5`), `κL = 0`: region 0's noise part is `+0.46(1 − z₀)τ²` per unit `γN`. Realistic
    size (J = 8, T = 5, region sizes ×4 apart, one region with 90% of its volume in one year, `z₀ = 0.5`,

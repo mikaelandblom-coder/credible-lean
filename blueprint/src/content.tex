@@ -9034,8 +9034,25 @@ price needs their covariances.
   Region 0 holds $8/9$ of its volume in one year, so its mean is nearly one cell: its noise kurtosis
   reaches $S^2$ in full but the pooled $\hat\sigma^2$ hardly, and the negative channel through $\hat\sigma^2$ no
   longer wins. With $J = 8$, $T = 5$ and one such region the exact cross term is $+7.5\%$ of its MSE by
-  simulation. The level part was $\le 0$ in every world tried (not proved).
+  simulation. The level part has a sign (Theorem~\ref{thm:crossTerm_bs_level_nonpos}).
 \end{remark}
+
+\begin{theorem}[The level part of the cross term is $\le 0$, any volumes]\label{thm:crossTerm_bs_level_nonpos}
+  \lean{Credibility.Cumulants.sum_mul_sum_sq_le_of_monovary, Credibility.Cumulants.bsZk_spread_monovary, Credibility.Cumulants.bsLevel_sum_nonneg, Credibility.Cumulants.crossTerm_bs_level_nonpos}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  With $\kappa_L \ge 0$ and $\kappa_N = 0$ the cross term of Theorem~\ref{thm:crossTerm_bs} is $\le 0$ for any
+  positive volumes: $\sum_i \lambda_i (1 - W_i/W) W_i (\alpha_i - \delta_{ij}) \ge 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  With $m_i = W_i(1 - W_i/W)$, $Z = \sum z$, $R = \sum_{i \ne j} z_i$, $s' = \sum_{i \ne j} z_i^2$, the sum is
+  $(1 - z_j)^2/Z^3$ times
+  $m_j z_j R (R^2 + s') + z_j \sum_{i \ne j} m_i z_i^2 (R + z_i) + \bigl(R \sum_{i \ne j} m_i z_i^3 - s' \sum_{i \ne j} m_i z_i^2\bigr)$.
+  The last bracket is Chebyshev's sum inequality with weights $z_i$: $m_i z_i$ increases with $z_i$, since
+  $W_i \le W_l$ and $W_i + W_l \le W$ give $m_i \le m_l$. And $c = W - \sum W_i^2/W \ge 0$.
+\end{proof}
 
 \begin{remark}[Finding 38 for any volumes]
   Every $\lambda_i$, $\alpha_i$ and weight in Theorem~\ref{thm:crossTerm_bs} is explicit; on unbalanced worlds
