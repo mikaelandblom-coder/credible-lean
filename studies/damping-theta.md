@@ -668,5 +668,6 @@ true `σⱼ²`, `τ²`; Part B fitted, as paired differences to BS in % of its l
 **Consequence.** No OBP mean in the app, and no handbook recommendation for it: a "watch out" says why
 (`res:bs`). Grouping cohorts by cuts of their sorted estimates must not choose the cut by SURE; the app's
 planned grouping step (PLAN "Grouping cohorts") needs a selection-aware criterion (cross-fitting or the
-gain against price with the selection in the price) before it is built. A suspected trend in volume goes
-in as a design column, chosen by gain against price (S57), with its price visible at β = 0.
+gain against price with the selection in the price) before it is built. A trend in volume, if data show one, goes
+in as a design column (an offset in log volume), chosen by gain against price (S57), with its price
+visible at β = 0. Parked by the owner (2026-11-25): a size trend is niche, tariffs usually carry size.

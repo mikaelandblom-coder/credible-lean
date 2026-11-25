@@ -855,9 +855,12 @@ One chat per step; none needs Lean except step 5.
   Two side results: grouping by cuts of the sorted estimates chosen by SURE is 2–74% worse than BS (S61,
   see "Grouping cohorts" above), and a volume trend as a design column `[1, log w]` (BLUP) gains 3–35% at a
   trend ≥ τ for a price of 0.5–12% without one (S62).
-- [ ] Volume trend as a design column (2026-11-25, S62): a fit "BLUP with log volume" (`res:blup`, X = `[1, log w]`),
-  switched on by gain against price (S57) with the price of the column. Needs the price of an extra column in
-  `Engine.gainPrice` and a world switch "levels trend with volume" (`obp-mean.js` has both pieces).
+- [ ] *Parked (owner, 2026-11-25: a size trend is niche; tariffs usually carry size already).* Volume trend as a
+  design column (S62): the offset `E μⱼ = α + γ log wⱼ`, a fit "BLUP with log volume" (`res:blup`,
+  X = `[1, log w]`). Build only if real data show a slope: regress `μ̂ⱼ` on `log wⱼ` with weights `1/(τ̂² + D̂ⱼ)`
+  and compare `γ̂` with `τ̂`. Then switch it on by gain against price (S57), which needs the price of an extra
+  column in `Engine.gainPrice`. A known `γ` (from a tariff factor) is a plain offset: subtract it, BS, no price.
+  `obp-mean.js` has `fitTrendX` and the trend world.
 - [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a

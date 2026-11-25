@@ -1268,9 +1268,10 @@ of the weights $\propto z_j$ that are best on average over interchangeable level
 for different questions, but as a fit the averaged answer wins. Even when levels trend with
 volume, the plug-in gains at most a few per cent, it breaks balance, and with per-cohort variances it
 is much worse: the theorem holds the collective mean fixed, while as an estimate it is noisiest
-exactly where those weights put it. A trend in volume belongs in the design as a fixed effect
-(\hb{res:blup}{34}), which gains far more when the trend is there and has a visible price when
-it is not (\file{studies/damping-theta.md}, S59--S62).
+exactly where those weights put it. If the data do show levels trending with volume (rare once
+the tariff carries a size factor), model the trend directly, as an offset in the design
+(\hb{res:blup}{34}): it gains far more when the trend is there and has a visible price when it is
+not (\file{studies/damping-theta.md}, S59--S62).
 
 \watch
 \begin{itemize}

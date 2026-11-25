@@ -339,9 +339,10 @@ over different periods (Section~\ref{sec:beyond}).
   when they don't. It also breaks balance, which needs $b_j \propto u_j(1 - z_j)$
   (Result~\ref{res:balance}). With per-cohort variances it can be up to 58\% worse even with known
   parameters: the theorem keeps the collective mean fixed, but as an estimate it is noisiest where
-  those weights sit. If levels trend with volume, add $\log w_{j*}$ as a design column
-  (Result~\ref{res:blup}): 3--35\% better with a trend of $\tau$ or more, a price of up to 12\%
-  without one. Let gain against price decide.
+  those weights sit. If your data do show levels trending with volume (rare once the tariff
+  has a size factor), model it directly: an offset $\alpha + \gamma\log w_{j*}$ as a design column
+  (Result~\ref{res:blup}), 3--35\% better with a trend of $\tau$ or more, a price of up to 12\%
+  without one. A known $\gamma$ is a plain offset: subtract it and run Bühlmann--Straub.
   \lean{Credibility.Core.condRisk_obpMean_le}
 \end{caveat}
 
