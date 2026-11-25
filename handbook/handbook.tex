@@ -650,6 +650,42 @@ term measures whether it strays towards the target or away from it.
   cross term can have either sign and the plug-in can be biased (Result~\ref{res:randomWeights}).
 \end{caveat}
 
+\begin{result}[What fitting Bühlmann--Straub costs, to first order]\label{res:bsPrice}
+  Balanced world: $J$ regions, $T$ years, equal volumes, $z = \tau^2/(\tau^2 + v)$. Relative to
+  $(1-z)\tau^2$, the error of the blend with known parameters, fitting $\tau^2$ and $\sigma^2$ adds
+  $E B^2 \approx (1 - \tfrac1J)\tfrac{1-z}{z}\bigl[\tfrac{2}{J(T-1)} + \tfrac{2}{J-1}
+  + \tfrac{\gamma_L z^2}{J} + \tfrac{\gamma_N z^2}{JT}\bigr]$
+  (law (a)), with $\gamma_L$, $\gamma_N$ the excess kurtosis of the levels and of the noise.
+  Without kurtosis this is at most $\tfrac2J\tfrac{T}{T-1}\tfrac{1-z}{z}$. The cross term is
+  \[
+    2E[AB] \approx -2\bigl(1 - \tfrac1J\bigr)\,z(1-z)\,\frac{\gamma_L + \gamma_N/T}{J},
+  \]
+  so heavy tails lower the total, by $(1 - \frac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$. Own variances
+  per region instead of a pooled one cost at most $z(1-z)\cdot 2/(T-1)$ more (law (b)). The cross
+  term has a closed form for any volumes too (sums over regions), and its level part is never
+  positive. All of this holds for every distribution with these moments.
+  \lean{Credibility.Cumulants.bsPrice_le_of_balanced}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced_cumulants}
+  \lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants}
+  \lean{Credibility.Cumulants.ownPrice_sub_pooled_le_of_balanced}
+  \lean{Credibility.Cumulants.crossTerm_bs_of_cumulants}
+  \lean{Credibility.Cumulants.crossTerm_bs_level_nonpos}
+\end{result}
+\use Before fitting more than Bühlmann--Straub, compare what the richer model gains (exact, from
+$\hat K$, Result~\ref{res:mse}) with this price; the app's ``gain against price'' step does that.
+With $J = 8$, $T = 10$ and $z = 0.6$ the price is already about $18\%$ of the error.
+\why The fitted $\hat z$ is noisy, and the error is a parabola in $z$: its curvature times
+$\operatorname{Var}\hat z$ is $E B^2$. Kurtosis makes $\hat z$ noisier, but $\hat z$ also errs
+towards the draws' own levels, which is what the cross term measures.
+\begin{caveat}
+  Law (a)'s kurtosis terms alone have the wrong sign for the total: add the cross term. And don't
+  promise the sign: when one region's volume sits mostly in one year, the noise part of the cross
+  term turns positive (about $+0.46(1-z)\tau^2$ per unit $\gamma_N$ in the example). For the BLUP on a
+  correlated $\hat K$ the level part can be slightly positive too (below $0.4\%$ of the error per unit
+  $\gamma_L$, simulated). $\gamma_L$ cannot be estimated from a few regions: treat it as a sensitivity.
+  \lean{Credibility.Cumulants.crossTerm_bs_pos_example}
+\end{caveat}
+
 % ===========================================================================
 \section{The moments are real}\label{sec:moments}
 
@@ -1240,6 +1276,33 @@ follows.
   several groups: it lands between $(1-\phi)\tau^2$ and $\tau^2$. Estimate
   $\phi\tau^2$ from within- and across-group pairs, and the rest from there.
 \end{caveat}
+
+\begin{result}[Each group's own effect: Henderson's equations]\label{res:groupEffect}
+  Let $0 < \phi < 1$, $A$ the covariance of the estimates for the non-shared part
+  $(1-\phi)\tau^2$, and $Z$ the cohorts-by-groups design. Solve Henderson's mixed-model equations
+  \[
+    \begin{pmatrix} \bu^\top A^{-1}\bu & \bu^\top A^{-1}Z \\ Z^\top A^{-1}\bu & Z^\top A^{-1}Z + (\phi\tau^2)^{-1} I \end{pmatrix}
+    \begin{pmatrix} \hat m \\ \hat b \end{pmatrix}
+    = \begin{pmatrix} \bu^\top A^{-1}\hmu \\ Z^\top A^{-1}\hmu \end{pmatrix}.
+  \]
+  Then $\hat m = \sum_j b_j\hmu_j$ with the GLS weights of $K_G$, and $\hat b_g$ is the best linear
+  unbiased predictor of group $g$'s effect, with the smallest true mean squared error among all
+  $\sum_j d_j\hmu_j$ with $\sum_j d_j = 0$, for every distribution with these moments. Its error is
+  $\phi\tau^2 - \ell^\top K_G^{-1}\ell + (\bu^\top K_G^{-1}\ell)^2/\bu^\top K_G^{-1}\bu$ with
+  $\ell = \phi\tau^2\bu_g$. On the way,
+  $K_G^{-1} = A^{-1} - A^{-1}Z\bigl(Z^\top A^{-1}Z + (\phi\tau^2)^{-1}I\bigr)^{-1}Z^\top A^{-1}$.
+  \lean{Credibility.Unequal.groupMean_eq_gls}
+  \lean{Credibility.Unequal.groupEffect_eq_blup}
+  \lean{Credibility.Unequal.NoiseG.mme_groupEffect_mse_optimal}
+  \lean{Credibility.Unequal.NoiseG.mse_groupEffect_blup}
+  \lean{Credibility.Unequal.KG_inv_eq}
+\end{result}
+\use To report how far a group stands from the portfolio, with an error bar. It is what
+mixed-model software (\texttt{lme4}, \texttt{PROC MIXED}) computes, so the two can be checked
+against each other. For many cohorts, invert $A$ (diagonal when errors are uncorrelated) and one
+matrix of size the number of groups, not $K_G$.
+\why Hierarchical credibility is a mixed model with the collective mean as fixed effect and the
+group effects as random effects. Henderson's equations are the normal equations of that model.
 
 \subsection*{Choosing the cohorts}
 

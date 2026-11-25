@@ -84,18 +84,11 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- Henderson's equations (2026-11-24, `Matrix.hendersonMME`, `Matrix.pushThrough`, ported from
-  Stat-Lean): the hierarchical section may cite them as the link to mixed-model practice
-  (credibility = BLUP of the group effects); `Unequal.KG_inv_eq` for the computation. Now proved:
-  the MME solution is our BLUP (`Core.hendersonMME_eq_blup`); for groups, `b̂_g` is the BLUP of the
-  group effect and `m̂` the GLS mean of `K_G` (`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`),
-  best in true MSE for any distribution (`Unequal.NoiseG.mme_groupEffect_mse_optimal`).
-- Cross term of the plug-in with kurtosis (2026-11-24, Finding 38,
-  `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
-  ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,
-  heavy tails of levels or noise lower the plug-in's first-order MSE, `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.
-  Qualify with Finding 39: that holds for even years; when a region's volume sits in one year the noise
-  part can raise the MSE (`crossTerm_bs_pos_example`).
+- *Done 2026-11-25:* "Is a richer fit worth its price?" (§ Estimating the parameters: gain against
+  price, laws (a) and (b), the cross term with Findings 37–40); one sentence on the cross term in
+  "What 'normal' means here"; a watch-out in "What 'best' means" (MSE averaged over the collective,
+  not per cohort; literature §10p); "The group effects, as mixed-model software computes them"
+  (Henderson's equations, § Groups and shared levels).
 - *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
   and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
 - The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why
@@ -105,11 +98,6 @@ may need a paragraph.)
 - Finding 35 (2026-11-23, `studies/skew-bias.js`): the plug-in bias predicted from one data set
   to first order (skew channel), within 20–35% of the simulated bias without correlation. A sentence
   where Finding 35 is explained.
-- Gain against price (2026-11-24, studies S53–S57, `FitStatistics.lean`, Finding 37): the comparison
-  of two fits splits into an exact oracle gap (a quadratic in `z` for two blends) and a price from
-  the moments of three statistics, and when those are uncorrelated (Finding 37). One paragraph
-  with the app's "gain against price" step. Both price laws are proved in the balanced world
-  (`Cumulants.bsPrice_of_balanced`, `ownPrice_sub_pooled_of_balanced`).
 - §8 damping (2026-11-23, studies S38–S42): the exact variance of `Σ̂ᵢⱼ` in the damping rule
   makes it worse for the rates; why the correlation-scale rule works, and why its normal-theory
   variance is enough (S41) and safer under heavy tails (S42). One paragraph.

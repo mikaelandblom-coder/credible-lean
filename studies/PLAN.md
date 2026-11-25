@@ -422,7 +422,7 @@ One chat per step; none needs Lean except step 5.
   non-normality the cross term `2E[AB]` is first order too. For the levels it is `−2z(1 − z)γL/J`
   (with D known), so the γL sensitivity row overstates; the net effect of level kurtosis is
   `−z(1 − z)γL/J`. Once the cross term is proved (Lean target in §10m), show the net price, or add a
-  watch-out to the γL row. *Also (literature §10n, Datta–Lahiri 2000):* with spread volumes the price
+  watch-out to the γL row. *Also (literature §10o, Datta–Lahiri 2000):* with spread volumes the price
   of `τ̂²` depends on its estimator (ANOVA: arithmetic mean of `(τ² + vⱼ)²`; REML or a
   precision-weighted Fay–Herriot moment equation: harmonic mean, far smaller). Candidate: a FH
   moment `τ̂²` as a corrBS option, checked against the app's simulations. Law (a) applied region by
@@ -832,4 +832,12 @@ One chat per step; none needs Lean except step 5.
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A
   possible app step: "group the cohorts" before the blend, with group sizes and `τ²` per group fitted
-  (no hand-set number of groups, §1). Read the paper first; no Lean target yet.
+  (no hand-set number of groups, §1). *Read 2026-11-25 (literature §10p):* their `K` by BIC and the
+  contiguity weight `φ` by a stability plateau are hand-set choices. BIC over-clusters with no regimes. In 1-D,
+  cohorts ordered by volume or time are grouped into intervals, so there is no `φ`, and `K` should come
+  from gain against price with `K = 1` as reference. Open first (numerically, a small study): with its own `τ²` per
+  group, are the optimal groups still intervals? Only then a Lean target.
+- [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
+  correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
+  (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a
+  bias term for fitting the learner on the same data (Finding 35). Not now: the app has no covariates.

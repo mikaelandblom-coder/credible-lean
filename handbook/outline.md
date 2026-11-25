@@ -16,19 +16,6 @@ voice, then trim towards 8 pages.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`; general `Matrix.inv_mul_mul_transpose_add`,
-  `Matrix.pushThrough`, `Matrix.hendersonMME` in `Henderson.lean`): computing tip for group levels
-  ("use it": invert only a groups × groups matrix). Probably a one-line note, if any. With it:
-  the group effects from Henderson's equations are BLUPs (`Unequal.groupEffect_eq_blup`), with true
-  error `NoiseG.mse_groupEffect_blup` (a candidate formula entry: the group effect and its error).
-- Cross term of the plug-in (2026-11-24, `Cumulants.crossTerm_of_balanced_cumulants`, Finding 38):
-  with law (a); "watch out": law (a)'s kurtosis terms alone have the wrong sign for the total, the
-  kurtosis effect on the BS plug-in's first-order MSE is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.
-  Any volumes (2026-11-25, `Cumulants.crossTerm_bs_of_cumulants`): the same term as sums over regions.
-  Watch out (Finding 39, `crossTerm_bs_pos_example`): with a region's volume concentrated in one year
-  the noise part turns positive; the level part is always ≤ 0 (2026-11-25,
-  `Cumulants.crossTerm_bs_level_nonpos`). Not for the BLUP plug-in (Finding 40): there it can be slightly
-  positive (< 0.4% of MSE per unit γL, strong ρ and very uneven volumes), so don't promise the sign.
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):
@@ -48,8 +35,9 @@ voice, then trim towards 8 pages.
   Law (b), own variances over a pooled one: `(1 − 1/J)²·z(1 − z)·2/(T − 1) ≤ z(1 − z)·2/(T − 1) ≤ 1/(2(T − 1))`
   (`Cumulants.ownPrice_sub_pooled_le_of_balanced`); "why": an own factor at fixed `τ²` pays `z²` times
   BS's price for the same noise in `v̂` (`ownPrice_eq_sq_mul_bsPrice`).
-  "use it" to judge whether BS's fit costs more than it gains. Add with the "gain against price" entry
-  once the app step lands.
+  "use it" to judge whether BS's fit costs more than it gains. *Laws (a), (b) and the cross term are in
+  (2026-11-25, `res:bsPrice`).* Still pending from this item: exact Var/Cov of `P`, `Qn`, `B` and the
+  Finding 37 watch-out, if the gain-against-price entry ever needs them.
 - Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
   `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
   cross-fit (even against odd years). Add when step 2 (skew correction) is settled. The "why":
@@ -137,6 +125,8 @@ voice, then trim towards 8 pages.
     `thm:U_bestZ_G_eq`, `thm:U_G_bestZ_mse`, `thm:U_G_exists_noise`,
     `thm:glsWeight_blockDiag`, `thm:estimation_G`, `cor:KHat_G_iff`,
     `cor:phiTauHat`, `thm:G_integral_quad`.
+15a. Each group's own effect (2026-11-25): Henderson's equations give the GLS mean and the BLUP of
+    each group effect, best in true MSE, with its error; the small form of `K_G⁻¹` — `res:groupEffect`.
 16. Choosing cohorts (drafted): optimal cohorts are intervals of the sorted
     levels for exposure-weighted pooling (= weighted k-means + #cohorts) and
     for the blend with a common variance; find them by dynamic programming —
@@ -154,6 +144,9 @@ voice, then trim towards 8 pages.
     for ordered cohorts — `res:damped`.
 10c. The price of plugging in (2026-11-22, after 10b): `mse(d*) + E B² + 2E[AB]`; normal noise:
     cross term 0; symmetric noise: unbiased — `res:plugIn`.
+10d. What fitting BS costs, to first order (2026-11-25, after 10c): law (a) with kurtosis, the cross
+    term (Finding 38) and the net kurtosis effect, law (b), any volumes; "watch out": the sign is not
+    guaranteed (Findings 39, 40) — `res:bsPrice`.
 17b. The best linear predictor of any target (2026-11-22, Finding 18): universal kriging, its
     error, the price of the blend; aggregation and unneeded design columns — `res:blup`.
 17c. Monthly data: the season (Finding 24) — `res:season`.

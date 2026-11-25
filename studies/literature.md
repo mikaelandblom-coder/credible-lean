@@ -1013,7 +1013,7 @@ Mathlib can give from independence of `Y − ℓᵀK⁻¹x` and `x` without port
 conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,
 AI4SLT (arXiv 2602.02285), FormalSLT.
 
-*Papers (arXiv, from the owner's search; not yet read here, so the descriptions are the owner's summaries):*
+*Papers (arXiv, from the owner's search; the descriptions below are the owner's summaries. The first three were read on 2026-11-25: see §10p, which supersedes these items):*
 - Maranzano, Mattera & Sugasawa (2026-08), spatially clustered Fay–Herriot: contiguous regions found
   from the data, each with its own coefficients and random-effect variance, i.e. its own collective mean
   and `τ²`. **Best fit.** It is the 2-D form of `KMeansBridge.lean` (Finding 14: optimal pooled cohorts
@@ -1032,7 +1032,7 @@ AI4SLT (arXiv 2602.02285), FormalSLT.
   covariates, which our models do not have yet), differential privacy (Das & Drechsler), and
   variance-inflated Fay–Herriot for non-probability samples. Unconfirmed: "Double-robust SAE", JASA (2026 DOI).
 
-### 10n. The variance-component estimator and the mean model (owner's pointers, 2026-11-24)
+### 10o. The variance-component estimator and the mean model (owner's pointers, 2026-11-24)
 - Datta & Lahiri (2000), "A unified measure of uncertainty of estimated best linear unbiased
   predictors in small area estimation problems", *Statistica Sinica* 10, 613–627. *Read in full
   (PDF text) 2026-11-24.* General mixed linear **normal** model; ψ̂ by ML or REML.
@@ -1065,3 +1065,84 @@ AI4SLT (arXiv 2602.02285), FormalSLT.
     when the levels are not exchangeable, e.g. a level trend with volume (Finding 14's k-means world).
     The owner can supply the PDF; check the BPE formula, the criterion (design-based MSPE,
     conditional on θ) and the OBP MSPE estimator.
+
+### 10p. Three recent small-area papers, read (2026-11-25)
+Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was seen, it says so.
+- **Maranzano, Mattera & Sugasawa (2026)**, "Small area estimation under spatial regimes: spatially
+  clustered Fay–Herriot models for agricultural indicators", arXiv:2608.13638 (v1, 2026-08-13).
+  - *Model.* Fay–Herriot with known sampling variances `Dᵢ`. Cluster `k` has its own coefficients `θ_k`
+    (intercept included) and its own random-effect variance `σ²_uk`, i.e. with `x = 1` its own collective
+    mean and `τ²`. Normal likelihood throughout. Objective (eq. 9): log-likelihood plus a Potts term
+    `φ Σ w_dd' 1(k_d = k_d')` on the adjacency matrix. The term encourages contiguous clusters but does
+    not force them. `φ = 0` gives a non-spatial clusterwise FH, `K = 1` the pooled FH.
+  - *Fit.* Alternate: fit one FH per cluster, then relabel areas one at a time by ICM (Besag 1986).
+    Each sweep cannot lower the objective. Start: k-means on covariates (on coordinates for
+    intercept-only models). Variance: adjusted REML (Li & Lahiri 2010), always positive. Plain REML hit
+    the boundary in up to 96% of runs with poorly separated clusters.
+  - *Choices.* `K` by BIC (seen as a summary only). `φ` as the smallest value on a stability plateau of
+    the adjusted Rand index between neighbouring `φ`, with tolerance `δ = 0.05`. MSE by parametric
+    bootstrap that reruns the clustering. No analytic MSE, and no theorems (no result on recovering the clusters).
+  - *Findings.* With clear regimes the RMSE is 88–93% of the pooled FH's. With poor separation a large
+    `φ` makes it worse than pooled. With smooth variation and no regimes there is no gain, and BIC
+    over-clusters.
+  - **For us.** (a) In 1-D this is `KMeansBridge.lean` with a variance per group added. Finding 14 covers
+    pooling with a common variance (optimal groups are intervals). With its own `τ²` per group the
+    label step maximises a normal likelihood, not a weighted sum of squares. Whether the optimal groups
+    are still intervals is **open**: not claimed, and no counterexample searched yet. (b) Hand-set numbers
+    (`δ`, the `φ` grid, the `K` band) clash with PLAN §1. In 1-D, cohorts ordered by volume or time
+    make contiguity automatic: groups are intervals, so there is no `φ`. `K` would come from the gain
+    against price (S57), not BIC, because BIC over-clusters when there are no regimes. (c) Keep `K = 1`
+    as the reference, as they do. (d) A moment version would use our distribution-free `τ̂²` per group
+    and no likelihood. The positivity problem is the same one our `τ̂²` truncation handles.
+  - *Used:* the PLAN item "Grouping cohorts in two dimensions" is updated to say this. No Lean target
+    until (a) is settled numerically.
+- **Reluga, Salvati, Ranjbar, Tzavidis & van der Laan (2026)**, "Small area learning",
+  arXiv:2610.15953 (v2, 2026-11-11).
+  - *Estimator* (eq. 11): `μ̂_d(a) = P_{N_d} ĝ + a·r̄_d`. Here `ĝ` is any learner fit on the pooled sample,
+    `P_{N_d}` its mean over the area's population, and `r̄_d` the area's mean residual. `a = 1` is the
+    fully corrected (generalized-difference) estimator, `a = f_d = n_d/N_d` the model-based one, and `a = 0`
+    the synthetic one. There is a cross-fitted version and one for area-level covariate means
+    (aggregation bias `b_d`, bounded by Lipschitz or Hessian constants).
+  - *The weight.* From an approximate MSE `(1 − a)²β_d² + a²σ_d²/n_d`, they derive the oracle
+    `a* = β_d²/(β_d² + σ_d²/n_d)`, with `β_d` the area's residual bias of the learner's limit. It is not
+    estimable, because `β_d` is a fixed unknown. They recommend `a = 1`: it is Neyman orthogonal, its CLT
+    needs only second moments, and it needs no rate for the learner.
+  - *Findings.* RMSE 39–49% below the direct estimator. Fully corrected intervals cover 0.92–0.95. The
+    naive interval around the shrunk estimator covers 2–4%: it ignores the area's bias.
+  - **For us.** `a*` is our credibility factor written per area. If the residual biases `β_d` are random
+    across areas with variance `τ²`, eq. (7) / `bestZ` gives `a* = τ²/(τ² + σ_d²/n_d)`. That is
+    estimable from the spread of the `r̄_d` (Bühlmann–Straub on the learner's residuals), with no tuning. So
+    "any learner as the collective mean, credibility on its residuals" is a Core instance. The learner
+    plays the role of `x'β`, as in the general target of `Blup.lean`. The new work would be only the bias
+    from fitting the learner on the same data (Finding 35's channel; their cross-fitting is the remedy). Their coverage
+    failure is the conditional-versus-unconditional point. Our MSEs average over the collective's levels
+    (`Core.Estimates`), so a per-region interval from them is not conditional on that region. *Paper:* one
+    sentence where the MSE is explained. *App:* none now.
+- **J.N.K. Rao & J. Sunil Rao (2026)**, "Inferential issues in model-based small area estimation: some
+  history and selective recent advances", arXiv:2611.04281 (v1, 2026-11-03, 15 pp.).
+  Read as PDF text; the formulas came out garbled, so only statements in words are used.
+  - *Robustness of the MSE estimator* (§3.2). The Prasad–Rao normal-theory MSE estimator stays second-order
+    unbiased for non-normal area effects with normal sampling errors (Lahiri–Rao 1995). It fails with the
+    FH moment estimator (Chen–Lahiri–Rao 2025). With both non-normal, the second-order MSE estimator depends on the
+    sampling errors' kurtosis, not the area effects'. This **agrees with §10m**: there `κ_v` cancels in
+    the *estimator* (between `2g₃` and `2g₄`), while the true MSPE keeps a `κ_v` term. So law (a) plus the
+    cross term (Finding 38) is about the MSE itself, and nothing here contradicts it.
+  - *Observed best prediction* (§3.4, §4.1). The BPE of `β` minimises an unbiased estimate of the total
+    design MSE (conditional on the area means). It is a WLS estimator that "gives more weight to areas
+    with larger sampling variances", the opposite of the WLS (GLS) weights. The printed weight formula
+    did not survive text extraction. `∝ (1 − γᵢ)² = Dᵢ²/(A + Dᵢ)²` fits that direction but is **still
+    unconfirmed** (needs Jiang–Nguyen–Rao 2011). Further: Rao (2026) shows that BPE and ML are both
+    orthogonal projections onto the model space, in different inner products, and that the excess
+    prediction risk is the squared distance to the truth in the BPE metric. Henderson, Varadhan & Louis
+    (2023) give a compromise (CBP) that keeps the OBP's robustness and the EBLUP's efficiency under the
+    right model. Liu, Ma & Jiang (2022): the PR MSE estimator with the BPE variance is first-order robust
+    to misspecification. Open problem: the MSE conditional on the covariates.
+  - **For us.** This confirms the direction of §10o's item. Under a correct (exchangeable) model, `b ∝ z` is MSE-optimal
+    (`Core.blupWeight_optimal`) and gives exposure balance (§2.9). The BPE gives up both, for robustness when
+    the collective mean is misspecified, e.g. levels trending with volume. A candidate result, once the formula is
+    confirmed: the collective-mean weights that minimise the MSE conditional on the levels, and when they
+    differ from `b ∝ z`. Also noted: Stefan & Rao (2026) split each sample, fit on one half and predict
+    from the other, which gives a design-unbiased EB and its MSE (the cross-fitting remedy again, cf. Finding 35).
+    Lahiri & Salvati (2023) let model parameters vary by area, with pooled estimating equations,
+    next to our own-against-pooled variances (law (b)).
+- *Still for the owner:* the Jiang–Nguyen–Rao (2011) PDF, to confirm the BPE weights and criterion.
