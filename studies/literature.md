@@ -57,8 +57,9 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - The blend against the BLUP (searched 2026-11-16 for Finding 18): Goldberger (1962), *Best
   linear unbiased prediction in the generalized linear regression model*, JASA 57: the predictor
   `K⁻¹ℓ` plus the GLS mean of the remainder, which with an unknown common mean is the homogeneous
-  credibility estimator. Wen, Wu & Zhou (2009), *The credibility estimator with general dependence
-  structure over risks*, and Zhang & Chen (2018), *Credibility estimators with dependence structure over risks and time
+  credibility estimator. Wen, Wu & Zhou (2009), *The credibility premiums for models with
+  dependence induced by common effects*, IME 44(1), 19–25 (title corrected 2026-11-25 from OpenAlex;
+  the earlier title here was Wen & Wu 2011's), and Zhang & Chen (2018), *Credibility estimators with dependence structure over risks and time
   under balanced loss function*, Statistica Neerlandica 72(2), 157–173 (equal dependence over
   risks and time; checked 2026-11-17):
   homogeneous and inhomogeneous estimators under dependence by orthogonal projection. Used: the
@@ -1179,3 +1180,65 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     not started: conditional on the levels `θ`, the fixed collective mean that minimises the total squared bias
     `Σⱼ uⱼ(1 − zⱼ)²(m − θⱼ)²` is `m = Σuⱼ(1 − zⱼ)²θⱼ / Σuⱼ(1 − zⱼ)²`, and the BPE is its unbiased-risk plug-in.
     Averaged over exchangeable levels, `b ∝ z` wins (proved). Together these say when each one is right.
+
+### 10q. Novelty check of the paper's "New here" (2026-11-25, citation search; full texts not yet read)
+Goal: check paper §1 "What this paper contributes" and §9 against Yeo & Valdez (2006), Wen, Wu &
+Zhou (2009), Ebrahimzadeh et al. (2012), Huang & Wu (2015), Zhang, Cui & Chen (2017) and their
+citing papers. Method: OpenAlex `cites:` lists (YV06: 43 citing, WWZ09: 41, EIJK12: 3, HW15: 5,
+ZCC17: 4), abstracts read for every credibility paper among them. Semantic Scholar snippet search
+(full-text passages) returned HTTP 429 throughout without an API key.
+
+**Open-access copies found** (hosts added to Default 2026-11-25; not yet read, see "Blocked" below):
+- Ebrahimzadeh, Ibrahim, Jemain & Kilicman (2012), accepted manuscript:
+  `www.emis.de/journals/BMMSS/pdf/acceptedpapers/2010-08-021_R3.pdf`.
+- Ebrahimzadeh (2012), PhD thesis UPM, *Claim dependence in hierarchical credibility models and
+  estimation of structural parameters*: `psasir.upm.edu.my/id/eprint/66460/` (likely contains the
+  2012 estimators and the 2013 CSTM hierarchical paper).
+- Yeo & Valdez (2006): CiteSeerX record 10.1.1.585.8698 (PDF availability not checked).
+- Ebrahimzadeh et al. (2013), *Claim dependence with common effects in credibility models with error
+  uniform dependence*, World Appl. Sci. J. 27(12), 1551–1560: `www.idosi.org/wasj/wasj27(12)13/5.pdf`.
+- Poon (2013), SFU MSc project, *Spatial cross-sectional credibility models with general dependence
+  structure among risks*: `summit.sfu.ca` etd7657 (the basis of Poon & Lu 2015 below).
+- (2019) JIMO, *Multidimensional balanced credibility model with time effect
+  and two level random common effects* (DOI 10.3934/jimo.2019004) and (2020) *Quantile
+  credibility models with common effects*, Risks 8(4) 100: open access (publisher sites not allowed).
+
+**Result by result, from abstracts and listings (none contradicts a "New here" yet):**
+- *Correlated noise across risks within a period (paper §1 item 1, §9 "New here").* The
+  common-effect line (YV06, WWZ09, EIJK 2012/2013, ZCC17, the two-level common-effect papers 2019,
+  quantile versions 2019–2024, Yang & Wang 2022/2024 "correlation risk") all use a common effect
+  shared by risks over **all** periods, plus dependence within one risk over time ("error uniform
+  dependence", Chinese 2009 and WASJ 2013 abstracts: "uniform conditional dependence for claim
+  amounts for each individual risk"). Same picture as §8. **One candidate precedent:** Poon & Lu
+  (2015), *A spatial cross-sectional credibility model with dependence among risks*, NAAJ 19(4)
+  (DOI 10.1080/10920277.2015.1063441), and Poon (2013): "a Bühlmann–Straub type credibility model
+  with dependence structure among risk parameters **and conditional spatial cross-sectional
+  dependence**", predictors by minimizing quadratic loss, nonparametric structural-parameter
+  estimators "in the spatial statistics context", crop insurance data. "Conditional cross-sectional
+  dependence" reads as noise correlated across risks given the levels, i.e. our `C`. Whether it is
+  within a period only, a general matrix or a distance function, and whether the predictor keeps the
+  blend form are unknown until read. **Must be read before the "New here" stands;** if it is the
+  thesis model, the novelty narrows to the factor for any PD `K`, Findings 3/17, balance, Finding 18
+  and the estimators from same-period cross products (and those must be compared with theirs).
+- *Unbiased structural-parameter estimators (paper §9: EIJK12 "probably the closest prior art").*
+  Unchanged: EIJK12 not read; the 2019 JIMO paper also give "unbiased estimators of structural
+  parameters" for two-level common effects; Yang & Wang (2022, CSTM, DOI 10.1080/03610926.2022.2150057)
+  REML and linear Bayes for the balanced Bühlmann model with correlation risk. All are for permanent
+  common effects, so they estimate a level covariance, not `C` from same-period cross products.
+- *Factor outside `[0, 1]`, what to report (Findings 3, 17).* No abstract in the citing set mentions
+  it. Huang & Wu (2015, read) say the premium leaves the classical form; nothing on `z ∉ [0, 1]`.
+- *Price of the blend form (Finding 18).* Huang & Wu (2015) note the gap qualitatively (§8); no citing
+  abstract quantifies it.
+- *Hierarchical with correlated noise and pair estimators (Finding 13).* EIJK (2013, CSTM 42(18))
+  "three-level common effects model ... across portfolios, across individuals and simultaneously
+  across time within individuals", premiums by projection; again permanent effects, noise
+  independent across risks as far as the abstract says. Not read.
+- *Spatial line, for later:* Poon & Lu (2015) is cited by few; no further spatial credibility found
+  in these lists.
+
+**Blocked (2026-11-25).** The web-fetch tool cannot resolve these hosts even after they were added
+to the environment, and a direct download from the container was refused by the session's
+permission classifier. Next: read (1) Poon (2013) / Poon & Lu (2015), (2) EIJK12 accepted
+manuscript, (3) Ebrahimzadeh's thesis, (4) Yeo & Valdez (2006), or the owner supplies PDFs/photos.
+Until then the paper's "New here" stays as is, with Poon & Lu (2015) as the open risk.
+

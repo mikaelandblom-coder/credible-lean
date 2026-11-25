@@ -92,6 +92,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- *Novelty check (2026-11-25, `studies/literature.md` §10q):* citing lists of YV06, WWZ09, EIJK12,
+  HW15, ZCC17 checked by abstract; nothing moves yet. Poon & Lu (2015, NAAJ, "conditional spatial
+  cross-sectional dependence" in a Bühlmann–Straub model) may be correlated noise within a period:
+  read it, then cite it in §9 and, if it is the thesis model, move that "New here" to "Used".
 - *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
   classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
   studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the
