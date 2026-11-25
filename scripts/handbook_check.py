@@ -20,4 +20,22 @@ bad = [n for n in names if n not in proved]
 for n in bad:
     print(f"handbook links to {n}, which is not a proved declaration")
 print(f"handbook: {len(names) - len(bad)}/{len(names)} links ok")
-sys.exit(1 if bad else 0)
+
+
+def norm(t):
+    """A heading as plain text: \\texorpdfstring{A}{B} -> A, no trailing period."""
+    t = re.sub(r"\\texorpdfstring\{((?:[^{}]|\{[^{}]*\})*)\}\{[^{}]*\}", r"\1", t)
+    return " ".join(t.split()).rstrip(".")
+
+
+# \paper{Title}: a section, subsection or paragraph of paper/paper.tex.
+paper = (ROOT / "paper" / "paper.tex").read_text()
+titles = {norm(m.group(1)) for m in re.finditer(
+    r"\\(?:sub)*(?:section|paragraph)\*?\{((?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*)\}", paper)}
+cited = re.findall(r"\\paper\{((?:[^{}]|\{[^{}]*\})*)\}",
+                   re.sub(r"(?<!\\)%.*", "", tex))
+missing = sorted({t for t in cited if norm(t) not in titles})
+for t in missing:
+    print(f"handbook cites the paper's '{t}', which is not a heading there")
+print(f"handbook: {len(cited) - len(missing)}/{len(cited)} paper citations ok")
+sys.exit(1 if bad or missing else 0)

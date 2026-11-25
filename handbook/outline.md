@@ -9,10 +9,19 @@ Only results that serve the credibility framework go in.
 Per entry: **statement** (one display), **comment** (when to use it and why it
 holds, in words), **Lean** (theorem name, linked to the source line).
 
-Status (2026-11-11): all sections 0–5 drafted in `handbook.tex`, including
-the moment layer (true MSE for any `K`, `L`), unequal-length estimation,
-group levels (Finding 13) and choosing cohorts. Next: owner review of the
-voice, then trim towards 8 pages.
+Status (2026-11-25, review): restructured into 12 sections with a table of contents, in the
+order of the paper: setting; core; special cases; the moments are real (and the error given the
+level); beyond the blend (the BLUP); estimating (with **the recipe**, the app's no-tuning fit, and
+what fitting costs); beyond second moments; unequal lengths; groups; choosing cohorts; monthly
+data (shock, season, factor); trends and several quantities; appendix: a worked example (three
+cohorts, four years, every number checkable by hand). Labels unchanged (the thesis proposal and
+the paper cite them); numbers changed, so the paper was rerun with `paper_check.py --fix`.
+
+**One home per explanation** (owner, 2026-11-25): the handbook is a quick formula book. An entry
+keeps its statement, a short "use it", a one-line "why" and the "watch out"s a user needs at the
+formula; longer explanations, study details and the story live in the paper and are cited by
+title with `\paper{Title}` (checked by `handbook_check.py`: the title must be a heading or run-in
+paragraph of `paper/paper.tex`). The 6–8 page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
@@ -21,32 +30,16 @@ voice, then trim towards 8 pages.
   "why" sentence in `res:blup` (`knownMeanPred_mse_le_of_normal`).
 - *Done 2026-11-25 (later):* OBP collective mean "watch out" at `res:bs` (study S59–S62: don't use it; a volume
   trend as a design column instead), and a line in the Finding 41 caveat: never cut sorted estimates by SURE (S61).
-- Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
-  formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
-  With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):
-  "mean of the conditional variance plus variance of the conditional mean"; watch out: the
-  cumulants are averaged over the levels, not taken at the mean level. Same entry.
-  Sample covariance over independent years (2026-11-23, `Cumulants.variance_sampleCov`):
-  `Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T`; "watch out": heavy tails add `κ₄/T` to the
-  normal-theory variance of `ŝᵢⱼ`. But don't feed it to the damping rule in covariance form:
-  it damps too much for the rates (studies S39); the app's rule is on the correlation scale. Add with G2's handbook entry. Weighted version
-  for the shock model (`Cumulants.variance_crossResid`): same entry.
-- Moments of the fit statistics (2026-11-24, `Cumulants.covariance_stat`, `covariance_statB_eq_zero`,
-  `Core.linMse_lineWeight_sub`): exact Var/Cov of `P`, `Qn`, `B`; "watch out": `B` is uncorrelated
-  with `P`, `Qn` only for normal cells and region means uncorrelated with residuals (Finding 37).
-  Same entry: the balanced identity `ẑ = 1 − v̂/S²` and law (a), the price of fitting BS,
-  `(2/J)(1 + (J−1)/(J(T−1)))(1 − z)/z ≤ (2/J)·T/(T−1)·(1 − z)/z` (`Cumulants.bsPrice_le_of_balanced`; from the cells alone: `bsPrice_of_balanced_cells`; corrected for kurtosis, `+ κL/(Js²) + γN z²/(JT)` in
-  the bracket: `bsPrice_of_balanced_cumulants`):
-  Law (b), own variances over a pooled one: `(1 − 1/J)²·z(1 − z)·2/(T − 1) ≤ z(1 − z)·2/(T − 1) ≤ 1/(2(T − 1))`
-  (`Cumulants.ownPrice_sub_pooled_le_of_balanced`); "why": an own factor at fixed `τ²` pays `z²` times
-  BS's price for the same noise in `v̂` (`ownPrice_eq_sq_mul_bsPrice`).
-  "use it" to judge whether BS's fit costs more than it gains. *Laws (a), (b) and the cross term are in
-  (2026-11-25, `res:bsPrice`).* Still pending from this item: exact Var/Cov of `P`, `Qn`, `B` and the
-  Finding 37 watch-out, if the gain-against-price entry ever needs them.
-- Noise shape (app, 2026-11-22, not proved): a "watch out" near Finding 35: the slope of
-  `log σ̂ⱼ²` on `log μ̂ⱼ` from the same years is biased up under skew (≈ 2 when the truth is 0);
-  cross-fit (even against odd years). Add when step 2 (skew correction) is settled. The "why":
-  `cov(σ̂², μ̂) = Σₛ aₛκₛ Σₜ cₜ(δₜₛ − aₛ)²` (`Cumulants.covariance_resVar_mean`, 2026-11-23).
+- *Done 2026-11-25 (review):* `res:varQuad` (variance of a quadratic estimator: cumulants,
+  independent sources, sample covariance, variance function), `res:givenLevel` (error given the
+  level, SURE, the OBP collective mean, moved out of `res:bs`), the recipe (§ Estimating), the
+  damping rule on the correlation scale (`res:bestTheta`), aggregation and recency (`res:blup`),
+  first-order skew bias (`res:randomWeights`), typical error (`res:plugIn`), the worked example.
+- Still open from the old list: exact Var/Cov of `P`, `Qn`, `B` and the Finding 37 watch-out, if the
+  gain-against-price entry ever needs them; the noise-shape watch-out (slope of `log σ̂ⱼ²` on
+  `log μ̂ⱼ` biased up under skew; cross-fit) once the app's skew step is settled.
+
+The numbered list below is the drafting record (old numbering), kept for history.
 
 ## 0. Setting and notation (1 page)
 - The model: `μⱼₜ = μ + τ ηⱼ + σⱼₜ εⱼₜ`, `cov(εᵢₜ, εⱼₛ) = ρᵢⱼ δₜₛ`.
