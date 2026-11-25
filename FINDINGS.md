@@ -687,4 +687,21 @@ Gaps, extra hypotheses and new results found while formalizing.
    uneven years). Consequence: the sign of the kurtosis correction to the price of fitting BS depends
    on the volumes; use the general formula (`crossTerm_bs_of_cumulants`), not the balanced one.
 
+40. **The level part of the cross term has no sign for the BLUP on corrBS's K̂ (new; exact check
+   `studies/blup-level-sign.py`, search `studies/blup-level-sign.js`; not in Lean).** Expected: like BS
+   (`Cumulants.crossTerm_bs_level_nonpos`), the level part of the first-order cross term `2E[AⱼBⱼ]` is ≤ 0
+   when `κL ≥ 0`. Formula, for any pooled fit (data only through `P`, `Qn`, `B`): a level `Lₚ` enters only
+   `B`, with weight `mₚ = Wₚ(1 − Wₚ/W)`, so the level part is `2κL Σₚ mₚ(dⱼₚ − δₚⱼ)∂dⱼₚ/∂B
+   = (κL/c) d/dτ² ‖dⱼ − eⱼ‖²ₘ`. The sign asks whether more `τ̂²` pulls the weights towards the region's own
+   mean in the `m`-norm. BS: always (Chebyshev). Found for the BLUP: ≤ 0 in 28 000 random cells
+   (J = 2–10, T = 2–9, ρ < 0.95), and with J = 2 in every search, but not in general. Counterexample (exact,
+   rational): J = 3, T = 2, σ² = 1, ρ = 0.99, τ² = 1/20, volumes `(0.2², 0.23²)`, `(0.13², 0.14²)`, `(35², 44²)`,
+   region 1: `d/dτ² ‖d − e₁‖²ₘ = +0.0125`, level part `+0.12%` of the region's BLUP MSE per unit `γL`.
+   Largest found: `+0.38%` (J = 10, T = 3, ρ = 0.9, sizes ≤ 16× apart, one region's volume 5× uneven over
+   its years); with ρ ≤ 0.6 at most `+0.015%`, and none with ρ ≤ 0.9 when year shares are within 10×.
+   Why: with strong cross-region correlation a large region's mean reveals a small region's noise, so the
+   BLUP weight of a small region sits mostly on the large one (weights −0.04, 0.03, 1.02 above), and more
+   `τ̂²` need not move it towards `eⱼ`. Consequence: for the BLUP plug-in the level part is negative for
+   practical purposes but not a theorem; the per-region sign of BS does not carry over.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

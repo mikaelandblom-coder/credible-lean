@@ -27,7 +27,8 @@ voice, then trim towards 8 pages.
   Any volumes (2026-11-25, `Cumulants.crossTerm_bs_of_cumulants`): the same term as sums over regions.
   Watch out (Finding 39, `crossTerm_bs_pos_example`): with a region's volume concentrated in one year
   the noise part turns positive; the level part is always ≤ 0 (2026-11-25,
-  `Cumulants.crossTerm_bs_level_nonpos`).
+  `Cumulants.crossTerm_bs_level_nonpos`). Not for the BLUP plug-in (Finding 40): there it can be slightly
+  positive (< 0.4% of MSE per unit γL, strong ρ and very uneven volumes), so don't promise the sign.
 - Variance of a quadratic estimator (2026-11-22, `Cumulants.variance_quad_of_cumulants`): the
   formula with skewness and kurtosis terms; add with its first use (G2 `V`, G4 weights).
   With a variance function `μᵖ` (2026-11-23, `VarianceFunction.variance_quad_of_powerVariance`):

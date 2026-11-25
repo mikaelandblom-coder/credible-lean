@@ -9054,6 +9054,15 @@ price needs their covariances.
   $W_i \le W_l$ and $W_i + W_l \le W$ give $m_i \le m_l$. And $c = W - \sum W_i^2/W \ge 0$.
 \end{proof}
 
+\begin{remark}[Finding 40: not for the BLUP on corrBS's $\hat K$]
+  For any fit that sees the data only through $(P, Q_n, B)$ the level part is
+  $(\kappa_L/c)\, \tfrac{d}{d\tau^2} \sum_p m_p (d_{jp} - \delta_{pj})^2$: more $\hat\tau^2$ must pull the weights towards
+  the own region. For the plug-in BLUP this fails: $J = 3$, $T = 2$, $\rho = 0.99$, $\tau^2 = 1/20$, $\sigma^2 = 1$,
+  volumes $(0.2^2, 0.23^2)$, $(0.13^2, 0.14^2)$, $(35^2, 44^2)$, region 1 gives $+0.12\%$ of its MSE per unit $\gamma_L$
+  (exact rational check). In the worlds searched it stays below $+0.4\%$, and needs strong correlation and
+  very uneven volumes.
+\end{remark}
+
 \begin{remark}[Finding 38 for any volumes]
   Every $\lambda_i$, $\alpha_i$ and weight in Theorem~\ref{thm:crossTerm_bs} is explicit; on unbalanced worlds
   (region sizes $16\times$ apart) the term is negative in every region, for levels and for noise, and
