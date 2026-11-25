@@ -1382,112 +1382,112 @@ log \href{https://github.com/mikaelandblom-coder/credible-lean/blob/main/FINDING
 which has the details. The paper explains each where it belongs.
 
 \begin{description}
-  \item[1. $K$ is positive definite, not just semidefinite.] The thesis infers it from $K$ being a covariance matrix, which gives only $\succeq 0$. It holds because $\tau^2 > 0$ and $\rho \succeq 0$.
+  \item[{1. $K$ is positive definite, not just semidefinite.}] The thesis infers it from $K$ being a covariance matrix, which gives only $\succeq 0$. It holds because $\tau^2 > 0$ and $\rho \succeq 0$.
   \lean{Credibility.Model.K_posDef}
-  \item[2. At least two cohorts.] With $J = 1$, $b = 1$, $s^2 = \tau^2 + \sigma^2$ and eq.~(26) is $0/0$; the reduction to Bühlmann--Straub needs $J \ge 2$.
+  \item[{2. At least two cohorts.}] With $J = 1$, $b = 1$, $s^2 = \tau^2 + \sigma^2$ and eq.~(26) is $0/0$; the reduction to Bühlmann--Straub needs $J \ge 2$.
   \lean{Credibility.bs_z}
-  \item[3. When $z_1 > 1$.] Below the singularity, $z_1 > 1$ iff $\sigma_1 < \sigma_2\rho$, whatever $\tau^2$.
+  \item[{3. When $z_1 > 1$.}] Below the singularity, $z_1 > 1$ iff $\sigma_1 < \sigma_2\rho$, whatever $\tau^2$.
   \lean{Credibility.TwoCohorts.z1_gt_one_iff}
-  \item[4. Weights from factors: two cohorts only.] $b_1 = z_1/(z_1 + z_2)$ (defence slides). Fails from three cohorts: equal noise with one correlated pair, or equal correlations with unequal noise.
+  \item[{4. Weights from factors: two cohorts only.}] $b_1 = z_1/(z_1 + z_2)$ (defence slides). Fails from three cohorts: equal noise with one correlated pair, or equal correlations with unequal noise.
   \lean{Credibility.TwoCohorts.b1_eq_z}
   \lean{Credibility.Model.exists_b_ne_z}
   \lean{Credibility.Model.exists_b_ne_z_equalCorr}
-  \item[5. Equal covariances, any number of cohorts.] $b_j = z_j/z_*$ and $z_j = \tau^2/(\tau^2 + v_j - c)$; with three cohorts equal covariances are also necessary.
+  \item[{5. Equal covariances, any number of cohorts.}] $b_j = z_j/z_*$ and $z_j = \tau^2/(\tau^2 + v_j - c)$; with three cohorts equal covariances are also necessary.
   \lean{Credibility.Model.bestZ_of_equalCov}
   \lean{Credibility.Model.equalCov_of_b_eq_z}
-  \item[6. Equal credibility is not grouping (discussion).] Equal $z$ means equal reliability, not equal risk; merging needs the gap condition of Result~\ref{res:merge}.
+  \item[{6. Equal credibility is not grouping (discussion).}] Equal $z$ means equal reliability, not equal risk; merging needs the gap condition of Result~\ref{res:merge}.
   \lean{Credibility.Merging.merge_iff}
-  \item[7. Estimation needs $T \ge 2$, $J \ge 2$; a typo in eq.~(13).] With $T = 1$ or $J = 1$ a denominator is zero. The Bühlmann--Straub $\hat\sigma^2$ averages with $1/J$, not $1/T$.
+  \item[{7. Estimation needs $T \ge 2$, $J \ge 2$; a typo in eq.~(13).}] With $T = 1$ or $J = 1$ a denominator is zero. The Bühlmann--Straub $\hat\sigma^2$ averages with $1/J$, not $1/T$.
   \lean{Credibility.Model.tauHatBS_unbiased}
-  \item[8. Unequal lengths keep $K \succ 0$, under a weaker condition.] Per period, the correlations of the cohorts observed then must be $\succeq 0$. Periods $\{1\}, \{1,2\}, \{2\}$ with $\rho_{12} = \rho_{23} = 0.9$, $\rho_{13} = -0.9$: $\rho$ indefinite, $K \succ 0$.
+  \item[{8. Unequal lengths keep $K \succ 0$, under a weaker condition.}] Per period, the correlations of the cohorts observed then must be $\succeq 0$. Periods $\{1\}, \{1,2\}, \{2\}$ with $\rho_{12} = \rho_{23} = 0.9$, $\rho_{13} = -0.9$: $\rho$ indefinite, $K \succ 0$.
   \lean{Credibility.Unequal.K_posDef}
-  \item[9. The $T - 2$ becomes a per-pair count.] $n_{ij} = |T_i \cap T_j| - \omega_i - \omega_j$; the naive $|T_i \cap T_j| - 2$ is biased unless the periods agree.
+  \item[{9. The $T - 2$ becomes a per-pair count.}] $n_{ij} = |T_i \cap T_j| - \omega_i - \omega_j$; the naive $|T_i \cap T_j| - 2$ is biased unless the periods agree.
   \lean{Credibility.Unequal.sigRhoHat_unbiased}
   \lean{Credibility.Unequal.den_of_overlap_singleton}
-  \item[10. Balance survives unequal lengths.] Bühlmann--Straub stays exposure-balanced; equal covariances with one disjoint pair force $c = 0$.
+  \item[{10. Balance survives unequal lengths.}] Bühlmann--Straub stays exposure-balanced; equal covariances with one disjoint pair force $c = 0$.
   \lean{Credibility.Unequal.balance}
   \lean{Credibility.Unequal.equalCov_eq_zero}
-  \item[11. Distribution-free, and $\rho \succeq 0$ is free.] The moments are the actual covariances for any random variables; such variables exist iff $\rho \succeq 0$.
+  \item[{11. Distribution-free, and $\rho \succeq 0$ is free.}] The moments are the actual covariances for any random variables; such variables exist iff $\rho \succeq 0$.
   \lean{Credibility.Model.Noise.mse_blend}
   \lean{Credibility.Model.exists_noise_iff}
-  \item[12. Unequal lengths: the block condition is free.] Random variables exist iff the per-period condition of Finding 8 holds.
+  \item[{12. Unequal lengths: the block condition is free.}] Random variables exist iff the per-period condition of Finding 8 holds.
   \lean{Credibility.Unequal.exists_noise_iff}
-  \item[13. With group levels, $\widehat{\tau^2}$ is biased.] $E\widehat{\tau^2} = \tau^2 - \phi\tau^2\pi$; pairs within and across groups give $\phi\tau^2$ unbiased.
+  \item[{13. With group levels, $\widehat{\tau^2}$ is biased.}] $E\widehat{\tau^2} = \tau^2 - \phi\tau^2\pi$; pairs within and across groups give $\phi\tau^2$ unbiased.
   \lean{Credibility.Model.tauHat_unbiasedG}
   \lean{Credibility.Model.phiTauHat_unbiasedG}
-  \item[14. Optimal cohorts are intervals for pooling and for a common variance, not in general.] Counterexample: $x = (-\tfrac12, 0, \tfrac12)$, $v = (16, 4, 16)$, $\tau^2 = 1$: best two cohorts $\{1,3\}$, $\{2\}$.
+  \item[{14. Optimal cohorts are intervals for pooling and for a common variance, not in general.}] Counterexample: $x = (-\tfrac12, 0, \tfrac12)$, $v = (16, 4, 16)$, $\tau^2 = 1$: best two cohorts $\{1,3\}$, $\{2\}$.
   \lean{Credibility.pool_optimal_contiguous}
   \lean{Credibility.blend_optimal_contiguous}
-  \item[15. The best balanced blend: closed form, but poor.] Balanced blends are $z_j = 1 - c\,b_j/u_j$; even the best has up to twice the optimal error.
+  \item[{15. The best balanced blend: closed form, but poor.}] Balanced blends are $z_j = 1 - c\,b_j/u_j$; even the best has up to twice the optimal error.
   \lean{Credibility.Core.bestBalanced_optimal}
   \lean{Credibility.Core.Estimates.bestBalanced_mse_optimal}
-  \item[16. The common shift is the best balanced correction only without correlation.] Best $c_j^* = (\lambda u_j/\varphi_j - \kappa_j)/V$; the shift iff all $\kappa_j = \cov(\hmu_j^b - \mu_j, D)$ agree, as for independent cohorts.
+  \item[{16. The common shift is the best balanced correction only without correlation.}] Best $c_j^* = (\lambda u_j/\varphi_j - \kappa_j)/V$; the shift iff all $\kappa_j = \cov(\hmu_j^b - \mu_j, D)$ agree, as for independent cohorts.
   \lean{Credibility.Core.bestCorrection_optimal}
   \lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag}
-  \item[17. The blend is continuous through the singularity.] $z_1(\hmu_1 - \hmu) = (\tau^2/D)(\hmu_1 - \hmu_2)$; the own-data weight $c_j$ is bounded by $\tau^2/\lambda_{\min}(K)$ from $b_j$.
+  \item[{17. The blend is continuous through the singularity.}] $z_1(\hmu_1 - \hmu) = (\tau^2/D)(\hmu_1 - \hmu_2)$; the own-data weight $c_j$ is bounded by $\tau^2/\lambda_{\min}(K)$ from $b_j$.
   \lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1}
   \lean{Credibility.Core.abs_bestZ_mul_one_sub_le_eigenvalues}
-  \item[18. The blend against the best linear unbiased predictor.] The blend loses exactly $(w - d^*)^\top K(w - d^*)$; zero iff the cohort covaries equally with all others. Three-cohort example: 2.8\%, 3.1\%, 0.1\%.
+  \item[{18. The blend against the best linear unbiased predictor.}] The blend loses exactly $(w - d^*)^\top K(w - d^*)$; zero iff the cohort covaries equally with all others. Three-cohort example: 2.8\%, 3.1\%, 0.1\%.
   \lean{Credibility.Core.errVar_eq_blupWeight_add}
   \lean{Credibility.Core.exists_blendWeight_eq_blupWeight_iff}
-  \item[19. What ignoring correlation costs.] At most $1/(1 - \delta^2)$ times the best MSE, whatever $\tau^2$ and $v_j$.
+  \item[{19. What ignoring correlation costs.}] At most $1/(1 - \delta^2)$ times the best MSE, whatever $\tau^2$ and $v_j$.
   \lean{Credibility.Core.linMse_ignoreCorr_le}
   \lean{Credibility.Core.Estimates.ignoreCorr_mse_le}
-  \item[20. Equal correlations: the sharp price.] $\delta = r$ is not enough: $J = 3$, $r = 0.5$, $\tau^2 = 0.001$, $v = (1, 1000, 30)$ gives 1.561 > 4/3. Sharp: $(A + a)^2/(4aA)$ with both eigenvalues.
+  \item[{20. Equal correlations: the sharp price.}] $\delta = r$ is not enough: $J = 3$, $r = 0.5$, $\tau^2 = 0.001$, $v = (1, 1000, 30)$ gives 1.561 > 4/3. Sharp: $(A + a)^2/(4aA)$ with both eigenvalues.
   \lean{Credibility.Core.linMse_ignoreCorr_equicorr_le}
   \lean{Credibility.Core.linMse_damped_equicorr_le}
-  \item[21. A known trend moves no weight; an estimated one moves relativities.] Data $(2,1)$ and $(1,2)$: relativity 1 at $\hat g = 0$, 1.032 at $\hat g = 10\%$.
+  \item[{21. A known trend moves no weight; an estimated one moves relativities.}] Data $(2,1)$ and $(1,2)$: relativity 1 at $\hat g = 0$, 1.032 at $\hat g = 10\%$.
   \lean{Credibility.Unequal.bestZ_detrend}
   \lean{Credibility.Unequal.Noise.relativity_detrend}
-  \item[22. The matrix blend need not beat separate blends.] Frequency error 0.9768 against 0.9726 for separate blends; the matrix best predictor does beat them.
+  \item[{22. The matrix blend need not beat separate blends.}] Frequency error 0.9768 against 0.9726 for separate blends; the matrix best predictor does beat them.
   \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
-  \item[23. A common shock does not shrink with volume.] A fixed $\rho_{ij}$ with $\sigma_j^2/w_{jt}$ halves the shared covariance when volumes double; shock plus process noise does not, and needs varying volume to be identified.
+  \item[{23. A common shock does not shrink with volume.}] A fixed $\rho_{ij}$ with $\sigma_j^2/w_{jt}$ halves the shared covariance when volumes double; shock plus process noise does not, and needs varying volume to be identified.
   \lean{Credibility.Shock.K_posDef}
   \lean{Credibility.Shock.not_unbiased_s2_of_const}
-  \item[24. The season does not drop out, even with whole years.] One cohort, two years of two months, twice the volume in the first: weights $\tfrac43$, $\tfrac23$, bias $(\beta_1 - \beta_2)/3$.
+  \item[{24. The season does not drop out, even with whole years.}] One cohort, two years of two months, twice the volume in the first: weights $\tfrac43$, $\tfrac23$, bias $(\beta_1 - \beta_2)/3$.
   \lean{Credibility.Season.blup_eq_iff}
   \lean{Credibility.Season.blup_ne_of_volume}
-  \item[25. Positive autocorrelation does not keep weights positive.] AR(1) with $\phi = \tfrac12$, two cohorts: the other cohort's first month gets $-\tfrac1{30}$.
+  \item[{25. Positive autocorrelation does not keep weights positive.}] AR(1) with $\phi = \tfrac12$, two cohorts: the other cohort's first month gets $-\tfrac1{30}$.
   \lean{Credibility.Factor.blup_neg_of_ar1}
-  \item[26. The shock fit absorbs only part of a persistent factor.] Two months, equal weights: $\hat C$ estimates $C + (1-\phi)\gamma\lambda\lambda^\top$, neither $C$ nor the lag-0 covariance.
+  \item[{26. The shock fit absorbs only part of a persistent factor.}] Two months, equal weights: $\hat C$ estimates $C + (1-\phi)\gamma\lambda\lambda^\top$, neither $C$ nor the lag-0 covariance.
   \lean{Credibility.Factor.crossHat_ar1_two}
-  \item[27. Cohort-specific means hide $\tau^2$.] Every invariant estimating system is singular in $\tau^2$; leave it out.
+  \item[{27. Cohort-specific means hide $\tau^2$.}] Every invariant estimating system is singular in $\tau^2$; leave it out.
   \lean{Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero}
-  \item[28. Under a cohort season, only repeated calendar months inform.] One year estimates nothing; a factor that repeats with the calendar is absorbed.
+  \item[{28. Under a cohort season, only repeated calendar months inform.}] One year estimates nothing; a factor that repeats with the calendar is absorbed.
   \lean{Credibility.Factor.unbiasedMean_cohortSeason_eq_zero}
   \lean{Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape}
-  \item[29. With two years, volumes must vary over the calendar.] MINQUE is nonsingular given AR(1) and $1/w_{j,0,m} + 1/w_{j,1,m}$ not constant in $m$.
+  \item[{29. With two years, volumes must vary over the calendar.}] MINQUE is nonsingular given AR(1) and $1/w_{j,0,m} + 1/w_{j,1,m}$ not constant in $m$.
   \lean{Credibility.Factor.minque_cohortSeason_det_ne_zero}
   \lean{Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume}
-  \item[30. Valid tables need $\hat s^2 > 0$.] $\hat K \succ 0$ for any $\hat A, \hat C \succeq 0$ when every $\hat s_j^2 > 0$; a cohort with all three zero makes $\hat K$ singular.
+  \item[{30. Valid tables need $\hat s^2 > 0$.}] $\hat K \succ 0$ for any $\hat A, \hat C \succeq 0$ when every $\hat s_j^2 > 0$; a cohort with all three zero makes $\hat K$ singular.
   \lean{Credibility.Factor.tableK_posDef}
   \lean{Credibility.Factor.tableK_not_posDef}
-  \item[31. Same months do not cancel the factor from relativities.] Weights $(\tfrac34, \tfrac14)$ against $(\tfrac14, \tfrac34)$ leave $\gamma(1-\phi)/2$; the month weights must match.
+  \item[{31. Same months do not cancel the factor from relativities.}] Weights $(\tfrac34, \tfrac14)$ against $(\tfrac14, \tfrac34)$ leave $\gamma(1-\phi)/2$; the month weights must match.
   \lean{Credibility.Factor.relCoef_factor_free}
   \lean{Credibility.Factor.extra_profile}
-  \item[32. Separate equals joint without block diagonality.] With $K = K_c \otimes S$, joint is separate whatever $S$: correlated residuals are not sufficient for a gain.
+  \item[{32. Separate equals joint without block diagonality.}] With $K = K_c \otimes S$, joint is separate whatever $S$: correlated residuals are not sufficient for a gain.
   \lean{Credibility.CoreVector.blupW_kronecker}
-  \item[33. The pure-premium bias is exact.] $\cov(\hat\varphi, \hat\psi) - \cov(\mu_F, \mu_Y)$, no delta method; zero for separate fits of uncorrelated components.
+  \item[{33. The pure-premium bias is exact.}] $\cov(\hat\varphi, \hat\psi) - \cov(\mu_F, \mu_Y)$, no delta method; zero for separate fits of uncorrelated components.
   \lean{Credibility.CoreVector.VecEstimates.integral_mul_pred_sub}
-  \item[34. $\hat K \succ 0$ iff $(\hat A + \hat C)_{ZZ} \succ 0$ needs $\Phi \succ 0$ and a common month.] $\Phi = 0$, $\hat A = I$: the condition holds but $\hat K = 0$.
+  \item[{34. $\hat K \succ 0$ iff $(\hat A + \hat C)_{ZZ} \succ 0$ needs $\Phi \succ 0$ and a common month.}] $\Phi = 0$, $\hat A = I$: the condition holds but $\hat K = 0$.
   \lean{Credibility.Factor.tableK_posDef_iff}
   \lean{Credibility.Factor.tableK_counter_phi}
   \lean{Credibility.Factor.tableK_counter_month}
-  \item[35. Skewed claims and per-cohort variances under-price (simulated).] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio.
+  \item[{35. Skewed claims and per-cohort variances under-price (simulated).}] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio.
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
-  \item[36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$.
+  \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$.
   \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}
-  \item[37. The spread of the means is uncorrelated with the pooled variances only under conditions.] Needs constant means within regions, no skewness, means uncorrelated with residuals, and no kurtosis; $J = T = 2$, unit volumes: $\cov(B, P) = \kappa_4/4$.
+  \item[{37. The spread of the means is uncorrelated with the pooled variances only under conditions.}] Needs constant means within regions, no skewness, means uncorrelated with residuals, and no kurtosis; $J = T = 2$, unit volumes: $\cov(B, P) = \kappa_4/4$.
   \lean{Credibility.Cumulants.covariance_statB_eq_zero}
-  \item[38. Estimating the noise variance flips the sign of its kurtosis in the cross term.] $2E[AB] = -2(1 - \tfrac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$; with known noise variance the $\gamma_N$ term is positive.
+  \item[{38. Estimating the noise variance flips the sign of its kurtosis in the cross term.}] $2E[AB] = -2(1 - \tfrac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$; with known noise variance the $\gamma_N$ term is positive.
   \lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants}
   \lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants_known}
-  \item[39. Heavy-tailed noise can raise the plug-in's error.] $J = T = 2$, volumes $(1, 8)$ and $(10, 10)$: the noise part of the cross term is positive. The level part is never positive.
+  \item[{39. Heavy-tailed noise can raise the plug-in's error.}] $J = T = 2$, volumes $(1, 8)$ and $(10, 10)$: the noise part of the cross term is positive. The level part is never positive.
   \lean{Credibility.Cumulants.crossTerm_bs_pos_example}
   \lean{Credibility.Cumulants.crossTerm_bs_level_nonpos}
-  \item[40. For the BLUP the level part has no sign (numerical).] Slightly positive in some correlated worlds, below 0.4\% of the error per unit $\gamma_L$.
-  \item[41. A $\tau^2$ per group breaks intervals (numerical).] Equal volumes, $D = 1$, $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$: best groups $\{-5, 5\}$ and the middle five. With one common $\tau^2$ they are intervals.
+  \item[{40. For the BLUP the level part has no sign (numerical).}] Slightly positive in some correlated worlds, below 0.4\% of the error per unit $\gamma_L$.
+  \item[{41. A $\tau^2$ per group breaks intervals (numerical).}] Equal volumes, $D = 1$, $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$: best groups $\{-5, 5\}$ and the middle five. With one common $\tau^2$ they are intervals.
   \lean{Credibility.group_optimal_contiguous}
 \end{description}
 
