@@ -662,7 +662,27 @@ Gaps, extra hypotheses and new results found while formalizing.
    on `(σ̂², τ̂²)` only through `k = σ²/τ²`, so the first-order error is `ε̂·(λ·x̄)`, `ε̂ = σ̂²/σ² − τ̂²/τ²`,
    `λ = dα/d log k`; then `2E[AB] = 2((1/σ² + (J − 1)/(cτ²))T_P − T_B/(cτ²))` with
    `T_P = κN/(J(T − 1)) Σᵢ αᵢλᵢ(1 − hᵢ)/Wᵢ`, `T_B = Σᵢ λᵢ(1 − Wᵢ/W)(κL Wᵢ(αᵢ − δᵢⱼ) + κN hᵢαᵢ/Wᵢ)`,
-   `hᵢ = Σₜ aᵢₜ²`. It matches `firstOrder` in the study to all printed digits. Not proved: the sign in
-   general (only numerically). The balanced theorems are now its equal-volumes corollaries (2026-11-25).
+   `hᵢ = Σₜ aᵢₜ²`. It matches `firstOrder` in the study to all printed digits. The sign is not general
+   (Finding 39). The balanced theorems are now its equal-volumes corollaries (2026-11-25).
+
+39. **Heavy-tailed noise can raise the Bühlmann–Straub plug-in's MSE: Finding 38's sign fails when a
+   region's volume sits in one year (new; Lean: `Cumulants.crossTerm_bs_pos_example`, with
+   `crossTerm_bs_noise_pos_value`, in `FitStatistics.lean`; `studies/cross-term.js` for the general
+   term).** Expected (Finding 38, numerics with even years): the first-order cross term `2E[AB]` is
+   ≤ 0 whenever `κL, κN ≥ 0`. Found: the *level* part is ≤ 0 in every world tried (random volumes,
+   J = 2–11, T = 2–11, 300 000 worlds × regions; not proved), but the *noise* part is not.
+   Counterexample (proved): J = T = 2, volumes `(1, 8)` and `(10, 10)`, `τ² = 1`, `σ² = 20`
+   (`z = 0.31, 0.5`), `κL = 0`: region 0's noise part is `+0.46(1 − z₀)τ²` per unit `γN`. Realistic
+   size (J = 8, T = 5, region sizes ×4 apart, one region with 90% of its volume in one year, `z₀ = 0.5`,
+   `γN = 3`): first order +19%, simulated exact `2E[A₀B₀]` **+7.5 ± 0.5%** with Laplace noise (0.0 ± 0.3%
+   normal; 400 000 draws); with the year shares even (f = 0.2) it is −3.3% first order, −2.9 ± 0.4%
+   simulated. Why: a region whose volume is concentrated in one year (`hᵢ = Σₜaᵢₜ²` near 1) has a mean
+   that is nearly one cell, so its noise kurtosis passes in full to `S²`, while the pooled `σ̂²` hardly
+   sees it (the residual weight of that cell is `w(1 − a)`, small). The negative channel through `σ̂²`
+   then no longer outweighs the positive one through `S²`. With even years inside every region the
+   noise part was ≤ 0 except at `z ≈ 0` (J = 2, `z < 0.01`), where the first order means little.
+   Exposure-weighted portfolio totals can turn positive too (up to +2% at `z ≥ 0.5`, J = 8, T = 5,
+   uneven years). Consequence: the sign of the kurtosis correction to the price of fitting BS depends
+   on the volumes; use the general formula (`crossTerm_bs_of_cumulants`), not the balanced one.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

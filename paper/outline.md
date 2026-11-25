@@ -94,6 +94,8 @@ may need a paragraph.)
   `Cumulants.crossTerm_of_balanced_cumulants`): the paragraph citing `bsPrice_of_balanced_cumulants`
   ("What 'normal' means here") should add that the cross term reverses the kurtosis effect: in total,
   heavy tails of levels or noise lower the plug-in's first-order MSE, `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`.
+  Qualify with Finding 39: that holds for even years; when a region's volume sits in one year the noise
+  part can raise the MSE (`crossTerm_bs_pos_example`).
 - *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
   and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
 - The fourth-moment layer (2026-11-22, `Cumulants.lean`, `notes/fourth-moments.md`): why

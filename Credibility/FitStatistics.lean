@@ -2299,6 +2299,54 @@ theorem crossTerm_of_balanced_cumulants_known [Nonempty J] (X : J ⊕ (J × T) �
 
 end CrossBalanced
 
+/-! ### A counterexample to the sign of the noise part -/
+
+/-- Volumes of the counterexample: region 0 has `(1, 8)`, region 1 has `(10, 10)`. -/
+def wce : Fin 2 → Fin 2 → ℝ := ![![1, 8], ![10, 10]]
+
+/-- The right-hand side of `crossTerm_bs_of_cumulants` at the counterexample is positive. -/
+lemma crossTerm_bs_noise_pos_value :
+    0 < 2 * ((1 / (20 : ℝ) + ((Fintype.card (Fin 2) : ℝ) - 1)
+            / ((∑ i, ∑ t, wce i t - (∑ i, (∑ t, wce i t) ^ 2) / ∑ i, ∑ t, wce i t) * (1 : ℝ)))
+          * ((1 : ℝ) / (Fintype.card (Fin 2) * ((Fintype.card (Fin 2) : ℝ) - 1))
+            * ∑ i, bsAlpha (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+              * bsLambda (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+              * (1 - ∑ t, shares wce i t ^ 2) / ∑ t, wce i t)
+        - 1 / ((∑ i, ∑ t, wce i t - (∑ i, (∑ t, wce i t) ^ 2) / ∑ i, ∑ t, wce i t) * (1 : ℝ))
+          * ∑ i, bsLambda (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+            * (1 - (∑ t, wce i t) / ∑ l, ∑ t, wce l t)
+            * ((0 : ℝ) * (∑ t, wce i t) * (bsAlpha (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+                - if i = (0 : Fin 2) then 1 else 0)
+              + (1 : ℝ) * (∑ t, shares wce i t ^ 2) * bsAlpha (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+                / ∑ t, wce i t)) := by
+  simp only [wce, bsAlpha, bsLambda, bsZk, shares, Fin.sum_univ_two, Fintype.card_fin,
+    Matrix.cons_val_zero, Matrix.cons_val_one, Fin.isValue]
+  norm_num
+
+/-- **Finding 39: heavy-tailed noise can raise the plug-in's MSE.** Two regions, two years, volumes
+`(1, 8)` and `(10, 10)`, `τ² = 1`, `σ² = 20` (`z = 0.31, 0.5`), normal-like levels (`κL = 0`) and noise
+of fourth cumulant `1/wᵢₜ²`: for any random cells with these moments the first-order cross term of
+Bühlmann–Straub's plug-in for region 0 is positive (about `+0.46(1 - z₀)τ²` per unit `γN`). Region 0
+has `8/9` of its volume in one year, so its mean is nearly one cell: its noise kurtosis reaches `S²`
+fully but the pooled `σ̂²` hardly, and the negative term through `σ̂²` (Finding 38) no longer wins. -/
+theorem crossTerm_bs_pos_example {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
+    (X : Fin 2 ⊕ (Fin 2 × Fin 2) → Ω → ℝ) (hX : ∀ p, MemLp (X p) 4 P) (μ : ℝ)
+    (h4 : ∀ p q r s, ∫ ω, X p ω * X q ω * X r ω * X s ω ∂P
+      = primK4W 0 1 wce p q r s
+        + diagonal (primVarW 1 20 wce) p q * diagonal (primVarW 1 20 wce) r s
+        + diagonal (primVarW 1 20 wce) p r * diagonal (primVarW 1 20 wce) q s
+        + diagonal (primVarW 1 20 wce) p s * diagonal (primVarW 1 20 wce) q r) :
+    0 < 2 * ∫ ω, (∑ i, bsAlpha (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+            * regionMean wce (cellsOf μ fun p => X p ω) i - (μ + X (Sum.inl 0) ω))
+        * (∑ i, bsLambda (fun i => ∑ t, wce i t) ((20 : ℝ) / (1 : ℝ)) 0 i
+            * regionMean wce (cellsOf μ fun p => X p ω) i)
+        * bsEps wce (1 : ℝ) (20 : ℝ) (statP wce (cellsOf μ fun p => X p ω))
+            (statB wce (cellsOf μ fun p => X p ω)) ∂P := by
+  have hw : ∀ i t, 0 < wce i t := by
+    intro i t; fin_cases i <;> fin_cases t <;> norm_num [wce]
+  rw [crossTerm_bs_of_cumulants X hX 1 20 0 1 μ one_pos (by norm_num) wce hw h4 0]
+  exact crossTerm_bs_noise_pos_value
+
 end Credibility.Cumulants
 
 /-! ### The gap between two blends as a quadratic in `z` -/

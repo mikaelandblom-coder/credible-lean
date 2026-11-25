@@ -9017,10 +9017,31 @@ price needs their covariances.
   Lemma~\ref{lem:integral_errW} the two moments.
 \end{proof}
 
+\begin{theorem}[Heavy-tailed noise can raise the plug-in's MSE]\label{thm:crossTerm_bs_pos_example}
+  \lean{Credibility.Cumulants.wce, Credibility.Cumulants.crossTerm_bs_noise_pos_value, Credibility.Cumulants.crossTerm_bs_pos_example}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  $J = T = 2$, volumes $(1, 8)$ and $(10, 10)$, $\tau^2 = 1$, $\sigma^2 = 20$, $\kappa_L = 0$, $\kappa_N = 1$: the first-order
+  cross term of region 0 is positive.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  Theorem~\ref{thm:crossTerm_bs}, then evaluate the finite sums.
+\end{proof}
+
+\begin{remark}[Finding 39: the noise part has no sign]
+  Region 0 holds $8/9$ of its volume in one year, so its mean is nearly one cell: its noise kurtosis
+  reaches $S^2$ in full but the pooled $\hat\sigma^2$ hardly, and the negative channel through $\hat\sigma^2$ no
+  longer wins. With $J = 8$, $T = 5$ and one such region the exact cross term is $+7.5\%$ of its MSE by
+  simulation. The level part was $\le 0$ in every world tried (not proved).
+\end{remark}
+
 \begin{remark}[Finding 38 for any volumes]
   Every $\lambda_i$, $\alpha_i$ and weight in Theorem~\ref{thm:crossTerm_bs} is explicit; on unbalanced worlds
   (region sizes $16\times$ apart) the term is negative in every region, for levels and for noise, and
-  matches simulation (\texttt{studies/cross-term.js}).
+  matches simulation (\texttt{studies/cross-term.js}); with one region's volume in a single year the
+  noise part turns positive (Theorem~\ref{thm:crossTerm_bs_pos_example}).
 \end{remark}
 
 \begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}

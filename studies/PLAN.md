@@ -363,6 +363,9 @@ One chat per step; none needs Lean except step 5.
   engine rather than the balanced closed form; γL stays a sensitivity.
   *Proved 2026-11-25 (`Cumulants.crossTerm_bs_of_cumulants`):* the closed form for any volumes (finite
   sums over regions, Finding 38); the engine can use it directly instead of the numeric `firstOrder`.
+  *Finding 39 (2026-11-25):* the noise part has no sign: with a region's volume concentrated in one
+  year it is positive (+7.5% of that region's MSE, simulated). So the engine must use the general
+  formula per region, and the readout should show its sign, not assume "kurtosis lowers the price".
 - [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the
