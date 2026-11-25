@@ -997,7 +997,19 @@ do not shorten the existing hierarchical proofs: those use a rank-one term along
 (`φ = 0` allowed, where `G = φτ²I` is not invertible) and block-diagonal `K`, both already short.
 Added on top: the MME solution is `Core.blup` of each random effect (`Core.hendersonMME_eq_blup`,
 Henderson 1963's result in our universal-kriging form) and its group case
-(`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`). Its Gaussian
+(`Unequal.groupEffect_eq_blup`, `groupMean_eq_gls`).
+*Gaussian conditioning checked (2026-11-25; `BLUP.lean`, `Marginal.lean` read as raw text).*
+`condMeanMatrix_lmm` is one line (`G Zᵀ V⁻¹` as the regression matrix); `compProd_lmmJointLaw`
+says the Gaussian joint law disintegrates through Stat-Lean's own `gaussianCondKernel`, with mean
+the BLUP at known `β` and covariance `G − GZᵀV⁻¹ZG`. It rests on Stat-Lean's Gaussian library
+(`multivariateGaussian`, `Gaussian/Conditioning.lean`, `ForMathlib/BindProd`, on `EuclideanSpace`),
+which is not in Mathlib. **It does not shorten `PlugInNormal.lean`**: that proof needs only
+"jointly normal and uncorrelated ⇒ independent", which Mathlib already has
+(`HasGaussianLaw.indepFun_of_covariance_eval`); the rest is our residual algebra. Not ported.
+`blupRisk_eq_add` is our `predMse_eq_blup_add` + `Target.mse_portLin` (distribution-free).
+Possible later distribution-layer result (not started): under normal noise with known `β`, the
+BLUP is `E[Y | x]`, so best among *all* predictors; it would need conditional expectation, which
+Mathlib can give from independence of `Y − ℓᵀK⁻¹x` and `x` without porting the kernel. Its Gaussian
 conditioning results might shorten `PlugInNormal.lean`. Also seen, not about our topics: StatsMLlib,
 AI4SLT (arXiv 2602.02285), FormalSLT.
 
