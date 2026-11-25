@@ -703,5 +703,11 @@ Gaps, extra hypotheses and new results found while formalizing.
    BLUP weight of a small region sits mostly on the large one (weights −0.04, 0.03, 1.02 above), and more
    `τ̂²` need not move it towards `eⱼ`. Consequence: for the BLUP plug-in the level part is negative for
    practical purposes but not a theorem; the per-region sign of BS does not carry over.
+   *Where it holds (2026-11-25):* J = 2 always. The weights sum to 1, so `dⱼ − eⱼ = d₂(e₂ − e₁)` with
+   `d₂ = (a − c)/(a + b − 2c + 2τ²)`, `a, b` the noise variances of the two means and `c` their covariance,
+   and `d/dτ² 2m d₂² = −8m(a − c)²/Var(x̄₁ − x̄₂)³ ≤ 0`. No condition on ρ or the years suffices for J ≥ 3:
+   with even year shares it fails at ρ = 0.1 (exact: J = 4, T = 3, per-year volumes
+   `0.01², 37.1², 5.03², 5.01²`, τ² = 30, region 1: `+2.5·10⁻⁷` per unit γL), and the size grows with ρ
+   (even years: at most `+0.002%` for ρ ≤ 0.5, `+0.2%` at 0.8, `+2.5%` at 0.999 with sizes 10⁶ apart).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
