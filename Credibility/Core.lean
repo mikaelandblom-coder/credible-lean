@@ -1085,7 +1085,7 @@ noncomputable def residualWeight (K : Matrix J J ℝ) (c : J → ℝ) : J → �
 /-- `(c + (1 - 1ᵀc) b)ᵀx = bᵀx + cᵀ(x - (bᵀx) 1)`. -/
 theorem residualWeight_dotProduct (K : Matrix J J ℝ) (c x : J → ℝ) :
     residualWeight K c ⬝ᵥ x = glsWeight K ⬝ᵥ x + c ⬝ᵥ (x - (glsWeight K ⬝ᵥ x) • 1) := by
-  simp only [residualWeight, add_dotProduct, smul_dotProduct, sub_dotProduct, dotProduct_sub,
+  simp only [residualWeight, add_dotProduct, smul_dotProduct, dotProduct_sub,
     dotProduct_smul, smul_eq_mul, dotProduct_one, one_dotProduct]
   ring
 

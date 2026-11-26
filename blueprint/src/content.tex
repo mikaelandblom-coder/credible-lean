@@ -3573,6 +3573,65 @@ This section assumes symmetric noise; nothing else depends on it.
   Expand $(A + B)^2$; $\mathbb E A^2 = \mathrm{mse}(d)$ by Theorem~\ref{thm:Blup_mse_true}.
 \end{proof}
 
+\begin{definition}[The loss along a path between two predictors]\label{def:mixLoss}
+  \lean{Credibility.mixLoss, Credibility.bestMix}
+  \leanok
+  For mean squared errors $M_0$, $M_1$ of two predictors and their spread $S$ (the mean square of
+  the difference of the predictions), $\mathrm{loss}(\theta) = (1-\theta)M_0 + \theta M_1
+  - \theta(1-\theta)S$ and $\theta^* = \tfrac12 + (M_0 - M_1)/(2S)$.
+\end{definition}
+
+\begin{theorem}[The best fraction]\label{thm:bestMix}
+  \lean{Credibility.mixLoss_zero, Credibility.mixLoss_one, Credibility.mixLoss_eq,
+        Credibility.bestMix_optimal, Credibility.mixLoss_bestMix, Credibility.bestMix_eq_one_iff,
+        Credibility.bestMix_mem_Icc_iff, Credibility.mixLoss_le_zero_iff, Credibility.mixLoss_half}
+  \leanok
+  \uses{def:mixLoss}
+  $\mathrm{loss}(0) = M_0$, $\mathrm{loss}(1) = M_1$, $\mathrm{loss}(\tfrac12) = (M_0 + M_1)/2 - S/4$.
+  If $S \ne 0$, $\mathrm{loss}(\theta) = \mathrm{loss}(\theta^*) + S(\theta - \theta^*)^2$ with
+  $\mathrm{loss}(\theta^*) = (M_0 + M_1)/2 - S/4 - (M_0 - M_1)^2/(4S)$, and $\theta^* = 1$ iff
+  $M_0 - M_1 = S$. If $S > 0$, $\theta^*$ minimises the loss and $\theta^* \in [0, 1]$ iff
+  $|M_0 - M_1| \le S$. For $\theta > 0$, $\mathrm{loss}(\theta) \le M_0$ iff
+  $M_1 - M_0 \le (1-\theta)S$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Algebra: complete the square in $\theta$.
+\end{proof}
+
+\begin{theorem}[Mixing two predictors]\label{thm:plugIn_mix}
+  \lean{Credibility.integral_sq_mix, Credibility.Core.Target.plugIn_mix,
+        Credibility.Core.Target.integral_sq_plugIn_mix}
+  \leanok
+  \uses{def:mixLoss, def:Blup_Target}
+  For square-integrable random errors $e_0$, $e_1$,
+  $\mathbb E((1-\theta)e_0 + \theta e_1)^2 = \mathrm{loss}(\theta)$ with $M_k = \mathbb E e_k^2$,
+  $S = \mathbb E(e_1 - e_0)^2$. In particular, for random weights $\hat w$ (the fitted blend) and
+  $\hat d$ (the fitted best predictor) with square-integrable errors, the weights
+  $\hat w + \theta(\hat d - \hat w)$ have mean squared error $\mathrm{loss}(\theta)$ with
+  $S = \mathbb E(\hat d^Tx - \hat w^Tx)^2$, for every distribution.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:mixLoss}
+  Pointwise $((1-\theta)a + \theta b)^2 = (1-\theta)a^2 + \theta b^2 - \theta(1-\theta)(b-a)^2$;
+  integrate. Mixing the weights mixes the predictions.
+\end{proof}
+
+\begin{corollary}[With known moments the full step is best]\label{cor:bestMix_blup}
+  \lean{Credibility.Core.bestMix_blupWeight}
+  \leanok
+  \uses{thm:bestMix, thm:Core_blup_optimal}
+  If $K \succ 0$, $\sum_i w_i = 1$ and $w \ne d^*$, then with $M_0 = \mathrm{mse}_j(w)$,
+  $M_1 = \mathrm{mse}_j(d^*)$ and $S = (w - d^*)^TK(w - d^*)$, $\theta^* = 1$
+  (Theorem~\ref{thm:Core_shrink_blup}).
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:bestMix, thm:Core_blup_optimal}
+  The gain $M_0 - M_1$ is $S$ by Theorem~\ref{thm:Core_blup_optimal}.
+\end{proof}
+
 \begin{theorem}[The plug-in predictor under normal noise]\label{thm:Blup_plugIn_normal}
   \lean{Credibility.Core.Target.resid, Credibility.Core.Target.resid_mul,
         Credibility.Core.Target.eq_resid_add, Credibility.Core.Target.plugIn_mse_of_normal,

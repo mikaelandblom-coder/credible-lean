@@ -725,6 +725,27 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   Normal or symmetric noise only; with skewed claims the cross term has either sign.
 \end{caveat}
 
+\begin{result}[Part way from the fitted blend to the fitted best predictor]\label{res:plugIn_mix}
+  With $M_0$, $M_1$ the errors of the fitted blend $\hat w^\top x$ and the fitted best predictor
+  $\hat d^\top x$, and the spread $S = E(\hat d^\top x - \hat w^\top x)^2$, the weights
+  $\hat w + \theta(\hat d - \hat w)$ have error
+  \[
+    (1-\theta)M_0 + \theta M_1 - \theta(1-\theta)S, \qquad
+    \theta^* = \tfrac12 + \frac{M_0 - M_1}{2S},
+  \]
+  for every distribution. $\theta^* \in [0,1]$ iff $|M_0 - M_1| \le S$; with known moments
+  $M_0 - M_1 = S$ and $\theta^* = 1$ (Result~\ref{res:blup_residual}).
+  \lean{Credibility.Core.Target.integral_sq_plugIn_mix}
+  \lean{Credibility.bestMix_optimal}
+  \lean{Credibility.bestMix_mem_Icc_iff}
+  \lean{Credibility.mixLoss_le_zero_iff}
+  \lean{Credibility.Core.bestMix_blupWeight}
+\end{result}
+\use $\theta = \tfrac12$ costs $(M_0 + M_1)/2 - S/4$: better than the blend whenever the fitted best predictor loses less than $S/2$ to it.
+\begin{caveat}
+  $S$ is estimable from the data, the gain $M_0 - M_1$ is not; no fitted $\hat\theta$ yet.
+\end{caveat}
+
 \begin{result}[What fitting Bühlmann--Straub costs, to first order]\label{res:bsPrice}
   Balanced world: $J$ regions, $T$ years, equal volumes, $z = \tau^2/(\tau^2 + v)$. Relative to
   $(1-z)\tau^2$, the error of the blend with known parameters, fitting $\tau^2$ and $\sigma^2$ adds

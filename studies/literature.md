@@ -1398,3 +1398,13 @@ credibility, Künsch, Zhao & Poudyal §10l).
   which makes inverse-variance weights `∝ (θ + nₚ)⁻²` — the weights Dannenburg (1995) and Goulet
   (1998) replace by volume products. Nothing new needed from outside; the symmetry argument
   (transitive group ⇒ equal row sums ⇒ equal weights) is standard invariance.
+
+### 10u. Mixing the fitted blend and the fitted BLUP (2026-11-26; from memory, not fetched)
+- Used for `PlugInMix.lean`: the error of a mix of two predictors is the straight line between
+  their errors minus `θ(1−θ)` times their spread (Krogh & Vedelsby 1995, ambiguity decomposition
+  for ensembles); the optimal weight `θ* = (M₀ − C)/(M₀ + M₁ − 2C)` is Bates & Granger's (1969)
+  for combining forecasts and that of a composite small-area estimator (Schaible 1979; Rao &
+  Molina 2015, §3.3). New here: written with the spread `S` (estimable from the data alone), and
+  with known moments `θ* = 1` exactly (Pythagoras), so `θ* < 1` measures what fitting costs.
+  Open: an estimate of the gain `M₀ − M₁` without the truth (SURE as in `ObservedBest.lean`, or
+  cross-fitting as in S63) to give a fitted `θ̂` with no hand-set value.

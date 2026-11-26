@@ -5,6 +5,7 @@ import Credibility.Blup
 import Credibility.BlupMoments
 import Credibility.PlugInSymmetric
 import Credibility.PlugIn
+import Credibility.PlugInMix
 import Credibility.PlugInNormal
 import Credibility.BlupNormal
 import Credibility.Season
