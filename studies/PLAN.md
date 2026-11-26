@@ -921,7 +921,11 @@ One chat per step; none needs Lean except step 5.
   "borrowed") in the card "Is correlation worth modelling?"; later a fit with `θ̂` from gain against price
   (S57), once the best `θ` for a plug-in is stated (stated 2026-11-26, `PlugInMix.lean`:
   `θ* = ½ + (M₀ − M₁)/(2S)`, `S` the spread of the fitted blend and BLUP; the app can show `S` and
-  the safe range `M₁ − M₀ ≤ (1 − θ)S`; a fitted `θ̂` still needs an estimate of the gain). Gauge of `Z`'s rows to settle.
+  the safe range `M₁ − M₀ ≤ (1 − θ)S`). Fitted `θ̂` (2026-11-26, `Target.integral_sq_plugIn_mix_proxy`,
+  `proxy_neg_div_eq`): fit on years `1..T−1`, regress year `T`'s blend error on `Δ` across cohorts,
+  clip to `[0, 1]` (`mixLoss_clip_le`); exact in mean when year-`T` noise is independent of the fit,
+  biased by `E[Δε]/EΔ²` under a common year shock. Study first: its noise against S14's CV for `θ`
+  of damping, and against `θ = 1` (the plug-in BLUP) and `θ = ½`. Gauge of `Z`'s rows to settle.
 - [ ] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the
   pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
   needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:

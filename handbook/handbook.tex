@@ -748,7 +748,27 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
 \end{result}
 \use $\theta = \tfrac12$ costs $(M_0 + M_1)/2 - S/4$: better than the blend whenever the fitted best predictor loses less than $S/2$ to it.
 \begin{caveat}
-  $S$ is estimable from the data, the gain $M_0 - M_1$ is not; no fitted $\hat\theta$ yet.
+  $S$ is estimable from the data, the gain $M_0 - M_1$ is not: it needs a proxy for the target (Result~\ref{res:plugIn_proxy}).
+\end{caveat}
+
+\begin{result}[Choosing $\theta$ on held-out data]\label{res:plugIn_proxy}
+  With a proxy $Y' = Y + \varepsilon$ for the target (a held-out year) and the disagreement
+  $\Delta = \hat d^\top x - \hat w^\top x$, the best fraction is the regression of the blend's
+  error on $\Delta$, and on the proxy
+  \[
+    -\frac{E[(\hat w^\top x - Y')\Delta]}{E\Delta^2} = \theta^* + \frac{E[\Delta\varepsilon]}{E\Delta^2},
+  \]
+  for every distribution. If $E[\Delta\varepsilon] = 0$ (e.g.\ $\varepsilon$ independent of the data,
+  mean zero), the proxy's error curve is the target's plus a constant: same $\theta^*$, same gain.
+  \lean{Credibility.bestMix_eq_neg_div}
+  \lean{Credibility.proxy_neg_div_eq}
+  \lean{Credibility.proxy_gain_eq}
+  \lean{Credibility.Core.Target.integral_sq_plugIn_mix_proxy}
+  \lean{Credibility.mixLoss_clip_le}
+\end{result}
+\use Fit on years $1..T-1$, regress year $T$'s error of the blend on $\Delta$ across cohorts; clipping to $[0,1]$ never hurts when $|M_0 - M_1| \le S$.
+\begin{caveat}
+  A shock common to all cohorts in the held-out year correlates $\varepsilon$ with $\Delta$ and biases $\hat\theta$ by $E[\Delta\varepsilon]/E\Delta^2$; one year is a noisy sample (S14).
 \end{caveat}
 
 \begin{result}[What fitting Bühlmann--Straub costs, to first order]\label{res:bsPrice}

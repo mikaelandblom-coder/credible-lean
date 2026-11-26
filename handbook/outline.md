@@ -30,7 +30,8 @@ page target is dropped: it is a reference, not a read.
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
 - *Done 2026-11-26:* `res:blup_residual` after `res:blup` (GLS mean plus predicted residuals, the
-  blend as the row `z eⱼ`, `(1−θ)²`), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`).
+  blend as the row `z eⱼ`, `(1−θ)²`), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`), `res:plugIn_proxy` (`θ` on a held-out
+  year, its exact bias, clipping).
 - *Done 2026-11-26:* `res:crossed_pool` after `res:crossed_est`: Var of a pair pool = aᵀVa, GLS on V is the
   best unbiased pool, equal weights exactly optimal in a balanced table, the normal-noise diagonal
   2(θ + nₚ)² and the two limits of inverse variance.

@@ -48,7 +48,11 @@ Lean targets (`Core.lean`, one chat; 1–3 done 2026-11-26: `Core.blupWeight_dot
 4. Later (needs the moment layer): the best `θ` for a plug-in, as for damping. *Done 2026-11-26*
    (`PlugInMix.lean`): `MSE(θ) = (1 − θ)M₀ + θM₁ − θ(1 − θ)S` for every distribution, `S` the spread of
    the two fitted predictions, `θ* = ½ + (M₀ − M₁)/(2S)`; not gain/(gain + price) but
-   ½ + gain/(2·spread). Open: estimating the gain (no truth), for a fitted `θ̂`.
+   ½ + gain/(2·spread). Fitted `θ̂` (2026-11-26, same file): `θ* = −E[e₀Δ]/EΔ²`, the regression of
+   the blend's error on the disagreement `Δ`; on a held-out proxy `Y' = Y + ε` it is off by exactly
+   `E[Δε]/EΔ²`, so it is exact when the held-out noise is independent of the data (mean zero), and
+   clipping to `[0, 1]` never hurts when `|M₀ − M₁| ≤ S`. Open: how noisy one held-out year is (a
+   study, then a variance statement), and the common-shock bias in the factor model.
 
 ## 3. Hypothesis for the ρ̂ channel (Finding 35, PLAN "Finding 35 remedies", open item)
 

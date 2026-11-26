@@ -1406,5 +1406,9 @@ credibility, Künsch, Zhao & Poudyal §10l).
   for combining forecasts and that of a composite small-area estimator (Schaible 1979; Rao &
   Molina 2015, §3.3). New here: written with the spread `S` (estimable from the data alone), and
   with known moments `θ* = 1` exactly (Pythagoras), so `θ* < 1` measures what fitting costs.
-  Open: an estimate of the gain `M₀ − M₁` without the truth (SURE as in `ObservedBest.lean`, or
-  cross-fitting as in S63) to give a fitted `θ̂` with no hand-set value.
+  The gain `M₀ − M₁` needs a proxy for the target. Choosing the weight by regressing a held-out
+  outcome on the forecasts is Granger & Ramanathan (1984) and stacking (Wolpert 1992; Breiman 1996,
+  *Stacked regressions*), both from memory. New here (`PlugInMix.lean`, proxy section): the exact,
+  distribution-free bias of the proxy's `θ`, `E[Δε]/EΔ²`, zero iff the proxy noise is uncorrelated
+  with the disagreement `Δ` (independent, mean zero suffices); with a common year shock it is not
+  (Bergmeir et al. 2018 above, the same mechanism), and one held-out year is noisy (S14).

@@ -3613,7 +3613,8 @@ This section assumes symmetric noise; nothing else depends on it.
 \begin{theorem}[The best fraction]\label{thm:bestMix}
   \lean{Credibility.mixLoss_zero, Credibility.mixLoss_one, Credibility.mixLoss_eq,
         Credibility.bestMix_optimal, Credibility.mixLoss_bestMix, Credibility.bestMix_eq_one_iff,
-        Credibility.bestMix_mem_Icc_iff, Credibility.mixLoss_le_zero_iff, Credibility.mixLoss_half}
+        Credibility.bestMix_mem_Icc_iff, Credibility.mixLoss_le_zero_iff, Credibility.mixLoss_half,
+        Credibility.mixLoss_clip_le}
   \leanok
   \uses{def:mixLoss}
   $\mathrm{loss}(0) = M_0$, $\mathrm{loss}(1) = M_1$, $\mathrm{loss}(\tfrac12) = (M_0 + M_1)/2 - S/4$.
@@ -3621,7 +3622,8 @@ This section assumes symmetric noise; nothing else depends on it.
   $\mathrm{loss}(\theta^*) = (M_0 + M_1)/2 - S/4 - (M_0 - M_1)^2/(4S)$, and $\theta^* = 1$ iff
   $M_0 - M_1 = S$. If $S > 0$, $\theta^*$ minimises the loss and $\theta^* \in [0, 1]$ iff
   $|M_0 - M_1| \le S$. For $\theta > 0$, $\mathrm{loss}(\theta) \le M_0$ iff
-  $M_1 - M_0 \le (1-\theta)S$.
+  $M_1 - M_0 \le (1-\theta)S$. If $S > 0$ and $\theta^* \in [0,1]$, clipping any $\theta$ to $[0,1]$
+  does not increase the loss.
 \end{theorem}
 \begin{proof}
   \leanok
@@ -3659,6 +3661,54 @@ This section assumes symmetric noise; nothing else depends on it.
   \leanok
   \uses{thm:bestMix, thm:Core_blup_optimal}
   The gain $M_0 - M_1$ is $S$ by Theorem~\ref{thm:Core_blup_optimal}.
+\end{proof}
+
+\begin{theorem}[The best fraction as a regression]\label{thm:bestMix_regression}
+  \lean{Credibility.bestMix_eq_neg_div}
+  \leanok
+  \uses{thm:bestMix}
+  For square-integrable $e_0$, $\Delta$ with $\mathbb E\Delta^2 \ne 0$ and $e_1 = e_0 + \Delta$:
+  $\theta^* = -\mathbb E[e_0\Delta]/\mathbb E\Delta^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\mathbb E e_1^2 = \mathbb E e_0^2 + 2\mathbb E[e_0\Delta] + \mathbb E\Delta^2$; substitute into
+  $\theta^*$.
+\end{proof}
+
+\begin{theorem}[Choosing the fraction on a proxy]\label{thm:mix_proxy}
+  \lean{Credibility.integral_sq_mix_proxy, Credibility.proxy_neg_div_eq,
+        Credibility.proxy_gain_eq, Credibility.integral_mul_eq_zero_of_indepFun}
+  \leanok
+  \uses{thm:bestMix_regression}
+  For square-integrable $e_0$, $\Delta$, $\varepsilon$ (the proxy $Y' = Y + \varepsilon$):
+  $\mathbb E(e_0 + \theta\Delta - \varepsilon)^2 = \mathbb E(e_0 + \theta\Delta)^2
+  + (\mathbb E\varepsilon^2 - 2\mathbb E[e_0\varepsilon]) - 2\theta\,\mathbb E[\Delta\varepsilon]$.
+  Hence the proxy's regression fraction is
+  $-\mathbb E[(e_0 - \varepsilon)\Delta]/\mathbb E\Delta^2 = \theta^* + \mathbb E[\Delta\varepsilon]/\mathbb E\Delta^2$
+  and its gain is the true gain plus $2\mathbb E[\Delta\varepsilon]$. If $\Delta$ and $\varepsilon$ are
+  independent and $\mathbb E\varepsilon = 0$, then $\mathbb E[\Delta\varepsilon] = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bestMix_regression}
+  Expand the square pointwise and integrate; the gain is the curve at $\theta = 0$ minus
+  $\theta = 1$. Independence gives $\mathbb E[\Delta\varepsilon] = \mathbb E\Delta\,\mathbb E\varepsilon$.
+\end{proof}
+
+\begin{corollary}[A held-out proxy finds the best fraction]\label{cor:plugIn_mix_proxy}
+  \lean{Credibility.Core.Target.integral_sq_plugIn_mix_proxy}
+  \leanok
+  \uses{thm:mix_proxy, thm:plugIn_mix}
+  If the proxy's noise $Y' - Y$ is uncorrelated with the disagreement $\hat d^Tx - \hat w^Tx$, the
+  proxy's mean squared error of $\hat w + \theta(\hat d - \hat w)$ is the target's plus a constant
+  for every $\theta$, so both have the same minimiser, for every distribution.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:mix_proxy, thm:plugIn_mix}
+  Theorem~\ref{thm:mix_proxy} at $\theta$ and at $0$, with mixed predictions as in
+  Theorem~\ref{thm:plugIn_mix}.
 \end{proof}
 
 \begin{theorem}[The plug-in predictor under normal noise]\label{thm:Blup_plugIn_normal}

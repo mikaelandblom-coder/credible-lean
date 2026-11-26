@@ -26,7 +26,8 @@ tactics.
   MSE `mse(d*) + E B² + 2E[AB]` (distribution-free) → `Credibility/PlugIn.lean`; the cross term
   vanishes under normal noise → `Credibility/PlugInNormal.lean`; part way from the fitted blend to the
   fitted BLUP: `MSE(θ) = (1−θ)M₀ + θM₁ − θ(1−θ)S`, best `θ = ½ + (M₀−M₁)/(2S)`, `θ* = 1` with known
-  moments (distribution-free) → `Credibility/PlugInMix.lean`; with known mean the best linear predictor is `E[Y | x]` and best among all measurable
+  moments, `θ` chosen on a held-out proxy (exact iff `E[Δε] = 0`, bias `E[Δε]/EΔ²`), clipping to
+  `[0, 1]` (distribution-free) → `Credibility/PlugInMix.lean`; with known mean the best linear predictor is `E[Y | x]` and best among all measurable
   predictors under normal noise → `Credibility/BlupNormal.lean`
 - §2.3–2.5 data model, `K`, eqs. (21), (22), (26) → `Credibility/Model.lean` (corollaries of `Unequal` via `Model.toUnequal`)
 - §2.6 Bühlmann–Straub special case, eqs. (28)–(30) → `Credibility/BuhlmannStraub.lean` (corollaries of `UnequalEstimation`);

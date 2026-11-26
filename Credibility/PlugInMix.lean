@@ -108,6 +108,20 @@ theorem mixLoss_le_zero_iff {θ : ℝ} (hθ : 0 < θ) :
       mul_nonpos_of_nonneg_of_nonpos hθ.le (by linarith)
     linarith
 
+/-- **Clipping to `[0, 1]` never hurts** when the best fraction lies there (`|M₀ - M₁| ≤ S`):
+any `θ`, e.g. an estimate, moved into `[0, 1]` has no larger loss. -/
+theorem mixLoss_clip_le (hS : 0 < S) (hmem : bestMix M₀ M₁ S ∈ Set.Icc 0 1) (θ : ℝ) :
+    mixLoss M₀ M₁ S (max 0 (min θ 1)) ≤ mixLoss M₀ M₁ S θ := by
+  rw [mixLoss_eq M₀ M₁ S hS.ne' θ, mixLoss_eq M₀ M₁ S hS.ne' (max 0 (min θ 1))]
+  obtain ⟨h0, h1⟩ := hmem
+  have hsq : (max 0 (min θ 1) - bestMix M₀ M₁ S) ^ 2 ≤ (θ - bestMix M₀ M₁ S) ^ 2 := by
+    rcases le_total θ 0 with hθ | hθ
+    · rw [min_eq_left (by linarith), max_eq_left hθ]; nlinarith
+    · rcases le_total θ 1 with hθ1 | hθ1
+      · rw [min_eq_left hθ1, max_eq_right hθ]
+      · rw [min_eq_right hθ1, max_eq_right zero_le_one]; nlinarith
+  nlinarith
+
 /-- Halfway: `MSE(½) = (M₀ + M₁)/2 - S/4`. -/
 theorem mixLoss_half : mixLoss M₀ M₁ S (1 / 2) = (M₀ + M₁) / 2 - S / 4 := by
   simp only [mixLoss]; ring
@@ -155,6 +169,88 @@ theorem integral_sq_mix {e₀ e₁ : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (h₁ :
   rw [e1, e2, integral_const_mul, integral_const_mul, integral_const_mul]
   rfl
 
+/-! ### Choosing `θ` against a held-out proxy
+
+The target `Y` is unobserved; a proxy `Y' = Y + ε` (next year's experience, a held-out year) is.
+With the blend's error `e₀` and the disagreement `Δ` of the two predictions, the proxy's loss
+curve is the true one plus a constant, minus `2θE[Δε]`. So the regression of the blend's
+proxy error on the disagreement (Granger & Ramanathan's combination, stacking) finds the best
+`θ` exactly when `E[Δε] = 0`, and is off by `E[Δε]/EΔ²` otherwise. -/
+
+/-- **The proxy's loss curve**: `E(e₀ + θΔ - ε)² = E(e₀ + θΔ)² + (Eε² - 2E[e₀ε]) - 2θE[Δε]`. -/
+theorem integral_sq_mix_proxy {e₀ Δ ε : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (hΔ : MemLp Δ 2 P)
+    (hε : MemLp ε 2 P) (θ : ℝ) :
+    P[fun ω => (e₀ ω + θ * Δ ω - ε ω) ^ 2]
+      = P[fun ω => (e₀ ω + θ * Δ ω) ^ 2]
+        + (P[fun ω => ε ω ^ 2] - 2 * P[fun ω => e₀ ω * ε ω]) - 2 * θ * P[fun ω => Δ ω * ε ω] := by
+  have hpt : ∀ ω, (e₀ ω + θ * Δ ω - ε ω) ^ 2
+      = (e₀ ω + θ * Δ ω) ^ 2 + (ε ω ^ 2 - 2 * (e₀ ω * ε ω)) - 2 * θ * (Δ ω * ε ω) := fun ω => by
+    ring
+  simp_rw [hpt]
+  have iA := (h₀.add (hΔ.const_mul θ)).integrable_sq
+  have iε := hε.integrable_sq
+  have i0 := h₀.integrable_mul hε
+  have iΔ := hΔ.integrable_mul hε
+  have e1 := integral_sub (iA.add (iε.sub (i0.const_mul 2))) (iΔ.const_mul (2 * θ))
+  have e2 := integral_add iA (iε.sub (i0.const_mul 2))
+  have e3 := integral_sub iε (i0.const_mul 2)
+  simp only [Pi.add_apply, Pi.sub_apply, Pi.mul_apply] at e1 e2 e3
+  rw [e1, e2, e3, integral_const_mul, integral_const_mul]
+
+/-- **The best fraction as a regression**: with `e₁ = e₀ + Δ`, `θ* = -E[e₀Δ]/EΔ²`. -/
+theorem bestMix_eq_neg_div {e₀ Δ : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (hΔ : MemLp Δ 2 P)
+    (hS : P[fun ω => Δ ω ^ 2] ≠ 0) :
+    bestMix (P[fun ω => e₀ ω ^ 2]) (P[fun ω => (e₀ ω + Δ ω) ^ 2]) (P[fun ω => Δ ω ^ 2])
+      = -P[fun ω => e₀ ω * Δ ω] / P[fun ω => Δ ω ^ 2] := by
+  have hpt : ∀ ω, (e₀ ω + Δ ω) ^ 2 = e₀ ω ^ 2 + 2 * (e₀ ω * Δ ω) + Δ ω ^ 2 := fun ω => by ring
+  simp_rw [hpt]
+  have i0 := h₀.integrable_sq
+  have iΔ := hΔ.integrable_sq
+  have i1 := h₀.integrable_mul hΔ
+  have e1 := integral_add (i0.add (i1.const_mul 2)) iΔ
+  have e2 := integral_add i0 (i1.const_mul 2)
+  simp only [Pi.add_apply, Pi.mul_apply] at e1 e2
+  rw [e1, e2, integral_const_mul]
+  simp only [bestMix]
+  field_simp
+  ring
+
+/-- **The proxy's best fraction**: regressing the blend's proxy error `e₀ - ε` on `Δ` gives
+`θ* + E[Δε]/EΔ²`; it is the best fraction for the target exactly when `E[Δε] = 0`. -/
+theorem proxy_neg_div_eq {e₀ Δ ε : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (hΔ : MemLp Δ 2 P)
+    (hε : MemLp ε 2 P) (hS : P[fun ω => Δ ω ^ 2] ≠ 0) :
+    -P[fun ω => (e₀ ω - ε ω) * Δ ω] / P[fun ω => Δ ω ^ 2]
+      = bestMix (P[fun ω => e₀ ω ^ 2]) (P[fun ω => (e₀ ω + Δ ω) ^ 2]) (P[fun ω => Δ ω ^ 2])
+        + P[fun ω => Δ ω * ε ω] / P[fun ω => Δ ω ^ 2] := by
+  rw [bestMix_eq_neg_div h₀ hΔ hS]
+  have hpt : ∀ ω, (e₀ ω - ε ω) * Δ ω = e₀ ω * Δ ω - Δ ω * ε ω := fun ω => by ring
+  simp_rw [hpt]
+  have e := integral_sub (h₀.integrable_mul hΔ) (hΔ.integrable_mul hε)
+  simp only [Pi.sub_apply, Pi.mul_apply] at e
+  rw [e]
+  field_simp
+  ring
+
+/-- **The proxy's gain**: `E(e₀ - ε)² - E(e₀ + Δ - ε)² = (Ee₀² - E(e₀ + Δ)²) + 2E[Δε]`. -/
+theorem proxy_gain_eq {e₀ Δ ε : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (hΔ : MemLp Δ 2 P)
+    (hε : MemLp ε 2 P) :
+    P[fun ω => (e₀ ω - ε ω) ^ 2] - P[fun ω => (e₀ ω + Δ ω - ε ω) ^ 2]
+      = (P[fun ω => e₀ ω ^ 2] - P[fun ω => (e₀ ω + Δ ω) ^ 2])
+        + 2 * P[fun ω => Δ ω * ε ω] := by
+  have h0 := integral_sq_mix_proxy h₀ hΔ hε 0
+  have h1 := integral_sq_mix_proxy h₀ hΔ hε 1
+  simp only [zero_mul, add_zero, one_mul] at h0 h1
+  rw [h0, h1]
+  ring
+
+/-- A proxy whose noise is independent of the disagreement and has mean zero has `E[Δε] = 0`. -/
+theorem integral_mul_eq_zero_of_indepFun {Δ ε : Ω → ℝ} (hind : Δ ⟂ᵢ[P] ε)
+    (hΔ : AEStronglyMeasurable Δ P) (hε : AEStronglyMeasurable ε P) (h0 : P[ε] = 0) :
+    P[fun ω => Δ ω * ε ω] = 0 := by
+  have := hind.integral_mul_eq_mul_integral hΔ hε
+  simp only [Pi.mul_apply] at this
+  rw [this, h0, mul_zero]
+
 namespace Core
 namespace Target
 
@@ -188,6 +284,39 @@ theorem integral_sq_plugIn_mix (wh dh : Ω → n → ℝ)
       = (T.plugIn dh ω - T.Y ω) - (T.plugIn wh ω - T.Y ω) := fun ω => by ring
   simp_rw [hpt, hS]
   exact integral_sq_mix h₀ h₁ θ
+
+/-- **Choosing `θ` on a held-out proxy.** Let `Y'` be a proxy for the target (next year's
+experience) whose noise `Y' - Y` is uncorrelated with the disagreement `d̂ᵀx - ŵᵀx` of the two
+fitted predictions. Then for every `θ` the proxy's mean squared error is the target's plus a
+constant, so both are minimised by the same `θ`, for every distribution. -/
+theorem integral_sq_plugIn_mix_proxy (wh dh : Ω → n → ℝ) (Y' : Ω → ℝ)
+    (h₀ : MemLp (fun ω => T.plugIn wh ω - T.Y ω) 2 P)
+    (h₁ : MemLp (fun ω => T.plugIn dh ω - T.Y ω) 2 P)
+    (hε : MemLp (fun ω => Y' ω - T.Y ω) 2 P)
+    (horth : P[fun ω => (T.plugIn dh ω - T.plugIn wh ω) * (Y' ω - T.Y ω)] = 0) (θ : ℝ) :
+    P[fun ω => (T.plugIn (fun ω => wh ω + θ • (dh ω - wh ω)) ω - Y' ω) ^ 2]
+      = P[fun ω => (T.plugIn (fun ω => wh ω + θ • (dh ω - wh ω)) ω - T.Y ω) ^ 2]
+        + (P[fun ω => (T.plugIn wh ω - Y' ω) ^ 2] - P[fun ω => (T.plugIn wh ω - T.Y ω) ^ 2]) := by
+  have hΔ : MemLp (fun ω => T.plugIn dh ω - T.plugIn wh ω) 2 P := by
+    have := h₁.sub h₀
+    refine this.congr_norm ?_ ?_
+    · exact (h₁.sub h₀).aestronglyMeasurable.congr (Filter.Eventually.of_forall fun ω => by
+        simp only [Pi.sub_apply]; ring)
+    · exact Filter.Eventually.of_forall fun ω => by simp only [Pi.sub_apply]; ring_nf
+  have key := integral_sq_mix_proxy h₀ hΔ hε θ
+  have key0 := integral_sq_mix_proxy h₀ hΔ hε 0
+  rw [horth] at key key0
+  simp only [zero_mul, add_zero, mul_zero, sub_zero] at key0 key
+  have p1 : ∀ ω, T.plugIn (fun ω => wh ω + θ • (dh ω - wh ω)) ω - Y' ω
+      = (T.plugIn wh ω - T.Y ω) + θ * (T.plugIn dh ω - T.plugIn wh ω) - (Y' ω - T.Y ω) :=
+    fun ω => by rw [plugIn_mix]; ring
+  have p2 : ∀ ω, T.plugIn (fun ω => wh ω + θ • (dh ω - wh ω)) ω - T.Y ω
+      = (T.plugIn wh ω - T.Y ω) + θ * (T.plugIn dh ω - T.plugIn wh ω) :=
+    fun ω => by rw [plugIn_mix]; ring
+  have p3 : ∀ ω, T.plugIn wh ω - Y' ω = (T.plugIn wh ω - T.Y ω) - (Y' ω - T.Y ω) :=
+    fun ω => by ring
+  simp_rw [p1, p2, p3, key, key0]
+  ring
 
 end Target
 end Core
