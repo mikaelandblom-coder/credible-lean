@@ -671,3 +671,27 @@ planned grouping step (PLAN "Grouping cohorts") needs a selection-aware criterio
 gain against price with the selection in the price) before it is built. A trend in volume, if data show one, goes
 in as a design column (an offset in log volume), chosen by gain against price (S57), with its price
 visible at β = 0. Parked by the owner (2026-11-25): a size trend is niche, tariffs usually carry size.
+
+### Finding 35's ρ̂ channel: cross-fitting (2026-11-26, `studies/rho-channel.js`, `notes/blup-credibility-form.md` §3)
+- S63. *[numerical]* **Balance to the cross-fitted level, not to exposure.** 4000 draws, ten worlds; MSE in %
+    of the oracle / portfolio bias in % of the tariff (± 2 SE ≤ 0.15). Leave-one-year-out cross-fitting
+    (`cfPool`: the weights for year `s`'s cells from corrBS's pooled parameters fitted without year `s`)
+    removes the bias in every world (|bias| ≤ 0.09, all within 2 SE of 0; pooled BLUP −0.47 at `ρ = 0.6`,
+    −0.84 at `ρ = 0.6, T = 5`), but costs 4–17 MSE points as a predictor. Keeping the BLUP's regional
+    rates and moving only its exposure-weighted level to `cfPool`'s (`shiftBlup`, one common shift) is
+    unbiased too and cheap: 112 / 119 / 128 against the exposure-balanced BLUP's 111 / 118 / 127 without
+    correlation (default, `T = 4` shape 1, σⱼ spread 1), and 112 / 127 / 112 / 143 against 131 / 147 / 158
+    / 145 under `ρ = 0.6` (plain, `T = 5`, `J = 20`, spread 1). So it matches exposure balance where that is
+    free and beats it by 2–46 points where it is not, with no threshold on `ρ̂`. Attribution: the pooled
+    BLUP with `ρ` fixed at the truth keeps about half the bias (−0.27 against −0.47; `T = 5`: −0.44 against
+    −0.84), so `ρ̂` is half the channel, the rest through the pooled `σ̂²`/`τ̂²` ratio. P1 checked: equal
+    volumes and `σⱼ`, the pooled BLUP has bias 0 exactly (symmetry), the region-specific one −0.18
+    (its `σ̂ⱼ²` channel). The region-specific cross-fit alone over-corrects (+0.10 default, +0.33 `T = 4`),
+    likely the level channel (`τ̂²` from the other years' means, skewed levels); not checked.
+
+**Consequence (candidate, owner to decide).** The balance switch could balance to the cross-fitted portfolio
+level instead of the exposures. General target before building it (CLAUDE.md, general results first): with
+year weights `πₛ` common to the regions (proportional volumes, as in the app) and weights `d̂⁽ˢ⁾` summing to 1
+and independent of year `s`'s noise, `Σₛ πₛ d̂⁽ˢ⁾ᵀXₛ` has bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)` (levels only;
+0 for fixed levels), any distribution: a corollary of `Core.Estimates.integral_randomLin_sub`. With
+region-specific year weights `aᵢₛ` the cross-fit is not exactly translation equivariant (`Σₛ Σᵢ aᵢₛd̂ᵢ⁽ˢ⁾ ≠ 1`).

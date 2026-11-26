@@ -924,6 +924,10 @@ One chat per step; none needs Lean except step 5.
   pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
   needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:
   leave-one-year-out cross-fitting of `ρ̂`, `σ̂²` (weights from the other years), exactly unbiased in
-  that channel for any distribution, without forcing exposure balance. Study `studies/rho-channel.js`
-  (H1 attribution, P1–P3, R1 against pooled and balanced); then a fit option and the Lean corollary of
-  `Core.Estimates.integral_randomLin_sub`.
+  that channel for any distribution, without forcing exposure balance. *Studied 2026-11-26* (S63,
+  `studies/rho-channel.js`, 4000 draws): the cross-fit is unbiased in all ten worlds but costs 4–17 points as
+  a predictor; the BLUP shifted to the cross-fitted portfolio level is unbiased and costs ≤ 1 point against
+  exposure balance without correlation and 2–46 points less with it (ρ = 0.6). `ρ̂` is about half the channel.
+  **Owner to decide:** let the balance switch balance to the cross-fitted level (`balanceFit` with a target
+  level; recipe step, Node test). Lean first: the cross-fitted level's bias is the level channel only
+  (S63 "Consequence", a corollary of `Core.Estimates.integral_randomLin_sub`; **lean** chat).

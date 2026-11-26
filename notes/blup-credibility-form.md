@@ -49,6 +49,13 @@ Lean targets (`Core.lean`, one chat; 1–3 done 2026-11-26: `Core.blupWeight_dot
 
 ## 3. Hypothesis for the ρ̂ channel (Finding 35, PLAN "Finding 35 remedies", open item)
 
+*Outcome 2026-11-26 (S63 in `studies/damping-theta.md`, `studies/rho-channel.js`).* H2 and P3 were in fact
+already in the app: `Engine.skewBias` (2026-11-23) predicts the `ρ̂` part to first order. H1 holds only by
+half: with `ρ` fixed at the truth about half the bias stays (the pooled `σ̂²`/`τ̂²` ratio). P1 holds (bias 0
+exactly). R1 removes the bias but costs 4–17 MSE points; its variant R1b, the BLUP shifted to the
+cross-fitted portfolio level, is unbiased and beats exposure balance under correlation. Next: owner's
+choice and the Lean corollary (S63 "Consequence"). The text below is the hypothesis as written before.
+
 Seen: with the pooled `σ̂²` the portfolio bias is gone at `ρ = 0` (−0.05%) but not at `ρ = 0.6`
 (−0.54%; spread 1: −0.38%). Balancing to exposure removes it but costs ~20 MSE points there.
 
