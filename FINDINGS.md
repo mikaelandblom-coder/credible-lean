@@ -724,4 +724,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    the sorted *estimates* by SURE on the same data is 2–74% worse than one group (S61, `studies/damping-theta.md`):
    the fit needs a selection-aware criterion first. Details: `notes/group-variances.md`.
 
+42. **The analysis-of-variance estimators of crossed-classification credibility are biased when the
+   noise is correlated across cells (new; proved: `Model.anovaStat_row_unbiasedX`).** Goulet (1998,
+   eqs. (67)–(69), from Dannenburg 1995) estimates the crossed variances from volume-weighted sums of
+   squares of the cell means minus `(n − 1)ŝ²/U`. Exactly (`sum_mul_sq_sub_noise_eq_pairs`): such a
+   statistic is the pool of the pairs `(μ̂ₖ − μ̂ₗ)² − v̂ₖ − v̂ₗ` with weights `uₖuₗ/(2U²)`. Its noise
+   correction has each cell's own noise variance but not the cross term `+2σ²ₖₗρₖₗ` that the pair
+   estimator `P̂ₖₗ` carries. For cells in one row (`anovaStat_row_unbiasedX`):
+   `E G = (β² + γ²)(1 − Σ(uₖ/U)²) − Σ_{k≠l} (uₖuₗ/U²) σ²ₖₗρₖₗ`. The first term is Goulet's (67) (exact,
+   `anovaStat_row_unbiasedX_of_uncorr`, when the noise is uncorrelated across the cells); the second is
+   the bias. With positive correlation within a period, the classical estimators understate the
+   variance components. Example: `n` cells of equal volume `u` in a row, noise variance `σ²/u` per cell
+   estimate and correlation `ρ` between cells: `E G = (1 − 1/n)(β² + γ² − ρσ²/u)`, so Goulet's estimate
+   of `β² + γ²` is short by `ρσ²/u`, a fraction `ρ` of a cell's noise variance.
+   General form for any set of cells: `anovaStat_unbiasedX`. Use the pair estimators with the
+   cross-covariance estimate (`crossed_unbiasedX`) instead; they are unbiased for any correlations.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

@@ -345,7 +345,11 @@ credibility texts assume independence across risks. "No references" is too stron
   simulations. **Use for the next chat:** this is the precedent for crossed estimators; our pair
   differences (same row / same column / neither) are the same moment method in pair form, and
   must reduce to (67)–(69) with natural weights. Their noise is uncorrelated across cells; ours
-  must also handle `Σ` correlated within a period (the thesis's point).
+  must also handle `Σ` correlated within a period (the thesis's point). **Done 2026-11-26**
+  (`CrossedEstimation.lean`): their statistic is exactly the pool with weights `uₖuₗ/(2U²)`
+  (`sum_mul_sq_sub_noise_eq_pairs`, noise term included), its two-way within-row expectation is (67)
+  exactly when the noise is uncorrelated, and biased by `−Σ (uₖuₗ/U²)σ²ₖₗρₖₗ` otherwise (Finding 42).
+  The three-way version and the grand-mean equation (69) are not formalized.
 - Dutang, Goulet, Milhaud & Pigeon, *Credibility theory features of actuar* (R vignette, owner's
   PDF, 2026-11-26): `cm` fits hierarchical (incl. Bühlmann–Straub), regression (Hachemeister) and
   linear Bayes models; no crossed classification and no correlated noise. Useful only as a

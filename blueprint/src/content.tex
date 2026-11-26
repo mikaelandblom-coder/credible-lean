@@ -8172,6 +8172,68 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
   Both sides equal $\sum_k w_kx_k^2 - (\sum_k w_kx_k)^2/W$.
 \end{proof}
 
+\begin{lemma}[With the noise correction]\label{lem:sum_sq_noise_pairs}
+  \lean{Credibility.sum_offDiag_eq, Credibility.sum_mul_sq_sub_noise_eq_pairs}
+  \leanok
+  \uses{lem:sum_sq_pairs}
+  With weights $u_k$ on a set $S$, $U = \sum_S u_k \ne 0$, $\bar x = \sum_S u_kx_k/U$ and any $v_k$:
+  \[
+    \sum_S \tfrac{u_k}{U}(x_k - \bar x)^2 - \sum_S \tfrac{u_k}{U}\bigl(1 - \tfrac{u_k}{U}\bigr)v_k
+      = \sum_{k \ne l \in S} \frac{u_ku_l}{2U^2}\bigl((x_k - x_l)^2 - v_k - v_l\bigr).
+  \]
+  With $v_k = s^2/u_k$ the correction is $(|S| - 1)s^2/U$, that of Goulet (1998), eqs.~(67)--(69).
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides equal $\sum u_kx_k^2/U - (\sum u_kx_k)^2/U^2 - \sum u_kv_k/U + \sum u_k^2v_k/U^2$;
+  the sum over $k \ne l$ is the sum over all pairs minus the diagonal.
+\end{proof}
+
+\begin{theorem}[The exact expectation of the ANOVA statistics]\label{thm:anovaStat}
+  \lean{Credibility.Model.anovaStat, Credibility.Model.anovaStat_unbiasedX,
+    Credibility.Model.sum_offDiag_wtot}
+  \leanok
+  \uses{thm:pairHat_X, lem:sum_sq_noise_pairs}
+  For a set $S$ of cells with volumes $u_k$ and unbiased noise estimates $\hat v_k$ of
+  $\sigma^2_{kk}\rho_{kk}$, the statistic $G = \sum_S (u_k/U)(\hmu_k - \bar\mu)^2 -
+  \sum_S (u_k/U)(1 - u_k/U)\hat v_k$ has, with crossed levels and any noise correlations,
+  expectation $\sum_{k \ne l \in S} \frac{u_ku_l}{2U^2}\bigl(2\gamma^2 + 2\alpha^2[r(k) \ne r(l)]
+  + 2\beta^2[c(k) \ne c(l)] - 2\sigma^2_{kl}\rho_{kl}\bigr)$; and
+  $\sum_{k \ne l \in S} u_ku_l/U^2 = 1 - \sum_S (u_k/U)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_sq_noise_pairs, thm:pairHat_X}
+  By Lemma~\ref{lem:sum_sq_noise_pairs}, $G$ is a pool of $(\hmu_k - \hmu_l)^2 - \hat v_k - \hat v_l
+  = \widehat P_{kl} + (\widehat{\sigma^2_{kk}\rho_{kk}} - \hat v_k)
+  + (\widehat{\sigma^2_{ll}\rho_{ll}} - \hat v_l) - 2\widehat{\sigma^2_{kl}\rho_{kl}}$;
+  Theorem~\ref{thm:pairHat_X}.
+\end{proof}
+
+\begin{theorem}[Goulet's within-row equation, and its bias]\label{thm:anovaStat_row}
+  \lean{Credibility.Model.anovaStat_row_unbiasedX,
+    Credibility.Model.anovaStat_row_unbiasedX_of_uncorr}
+  \leanok
+  \uses{thm:anovaStat}
+  If the cells of $S$ lie in one row and different columns,
+  $E G = (\beta^2 + \gamma^2)(1 - \sum_S (u_k/U)^2) - \sum_{k \ne l \in S}(u_ku_l/U^2)
+  \sigma^2_{kl}\rho_{kl}$. With noise uncorrelated across the cells of $S$ this is Goulet's
+  eq.~(67) (two-way) exactly.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:anovaStat}
+  Theorem~\ref{thm:anovaStat} with $[r(k) \ne r(l)] = 0$, $[c(k) \ne c(l)] = 1$.
+\end{proof}
+
+\begin{remark}[Finding 42]\label{rem:finding42}
+  The classical ANOVA estimators of crossed classification omit the cross term of the noise: with
+  $n$ cells of equal volume $u$ in a row, noise variance $\sigma^2/u$ and correlation $\rho$,
+  $E G = (1 - 1/n)(\beta^2 + \gamma^2 - \rho\sigma^2/u)$. Positive correlation within a period
+  biases them down. The pair estimators of Theorem~\ref{thm:crossed_identified} carry the cross
+  term and stay unbiased.
+\end{remark}
+
 \section{The crossed moments are real}\label{sec:crossed_moments}
 % Lean: Credibility/CrossedMoments.lean
 

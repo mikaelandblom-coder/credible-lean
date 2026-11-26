@@ -30,6 +30,55 @@ the same period. Only first and second moments are assumed.
 open Finset
 
 namespace Credibility
+
+/-- A sum over the ordered pairs of distinct elements: all pairs minus the diagonal. -/
+lemma sum_offDiag_eq {ι : Type*} [DecidableEq ι] (s : Finset ι) (f : ι → ι → ℝ) :
+    ∑ p ∈ s.offDiag, f p.1 p.2 = ∑ a ∈ s, ∑ b ∈ s, f a b - ∑ a ∈ s, f a a := by
+  have h : ∀ a b, (if a ≠ b then f a b else 0) = f a b - if a = b then f a b else 0 := by
+    intro a b; split_ifs <;> simp_all
+  have hs : s.offDiag = (s ×ˢ s).filter fun p => p.1 ≠ p.2 := by
+    ext p; simp [Finset.mem_offDiag, and_assoc]
+  rw [hs, Finset.sum_filter, Finset.sum_product]
+  simp only [h, Finset.sum_sub_distrib, Finset.sum_ite_eq]
+  congr 1
+  exact Finset.sum_congr rfl fun a ha => by simp [ha]
+
+/-- **A noise-corrected weighted sum of squares is a pool of noise-corrected pair differences.**
+With weights `uₖ`, `U = Σₖ uₖ`, `x̄ = Σₖ uₖxₖ/U` and noise variances `vₖ`:
+
+  `Σₖ (uₖ/U)(xₖ - x̄)² - Σₖ (uₖ/U)(1 - uₖ/U)vₖ = Σ_{k ≠ l} uₖuₗ/(2U²) · ((xₖ - xₗ)² - vₖ - vₗ)`.
+
+With `vₖ = s²/uₖ` the correction is `(n - 1)s²/U`, that of the analysis-of-variance estimators of
+crossed-classification credibility (Goulet 1998, eqs. (67)–(69)). -/
+theorem sum_mul_sq_sub_noise_eq_pairs {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (u x v : ι → ℝ) (hU : ∑ k ∈ s, u k ≠ 0) :
+    ∑ k ∈ s, u k / (∑ l ∈ s, u l) * (x k - ∑ l ∈ s, u l / (∑ l ∈ s, u l) * x l) ^ 2
+        - ∑ k ∈ s, u k / (∑ l ∈ s, u l) * (1 - u k / ∑ l ∈ s, u l) * v k
+      = ∑ p ∈ s.offDiag, u p.1 * u p.2 / (2 * (∑ l ∈ s, u l) ^ 2)
+          * ((x p.1 - x p.2) ^ 2 - v p.1 - v p.2) := by
+  rw [sum_offDiag_eq s fun a b => u a * u b / (2 * (∑ l ∈ s, u l) ^ 2)
+    * ((x a - x b) ^ 2 - v a - v b)]
+  set U := ∑ l ∈ s, u l
+  have e1 : ∀ k, u k / U * (x k - ∑ l ∈ s, u l / U * x l) ^ 2
+      = u k * x k ^ 2 / U - 2 * (∑ l ∈ s, u l * x l) / U ^ 2 * (u k * x k)
+        + (∑ l ∈ s, u l * x l) ^ 2 / U ^ 3 * u k := fun k => by
+    rw [show ∑ l ∈ s, u l / U * x l = (∑ l ∈ s, u l * x l) / U by
+      rw [Finset.sum_div]; exact Finset.sum_congr rfl fun l _ => by ring]
+    field_simp; ring
+  have e2 : ∀ a b, u a * u b / (2 * U ^ 2) * ((x a - x b) ^ 2 - v a - v b)
+      = (u b * (u a * x a ^ 2) + u a * (u b * x b ^ 2) - 2 * (u a * x a) * (u b * x b)
+        - u b * (u a * v a) - u a * (u b * v b)) / (2 * U ^ 2) := fun a b => by ring
+  have hUd : ∑ i ∈ s, u i = U := rfl
+  simp only [e1, e2, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_div,
+    ← Finset.sum_mul, ← Finset.mul_sum, Finset.sum_neg_distrib, hUd]
+  rw [show ∑ k ∈ s, u k / U * (1 - u k / U) * v k
+      = (∑ k ∈ s, u k * v k) / U - (∑ k ∈ s, u k ^ 2 * v k) / U ^ 2 by
+    rw [Finset.sum_div, Finset.sum_div, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun k _ => by field_simp]
+  field_simp
+  simp only [mul_assoc, ← Finset.mul_sum]
+  ring
+
 namespace Model
 
 variable {J T A B : Type*} [Fintype J] [DecidableEq J] [Fintype T] [DecidableEq T]
@@ -177,6 +226,110 @@ theorem crossed_unbiasedX (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ) (r c n
   refine ⟨((hN.add (hR.const_mul (-1))).const_mul (1 / 2)).congr (fun X => by ring) (by ring),
     ((hN.add (hC.const_mul (-1))).const_mul (1 / 2)).congr (fun X => by ring) (by ring),
     (((hR.add hC).add (hN.const_mul (-1))).const_mul (1 / 2)).congr (fun X => by ring) (by ring)⟩
+
+
+/-! ### The analysis-of-variance statistics of Dannenburg and Goulet
+
+Goulet (1998, eqs. (67)–(69), from Dannenburg 1995) estimates the crossed variances from
+volume-weighted sums of squares of the cell estimates about their weighted mean, minus a noise
+correction. For a set `S` of cells with volumes `uₖ = Σₜ wₖₜ`, `U = Σ_S uₖ`, and noise estimates
+`v̂ₖ` of `Var(noise of μ̂ₖ) = σ²ₖₖρₖₖ`, the statistic is
+
+  `G = Σ_S (uₖ/U)(μ̂ₖ - μ̄)² - Σ_S (uₖ/U)(1 - uₖ/U)v̂ₖ`
+
+(with `v̂ₖ = ŝ²/uₖ` the correction is Goulet's `(|S| - 1)ŝ²/U`). It is the pool of the pairs
+`(μ̂ₖ - μ̂ₗ)² - v̂ₖ - v̂ₗ` with weights `uₖuₗ/(2U²)` (`sum_mul_sq_sub_noise_eq_pairs`), whose noise
+correction omits the cross term `+2σ²ₖₗρₖₗ` of the pair estimator `P̂ₖₗ`. -/
+
+/-- The analysis-of-variance statistic of crossed-classification credibility for a set `S` of
+cells, with noise estimates `v`. -/
+noncomputable def anovaStat (w : J → T → ℝ) (S : Finset J) (v : J → (J × T → ℝ) → ℝ)
+    (X : J × T → ℝ) : ℝ :=
+  ∑ k ∈ S, wtot w k / (∑ l ∈ S, wtot w l)
+      * (muHat w X k - ∑ l ∈ S, wtot w l / (∑ l ∈ S, wtot w l) * muHat w X l) ^ 2
+    - ∑ k ∈ S, wtot w k / (∑ l ∈ S, wtot w l) * (1 - wtot w k / ∑ l ∈ S, wtot w l) * v k X
+
+/-- **The exact expectation of the ANOVA statistic** with crossed levels and any noise
+correlations: with `cₖₗ = uₖuₗ/(2U²)`,
+
+  `E G = Σ_{k ≠ l ∈ S} cₖₗ (2γ² + 2α²[rows differ] + 2β²[columns differ] - 2σ²ₖₗρₖₗ)`,
+
+for any unbiased noise estimates `v̂ₖ`. -/
+theorem anovaStat_unbiasedX (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ) (S : Finset J)
+    (hS : S.Nonempty) (v : J → (J × T → ℝ) → ℝ)
+    (hv : ∀ k, M.UnbiasedX row col α2 β2 γ2 (v k) (M.σ2 k k * M.ρ k k)) :
+    M.UnbiasedX row col α2 β2 γ2 (anovaStat w S v)
+      (∑ p ∈ S.offDiag, wtot w p.1 * wtot w p.2 / (2 * (∑ l ∈ S, wtot w l) ^ 2)
+        * (2 * γ2 + 2 * α2 * (if row p.1 = row p.2 then 0 else 1)
+          + 2 * β2 * (if col p.1 = col p.2 then 0 else 1) - 2 * (M.σ2 p.1 p.2 * M.ρ p.1 p.2))) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hU : ∑ l ∈ S, wtot w l ≠ 0 :=
+    (Finset.sum_pos (fun l _ => wtot_pos hw l) hS).ne'
+  have hs := M.sigRhoHat_unbiasedX row col sig hw hσ hT α2 β2 γ2
+  refine (UnbiasedCov.sum S.offDiag fun p hp =>
+    ((((M.pairHat_unbiasedX row col sig hw hσ hT α2 β2 γ2 (Finset.mem_offDiag.mp hp).2.2).add
+      ((hs p.1 p.1).add ((hv p.1).const_mul (-1)))).add
+      ((hs p.2 p.2).add ((hv p.2).const_mul (-1)))).add
+      ((hs p.1 p.2).const_mul (-2))).const_mul
+      (wtot w p.1 * wtot w p.2 / (2 * (∑ l ∈ S, wtot w l) ^ 2))).congr (fun X => ?_) ?_
+  · rw [anovaStat, sum_mul_sq_sub_noise_eq_pairs S (wtot w) (fun k => muHat w X k)
+      (fun k => v k X) hU]
+    refine Finset.sum_congr rfl fun p _ => ?_
+    simp only [pairHat]
+    ring
+  · exact Finset.sum_congr rfl fun p _ => by ring
+
+omit [Fintype J] [DecidableEq T] hw hσ in
+/-- `Σ_{k ≠ l ∈ S} uₖuₗ/U² = 1 - Σ_S (uₖ/U)²`. -/
+lemma sum_offDiag_wtot (S : Finset J) (hU : ∑ l ∈ S, wtot w l ≠ 0) :
+    ∑ p ∈ S.offDiag, wtot w p.1 * wtot w p.2 / (∑ l ∈ S, wtot w l) ^ 2
+      = 1 - ∑ k ∈ S, (wtot w k / ∑ l ∈ S, wtot w l) ^ 2 := by
+  rw [sum_offDiag_eq S fun a b => wtot w a * wtot w b / (∑ l ∈ S, wtot w l) ^ 2]
+  simp only [← Finset.sum_div, ← Finset.mul_sum, ← Finset.sum_mul, div_pow]
+  field_simp
+
+/-- **Goulet's within-row equation, exactly, and its bias under correlated noise** (Finding 42).
+If the cells of `S` lie in one row, in different columns, the ANOVA statistic has expectation
+
+  `(β² + γ²)(1 - Σ_S (uₖ/U)²) - Σ_{k ≠ l ∈ S} (uₖuₗ/U²) σ²ₖₗρₖₗ`.
+
+The first term is Goulet's eq. (67) (two-way); the second is missing from it: noise correlated
+across cells in the same period biases the statistic, downward when the correlations are
+positive. -/
+theorem anovaStat_row_unbiasedX (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ) (S : Finset J)
+    (hS : S.Nonempty) (hrow : ∀ k ∈ S, ∀ l ∈ S, k ≠ l → row k = row l ∧ col k ≠ col l)
+    (v : J → (J × T → ℝ) → ℝ)
+    (hv : ∀ k, M.UnbiasedX row col α2 β2 γ2 (v k) (M.σ2 k k * M.ρ k k)) :
+    M.UnbiasedX row col α2 β2 γ2 (anovaStat w S v)
+      ((β2 + γ2) * (1 - ∑ k ∈ S, (wtot w k / ∑ l ∈ S, wtot w l) ^ 2)
+        - ∑ p ∈ S.offDiag, wtot w p.1 * wtot w p.2 / (∑ l ∈ S, wtot w l) ^ 2
+          * (M.σ2 p.1 p.2 * M.ρ p.1 p.2)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hU : ∑ l ∈ S, wtot w l ≠ 0 :=
+    (Finset.sum_pos (fun l _ => wtot_pos hw l) hS).ne'
+  refine (M.anovaStat_unbiasedX row col sig hw hσ hT α2 β2 γ2 S hS v hv).congr (fun _ => rfl) ?_
+  rw [← sum_offDiag_wtot S hU, Finset.mul_sum, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun p hp => ?_
+  obtain ⟨h1, h2, h3⟩ := Finset.mem_offDiag.mp hp
+  obtain ⟨hr, hc⟩ := hrow p.1 h1 p.2 h2 h3
+  simp only [hr, hc, ite_true, ite_false]
+  field_simp
+  ring
+
+/-- …so with noise uncorrelated across the cells of `S` the ANOVA statistic is unbiased for
+Goulet's `(β² + γ²)(1 - Σ_S (uₖ/U)²)`: the exact match with eq. (67). -/
+theorem anovaStat_row_unbiasedX_of_uncorr (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ)
+    (S : Finset J) (hS : S.Nonempty)
+    (hrow : ∀ k ∈ S, ∀ l ∈ S, k ≠ l → row k = row l ∧ col k ≠ col l)
+    (hρ : ∀ k ∈ S, ∀ l ∈ S, k ≠ l → M.ρ k l = 0) (v : J → (J × T → ℝ) → ℝ)
+    (hv : ∀ k, M.UnbiasedX row col α2 β2 γ2 (v k) (M.σ2 k k * M.ρ k k)) :
+    M.UnbiasedX row col α2 β2 γ2 (anovaStat w S v)
+      ((β2 + γ2) * (1 - ∑ k ∈ S, (wtot w k / ∑ l ∈ S, wtot w l) ^ 2)) := by
+  refine (M.anovaStat_row_unbiasedX row col sig hw hσ hT α2 β2 γ2 S hS hrow v hv).congr
+    (fun _ => rfl) ?_
+  rw [Finset.sum_eq_zero (s := S.offDiag) fun p hp => by
+    obtain ⟨h1, h2, h3⟩ := Finset.mem_offDiag.mp hp
+    rw [hρ p.1 h1 p.2 h2 h3, mul_zero, mul_zero], sub_zero]
 
 end Model
 
