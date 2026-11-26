@@ -1366,3 +1366,22 @@ doi 10.2143/ast.27.1.563206; Künsch (1992), *Robust methods for credibility*, A
 Used in `studies/thesis-topics/proposal.tex`, Section "Other approaches worth considering" (A1
 covariates first, with Reluga et al. 2026, §10p; A2 likelihood benchmark, Jewell; A5 robust
 credibility, Künsch, Zhao & Poudyal §10l).
+
+### 10s. Crop-insurance pricing papers (2026-11-26; owner's upload and OpenAlex)
+- Zhu, Tan & Porth, *Agricultural insurance ratemaking: development of a new premium principle*,
+  SSRN 2835481 (owner's upload, read: abstract, §1, §3.1). A premium principle (risk loading),
+  `Π = E[w(Y)X]/E[w(Y)]`: historical loss years reweighted by auxiliary factors `Y` (weather,
+  prices) through a hand-chosen `w`; Manitoba reinsurance data. No credibility factor, no `K`, no
+  second-moment estimation; needs the joint distribution (distribution layer at most) and a
+  hand-set `w` (against `studies/PLAN.md` §1). **Nothing used.** Contact points only: reweighting
+  years is a cousin of recency weighting (S43–S45), whose model-based form is a common period
+  effect (`Factor.lean`); it cites Poon & Lu (2015), so the crop line builds on Poon (§10q).
+- Porth, Zhu & Tan (2014), *A credibility-based Erlang mixture model for pricing crop
+  reinsurance*, Agric. Finance Rev. 74(2), 162–187, doi 10.1108/afr-04-2014-0006 (closed; abstract
+  from OpenAlex only). Two "modified" Bühlmann–Straub models on liability-weighted loss cost ratios,
+  region/province against the Canadian collective, with an Erlang mixture for the tails. From the
+  abstract: classical BS (regions independent), the modification is the weighting, not correlation
+  or crossed levels. **Nothing used; not prior art for crossed levels or correlated noise.** The
+  full text is a chapter of Zhu's thesis, *Actuarial ratemaking in agricultural insurance*
+  (Waterloo 2015, `uwspace.uwaterloo.ca` handle 10012/9503, open access); not fetched because that
+  host is blocked. Fetch only if the region-weighting needs checking.
