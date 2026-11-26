@@ -146,6 +146,9 @@ and nothing in the core depends on them.
   provable. If a statement is false or needs an extra hypothesis, stop,
   explain why with a counterexample, and log it in `FINDINGS.md`. Such
   gaps in the thesis are the interesting part.
+- General results first (owner, 2026-11-26): a statement for every world beats a ranking in the
+  worlds a simulation visits. Simulations illustrate and build hypotheses; turn a study's outcome
+  into a general target (Lean, or a Finding) rather than reporting it as settled.
 - Work on one `sorry` at a time and run `lake build` after each step.
 - Prefer existing Mathlib lemmas; search with `exact?`, `apply?`, or grep in
   `.lake/packages/mathlib`.

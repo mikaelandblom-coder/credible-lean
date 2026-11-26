@@ -244,8 +244,9 @@
   /**
    * The crossed fit. opts.weights as for pairPools; opts.trunc: 'clip' (each variance at 0, the Euclidean
    * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
-   * settled by studies/crossed-fit.js (1000 draws × 96 worlds): inverse variance + clip is never clearly
-   * worse than equal weights and better in 59 worlds; least squares loses to clip in 67.
+   * provisional, from studies/crossed-fit.js (1000 draws × 96 worlds: inverse variance + clip is never clearly
+   * worse than equal weights and better in 59 worlds; least squares loses to clip in 67): a hypothesis for the
+   * worlds it visits, until the general targets in PLAN.md (Pending: crossed) are proved.
    */
   function fit(data, opts) {
     const o = Object.assign({ weights: 'iv', trunc: 'clip' }, opts || {});

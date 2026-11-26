@@ -29,6 +29,12 @@ complex the *fitted model* is, and see what happens when they differ.
 
 ### Study conventions (2026-11-24, after `studies/taper-signal.js`)
 
+**General results first (owner, 2026-11-26).** A result that holds for every world (a theorem, or a
+statement with its conditions) is worth far more than a ranking in the worlds a study visits. Simulations
+illustrate and build hypotheses; a study's winner is a provisional default, and its next step is the
+general statement that explains it (a Lean target, or a Finding when it fails). Report a study's
+outcome as a hypothesis with its conditions, never as settled.
+
 The simulation studies (`studies/*.js`, numbered observations S1–S48 in `damping-theta.md`) are cheap
 (seconds to minutes) but answer only for the worlds they visit. Each study states its purpose in its
 header, since the rules differ (of S1–S48: 43 numerical, 12 exact, 6 hypotheses):
@@ -361,7 +367,7 @@ One chat per step; none needs Lean except step 5.
   many draws in % of the floor, the variances' bias (ANOVA's under ρ > 0, Finding 42). Tests: layer
   excess and three factors exact, `missing_blup`/`missing_predMse` (3.575), pools unbiased by an exact
   expectation (any weights, any ρ), ANOVA's γ̂² bias `−σ²ρ/w*` in a balanced table, projections.
-  *Settled by `studies/crossed-fit.js`* (1000 draws × 96 worlds: table 3×2/4×3/6×4 × four effect mixes ×
+  *Provisional, from `studies/crossed-fit.js` (a hypothesis, not a general result)* (1000 draws × 96 worlds: table 3×2/4×3/6×4 × four effect mixes ×
   ρ 0/0.5 × volume spread 0/1 × app/thesis regime; output `crossed-fit.out.txt`): **truncation: clip** (least
   squares on the pool equations, equal weights, is worse in 67 worlds, better in 10); **weights: inverse
   variance** `1/(P̂_class + noise of the difference)²` from a first equal-weight pass (worse than equal
@@ -371,6 +377,12 @@ One chat per step; none needs Lean except step 5.
   of the floor: iv 130, equal 132, volume 134, ANOVA 135, best blend with true parameters 146, thesis fit 157.
   Watch out: with weak effects (z ≈ 0.2) the crossed fit (145) loses to the thesis fit (139): three
   noisy variances cost more than they buy. Lean candidate: unbiasedness is exact for fixed weights only.
+  *General targets (lean chat), which would replace this ranking:* (1) the minimum-variance unbiased
+  pool within a class is GLS on the pair estimators' covariance table (`glsWeight_optimal`, the table from
+  `Cumulants.covariance_quad_of_cumulants`; distribution-free); (2) under normal noise
+  Var((μ̂ᵢ − μ̂ⱼ)²) = 2(E(μ̂ᵢ − μ̂ⱼ)²)², so inverse variance is GLS's diagonal; the limits signal ≫ noise (equal
+  weights) and noise ≫ signal (large cells favoured) explain the regime split; (3) balanced table: equal
+  weights exactly optimal (symmetry). Then the app tries full GLS pool weights.
 - [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
   with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
   `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use
