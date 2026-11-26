@@ -957,6 +957,11 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   \lean{Credibility.Crossed.colEffect_eq_blup}
   \lean{Credibility.Crossed.K_beta_zero}
   \lean{Credibility.Crossed.blupWeight_beta_zero}
+  These are the actual covariances of any random variables with these moments; such variables
+  exist iff $\rho \succeq 0$, and the best predictor then has the smallest true mean squared error.
+  \lean{Credibility.Model.NoiseX.cov_obs}
+  \lean{Credibility.Model.NoiseX.blup_mse_optimal}
+  \lean{Credibility.Model.exists_noiseX_iff}
 \end{result}
 \use Any tariff table with two rating factors; unbalanced cells: the general predictor of Section~\ref{sec:blup}.
 
@@ -1027,6 +1032,7 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   \lean{Credibility.Model.sigRhoHat_unbiasedX}
   \lean{Credibility.Model.unbiasedX_of}
   \lean{Credibility.sum_mul_sq_sub_eq_pairs}
+  \lean{Credibility.Model.NoiseX.crossed_integral}
 \end{result}
 \use Any weights work; weights $\propto w_kw_l$ give the analysis-of-variance estimators of crossed-classification credibility.
 \begin{caveat}

@@ -103,7 +103,9 @@ tactics.
   Bridge 4; balanced table: three factors `z_r, z_c, z_i`, the blend's excess per layer; a cell
   without data (2×2) → `Credibility/Crossed.lean`; its estimation (pair estimators from the
   same row / column / neither, unbiased for any noise correlations, `Model.crossed_unbiasedX`; the
-  ANOVA identity `sum_mul_sq_sub_eq_pairs`) → `Credibility/CrossedEstimation.lean`
+  ANOVA identity `sum_mul_sq_sub_eq_pairs`) → `Credibility/CrossedEstimation.lean`; its moment
+  layer (`Model.NoiseX`: row and column effects as a common component on the thesis noise, true
+  covariances and expectations, true MSE, consistent iff `ρ ⪰ 0`) → `Credibility/CrossedMoments.lean`
 - general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,
   binomial inverse (small form of `V⁻¹`), Henderson's mixed-model equations, their solution is `Core.blup`
   (`hendersonMME_eq_blup`) → `Credibility/Henderson.lean`; group effects by MME: `Unequal.groupEffect_eq_blup`
@@ -127,7 +129,7 @@ used in `studies/literature.md`: combine the best existing pieces in this framew
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
 Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `Cumulants.lean`, `FactorMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
-`Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`), which
+`Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`, `CrossedMoments.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second
 moments are assumed): never add a distributional assumption to it. An

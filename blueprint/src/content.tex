@@ -8153,6 +8153,78 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
   Both sides equal $\sum_k w_kx_k^2 - (\sum_k w_kx_k)^2/W$.
 \end{proof}
 
+\section{The crossed moments are real}\label{sec:crossed_moments}
+% Lean: Credibility/CrossedMoments.lean
+
+\begin{definition}[Random variables with crossed levels]\label{def:noiseX}
+  \lean{Credibility.Model.NoiseX, Credibility.Model.NoiseX.common, Credibility.Model.NoiseX.trueMean,
+    Credibility.Model.NoiseX.obs, Credibility.Model.NoiseX.cohortEst}
+  \leanok
+  \uses{def:crossed}
+  Square-integrable $\eta$, $\varepsilon$ with the moments of the thesis model (level variance
+  $\gamma^2$), and row effects $A_a$ and column effects $B_b$, centred, of unit variance,
+  uncorrelated with each other, with $\eta$ and with $\varepsilon$. Levels
+  $\mu_j = \mu + \gamma\eta_j + \alpha A_{r(j)} + \beta B_{c(j)}$, observations
+  $\mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt}$, cell estimates $\hmu_j = \sum_t a_{jt}\mu_{jt}$.
+\end{definition}
+
+\begin{theorem}[The crossed covariances are the actual ones]\label{thm:noiseX_cov}
+  \lean{Credibility.Model.NoiseX.cohortEst_eq, Credibility.Model.NoiseX.memLp_common,
+    Credibility.Model.NoiseX.integral_common, Credibility.Model.NoiseX.cov_common,
+    Credibility.Model.NoiseX.cov_common_of, Credibility.Model.NoiseX.cov_eff_trueMean,
+    Credibility.Model.NoiseX.cov_eff_obs, Credibility.Model.NoiseX.cov_eff_cohortEst,
+    Credibility.Model.NoiseX.memLp_obs, Credibility.Model.NoiseX.obs_mean,
+    Credibility.Model.NoiseX.cov_obs, Credibility.Model.NoiseX.integral_quad,
+    Credibility.Model.NoiseX.integral_of_unbiasedX, Credibility.Model.NoiseX.crossed_integral}
+  \leanok
+  \uses{def:noiseX, thm:unbiasedX_of}
+  For $\alpha^2, \beta^2 \ge 0$: $E\mu_{jt} = \mu$, $\cov(\mu_{it}, \mu_{js})$ is the crossed
+  table of Section~\ref{sec:crossed_estimation}, every quadratic form has the expectation used
+  there, and so the pair estimators of Theorem~\ref{thm:crossed_identified} have expectations
+  $\alpha^2$, $\beta^2$, $\gamma^2$ for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:cov_obs, thm:integral_quad_cov, thm:crossed_identified}
+  The row and column component is uncorrelated with $\eta$ and $\varepsilon$, so the covariance
+  is that of the thesis (Theorem~\ref{thm:cov_obs}) plus $\alpha^2[\text{same row}] +
+  \beta^2[\text{same column}]$; then Theorem~\ref{thm:integral_quad_cov}.
+\end{proof}
+
+\begin{theorem}[The crossed predictor in true mean squared error]\label{thm:noiseX_blup}
+  \lean{Credibility.Model.NoiseX.K_eq, Credibility.Model.NoiseX.levelCov_eq,
+    Credibility.Model.NoiseX.addCommon, Credibility.Model.NoiseX.toEstimates,
+    Credibility.Model.NoiseX.blup_mse_optimal, Credibility.Model.NoiseX.mse_portLin}
+  \leanok
+  \uses{def:noiseX, thm:Core_blup_mse, lem:Core_addCommon, lem:moments_full}
+  $\cov(\hmu_i, \hmu_j) = K_{ij}$ and $\cov(\mu_i, \hmu_j) = \cov(\mu_i, \mu_j) = L_{ij}$ with the
+  crossed $K = L + \Sigma$, $L$. So the actual mean squared error of any $\sum_i d_i\hmu_i$ with
+  $\sum_i d_i = 1$ is $d^TKd - 2d^TL_j + L_{jj}$, and if $\rho \succeq 0$ the crossed best predictor
+  has the smallest one, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_mse, lem:crossed_posDef, lem:errCov_posSemidef}
+  The thesis moment layer (Lemma~\ref{lem:moments_full}) plus a common component
+  (Lemma~\ref{lem:Core_addCommon}); then Theorem~\ref{thm:Core_blup_mse}.
+\end{proof}
+
+\begin{theorem}[When such random variables exist]\label{thm:noiseX_exists}
+  \lean{Credibility.Model.exists_noiseX_iff}
+  \leanok
+  \uses{def:noiseX, thm:exists_noise}
+  Random variables with crossed levels exist iff $\rho \succeq 0$: row and column effects add
+  no constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:exists_noise}
+  Necessity by forgetting $A$, $B$ (Theorem~\ref{thm:exists_noise}). Sufficiency: the thesis
+  noise on one factor and independent standard normal $A$, $B$ on the other, as in
+  Theorem~\ref{thm:G_exists_noise}.
+\end{proof}
+
+
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).
 % Lean: Credibility/KMeans.lean

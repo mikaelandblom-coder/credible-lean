@@ -112,6 +112,9 @@ def refers_to_namesake(row) -> bool:
 # Groups that share a name but are not duplicates to merge: neither copy can be
 # a corollary of the other without changing a statement. Reviewed 2026-11-11.
 EXEMPT = {
+    "K_eq": "different matrices: `NoiseX.K_eq` writes the crossed `K` as the thesis `K` plus the row and column terms; `AgreeOnOverlaps.K_eq` is about unequal lengths",
+    "levelCov_eq": "different matrices: `NoiseX.levelCov_eq` is the crossed `L`, `Model.levelCov_eq` Bridge 2's one shared level",
+    "cov_common": "different components: `NoiseG` has one group effect per cohort, `NoiseX` a row and a column effect; the shared part is `Estimates.addCommon`",
     "levelCov_apply": "different matrices: `Model.levelCov` is Bridge 2's one shared level (`τ²(11ᵀ)^φ`), `Crossed.levelCov` the crossed `α²[same row] + β²[same column] + γ²I`; neither is a special case of the other's lemma",
     "blup_mse_optimal": "the scalar `Core.Estimates` result (common mean, index `J`) and the matrix `CoreVector.VecEstimates` one (component means, index `J × P`, Loewner order) are about different random variables; deriving the scalar one through `P = Unit` would need reindexing `J ≃ J × Unit` and only lengthen it",
     "mse_blend_eq_blup_add": "the scalar `Core.Estimates` result (common mean, index `J`) and the matrix `CoreVector.VecEstimates` one (component means, index `J × P`, Loewner order) are about different random variables; deriving the scalar one through `P = Unit` would need reindexing `J ≃ J × Unit` and only lengthen it",
