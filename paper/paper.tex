@@ -1860,7 +1860,11 @@ seen in every column ($\lambda_r = n_T\alpha^2 + \gamma^2$), the column effect i
 every row, the cell effect only once. The thesis blend is the same formula with
 one common factor, and summed over the table it loses, per layer, the layer's
 dimension times $(\lambda_k + \sigma^2)(z - z_k)^2$: nothing only when the
-three layers agree, that is in the thesis model. In the example of
+three layers agree, that is in the thesis model. Its best single factor uses the
+average of the layer variances, weighted by their dimensions
+(\hb{res:crossed_balanced}{40}). Noise correlated equally across all cells, as in
+the thesis's simulation study, changes nothing but the noise variance: the
+common part cancels in every contrast, and each factor uses $\sigma^2(1 - \rho)$. In the example of
 \file{notes/crossed-2x2.md} the best blend reaches a total error of $5.94$ and
 the full predictor $5.13$, while getting the single factor exactly right
 instead of approximately only moves $6.04$ to $5.94$. The full predictor also

@@ -189,6 +189,38 @@ lemma eq_blupWeight_of_mulVec {J : Type*} [Fintype J] [DecidableEq J]
   simp only [star_trivial] at this
   linarith
 
+
+/-- A rank-one term along `1` does not change the best predictor: noise (or level) shared by
+all cohorts cancels, `d*(K + c·11ᵀ) = d*(K)` (cf. `glsWeight_add_rankOne`). -/
+theorem blupWeight_add_rankOne {J : Type*} [Fintype J] [DecidableEq J] {K : Matrix J J ℝ}
+    (hK : K.PosDef) (c : ℝ) (hK' : (K + c • vecMulVec 1 1).PosDef) (L : Matrix J J ℝ) (j : J) :
+    blupWeight (K + c • vecMulVec 1 1) L j = blupWeight K L j := by
+  have : Nonempty J := ⟨j⟩
+  symm
+  refine eq_blupWeight_of_mulVec hK' L j
+    (c := (1 - 1 ⬝ᵥ (K⁻¹ *ᵥ L j)) * (invTotal K)⁻¹ + c) (fun i => ?_) (sum_blupWeight hK L j)
+  have h := mulVec_blupWeight hK L j i
+  have hs := sum_blupWeight hK L j
+  have : ((K + c • vecMulVec 1 1) *ᵥ blupWeight K L j) i
+      = (K *ᵥ blupWeight K L j) i + c * ∑ k, blupWeight K L j k := by
+    simp [mulVec, dotProduct, vecMulVec, add_mul, Finset.sum_add_distrib, Finset.mul_sum]
+  rw [this, hs]
+  linarith
+
+/-- …and it adds `c(Σᵢdᵢ)²` to the error of any weights. -/
+lemma linMse_add_rankOne {J : Type*} [Fintype J] (K L : Matrix J J ℝ) (c : ℝ) (j : J)
+    (d : J → ℝ) :
+    linMse (K + c • vecMulVec 1 1) L j d = linMse K L j d + c * (∑ i, d i) ^ 2 := by
+  have : d ⬝ᵥ ((K + c • vecMulVec 1 1) *ᵥ d) = d ⬝ᵥ (K *ᵥ d) + c * (∑ i, d i) ^ 2 := by
+    simp only [Matrix.add_mulVec, Matrix.smul_mulVec, dotProduct_add, dotProduct_smul,
+      smul_eq_mul]
+    congr 1
+    simp only [mulVec, dotProduct, vecMulVec, of_apply, Pi.one_apply, mul_one, one_mul, sq,
+      Finset.sum_mul, Finset.mul_sum]
+    rw [Finset.sum_comm]
+  simp only [linMse, this]
+  ring
+
 end Core
 
 namespace Crossed
@@ -462,6 +494,235 @@ theorem sum_linMse_blend [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα 
     Fintype.card_prod, nsmul_eq_mul, Nat.cast_mul]
   congr 1
   field_simp
+
+
+
+/-! #### The best common factor and the price of the blend -/
+
+/-- `Σₖ mₖλₖ`: the layer signal variances times the layer dimensions
+`m_r = n_A - 1`, `m_c = n_T - 1`, `m_i = (n_A - 1)(n_T - 1)`. -/
+noncomputable def layerSignal (A T : Type*) [Fintype A] [Fintype T] (α2 β2 γ2 : ℝ) : ℝ :=
+  (Fintype.card A - 1) * (Fintype.card T * α2 + γ2) + (Fintype.card T - 1) * (Fintype.card A * β2 + γ2)
+    + (Fintype.card A - 1) * (Fintype.card T - 1) * γ2
+
+/-- The best common credibility factor of the blend in the balanced table:
+`z̄ = Σₖmₖλₖ / (Σₖmₖλₖ + (n_An_T - 1)σ²) = λ̄/(λ̄ + σ²)`, `λ̄` the dimension-weighted mean of the
+layer variances. -/
+noncomputable def zBlend (A T : Type*) [Fintype A] [Fintype T] (α2 β2 γ2 σ2 : ℝ) : ℝ :=
+  layerSignal A T α2 β2 γ2 / (layerSignal A T α2 β2 γ2 + (Fintype.card A * Fintype.card T - 1) * σ2)
+
+/-- `1ᵀK⁻¹1 = n_An_T/κ` with `κ = n_Tα² + n_Aβ² + γ² + σ²`, the eigenvalue of `1`. -/
+lemma invTotal_KBal [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2)
+    (hγ : 0 ≤ γ2) (hσ : 0 < σ2) :
+    invTotal (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ)
+      = Fintype.card A * Fintype.card T
+        / (α2 * Fintype.card T + β2 * Fintype.card A + γ2 + σ2) := by
+  have hK : (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ).PosDef :=
+    K_posDef _ _ hα hβ hγ (PosDef.one.smul hσ)
+  have hA : (0 : ℝ) < Fintype.card A := by exact_mod_cast Fintype.card_pos
+  have hT : (0 : ℝ) < Fintype.card T := by exact_mod_cast Fintype.card_pos
+  set κ := α2 * Fintype.card T + β2 * Fintype.card A + γ2 + σ2
+  have hκ : 0 < κ := by positivity
+  obtain ⟨p⟩ : Nonempty (A × T) := inferInstance
+  have hx : KBal α2 β2 γ2 σ2 *ᵥ layer p κ⁻¹ 0 0 0 = 1 := by
+    rw [mulVec_layer]; funext q; simp [layer, κ, hκ.ne']
+  have hdet : IsUnit (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ).det :=
+    (Matrix.isUnit_iff_isUnit_det _).mp hK.isUnit
+  have : (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ)⁻¹ *ᵥ 1 = layer p κ⁻¹ 0 0 0 := by
+    rw [← hx, mulVec_mulVec, nonsing_inv_mul _ hdet, one_mulVec]
+  rw [invTotal, this, one_dotProduct, sum_layer]
+  field_simp
+  ring
+
+/-- **The best common factor** (Core's eq. (26) for the crossed `K`, `L`): in the balanced table
+every cell has `z = z̄` (`zBlend`). In the 2×2 table `z̄ = D/(D + 3σ²)` with
+`D = 2α² + 2β² + 3γ²` (`notes/crossed-2x2.md` §3). -/
+theorem bestZ_KBal [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2)
+    (hγ : 0 ≤ γ2) (hσ : 0 < σ2) (hN : 1 < Fintype.card A * Fintype.card T) (c : A × T) :
+    (Core.levelMoments (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) (KBal α2 β2 γ2 σ2 c c) c).bestZ
+      = zBlend A T α2 β2 γ2 σ2 := by
+  have hK : (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ).PosDef :=
+    K_posDef _ _ hα hβ hγ (PosDef.one.smul hσ)
+  have hA : (1 : ℝ) ≤ Fintype.card A := by exact_mod_cast Fintype.card_pos
+  have hT : (1 : ℝ) ≤ Fintype.card T := by exact_mod_cast Fintype.card_pos
+  have hN' : (1 : ℝ) < Fintype.card A * Fintype.card T := by exact_mod_cast hN
+  have hb : glsWeight (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ)
+      = layer c (1 / (Fintype.card A * Fintype.card T)) 0 0 0 := by
+    funext p; rw [glsWeight_KBal hα hβ hγ hσ]; simp [layer]
+  have hL : (LBal α2 β2 γ2 *ᵥ glsWeight (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ)) c
+      = (Fintype.card T * α2 + Fintype.card A * β2 + γ2) / (Fintype.card A * Fintype.card T) := by
+    rw [hb, mulVec, LBal_eq_layer, layer_dotProduct_layer]
+    field_simp; ring
+  have hcc : LBal α2 β2 γ2 c c = α2 + β2 + γ2 := by simp [LBal, levelCov_apply]
+  have hKcc : (KBal α2 β2 γ2 σ2 : Matrix (A × T) (A × T) ℝ) c c = α2 + β2 + γ2 + σ2 := by
+    simp [KBal, K, levelCov_apply]
+  rw [Core.levelMoments_bestZ_eq hK, hL, hcc, hKcc, invTotal_KBal hα hβ hγ hσ, zBlend,
+    layerSignal]
+  have h1 : 0 < (Fintype.card A * Fintype.card T - 1) * σ2 := mul_pos (by linarith) hσ
+  have h2 : 0 ≤ (Fintype.card A - 1) * (Fintype.card T * α2 + γ2)
+      + (Fintype.card T - 1) * (Fintype.card A * β2 + γ2)
+      + (Fintype.card A - 1) * (Fintype.card T - 1) * γ2 := by
+    have := sub_nonneg.mpr hA; have := sub_nonneg.mpr hT; positivity
+  have hκ : 0 < α2 * Fintype.card T + β2 * Fintype.card A + γ2 + σ2 := by positivity
+  have hd : α2 + β2 + γ2 + σ2 - (Fintype.card A * Fintype.card T
+      / (α2 * Fintype.card T + β2 * Fintype.card A + γ2 + σ2))⁻¹
+      = ((Fintype.card A - 1) * (Fintype.card T * α2 + γ2)
+        + (Fintype.card T - 1) * (Fintype.card A * β2 + γ2)
+        + (Fintype.card A - 1) * (Fintype.card T - 1) * γ2
+        + (Fintype.card A * Fintype.card T - 1) * σ2) / (Fintype.card A * Fintype.card T) := by
+    field_simp; ring
+  rw [hd]
+  field_simp
+  ring
+
+/-- **The blend at its best common factor**, summed over the table: `z̄` minimizes the total
+error of `z X_c + (1 - z) X̄`, and any other `z` costs `W(z - z̄)²` more,
+`W = Σₖ mₖ(λₖ + σ²)`. -/
+theorem sum_linMse_blend_zBlend [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα : 0 ≤ α2)
+    (hβ : 0 ≤ β2) (hγ : 0 ≤ γ2) (hσ : 0 < σ2) (hN : 1 < Fintype.card A * Fintype.card T)
+    (z : ℝ) :
+    ∑ c : A × T, Core.linMse (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c
+        (Core.blendWeight (KBal α2 β2 γ2 σ2) c z)
+      = ∑ c : A × T, Core.linMse (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c
+          (Core.blendWeight (KBal α2 β2 γ2 σ2) c (zBlend A T α2 β2 γ2 σ2))
+        + (layerSignal A T α2 β2 γ2 + (Fintype.card A * Fintype.card T - 1) * σ2)
+          * (z - zBlend A T α2 β2 γ2 σ2) ^ 2 := by
+  have hA : (1 : ℝ) ≤ Fintype.card A := by exact_mod_cast Fintype.card_pos
+  have hT : (1 : ℝ) ≤ Fintype.card T := by exact_mod_cast Fintype.card_pos
+  have hN' : (1 : ℝ) < Fintype.card A * Fintype.card T := by exact_mod_cast hN
+  have hW : 0 < layerSignal A T α2 β2 γ2 + (Fintype.card A * Fintype.card T - 1) * σ2 := by
+    have := sub_nonneg.mpr hA; have := sub_nonneg.mpr hT
+    have h1 : 0 < (Fintype.card A * Fintype.card T - 1) * σ2 := mul_pos (by linarith) hσ
+    unfold layerSignal; positivity
+  have h1 : 0 < Fintype.card T * α2 + γ2 + σ2 := by positivity
+  have h2 : 0 < Fintype.card A * β2 + γ2 + σ2 := by positivity
+  have h3 : 0 < γ2 + σ2 := by positivity
+  rw [sum_linMse_blend hα hβ hγ hσ, sum_linMse_blend hα hβ hγ hσ]
+  simp only [zBlend, zRow, zCol, zCell]
+  unfold layerSignal at hW ⊢
+  field_simp
+  ring
+
+/-- **The error of the crossed predictor**, summed over the table:
+`σ² + Σₖ mₖλₖσ²/(λₖ + σ²)`. The grand mean costs `σ²`; each layer is shrunk by its own `zₖ`
+(`notes/crossed-2x2.md` §3). -/
+theorem sum_linMse_blup [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2)
+    (hγ : 0 ≤ γ2) (hσ : 0 < σ2) :
+    ∑ c : A × T, Core.linMse (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c
+        (Core.blupWeight (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c)
+      = σ2 + (Fintype.card A - 1) * ((Fintype.card T * α2 + γ2) * σ2
+            / (Fintype.card T * α2 + γ2 + σ2))
+        + (Fintype.card T - 1) * ((Fintype.card A * β2 + γ2) * σ2
+            / (Fintype.card A * β2 + γ2 + σ2))
+        + (Fintype.card A - 1) * (Fintype.card T - 1) * (γ2 * σ2 / (γ2 + σ2)) := by
+  have hA : (0 : ℝ) < Fintype.card A := by exact_mod_cast Fintype.card_pos
+  have hT : (0 : ℝ) < Fintype.card T := by exact_mod_cast Fintype.card_pos
+  have h1 : 0 < Fintype.card T * α2 + γ2 + σ2 := by positivity
+  have h2 : 0 < Fintype.card A * β2 + γ2 + σ2 := by positivity
+  have h3 : 0 < γ2 + σ2 := by positivity
+  have hterm : ∀ c : A × T, Core.linMse (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c
+      (Core.blupWeight (KBal α2 β2 γ2 σ2) (LBal α2 β2 γ2) c)
+      = (σ2 + (Fintype.card A - 1) * ((Fintype.card T * α2 + γ2) * σ2
+            / (Fintype.card T * α2 + γ2 + σ2))
+        + (Fintype.card T - 1) * ((Fintype.card A * β2 + γ2) * σ2
+            / (Fintype.card A * β2 + γ2 + σ2))
+        + (Fintype.card A - 1) * (Fintype.card T - 1) * (γ2 * σ2 / (γ2 + σ2)))
+        / (Fintype.card A * Fintype.card T) := by
+    intro c
+    have hcc : LBal α2 β2 γ2 c c = α2 + β2 + γ2 := by simp [LBal, levelCov_apply]
+    rw [Core.linMse, hcc, blupWeight_KBal hα hβ hγ hσ, mulVec_layer, LBal_eq_layer,
+      layer_dotProduct_layer, layer_dotProduct_layer]
+    simp only [zRow, zCol, zCell]
+    field_simp
+    ring
+  simp only [hterm, Finset.sum_const, Finset.card_univ, Fintype.card_prod, nsmul_eq_mul,
+    Nat.cast_mul]
+  field_simp
+
+/-! #### Equicorrelated noise
+
+The noise of the thesis simulation study, `Σ = σ²((1 - ρ)I + ρ11ᵀ)`, is `σ²(1 - ρ)I` plus a
+term common to all cells, which cancels in every contrast. -/
+
+/-- `K` of the balanced table with equicorrelated noise `σ²((1 - ρ)I + ρ11ᵀ)`. -/
+noncomputable def KBalρ (α2 β2 γ2 σ2 ρ : ℝ) : Matrix (A × T) (A × T) ℝ :=
+  K Prod.fst Prod.snd α2 β2 γ2 (σ2 • ((1 - ρ) • (1 : Matrix (A × T) (A × T) ℝ) + ρ • vecMulVec 1 1))
+
+lemma KBalρ_eq (α2 β2 γ2 σ2 ρ : ℝ) :
+    (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ)
+      = KBal α2 β2 γ2 (σ2 * (1 - ρ)) + (σ2 * ρ) • vecMulVec 1 1 := by
+  ext p q
+  simp only [KBalρ, KBal, K, Matrix.add_apply, Matrix.smul_apply, smul_eq_mul]
+  ring
+
+/-- `K ≻ 0` for `0 ≤ ρ < 1`. -/
+theorem KBalρ_posDef {α2 β2 γ2 σ2 ρ : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (hγ : 0 ≤ γ2)
+    (hσ : 0 < σ2) (h0 : 0 ≤ ρ) (h1 : ρ < 1) :
+    (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ).PosDef := by
+  rw [KBalρ_eq]
+  have h1' : (vecMulVec (1 : A × T → ℝ) 1).PosSemidef := by
+    simpa using posSemidef_vecMulVec_self_star (1 : A × T → ℝ)
+  exact (K_posDef _ _ hα hβ hγ (PosDef.one.smul (mul_pos hσ (sub_pos.mpr h1)))).add_posSemidef
+    (h1'.smul (mul_nonneg hσ.le h0))
+
+/-- **The crossed formula with equicorrelated noise**: the same weights, with `σ²(1 - ρ)` in place
+of `σ²` (`notes/crossed-2x2.md` §5). Positive correlation raises all three factors: common
+noise cancels in every contrast. Any `ρ` for which `K ≻ 0`. -/
+theorem blupWeight_KBalρ [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 ρ : ℝ} (hα : 0 ≤ α2)
+    (hβ : 0 ≤ β2) (hγ : 0 ≤ γ2) (hσ : 0 < σ2 * (1 - ρ))
+    (hK : (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ).PosDef) (c : A × T) :
+    Core.blupWeight (KBalρ α2 β2 γ2 σ2 ρ) (LBal α2 β2 γ2) c
+      = Core.blupWeight (KBal α2 β2 γ2 (σ2 * (1 - ρ))) (LBal α2 β2 γ2) c := by
+  rw [KBalρ_eq] at hK ⊢
+  exact Core.blupWeight_add_rankOne (K_posDef _ _ hα hβ hγ (PosDef.one.smul hσ)) _ hK _ c
+
+/-- …so `blup_balanced` holds with `σ²(1 - ρ)`. -/
+theorem blup_balancedρ [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 ρ : ℝ} (hα : 0 ≤ α2)
+    (hβ : 0 ≤ β2) (hγ : 0 ≤ γ2) (hσ : 0 < σ2 * (1 - ρ))
+    (hK : (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ).PosDef) (x : A × T → ℝ) (c : A × T) :
+    Core.blupWeight (KBalρ α2 β2 γ2 σ2 ρ) (LBal α2 β2 γ2) c ⬝ᵥ x
+      = (∑ p, x p) / (Fintype.card A * Fintype.card T)
+        + zRow T α2 γ2 (σ2 * (1 - ρ)) * ((∑ t, x (c.1, t)) / Fintype.card T
+            - (∑ p, x p) / (Fintype.card A * Fintype.card T))
+        + zCol A β2 γ2 (σ2 * (1 - ρ)) * ((∑ a, x (a, c.2)) / Fintype.card A
+            - (∑ p, x p) / (Fintype.card A * Fintype.card T))
+        + zCell γ2 (σ2 * (1 - ρ)) * (x c - (∑ t, x (c.1, t)) / Fintype.card T
+            - (∑ a, x (a, c.2)) / Fintype.card A
+            + (∑ p, x p) / (Fintype.card A * Fintype.card T)) := by
+  rw [blupWeight_KBalρ hα hβ hγ hσ hK, blup_balanced hα hβ hγ hσ]
+
+/-- …and the blend's excess is that of `sum_linMse_blend` with `σ²(1 - ρ)`: the common noise
+costs every unbiased rule the same. -/
+theorem sum_linMse_blendρ [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 ρ : ℝ} (hα : 0 ≤ α2)
+    (hβ : 0 ≤ β2) (hγ : 0 ≤ γ2) (hσ : 0 < σ2 * (1 - ρ))
+    (hK : (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ).PosDef) (z : ℝ) :
+    ∑ c : A × T, Core.linMse (KBalρ α2 β2 γ2 σ2 ρ) (LBal α2 β2 γ2) c
+        (Core.blendWeight (KBalρ α2 β2 γ2 σ2 ρ) c z)
+      = ∑ c : A × T, Core.linMse (KBalρ α2 β2 γ2 σ2 ρ) (LBal α2 β2 γ2) c
+          (Core.blupWeight (KBalρ α2 β2 γ2 σ2 ρ) (LBal α2 β2 γ2) c)
+        + ((Fintype.card A - 1) * (Fintype.card T * α2 + γ2 + σ2 * (1 - ρ))
+            * (z - zRow T α2 γ2 (σ2 * (1 - ρ))) ^ 2
+          + (Fintype.card T - 1) * (Fintype.card A * β2 + γ2 + σ2 * (1 - ρ))
+            * (z - zCol A β2 γ2 (σ2 * (1 - ρ))) ^ 2
+          + (Fintype.card A - 1) * (Fintype.card T - 1) * (γ2 + σ2 * (1 - ρ))
+            * (z - zCell γ2 (σ2 * (1 - ρ))) ^ 2) := by
+  have hK0 : (KBal α2 β2 γ2 (σ2 * (1 - ρ)) : Matrix (A × T) (A × T) ℝ).PosDef :=
+    K_posDef _ _ hα hβ hγ (PosDef.one.smul hσ)
+  have hK' := hK
+  rw [KBalρ_eq] at hK'
+  have hb : ∀ c : A × T, Core.blendWeight (KBalρ α2 β2 γ2 σ2 ρ) c z
+      = Core.blendWeight (KBal α2 β2 γ2 (σ2 * (1 - ρ))) c z := fun c => by
+    rw [Core.blendWeight, Core.blendWeight, KBalρ_eq, Core.glsWeight_add_rankOne hK0 _ hK']
+  have hsb : ∀ c : A × T, ∑ i, Core.blendWeight (KBal α2 β2 γ2 (σ2 * (1 - ρ))) c z i = 1 :=
+    fun c => by
+      have hA : (0 : ℝ) < Fintype.card A := by exact_mod_cast Fintype.card_pos
+      have hT : (0 : ℝ) < Fintype.card T := by exact_mod_cast Fintype.card_pos
+      rw [blendWeight_KBal hα hβ hγ hσ, sum_layer]; field_simp; ring
+  simp only [hb, blupWeight_KBalρ hα hβ hγ hσ hK]
+  rw [KBalρ_eq]
+  simp only [Core.linMse_add_rankOne, hsb, Core.sum_blupWeight hK0, Finset.sum_add_distrib]
+  rw [sum_linMse_blend hα hβ hγ hσ]
+  ring
 
 end Balanced
 

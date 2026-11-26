@@ -977,6 +977,17 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   \lean{Credibility.Crossed.blupWeight_KBal}
   \lean{Credibility.Crossed.glsWeight_KBal}
   \lean{Credibility.Crossed.sum_linMse_blend}
+  With layer dimensions $m_r = n_A - 1$, $m_c = n_T - 1$, $m_i = (n_A - 1)(n_T - 1)$, the best
+  common $z$ is $\bar z = \sum_k m_k\lambda_k/(\sum_k m_k\lambda_k + (n_An_T - 1)\sigma^2)$, and
+  the predictor's total error is $\sigma^2 + \sum_k m_k\lambda_k\sigma^2/(\lambda_k + \sigma^2)$.
+  With noise $\sigma^2((1-\rho)I + \rho\mathbf 1\mathbf 1^\top)$, all of this holds with
+  $\sigma^2(1-\rho)$ for $\sigma^2$.
+  \lean{Credibility.Crossed.bestZ_KBal}
+  \lean{Credibility.Crossed.sum_linMse_blend_zBlend}
+  \lean{Credibility.Crossed.sum_linMse_blup}
+  \lean{Credibility.Crossed.blup_balancedρ}
+  \lean{Credibility.Crossed.sum_linMse_blendρ}
+  \lean{Credibility.Core.blupWeight_add_rankOne}
 \end{result}
 \use One factor per layer: country effect, car-type effect, what is left in the cell.
 \begin{caveat}

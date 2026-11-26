@@ -7996,6 +7996,64 @@ All cells of $A \times T$ observed, $n_A$ rows, $n_T$ columns, $\Sigma = \sigma^
   it is the same for every cell, and $n_An_T$ times it is the sum above.
 \end{proof}
 
+\begin{theorem}[The best common factor and the crossed predictor's error]\label{thm:crossed_bestZ}
+  \lean{Credibility.Crossed.layerSignal, Credibility.Crossed.zBlend,
+    Credibility.Crossed.invTotal_KBal, Credibility.Crossed.bestZ_KBal,
+    Credibility.Crossed.sum_linMse_blend_zBlend, Credibility.Crossed.sum_linMse_blup}
+  \leanok
+  \uses{thm:crossed_blend_excess, thm:Core_levelMoments_bestZ_eq}
+  In the balanced table with $n_An_T \ge 2$, let $m_r = n_A - 1$, $m_c = n_T - 1$,
+  $m_i = (n_A - 1)(n_T - 1)$ be the layer dimensions. Every cell's best factor (eq.~(26)) is
+  \[
+    \bar z = \frac{\sum_k m_k\lambda_k}{\sum_k m_k\lambda_k + (n_An_T - 1)\sigma^2},
+  \]
+  $1^TK^{-1}1 = n_An_T/(n_T\alpha^2 + n_A\beta^2 + \gamma^2 + \sigma^2)$, and summed over the table
+  the blend with $z$ costs $W(z - \bar z)^2$ more than with $\bar z$,
+  $W = \sum_k m_k(\lambda_k + \sigma^2)$. The best predictor's total error is
+  $\sigma^2 + \sum_k m_k\lambda_k\sigma^2/(\lambda_k + \sigma^2)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_levelMoments_bestZ_eq, thm:crossed_blend_excess, lem:crossed_layer,
+    lem:crossed_posDef, thm:crossed_balanced}
+  Eq.~(26) (Theorem~\ref{thm:Core_levelMoments_bestZ_eq}) with $b = 1/(n_An_T)$ and
+  $K\mathbf 1 = \kappa\mathbf 1$. The excess of Theorem~\ref{thm:crossed_blend_excess} is a
+  parabola in $z$ with vertex $\sum_k m_k(\lambda_k + \sigma^2)z_k/W = \bar z$. The error of the
+  best predictor: $d^{*T}Kd^* - 2d^{*T}L_c + L_{cc}$ on layer vectors.
+\end{proof}
+
+\begin{lemma}[A common term does not move the best predictor]\label{lem:Core_blupWeight_add_rankOne}
+  \lean{Credibility.Core.blupWeight_add_rankOne, Credibility.Core.linMse_add_rankOne}
+  \leanok
+  \uses{lem:eq_blupWeight_of_mulVec}
+  If $K$ and $K + c\mathbf 1\mathbf 1^T$ are positive definite, both have the same best predictor
+  weights, and $c\mathbf 1\mathbf 1^T$ adds $c(\sum_i d_i)^2$ to the error of any weights $d$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:eq_blupWeight_of_mulVec, lem:Core_blup_foc}
+  $(K + c\mathbf 1\mathbf 1^T)d^* - L_j = (Kd^* - L_j) + c\mathbf 1$ is constant;
+  Lemma~\ref{lem:eq_blupWeight_of_mulVec}.
+\end{proof}
+
+\begin{theorem}[Equicorrelated noise]\label{thm:crossed_equicorr}
+  \lean{Credibility.Crossed.KBalρ, Credibility.Crossed.KBalρ_eq, Credibility.Crossed.KBalρ_posDef,
+    Credibility.Crossed.blupWeight_KBalρ, Credibility.Crossed.blup_balancedρ,
+    Credibility.Crossed.sum_linMse_blendρ}
+  \leanok
+  \uses{thm:crossed_balanced, thm:crossed_blend_excess}
+  With $\Sigma = \sigma^2((1 - \rho)I + \rho\mathbf 1\mathbf 1^T)$ ($K \succ 0$, e.g.\
+  $0 \le \rho < 1$), Theorems~\ref{thm:crossed_balanced} and~\ref{thm:crossed_blend_excess} hold
+  with $\sigma^2(1 - \rho)$ in place of $\sigma^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blupWeight_add_rankOne, thm:glsWeight_add_rankOne, thm:crossed_balanced,
+    thm:crossed_blend_excess, lem:crossed_posDef}
+  $K = K(\sigma^2(1 - \rho)) + \sigma^2\rho\mathbf 1\mathbf 1^T$; Lemma~\ref{lem:Core_blupWeight_add_rankOne}
+  and Theorem~\ref{thm:glsWeight_add_rankOne}.
+\end{proof}
+
 \begin{theorem}[A cell without data]\label{thm:crossed_missing}
   \lean{Credibility.Crossed.cellCov, Credibility.Crossed.missRow, Credibility.Crossed.missCol,
     Credibility.Crossed.missing_blup, Credibility.Crossed.missing_predMse}
