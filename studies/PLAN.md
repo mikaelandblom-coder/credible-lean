@@ -916,7 +916,8 @@ One chat per step; none needs Lean except step 5.
 - [ ] BLUP in credibility form (2026-11-26, `notes/blup-credibility-form.md` §1–2): `μ̂ᴮᴸᵁᴾ = 1μ̂_GLS + Z r`,
   `Z = LK⁻¹` (`τ²(τ²I + V)⁻¹` in the thesis model), residuals `r = μ̂ − 1μ̂_GLS`; the blend is row `j`
   restricted to `z eⱼ`; path `w + θ(d* − w)` with `MSE(θ) = MSE(d*) + (1 − θ)²·price`. Lean first (targets
-  1–3 in the note, `Core.lean`). App then: show `Ẑ` (diagonal next to the blend's `ẑ`, off-diagonal as
+  1–3 in the note, `Core.lean`: done 2026-11-26, `Core.blupWeight_dotProduct`,
+  `Core.linMse_add_smul_blupWeight_sub`). App then: show `Ẑ` (diagonal next to the blend's `ẑ`, off-diagonal as
   "borrowed") in the card "Is correlation worth modelling?"; later a fit with `θ̂` from gain against price
   (S57), once the best `θ` for a plug-in is stated. Gauge of `Z`'s rows to settle.
 - [ ] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the

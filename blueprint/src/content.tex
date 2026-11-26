@@ -3432,6 +3432,58 @@ lost by not using the best of them all?
   diagonal and $\tau^2 = z(K_{jj} - c)$; $z = 0$ would need $\tau^2 = 0$.
 \end{proof}
 
+\begin{definition}[GLS mean plus predicted residuals]\label{def:Core_residualWeight}
+  \lean{Credibility.Core.residualWeight}
+  \leanok
+  \uses{def:Core_blup}
+  For a row $c$, the predictor $\hmu + c^T(\hmu_\cdot - \hmu 1)$ (the GLS mean plus $c$
+  applied to the residuals) has the unbiased weights $c + (1 - 1^Tc)\,b$.
+\end{definition}
+
+\begin{theorem}[The best predictor is the GLS mean plus predicted residuals]\label{thm:Core_blup_residual}
+  \lean{Credibility.Core.blupWeight_dotProduct, Credibility.Core.residualWeight_dotProduct,
+        Credibility.Core.blupWeight_eq_residualWeight, Credibility.Core.mul_inv_row_eq}
+  \leanok
+  \uses{def:Core_residualWeight}
+  If $K$ is symmetric then for every $x$,
+  $d^{*T}x = b^Tx + (LK^{-1})_{j\cdot}\,(x - (b^Tx)\,1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_residualWeight}
+  $d^*$ is the weight of the row $c = K^{-1}L_{j\cdot}$, and $(LK^{-1})_{j\cdot} = K^{-1}L_{j\cdot}$
+  since $K^{-1}$ is symmetric; expand $(c + (1-1^Tc)b)^Tx$.
+\end{proof}
+
+\begin{corollary}[The blend restricts the row to $z e_j$]\label{cor:Core_blend_residual}
+  \lean{Credibility.Core.blendWeight_eq_residualWeight, Credibility.Core.blendWeight_bestZ_optimal}
+  \leanok
+  \uses{thm:Core_blup_residual, lem:Core_blendWeight, def:bestZ}
+  The row $c = z e_j$ gives the blend: $w(z) = z e_j + (1 - z)\,b$. If $K \succ 0$ and
+  $b \ne e_j$, the best $z$ in this family is $z^*$ of \eqth{7} for the moments of
+  Definition~\ref{def:Core.levelMoments}, i.e.\ \eqth{26}.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blendWeight, thm:bestZ_optimal, lem:Core_quadForm_gap, thm:Core_levelMoments_bestZ_eq}
+  $1^T(ze_j) = z$. By Lemma~\ref{lem:Core_blendWeight} $\mathrm{mse}_j(w(z))$ is the error
+  variance \eqth{6}, minimised at $z^*$ when the gap $K_{jj} - s^2 = (e_j - b)^TK(e_j - b)$ is positive.
+\end{proof}
+
+\begin{theorem}[Shrinking towards the best predictor]\label{thm:Core_shrink_blup}
+  \lean{Credibility.Core.linMse_add_smul_blupWeight_sub}
+  \leanok
+  \uses{def:Core_blup}
+  If $K \succ 0$ and $\sum_i w_i = 1$ then for every $\theta$,
+  $\mathrm{mse}_j(w + \theta(d^* - w)) = \mathrm{mse}_j(d^*) + (1-\theta)^2(w - d^*)^TK(w - d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_optimal}
+  The weights sum to one and differ from $d^*$ by $(1-\theta)(w - d^*)$;
+  Theorem~\ref{thm:Core_blup_optimal}.
+\end{proof}
+
 \begin{definition}[Data and a general target]\label{def:Blup_Target}
   \lean{Credibility.Core.Target}
   \leanok

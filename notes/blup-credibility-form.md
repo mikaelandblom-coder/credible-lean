@@ -1,8 +1,8 @@
 # The BLUP in credibility form, and the ρ̂ channel of Finding 35
 
 Discussion of 2026-11-26 (owner: is the BLUP more exposed to a winner's curse than the blend, and can it
-be written like credibility so that the blend falls out of it?). Nothing here is proved yet; Lean targets
-are marked. Plan entries: `studies/PLAN.md` Pending, "BLUP in credibility form" and "Finding 35: the ρ̂
+be written like credibility so that the blend falls out of it?). Targets 1–3 of §2 are proved (2026-11-26); the
+other Lean targets are marked. Plan entries: `studies/PLAN.md` Pending, "BLUP in credibility form" and "Finding 35: the ρ̂
 channel".
 
 ## 1. Degrees of freedom
@@ -39,7 +39,9 @@ Path between them: `d(θ) = w + θ(d* − w)`, `w` the best blend. Both are unbi
 `Damping.lean`'s `θ*`, estimable from the data (no hand-set value). Report: `ẑ` as the headline, the
 off-diagonal correction `θ̂(d̂* − ŵ)` next to it.
 
-Lean targets (`Core.lean`, one chat):
+Lean targets (`Core.lean`, one chat; 1–3 done 2026-11-26: `Core.blupWeight_dotProduct`,
+`Core.blendWeight_eq_residualWeight`, `Core.blendWeight_bestZ_optimal` (needs `b ≠ eⱼ`),
+`Core.linMse_add_smul_blupWeight_sub`):
 1. `blupWeight K L j ⬝ᵥ μ̂ = glsMean + (L K⁻¹ row j) ⬝ᵥ (μ̂ − glsMean • 1)`.
 2. Row `j` restricted to `z eⱼ` gives `blendWeight`, its best `z` is `bestZ`.
 3. `linMse` of `w + θ(d* − w)` equals `linMse d* + (1 − θ)²(w − d*)ᵀK(w − d*)`.

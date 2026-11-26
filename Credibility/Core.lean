@@ -1071,6 +1071,81 @@ theorem exists_blendWeight_eq_blupWeight_iff (hK : K.PosDef) (hτ : τ2 ≠ 0) (
   · rintro ⟨c, hne, hc⟩
     exact ⟨_, blendWeight_eq_blupWeight_of_equalCol hK j hc hne⟩
 
+/-! #### The best predictor as GLS mean plus predicted residuals
+
+`d*ᵀμ̂ = μ̂ + (L K⁻¹)ⱼ (μ̂ - μ̂ 1)`: the portfolio mean plus the regression of `μⱼ` on the
+residuals (the universal-kriging split). Any row `c` in place of `(L K⁻¹)ⱼ` gives
+unbiased weights `c + (1 - 1ᵀc) b`; the row `z eⱼ` gives the blend, and the best `z` there
+is `bestZ`. -/
+
+/-- The weights of `μ̂ + cᵀ(μ̂ - μ̂ 1)`, the GLS mean plus `c` applied to the residuals. -/
+noncomputable def residualWeight (K : Matrix J J ℝ) (c : J → ℝ) : J → ℝ :=
+  c + (1 - 1 ⬝ᵥ c) • glsWeight K
+
+/-- `(c + (1 - 1ᵀc) b)ᵀx = bᵀx + cᵀ(x - (bᵀx) 1)`. -/
+theorem residualWeight_dotProduct (K : Matrix J J ℝ) (c x : J → ℝ) :
+    residualWeight K c ⬝ᵥ x = glsWeight K ⬝ᵥ x + c ⬝ᵥ (x - (glsWeight K ⬝ᵥ x) • 1) := by
+  simp only [residualWeight, add_dotProduct, smul_dotProduct, sub_dotProduct, dotProduct_sub,
+    dotProduct_smul, smul_eq_mul, dotProduct_one, one_dotProduct]
+  ring
+
+/-- `d* = residualWeight (K⁻¹Lⱼ)`. -/
+theorem blupWeight_eq_residualWeight (K L : Matrix J J ℝ) (j : J) :
+    blupWeight K L j = residualWeight K (K⁻¹ *ᵥ L j) := rfl
+
+/-- For symmetric `K`, row `j` of `L K⁻¹` is `K⁻¹Lⱼ`. -/
+theorem mul_inv_row_eq (hK : K.IsHermitian) (L : Matrix J J ℝ) (j : J) :
+    (L * K⁻¹) j = K⁻¹ *ᵥ L j := by
+  have hsymm : (K⁻¹)ᵀ = K⁻¹ := by
+    rw [← conjTranspose_eq_transpose_of_trivial]; exact hK.inv
+  funext i
+  rw [← vecMul_transpose, hsymm]
+  rfl
+
+/-- **The best predictor is the GLS mean plus predicted residuals**:
+`d*ᵀμ̂ = bᵀμ̂ + (L K⁻¹)ⱼ (μ̂ - (bᵀμ̂) 1)`. -/
+theorem blupWeight_dotProduct (hK : K.IsHermitian) (L : Matrix J J ℝ) (j : J) (x : J → ℝ) :
+    blupWeight K L j ⬝ᵥ x
+      = glsWeight K ⬝ᵥ x + (L * K⁻¹) j ⬝ᵥ (x - (glsWeight K ⬝ᵥ x) • 1) := by
+  rw [mul_inv_row_eq hK, blupWeight_eq_residualWeight, residualWeight_dotProduct]
+
+/-- Restricting the row to `z eⱼ` gives the blend:
+`z μ̂ⱼ + (1 - z) μ̂ = μ̂ + z eⱼᵀ(μ̂ - μ̂ 1)`. -/
+theorem blendWeight_eq_residualWeight (K : Matrix J J ℝ) (j : J) (z : ℝ) :
+    blendWeight K j z = residualWeight K (z • Pi.single j 1) := by
+  simp only [blendWeight, residualWeight, dotProduct_smul, one_dotProduct, smul_eq_mul,
+    Finset.sum_pi_single', mem_univ, ite_true, mul_one]
+
+/-- …and the best predictor in that restricted family is the blend with `bestZ`
+(eq. (26)), whenever cohort `j` is not the whole portfolio (`b ≠ eⱼ`). -/
+theorem blendWeight_bestZ_optimal (hK : K.PosDef) (L : Matrix J J ℝ) (j : J)
+    (hb : glsWeight K ≠ Pi.single j 1) (z : ℝ) :
+    linMse K L j (blendWeight K j (levelMoments K L (K j j) j).bestZ)
+      ≤ linMse K L j (blendWeight K j z) := by
+  have : Nonempty J := ⟨j⟩
+  rw [linMse_blendWeight hK, linMse_blendWeight hK]
+  refine BlendMoments.bestZ_optimal _ ?_ z
+  rw [levelMoments_gap_eq hK, ← quadForm_single_sub_glsWeight hK]
+  have := hK.dotProduct_mulVec_pos (x := Pi.single j 1 - glsWeight K)
+    (sub_ne_zero.mpr (Ne.symm hb))
+  simpa only [star_trivial] using this
+
+/-- **Shrinking towards the best predictor**: for any unbiased weights `w`, moving the
+fraction `θ` of the way to `d*` leaves the excess `(1 - θ)²(w - d*)ᵀK(w - d*)`. -/
+theorem linMse_add_smul_blupWeight_sub (hK : K.PosDef) (L : Matrix J J ℝ) (j : J)
+    {w : J → ℝ} (hw : ∑ i, w i = 1) (θ : ℝ) :
+    linMse K L j (w + θ • (blupWeight K L j - w)) = linMse K L j (blupWeight K L j)
+      + (1 - θ) ^ 2 * ((w - blupWeight K L j) ⬝ᵥ (K *ᵥ (w - blupWeight K L j))) := by
+  have : Nonempty J := ⟨j⟩
+  have hs : ∑ i, (w + θ • (blupWeight K L j - w)) i = 1 := by
+    simp only [Pi.add_apply, Pi.smul_apply, Pi.sub_apply, smul_eq_mul, sum_add_distrib,
+      ← mul_sum, sum_sub_distrib, hw, sum_blupWeight hK, sub_self, mul_zero, add_zero]
+  have hd : w + θ • (blupWeight K L j - w) - blupWeight K L j
+      = (1 - θ) • (w - blupWeight K L j) := by
+    funext i; simp only [Pi.add_apply, Pi.smul_apply, Pi.sub_apply, smul_eq_mul]; ring
+  rw [linMse_eq_blupWeight_add hK L j _ hs, hd, mulVec_smul, smul_dotProduct, dotProduct_smul,
+    smul_eq_mul, smul_eq_mul, ← mul_assoc, sq]
+
 end Blup
 
 /-! ### A wrong covariance model (Finding 19)

@@ -521,6 +521,25 @@ $E Y = x_0^\top\beta$ for unknown $\beta$ (one mean; a season; a mean per compon
 \lean{Credibility.Core.predMse_aggregate_eq_blup_add}
 \lean{Credibility.Core.predMse_blup_nested}
 
+\begin{result}[GLS mean plus predicted residuals]\label{res:blup_residual}
+  For one common mean ($X = 1$, target $\mu_j$, $\ell = L_{j\cdot}$),
+  \[
+    d^{*\top}\hmu_\cdot = \hmu + (LK^{-1})_{j\cdot}\,(\hmu_\cdot - \hmu\,1),
+  \]
+  the GLS mean plus the regression of $\mu_j$ on the residuals. Any row $c$ in its place gives
+  unbiased weights $c + (1 - 1^\top c)\,b$; the row $z e_j$ is the blend, and the best $z$ there is
+  eq.~(26). Shrinking any unbiased $w$ the fraction $\theta$ towards $d^*$ costs
+  $\mathrm{mse}(d^*) + (1-\theta)^2(w - d^*)^\top K(w - d^*)$.
+  \lean{Credibility.Core.blupWeight_dotProduct}
+  \lean{Credibility.Core.blendWeight_eq_residualWeight}
+  \lean{Credibility.Core.blendWeight_bestZ_optimal}
+  \lean{Credibility.Core.linMse_add_smul_blupWeight_sub}
+\end{result}
+\use Read the blend as the best predictor with the residual row cut down to cohort $j$'s own residual; $(LK^{-1})_{j\cdot}$ shows which other cohorts' residuals it ignores.
+\begin{caveat}
+  The excess falls only as $(1-\theta)^2$: going halfway to $d^*$ removes three quarters of the blend's loss, not half.
+\end{caveat}
+
 % ===========================================================================
 \section{Estimating the parameters}\label{sec:estimation}
 
