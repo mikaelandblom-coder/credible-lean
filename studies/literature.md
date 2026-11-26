@@ -1379,11 +1379,11 @@ credibility, Künsch, Zhao & Poudyal §10l).
   years is a cousin of recency weighting (S43–S45), whose model-based form is a common period
   effect (`Factor.lean`); it cites Poon & Lu (2015), so the crop line builds on Poon (§10q).
 - Porth, Zhu & Tan (2014), *A credibility-based Erlang mixture model for pricing crop
-  reinsurance*, Agric. Finance Rev. 74(2), 162–187, doi 10.1108/afr-04-2014-0006 (closed; abstract
-  from OpenAlex only). Two "modified" Bühlmann–Straub models on liability-weighted loss cost ratios,
-  region/province against the Canadian collective, with an Erlang mixture for the tails. From the
-  abstract: classical BS (regions independent), the modification is the weighting, not correlation
-  or crossed levels. **Nothing used; not prior art for crossed levels or correlated noise.** The
-  full text is a chapter of Zhu's thesis, *Actuarial ratemaking in agricultural insurance*
-  (Waterloo 2015, `uwspace.uwaterloo.ca` handle 10012/9503, open access); not fetched because that
-  host is blocked. Fetch only if the region-weighting needs checking.
+  reinsurance*, Agric. Finance Rev. 74(2), 162–187, doi 10.1108/afr-04-2014-0006 (owner's upload,
+  §5–6 read). The two "modified Bühlmann–Straub" models are the classical a-priori-differences model
+  (Bühlmann & Gisler 2005, ch. 4): `E[X_ij | Y_i] = a_i m(Y_i)`, `Var = a_i s²(Y_i)/(b_i L_ij)` with
+  known `a_i, b_i`, so `Z_i = a_i b_i L_i/(a_i b_i L_i + κ)`; liabilities `L_ij` are the volumes.
+  Provinces are **independent** (A2), although §1 says losses are "geographically correlated across
+  regions"; no estimators beyond ML under a normal prior; `Z_i ≈ 0.95–0.98` with 36 years. **Nothing
+  used; not prior art** for correlated noise or crossed levels. Use only as a motivating example in
+  the paper: ten Canadian provinces, correlation acknowledged and then assumed away.
