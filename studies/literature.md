@@ -1316,3 +1316,15 @@ estimators" to *Used*, and names Poon & Lu, not EIJK12, as the closest prior art
 afterwards (owner's uploads), move nothing more. Still *New here*: the blend's factor for any PD `K`, `z ∉ [0, 1]` (Findings 3, 17),
 the price of the blend form (18), balance, unequal histories and their pair counts (9), the group
 model with correlated noise (13), the exact price of ignoring correlation (19, 20).
+
+### 10r. References added to the thesis proposal (2026-11-26)
+Existence and venue checked from OpenAlex metadata only (not read): Ohlsson (2008), *Combining
+generalized linear models and credibility models in practice*, Scand. Actuar. J. 2008(4),
+doi 10.1080/03461230701878612 (GLM as the mean model, credibility on the residual relativities);
+Nelder & Verrall (1997), *Credibility theory and generalized linear models*, ASTIN Bull. 27(1),
+doi 10.2143/ast.27.1.563206; Künsch (1992), *Robust methods for credibility*, ASTIN Bull. 22(1),
+33–49; Jewell (1974), *Credible means are exact Bayesian for exponential families*, ASTIN Bull.
+8(1), 77–90. Gisler & Reinhard (1993) was not found by title search: cited only in the notes.
+Used in `studies/thesis-topics/proposal.tex`, Section "Other approaches worth considering" (A1
+covariates first, with Reluga et al. 2026, §10p; A2 likelihood benchmark, Jewell; A5 robust
+credibility, Künsch, Zhao & Poudyal §10l).

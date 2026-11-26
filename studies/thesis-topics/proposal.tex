@@ -14,7 +14,10 @@
 \usepackage{booktabs, array}
 \newcommand{\rowsep}{\specialrule{0.2pt}{3pt}{3pt}}
 \usepackage{xr-hyper}
-\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+\usepackage{xcolor}
+% Link colours as in the paper and the handbook: internal links in the text colour, external in a muted blue.
+\definecolor{linkblue}{RGB}{30,60,110}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=linkblue]{hyperref}
 \externaldocument[H-]{../../handbook/handbook}
 
 \newcommand{\site}{https://mikaelandblom-coder.github.io/credible-lean/}
@@ -36,6 +39,13 @@
   \begin{enumerate}\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}#4\end{enumerate}
   \textit{Data question.} #5\par\smallskip
   {\small\textit{Check against:} Handbook #6 \quad\textperiodcentered\quad \textit{Size:} #7}\par}
+
+% One other approach: \other{title}{idea}{question}{check against}
+\newcommand{\other}[4]{%
+  \subsection*{#1}
+  \textit{Idea.} #2\par\smallskip
+  \textit{Question.} #3\par\smallskip
+  {\small\textit{Check against:} #4}\par}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{4pt}
@@ -59,7 +69,8 @@ Since then the model has been extended in several directions.
 
 This thesis takes some of those extensions, derives their formulas, and tests them on real data.
 You derive the formulas yourself, then check them against the handbook (Section~\ref{sec:where}),
-which states each result with the idea of its proof. Deriving is the best way to learn the subject,
+which states each formula with a note on its use and what to watch out for. The paper explains the
+ideas behind the formulas, and each handbook result links to its machine-checked proof. Deriving is the best way to learn the subject,
 and it makes the thesis less dependent on mathematics generated with AI tools. The theory is
 general; the data are monthly claims of a travel insurance sold through payment cards
 (Section~\ref{sec:cards}), where each extension answers a concrete pricing question.
@@ -86,6 +97,17 @@ The cohort effects $\eta_j$ and the noise $\varepsilon_{jt}$ are centred with un
 the cohort effects are uncorrelated with each other and with the noise. The new assumption is the
 last one: noise in the same period is correlated across cohorts. With $\rho_{ij} = \delta_{ij}$
 (no correlation) and a common $\sigma_j = \sigma$ this is Bühlmann--Straub.
+
+\textbf{Prior art.} This model has a precedent, which a thesis should position itself against.
+Poon (2013, an MSc project, read in full) and Poon and Lu (2015) have noise correlated across
+risks within a period, the best linear predictor, and the same cross-product estimators; Schnapp
+et al.\ (2000) is the original, with equal volumes. The common-effect line (Yeo and Valdez 2006;
+Wen, Wu and Zhou 2009; Ebrahimzadeh et al.\ 2012, 2013) instead shares one \emph{permanent} effect
+over all periods. A literature check (\href{\repo/blob/main/studies/literature.md}{literature
+notes}, \S10q) found these \emph{not} in the earlier work: the credibility factor for any positive
+definite $K$ and when it leaves $[0, 1]$, the exact price of the blend form and of ignoring the
+correlation, exposure balance, cohorts observed over different periods, and the group model with
+correlated noise. A first task is to check that claim against the papers.
 
 \textbf{The recipe.} Every result follows from one matrix.
 \begin{enumerate}\setlength{\itemsep}{1pt}
@@ -130,7 +152,8 @@ Each model below is a \emph{suggestion}: change it if the data or the literature
 something else. The scope is flexible and follows the ambition of the thesis. E3 is a natural
 first chapter for E4--E7 and E9; from there one can go deep on one or two extensions or cover more,
 and the review of Section~\ref{sec:review} can be a part of its own. Whatever the choice, it needs
-the method of Section~\ref{sec:method}.
+the method of Section~\ref{sec:method}. Section~\ref{sec:other} lists further approaches that do not
+fit the nine, to consider or to use as comparators.
 
 \section{The extensions}
 
@@ -239,7 +262,7 @@ true moments.}
  \item An estimated table need not be positive definite. Projecting it onto valid tables never
    increases the error.
  \item Standard errors of the moment estimators: their variance needs third and fourth moments
-   (the repository has the general formula; not yet in the handbook).}
+   (the general formula is Handbook Result \hb{res:varQuad}).}
 {How skewed and how heavy-tailed are the residuals, and what does balancing the total premium cost
 in accuracy?}
 {Results \hb{res:randomWeights}, \hb{res:plugIn}, \hb{res:valid_tables}}{medium}
@@ -268,12 +291,80 @@ $\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \tau^2\delta_{ij}$; noise as in 
 (Result \hb{res:trend}), when to merge cohorts and how to choose them (Results \hb{res:merge},
 \hb{res:pool_intervals}, \hb{res:blend_intervals}), and balance (Results \hb{res:balance}--\hb{res:commonShift}).
 
+\section{Other approaches worth considering}\label{sec:other}
+
+Neither extensions of the model nor part of the 2023 recipe, these are alternatives, baselines and
+checks that would strengthen a thesis on the card data. Each is optional.
+
+\other{A1. Covariates first: a model for the means, credibility on the residuals}
+{Cards differ in country, tier and channel. Instead of nesting cards in countries (E9), fit a GLM
+or another learner on those covariates and use it as the collective mean; credibility then blends
+each card's own residual with zero. The weight is the usual factor, from the spread of the
+residuals across cards, with no tuning. This is a case of E3, with the learner in the place of
+$X\beta$ (``small area learning''). On the log scale it is a credibility correction to a
+multiplicative tariff.}
+{Does it beat nested levels, and how much does fitting the learner on the same data bias the
+premium (cross-fitting is the remedy)? Do tiers behave alike across countries once covariates are
+in?}
+{Handbook Results \hb{res:blup}, \hb{res:randomWeights}. Reluga et al.\ (2026); Ohlsson (2008);
+Nelder and Verrall (1997).}
+
+\other{A2. A likelihood benchmark}
+{All alternatives in Section~\ref{sec:method} are moment fits. Add a Poisson or Tweedie mixed
+model with correlated random effects, fitted by REML or Laplace (\texttt{lme4}, \texttt{glmmTMB})
+or Bayesian. With conjugate priors in an exponential family, linear credibility is the exact Bayes
+rule (Jewell 1974), so the question is where it is not: skewed cells, small cells, heavy tails.}
+{What does the distribution-free fit give up, if anything, and when? A result that uses a
+distribution is fine if it says so.}
+{Handbook Result \hb{res:varQuad} (what skewness and kurtosis change); Result \hb{res:randomWeights}.}
+
+\other{A3. Which cards to pool}
+{Merge cards that are alike. With known levels the best groups are intervals of the sorted levels
+(weighted $k$-means on a line), found by dynamic programming. In practice the levels are estimated
+from the data you then fit, so groups look more different than they are: a winner's curse. Cutting
+the sorted estimates where an estimated risk is smallest was 2--74\% worse than one group in our
+simulations, and with a separate $\tau^2$ per group the optimal groups are not intervals.}
+{How large is the curse in general, and is there a correction, as the price of estimation corrects
+a fitted model's error? Is the number of groups better chosen by gain against price than by a
+likelihood criterion? It is open.}
+{Handbook Results \hb{res:merge}, \hb{res:pool_intervals}, \hb{res:blend_intervals},
+\hb{res:bsPrice}; Findings 14, 41.}
+
+\other{A4. Baselines for the persistent factor}
+{A practitioner weights a card's own years by $\lambda^{\text{age}}$ (exponential smoothing; Morris
+2026, with $\lambda$ depending on account size). The factor of E5 has a state-space form, so the
+best predictor can be computed by a Kalman filter on long histories (Gerber and Jones 1975;
+Zehnwirth 1985), and Pinquet (2020) restricts the weights to be nonnegative. In the repository's
+simulated monthly world, recency weighting lost 6--31\% against the best predictor when the factor
+persists, because the best predictor reads the factor from the \emph{other} cards.}
+{Is that the case on the data? Does the best $\lambda$ fall with a card's volume, as the model
+predicts? Is a restriction to nonnegative weights worth its cost?}
+{Handbook Result \hb{res:blup} (the exact loss of any aggregate predictor), Results \hb{res:factor}, \hb{res:factor_est}.}
+
+\other{A5. The pandemic as an outlier}
+{E5 handles it as a break in the factor's covariance at known dates. Alternatives: drop the months,
+or use robust credibility, which limits the pull of extreme observations (Künsch 1992; winsorized
+losses with quadratic terms, Zhao and Poudyal 2026). Robust versions need moments beyond the
+second, so they leave the distribution-free core.}
+{Which treatment predicts the later years best, and does it change the cards' ranking?}
+{Handbook Results \hb{res:factor}, \hb{res:varQuad}.}
+
+\other{A6. Uncertainty per card}
+{The mean squared errors in the handbook average over the cards' levels. For one card whose level
+lies far from the portfolio, the shrunk estimate is biased towards the portfolio, and an interval
+built from the average error can cover far less than it claims (2--4\% in a small-area study).
+The error given the card's level, and its unbiased estimate, are known.}
+{Back-test interval coverage per card, not only squared error: does the average-error interval
+under-cover the outlying cards, and does the given-level one repair it?}
+{Handbook Result \hb{res:givenLevel}; Result \hb{res:plugIn} (quote a fitted error as typical).}
+
 \section{Results to review}\label{sec:review}
 
 The continuation found results that seem to be new, often gaps in the 2023 thesis itself. For any
 of them, check: is it correct, is it already known (a reference is as good an outcome as a
-confirmation), and does it matter in practice? Each is in the \Handbook{} with its proof idea, and
-in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with an example.
+confirmation), and does it matter in practice? Each is in the \Handbook{}, whose appendix \emph{Findings} lists all 41 findings with their
+counterexamples and Lean proofs, and in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with the
+details.
 \begin{enumerate}\setlength{\itemsep}{1pt}
   \item \textbf{The 2023 model makes a common shock shrink with volume} (Finding 23, Result
     \hb{res:shock}). With a fixed $\rho_{ij}$ the shared shock falls like $1/\sqrt{w_{it}w_{jt}}$;
@@ -294,6 +385,9 @@ in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with an example.
   \item \textbf{The own-data weight stays bounded} where $z_j$ explodes (Finding 17, Result
     \hb{res:z}): near the two-cohort singularity $z_j$ is large or negative, but
     $c_j = b_j + z_j(1 - b_j)$ is not.
+  \item \textbf{Which of these are new?} The prior art of Section~2 contains the model and its
+    estimators. Check each claim of novelty above against Poon and Lu (2015) and Schnapp et al.\
+    (2000) before building on it, and write down what each paper has and lacks.
 \end{enumerate}
 
 \section{Comparing models on data}\label{sec:method}
@@ -309,7 +403,10 @@ held-out months with the training months.
 First check the power in simulation: in a world the size of the data, how often does the test find
 a real difference? (The app's first answer: with 6--8 years a 30\% gap is found in only 15--23\% of
 draws.) ``No evidence of a difference'' is then a result in itself, and so is finding that a
-statement in the handbook is wrong or of little practical use.
+statement in the handbook is wrong or of little practical use. Score squared error and also interval
+coverage per card (A6). With so little power, \emph{combining} fits may beat choosing one
+(forecast combination): two predictors' best blend is the credibility factor itself, with
+correlated errors. This is an idea, not tested.
 
 \section{The application: travel insurance on payment cards}\label{sec:cards}
 
@@ -327,6 +424,8 @@ several countries, each with its own tiers. The pricing questions map to the ext
   \item Frequency and severity combined, separate or joint? (E6)
   \item How should new and closed cards enter the fit? (E1)
   \item How much does a card borrow from the other cards of its country? (E9)
+  \item Do country and tier work better as covariates than as nested levels? Which cards can be
+    pooled? (A1, A3)
 \end{itemize}
 \textit{Left to the student:} the number of factors, the treatment of the pandemic, reporting delay
 (simplest: use developed months only), and whether new cardholders behave differently.
@@ -338,8 +437,8 @@ reproduced without the company data.
 
 \begin{itemize}\setlength{\itemsep}{1pt}
   \item \textbf{Derive first, then check.} Derive the listed results by hand, then compare with the
-    handbook, which gives the formula, a practical note and the proof idea. Where you disagree, find
-    out who is right.
+    handbook, which gives the formula and a practical note; the paper explains why it holds, and
+    the proof is behind the handbook's Lean link. Where you disagree, find out who is right.
   \item \textbf{Guidance, not authority.} The continuation was developed with extensive AI
     assistance. Its proofs are machine-checked, so a stated result follows from its definitions. A
     machine cannot check whether the definitions say what is intended, whether a model fits real
@@ -358,10 +457,11 @@ reproduced without the company data.
 \begin{center}\small
 \begin{tabular}{>{\raggedright}p{3.6cm} >{\raggedright\arraybackslash}p{11.2cm}}
   \toprule
-  \href{\site handbook.pdf}{Handbook} & Each result with its formula, when to use it, what to watch
-    out for, and why it holds. Result numbers in this proposal refer to it. \\ \rowsep
-  \href{\site paper/}{Paper} & The up-to-date version of the 2023 thesis: concepts and intuition,
-    organized for lookup. \\ \rowsep
+  \href{\site handbook.pdf}{Handbook} & Every formula, with how to use it and what to watch out for, linked to its Lean proof;
+    the appendix \emph{Findings} lists all 41 findings with counterexamples. Result numbers in this
+    proposal refer to it. \\ \rowsep
+  \href{\site paper/}{Paper} & The up-to-date version of the 2023 thesis: concepts, intuition and the reasons behind the
+    formulas, organized for lookup, with a literature map. \\ \rowsep
   \href{\site app/}{App} & Simulated worlds: draw data, fit models that never see the truth,
     compare with the best possible fit. ``Monthly cohorts'' is a world like the card data. \\ \rowsep
   \href{\repo}{Repository} & Everything below, with its history. \\ \rowsep
@@ -408,6 +508,24 @@ series basics, simulation, R or Python.
   \item Rao, J. N. K. and Molina, I. (2015). \emph{Small Area Estimation}, 2nd ed. Wiley.
   \item Diebold, F. X. and Mariano, R. S. (1995). Comparing predictive accuracy. \emph{JBES} 13,
     253--263.
+  \item Poon, J. (2013). \emph{Spatial cross-sectional credibility models with general dependence
+    structure among risks}. MSc project, Simon Fraser University. Poon, J. and Lu, Y. (2015). A
+    spatial cross-sectional credibility model with dependence among risks. \emph{North American
+    Actuarial Journal} 19(4). Schnapp et al.\ (2000), \emph{CAS Forum}.
+  \item Reluga, K., Salvati, N., Ranjbar, S., Tzavidis, N. and van der Laan, M. (2026). Small area
+    learning. arXiv:2610.15953. Ohlsson, E. (2008). Combining generalized linear models and
+    credibility models in practice. \emph{Scand.\ Actuar.\ J.} 2008(4). Nelder, J. A. and Verrall, R. J.
+    (1997). Credibility theory and generalized linear models. \emph{ASTIN Bull.} 27(1).
+  \item Jewell, W. S. (1974). Credible means are exact Bayesian for exponential families.
+    \emph{ASTIN Bull.} 8(1), 77--90.
+  \item Gerber, H. U. and Jones, D. A. (1975). Credibility formulas of the updating type.
+    \emph{Trans.\ Soc.\ Actuaries} 27. Zehnwirth, B. (1985). Linear filtering and recursive
+    credibility estimation. \emph{ASTIN Bull.} 15(1), 19--36. Pinquet, J. (2020). Poisson models
+    with dynamic random effects and nonnegative credibilities per period. \emph{ASTIN Bull.} 50(2),
+    585--618. Morris, J. (2026). Logistic credibility with temporal decay. arXiv:2606.08692.
+  \item Künsch, H. R. (1992). Robust methods for credibility. \emph{ASTIN Bull.} 22(1), 33--49.
+    Zhao, Q. and Poudyal, C. (2026). Robust quadratic credibility. \emph{Ann.\ Actuar.\ Sci.} 20(2),
+    302--332.
 \end{itemize}}
 
 \end{document}
