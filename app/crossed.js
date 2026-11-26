@@ -211,10 +211,10 @@
   }
 
   /**
-   * The crossed fit. opts.weights: 'equal' (each pair of a class alike), 'vol' (∝ wᵢ*wⱼ*), or 'anova'
+   * The three pair pools and the raw α̂², β̂², γ̂² (Model.crossed_unbiasedX). weights: 'iv' (inverse variance,
+   * the default: studies/crossed-fit.js), 'equal' (each pair of a class alike), 'vol' (∝ wᵢ*wⱼ*), or 'anova'
    * (∝ wᵢ*wⱼ* and the noise cross term omitted: Dannenburg's and Goulet's ANOVA statistics as pair pools,
-   * biased under correlated noise, Finding 42). opts.trunc: 'clip' (each variance at 0, the Euclidean
-   * projection) or 'nnls' (the projection in the pool equations' metric).
+   * biased under correlated noise, Finding 42).
    */
   function pairPools(data, weights) {
     const { idx, sub, row, col } = observed(data), n = idx.length;
@@ -241,8 +241,14 @@
     return { idx, sub, row, col, wt, m, Sig, P, count, raw };
   }
 
+  /**
+   * The crossed fit. opts.weights as for pairPools; opts.trunc: 'clip' (each variance at 0, the Euclidean
+   * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
+   * settled by studies/crossed-fit.js (1000 draws × 96 worlds): inverse variance + clip is never clearly
+   * worse than equal weights and better in 59 worlds; least squares loses to clip in 67.
+   */
   function fit(data, opts) {
-    const o = Object.assign({ weights: 'equal', trunc: 'clip' }, opts || {});
+    const o = Object.assign({ weights: 'iv', trunc: 'clip' }, opts || {});
     const { idx, sub, row, col, wt, m, Sig, P, count, raw } = pairPools(data, o.weights);
     const ok = raw.every(Number.isFinite);
     const theta = !ok ? [0, 0, 0] : o.trunc === 'nnls' ? nnls3([P.r / 2, P.c / 2, P.n / 2]) : raw.map((x) => Math.max(x, 0));
@@ -263,7 +269,7 @@
       { name: 'cell means μ̂ⱼ', badge: 'proved', lean: 'Model.a_special' },
       { name: 'noise σ²ᵢⱼρᵢⱼ^ (eq. (39))', badge: 'proved', lean: 'Model.sigRhoHat_unbiasedX', note: 'unbiased with crossed levels too: the levels cancel within a cell' },
       { name: 'pair estimators P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ̂ᵢᵢ + σ̂ⱼⱼ − 2σ̂ᵢⱼ)', badge: o.weights === 'anova' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.pairHat_unbiasedX', note: o.weights === 'anova' ? 'ANOVA: the cross term −2σ̂ᵢⱼ is left out, biased by the noise covariances (Finding 42)' : 'E P̂ᵢⱼ = 2γ² + 2α²[other row] + 2β²[other column]' },
-      { name: `three pools (${o.weights === 'equal' ? 'equal weights' : 'weights ∝ wᵢ*wⱼ*'}) → α̂², β̂², γ̂²`, values: raw, badge: o.weights === 'anova' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.crossed_unbiasedX', note: `pairs: ${count.r} same row, ${count.c} same column, ${count.n} neither` },
+      { name: `three pools (${o.weights === 'equal' ? 'equal weights' : o.weights === 'iv' ? 'inverse-variance weights' : 'weights ∝ wᵢ*wⱼ*'}) → α̂², β̂², γ̂²`, values: raw, badge: o.weights === 'anova' || o.weights === 'iv' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.crossed_unbiasedX', note: `pairs: ${count.r} same row, ${count.c} same column, ${count.n} neither` + (o.weights === 'iv' ? '. Weights 1/(P̂_class + noise of the difference)² from a first equal-weight pass: unbiased for fixed weights (Model.crossed_unbiasedX); with weights from the same data only nearly (γ̂² about +7% of τ² at ρ = 0.5 in the study)' : '') },
       { name: `truncation at 0 (${o.trunc === 'nnls' ? 'least squares, θ ≥ 0' : 'clip'})`, values: theta, badge: 'proved', lean: 'ConeProjection.hsq_proj_le', note: 'a projection onto a convex set that contains the truth: its error is at most the raw one, in every draw' },
       { name: 'K̂ = L̂ + Σ̂ (Σ̂ from corrBS: σ̃ⱼ², one ρ̂)', values: [vc.rho], badge: 'proved', lean: 'Crossed.K_posDef', note: 'K̂ ≻ 0: L̂ ⪰ 0 for α̂², β̂², γ̂² ≥ 0 and Σ̂ ≻ 0' },
       { name: 'rates: the best linear unbiased predictor μ̂ + ℓ̂ᵀK̂⁻¹(μ̂ⱼ − μ̂)', badge: 'proved', lean: 'Core.blup_optimal', note: 'optimal for the true K and L; plugged in here. A cell without data uses ℓ = α²[same row] + β²[same column] (Crossed.missing_blup)' },
@@ -280,11 +286,12 @@
   // ---------------------------------------------------------------- many draws
 
   const VARIANTS = [
+    { id: 'iv-clip', weights: 'iv', trunc: 'clip' },
+    { id: 'iv-nnls', weights: 'iv', trunc: 'nnls' },
     { id: 'equal-clip', weights: 'equal', trunc: 'clip' },
     { id: 'equal-nnls', weights: 'equal', trunc: 'nnls' },
     { id: 'vol-clip', weights: 'vol', trunc: 'clip' },
     { id: 'vol-nnls', weights: 'vol', trunc: 'nnls' },
-    { id: 'iv-clip', weights: 'iv', trunc: 'clip' },
     { id: 'anova-clip', weights: 'anova', trunc: 'clip' },
   ];
 

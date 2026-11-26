@@ -26,6 +26,9 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- [ ] Crossed fit recipe (2026-11-26, `studies/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
+  pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
+  the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
 - *Done 2026-11-26:* subsection "Crossed levels" in §9 (groups): `res:crossed` (K ≻ 0, mixed form,
   Henderson, β² = 0 is `res:groups`), `res:crossed_balanced` (three factors, the blend's excess per
   layer), `res:crossed_missing` (a cell without data, 2×2), `res:crossed_balanced` also has the best common `z̄`, the predictor's total error and

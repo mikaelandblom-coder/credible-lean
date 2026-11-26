@@ -344,7 +344,7 @@ One chat per step; none needs Lean except step 5.
 
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
-- [ ] Crossed levels (2026-11-26, `Credibility/Crossed.lean`): a "crossed" switch for a table of
+- [x] Crossed levels (2026-11-26, `Credibility/Crossed.lean`): a "crossed" switch for a table of
   cells with a row and a column (country × car type). World: `L = α²[same row] + β²[same column]
   + γ²I`. Show the three-factor predictor (`Crossed.blup_balanced`, general `K` via `Core.blup`)
   against the blend, the blend's excess per layer (`Crossed.sum_linMse_blend`) and a cell without
@@ -353,6 +353,24 @@ One chat per step; none needs Lean except step 5.
   for any weights summing to one per class; weights `∝ w_k w_l` are Dannenburg's ANOVA
   estimators). Choice of weights and truncation at 0 to be settled by simulation (no hand-set
   choices).
+  *Built 2026-11-26* (`app/crossed.js`, tests `app/crossed.test.js`, card "Crossed levels"): world = the
+  engine's thesis noise (τ = 0) plus row, column and cell effects; optional cell without data (row 1,
+  column 1). Fit from the data: pair estimators with eq. (39) noise, three pools, `α̂², β̂², γ̂²`, `K̂ = L̂ + Σ̂`
+  (corrBS's Σ̂, so `K̂ ≻ 0`), BLUP for every cell, including the empty one. Shown: the table (truth, own mean,
+  crossed and thesis rates), the weights of cell (1,1), the exact blend excess per layer when balanced,
+  many draws in % of the floor, the variances' bias (ANOVA's under ρ > 0, Finding 42). Tests: layer
+  excess and three factors exact, `missing_blup`/`missing_predMse` (3.575), pools unbiased by an exact
+  expectation (any weights, any ρ), ANOVA's γ̂² bias `−σ²ρ/w*` in a balanced table, projections.
+  *Settled by `studies/crossed-fit.js`* (1000 draws × 96 worlds: table 3×2/4×3/6×4 × four effect mixes ×
+  ρ 0/0.5 × volume spread 0/1 × app/thesis regime; output `crossed-fit.out.txt`): **truncation: clip** (least
+  squares on the pool equations, equal weights, is worse in 67 worlds, better in 10); **weights: inverse
+  variance** `1/(P̂_class + noise of the difference)²` from a first equal-weight pass (worse than equal
+  in 1, better in 59, max +2.3 points; better than volume products in 44, worse in 17). Equal and volume
+  weights split by regime (volume better at low credibility, equal at the thesis level). Inverse variance is
+  only nearly unbiased (γ̂² +7% of τ² at ρ = 0.5), so its step is "not proved yet". Mean over the grid in %
+  of the floor: iv 130, equal 132, volume 134, ANOVA 135, best blend with true parameters 146, thesis fit 157.
+  Watch out: with weak effects (z ≈ 0.2) the crossed fit (145) loses to the thesis fit (139): three
+  noisy variances cost more than they buy. Lean candidate: unbiasedness is exact for fixed weights only.
 - [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
   with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
   `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use

@@ -92,6 +92,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- [ ] "Fitting crossed levels" in Open directions (2026-11-26): the pair weights are settled by simulation
+  (`studies/crossed-fit.js`: inverse variance from an equal-weight pass, clip at 0; 130% of the floor against
+  157% for the thesis fit on average, but worse with weak effects); move it to §5 "Which fit to use" and keep the small-table
+  caveat open.
 - *Done 2026-11-26:* crossed levels moved from "Open directions" to a result: paragraph "Crossed
   levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
   directions" keeps "Fitting crossed levels" (now: choice of pair weights, simulation, small
