@@ -29,6 +29,9 @@ page target is dropped: it is a reference, not a read.
 - [ ] Crossed fit recipe (2026-11-26, `studies/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
+- *Done 2026-11-26:* `res:crossed_pool` after `res:crossed_est`: Var of a pair pool = aᵀVa, GLS on V is the
+  best unbiased pool, equal weights exactly optimal in a balanced table, the normal-noise diagonal
+  2(θ + nₚ)² and the two limits of inverse variance.
 - *Done 2026-11-26:* subsection "Crossed levels" in §9 (groups): `res:crossed` (K ≻ 0, mixed form,
   Henderson, β² = 0 is `res:groups`), `res:crossed_balanced` (three factors, the blend's excess per
   layer), `res:crossed_missing` (a cell without data, 2×2), `res:crossed_balanced` also has the best common `z̄`, the predictor's total error and

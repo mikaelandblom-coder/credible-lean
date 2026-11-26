@@ -96,6 +96,10 @@ may need a paragraph.)
   (`studies/crossed-fit.js`: inverse variance from an equal-weight pass, clip at 0; 130% of the floor against
   157% for the thesis fit on average, but worse with weak effects); move it to §5 "Which fit to use" and keep the small-table
   caveat open.
+- [ ] Crossed pool weights proved (2026-11-26, handbook `res:crossed_pool`): the best unbiased pool is GLS on the
+  pair covariance table; balanced table: equal weights exact; normal noise: inverse variance ∝ (θ + nₚ)⁻², equal for
+  strong effects, large cells favoured for weak ones. A sentence in "Fitting crossed levels" replacing the
+  simulation ranking by this explanation.
 - *Done 2026-11-26:* crossed levels moved from "Open directions" to a result: paragraph "Crossed
   levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
   directions" keeps "Fitting crossed levels" (now: choice of pair weights, simulation, small

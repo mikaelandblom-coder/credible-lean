@@ -48,3 +48,5 @@ import Credibility.VarianceFunction
 import Credibility.Crossed
 import Credibility.CrossedEstimation
 import Credibility.CrossedMoments
+import Credibility.CrossedPoolWeights
+import Credibility.CrossedPoolNormal

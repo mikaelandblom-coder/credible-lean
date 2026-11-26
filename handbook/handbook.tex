@@ -1052,6 +1052,27 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   Each class needs a pair; in a $2\times 2$ table there are two per class, so the estimates are very noisy and can be negative.
 \end{caveat}
 
+\begin{result}[The best pool within a class]\label{res:crossed_pool}
+  The pool $\sum_{p \in S} a_p\widehat P_p$ has variance $a^TVa$, $V_{pq} = \cov(\widehat P_p,
+  \widehat P_q)$ from the cells' mean, covariance, third and fourth cumulants. If $V \succ 0$,
+  the minimum-variance unbiased pool is GLS: $a = V^{-1}\bu/\bu^TV^{-1}\bu$.
+  \lean{Credibility.Model.variance_pairPool}
+  \lean{Credibility.Model.pairPool_gls_optimal}
+  Balanced full table, moments invariant under permuting rows and columns: equal weights
+  $1/|S|$ are exactly optimal.
+  \lean{Credibility.Model.pairPool_equal_optimal_of_balanced}
+  Normal cells with a common mean: $\Var((\hmu_i - \hmu_j)^2) = 2(E(\hmu_i - \hmu_j)^2)^2$, so
+  inverse-variance weights are $\propto (\theta + n_p)^{-2}$ ($\theta$ the class value, $n_p$ the
+  noise variance of the difference): equal as $\theta \to \infty$, $\propto n_p^{-2}$ at $\theta = 0$.
+  \lean{Credibility.Model.variance_sq_muHat_sub_of_normal}
+  \lean{Credibility.tendsto_sqIVWeight_atTop}
+  \lean{Credibility.sqIVWeight_div}
+\end{result}
+\use Strong effects: equal weights; weak effects: favour large cells. $V$ needs fitted fourth moments, so plug-in GLS is only nearly unbiased.
+\begin{caveat}
+  Inverse variance is GLS on the diagonal of $V$ only; pairs sharing a cell are correlated.
+\end{caveat}
+
 % ===========================================================================
 \section{Choosing the cohorts}\label{sec:cohorts}
 

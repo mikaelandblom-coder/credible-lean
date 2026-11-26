@@ -8253,6 +8253,184 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
   term and stay unbiased.
 \end{remark}
 
+\section{The best pool within a class}\label{sec:crossed_pool_weights}
+% Lean: Credibility/CrossedPoolWeights.lean
+Every pool with weights summing to one on a class is unbiased
+(Theorem~\ref{thm:crossed_identified}); which one has the least variance? The pair estimators
+are quadratic in the data, so their covariance table comes from moments up to order four
+(Theorem~\ref{thm:covariance_quad_of_cumulants}), and the answer is GLS on that table.
+
+\begin{lemma}[The pair estimator is a quadratic form]\label{lem:pool_quadForm}
+  \lean{Credibility.Model.IsQuadForm, Credibility.Model.IsLinForm,
+    Credibility.Model.IsLinForm.add, Credibility.Model.IsLinForm.const_mul,
+    Credibility.Model.IsLinForm.sub, Credibility.Model.isLinForm_eval,
+    Credibility.Model.isLinForm_sum, Credibility.Model.IsQuadForm.add,
+    Credibility.Model.IsQuadForm.const_mul, Credibility.Model.IsQuadForm.sub,
+    Credibility.Model.isQuadForm_sum, Credibility.Model.IsLinForm.mul,
+    Credibility.Model.isLinForm_muHat, Credibility.Model.isQuadForm_sigRhoHat,
+    Credibility.Model.isQuadForm_pairHat, Credibility.Model.symMat,
+    Credibility.Model.symMat_symm, Credibility.Model.quad_symMat}
+  \leanok
+  $\hmu_j$ is linear in the data and $\widehat{\sigma^2_{ij}\rho_{ij}}$ quadratic, so
+  $\widehat P_{ij}(X) = X^\top A_{ij}X$ with the symmetric
+  $(A_{ij})_{ab} = \bigl(f(1_a + 1_b) - f(1_a) - f(1_b)\bigr)/2$, $f = \widehat P_{ij}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Sums, multiples and products of linear forms; polarization.
+\end{proof}
+
+\begin{theorem}[The variance of a combination of quadratic estimators]\label{thm:variance_sum_quad}
+  \lean{Credibility.Cumulants.quadCovTable, Credibility.Cumulants.variance_sum_quad}
+  \leanok
+  \uses{thm:covariance_quad_of_cumulants}
+  For symmetric $A_p$ and cells with the moment tables of
+  Theorem~\ref{thm:variance_quad_of_cumulants}, $\Var\bigl(\sum_p a_p Z^\top A_pZ\bigr) = a^\top Va$
+  with $V_{pq} = \mathrm{cov}(A_p, A_q)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_quad_of_cumulants, lem:Cumulants_memLp_quadForm}
+  Bilinearity of the covariance and Theorem~\ref{thm:covariance_quad_of_cumulants}.
+\end{proof}
+
+\begin{theorem}[The minimum-variance unbiased combination is GLS]\label{thm:quadPool_gls_optimal}
+  \lean{Credibility.Cumulants.quadPool_gls_optimal}
+  \leanok
+  \uses{thm:variance_sum_quad, thm:glsWeight_optimal}
+  If $V \succ 0$, among weights summing to one the GLS weights $V^{-1}\bu/\bu^TV^{-1}\bu$ give
+  the least variance.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_quad, thm:glsWeight_optimal}
+  Theorem~\ref{thm:variance_sum_quad} on both sides, then Theorem~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[The best pair pool]\label{thm:pairPool_gls}
+  \lean{Credibility.Model.pairCovTable, Credibility.Model.pairGLS,
+    Credibility.Model.pairPool_eq_sum_subtype, Credibility.Model.sum_pairGLS,
+    Credibility.Model.variance_pairPool, Credibility.Model.pairPool_gls_optimal}
+  \leanok
+  \uses{lem:pool_quadForm, thm:quadPool_gls_optimal, thm:crossed_identified}
+  For a set $S$ of pairs, the pool $\sum_{p \in S} a_p\widehat P_p$ has variance $a^TVa$,
+  $V_{pq} = \cov(\widehat P_p, \widehat P_q)$ from the moment tables of the cells. If $V \succ 0$,
+  the GLS weights on $V$ sum to one and have the least variance among all weights summing to one:
+  within each class of Theorem~\ref{thm:crossed_identified} they give the minimum-variance unbiased
+  pool. Distribution-free.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:pool_quadForm, thm:variance_sum_quad, thm:glsWeight_optimal, lem:sum_glsWeight}
+  Lemma~\ref{lem:pool_quadForm} writes the pool as $\sum_p a_pZ^\top A_pZ$;
+  Theorems~\ref{thm:variance_sum_quad} and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[Equal weights when the rows of $V$ have equal sums]\label{thm:equalWeight_optimal}
+  \lean{Credibility.equalWeight_optimal, Credibility.mulVec_one_eq_of_transitive}
+  \leanok
+  If $V$ is symmetric, positive semidefinite and $V\bu = c\bu$, the equal weights $1/n$ minimize
+  $b^TVb$ subject to $\sum b = 1$; no $V \succ 0$ needed. If permutations of the index set that
+  leave $V$ invariant carry any index to any other, every row of $V$ has the same sum.
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $b = e + d$, $e = \bu/n$, $\sum d = 0$: $d^TVe = (c/n)\sum d = 0$, so
+  $b^TVb = e^TVe + d^TVd \ge e^TVe$. Row sums: reindex $\sum_r V_{\sigma p, r} = \sum_r
+  V_{\sigma p, \sigma r} = \sum_r V_{pr}$.
+\end{proof}
+
+\begin{lemma}[Relabelling rows and columns]\label{lem:pool_balanced_helpers}
+  \lean{Credibility.Model.pairCovTable_eq_covariance, Credibility.Model.pairHat_comp_perm,
+    Credibility.exists_perm_two, Credibility.Model.cellPerm, Credibility.Model.mem_class_iff}
+  \leanok
+  \uses{lem:pool_quadForm, thm:covariance_quad_of_cumulants}
+  $V_{pq} = \cov(\widehat P_p, \widehat P_q)$ for any random cells with the given moment tables.
+  Relabelling the cohorts by $\pi$ with volumes invariant under $\pi$ relabels the pair estimators.
+  Two points can be carried to any two points with the same coincidence pattern, and each class of
+  a full table is given by its pattern (rows equal or not, columns equal or not).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:pool_quadForm, thm:covariance_quad_of_cumulants}
+  Theorem~\ref{thm:covariance_quad_of_cumulants} with Lemma~\ref{lem:pool_quadForm}; for the two
+  points, $\mathrm{swap}(\tau x', y') \circ \tau$ with $\tau = \mathrm{swap}(x, y)$.
+\end{proof}
+
+\begin{theorem}[Balanced table: equal weights are exactly optimal]\label{thm:pairPool_equal_balanced}
+  \lean{Credibility.Model.pairPool_equal_optimal_of_balanced}
+  \leanok
+  \uses{thm:pairPool_gls, thm:equalWeight_optimal, lem:pool_balanced_helpers}
+  In a full table (rows $A$ $\times$ columns $B$) with the same volumes in every cell, if the
+  mean, covariance, third and fourth cumulant tables of the cells are invariant under permuting
+  rows among themselves and columns among themselves, then within each class the pool with equal
+  weights $1/|S|$ has the least variance among all unbiased pools. Distribution-free.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:pairPool_gls, thm:variance_sum_quad, thm:equalWeight_optimal, lem:pool_balanced_helpers}
+  The relabelled cells have the same moment tables, so the same $V$; a row-and-column permutation
+  maps the pair estimators of a class onto each other, so it leaves $V$ invariant, and it carries
+  any pair of the class to any other (Lemma~\ref{lem:pool_balanced_helpers}). So the rows of $V$
+  have equal sums; $V$ is a covariance table, hence symmetric and positive semidefinite;
+  Theorem~\ref{thm:equalWeight_optimal}.
+\end{proof}
+
+\section{The pair pool under normal noise}\label{sec:crossed_pool_normal}
+% Lean: Credibility/CrossedPoolNormal.lean
+Distribution layer: here the cells are jointly normal.
+
+\begin{lemma}[The fourth moment of a centred normal]\label{lem:gauss_fourth}
+  \lean{Credibility.iteratedDeriv_four_exp_sq, Credibility.integral_pow_four_gaussianReal}
+  \leanok
+  $\int x^4\,d\mathcal N(0, v) = 3v^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The fourth derivative of the moment generating function $e^{vt^2/2}$ at $0$.
+\end{proof}
+
+\begin{theorem}[Variance of a squared normal difference]\label{thm:variance_sq_gaussian}
+  \lean{Credibility.variance_sq_of_hasGaussianLaw, Credibility.Model.muHatDiff,
+    Credibility.Model.variance_sq_muHat_sub_of_normal}
+  \leanok
+  \uses{lem:gauss_fourth}
+  If $D$ is normal with mean $0$, $\Var(D^2) = 2(ED^2)^2$. So with jointly normal cells of a
+  common mean, $\Var\bigl((\hmu_i - \hmu_j)^2\bigr) = 2\bigl(E(\hmu_i - \hmu_j)^2\bigr)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:gauss_fourth}
+  $\Var(D^2) = ED^4 - (ED^2)^2 = 3v^2 - v^2$; $\hmu_i - \hmu_j$ is a linear map of a normal vector,
+  hence normal, with mean $\mu - \mu = 0$.
+\end{proof}
+
+\begin{theorem}[Inverse-variance weights of squared differences]\label{thm:sqIVWeight}
+  \lean{Credibility.sqIVWeight, Credibility.sqIVWeight_div, Credibility.sqIVWeight_anti,
+    Credibility.tendsto_sqIVWeight_atTop}
+  \leanok
+  \uses{def:invVarWeight, thm:variance_sq_gaussian}
+  With $E(\hmu_i - \hmu_j)^2 = \theta + n_p$ ($\theta$ the class value, $n_p$ the noise variance of
+  the difference), Theorem~\ref{thm:variance_sq_gaussian} gives the diagonal of $V$, and the
+  inverse-variance weights $b_p \propto (\theta + n_p)^{-2}$ satisfy
+  $b_p/b_q = \bigl((\theta + n_q)/(\theta + n_p)\bigr)^2$; for $\theta \ge 0$ more precise pairs
+  get more weight; as $\theta \to \infty$ every $b_p \to 1/|S|$ (signal $\gg$ noise: equal
+  weights), while at $\theta = 0$ $b_p \propto n_p^{-2}$ (noise $\gg$ signal: large cells favoured).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_inv_pos}
+  The ratio is direct; $(\theta + n_p)/(\theta + n_r) = 1 + (n_p - n_r)/(\theta + n_r) \to 1$.
+\end{proof}
+
+\begin{remark}[GLS against inverse variance]\label{rem:pool_gls_vs_iv}
+  Inverse variance is GLS on the diagonal of $V$ only: pairs that share a cell are correlated, so
+  the full GLS of Theorem~\ref{thm:pairPool_gls} differs from it in general. The regime split seen
+  in simulation (equal weights best at the thesis level, volume-based weights at low credibility)
+  is the two limits of Theorem~\ref{thm:sqIVWeight}; in a balanced table equal weights are exactly
+  optimal (Theorem~\ref{thm:pairPool_equal_balanced}).
+\end{remark}
+
 \section{The crossed moments are real}\label{sec:crossed_moments}
 % Lean: Credibility/CrossedMoments.lean
 

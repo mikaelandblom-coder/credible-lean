@@ -1387,3 +1387,14 @@ credibility, Künsch, Zhao & Poudyal §10l).
   regions"; no estimators beyond ML under a normal prior; `Z_i ≈ 0.95–0.98` with 36 years. **Nothing
   used; not prior art** for correlated noise or crossed levels. Use only as a motivating example in
   the paper: ten Canadian provinces, correlation acknowledged and then assumed away.
+
+### 10t. Weights for pooling pair estimators (2026-11-26)
+- Used for `CrossedPoolWeights.lean` / `CrossedPoolNormal.lean`: the best linear combination of
+  unbiased estimators of one quantity is GLS on their covariance table (Aitken; as in thesis eq. (25),
+  `glsWeight_optimal`), and the covariance table of quadratic estimators comes from moments up to
+  order four (§10l: Atiqullah 1962; Seber & Lee 2003, Thm 1.6; `covQuad`). This is the restricted
+  MINQUE/MIVQUE idea of Rao (1971, §10 above) applied inside one class of pairs rather than over all
+  quadratic forms. Under normality `Var(D²) = 2(ED²)²` (Searle, Casella & McCulloch 1992, App. S),
+  which makes inverse-variance weights `∝ (θ + nₚ)⁻²` — the weights Dannenburg (1995) and Goulet
+  (1998) replace by volume products. Nothing new needed from outside; the symmetry argument
+  (transitive group ⇒ equal row sums ⇒ equal weights) is standard invariance.

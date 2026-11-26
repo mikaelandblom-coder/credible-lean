@@ -108,7 +108,11 @@ tactics.
   as pair pools, `anovaStat_row/grand_unbiasedX`, biased under correlated noise: Finding 42)
   → `Credibility/CrossedEstimation.lean`; its moment
   layer (`Model.NoiseX`: row and column effects as a common component on the thesis noise, true
-  covariances and expectations, true MSE, consistent iff `ρ ⪰ 0`) → `Credibility/CrossedMoments.lean`
+  covariances and expectations, true MSE, consistent iff `ρ ⪰ 0`) → `Credibility/CrossedMoments.lean`;
+  the best pool within a class (moment layer: Var of a pair pool = `aᵀVa` from `covQuad`, GLS on `V`
+  is the minimum-variance unbiased pool, balanced table: equal weights exact by symmetry)
+  → `Credibility/CrossedPoolWeights.lean`; under normal noise `Var((μ̂ᵢ − μ̂ⱼ)²) = 2(E(μ̂ᵢ − μ̂ⱼ)²)²`
+  and the limits of inverse-variance pair weights (distribution layer) → `Credibility/CrossedPoolNormal.lean`
 - general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,
   binomial inverse (small form of `V⁻¹`), Henderson's mixed-model equations, their solution is `Core.blup`
   (`hendersonMME_eq_blup`) → `Credibility/Henderson.lean`; group effects by MME: `Unequal.groupEffect_eq_blup`
@@ -132,7 +136,8 @@ used in `studies/literature.md`: combine the best existing pieces in this framew
 reinvent them. Fitted models never need hand-set hyperparameters (`studies/PLAN.md` §1).
 
 Second moments are taken as given numbers, except in the moment layer (`BlupMoments.lean`, `CoreMoments.lean`, `Cumulants.lean`, `FactorMoments.lean`, `CoreVectorMoments.lean`, `ShockMoments.lean`,
-`Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`, `CrossedMoments.lean`), which
+`Moments.lean`, `UnequalMoments.lean`, `HierarchicalMoments.lean`, `CrossedMoments.lean`,
+`CrossedPoolWeights.lean`), which
 proves they are the actual covariances of *any* random variables with
 those moments. The core model is distribution-free (only first and second
 moments are assumed): never add a distributional assumption to it. An

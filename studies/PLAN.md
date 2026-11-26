@@ -383,6 +383,15 @@ One chat per step; none needs Lean except step 5.
   Var((μ̂ᵢ − μ̂ⱼ)²) = 2(E(μ̂ᵢ − μ̂ⱼ)²)², so inverse variance is GLS's diagonal; the limits signal ≫ noise (equal
   weights) and noise ≫ signal (large cells favoured) explain the regime split; (3) balanced table: equal
   weights exactly optimal (symmetry). Then the app tries full GLS pool weights.
+  *Proved 2026-11-26* (`Credibility/CrossedPoolWeights.lean`, `CrossedPoolNormal.lean`): (1)
+  `Model.pairPool_gls_optimal` (any moments to order four; `variance_pairPool`: Var = aᵀVa with
+  `V = pairCovTable` from `Cumulants.covQuad`); (2) `Model.variance_sq_muHat_sub_of_normal` (normal
+  layer), `sqIVWeight_div`/`_anti`, `tendsto_sqIVWeight_atTop` (θ → ∞: equal weights; θ = 0: ∝ nₚ⁻²);
+  (3) `Model.pairPool_equal_optimal_of_balanced` (full table, equal volumes, moments invariant under
+  row and column permutations). So the regime split of the study is the two limits of (2), and equal
+  weights are exactly right in a balanced table. *App next:* a fit variant with full GLS pool weights
+  (V from fitted moments: normal-noise `covQuad` with κ₃ = κ₄ = 0 is the natural first plug-in);
+  compare with inverse variance (GLS's diagonal) in `studies/crossed-fit.js` before changing the default.
 - [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
   with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
   `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use
