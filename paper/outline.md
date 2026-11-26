@@ -92,6 +92,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- *Done 2026-11-26:* crossed levels moved from "Open directions" to a result: paragraph "Crossed
+  levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
+  directions" keeps "Fitting crossed levels" (pair estimators).
 - *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
   classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
   studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the

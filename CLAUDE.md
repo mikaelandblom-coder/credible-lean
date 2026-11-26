@@ -98,6 +98,10 @@ tactics.
   forms and the statistics `P`, `Qn`, `B` of the pooled fits (S53: exact Var/Cov, `cov(B, P) = 0`
   conditions, Finding 37), the balanced identity `ẑ = 1 − v̂/S²` and law (a) of S56 (first-order price of
   fitting BS), the gap between two blends as a quadratic in `z` → `Credibility/FitStatistics.lean`
+- extension: crossed levels (`notes/crossed-2x2.md`): `L = α²[same row] + β²[same column] + γ²I`
+  for any cell set, `K ≻ 0`, `K = ZGZᵀ + R` (Henderson gives row and column effects), `β² = 0` is
+  Bridge 4; balanced table: three factors `z_r, z_c, z_i`, the blend's excess per layer; a cell
+  without data (2×2) → `Credibility/Crossed.lean`
 - general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,
   binomial inverse (small form of `V⁻¹`), Henderson's mixed-model equations, their solution is `Core.blup`
   (`hendersonMME_eq_blup`) → `Credibility/Henderson.lean`; group effects by MME: `Unequal.groupEffect_eq_blup`

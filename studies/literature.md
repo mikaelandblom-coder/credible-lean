@@ -316,7 +316,19 @@ credibility texts assume independence across risks. "No references" is too stron
   claims. That is the BLUP-vs-blend gap that Finding 18 makes exact (price of the blend, and
   when it is zero).
 - Dannenburg (1995), *Crossed classification credibility models*, TI 95-64 (DARE has the
-  record only, no PDF); Dannenburg, Kaas & Goovaerts (1996), ch. 6; Goulet (2001).
+  record only, no PDF; 2026-11-26: `papers.tinbergen.nl`, now allowlisted in **lean**, serves
+  TI papers only from 1996 on, so 95-64 is not there either); Dannenburg, Kaas & Goovaerts (1996),
+  ch. 6 (a book, no open copy); Goulet (2001). Not read in full. **Used in
+  `Credibility/Crossed.lean` (2026-11-26):** only the model shape (two crossed risk
+  classifications plus an interaction, all permanent). What we built instead of reusing their
+  derivation: their model's level covariance is our `L = α²[same row] + β²[same column] + γ²I`;
+  the predictor is our general BLUP (`Core.blup`, Goldberger 1962) with `K = L + Σ` for any noise
+  `Σ` (theirs: independent noise within a cell over time), and Henderson's equations give the
+  row and column effects (`Crossed.rowEffect_eq_blup`), the mixed-model reading of crossed random
+  effects. New here, as far as the abstracts show: correlated noise across cells, any cell set,
+  and the exact loss of the one-factor blend per layer (`Crossed.sum_linMse_blend`). The balanced
+  closed form by layers is the classical two-way ANOVA eigen-decomposition; whether Dannenburg
+  states it is unchecked.
   `y_ijt = β + α_i⁽¹⁾ + α_j⁽²⁾ + α_ij + ε_ijt`: both factors are *risk* classifications, so
   cells sharing a row correlate permanently, not per year. Taking the second factor to be the
   year would give equicorrelated noise within a year (ρ ≥ 0 only), but that is our reading,

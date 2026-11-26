@@ -112,6 +112,7 @@ def refers_to_namesake(row) -> bool:
 # Groups that share a name but are not duplicates to merge: neither copy can be
 # a corollary of the other without changing a statement. Reviewed 2026-11-11.
 EXEMPT = {
+    "levelCov_apply": "different matrices: `Model.levelCov` is Bridge 2's one shared level (`τ²(11ᵀ)^φ`), `Crossed.levelCov` the crossed `α²[same row] + β²[same column] + γ²I`; neither is a special case of the other's lemma",
     "blup_mse_optimal": "the scalar `Core.Estimates` result (common mean, index `J`) and the matrix `CoreVector.VecEstimates` one (component means, index `J × P`, Loewner order) are about different random variables; deriving the scalar one through `P = Unit` would need reindexing `J ≃ J × Unit` and only lengthen it",
     "mse_blend_eq_blup_add": "the scalar `Core.Estimates` result (common mean, index `J`) and the matrix `CoreVector.VecEstimates` one (component means, index `J × P`, Loewner order) are about different random variables; deriving the scalar one through `P = Unit` would need reindexing `J ≃ J × Unit` and only lengthen it",
     "bestZ_optimal": "the scalar `BlendMoments` result is thesis eq. (6)/(7) with a short direct proof; the `VecBlendMoments` (matrix) one needs symmetry hypotheses and contains it via `BlendMoments.toVec`, so deriving the scalar one from it would only lengthen it",

@@ -933,6 +933,71 @@ covariance of the cohort estimates $K_G$.
 \end{result}
 \use A group's distance from the portfolio, with its error; matches \texttt{lme4} and \texttt{PROC MIXED}. Invert $A$ and a groups-sized matrix, not $K_G$.
 
+\subsection*{Crossed levels}
+
+\noindent\textit{Context:} paper, \paper{Crossed levels}.
+
+Cells of a table share a level along two groupings at once, a row $r(j)$ (country) and a
+column $c(j)$ (car type):
+$\mu_j = \mu + \alpha A_{r(j)} + \beta B_{c(j)} + \gamma C_j$, with $A$, $B$, $C$ uncorrelated,
+centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
+\beta^2[\text{same column}] + \gamma^2[i = j]$.
+
+\begin{result}[Crossed $K$]\label{res:crossed}
+  For any set of cells and any noise covariance $\Sigma$: $K = L + \Sigma$ is positive definite if
+  $\Sigma \succ 0$, or if $\gamma^2 > 0$ and $\Sigma \succeq 0$. $K = ZGZ^\top + (\gamma^2 I + \Sigma)$
+  with $Z$ the rows-and-columns design and $G = \operatorname{diag}(\alpha^2, \beta^2)$, so
+  Henderson's equations give the best predictors of the row and column effects. With $\beta^2 = 0$
+  it is Result~\ref{res:groups} with the rows as groups, $\tau^2 = \alpha^2 + \gamma^2$,
+  $\phi = \alpha^2/\tau^2$.
+  \lean{Credibility.Crossed.K_posDef}
+  \lean{Credibility.Crossed.K_posDef_of_gamma}
+  \lean{Credibility.Crossed.K_eq_mixed}
+  \lean{Credibility.Crossed.rowEffect_eq_blup}
+  \lean{Credibility.Crossed.colEffect_eq_blup}
+  \lean{Credibility.Crossed.K_beta_zero}
+  \lean{Credibility.Crossed.blupWeight_beta_zero}
+\end{result}
+\use Any tariff table with two rating factors; unbalanced cells: the general predictor of Section~\ref{sec:blup}.
+
+\begin{result}[Crossed credibility, balanced table]\label{res:crossed_balanced}
+  All $n_A \times n_T$ cells observed, $\Sigma = \sigma^2 I$. With $\lambda_r = n_T\alpha^2 + \gamma^2$,
+  $\lambda_c = n_A\beta^2 + \gamma^2$, $\lambda_i = \gamma^2$ and $z_k = \lambda_k/(\lambda_k + \sigma^2)$,
+  the best linear unbiased predictor of cell $(a, t)$ is
+  \[
+    \bar X + z_r(\bar X_{a\cdot} - \bar X) + z_c(\bar X_{\cdot t} - \bar X)
+      + z_i(X_{at} - \bar X_{a\cdot} - \bar X_{\cdot t} + \bar X).
+  \]
+  The blend $zX_{at} + (1 - z)\bar X$ loses, summed over all cells,
+  \[
+    (n_A - 1)(\lambda_r + \sigma^2)(z - z_r)^2 + (n_T - 1)(\lambda_c + \sigma^2)(z - z_c)^2
+      + (n_A - 1)(n_T - 1)(\lambda_i + \sigma^2)(z - z_i)^2 .
+  \]
+  \lean{Credibility.Crossed.blup_balanced}
+  \lean{Credibility.Crossed.blupWeight_KBal}
+  \lean{Credibility.Crossed.glsWeight_KBal}
+  \lean{Credibility.Crossed.sum_linMse_blend}
+\end{result}
+\use One factor per layer: country effect, car-type effect, what is left in the cell.
+\begin{caveat}
+  The thesis blend is this with one $z$; it is right only when $\alpha^2 = \beta^2 = 0$.
+\end{caveat}
+
+\begin{result}[A cell without data]\label{res:crossed_missing}
+  Its level has covariance $\alpha^2[r(j) = a] + \beta^2[c(j) = t]$ with the data. In a
+  $2 \times 2$ table without one cell, with $s = \gamma^2 + \sigma^2$ and
+  $D = 4\alpha^2\beta^2 + 4(\alpha^2 + \beta^2)s + 3s^2$, the weights are
+  $(4\alpha^2\beta^2 + 4\alpha^2 s + s^2)/D$ (same row), $(4\alpha^2\beta^2 + 4\beta^2 s + s^2)/D$
+  (same column), $(s^2 - 4\alpha^2\beta^2)/D$ (opposite), with error
+  $\gamma^2 + s(12\alpha^2\beta^2 + 4(\alpha^2 + \beta^2)s + s^2)/D$.
+  \lean{Credibility.Crossed.missing_blup}
+  \lean{Credibility.Crossed.missing_predMse}
+\end{result}
+\use Rate a new combination from its row and column: same row + same column $-$ opposite, shrunk.
+\begin{caveat}
+  The opposite cell's weight is negative once $4\alpha^2\beta^2 > s^2$.
+\end{caveat}
+
 % ===========================================================================
 \section{Choosing the cohorts}\label{sec:cohorts}
 

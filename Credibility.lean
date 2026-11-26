@@ -45,3 +45,4 @@ import Credibility.ShockMoments
 import Credibility.Cumulants
 import Credibility.FitStatistics
 import Credibility.VarianceFunction
+import Credibility.Crossed
