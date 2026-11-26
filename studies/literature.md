@@ -349,7 +349,9 @@ credibility texts assume independence across risks. "No references" is too stron
   (`CrossedEstimation.lean`): their statistic is exactly the pool with weights `uₖuₗ/(2U²)`
   (`sum_mul_sq_sub_noise_eq_pairs`, noise term included), its two-way within-row expectation is (67)
   exactly when the noise is uncorrelated, and biased by `−Σ (uₖuₗ/U²)σ²ₖₗρₖₗ` otherwise (Finding 42).
-  The three-way version and the grand-mean equation (69) are not formalized.
+  The grand-mean equation (69) too (`anovaStat_grand_unbiasedX`), so the two-way system is
+  complete. Not formalized: the three-way version (same device, more indicator terms) and Goulet's
+  pooled `ŝ²` (any unbiased noise estimate plugs in; the per-cell `σ²ᵢᵢρᵢᵢ^` is used).
 - Dutang, Goulet, Milhaud & Pigeon, *Credibility theory features of actuar* (R vignette, owner's
   PDF, 2026-11-26): `cm` fits hierarchical (incl. Bühlmann–Straub), regression (Hachemeister) and
   linear Bayes models; no crossed classification and no correlated noise. Useful only as a

@@ -331,6 +331,92 @@ theorem anovaStat_row_unbiasedX_of_uncorr (hT : 2 ≤ Fintype.card T) (α2 β2 �
     obtain ⟨h1, h2, h3⟩ := Finset.mem_offDiag.mp hp
     rw [hρ p.1 h1 p.2 h2 h3, mul_zero, mul_zero], sub_zero]
 
+
+/-- The volume of the cells of `S` in group `g` (a row or a column): `U_g = Σ_{k ∈ S, g(k) = g} uₖ`. -/
+noncomputable def grpVolume {G : Type*} (w : J → T → ℝ) (S : Finset J) (grp : J → G)
+    [DecidableEq G] (g : G) : ℝ :=
+  ∑ k ∈ S, if grp k = g then wtot w k else 0
+
+omit [Fintype J] [DecidableEq T] hw hσ in
+/-- `Σ_g U_g² = Σ_{k, l ∈ S} uₖuₗ[g(k) = g(l)]`. -/
+lemma sum_grpVolume_sq {G : Type*} [Fintype G] [DecidableEq G] (S : Finset J) (grp : J → G) :
+    ∑ g, grpVolume w S grp g ^ 2
+      = ∑ a ∈ S, ∑ b ∈ S, wtot w a * wtot w b * (if grp a = grp b then 1 else 0) := by
+  simp only [grpVolume, sq, Finset.sum_mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun a _ => ?_
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun b _ => ?_
+  by_cases h : grp a = grp b
+  · simp [h, Finset.sum_ite_eq']
+  · simp only [h, ite_false, mul_zero]
+    refine Finset.sum_eq_zero fun g _ => ?_
+    by_cases ha : grp a = g
+    · have : ¬grp b = g := fun e => h (ha.trans e.symm)
+      simp [ha, this]
+    · simp [ha]
+
+omit [Fintype J] [DecidableEq T] hw hσ in
+/-- The weighted share of pairs in different groups: `Σ_{k ≠ l ∈ S} uₖuₗ[g(k) ≠ g(l)]/U²
+= 1 - Σ_g (U_g/U)²`. -/
+lemma sum_offDiag_wtot_ne {G : Type*} [Fintype G] [DecidableEq G] (S : Finset J)
+    (grp : J → G) (hU : ∑ l ∈ S, wtot w l ≠ 0) :
+    ∑ p ∈ S.offDiag, wtot w p.1 * wtot w p.2 / (∑ l ∈ S, wtot w l) ^ 2
+        * (if grp p.1 = grp p.2 then 0 else 1)
+      = 1 - ∑ g, (grpVolume w S grp g / ∑ l ∈ S, wtot w l) ^ 2 := by
+  rw [sum_offDiag_eq S fun a b => wtot w a * wtot w b / (∑ l ∈ S, wtot w l) ^ 2
+    * (if grp a = grp b then 0 else 1)]
+  simp only [div_pow, ← Finset.sum_div, sum_grpVolume_sq, ite_true, mul_zero,
+    Finset.sum_const_zero, sub_zero]
+  have : ∀ a b, wtot w a * wtot w b / (∑ l ∈ S, wtot w l) ^ 2 * (if grp a = grp b then 0 else 1)
+      = (wtot w a * wtot w b - wtot w a * wtot w b * (if grp a = grp b then 1 else 0))
+        / (∑ l ∈ S, wtot w l) ^ 2 := fun a b => by split_ifs <;> ring
+  simp only [this, ← Finset.sum_div, Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.sum_mul]
+  field_simp
+
+/-- **Goulet's grand equation (69), two-way, and its bias** (Finding 42). For any nonempty set `S`
+of cells, the ANOVA statistic about the grand mean has expectation
+
+  `α²(1 - Σₐ(U_a/U)²) + β²(1 - Σ_b(U_b/U)²) + γ²(1 - Σₖ(uₖ/U)²) - Σ_{k ≠ l}(uₖuₗ/U²)σ²ₖₗρₖₗ`,
+
+`U_a`, `U_b` the row and column volumes. The first three terms are eq. (69) (two-way); the last is
+the bias of correlated noise. -/
+theorem anovaStat_grand_unbiasedX (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ) (S : Finset J)
+    (hS : S.Nonempty) (v : J → (J × T → ℝ) → ℝ)
+    (hv : ∀ k, M.UnbiasedX row col α2 β2 γ2 (v k) (M.σ2 k k * M.ρ k k)) :
+    M.UnbiasedX row col α2 β2 γ2 (anovaStat w S v)
+      (α2 * (1 - ∑ a, (grpVolume w S row a / ∑ l ∈ S, wtot w l) ^ 2)
+        + β2 * (1 - ∑ b, (grpVolume w S col b / ∑ l ∈ S, wtot w l) ^ 2)
+        + γ2 * (1 - ∑ k ∈ S, (wtot w k / ∑ l ∈ S, wtot w l) ^ 2)
+        - ∑ p ∈ S.offDiag, wtot w p.1 * wtot w p.2 / (∑ l ∈ S, wtot w l) ^ 2
+          * (M.σ2 p.1 p.2 * M.ρ p.1 p.2)) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have hU : ∑ l ∈ S, wtot w l ≠ 0 :=
+    (Finset.sum_pos (fun l _ => wtot_pos hw l) hS).ne'
+  refine (M.anovaStat_unbiasedX row col sig hw hσ hT α2 β2 γ2 S hS v hv).congr (fun _ => rfl) ?_
+  rw [← sum_offDiag_wtot_ne S row hU, ← sum_offDiag_wtot_ne S col hU, ← sum_offDiag_wtot S hU,
+    Finset.mul_sum, Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib,
+    ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl fun p _ => ?_
+  field_simp
+  ring
+
+/-- …so with noise uncorrelated across the cells of `S` the grand statistic is unbiased for
+Goulet's eq. (69) (two-way) exactly. -/
+theorem anovaStat_grand_unbiasedX_of_uncorr (hT : 2 ≤ Fintype.card T) (α2 β2 γ2 : ℝ)
+    (S : Finset J) (hS : S.Nonempty) (hρ : ∀ k ∈ S, ∀ l ∈ S, k ≠ l → M.ρ k l = 0)
+    (v : J → (J × T → ℝ) → ℝ)
+    (hv : ∀ k, M.UnbiasedX row col α2 β2 γ2 (v k) (M.σ2 k k * M.ρ k k)) :
+    M.UnbiasedX row col α2 β2 γ2 (anovaStat w S v)
+      (α2 * (1 - ∑ a, (grpVolume w S row a / ∑ l ∈ S, wtot w l) ^ 2)
+        + β2 * (1 - ∑ b, (grpVolume w S col b / ∑ l ∈ S, wtot w l) ^ 2)
+        + γ2 * (1 - ∑ k ∈ S, (wtot w k / ∑ l ∈ S, wtot w l) ^ 2)) := by
+  refine (M.anovaStat_grand_unbiasedX row col sig hw hσ hT α2 β2 γ2 S hS v hv).congr
+    (fun _ => rfl) ?_
+  rw [Finset.sum_eq_zero (s := S.offDiag) fun p hp => by
+    obtain ⟨h1, h2, h3⟩ := Finset.mem_offDiag.mp hp
+    rw [hρ p.1 h1 p.2 h2 h3, mul_zero, mul_zero], sub_zero]
+
 end Model
 
 /-- **A weighted sum of squares is a weighted average of squared pair differences.** With

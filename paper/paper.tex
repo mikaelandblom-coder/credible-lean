@@ -68,10 +68,11 @@
   positive volume measure balances the best blend. The paper then shows how to fit
   the model without hand-set parameters and what fitting from the same data costs,
   exactly and to first order, also for skewed and heavy-tailed claims. Further
-  situations (unequal histories, shared group levels, monthly data with a
-  persistent factor, several quantities per cohort) are new covariance matrices for
+  situations (unequal histories, shared group levels, crossed levels such as
+  country and car type, monthly data with a persistent factor, several quantities
+  per cohort) are new covariance matrices for
   the same machinery. Every result is machine-checked in the proof assistant Lean;
-  formalizing the master thesis this grew out of turned up 41 gaps,
+  formalizing the master thesis this grew out of turned up 42 gaps,
   counterexamples and new results.
 \end{abstract}
 
@@ -1737,7 +1738,9 @@ cohorts share part of their level, a level shared by the whole portfolio
 drops out and the thesis procedure is already right; with several groups
 the credibility factor gains a term for the group, the weights become
 two-stage, and the thesis $\hat\tau^2$ is biased, but pairs of cohorts
-within and across groups repair it.
+within and across groups repair it. Groupings that cross (country and car type)
+give one credibility factor per layer, and pairs in the same row, the same column
+and neither estimate their variances.
 
 \paragraph{The model.}
 
@@ -1886,7 +1889,9 @@ squares about a mean is a weighted average of squared pair differences. Their no
 correction, however, removes only each cell's own noise variance; the pair
 estimators also remove the noise the two cells share in a period. So with noise
 correlated across cells, the thesis's case, the classical estimators are biased
-down by the shared part (\finding{42}). As
+down by the shared part (\finding{42}). With uncorrelated noise they are
+Dannenburg's two-way equations exactly, within rows, within columns and about the
+grand mean (\hb{res:crossed_est}{42}). As
 everywhere in this paper, these are statements about any random variables
 with the model's moments; they exist exactly when the noise correlations are
 consistent, as in the thesis, and the predictor is then best in true mean
@@ -2567,7 +2572,7 @@ of the cohort estimates is written down and shown positive definite, the
 portfolio weights, the credibility factor, the best linear predictor and their
 true mean squared errors follow, for any distribution with those moments.
 Bühlmann--Straub is the case of a diagonal $K$; unequal histories, group levels,
-a monthly factor and several quantities per cohort are other matrices.
+crossed levels, a monthly factor and several quantities per cohort are other matrices.
 
 \paragraph{What changes against Bühlmann--Straub.}
 
@@ -2689,7 +2694,10 @@ New results, each explained in its own section.
   \item[Unequal lengths (§\ref{sec:unequal}).] Cohorts observed over
     different periods (\finding{8}--\finding{10}).
   \item[Groups (§\ref{sec:groups}).] Levels shared within groups, and the
-    group effects by Henderson's equations (\finding{13}).
+    group effects by Henderson's equations (\finding{13}); crossed levels
+    (row and column effects), their three credibility factors, a cell without
+    data, unbiased pair estimators, and the bias of the classical
+    analysis-of-variance estimators under correlated noise (\finding{42}).
   \item[Choosing the cohorts (§\ref{sec:cohorts}).] When merging pays, when
     optimal cohorts are intervals, and when a variance per group breaks that
     (\finding{6}, \finding{14}, \finding{41}).

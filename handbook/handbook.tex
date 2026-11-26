@@ -1040,6 +1040,11 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   \lean{Credibility.Model.anovaStat_unbiasedX}
   \lean{Credibility.Model.anovaStat_row_unbiasedX}
   \lean{Credibility.Model.anovaStat_row_unbiasedX_of_uncorr}
+  About the grand mean, with row and column volumes $U_a$, $U_b$:
+  $E = \alpha^2(1 - \sum_a (U_a/U)^2) + \beta^2(1 - \sum_b (U_b/U)^2) + \gamma^2(1 - \sum_k (u_k/U)^2)$
+  minus the same cross term.
+  \lean{Credibility.Model.anovaStat_grand_unbiasedX}
+  \lean{Credibility.Model.anovaStat_grand_unbiasedX_of_uncorr}
 \end{result}
 \use Any weights work; weights $\propto w_kw_l$ give the analysis-of-variance estimators of crossed-classification credibility.
 \begin{caveat}
@@ -1608,7 +1613,7 @@ which has the details. The paper explains each where it belongs.
   \item[{40. For the BLUP the level part has no sign (numerical).}] Slightly positive in some correlated worlds, below 0.4\% of the error per unit $\gamma_L$.
   \item[{41. A $\tau^2$ per group breaks intervals (numerical).}] Equal volumes, $D = 1$, $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$: best groups $\{-5, 5\}$ and the middle five. With one common $\tau^2$ they are intervals.
   \lean{Credibility.group_optimal_contiguous}
-  \item[{42. Crossed ANOVA estimators miss the noise cross term.}] Goulet's (Dannenburg's) statistic is a pool of pair differences whose noise correction lacks $+2\sigma^2_{kl}\rho_{kl}$: within a row, $E = (\beta^2 + \gamma^2)(1 - \sum (u_k/U)^2) - \sum_{k \ne l}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$; exact (eq.~(67)) when the noise is uncorrelated.
+  \item[{42. Crossed ANOVA estimators miss the noise cross term.}] Goulet's (Dannenburg's) statistic is a pool of pair differences whose noise correction lacks $+2\sigma^2_{kl}\rho_{kl}$: within a row, $E = (\beta^2 + \gamma^2)(1 - \sum (u_k/U)^2) - \sum_{k \ne l}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$, and the grand-mean equation loses the same cross term; exact (eqs.~(67)--(69), two-way) when the noise is uncorrelated.
   \lean{Credibility.Model.anovaStat_row_unbiasedX}
 \end{description}
 

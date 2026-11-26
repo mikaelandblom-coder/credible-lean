@@ -31,6 +31,8 @@ page target is dropped: it is a reference, not a read.
   layer), `res:crossed_missing` (a cell without data, 2×2), `res:crossed_balanced` also has the best common `z̄`, the predictor's total error and
   equicorrelated noise (σ²(1−ρ)); `res:crossed_est` (pair estimators of
   `α², β², γ²`, the ANOVA identity); moment layer links (`NoiseX`, true MSE, existence iff ρ ⪰ 0).
+- *Done 2026-11-26:* Finding 42 (crossed ANOVA estimators miss the noise cross term) in the
+  appendix and in `res:crossed_est` (rows, grand mean: Goulet's (67)–(69), two-way).
 - *Done 2026-11-25:* Appendix "Findings" (all 41, one line each, counterexamples included, with Lean
   links); every Lean name the paper used is now linked from a handbook entry. New finding → add its
   line there in the same commit.

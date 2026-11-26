@@ -104,7 +104,9 @@ tactics.
   Bridge 4; balanced table: three factors `z_r, z_c, z_i`, the blend's excess per layer; a cell
   without data (2×2) → `Credibility/Crossed.lean`; its estimation (pair estimators from the
   same row / column / neither, unbiased for any noise correlations, `Model.crossed_unbiasedX`; the
-  ANOVA identity `sum_mul_sq_sub_eq_pairs`) → `Credibility/CrossedEstimation.lean`; its moment
+  ANOVA identity `sum_mul_sq_sub_eq_pairs`; Dannenburg's/Goulet's two-way ANOVA equations exactly
+  as pair pools, `anovaStat_row/grand_unbiasedX`, biased under correlated noise: Finding 42)
+  → `Credibility/CrossedEstimation.lean`; its moment
   layer (`Model.NoiseX`: row and column effects as a common component on the thesis noise, true
   covariances and expectations, true MSE, consistent iff `ρ ⪰ 0`) → `Credibility/CrossedMoments.lean`
 - general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,

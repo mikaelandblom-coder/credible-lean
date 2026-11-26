@@ -8226,6 +8226,25 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
   Theorem~\ref{thm:anovaStat} with $[r(k) \ne r(l)] = 0$, $[c(k) \ne c(l)] = 1$.
 \end{proof}
 
+\begin{theorem}[Goulet's grand equation, and its bias]\label{thm:anovaStat_grand}
+  \lean{Credibility.Model.grpVolume, Credibility.Model.sum_grpVolume_sq,
+    Credibility.Model.sum_offDiag_wtot_ne, Credibility.Model.anovaStat_grand_unbiasedX,
+    Credibility.Model.anovaStat_grand_unbiasedX_of_uncorr}
+  \leanok
+  \uses{thm:anovaStat}
+  For any nonempty set $S$ of cells, with row and column volumes $U_a$, $U_b$,
+  $E G = \alpha^2(1 - \sum_a (U_a/U)^2) + \beta^2(1 - \sum_b (U_b/U)^2) + \gamma^2(1 - \sum_k
+  (u_k/U)^2) - \sum_{k \ne l \in S}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$. With noise uncorrelated
+  across the cells of $S$ this is Goulet's eq.~(69) (two-way) exactly.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:anovaStat}
+  Theorem~\ref{thm:anovaStat}: the weighted share of pairs in different rows is
+  $\sum_{k \ne l}u_ku_l[r(k) \ne r(l)]/U^2 = 1 - \sum_a (U_a/U)^2$, as
+  $\sum_a U_a^2 = \sum_{k,l}u_ku_l[r(k) = r(l)]$; likewise for columns.
+\end{proof}
+
 \begin{remark}[Finding 42]\label{rem:finding42}
   The classical ANOVA estimators of crossed classification omit the cross term of the noise: with
   $n$ cells of equal volume $u$ in a row, noise variance $\sigma^2/u$ and correlation $\rho$,

@@ -60,7 +60,7 @@ with run-in paragraphs; the matrix blend added
 as §7.4. 2026-11-25: review; new §3.4 "Beyond the blend" (the BLUP of any target, restricted
 predictors, recency weighting) and new §7 "Beyond second moments" (cumulants, variance function,
 normal theory, heavy tails), gathered from old §5–6 and §7.4; §9 rewritten (old §9 is now §10);
-the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers Findings 6–41.)
+the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers Findings 6–42.)
 
 | # | Section (subsections) | Covers | Was (before 2026-11-20) | Status |
 |---|---|---|---|---|
@@ -73,7 +73,7 @@ the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers
 | 7 | Beyond second moments | cumulants, independent sources, variance function (Tweedie), what "normal" means, when linear is enough, heavy tails and the cross term (Findings 38–40), symmetric and normal noise | new (from §5, §6) | draft |
 | 8 | Extensions (Cohorts observed over different periods; Groups and shared levels; Choosing the cohorts; Monthly data with a common factor; Several quantities per cohort) | unequal lengths; shared levels and groups; merging and intervals; shocks that do not shrink (Finding 23), season, factor, relativities under a factor (Finding 31); the matrix blend, Hachemeister, a known trend (Finding 21), Finding 22, frequency × severity and the pure-premium bias (Findings 32–33) | §10, §11, §12, new | draft |
 | 9 | Related work | what is used from where | §14 | draft |
-| 10 | Open directions | where to look first; crossed levels, winner's curse, fits, time, short classical extensions, XoL, distribution layer, multiplicative tariffs | §13 | draft |
+| 10 | Open directions | where to look first; fitting crossed levels, winner's curse, fits, time, short classical extensions, XoL, distribution layer, multiplicative tariffs | §13 | draft |
 | 11 | Conclusion | what the framework establishes, what changes against BS, what to do differently, what is not settled | new (2026-11-25, external review) | draft |
 | A | Changes from the thesis | corrections, beyond the thesis, concordance | A | draft |
 | B | Concept index | term → meaning → section | B | draft |
@@ -96,6 +96,10 @@ may need a paragraph.)
   levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
   directions" keeps "Fitting crossed levels" (now: choice of pair weights, simulation, small
   tables); the unbiased pair estimators are in the §Groups paragraph.
+- *Done 2026-11-26 (crossed wrap-up):* §Groups one-liner and "Crossed levels." paragraph cover all
+  crossed results (equicorrelated noise, best common factor, moment layer, pair estimators,
+  Dannenburg's two-way system exactly, Finding 42); abstract (crossed levels, 42 findings),
+  conclusion and appendix "Beyond the thesis" updated.
 - *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
   classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
   studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the

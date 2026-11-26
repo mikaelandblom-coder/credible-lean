@@ -737,7 +737,10 @@ Gaps, extra hypotheses and new results found while formalizing.
    variance components. Example: `n` cells of equal volume `u` in a row, noise variance `σ²/u` per cell
    estimate and correlation `ρ` between cells: `E G = (1 − 1/n)(β² + γ² − ρσ²/u)`, so Goulet's estimate
    of `β² + γ²` is short by `ρσ²/u`, a fraction `ρ` of a cell's noise variance.
-   General form for any set of cells: `anovaStat_unbiasedX`. Use the pair estimators with the
+   General form for any set of cells: `anovaStat_unbiasedX`; about the grand mean
+   (`anovaStat_grand_unbiasedX`): `E G = α²(1 − Σ(U_a/U)²) + β²(1 − Σ(U_b/U)²) + γ²(1 − Σ(uₖ/U)²)` minus
+   the same cross term, Goulet's (69) exactly when the noise is uncorrelated. So the whole two-way
+   system (67)–(69) is reproduced, and each equation loses the same cross term. Use the pair estimators with the
    cross-covariance estimate (`crossed_unbiasedX`) instead; they are unbiased for any correlations.
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.
