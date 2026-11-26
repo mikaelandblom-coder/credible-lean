@@ -46,3 +46,4 @@ import Credibility.Cumulants
 import Credibility.FitStatistics
 import Credibility.VarianceFunction
 import Credibility.Crossed
+import Credibility.CrossedEstimation

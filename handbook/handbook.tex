@@ -998,6 +998,30 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   The opposite cell's weight is negative once $4\alpha^2\beta^2 > s^2$.
 \end{caveat}
 
+\begin{result}[Estimating the crossed variances]\label{res:crossed_est}
+  Let $T \ge 2$, $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$, any noise correlations $\rho$. The pair
+  estimator $\widehat P_{ij}$ of Result~\ref{res:est_groups} is unbiased for
+  $2\gamma^2 + 2\alpha^2[\text{different rows}] + 2\beta^2[\text{different columns}]$. Pool it
+  with weights summing to one over the pairs in the same row ($\widehat P_r$), the same column
+  ($\widehat P_c$) and neither ($\widehat P_n$); then
+  \[
+    \hat\alpha^2 = \tfrac12(\widehat P_n - \widehat P_r), \quad
+    \hat\beta^2 = \tfrac12(\widehat P_n - \widehat P_c), \quad
+    \hat\gamma^2 = \tfrac12(\widehat P_r + \widehat P_c - \widehat P_n)
+  \]
+  are unbiased. With $\bar x = \sum_k w_kx_k/W$:
+  $\sum_k w_k(x_k - \bar x)^2 = \sum_{k,l} w_kw_l(x_k - x_l)^2/(2W)$.
+  \lean{Credibility.Model.pairHat_unbiasedX}
+  \lean{Credibility.Model.crossed_unbiasedX}
+  \lean{Credibility.Model.sigRhoHat_unbiasedX}
+  \lean{Credibility.Model.unbiasedX_of}
+  \lean{Credibility.sum_mul_sq_sub_eq_pairs}
+\end{result}
+\use Any weights work; weights $\propto w_kw_l$ give the analysis-of-variance estimators of crossed-classification credibility.
+\begin{caveat}
+  Each class needs a pair; in a $2\times 2$ table there are two per class, so the estimates are very noisy and can be negative.
+\end{caveat}
+
 % ===========================================================================
 \section{Choosing the cohorts}\label{sec:cohorts}
 

@@ -28,7 +28,8 @@ page target is dropped: it is a reference, not a read.
 (Results proved since the last handbook update that may belong here.)
 - *Done 2026-11-26:* subsection "Crossed levels" in §9 (groups): `res:crossed` (K ≻ 0, mixed form,
   Henderson, β² = 0 is `res:groups`), `res:crossed_balanced` (three factors, the blend's excess per
-  layer), `res:crossed_missing` (a cell without data, 2×2). Estimators from pairs: next.
+  layer), `res:crossed_missing` (a cell without data, 2×2), `res:crossed_est` (pair estimators of
+  `α², β², γ²`, the ANOVA identity).
 - *Done 2026-11-25:* Appendix "Findings" (all 41, one line each, counterexamples included, with Lean
   links); every Lean name the paper used is now linked from a handbook entry. New finding → add its
   line there in the same commit.

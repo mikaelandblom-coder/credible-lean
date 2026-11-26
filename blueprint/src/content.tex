@@ -8016,12 +8016,84 @@ All cells of $A \times T$ observed, $n_A$ rows, $n_T$ columns, $\Sigma = \sigma^
   Corollary~\ref{cor:Blup_eq_of_normal}.
 \end{proof}
 
-\begin{remark}[Estimation, next]\label{rem:crossed_estimation}
-  As in Section~\ref{sec:hier_bridge5}, $\tfrac12\mathbb E(X_i - X_j)^2 - \sigma^2$ is
-  $\beta^2 + \gamma^2$ for a pair in the same row, $\alpha^2 + \gamma^2$ in the same column and
-  $\alpha^2 + \beta^2 + \gamma^2$ for neither: three equations for the three variances
-  (\texttt{notes/crossed-2x2.md} \S6). Not yet in Lean.
-\end{remark}
+\section{Estimating the three variances}\label{sec:crossed_estimation}
+% Lean: Credibility/CrossedEstimation.lean
+
+The cohorts of a thesis model (noise $\sigma_{jt}$, correlations $\rho_{ij}$ within a period)
+are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}
+[t = s] + L_{ij}$ with the crossed $L$ of Definition~\ref{def:crossed}.
+
+\begin{theorem}[From the thesis to crossed levels]\label{thm:unbiasedX_of}
+  \lean{Credibility.Model.obsCovX, Credibility.Model.UnbiasedX, Credibility.Model.obsCovX_symm,
+    Credibility.Model.Ecov_obsCovX_eq, Credibility.Model.unbiasedX_of}
+  \leanok
+  \uses{def:crossed, def:unbiased}
+  An estimator $f$ unbiased for $\theta$ in the thesis model has, with crossed levels,
+  expectation $\theta + (\gamma^2 - \tau^2)\sum_j f(\mathbf 1_j) + \alpha^2\sum_a f(\mathbf 1_{r = a})
+  + \beta^2\sum_b f(\mathbf 1_{c = b})$, evaluated on the noise-free cell, row and column patterns.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedG_of, def:crossed}
+  As Theorem~\ref{thm:unbiasedG_of}: $L = \alpha^2\sum_a \mathbf 1_a\mathbf 1_a^T
+  + \beta^2\sum_b \mathbf 1_b\mathbf 1_b^T + \gamma^2\sum_j e_je_j^T$, and $\sum_{p,q} Q_{pq}
+  d_pd_q = f(d)$ for each pattern $d$.
+\end{proof}
+
+\begin{theorem}[The pair estimators with crossed levels]\label{thm:pairHat_X}
+  \lean{Credibility.Model.sigRhoHat_unbiasedX, Credibility.Model.pairHat_unbiasedX}
+  \leanok
+  \uses{thm:unbiasedX_of, thm:pairHat_G}
+  With $T \ge 2$ and $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$: $\widehat{\sigma^2_{ij}\rho_{ij}}$
+  stays unbiased, and for $i \ne j$ the pair estimator $\widehat P_{ij}$ is unbiased for
+  $2\gamma^2 + 2\alpha^2[r(i) \ne r(j)] + 2\beta^2[c(i) \ne c(j)]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedX_of, cor:estimation, thm:pairHat_G, thm:estimation_G}
+  Theorem~\ref{thm:unbiasedX_of} with the thesis expectations ($2\tau^2$ for a pair,
+  Theorem~\ref{thm:pairHat_G}) and the pair estimator on the patterns:
+  $\sum_g \widehat P_{ij}(\mathbf 1_g) = 2[g(i) \ne g(j)]$.
+\end{proof}
+
+\begin{theorem}[The three variances are identified]\label{thm:crossed_identified}
+  \lean{Credibility.Model.sameRowPairs, Credibility.Model.sameColPairs,
+    Credibility.Model.crossPairs, Credibility.Model.pairPool,
+    Credibility.Model.pairPool_unbiasedX, Credibility.Model.sameRowPool_unbiasedX,
+    Credibility.Model.sameColPool_unbiasedX, Credibility.Model.crossPool_unbiasedX,
+    Credibility.Model.crossed_unbiasedX}
+  \leanok
+  \uses{thm:pairHat_X}
+  With weights $r$, $c$, $n$ summing to one on the ordered pairs in the same row (different
+  columns), the same column (different rows) and neither, the pools $\widehat P_r$, $\widehat P_c$,
+  $\widehat P_n$ are unbiased for $2(\beta^2 + \gamma^2)$, $2(\alpha^2 + \gamma^2)$ and
+  $2(\alpha^2 + \beta^2 + \gamma^2)$, so
+  \[
+    \hat\alpha^2 = \tfrac12(\widehat P_n - \widehat P_r), \quad
+    \hat\beta^2 = \tfrac12(\widehat P_n - \widehat P_c), \quad
+    \hat\gamma^2 = \tfrac12(\widehat P_r + \widehat P_c - \widehat P_n)
+  \]
+  are unbiased for $\alpha^2$, $\beta^2$, $\gamma^2$, for any noise correlations.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_X}
+  Linearity of unbiasedness over Theorem~\ref{thm:pairHat_X}.
+\end{proof}
+
+\begin{lemma}[Sums of squares are pair averages]\label{lem:sum_sq_pairs}
+  \lean{Credibility.sum_mul_sq_sub_eq_pairs}
+  \leanok
+  \uses{thm:crossed_identified}
+  With $W = \sum_k w_k \ne 0$ and $\bar x = \sum_k w_kx_k/W$:
+  $\sum_k w_k(x_k - \bar x)^2 = \sum_{k,l} w_kw_l(x_k - x_l)^2/(2W)$. So the
+  analysis-of-variance estimators of crossed-classification credibility (Dannenburg 1995;
+  Goulet 1998, eqs.~(67)--(69)) are pools of squared pair differences with weights $\propto w_kw_l$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides equal $\sum_k w_kx_k^2 - (\sum_k w_kx_k)^2/W$.
+\end{proof}
 
 \chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
 % Not in the thesis: README "Later goals -> Small lemmas" (a).

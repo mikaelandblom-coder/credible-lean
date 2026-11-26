@@ -348,9 +348,11 @@ One chat per step; none needs Lean except step 5.
   cells with a row and a column (country × car type). World: `L = α²[same row] + β²[same column]
   + γ²I`. Show the three-factor predictor (`Crossed.blup_balanced`, general `K` via `Core.blup`)
   against the blend, the blend's excess per layer (`Crossed.sum_linMse_blend`) and a cell without
-  data predicted from its row and column (`Crossed.missing_blup`). The fit of `α², β², γ²` from
-  same-row / same-column / neither pairs is not proved yet (next chat); until then the switch
-  shows known parameters only.
+  data predicted from its row and column (`Crossed.missing_blup`). Fit: `α̂², β̂², γ̂²` from
+  pools of same-row / same-column / neither pair estimators (`Model.crossed_unbiasedX`, unbiased
+  for any weights summing to one per class; weights `∝ w_k w_l` are Dannenburg's ANOVA
+  estimators). Choice of weights and truncation at 0 to be settled by simulation (no hand-set
+  choices).
 - [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
   with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
   `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use

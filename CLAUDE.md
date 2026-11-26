@@ -101,7 +101,9 @@ tactics.
 - extension: crossed levels (`notes/crossed-2x2.md`): `L = α²[same row] + β²[same column] + γ²I`
   for any cell set, `K ≻ 0`, `K = ZGZᵀ + R` (Henderson gives row and column effects), `β² = 0` is
   Bridge 4; balanced table: three factors `z_r, z_c, z_i`, the blend's excess per layer; a cell
-  without data (2×2) → `Credibility/Crossed.lean`
+  without data (2×2) → `Credibility/Crossed.lean`; its estimation (pair estimators from the
+  same row / column / neither, unbiased for any noise correlations, `Model.crossed_unbiasedX`; the
+  ANOVA identity `sum_mul_sq_sub_eq_pairs`) → `Credibility/CrossedEstimation.lean`
 - general matrix lemmas for `V = ZGZᵀ + R` (ported from Stat-Lean, Apache 2.0): push-through,
   binomial inverse (small form of `V⁻¹`), Henderson's mixed-model equations, their solution is `Core.blup`
   (`hendersonMME_eq_blup`) → `Credibility/Henderson.lean`; group effects by MME: `Unequal.groupEffect_eq_blup`
