@@ -329,6 +329,28 @@ credibility texts assume independence across risks. "No references" is too stron
   and the exact loss of the one-factor blend per layer (`Crossed.sum_linMse_blend`). The balanced
   closed form by layers is the classical two-way ANOVA eigen-decomposition; whether Dannenburg
   states it is unchecked.
+- Goulet (1998), *Principles and application of credibility theory*, J. Actuarial Practice 6,
+  5–62, §8 (owner's PDF, 2026-11-26; read §8 in full). The secondary source for Dannenburg
+  (1995). Model (52): `X_ijkt = m + Ξ⁽¹⁾ᵢ + Ξ⁽²⁾ⱼ + Ξ⁽³⁾ₖ + all interactions + Ξ⁽¹²³⁴⁾_ijkt`,
+  uncorrelated components (CCC1–4), noise `s²/w_ijkt` independent over time and cells. Its
+  two-way version is our `Crossed` model with `Σ` diagonal (`γ²` = the interaction `b⁽¹²⁾`).
+  Premium (57)–(64): `m` plus the credibility estimates of the effects, which are *not* explicit
+  but the solution of a linear system (six equations three-way); so no closed form in general,
+  as ours (`Core.blup`), and our balanced three-factor formula is the explicit case they do not
+  state. Estimation §8.3 (from Dannenburg): `m̂` the weighted mean, `ŝ²` within-cell over time
+  (66), and the variance components from a linear system of ANOVA-type equations (67)–(69):
+  weighted sums of squares of cell means about row / column / grand means, minus the noise
+  `(K-1)ŝ²/w`, equated to combinations of the `b`s with coefficients `1 - Σ(w/w)²`. Unbiased,
+  can be negative, "no known optimality properties", large coefficient of variation in
+  simulations. **Use for the next chat:** this is the precedent for crossed estimators; our pair
+  differences (same row / same column / neither) are the same moment method in pair form, and
+  must reduce to (67)–(69) with natural weights. Their noise is uncorrelated across cells; ours
+  must also handle `Σ` correlated within a period (the thesis's point).
+- Dutang, Goulet, Milhaud & Pigeon, *Credibility theory features of actuar* (R vignette, owner's
+  PDF, 2026-11-26): `cm` fits hierarchical (incl. Bühlmann–Straub), regression (Hachemeister) and
+  linear Bayes models; no crossed classification and no correlated noise. Useful only as a
+  reference implementation: the Hachemeister data and `cm` output could check the app's
+  hierarchical / Bühlmann–Straub numbers (independent noise case).
   `y_ijt = β + α_i⁽¹⁾ + α_j⁽²⁾ + α_ij + ε_ijt`: both factors are *risk* classifications, so
   cells sharing a row correlate permanently, not per year. Taking the second factor to be the
   year would give equicorrelated noise within a year (ρ ≥ 0 only), but that is our reading,
