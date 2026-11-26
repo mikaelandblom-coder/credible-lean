@@ -505,7 +505,7 @@ One chat per step; none needs Lean except step 5.
   Under correlation no remedy is free: the shift costs ~20 points (exposure balance is the wrong
   balance there, S28), the pooled σ̂² leaves the `ρ̂` channel (−0.5%). Tried and dropped: shifting the
   BLUP to the pooled BLUP's portfolio level (no better than the shift, worse under ρ). Open: a
-  remedy for the `ρ̂` channel. *Owner, 2026-11-22: balance by default* (below). Lean done (2026-11-22,
+  remedy for the `ρ̂` channel (hypothesis and cross-fitting candidate: Pending, "Finding 35: the ρ̂ channel"). *Owner, 2026-11-22: balance by default* (below). Lean done (2026-11-22,
   `Credibility/RandomWeights.lean`): (a) `Core.Estimates.integral_randomLin_sub`, (b)
   `Core.Estimates.integral_portfolio_sub_of_balanced` (the balanced BLUP is such a fit). *Done 2026-11-22:*
   `simulate` returns `covDiag` (sample `Σᵢ cov(d̂ᵢ, μ̂ᵢ)` over draws, own weight vs other regions,
@@ -904,3 +904,16 @@ One chat per step; none needs Lean except step 5.
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a
   bias term for fitting the learner on the same data (Finding 35). Not now: the app has no covariates.
+- [ ] BLUP in credibility form (2026-11-26, `notes/blup-credibility-form.md` §1–2): `μ̂ᴮᴸᵁᴾ = 1μ̂_GLS + Z r`,
+  `Z = LK⁻¹` (`τ²(τ²I + V)⁻¹` in the thesis model), residuals `r = μ̂ − 1μ̂_GLS`; the blend is row `j`
+  restricted to `z eⱼ`; path `w + θ(d* − w)` with `MSE(θ) = MSE(d*) + (1 − θ)²·price`. Lean first (targets
+  1–3 in the note, `Core.lean`). App then: show `Ẑ` (diagonal next to the blend's `ẑ`, off-diagonal as
+  "borrowed") in the card "Is correlation worth modelling?"; later a fit with `θ̂` from gain against price
+  (S57), once the best `θ` for a plug-in is stated. Gauge of `Z`'s rows to settle.
+- [ ] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the
+  pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
+  needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:
+  leave-one-year-out cross-fitting of `ρ̂`, `σ̂²` (weights from the other years), exactly unbiased in
+  that channel for any distribution, without forcing exposure balance. Study `studies/rho-channel.js`
+  (H1 attribution, P1–P3, R1 against pooled and balanced); then a fit option and the Lean corollary of
+  `Core.Estimates.integral_randomLin_sub`.
