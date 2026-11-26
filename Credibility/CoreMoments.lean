@@ -572,5 +572,67 @@ def addCommon (C : J → Ω → ℝ) (R : Matrix J J ℝ) (hC : ∀ j, MemLp (C 
 
 end Estimates
 
+/-! ### Common components built from orthonormal effects
+
+The group effects of `HierarchicalMoments.lean` and the row and column effects of
+`CrossedMoments.lean` are both a component `Cⱼ = Σ_{k ∈ sⱼ} cⱼₖ Zₖ` of centred effects `Zₖ`
+with `cov(Zₖ, Zₗ) = [k = l]`, added to every observation of cohort `j`. These are its facts,
+proved once; `Estimates.addCommon` then adds it to `K` and `L`. -/
+
+section Common
+
+variable {ι : Type*} {P : Measure Ω}
+
+/-- The common component `Cⱼ = Σ_{k ∈ sⱼ} cⱼₖ Zₖ` of cohort `j`: the effects `sⱼ` it shares, with
+loadings `cⱼₖ`. -/
+noncomputable def common (s : J → Finset ι) (c : J → ι → ℝ) (Z : ι → Ω → ℝ) (j : J) : Ω → ℝ :=
+  fun ω => ∑ k ∈ s j, c j k * Z k ω
+
+lemma memLp_common (s : J → Finset ι) (c : J → ι → ℝ) {Z : ι → Ω → ℝ}
+    (hZ : ∀ k, MemLp (Z k) 2 P) (j : J) : MemLp (common s c Z j) 2 P :=
+  memLp_finsetSum _ fun k _ => (hZ k).const_mul _
+
+lemma integral_common [IsProbabilityMeasure P] (s : J → Finset ι) (c : J → ι → ℝ)
+    {Z : ι → Ω → ℝ} (hZ : ∀ k, MemLp (Z k) 2 P) (hZ0 : ∀ k, P[Z k] = 0) (j : J) :
+    P[common s c Z j] = 0 := by
+  unfold common
+  rw [integral_finsetSum _ fun k _ => ((hZ k).const_mul _).integrable (by norm_num)]
+  simp [integral_const_mul, hZ0]
+
+/-- The component is uncorrelated with anything every effect is uncorrelated with. -/
+lemma cov_common_of [IsProbabilityMeasure P] (s : J → Finset ι) (c : J → ι → ℝ)
+    {Z : ι → Ω → ℝ} (hZ : ∀ k, MemLp (Z k) 2 P) {Y : Ω → ℝ} (hY : MemLp Y 2 P)
+    (h : ∀ k, cov[Z k, Y; P] = 0) (j : J) : cov[common s c Z j, Y; P] = 0 := by
+  unfold common
+  rw [covariance_fun_sum_left' (X := fun k ω => c j k * Z k ω)
+    (fun k _ => (hZ k).const_mul _) hY]
+  exact Finset.sum_eq_zero fun k _ => by rw [covariance_const_mul_left, h, mul_zero]
+
+/-- With orthonormal effects, `cov(Cᵢ, Cⱼ) = Σ_{k ∈ sᵢ} Σ_{l ∈ sⱼ} cᵢₖ cⱼₗ [k = l]`. -/
+lemma cov_common [IsProbabilityMeasure P] [DecidableEq ι] (s : J → Finset ι)
+    (c : J → ι → ℝ) {Z : ι → Ω → ℝ} (hZ : ∀ k, MemLp (Z k) 2 P)
+    (hZZ : ∀ k l, cov[Z k, Z l; P] = if k = l then 1 else 0) (i j : J) :
+    cov[common s c Z i, common s c Z j; P]
+      = ∑ k ∈ s i, ∑ l ∈ s j, c i k * c j l * (if k = l then 1 else 0) := by
+  unfold common
+  rw [covariance_fun_sum_left' (X := fun k ω => c i k * Z k ω)
+    (fun k _ => (hZ k).const_mul _) (memLp_finsetSum _ fun k _ => (hZ k).const_mul _)]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [covariance_const_mul_left, covariance_fun_sum_right' (X := fun l ω => c j l * Z l ω)
+    (fun l _ => (hZ l).const_mul _) (hZ k), Finset.mul_sum]
+  refine Finset.sum_congr rfl fun l _ => ?_
+  rw [covariance_const_mul_right, hZZ]
+  ring
+
+/-- A component common to all observations of a cohort passes through weights summing to one:
+`Σₜ aₜ(Xₜ + C) = Σₜ aₜXₜ + C`. -/
+lemma cohortEst_eq {T : Type*} (s : Finset T) {a : T → ℝ} (ha : ∑ t ∈ s, a t = 1)
+    (X : T → Ω → ℝ) (C : Ω → ℝ) :
+    (fun ω => ∑ t ∈ s, a t * (X t ω + C ω)) = fun ω => ∑ t ∈ s, a t * X t ω + C ω := by
+  funext ω
+  simp only [mul_add, Finset.sum_add_distrib, ← Finset.sum_mul, ha, one_mul]
+
+end Common
+
 end Core
 end Credibility

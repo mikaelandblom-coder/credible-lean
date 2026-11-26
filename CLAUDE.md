@@ -39,7 +39,8 @@ tactics.
 - extension: cohort-dependent lengths `Tⱼ` (`notes/unequal-lengths.md`) → `Credibility/Unequal.lean`;
   its estimation (§2.8) and balance (§2.9) → `Credibility/UnequalEstimation.lean`
 - extension: moment layer at Core level (any random `μ̂ⱼ`, `μⱼ` with covariances `K`, `L`:
-  `Core.Estimates`, true MSE of the blend) → `Credibility/CoreMoments.lean`; random weights
+  `Core.Estimates`, true MSE of the blend; a common component of orthonormal effects `Core.common`,
+  used by group and crossed effects) → `Credibility/CoreMoments.lean`; random weights
   (Finding 35: bias `Σᵢ cov(d̂ᵢ, μ̂ᵢ)`, exposure balance keeps the portfolio unbiased)
   → `Credibility/RandomWeights.lean`
 - extension: the collective mean given the levels (literature §10p): the blend's error given

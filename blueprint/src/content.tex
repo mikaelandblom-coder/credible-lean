@@ -3972,6 +3972,24 @@ example ignoring the correlation between cohorts. How much can that cost?
   Bilinearity: the cross terms vanish.
 \end{proof}
 
+\begin{lemma}[A common component of orthonormal effects]\label{lem:Core_common}
+  \lean{Credibility.Core.common, Credibility.Core.memLp_common, Credibility.Core.integral_common,
+    Credibility.Core.cov_common_of, Credibility.Core.cov_common, Credibility.Core.cohortEst_eq}
+  \leanok
+  \uses{lem:Core_addCommon}
+  Let $Z_k$ be square-integrable effects and $C_j = \sum_{k \in s_j} c_{jk}Z_k$. Then $C_j$ is
+  square-integrable; under a probability measure it is centred if the $Z_k$ are, uncorrelated
+  with any $Y$ the $Z_k$ are uncorrelated with, and if $\cov(Z_k, Z_l) = [k = l]$ then
+  $\cov(C_i, C_j) = \sum_{k \in s_i}\sum_{l \in s_j} c_{ik}c_{jl}[k = l]$. A component common to
+  all observations of a cohort passes through weights summing to one:
+  $\sum_t a_t(X_t + C) = \sum_t a_tX_t + C$. Group effects (one effect $g(j)$) and crossed effects
+  (a row and a column effect) are instances.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of the covariance over finite sums.
+\end{proof}
+
 % ---------------------------------------------------------------------------
 \chapter{Extension: a known common trend}\label{ch:trend}
 % Not in the thesis. Lean: Credibility/Trend.lean (notes/time-trends.md §1, steps 1–2)
@@ -7695,7 +7713,8 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \end{definition}
 
 \begin{lemma}[The group effect is a common component]\label{lem:U_G_moments_lin}
-  \lean{Credibility.Unequal.NoiseG.cohortEst_eq, Credibility.Unequal.NoiseG.memLp_common,
+  \lean{Credibility.Unequal.NoiseG.common_eq,
+        Credibility.Unequal.NoiseG.cohortEst_eq, Credibility.Unequal.NoiseG.memLp_common,
         Credibility.Unequal.NoiseG.integral_common, Credibility.Unequal.NoiseG.cov_common,
         Credibility.Unequal.NoiseG.cov_γ_trueMean, Credibility.Unequal.NoiseG.cov_γ_obsVal,
         Credibility.Unequal.NoiseG.cov_γ_cohortEst,
@@ -7713,7 +7732,7 @@ that of Definition~\ref{def:U_Noise} plus the group component.
 \end{lemma}
 \begin{proof}
   \leanok
-  \uses{lem:U_moments_lin}
+  \uses{lem:U_moments_lin, lem:Core_common}
   Lemma~\ref{lem:Core_addCommon} applied to Lemma~\ref{lem:U_moments_lin} for
   level variance $(1-\phi)\tau^2$ and $C_j = \sqrt{\phi\tau^2}\gamma_{g(j)}$;
   $\phi \ge 0$ gives $\cov(C_i,C_j) = R_{ij}$, and $K_G = K(M_\phi) + R$,
@@ -8169,7 +8188,9 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
 \end{definition}
 
 \begin{theorem}[The crossed covariances are the actual ones]\label{thm:noiseX_cov}
-  \lean{Credibility.Model.NoiseX.cohortEst_eq, Credibility.Model.NoiseX.memLp_common,
+  \lean{Credibility.Model.NoiseX.effects, Credibility.Model.NoiseX.common_eq,
+    Credibility.Model.NoiseX.effects_memLp, Credibility.Model.NoiseX.cov_effects,
+    Credibility.Model.NoiseX.cohortEst_eq, Credibility.Model.NoiseX.memLp_common,
     Credibility.Model.NoiseX.integral_common, Credibility.Model.NoiseX.cov_common,
     Credibility.Model.NoiseX.cov_common_of, Credibility.Model.NoiseX.cov_eff_trueMean,
     Credibility.Model.NoiseX.cov_eff_obs, Credibility.Model.NoiseX.cov_eff_cohortEst,
@@ -8185,8 +8206,9 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
 \end{theorem}
 \begin{proof}
   \leanok
-  \uses{thm:cov_obs, thm:integral_quad_cov, thm:crossed_identified}
-  The row and column component is uncorrelated with $\eta$ and $\varepsilon$, so the covariance
+  \uses{thm:cov_obs, thm:integral_quad_cov, thm:crossed_identified, lem:Core_common}
+  The row and column component is a common component of orthonormal effects
+  (Lemma~\ref{lem:Core_common}), uncorrelated with $\eta$ and $\varepsilon$, so the covariance
   is that of the thesis (Theorem~\ref{thm:cov_obs}) plus $\alpha^2[\text{same row}] +
   \beta^2[\text{same column}]$; then Theorem~\ref{thm:integral_quad_cov}.
 \end{proof}

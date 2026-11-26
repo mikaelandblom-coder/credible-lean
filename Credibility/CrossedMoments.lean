@@ -76,47 +76,60 @@ noncomputable def obs (j : J) (t : T) : Ω → ℝ :=
 /-- The cell estimate `μ̂ⱼ = Σₜ aⱼₜ μⱼₜ`, eq. (23). -/
 noncomputable def cohortEst (j : J) : Ω → ℝ := fun ω => ∑ t, M.a j t * N.obs α2 β2 μ j t ω
 
+/-- The row and column effects as one family over `A ⊕ B`. -/
+def effects : A ⊕ B → Ω → ℝ := Sum.elim N.rowEff N.colEff
+
+/-- The common component is `Core.common` with the two effects `inl (row j)`, `inr (col j)` and
+loadings `√α²`, `√β²`. -/
+lemma common_eq (j : J) :
+    N.common α2 β2 j = Core.common (fun j => {Sum.inl (row j), Sum.inr (col j)})
+      (fun _ => Sum.elim (fun _ => Real.sqrt α2) (fun _ => Real.sqrt β2)) N.effects j := by
+  funext ω
+  simp [common, Core.common, effects, Finset.sum_pair (Sum.inl_ne_inr)]
+
+lemma effects_memLp (k : A ⊕ B) : MemLp (N.effects k) 2 P := by
+  cases k
+  exacts [N.rowEff_memLp _, N.colEff_memLp _]
+
 /-- The row and column effects pass through the cell weights (`Σₜ aⱼₜ = 1`). -/
 lemma cohortEst_eq [Nonempty T] (j : J) :
     N.cohortEst α2 β2 μ j = fun ω => N.toNoise.cohortEst μ j ω + N.common α2 β2 j ω := by
-  have hs : ∑ t, M.a j t = 1 := by rw [← M.toUnequal_a]; exact M.toUnequal.sum_a_univ j
-  funext ω
-  simp only [cohortEst, obs, mul_add, sum_add_distrib, ← sum_mul, hs, one_mul]
-  rfl
+  have hs : ∑ t ∈ univ, M.a j t = 1 := by rw [← M.toUnequal_a]; exact M.toUnequal.sum_a_univ j
+  exact Core.cohortEst_eq univ hs (fun t => N.toNoise.obs μ j t) (N.common α2 β2 j)
 
-lemma memLp_common (j : J) : MemLp (N.common α2 β2 j) 2 P :=
-  ((N.rowEff_memLp _).const_mul _).add ((N.colEff_memLp _).const_mul _)
+lemma memLp_common (j : J) : MemLp (N.common α2 β2 j) 2 P := by
+  rw [common_eq]
+  exact Core.memLp_common _ _ N.effects_memLp j
 
 lemma integral_common [IsProbabilityMeasure P] (j : J) : P[N.common α2 β2 j] = 0 := by
-  simp only [common]
-  rw [integral_add (((N.rowEff_memLp _).const_mul _).integrable (by norm_num))
-    (((N.colEff_memLp _).const_mul _).integrable (by norm_num))]
-  simp [integral_const_mul, N.rowEff_mean, N.colEff_mean]
+  rw [common_eq]
+  exact Core.integral_common _ _ N.effects_memLp
+    (fun k => by cases k; exacts [N.rowEff_mean _, N.colEff_mean _]) j
 
 variable [IsProbabilityMeasure P]
 
-/-- `cov(common i, common j) = α²[row i = row j] + β²[col i = col j]`. -/
+/-- The effects are orthonormal: `cov(Zₖ, Zₗ) = [k = l]` over `A ⊕ B`. -/
+lemma cov_effects (k l : A ⊕ B) : cov[N.effects k, N.effects l; P] = if k = l then 1 else 0 := by
+  cases k <;> cases l <;> simp [effects, N.cov_row_row, N.cov_col_col, N.cov_row_col,
+    covariance_comm (N.colEff _) (N.rowEff _)]
+
+/-- `cov(common i, common j) = α²[row i = row j] + β²[col i = col j]` (`Core.cov_common`). -/
 lemma cov_common {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (i j : J) :
     cov[N.common α2 β2 i, N.common α2 β2 j; P]
       = (α2 • Model.sameGroup row + β2 • Model.sameGroup col) i j := by
-  unfold common
-  rw [cov_add_add ((N.rowEff_memLp _).const_mul _) ((N.colEff_memLp _).const_mul _)
-      ((N.rowEff_memLp _).const_mul _) ((N.colEff_memLp _).const_mul _)]
-  simp only [covariance_const_mul_left, covariance_const_mul_right, N.cov_row_row,
-    N.cov_col_col, N.cov_row_col, covariance_comm (N.colEff _) (N.rowEff _)]
+  rw [common_eq, common_eq, Core.cov_common _ _ N.effects_memLp N.cov_effects]
   have ha := Real.mul_self_sqrt hα
   have hb := Real.mul_self_sqrt hβ
-  simp only [Matrix.add_apply, Matrix.smul_apply, smul_eq_mul, Model.sameGroup, of_apply]
+  simp only [Finset.sum_pair Sum.inl_ne_inr, Sum.elim_inl, Sum.elim_inr, Sum.inl.injEq,
+    Sum.inr.injEq, reduceCtorEq, ite_false, mul_zero, add_zero, zero_add, Matrix.add_apply,
+    Matrix.smul_apply, smul_eq_mul, Model.sameGroup, of_apply]
   split_ifs <;> nlinarith
 
 /-- The common component is uncorrelated with anything the row and column effects are. -/
 lemma cov_common_of {Y : Ω → ℝ} (hY : MemLp Y 2 P) (h1 : ∀ a, cov[N.rowEff a, Y; P] = 0)
     (h2 : ∀ b, cov[N.colEff b, Y; P] = 0) (j : J) : cov[N.common α2 β2 j, Y; P] = 0 := by
-  rw [show N.common α2 β2 j = (fun ω => Real.sqrt α2 * N.rowEff (row j) ω)
-      + fun ω => Real.sqrt β2 * N.colEff (col j) ω from rfl,
-    covariance_add_left ((N.rowEff_memLp _).const_mul _) ((N.colEff_memLp _).const_mul _) hY,
-    covariance_const_mul_left, covariance_const_mul_left, h1, h2]
-  ring
+  rw [common_eq]
+  exact Core.cov_common_of _ _ N.effects_memLp hY (fun k => by cases k; exacts [h1 _, h2 _]) j
 
 lemma cov_eff_trueMean {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η j; P] = 0) (j : J) :
     cov[Z, N.toNoise.trueMean μ j; P] = 0 := by

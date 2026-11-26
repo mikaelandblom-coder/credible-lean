@@ -86,15 +86,22 @@ noncomputable abbrev portEst : Ω → ℝ := Core.portEst (M.KG grp φ) (N.cohor
 noncomputable abbrev blend (j : J) (z : ℝ) : Ω → ℝ := Core.blend (M.KG grp φ) (N.cohortEst μ) j z
 
 omit [Fintype J] [Fintype T] in
-/-- The group effect passes through the cohort weights (`Σ_{t∈Tⱼ} aⱼₜ = 1`). -/
-lemma cohortEst_eq (j : J) :
-    N.cohortEst μ j = fun ω => N.toNoise.cohortEst μ j ω + N.common j ω := by
+/-- The group component is `Core.common` with the one effect `grp j` and loading `√(φτ²)`. -/
+lemma common_eq (j : J) :
+    N.common j = Core.common (fun j => {grp j}) (fun _ _ => Real.sqrt (φ * M.τ2)) N.γ j := by
   funext ω
-  simp only [cohortEst, obsVal, mul_add, sum_add_distrib, ← sum_mul, M.sum_a, one_mul]
-  rfl
+  simp [common, Core.common]
 
 omit [Fintype J] [Fintype T] in
-lemma memLp_common (j : J) : MemLp (N.common j) 2 P := (N.γ_memLp _).const_mul _
+/-- The group effect passes through the cohort weights (`Σ_{t∈Tⱼ} aⱼₜ = 1`). -/
+lemma cohortEst_eq (j : J) :
+    N.cohortEst μ j = fun ω => N.toNoise.cohortEst μ j ω + N.common j ω :=
+  Core.cohortEst_eq (M.obs j) (M.sum_a j) (fun t => N.toNoise.obsVal μ j t) (N.common j)
+
+omit [Fintype J] [Fintype T] in
+lemma memLp_common (j : J) : MemLp (N.common j) 2 P := by
+  rw [common_eq]
+  exact Core.memLp_common _ _ N.γ_memLp j
 
 omit [Fintype J] [Fintype T] in
 lemma integral_common (j : J) : P[N.common j] = 0 := by
