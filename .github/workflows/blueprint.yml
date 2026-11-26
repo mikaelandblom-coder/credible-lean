@@ -192,9 +192,9 @@ jobs:
       # under Node, then the page is published at /app/ next to the blueprint.
       - name: Test and add the app
         run: |
-          node --test app/engine.test.js app/monthly.test.js
+          node --test app/engine.test.js app/monthly.test.js app/crossed.test.js
           mkdir -p blueprint/web/app
-          cp -r app/index.html app/engine.js app/monthly.js app/manifest.webmanifest app/icons blueprint/web/app/
+          cp -r app/index.html app/engine.js app/monthly.js app/crossed.js app/manifest.webmanifest app/icons blueprint/web/app/
 
       # The master thesis proposal: after the handbook, whose handbook.aux gives its result numbers (xr).
       - name: Build the thesis proposal

@@ -301,6 +301,38 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="tablewrap" id="r-many-out"></div>
   </section>
 
+  <section class="card" aria-labelledby="h-crossed">
+    <h2 id="h-crossed">Crossed levels <span class="sub">(rows × columns: country × car type)</span></h2>
+    <p class="sub" style="margin:0 0 6px">A third world: a table of cells, each with a row (country) and a column (car type). A cell's level is the tariff plus a row effect (spread α), a column effect (β) and its own effect (γ), so two cells in the same row share α², in the same column β² (<i>L</i> = α²[same row] + β²[same column] + γ²<i>I</i>). On top, the thesis noise σ²/<i>w</i> with correlation ρ between cells in a year. The fit sees each cell's row, column, volumes and ratios: it estimates α², β², γ² from pairs of cells, and predicts every cell from its row and column too. Against it, the thesis fit, which sees the cells but not the table.</p>
+    <div id="c-sliders"></div>
+    <div class="feature"><input type="checkbox" id="c-missing"><label for="c-missing">A cell without data <span class="sub">(row 1, column 1: a new car type in one country; the blend has no own mean to blend)</span></label></div>
+    <div class="grid2">
+      <div><label for="c-volume">Volume per cell and year</label><select id="c-volume">
+        <option value="500">500 vehicle-years (the app's default)</option>
+        <option value="4400">4400 (the thesis's credibility level)</option></select></div>
+      <div><label for="c-weights">Pairs pooled with weights</label><select id="c-weights">
+        <option value="equal">Equal within each class (default)</option>
+        <option value="vol">∝ wᵢ*wⱼ* (the product of the volumes)</option>
+        <option value="anova">ANOVA (Dannenburg): ∝ wᵢ*wⱼ*, noise cross term left out</option></select></div>
+      <div><label for="c-trunc">A negative variance</label><select id="c-trunc">
+        <option value="clip">Set to 0 (default)</option>
+        <option value="nnls">Refit the other two by least squares, all ≥ 0</option></select></div>
+    </div>
+    <div class="flexhead" style="margin-top:12px"><h3 style="margin:0">One draw</h3>
+      <span class="btnrow"><label class="seed" for="c-seed">Seed <input type="number" id="c-seed" inputmode="numeric" min="0" step="1" value="1"></label><button id="c-draw" class="primary">New draw</button><button type="button" id="c-csv" title="The data the fit sees: row, column, year, volume, ratio">Download CSV</button></span></div>
+    <div id="c-warn"></div>
+    <div id="c-grid"></div>
+    <div id="c-var"></div>
+    <div id="c-weightsTab"></div>
+    <div id="c-steps"></div>
+    <h3>The world: what the blend form costs <span class="sub">(exact, true parameters)</span></h3>
+    <div id="c-layers"></div>
+    <h3>Many draws</h3>
+    <p class="sub" style="margin:0" id="c-many-sub"></p>
+    <div class="tablewrap" id="c-many"></div>
+    <div class="tablewrap" id="c-bias"></div>
+  </section>
+
   <footer>
     <p>The floor is the best credibility blend if the true parameters were known (thesis eq. (26) on the true <i>K</i>): a benchmark, never a fit. The gap between fit and floor is the price of estimating the parameters. The table under Many draws also shows the best linear unbiased predictor with the true <i>K</i>, the lower floor that the blend form itself can miss (Finding 18).</p>
     <p>Every fitted number comes from the simulated data alone. Levels and noise are skewed (gamma): the theory assumes only two moments. <a href="../">Blueprint</a> · <a href="../handbook.pdf">Handbook</a></p>
@@ -310,6 +342,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
 
 <script src="engine.js"></script>
 <script src="monthly.js"></script>
+<script src="crossed.js"></script>
 <script>
 'use strict';
 (function () {
@@ -1211,6 +1244,140 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     clearTimeout(mPending); mPending = setTimeout(mRenderMany, 150);
   }
 
+  // ---------- crossed levels (app/crossed.js: world, then the fit from the data alone)
+  const CR = window.Crossed;
+  const cs = { nr: 4, nc: 3, alpha: 0.06, beta: 0.10, gamma: 0.04, rho: 0, spread: 0, volume: 500, missing: false, weights: 'equal', trunc: 'clip', seed: 1 };
+  const C_SLIDERS = [
+    { key: 'nr', label: 'Rows <span class="sub">(countries)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
+    { key: 'nc', label: 'Columns <span class="sub">(car types)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
+    { key: 'alpha', label: 'Row effects α', min: 0, max: 0.15, step: 0.01, fmt: (v) => v.toFixed(2) },
+    { key: 'beta', label: 'Column effects β', min: 0, max: 0.15, step: 0.01, fmt: (v) => v.toFixed(2) },
+    { key: 'gamma', label: 'Cell effects γ', min: 0, max: 0.15, step: 0.01, fmt: (v) => v.toFixed(2) },
+    { key: 'rho', label: 'Noise correlation ρ <span class="sub">(within a year)</span>', min: 0, max: 0.9, step: 0.05, fmt: (v) => v.toFixed(2) },
+    { key: 'spread', label: 'How unequal the volumes are <span class="sub">(0: a balanced table)</span>', min: 0, max: 1.5, step: 0.25, fmt: (v) => v.toFixed(2) },
+  ];
+  for (const s of C_SLIDERS) {
+    const row = document.createElement('div'); row.className = 'row';
+    const id = 'cs-' + s.key;
+    row.innerHTML = `<label for="${id}">${s.label}</label><input type="range" id="${id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${cs[s.key]}"><output></output>`;
+    $('c-sliders').appendChild(row);
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    const show = () => { out.textContent = s.fmt(+inp.value); };
+    show();
+    inp.addEventListener('input', () => { cs[s.key] = +inp.value; show(); cUpdate(); });
+  }
+  $('c-missing').addEventListener('change', (e) => { cs.missing = e.target.checked; cUpdate(); });
+  $('c-volume').addEventListener('change', (e) => { cs.volume = +e.target.value; cUpdate(); });
+  $('c-weights').addEventListener('change', (e) => { cs.weights = e.target.value; cRenderDraw(); cRenderMany(); });
+  $('c-trunc').addEventListener('change', (e) => { cs.trunc = e.target.value; cRenderDraw(); cRenderMany(); });
+  const cSeed = $('c-seed');
+  $('c-draw').addEventListener('click', () => { cs.seed++; cSeed.value = cs.seed; cRenderDraw(); });
+  cSeed.addEventListener('change', () => {
+    const v = Math.floor(+cSeed.value);
+    cs.seed = Number.isFinite(v) && v >= 0 ? v : 1; cSeed.value = cs.seed; cRenderDraw();
+  });
+  let cWorld = null, cExact = null, cData = null;
+  $('c-csv').addEventListener('click', () => { if (cData) download(`credibility-crossed-seed${cs.seed}.csv`, CR.toCSV(cData)); });
+  const r3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : '–');
+  const v4 = (x) => (Number.isFinite(x) ? (x * 1e4).toFixed(1) : '–'); // variances in units of 10⁻⁴
+  const cellName = (j) => `${cWorld.row[j] + 1},${cWorld.col[j] + 1}`;
+
+  function cRenderDraw() {
+    const w = cWorld, { levels, data } = CR.draw(w, E.rng(cs.seed));
+    cData = data;
+    const f = CR.fit(data, { weights: cs.weights, trunc: cs.trunc }), th = CR.thesisFit(data);
+    warnBlock($('c-warn'), f.warnings.map(esc), cs.weights === 'anova' && cs.rho > 0 ? [`ANOVA under correlated noise: its noise correction leaves out the cross term 2σ̂ᵢⱼ, so the pools come out too low by the noise covariances, and in a balanced table all of it lands on γ̂² (Finding 42, ${lean('Model.anovaStat_unbiasedX')}). The pair estimators keep the term and are unbiased for any noise correlation.`] : []);
+    // the table: per cell the truth, the own mean, the crossed rate, the thesis rate
+    let h = `<p class="sub" style="margin:10px 0 4px"><b>The table</b> (per cell: true level μ; own mean μ̂; <span style="color:var(--fit)">crossed fit</span>; <span style="color:var(--ref)">thesis fit</span>)</p><div class="tablewrap"><table class="mtab"><thead><tr><th></th>${Array.from({ length: w.nc }, (_, c) => `<th>Col ${c + 1}</th>`).join('')}</tr></thead><tbody>`;
+    for (let a = 0; a < w.nr; a++) {
+      h += `<tr><td>Row ${a + 1}</td>`;
+      for (let c = 0; c < w.nc; c++) {
+        const j = a * w.nc + c, k = f.idx.indexOf(j);
+        h += `<td>${r3(levels[j])}<span class="sub">${k >= 0 ? r3(f.m[k]) : 'no data'}</span><span class="sub" style="color:var(--fit)">${r3(f.rates[j])}</span><span class="sub" style="color:var(--ref)">${r3(th.rates[j])}</span></td>`;
+      }
+      h += '</tr>';
+    }
+    const err = (rates, o) => Math.sqrt(rates.reduce((s, x, j) => s + ((f.idx.includes(j)) === o ? (x - levels[j]) ** 2 : 0), 0) / (o ? f.idx.length : Math.max(w.miss.length, 1)));
+    h += `</tbody></table></div><p class="sub" style="margin:4px 0 0">This draw, root mean square error over the observed cells: crossed fit ${pct(err(f.rates, true), 2)}, thesis fit ${pct(err(th.rates, true), 2)}, own means ${pct(Math.sqrt(f.idx.reduce((s, j, k) => s + (f.m[k] - levels[j]) ** 2, 0) / f.idx.length), 2)}${w.miss.length ? `; the cell without data: crossed ${pct(err(f.rates, false), 2)}, thesis (μ̂ only) ${pct(err(th.rates, false), 2)}` : ''}.</p>`;
+    $('c-grid').innerHTML = h;
+    // the three variances
+    const t = w.truth, names = ['α² (row)', 'β² (column)', 'γ² (cell)'], tv = [t.alpha2, t.beta2, t.gamma2];
+    $('c-var').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>Variances</b> (×10⁻⁴) from the pools of pairs: ${f.count.r} in the same row, ${f.count.c} in the same column, ${f.count.n} in neither</p><table><thead><tr><th></th>${names.map((n) => `<th>${n}</th>`).join('')}</tr></thead><tbody>` +
+      `<tr><td>From the pools</td>${f.raw.map((x) => `<td>${v4(x)}</td>`).join('')}</tr><tr><td>Used</td>${f.theta.map((x) => `<td>${v4(x)}</td>`).join('')}</tr><tr><td>True</td>${tv.map((x) => `<td>${v4(x)}</td>`).join('')}</tr></tbody></table>` +
+      `<p class="sub" style="margin:4px 0 0">Thesis fit: one τ̂² = ${v4(th.tau2)} for all cells (true α² + β² + γ² = ${v4(tv[0] + tv[1] + tv[2])}); noise ρ̂ = ${f.rho.toFixed(2)}.</p>`;
+    // weights of one cell's prediction: the relativity at work
+    const j0 = 0, c0 = f.cells[j0], nm = cellName(j0);
+    let wt = `<p class="sub" style="margin:10px 0 4px"><b>Weights for cell ${nm}</b> on the other cells' means (crossed fit; <span class="sub" style="display:inline">fitted best blend below</span>). Same row and same column count more than the rest${w.miss.length ? '; the cell has no data of its own' : ''}; a cell in neither can get a negative weight: cell ≈ same row + same column − opposite.</p><div class="tablewrap"><table class="mtab"><thead><tr><th></th>${Array.from({ length: w.nc }, (_, c) => `<th>Col ${c + 1}</th>`).join('')}</tr></thead><tbody>`;
+    for (let a = 0; a < w.nr; a++) {
+      wt += `<tr><td>Row ${a + 1}</td>`;
+      for (let c = 0; c < w.nc; c++) {
+        const j = a * w.nc + c, k = f.idx.indexOf(j);
+        const col = (x) => (x < 0 ? 'var(--warn)' : 'inherit');
+        wt += k < 0 ? '<td class="sub">no data</td>' : `<td><span style="color:${col(c0.full[k])}">${c0.full[k].toFixed(3)}</span><span class="sub">${c0.blend[k].toFixed(3)}</span></td>`;
+      }
+      wt += '</tr>';
+    }
+    $('c-weightsTab').innerHTML = wt + '</tbody></table></div>';
+    $('c-steps').innerHTML = '<p class="sub" style="margin:10px 0 2px"><b>Fitting steps</b></p>' + f.steps.map((s) => {
+      const badge = s.badge === 'proved' ? '<span class="badge proved">proved</span>' : '<span class="badge open">not proved yet</span>';
+      return `<div class="step"><div class="step-head"><span class="step-name">${esc(s.name)}</span>${badge}</div>${s.lean ? `<div class="sub">${lean(s.lean)}</div>` : ''}${s.note ? `<div class="sub">${esc(s.note)}</div>` : ''}</div>`;
+    }).join('') + '<p class="sub" style="margin:4px 0 0">Unbiased before the truncation; the rates plug the estimates into a formula that is optimal for the true parameters (not proved for the plug-in).</p>';
+  }
+
+  function cRenderLayers() {
+    const ex = cExact, ly = ex.layers, n = cWorld.obs.length;
+    let h = `<p class="sub" style="margin:0 0 4px">Summed mean squared error over the ${n} observed cells, ×10⁻⁴: the best linear unbiased predictor with the true <i>K</i> and <i>L</i> (the floor, ${lean('Core.blup_optimal')}) ${v4(ex.full)}; the best blend <i>z</i>ⱼμ̂ⱼ + (1 − <i>z</i>ⱼ)μ̂, eq. (26) for this <i>L</i> (${lean('Core.levelMoments_bestZ_eq')}) ${v4(ex.blend)}: <b>+${pct(ex.blend / ex.full - 1, 1)}</b>. One credibility factor per cell cannot weigh the row, the column and the cell separately.</p>`;
+    if (ly) {
+      h += `<table><thead><tr><th>Layer</th><th>Dimension</th><th>Signal λ (×10⁻⁴)</th><th>Its z</th><th>Blend z̄</th><th>Blend's excess (×10⁻⁴)</th></tr></thead><tbody>` +
+        ly.layers.map((l) => `<tr><td>${l.name}</td><td>${l.m}</td><td>${v4(l.lambda)}</td><td>${l.z.toFixed(3)}</td><td>${ly.zbar.toFixed(3)}</td><td>${v4(l.loss)}</td></tr>`).join('') +
+        `<tr><td>Total</td><td></td><td></td><td></td><td></td><td>${v4(ly.excess)}</td></tr></tbody></table>` +
+        `<p class="sub" style="margin:4px 0 0"><span class="badge proved">proved</span> ${lean('Crossed.blup_balancedρ')}, ${lean('Crossed.sum_linMse_blendρ')}: in a balanced table the best predictor is the two-way table μ̂ + z<sub>r</sub>(row mean − μ̂) + z<sub>c</sub>(column mean − μ̂) + z<sub>i</sub>(cell − row − column + μ̂), each layer with its own z = λ/(λ + σ²(1 − ρ)/w*). The blend uses one z̄ for all three and loses (λ + σ²(1 − ρ)/w*)(z̄ − z)² per dimension of each layer. Common noise cancels in every contrast, so ρ raises all three factors.</p>`;
+    } else h += `<p class="sub" style="margin:0">Per layer only for a balanced table (equal volumes, every cell observed): set the volume spread to 0${cWorld.miss.length ? ' and give every cell data' : ''}. The total above is exact for any table.</p>`;
+    if (cWorld.miss.length) {
+      const c = ex.cells[0];
+      h += `<p class="sub" style="margin:8px 0 0"><b>The cell without data</b> (${cellName(0)}): typical error ${pct(Math.sqrt(c.mseFull), 2)} from its row and column, against ${pct(Math.sqrt(c.mseBlend), 2)} for the collective mean, the most a blend can give it. Its level still has covariance α² with its row and β² with its column; only its own effect γ² is seen nowhere. <span class="badge proved">proved</span> for a 2×2 table: ${lean('Crossed.missing_blup')}, ${lean('Crossed.missing_predMse')}; any table: ${lean('Core.blup_optimal')}.</p>`;
+    }
+    $('c-layers').innerHTML = h;
+  }
+
+  const CN = 300, CCHUNK = 20;
+  let cJob = 0;
+  function cRenderMany() {
+    const my = ++cJob, w = cWorld, acc = { obs: {}, miss: {}, raw: {}, used: {} };
+    let done = 0;
+    $('c-many-sub').textContent = `Computing ${CN} draws…`;
+    const step = () => {
+      if (my !== cJob) return;
+      const part = CR.simulate(w, CCHUNK, (cs.seed * 7919 + 31 + done) >>> 0);
+      for (const key in part) for (const id in part[key]) acc[key][id] = (acc[key][id] || []).concat(part[key][id]);
+      done += CCHUNK;
+      if (done < CN) { $('c-many-sub').textContent = `Computing… ${done} of ${CN} draws`; setTimeout(step, 0); return; }
+      const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+      const fl = mean(acc.obs.floor), flm = w.miss.length ? mean(acc.miss.floor) : NaN;
+      const sel = `${cs.weights === 'anova' ? 'anova' : cs.weights === 'vol' ? 'vol' : 'equal'}-${cs.weights === 'anova' ? 'clip' : cs.trunc}`;
+      const label = { 'equal-clip': 'Crossed: equal weights, set to 0', 'equal-nnls': 'Crossed: equal weights, least squares ≥ 0', 'vol-clip': 'Crossed: ∝ wᵢ*wⱼ*, set to 0', 'vol-nnls': 'Crossed: ∝ wᵢ*wⱼ*, least squares ≥ 0', 'iv-clip': 'Crossed: inverse-variance weights, set to 0', 'anova-clip': 'Crossed: ANOVA (Dannenburg), set to 0', thesis: 'Thesis fit (corrBS: no rows or columns)', floorBlend: 'Best blend, true parameters', floor: 'Floor: best predictor, true parameters' };
+      const ids = CR.VARIANTS.map((v) => v.id).concat(['thesis', 'floorBlend', 'floor']);
+      $('c-many-sub').innerHTML = `${CN} draws from this world. Summed squared error of the rates in % of the floor (100 = the best linear unbiased predictor with the true parameters); the cell without data on its own. Highlighted: the settings chosen above.`;
+      $('c-many').innerHTML = `<table><thead><tr><th>Fit</th><th>Observed cells</th>${w.miss.length ? '<th>Cell without data</th>' : ''}</tr></thead><tbody>` +
+        ids.map((id) => `<tr${id === sel ? ' style="font-weight:600"' : ''}><td>${label[id]}</td><td>${(100 * mean(acc.obs[id]) / fl).toFixed(0)}</td>${w.miss.length ? `<td>${(100 * mean(acc.miss[id]) / flm).toFixed(0)}</td>` : ''}</tr>`).join('') + '</tbody></table>';
+      const t = w.truth, tv = [t.alpha2, t.beta2, t.gamma2], tau2 = tv[0] + tv[1] + tv[2];
+      const row = (id, key) => [0, 1, 2].map((k) => `<td>${(100 * mean(acc[key][id].map((e) => e[k])) / tau2).toFixed(1)}</td>`).join('');
+      const rmse = (id) => (100 * Math.sqrt(mean(acc.used[id].map((e) => e.reduce((s, x) => s + x * x, 0)))) / tau2).toFixed(0);
+      $('c-bias').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>The variances</b>: mean error from the pools (bias) in % of α² + β² + γ²; the root mean square error after truncation, same units</p><table><thead><tr><th>Pools</th><th>α̂²</th><th>β̂²</th><th>γ̂²</th><th>RMSE, set to 0</th><th>RMSE, least squares</th></tr></thead><tbody>` +
+        [['equal', 'Equal weights'], ['vol', '∝ wᵢ*wⱼ*'], ['anova', 'ANOVA']].map(([k, n]) => `<tr><td>${n}</td>${row(`${k}-clip`, 'raw')}<td>${rmse(`${k}-clip`)}</td><td>${k === 'anova' ? '–' : rmse(`${k}-nnls`)}</td></tr>`).join('') +
+        `</tbody></table><p class="sub" style="margin:4px 0 0">Equal and volume weights are unbiased for any noise correlation (${lean('Model.crossed_unbiasedX')}); ANOVA is not when ρ > 0 (Finding 42). The bias column is a Monte Carlo mean (± a few % at ${CN} draws). Both truncations are projections onto valid values, so in their own metric never further from the truth (${lean('ConeProjection.hsq_proj_le')}).</p>`;
+    };
+    setTimeout(step, 0);
+  }
+
+  let cPending = null;
+  function cUpdate() {
+    cWorld = CR.makeWorld({ nr: cs.nr, nc: cs.nc, alpha: cs.alpha, beta: cs.beta, gamma: cs.gamma, rho: cs.rho, spread: cs.spread, volume: cs.volume, missing: cs.missing });
+    cExact = CR.exact(cWorld);
+    cRenderDraw(); cRenderLayers();
+    clearTimeout(cPending); cPending = setTimeout(cRenderMany, 150);
+  }
+
   // ---------- update loop
   let pending = null;
   function update() {
@@ -1223,6 +1390,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   if (mq.addEventListener) mq.addEventListener('change', () => { renderDraw(); renderMany(); mUpdate(); });
   update();
   mUpdate();
+  cUpdate();
 })();
 </script>
 </body>
