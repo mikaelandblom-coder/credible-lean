@@ -700,8 +700,13 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
   \lean{Credibility.Core.Estimates.integral_randomLin_resVar_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
+  Cross-fitted: weights $\hat d^{(s)}$ for year $s$ fitted without year $s$ (independent of its
+  noise), year weights $\pi_s$ common to all regions, $\sum_s\pi_s = 1$: the rate
+  $\sum_s\pi_s\hat d^{(s)\top}X_{\cdot s}$ has bias $\sum_s\pi_s\sum_i\cov(\hat d^{(s)}_i, \mu_i)$,
+  $0$ for fixed levels.
+  \lean{Credibility.Core.Estimates.integral_crossFit_sub}
 \end{result}
-\use Fixed weights never bias; to protect the total, shift all rates (Result~\ref{res:commonShift}).
+\use Fixed weights never bias; to protect the total, shift all rates (Result~\ref{res:commonShift}). Cross-fitting removes the noise channel; region-specific year weights break exactness.
 \begin{caveat}
   Skewed claims with region-specific variances price the portfolio 0.4--2.4\% too low; a pooled $\hat\sigma^2$ or the shift removes it.
 \end{caveat}

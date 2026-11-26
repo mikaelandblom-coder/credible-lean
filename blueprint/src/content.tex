@@ -2972,6 +2972,35 @@ Definition~\ref{def:Core_Estimates}.
   mean $0$. The corrections are balanced by Theorem~\ref{thm:Core_mse_correct}.
 \end{proof}
 
+\begin{theorem}[The cross-fitted rate's bias]\label{thm:Core_crossFit_bias}
+  \lean{Credibility.Core.Estimates.integral_crossFit_sub}
+  \leanok
+  \uses{thm:Core_randomLin_bias}
+  For each year $s$ let $X_{\cdot s}$ be estimates of the same levels $\mu_i$ with the moments of
+  Definition~\ref{def:Core_Estimates} (any covariances $K_s$), and let the weights $\hat d^{(s)}$ sum
+  to one and be independent of year $s$'s noise $X_{is} - \mu_i$. With year weights $\pi_s$
+  common to all regions and $\sum_s \pi_s = 1$,
+  \[
+    \mathbb E\Bigl(\sum_s \pi_s \hat d^{(s)\top}X_{\cdot s} - \mu_j\Bigr)
+      = \sum_s \pi_s \sum_i \cov(\hat d^{(s)}_i, \mu_i),
+  \]
+  for every distribution: only the levels enter, so the bias is $0$ for fixed levels.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_randomLin_bias}
+  Since $\sum_s\pi_s = 1$ the error is $\sum_s \pi_s(\hat d^{(s)\top}X_{\cdot s} - \mu_j)$;
+  Theorem~\ref{thm:Core_randomLin_bias} for each year, and
+  $\cov(\hat d^{(s)}_i, X_{is}) = \cov(\hat d^{(s)}_i, \mu_i) + \cov(\hat d^{(s)}_i, X_{is} - \mu_i)$,
+  the last term $0$ by independence.
+\end{proof}
+
+\begin{remark}[Region-specific year weights]\label{rem:crossFit_region_weights}
+  With year weights $a_{is}$ that depend on the region, $\sum_s\sum_i a_{is}\hat d^{(s)}_i \ne 1$ in
+  general: the rate is not translation equivariant, the mean $\mu$ enters the bias, and the identity
+  of Theorem~\ref{thm:Core_crossFit_bias} is not exact (S63).
+\end{remark}
+
 \subsection*{The collective mean given the levels}
 
 Extension (literature \S10p). The results above average over the levels. Here the levels

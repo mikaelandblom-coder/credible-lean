@@ -933,3 +933,6 @@ One chat per step; none needs Lean except step 5.
   **Owner to decide:** let the balance switch balance to the cross-fitted level (`balanceFit` with a target
   level; recipe step, Node test). Lean first: the cross-fitted level's bias is the level channel only
   (S63 "Consequence", a corollary of `Core.Estimates.integral_randomLin_sub`; **lean** chat).
+  *Lean done 2026-11-26:* `Core.Estimates.integral_crossFit_sub` (common year weights, weights independent of
+  their year's noise: bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)`, any distribution). The app's proportional volumes give
+  common year weights, so the identity applies there; only the owner's decision remains.

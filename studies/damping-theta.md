@@ -695,3 +695,6 @@ year weights `πₛ` common to the regions (proportional volumes, as in the app)
 and independent of year `s`'s noise, `Σₛ πₛ d̂⁽ˢ⁾ᵀXₛ` has bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)` (levels only;
 0 for fixed levels), any distribution: a corollary of `Core.Estimates.integral_randomLin_sub`. With
 region-specific year weights `aᵢₛ` the cross-fit is not exactly translation equivariant (`Σₛ Σᵢ aᵢₛd̂ᵢ⁽ˢ⁾ ≠ 1`).
+*Proved 2026-11-26:* `Core.Estimates.integral_crossFit_sub` (`Credibility/RandomWeights.lean`), with independence of
+`d̂ᵢ⁽ˢ⁾` and year `s`'s noise `Xᵢₛ - μᵢ` (uncorrelated would do); handbook `res:randomWeights` line, blueprint
+`thm:Core_crossFit_bias`. The region-specific case stays a remark (no exact identity).

@@ -116,6 +116,49 @@ theorem integral_randomLin_resVar_sub {ι : Type*} [Fintype ι] [DecidableEq ι]
   exact congrArg (b i * ·) (Cumulants.covariance_resVar_mean (e i) (Lv i) (hL i) (hLv i) (h0 i)
     (k i) (h3 i) (hlev i) (w i) (c i) (hw i))
 
+/-- **The cross-fitted rate's bias** (S63, `studies/damping-theta.md`). Each year `s` gives
+estimates `Xᵢₛ` (`E s`, any covariances `K s`) of the same levels `μᵢ`; the weights `d̂⁽ˢ⁾` for
+year `s` sum to one and are independent of year `s`'s noise `Xᵢₛ - μᵢ` (fitted without year `s`).
+With year weights `πₛ` common to all regions and summing to one, the cross-fitted rate
+`Σₛ πₛ d̂⁽ˢ⁾ᵀXₛ` has bias
+
+  `E(Σₛ πₛ d̂⁽ˢ⁾ᵀXₛ - μⱼ) = Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)`,
+
+for every distribution with these moments: only the levels enter, so the bias is `0` for fixed
+levels. A corollary of Finding 35 (a) (`integral_randomLin_sub`), year by year. With
+region-specific year weights `aᵢₛ` the identity is not exact: `Σₛ Σᵢ aᵢₛd̂ᵢ⁽ˢ⁾ ≠ 1` in general,
+so the rate is not translation equivariant and `μ` itself enters the bias. -/
+theorem integral_crossFit_sub {S : Type*} [Fintype S] {K : S → Matrix J J ℝ}
+    (E : ∀ s, Estimates (K s) L μ P) (lev : J → Ω → ℝ) (hlev : ∀ s, (E s).level = lev)
+    (π : S → ℝ) (hπ : ∑ s, π s = 1) (dh : S → Ω → J → ℝ)
+    (hdh : ∀ s i, MemLp (fun ω => dh s ω i) 2 P) (hsum : ∀ s ω, ∑ i, dh s ω i = 1)
+    (hind : ∀ s i, IndepFun (fun ω => dh s ω i) (fun ω => (E s).est i ω - lev i ω) P) (j : J) :
+    P[fun ω => ∑ s, π s * (E s).randomLin (dh s) ω - lev j ω]
+      = ∑ s, π s * ∑ i, cov[fun ω => dh s ω i, lev i; P] := by
+  have hint : ∀ s, Integrable (fun ω => (E s).randomLin (dh s) ω - lev j ω) P := by
+    intro s
+    have hl : MemLp (lev j) 2 P := by rw [← hlev s]; exact (E s).level_memLp j
+    exact (integrable_finsetSum _ fun i _ => (hdh s i).integrable_mul ((E s).est_memLp i)).sub
+      (hl.integrable (by norm_num))
+  have hpt : (fun ω => ∑ s, π s * (E s).randomLin (dh s) ω - lev j ω)
+      = fun ω => ∑ s, π s * ((E s).randomLin (dh s) ω - lev j ω) := by
+    funext ω
+    simp only [mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ, one_mul]
+  rw [hpt, integral_finsetSum _ fun s _ => (hint s).const_mul (π s)]
+  refine Finset.sum_congr rfl fun s _ => ?_
+  rw [integral_const_mul]
+  have h := (E s).integral_randomLin_sub (dh s) (hdh s) (hsum s) j
+  rw [hlev s] at h
+  rw [h]
+  congr 1
+  refine Finset.sum_congr rfl fun i _ => ?_
+  have hL : MemLp (lev i) 2 P := by rw [← hlev s]; exact (E s).level_memLp i
+  have hN : MemLp (fun ω => (E s).est i ω - lev i ω) 2 P := ((E s).est_memLp i).sub hL
+  have hsplit : (E s).est i = lev i + fun ω => (E s).est i ω - lev i ω := by
+    funext ω; simp
+  rw [hsplit, covariance_add_right (hdh s i) hL hN,
+    (hind s i).covariance_eq_zero (hdh s i) hN, add_zero]
+
 omit [IsProbabilityMeasure P] in
 /-- The balanced corrections `θ̂ⱼ = μ̂ⱼᵇ + cⱼD` with `Σⱼ uⱼcⱼ = 1` (G7) are exposure balanced. -/
 theorem correct_balanced [DecidableEq J] (u z c : J → ℝ) (hc : ∑ j, u j * c j = 1) (ω : Ω) :
