@@ -436,7 +436,11 @@ Finished items are in `studies/PLAN-done.md`.
   moment `τ̂²` as a corrBS option, checked against the app's simulations. Law (a) applied region by
   region is exact only balanced. *Cross-term caveat done 2026-11-27:* the Noise shape readout shows the net
   price, law (a) + `2E[AB]` (`crossTerm_bs_of_cumulants`, any volumes; PLAN-done: cross term with kurtosis).
-  Still open here: which fit the app recommends (owner), the FH moment `τ̂²` candidate.
+  Still open here: which fit the app recommends (owner), the FH moment `τ̂²` candidate. *S72 (2026-11-27,
+  `runs/recommended-fit.js`):* balanced, no candidate wins everywhere (BLUP −15.5 to +21.6 points against corrBS,
+  losing with a wide σⱼ spread; g/p ±4; held-out choice at most +10, regret +1.7). Next: the price of the BLUP
+  over the blend on the same `K̂` ("none extra" in `gainPrice` is wrong under a σⱼ spread), then a
+  gain-against-price verdict for the BLUP as for the variances.
 - [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A

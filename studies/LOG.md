@@ -104,6 +104,7 @@ continue the numbering here; the full text and its trust label are below.
 | S69 | `runs/group-fit.js` | Fit `φτ²` by one GLS pass on the pairs; groups or not matters more |
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
+| S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
 
 ## Observations
 
@@ -968,3 +969,24 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     worlds, worse by at most 5.3 points), REML is the app's crossed default from 2026-11-27, badge "not
     proved yet". A general target: a statement for REML's plug-in rates, or a bound on its loss against the
     pools, neither in hand.
+- S72. *[numerical]* **Balanced, no recommended fit wins everywhere: the BLUP gains with equal σⱼ and high ρ,
+    loses with a wide σⱼ spread, and g/p's variance verdict adds nothing.** S52's and S57's grids merged (regime
+    app / thesis with σⱼ spread 0, 1, 2, thesisShape; ρ ∈ {0, 0.3, 0.6, 0.9}; T ∈ {5, 10}; J = 8; gamma noise;
+    56 worlds, 600 draws), scored as the app prices: balance switch on (cross-fitted level). Fits: corrBS, corrBS
+    g/p, the BLUP on corrBS's `K̂`, "BLUP g/p" (BLUP on the `K̂` g/p picks), and "held-out" (BLUP or corrBS by
+    the leave-one-year-out score of the balanced fits). Paired against corrBS, in points of the floor:
+    g/p worse in 5, better in 3, even in 48, range −3.7 to +1.2; BLUP g/p against BLUP the same (−3.6 to
+    +1.2). The BLUP: worse in 16, better in 24, mean −0.6, range −15.5 to **+21.6**. By σⱼ spread: equal σⱼ
+    never worse (better in 11 of 16, down to −15.5 at ρ = 0.9); spread 1 mixed (−5.6 to +3.6); spread 2
+    worse in 14 of 24 (+15.8 and +21.6 at app volume, ρ = 0.3–0.6, T = 5; +3 to +5 in thesisShape at
+    ρ = 0.3–0.6), better only at ρ = 0.9. Held-out: worse in 22, better in 24, range −13.6 to +10.1;
+    regret against the better of corrBS and BLUP in each world: mean +1.7, at most +10.1 (it picks the BLUP
+    in 23–86% of draws). Means over the grid are all 148.6–149.2% of the floor. **Without balancing** the
+    BLUP wins broadly (mean −7.4, down to −65.4, worse in 10 of 56): S52 scored unbalanced fits and visited
+    no app-volume world with σⱼ spread 2, so its "never much worse" does not carry over to the app's
+    default (balance on). Portfolio bias before balancing: corrBS −56 bp, BLUP −72 bp (mean over worlds).
+    **Consequence.** No switch of the recommended fit on this evidence: corrBS stays; the BLUP stays a choice
+    with its watch-out (unequal noise variances); g/p is not worth a recommendation. General target: the
+    price of the BLUP over the blend on the same `K̂`. `gainPrice` treats it as "none extra", but S72 shows
+    it grows with the σⱼ spread at low volume (plug-in error of the off-diagonal `K̂` entries, which the
+    BLUP uses and the blend does not).

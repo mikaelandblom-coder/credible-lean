@@ -8,7 +8,7 @@
 //                         z ≈ 0.7–1.0, the regime of the thesis's expert-judgement study, §4 Table 4.1);
 //                         'thesisShape' adds that table's shape: volumes nearly equal (wⱼ sd 1%) and σⱼ²
 //                         spread like lognormal(16, √2) (noiseSpread 2: σⱼ² × 1/16–16).
-//   args()              — the command line: draws N (first number, default 400), --jobs=k (default: all cores),
+//   args({ N })         — the command line: draws N (first number, default the given N or 400), --jobs=k (default: all cores),
 //                         --only=a,b (fit ids to run; empty = all);
 //   mapWorlds(file, worlds, fn, jobs, cost) — fn(world, index) for every world, on a pool of `jobs` worker threads
 //                         (heaviest first by the optional cost(world))
@@ -33,11 +33,11 @@ const paired = (a, b) => meanSE(a.map((x, i) => x - b[i]));
 const pm = (r, scale) => `${(r.m * (scale || 1)).toFixed(1)} ± ${(2 * r.se * (scale || 1)).toFixed(1)}`;
 const regimes = { app: { volume: 500 }, thesis: { volume: 4400 }, thesisShape: { volume: 4400, spread: 0.05, noiseSpread: 2 } };
 
-function args(argv) {
-  const a = argv || process.argv.slice(2), num = a.find((x) => /^\d+$/.test(x));
+function args(defaults) {
+  const a = process.argv.slice(2), num = a.find((x) => /^\d+$/.test(x));
   const opt = (k) => { const x = a.find((y) => y.startsWith(`--${k}=`)); return x ? x.slice(k.length + 3) : null; };
   const only = opt('only');
-  return { N: num ? +num : 400, jobs: Math.max(1, +(opt('jobs') || os.cpus().length)), only: only ? only.split(',') : null };
+  return { N: num ? +num : (defaults && defaults.N) || 400, jobs: Math.max(1, +(opt('jobs') || os.cpus().length)), only: only ? only.split(',') : null };
 }
 
 function mapWorlds(file, worlds, fn, jobs, cost) {
