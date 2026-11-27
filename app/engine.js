@@ -153,6 +153,8 @@
     lomax: 0,        // 0: off; α > 2: the region part of the noise is a sum of Lomax claims with tail index α (literature §10l)
     shrink: false,   // the gamma region part of a cell's noise has shape k·w/500 (a sum of claims; SHRINK_W0): skewness ∝ 1/√w, excess kurtosis ∝ 1/w; the year shock keeps shape k
     noiseSpread: 0,  // region-specific σⱼ = σ·4^(s((j mod 4)/3 − ½)): 0 equal, 1 = ×0.5–2 (studies' spread worlds)
+    groups: 0,       // 0: off; G ≥ 2: regions in G groups (countries), region j in group j mod G, which share a level
+    phi: 0.5,        // with groups: the shared share φ of the level variance, cov(μᵢ, μⱼ) = φτ² within a group (Hierarchical.lean)
   };
 
   /**
@@ -255,7 +257,12 @@
     for (let i = 0; i < J; i++) { rho.push([]); for (let j = 0; j < J; j++) rho[i].push(i === j ? 1 : p.ordered ? Math.pow(r0, Math.abs(i - j)) : p.rho); }
     // σⱼ²: region-specific noise; σ² stays the base (σⱼ = σ when noiseSpread = 0).
     const sigmaj2 = Array.from({ length: J }, (_, j) => (p.sigma * noiseFactor(j, p.noiseSpread)) ** 2);
-    const truth = { mu: 1, tau2: p.tau * p.tau, sigma2: p.sigma * p.sigma, sigmaj2, rho };
+    // Group levels (Hierarchical.lean, Bridge 4): L = τ²[(1 − φ)I + φ·same group], else τ²I.
+    const G = p.groups >= 2 ? Math.min(p.groups, J) : 0, phi = G ? Math.min(Math.max(p.phi, 0), 0.999) : 0;
+    const grp = G ? Array.from({ length: J }, (_, j) => j % G) : null, tau2 = p.tau * p.tau;
+    const L = Array.from({ length: J }, (_, i) => Array.from({ length: J }, (_, j) =>
+      i === j ? tau2 : grp && grp[i] === grp[j] ? phi * tau2 : 0));
+    const truth = { mu: 1, tau2, sigma2: p.sigma * p.sigma, sigmaj2, rho, L, grp, phi };
     return { params: p, J, T, w, truth };
   }
 
@@ -268,7 +275,7 @@
       for (let j = 0; j < J; j++) {
         let r = 0;
         for (let t = 0; t < T; t++) r += Math.sqrt(w[i][t] * w[j][t]);
-        K[i].push(Math.sqrt(truth.sigmaj2[i] * truth.sigmaj2[j]) * truth.rho[i][j] * r / (wt[i] * wt[j]) + (i === j ? truth.tau2 : 0));
+        K[i].push(Math.sqrt(truth.sigmaj2[i] * truth.sigmaj2[j]) * truth.rho[i][j] * r / (wt[i] * wt[j]) + truth.L[i][j]);
       }
     }
     return K;
@@ -313,12 +320,17 @@
     const tau = Math.sqrt(truth.tau2), sig = truth.sigmaj2.map(Math.sqrt);
     const levels = [], X = [];
     const nz = params.normal, ns = params.noiseShape;
-    for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
+    if (truth.grp) {
+      // μⱼ = μ + τ(√φ γ_g + √(1 − φ) ηⱼ): group effects γ_g and region effects ηⱼ, unit variance (HierarchicalMoments.lean).
+      const G = Math.max(...truth.grp) + 1, gam = Array.from({ length: G }, () => r.unit(params.levelShape, nz));
+      for (let j = 0; j < J; j++) levels.push(truth.mu + tau * (Math.sqrt(truth.phi) * gam[truth.grp[j]] + Math.sqrt(1 - truth.phi) * r.unit(params.levelShape, nz)));
+    } else for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
+    const withGrp = (d) => (truth.grp ? Object.assign(d, { grp: Object.freeze(truth.grp.slice()) }) : d);
     if (params.ordered) {
       const E = [];
       for (let t = 0; t < T; t++) E.push(orderedNoise(J, Math.max(rho, 0), r, ns, nz, (j) => regionDraw(world, r, j, w[j][t])));
       for (let j = 0; j < J; j++) X.push(E.map((e, t) => levels[j] + sig[j] / Math.sqrt(w[j][t]) * e[j]));
-      return { levels, data: Object.freeze({ w: w.map((row) => Object.freeze(row.slice())), X }) };
+      return { levels, data: Object.freeze(withGrp({ w: w.map((row) => Object.freeze(row.slice())), X })) };
     }
     const eta = [];
     for (let t = 0; t < T; t++) eta.push(r.unit(ns, nz));
@@ -330,7 +342,7 @@
       }
       X.push(row);
     }
-    const data = Object.freeze({ w: w.map((row) => Object.freeze(row.slice())), X });
+    const data = Object.freeze(withGrp({ w: w.map((row) => Object.freeze(row.slice())), X }));
     return { levels, data };
   }
 
@@ -396,6 +408,39 @@
   }
 
   /**
+   * The same with a general level covariance L (group levels): the best z for the GLS weights b,
+   * zⱼ = (Bⱼ − Cⱼ)/(Aⱼ + Bⱼ − 2Cⱼ) with Aⱼ = Var(μ̂ⱼ − μⱼ) = Kⱼⱼ − Lⱼⱼ, Bⱼ = Var(μ̂ − μⱼ) = bᵀKb − 2(Lb)ⱼ + Lⱼⱼ,
+   * Cⱼ = cov(μ̂ⱼ − μⱼ, μ̂ − μⱼ) = (Kb)ⱼ − (Lb)ⱼ (eq. (7) on these moments; Hierarchical.bestZ_G_eq).
+   */
+  function blendMomentsL(K, L, b, j) {
+    const J = K.length, Kb = K.map((row) => sum(row.map((x, i) => x * b[i]))), Lb = L.map((row) => sum(row.map((x, i) => x * b[i])));
+    const bKb = sum(b.map((x, i) => x * Kb[i]));
+    return { A: K[j][j] - L[j][j], B: bKb - 2 * Lb[j] + L[j][j], C: Kb[j] - Lb[j], J };
+  }
+  function bestBlendWeightsL(K, L) {
+    const J = K.length, u = solve(K, new Array(J).fill(1)), tot = sum(u), b = u.map((x) => x / tot);
+    const z = b.map((_, j) => { const { A, B, C } = blendMomentsL(K, L, b, j), g = A + B - 2 * C; return g > 0 ? (B - C) / g : 0; });
+    return { b, z, s2: 1 / tot };
+  }
+  function blendMSEL(K, L, b, j, z) {
+    const { A, B, C } = blendMomentsL(K, L, b, j);
+    return z * z * A + (1 - z) * (1 - z) * B + 2 * z * (1 - z) * C;
+  }
+  /** BLUP of μⱼ with level covariance L (universal kriging, Core.blup_optimal): d* = K⁻¹ℓ + (1 − 1ᵀK⁻¹ℓ)b, ℓ = L eⱼ. */
+  function blupWeightL(K, L, j) {
+    const J = K.length, u = solve(K, new Array(J).fill(1)), tot = sum(u), b = u.map((x) => x / tot);
+    const l = solve(K, L.map((row) => row[j])), s = sum(l);
+    return l.map((x, i) => x + (1 - s) * b[i]);
+  }
+  /** True MSE of Σᵢ dᵢμ̂ᵢ for μⱼ with level covariance L: dᵀKd − 2dᵀLeⱼ + Lⱼⱼ. */
+  function linMseL(K, L, j, d) {
+    let q = 0;
+    for (let i = 0; i < d.length; i++) for (let k = 0; k < d.length; k++) q += d[i] * K[i][k] * d[k];
+    return q - 2 * sum(d.map((x, i) => x * L[i][j])) + L[j][j];
+  }
+  const hasGroups = (world) => !!world.truth.grp;
+
+  /**
    * The noise correlation's spread around I (Finding 20): with R = D^(−½)VD^(−½) the correlation
    * matrix of the noise V = K − τ²I, δ₋ = 1 − λmin(R) and δ₊ = λmax(R) − 1, so that
    * −δ₋ Σvᵢyᵢ² ≤ yᵀVy − Σvᵢyᵢ² ≤ δ₊ Σvᵢyᵢ² (the hypothesis of Core.linMse_damped_le).
@@ -426,23 +471,26 @@
    *            (Core.blupWeight_diag_eq_blendWeight), at most `bound` × best (Core.linMse_ignoreCorr_le_two_sided).
    * Weighted: Σ wⱼ* MSEⱼ / w**, as the app's error. Reads the truth.
    */
-  function correlationPrice(K, tau2, wt) {
-    const J = K.length, Kd = K.map((row, i) => row.map((x, k) => (i === k ? x : 0)));
-    const { b, z } = bestBlendWeights(K, tau2);
+  function correlationPrice(K, tau2, wt, L) {
+    // With group levels L (optional): the same prices with ℓ = L eⱼ; "ignore" drops the noise correlation only.
+    const J = K.length, Lm = L || K.map((row, i) => row.map((_, k) => (i === k ? tau2 : 0)));
+    const V = K.map((row, i) => row.map((x, k) => x - Lm[i][k]));
+    const Kd = K.map((row, i) => row.map((x, k) => (i === k ? V[i][i] : 0) + Lm[i][k]));
+    const { b, z } = L ? bestBlendWeightsL(K, L) : bestBlendWeights(K, tau2);
     const best = [], blendM = [], ignore = [];
     for (let j = 0; j < J; j++) {
-      best.push(linMse(K, tau2, j, blupWeight(K, tau2, j)));
-      blendM.push(linMse(K, tau2, j, blendWeight(z[j], b, j)));
-      ignore.push(linMse(K, tau2, j, blupWeight(Kd, tau2, j)));
+      best.push(linMseL(K, Lm, j, blupWeightL(K, Lm, j)));
+      blendM.push(linMseL(K, Lm, j, blendWeight(z[j], b, j)));
+      ignore.push(linMseL(K, Lm, j, blupWeightL(Kd, Lm, j)));
     }
-    const { dm, dp } = noiseDeltas(K.map((row, i) => row.map((x, k) => (i === k ? x - tau2 : x))));
+    const { dm, dp } = noiseDeltas(V);
     const wall = sum(wt), agg = (a) => sum(a.map((x, j) => wt[j] * x)) / wall;
     return { best, blend: blendM, ignore, dm, dp, bound: dampedBound(dm, dp, 0), weighted: { best: agg(best), blend: agg(blendM), ignore: agg(ignore) } };
   }
 
   /** correlationPrice of a world: the true K. Reads the truth. */
   function worldPrice(world) {
-    return correlationPrice(trueK(world), world.truth.tau2, world.w.map(sum));
+    return correlationPrice(trueK(world), world.truth.tau2, world.w.map(sum), hasGroups(world) ? world.truth.L : undefined);
   }
 
   /**
@@ -515,6 +563,12 @@
     balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
     balanceCf: 'rateⱼ + D,  D = L̂cf − Σᵢ wᵢ* rateᵢ/w**,  L̂cf = Σₛ πₛ Σᵢ c̄ᵢ⁽ˢ⁾ Xᵢₛ,  c̄⁽ˢ⁾ = Σⱼ (wⱼ*/w**) d̂⁽ʲ⁾ from the pooled BLUP fitted without year s',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
+    grpPairs: 'P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ²ᵢᵢρᵢᵢ^ + σ²ⱼⱼρⱼⱼ^ − 2σ²ᵢⱼρᵢⱼ^) for i < j (eq. (39) estimates), E P̂ᵢⱼ = 2λ + 2φτ²·[different groups], λ = (1 − φ)τ²',
+    grpFirst: 'first pass: W̄, Ā = the averages of P̂ᵢⱼ within and across groups with weights wᵢ*wⱼ*;  λ̂₀ = W̄/2, φτ²₀ = (Ā − W̄)/2',
+    grpGLS: '(λ̂, φτ²^) = (XᵀV̂⁻¹X)⁻¹XᵀV̂⁻¹P̂,  rows of X: (2, 2·[different groups]),  V̂ₚq = 2 ĉ(Dₚ, D_q)² + N̂ₚN̂_q·2/(J(T−1))',
+    grpK: 'K̂ = Σ̂ + L̂,  L̂ᵢⱼ = λ̂⁺δᵢⱼ + φτ²^⁺·[same group]  (⁺: negative set to 0)',
+    grpBlupD: 'd̂ = K̂⁻¹ℓⱼ + (1 − 1ᵀK̂⁻¹ℓⱼ) b,  ℓⱼ = L̂eⱼ (column j of L̂);  shown: own-data weight d̂ⱼⱼ',
+    grpChoice: 'groups when Σₛ Σⱼ wⱼₛ(rateⱼ⁽⁻ˢ⁾ − Xⱼₛ)² is smaller with groups than without, rateⱼ⁽⁻ˢ⁾ fitted without year s',
   };
 
   /**
@@ -822,6 +876,7 @@
     let num = 0, den = 0;
     for (let s = 0; s < T; s++) {
       const sub = { w: data.w.map((row) => row.filter((_, t) => t !== s)), X: data.X.map((row) => row.filter((_, t) => t !== s)) };
+      if (data.grp) sub.grp = data.grp;
       let rates;
       try { rates = fitFn(sub).rates; } catch (e) { const m = cohortMeans(sub).m; rates = m.map(() => sum(m) / J); }
       for (let j = 0; j < J; j++) { num += data.w[j][s] * (rates[j] - data.X[j][s]) ** 2; den += data.w[j][s]; }
@@ -835,6 +890,82 @@
     const f = taper ? fitBLUPTaper(data) : fitBLUP(data);
     f.notes = (f.notes || []).concat([`Leave-one-year-out loss: taper ${lt.toPrecision(3)}, corrBS ${lb.toPrecision(3)}: ${taper ? 'BLUP taper' : 'BLUP on corrBS’s K̂'}.`]);
     return Object.assign(f, { loyo: { taper: lt, corrBS: lb, preferTaper: taper } });
+  }
+
+  /**
+   * BLUP with group levels (PLAN G4, S69): corrBS's noise table Σ̂, the pair estimators P̂ᵢⱼ with
+   * mean 2λ + 2φτ²[across] (Model.pairHat_unbiasedG), a volume-weighted first pass
+   * (Model.phiTauPooled_unbiasedG), then Gauss–Markov on the pair table V̂ from that pass under the
+   * normal formulas (Model.phiTauPool_blue_optimal: best for the true V; here V̂ is plugged in, so
+   * only nearly unbiased). Then the BLUP of each μⱼ with L̂ (Core.blup_optimal with ℓⱼ = L̂eⱼ).
+   * Null when the groups are missing or a class of pairs is empty (φτ² not identified).
+   */
+  function fitGroupLevels(data) {
+    const grp = data.grp, J = data.X.length, T = data.X[0].length;
+    if (!grp) return null;
+    const p = vcEstimate(data), { m, wt, Sig } = p;
+    const pairs = [];
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) pairs.push([i, j, grp[i] === grp[j] ? 0 : 1]);
+    if (!pairs.some((x) => x[2] === 0) || !pairs.some((x) => x[2] === 1)) return null;
+    // P̂ᵢⱼ with the thesis's pairwise noise estimates, eq. (39) (unbiased: Model.pairHat_unbiasedG);
+    // corrBS's smoother table Σ̂ (clipped ρ̂, shrunk σ̃ⱼ²) only builds V̂ and K̂.
+    const Sh = sigmaHat(data).Sig;
+    const N = pairs.map(([i, j]) => Sig[i][i] + Sig[j][j] - 2 * Sig[i][j]);
+    const P = pairs.map(([i, j]) => (m[i] - m[j]) ** 2 - (Sh[i][i] + Sh[j][j] - 2 * Sh[i][j]));
+    const sw = [0, 0], sp = [0, 0];
+    pairs.forEach(([i, j, x], k) => { sw[x] += wt[i] * wt[j]; sp[x] += wt[i] * wt[j] * P[k]; });
+    const Wb = sp[0] / sw[0], Ab = sp[1] / sw[1], lam0 = Wb / 2, th0 = (Ab - Wb) / 2;
+    const Lmat = (l, t) => Array.from({ length: J }, (_, i) => Array.from({ length: J }, (_, j) => (i === j ? l + t : grp[i] === grp[j] ? t : 0)));
+    const K0 = Sig.map((row, i) => row.map((x, j) => x + Lmat(Math.max(lam0, 1e-12), Math.max(th0, 0))[i][j]));
+    const cD = (a, b, c, d) => K0[a][c] - K0[a][d] - K0[b][c] + K0[b][d], rel = 2 / (J * (T - 1));
+    const V = pairs.map(([a, b], k) => pairs.map(([c, d], q) => 2 * cD(a, b, c, d) ** 2 + N[k] * N[q] * rel));
+    const X = pairs.map(([, , x]) => [2, 2 * x]);
+    let lamRaw = lam0, thRaw = th0;
+    try {
+      const VX0 = solve(V, X.map((x) => x[0])), VX1 = solve(V, X.map((x) => x[1])), VP = solve(V, P);
+      const A00 = sum(X.map((x, k) => x[0] * VX0[k])), A01 = sum(X.map((x, k) => x[0] * VX1[k])), A11 = sum(X.map((x, k) => x[1] * VX1[k]));
+      const r0 = sum(X.map((x, k) => x[0] * VP[k])), r1 = sum(X.map((x, k) => x[1] * VP[k])), det = A00 * A11 - A01 * A01;
+      if (Math.abs(det) > 0) { lamRaw = (A11 * r0 - A01 * r1) / det; thRaw = (A00 * r1 - A01 * r0) / det; }
+    } catch (e) { /* V̂ singular: keep the first pass */ }
+    const lam = Math.max(lamRaw, 0), th = Math.max(thRaw, 0), L = Lmat(lam, th);
+    const K = Sig.map((row, i) => row.map((x, j) => x + L[i][j]));
+    const u = solve(K, new Array(J).fill(1)), tot = sum(u), b = u.map((x) => x / tot);
+    const D = m.map((_, j) => blupWeightL(K, L, j));
+    const rates = D.map((d) => sum(d.map((x, i) => x * m[i]))), c = D.map((d, j) => d[j]);
+    const levelMSE = D.map((d, j) => linMseL(K, L, j, d)), mu = sum(b.map((x, i) => x * m[i]));
+    const warnings = lam + th <= 0 ? ['λ̂ and φτ²^ ≤ 0, set to 0: every region gets the portfolio level'] : [];
+    const notes = [`λ̂ = ${lamRaw.toPrecision(3)}, φτ²^ = ${thRaw.toPrecision(3)}${thRaw <= 0 ? ' (≤ 0: no shared level, set to 0)' : ''}; φ̂ = ${lam + th > 0 ? (th / (lam + th)).toFixed(2) : '—'}.`];
+    const vcSteps = fitVC(data).steps.filter((x) => !['τ̂²', 'K̂', 'b', 'z', 'rates'].includes(x.name));
+    const steps = vcSteps.concat([
+      { name: 'pairs P̂ᵢⱼ', formula: F.grpPairs, values: [P.length], badge: 'proved', lean: 'Credibility.Model.pairHat_unbiasedG', note: `${pairs.filter((x) => !x[2]).length} pairs within groups, ${pairs.filter((x) => x[2]).length} across; the noise estimates of eq. (39), unbiased for any correlation` },
+      { name: 'first pass', formula: F.grpFirst, values: [lam0, th0], badge: 'proved', lean: 'Credibility.Model.phiTauPooled_unbiasedG', note: 'unbiased for any weights summing to one on each side' },
+      { name: 'λ̂, φτ²^', formula: F.grpGLS, values: [lamRaw, thRaw], badge: 'proved', lean: 'Credibility.Model.phiTauPool_blue_optimal', note: 'least variance among unbiased pools for the true V; V̂ from the first pass under normal formulas, Dₚ = μ̂ᵢ − μ̂ⱼ, N̂ₚ the pair’s noise on Σ̂. With V̂ from the same data it is not exactly unbiased: λ̂ runs 20–40% high in 12-region worlds, the first pass does not (S69: still the slightly better blend)' },
+      { name: 'K̂ (groups)', formula: F.grpK, values: [lam, th], badge: 'proved', lean: 'Credibility.Unequal.KG_posDef' },
+      { name: 'b (groups)', formula: F.gls, values: b, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },
+      { name: 'BLUP weights (groups)', formula: F.grpBlupD, values: c, badge: 'proved', lean: 'Credibility.Core.blup_optimal', note: 'for each region j a weight vector over all regions, summing to 1; regions of j’s group get more weight' },
+      { name: 'rates (groups)', formula: F.blupRates, values: rates, badge: 'proved', lean: 'Credibility.Core.blup_optimal', note: 'the parameters are plugged in: optimal among unbiased linear predictors for the true K and L' },
+    ]);
+    return { means: m, z: null, b, c, weights: D, mu, rates, warnings, notes, flags: { tauNeg: lam + th <= 0 }, K, L, tau2: lam + th, lam, phiTau: th, lamRaw, phiTauRaw: thRaw, rho: p.rho, theta: 1, levelMSE, steps };
+  }
+
+  /**
+   * Group levels or none, chosen on held-out years (CrossFit.integral_heldOutScore_sub: the difference
+   * of the two held-out scores is unbiased for the difference of their true errors, for the rules fitted
+   * on the other years, any distribution). Without groups in the data: the BLUP on corrBS's K̂.
+   */
+  function fitGroups(data) {
+    const g = fitGroupLevels(data);
+    let useG = false, lg = null, ln = null;
+    if (g) {
+      lg = loyoLoss(data, (d) => fitGroupLevels(d) || fitBLUP(d)); ln = loyoLoss(data, fitBLUP); useG = lg < ln;
+    }
+    const f = useG ? g : fitBLUP(data), branch = useG ? 'groups' : 'none';
+    const choice = { name: 'groups or none', formula: F.grpChoice, values: g ? [lg, ln] : [], badge: 'proved', lean: 'Credibility.CrossFit.integral_heldOutScore_sub',
+      note: g ? `leave-one-year-out score: groups ${lg.toPrecision(3)}, none ${ln.toPrecision(3)}: ${useG ? 'group levels' : 'no groups'}; the winner’s score is optimistic (CrossFit.integral_min_score_le)` : 'no groups in the data, or a kind of pair missing: no groups' };
+    f.steps = f.steps.concat([choice]);
+    f.branch = branch;
+    f.notes = (f.notes || []).concat([g ? `Held-out score with groups ${lg.toPrecision(3)}, without ${ln.toPrecision(3)}: ${useG ? 'group levels' : 'no groups'}.` : 'No groups in the data: BLUP on corrBS’s K̂.']);
+    return Object.assign(f, { loyoGroups: g ? { groups: lg, none: ln, useGroups: useG } : null, groupFit: g });
   }
 
   /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/runs/taper-signal.js). */
@@ -1386,6 +1517,7 @@
     corrC: { name: 'One common covariance — not recommended (unequal volumes)', short: 'common', fit: (data) => fitCorr(data, { common: true }), ready: true, notRecommended: 'finding S4: with unequal volumes one common covariance exceeds the large regions’ noise variance and z explodes' },
     own: { name: 'Own mean only (z = 1)', short: 'own', fit: fitOwn, ready: true, balanced: true },
     pool: { name: 'One tariff for all (z = 0)', short: 'pool', fit: fitPool, ready: true, balanced: true },
+    grp: { name: 'BLUP with group levels, groups or none chosen on held-out years', short: 'BLUP groups', fit: (data) => fitGroups(data), ready: true },
   };
 
   /**
@@ -1495,6 +1627,28 @@
   /** The cross-fitted balance step (the switch's target since 2026-11-27). */
   const BALANCE_CF_STEP = { name: 'balance', formula: F.balanceCf, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_crossFit_sub_eq_zero', note: 'one common shift to the cross-fitted portfolio level: each year priced with weights fitted without it, so its noise cannot steer its own weight (Finding 35). With year shares common to the regions the level\'s bias is only the levels\' channel, any distribution (Core.Estimates.integral_crossFit_sub), 0 when the weights are uncorrelated with the levels (ρ̂, σ̂² from residuals); τ̂² from the means keeps a small part. Studies S63: unbiased in ten worlds, at most 1 MSE point dearer than exposure balance without correlation and 2–46 points cheaper under ρ = 0.6. Not balanced on exposures; plug-in MSE first order (year weights averaged)' };
 
+  {
+    const shared = RECIPES.vc.steps.filter((x) => ['cohort means', 'σ̂ⱼ²', 'Wⱼ, β²', 'σ̃ⱼ²', 'ρ̂'].includes(x.name));
+    const none = RECIPES.blup.steps.filter((x) => ['τ̂²', 'K̂'].includes(x.name)).concat(BLUP_TAIL.filter((x) => x.name !== 'premium')).map((x) => Object.assign({}, x, { branch: 'none' }));
+    const g = (name, formula, lean, note) => Object.assign({ name, formula, badge: 'proved', lean, branch: 'groups' }, note ? { note } : {});
+    RECIPES.grp = {
+      intro: 'Regions in groups (countries) share a level. The variance is split into the shared part φτ² and the regional part λ = (1 − φ)τ², from pairs of regions within and across groups, and every region is priced by the BLUP with that level table; whether groups pay is decided on held-out years. Nothing to tune (studies S69).',
+      branches: { groups: 'the held-out score is smaller with groups', none: 'the held-out score is not smaller with groups' },
+      steps: shared.concat([
+        g('pairs P̂ᵢⱼ', F.grpPairs, 'Credibility.Model.pairHat_unbiasedG', 'the noise estimates of eq. (39), unbiased for any correlation; Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j (corrBS’s noise table) builds V̂ and K̂'),
+        g('first pass', F.grpFirst, 'Credibility.Model.phiTauPooled_unbiasedG', 'unbiased for any weights summing to one on each side'),
+        g('λ̂, φτ²^', F.grpGLS, 'Credibility.Model.phiTauPool_blue_optimal', 'least variance for the true V; V̂ from the first pass under normal formulas, Dₚ = μ̂ᵢ − μ̂ⱼ, N̂ₚ = Σ̂ᵢᵢ + Σ̂ⱼⱼ − 2Σ̂ᵢⱼ; ĉ the covariance on K̂₀ = Σ̂ + L̂₀'),
+        g('K̂ (groups)', F.grpK, 'Credibility.Unequal.KG_posDef'),
+        g('b (groups)', F.gls, 'Credibility.glsWeight_optimal'),
+        g('BLUP weights (groups)', F.grpBlupD, 'Credibility.Core.blup_optimal'),
+        g('rates (groups)', F.blupRates, 'Credibility.Core.blup_optimal'),
+      ], none, [
+        { name: 'groups or none', formula: F.grpChoice, badge: 'proved', lean: 'Credibility.CrossFit.integral_heldOutScore_sub', note: 'the difference of the held-out scores is unbiased for the difference of the true errors (rules fitted without year s), any distribution' },
+        premiumStep('MSEⱼ = d̂ᵀK̂d̂ − 2d̂ᵀℓⱼ + L̂ⱼⱼ (groups) or d̂ᵀK̂d̂ − 2τ̂²d̂ⱼ + τ̂² (none), with d̂ region j’s BLUP weights'),
+      ]),
+    };
+  }
+
   /** A recipe's steps, with the balance step before the premium when opts.balance. */
   function recipeSteps(id, opts) {
     const br = opts && opts.branch, st = br ? RECIPES[id].steps.filter((x) => !x.branch || x.branch === br) : RECIPES[id].steps;
@@ -1596,7 +1750,7 @@
   const FEATURES = [
     { id: 'rho', name: 'Correlation between regions within a year', world: true, fit: true },
     { id: 'unequal', name: 'Unequal lengths (regions entered recently)', world: false, fit: false, fitNote: 'step 4' },
-    { id: 'groups', name: 'Group levels (regions of one country)', world: false, fit: false, fitNote: 'step 4' },
+    { id: 'groups', name: 'Group levels (regions of one country)', world: true, fit: true },
   ];
 
   // ---------------------------------------------------------------- the floor (known parameters)
@@ -1604,14 +1758,14 @@
   /** The best blend if K and τ² were known: eq. (26) on the true K. Reads the truth. */
   function floorBlend(world) {
     const K = trueK(world);
-    const { b, z, s2 } = bestBlendWeights(K, world.truth.tau2);
+    const { b, z, s2 } = hasGroups(world) ? bestBlendWeightsL(K, world.truth.L) : bestBlendWeights(K, world.truth.tau2);
     return { K, b, z, s2, apply: (data) => blend(cohortMeans(data).m, z, b) };
   }
 
   /** The floor's true forecast MSE (Core.Estimates.mse_forecast): level MSE + σⱼ²/wⱼ,next. Reads the truth. */
   function floorForecast(world, wNext) {
     const fl = floorBlend(world), { tau2, sigmaj2 } = world.truth;
-    const level = fl.z.map((z, j) => blendMSE(fl.K, tau2, fl.b, fl.s2, j, z));
+    const level = fl.z.map((z, j) => (hasGroups(world) ? blendMSEL(fl.K, world.truth.L, fl.b, j, z) : blendMSE(fl.K, tau2, fl.b, fl.s2, j, z)));
     return { level, mse: level.map((g, j) => g + sigmaj2[j] / wNext[j]) };
   }
 
@@ -1649,7 +1803,7 @@
   function simulate(world, ids, n, seed, nextFactor, opts) {
     const bal = !!(opts && opts.balance), bo = balOpts(opts);
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
-    const Dstar = fl.K.map((_, j) => blupWeight(fl.K, world.truth.tau2, j));
+    const Dstar = fl.K.map((_, j) => (hasGroups(world) ? blupWeightL(fl.K, world.truth.L, j) : blupWeight(fl.K, world.truth.tau2, j)));
     const wt = world.w.map(sum), wall = sum(wt);
     const wNext = wt.map((x) => (nextFactor == null ? 1 : nextFactor) * x / world.T);
     const ftheory = sum(floorForecast(world, wNext).mse.map((m, j) => wt[j] * m)) / wall;
@@ -2023,6 +2177,7 @@
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, crossFitLevel, BALANCE_CF_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
+    fitGroupLevels, fitGroups, bestBlendWeightsL, blendMSEL, blupWeightL, linMseL,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate, SHRINK_W0,
   };
 });

@@ -159,7 +159,7 @@ a recipe from data.
 | Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
 | Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | — (`ĉⱼ`, `τ̂²` on `ĉ`: `tauHatCommon_unbiased`) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
-| Group levels | `φτ²` from pairs | `phiTauHat_unbiasedG` (one pair of each kind), pooled `phiTauPooled_unbiasedG` (G4) | best pair weights (fourth moments) |
+| Group levels | `φτ²` from pairs, one GLS pass; groups or none on held-out years (fit "BLUP groups", 2026-11-27) | `phiTauPooled_unbiasedG`, best weights `phiTauPool_blue_optimal`, choice `CrossFit.integral_heldOutScore_sub` | the GLS pass with plug-in `V̂` (λ̂ 20–40% high) |
 | `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only; clipping harmless iff true `z ∈ [0, 1]` (`errVar_clipZ_le_iff`) | estimated `ẑ` (G3) |
 | Choosing cohorts | not yet: the rules need the true levels or the true `d` | `merge_iff`, `pool_optimal_contiguous` | G5; not in the first version |
 
@@ -349,6 +349,10 @@ One chat per step; none needs Lean except step 5.
   J = 20 and strong structure, and is worst at T = 5. For step 4: a group-structured `K̂` (ρ within
   and between) with a BLUP on it, and a world switch for countries.
 - [ ] 4. Unequal lengths and group levels (world and fit). Offline support.
+  *Group levels done 2026-11-27:* world switch (G groups, region j in group j mod G, slider `φ`), group-aware
+  floors (`bestBlendWeightsL`, BLUP with `L`), fit "BLUP groups" (`fitGroupLevels`: pairs with the eq. (39)
+  noise estimates, volume-weighted first pass, one GLS pass, BLUP with `L̂`; `fitGroups`: groups or none by
+  leave-one-year-out score), tests. Open: unequal lengths; group sizes other than `j mod G`.
 - [ ] 5. Prove the gaps the app shows to matter (Lean chats); badges turn
   to "proved".
 - [ ] 6. Link the app from the README and handbook; screenshots of a few

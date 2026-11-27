@@ -186,7 +186,16 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     </div>
     <p class="sub" id="lomax-note" hidden style="margin:4px 0 0"><b>Use it:</b> with many claims per region and year (the default ~55) heavy tails barely matter: the sum smooths them. With few claims (try 50 vehicle-years) fits with region-specific variances (corrBS, BLUP) lose most and under-price the portfolio, since a big claim raises a region's mean and its σ̂ⱼ² together. Then prefer pooled variances (BS, BLUP pooled) or keep “Balance the total premium” on. <b>Watch out:</b> the typical error of one draw reads 15–25% low at α near 2 (right on average). Seen in simulation (<code>studies/runs/lomax-tails.js</code>), not proved.</p>
     <div class="feature off"><input type="checkbox" disabled><label>Unequal lengths <span class="sub">(regions entered recently)</span></label><span class="tag">soon</span></div>
-    <div class="feature off"><input type="checkbox" disabled><label>Group levels <span class="sub">(regions of one country)</span></label><span class="tag">soon</span></div>
+    <div class="feature">
+      <input type="checkbox" id="f-groups"><label for="f-groups">Group levels <span class="sub">(regions in countries: regions of one country share part φ of the level variance; region j is in group j mod G; try the fit “BLUP groups”)</span></label>
+    </div>
+    <div class="row" id="groups-row" hidden>
+      <label for="s-groups">Number of groups G</label><input type="range" id="s-groups" min="2" max="4" step="1" value="2"><output id="o-groups"></output>
+    </div>
+    <div class="row" id="phi-row" hidden>
+      <label for="s-phi">Shared share φ <span class="sub">(cov within a group = φτ²)</span></label><input type="range" id="s-phi" min="0" max="0.95" step="0.05" value="0.5"><output id="o-phi"></output>
+    </div>
+    <p class="sub" id="groups-note" hidden style="margin:4px 0 0"><b>Use it:</b> “BLUP groups” splits τ² into the shared part φτ² and the regional part from pairs of regions within and across groups (one GLS pass, no tuning), and keeps the groups only when they win on held-out years. <b>Watch out:</b> with 2–4 groups φτ² is barely identified (its spread is 2–9 times its value), so the choice “groups or none” matters more than the weights; with a small φ and short histories no groups can be better (studies S69).</p>
   </section>
 
   <section class="card" aria-labelledby="h-models">
@@ -363,7 +372,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     { key: 'volume', label: 'Vehicle-years per region and year', min: 50, max: 5000, step: 50, fmt: (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v },
     { key: 'spread', label: 'How unequal the volumes are', min: 0, max: 2, step: 0.1, fmt: (v) => v.toFixed(1) },
   ];
-  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, lomaxOn: false, lomaxVal: 3, fit: 'bs', ref: 'vc', balance: true, seed: 12345, stepsOf: 'fit', recipeOf: 'fit', next: 1 });
+  const state = Object.assign({}, E.DEFAULTS, { rhoOn: false, rhoVal: 0.5, lomaxOn: false, lomaxVal: 3, groupsOn: false, groupsN: 2, phiVal: 0.5, fit: 'bs', ref: 'vc', balance: true, seed: 12345, stepsOf: 'fit', recipeOf: 'fit', next: 1 });
 
   const ws = $('world-sliders');
   for (const s of SLIDERS) {
@@ -381,6 +390,15 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   showRho();
   rhoBox.addEventListener('change', () => { state.rhoOn = rhoBox.checked; showRho(); update(); });
   rhoIn.addEventListener('input', () => { state.rhoVal = +rhoIn.value; showRho(); update(); });
+  const grpBox = $('f-groups'), grpIn = $('s-groups'), phiIn = $('s-phi');
+  const showGroups = () => {
+    $('o-groups').textContent = grpIn.value; $('o-phi').textContent = (+phiIn.value).toFixed(2);
+    for (const id of ['groups-row', 'phi-row', 'groups-note']) $(id).hidden = !grpBox.checked;
+  };
+  showGroups();
+  grpBox.addEventListener('change', () => { state.groupsOn = grpBox.checked; showGroups(); update(); });
+  grpIn.addEventListener('input', () => { state.groupsN = +grpIn.value; showGroups(); update(); });
+  phiIn.addEventListener('input', () => { state.phiVal = +phiIn.value; showGroups(); update(); });
   // The switch balances to the cross-fitted portfolio level (owner, 2026-11-27; S63); the engine falls back to exposures when it can't.
   const balTarget = () => (state.balance ? 'crossFit' : false);
   $('f-balance').addEventListener('change', (e) => { state.balance = e.target.checked; update(); });
@@ -484,6 +502,8 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     p.rho = state.rhoOn ? state.rhoVal : 0;
     p.ordered = state.rhoOn && state.ordered;
     p.lomax = state.lomaxOn ? state.lomaxVal : 0;
+    p.groups = state.groupsOn ? state.groupsN : 0;
+    p.phi = state.phiVal;
     return p;
   }
 

@@ -1948,13 +1948,16 @@ squared error (\hb{res:crossed}{46}).
     (Section~\ref{sec:cohorts}).
   \item \emph{A single pair is noisy.} One within-group and one
     across-group pair identify $\phi\tau^2$ in principle; in practice you
-    want many of each, and a rule for combining them is open.
-  \item \emph{The app has no switch for this yet} (\app{World}, ``Group
-    levels'', marked ``soon'').
+    want many of each. The best combination is generalized least squares on
+    the pairs' covariance table, and one pass with that table estimated from a
+    first, volume-weighted pass is as good as knowing it (\hb{res:groups_pool}{44}).
+    With two to four groups $\phi\tau^2$ stays noisy whatever the weights, so
+    whether to use groups at all matters more: the app decides it on held-out
+    years (\hb{res:heldout}{54}).
 \end{itemize}
 
-\see \hbsec{sec:groups}{9}, \hb{res:phi}{40}, \hb{res:groups}{41}, \hb{res:twostage}{42}, \hb{res:est_groups}{43} ·
-\app{World} (soon) ·
+\see \hbsec{sec:groups}{9}, \hb{res:phi}{40}, \hb{res:groups}{41}, \hb{res:twostage}{42}, \hb{res:est_groups}{43}, \hb{res:groups_pool}{44} ·
+\app{World} ``Group levels'', fit ``BLUP groups'' (S69) ·
 \finding{13} ·
 \file{studies/literature.md} §3 ·
 not in the thesis.

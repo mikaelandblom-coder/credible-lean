@@ -112,11 +112,11 @@ test('BS estimators are unbiased on average at ρ = 0 (σ̂² via Model.sigRhoHa
   }
 });
 
-test('No fit sees the world: fits read only data.w and data.X', () => {
+test('No fit sees the world: fits read only data.w, data.X and the group labels data.grp', () => {
   const world = E.makeWorld({ rho: 0.4 }), { data } = E.draw(world, E.rng(7));
   const guarded = new Proxy(data, {
     get(target, key) {
-      if (key === 'w' || key === 'X') return target[key];
+      if (key === 'w' || key === 'X' || key === 'grp') return target[key];
       throw new Error(`fit read data.${String(key)}`);
     },
   });
@@ -1120,4 +1120,65 @@ test('Balance to the cross-fitted level (Finding 35, S63; Core.Estimates.integra
   assert.ok(Math.abs(c.blup.bias.mean) < 4 * c.blup.bias.se, `cross-fitted unbiased: ${c.blup.bias.mean} ± ${c.blup.bias.se}`);
   assert.ok(c.blup.mse < ex.blup.mse, `cheaper than exposure balance: ${c.blup.mse} vs ${ex.blup.mse}`);
   assert.equal(c.blup.covDiag, undefined, 'first-order weights: no covariance diagnosis');
+});
+
+// ---------------------------------------------------------------- step 4: group levels (PLAN G4, S69)
+
+test('Group world: Var μⱼ = τ², cov within a group = φτ², 0 across (Hierarchical.lean, Bridge 4); trueK carries L', () => {
+  const world = E.makeWorld({ groups: 2, phi: 0.6, J: 6, normal: true }), r = E.rng(41), n = 20000;
+  const s = { v: 0, w: 0, a: 0 };
+  for (let k = 0; k < n; k++) {
+    const { levels } = E.draw(world, r), d = levels.map((x) => x - 1);
+    s.v += d[0] * d[0]; s.w += d[0] * d[2]; s.a += d[0] * d[1];   // regions 0, 2 share group 0; region 1 is in group 1
+  }
+  const t2 = world.truth.tau2;
+  assert.ok(Math.abs(s.v / n / t2 - 1) < 0.05, `Var ${s.v / n}`);
+  assert.ok(Math.abs(s.w / n / t2 - 0.6) < 0.05, `within ${s.w / n}`);
+  assert.ok(Math.abs(s.a / n / t2) < 0.05, `across ${s.a / n}`);
+  const K = E.trueK(world), K0 = E.trueK(E.makeWorld({ J: 6, normal: true }));
+  assert.ok(Math.abs(K[0][2] - K0[0][2] - 0.6 * t2) < 1e-12 && Math.abs(K[0][1] - K0[0][1]) < 1e-12);
+});
+
+test('Group floor: the blend z with L minimises the blend MSE; the BLUP with L beats it (Core.blup_optimal)', () => {
+  const world = E.makeWorld({ groups: 3, phi: 0.7, J: 9 }), K = E.trueK(world), L = world.truth.L;
+  const { b, z } = E.bestBlendWeightsL(K, L);
+  for (let j = 0; j < 9; j++) {
+    const f = (x) => E.blendMSEL(K, L, b, j, x);
+    assert.ok(f(z[j]) <= f(z[j] + 1e-3) && f(z[j]) <= f(z[j] - 1e-3), `z_${j} not optimal`);
+    const d = E.blupWeightL(K, L, j), wb = b.map((x, i) => (i === j ? z[j] : 0) + (1 - z[j]) * x);
+    assert.ok(Math.abs(d.reduce((a, x) => a + x, 0) - 1) < 1e-9);
+    assert.ok(E.linMseL(K, L, j, d) <= E.linMseL(K, L, j, wb) + 1e-12);
+    assert.ok(Math.abs(E.linMseL(K, L, j, wb) - f(z[j])) < 1e-12, 'linMseL of the blend weights is the blend MSE');
+  }
+});
+
+test('Group fit: the first pass is about unbiased (phiTauPooled_unbiasedG), and the recipe matches both branches', () => {
+  const world = E.makeWorld({ groups: 3, phi: 0.6, J: 12, T: 6, tau: 0.15 }), r = E.rng(43), n = 300;
+  let sl = 0, st = 0;
+  const seen = new Set();
+  for (let k = 0; k < n; k++) {
+    const { data } = E.draw(world, r), g = E.fitGroupLevels(data), f = g.steps.find((x) => x.name === 'first pass').values;
+    sl += f[0]; st += f[1];   // the first pass is unbiased (phiTauPooled_unbiasedG); the GLS pass with V̂ from it is not exactly
+    if (k < 40) {
+      const fit = E.MODELS.grp.fit(data), pr = E.premium(fit, data, E.nextVolumes(data));
+      if (seen.has(fit.branch)) continue;
+      seen.add(fit.branch);
+      const steps = fit.steps.concat(pr ? [pr.step] : []), rs = E.recipeSteps('grp', { branch: fit.branch });
+      assert.deepEqual(rs.map((s) => s.name).sort(), steps.map((s) => s.name).sort(), `branch ${fit.branch}`);
+      for (const s of steps) { const x = rs.find((y) => y.name === s.name); assert.equal(x.badge, s.badge); assert.equal(x.lean || null, s.lean || null, s.name); }
+    }
+  }
+  const t2 = world.truth.tau2;
+  assert.ok(Math.abs(sl / n / (0.4 * t2) - 1) < 0.15, `λ̂ mean ${sl / n} vs ${0.4 * t2}`);
+  assert.ok(Math.abs(st / n / (0.6 * t2) - 1) < 0.2, `φτ²^ mean ${st / n} vs ${0.6 * t2}`);
+  assert.ok(seen.has('groups'), 'the groups branch is reached');
+  const none = E.MODELS.grp.fit(E.draw(E.makeWorld({}), E.rng(1)).data);
+  assert.equal(none.branch, 'none', 'no groups in the data: no groups');
+});
+
+test('Group world: the group fit beats the BLUP without groups when the shared share is large (S69, statistical)', () => {
+  const world = E.makeWorld({ groups: 2, phi: 0.8, J: 10, T: 6, tau: 0.15 });
+  const out = E.simulate(world, ['grp', 'blup'], 120, 7);
+  assert.ok(out.grp.mse < out.blup.mse, `grp ${out.grp.mse} vs blup ${out.blup.mse}`);
+  assert.ok(out.floorBlup.mse <= out.floor.mse * 1.05, 'the group-aware oracle is no worse than the floor blend');
 });

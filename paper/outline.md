@@ -92,7 +92,7 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] §Open directions, "A fit for the group model" (2026-11-27): settled in principle (`phiTauPool_blue_optimal`, handbook `res:groups_pool`) and in simulation (S69: one GLS pass; φτ² stays noisy with few groups; groups or not is the bigger choice). Mark it done and move the open part to "groups or not, by held-out score".
+- [ ] §Open directions, "A fit for the group model" (2026-11-27): settled in principle (`phiTauPool_blue_optimal`, handbook `res:groups_pool`), in simulation (S69) and in the app (fit "BLUP groups"; §groups updated). Mark it done and move the open part to "groups or not, by held-out score" (its regret in simulation).
 - [ ] From the external review (2026-11-25), still open: the novelty check of the "new here" claims against full
   texts (literature chat; OpenAlex/Semantic Scholar allowed in Default), and figures for the main study results.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
@@ -109,9 +109,8 @@ may need a paragraph.)
   estimator bottom-up then top-down). The other references were checked
   by web search (2026-11-17, details in `studies/literature.md`): bibliographic
   details and abstracts only, not full texts.
-- §10–11: when the app gets its "Unequal lengths" and "Group levels"
-  switches (`studies/PLAN.md` step 4), replace "(soon)" in the See lines
-  with the step, and add study numbers if a fit is simulated.
+- §10–11: when the app gets its "Unequal lengths" switch (`studies/PLAN.md` step 4), replace "(soon)" in
+  the See line with the step (group levels done 2026-11-27).
 - §14: the "new here" claims stand until a precedent turns up.
 - §12: when the app gets a step for choosing cohorts (`studies/PLAN.md`, G5),
   add it to the See line. (The BLUP fit is in: §5 and §13 cite it, 2026-11-17.)
