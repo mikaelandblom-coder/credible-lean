@@ -159,6 +159,31 @@ theorem integral_crossFit_sub {S : Type*} [Fintype S] {K : S → Matrix J J ℝ}
   rw [hsplit, covariance_add_right (hdh s i) hL hN,
     (hind s i).covariance_eq_zero (hdh s i) hN, add_zero]
 
+/-- **Cross-fitting with weights blind to the levels is unbiased.** In the setting of
+`integral_crossFit_sub`, if moreover each year's weights are uncorrelated with the levels
+(e.g. built from within-region residuals only, `residual_eq_noise`, with noise independent of the
+levels), the cross-fitted rate is unbiased: `E(Σₛ πₛ d̂⁽ˢ⁾ᵀμ̂⁽ˢ⁾ - μⱼ) = 0`, for every
+distribution. Only a fit whose weights see the levels (`τ̂²`, from the between-region spread)
+keeps a bias. -/
+theorem integral_crossFit_sub_eq_zero {S : Type*} [Fintype S] {K : S → Matrix J J ℝ}
+    (E : ∀ s, Estimates (K s) L μ P) (lev : J → Ω → ℝ) (hlev : ∀ s, (E s).level = lev)
+    (π : S → ℝ) (hπ : ∑ s, π s = 1) (dh : S → Ω → J → ℝ)
+    (hdh : ∀ s i, MemLp (fun ω => dh s ω i) 2 P) (hsum : ∀ s ω, ∑ i, dh s ω i = 1)
+    (hind : ∀ s i, IndepFun (fun ω => dh s ω i) (fun ω => (E s).est i ω - lev i ω) P)
+    (hblind : ∀ s i, cov[fun ω => dh s ω i, lev i; P] = 0) (j : J) :
+    P[fun ω => ∑ s, π s * (E s).randomLin (dh s) ω - lev j ω] = 0 := by
+  rw [integral_crossFit_sub E lev hlev π hπ dh hdh hsum hind j]
+  simp [hblind]
+
+omit [Fintype J] [IsProbabilityMeasure P] in
+/-- **Residuals do not see the level**: for cells `Lᵢ + eᵢₜ` and year weights summing to one,
+`(Lᵢ + eᵢₜ) - Σₛ wᵢₛ(Lᵢ + eᵢₛ) = eᵢₜ - Σₛ wᵢₛeᵢₛ`. So `ρ̂`, `σ̂²` and any weights built from
+within-region residuals are functions of the noise alone. -/
+theorem residual_eq_noise {ι : Type*} [Fintype ι] (Lv : ℝ) (e w : ι → ℝ) (hw : ∑ s, w s = 1)
+    (t : ι) : (Lv + e t) - ∑ s, w s * (Lv + e s) = e t - ∑ s, w s * e s := by
+  simp only [mul_add, sum_add_distrib, ← sum_mul, hw, one_mul]
+  ring
+
 omit [IsProbabilityMeasure P] in
 /-- The balanced corrections `θ̂ⱼ = μ̂ⱼᵇ + cⱼD` with `Σⱼ uⱼcⱼ = 1` (G7) are exposure balanced. -/
 theorem correct_balanced [DecidableEq J] (u z c : J → ℝ) (hc : ∑ j, u j * c j = 1) (ω : Ω) :

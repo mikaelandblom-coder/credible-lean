@@ -590,6 +590,22 @@ Definition~\ref{def:Core_Estimates}.
   the last term $0$ by independence.
 \end{proof}
 
+\begin{corollary}[Cross-fitting with weights blind to the levels is unbiased]\label{cor:Core_crossFit_unbiased}
+  \lean{Credibility.Core.Estimates.integral_crossFit_sub_eq_zero,
+        Credibility.Core.Estimates.residual_eq_noise}
+  \leanok
+  \uses{thm:Core_crossFit_bias}
+  In Theorem~\ref{thm:Core_crossFit_bias}, if moreover $\cov(\hat d^{(s)}_i, \mu_i) = 0$ for all $s$, $i$,
+  the cross-fitted rate is unbiased, for every distribution. This holds for weights built from
+  within-region residuals only, since for cells $L_i + e_{it}$ and $\sum_s w_{is} = 1$,
+  $(L_i + e_{it}) - \sum_s w_{is}(L_i + e_{is}) = e_{it} - \sum_s w_{is}e_{is}$, with noise independent of the levels.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_crossFit_bias}
+  Every term of Theorem~\ref{thm:Core_crossFit_bias}'s sum is $0$; the residual identity is algebra.
+\end{proof}
+
 \begin{remark}[Region-specific year weights]\label{rem:crossFit_region_weights}
   With year weights $a_{is}$ that depend on the region, $\sum_s\sum_i a_{is}\hat d^{(s)}_i \ne 1$ in
   general: the rate is not translation equivariant, the mean $\mu$ enters the bias, and the identity

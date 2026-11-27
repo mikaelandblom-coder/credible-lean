@@ -579,4 +579,6 @@ Finished items are in `studies/PLAN-done.md`.
   (S63 "Consequence", a corollary of `Core.Estimates.integral_randomLin_sub`; **lean** chat).
   *Lean done 2026-11-26:* `Core.Estimates.integral_crossFit_sub` (common year weights, weights independent of
   their year's noise: bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)`, any distribution). The app's proportional volumes give
-  common year weights, so the identity applies there; only the owner's decision remains.
+  common year weights, so the identity applies there; only the owner's decision remains. *2026-11-27:*
+  `integral_crossFit_sub_eq_zero`: exactly unbiased when the cross-fitted weights are uncorrelated with the
+  levels (residual-only `ρ̂`, `σ̂²`, `residual_eq_noise`); a `τ̂²` from all years keeps a level channel.

@@ -101,6 +101,9 @@ force the wrong balance under correlation (S28). Same idea as the cross-fitted p
 shape", literature §10j–k: Chernozhukov et al. 2018) and the cross-fitted learner (§10p).
 Lean target (distribution-free, a corollary of `Core.Estimates.integral_randomLin_sub`): weights summing
 to 1 and independent of the noise of the cells they weight give an unbiased predictor, given the levels.
+*Done 2026-11-27:* `integral_crossFit_sub` (bias = level channel only) and `integral_crossFit_sub_eq_zero`
+(0 when the weights are uncorrelated with the levels; `residual_eq_noise`: residual-only weights such as
+`ρ̂`, `σ̂²` never see the level). `τ̂²` from the between-region spread does, hence S63's remaining channel.
 
 **R2 (fallback): first-order bias correction** from k-statistic estimates of the cross-cumulants
 (`noiseDiagnostics`). Likely too noisy (third moments, few years); try only if R1's price is high.
