@@ -1229,3 +1229,25 @@ test('Cross term of the BS plug-in (Cumulants.crossTerm_bs_of_cumulants): equal 
   const w = [[1000, 1, 1, 1], [50, 50, 50, 50], [50, 50, 50, 50], [50, 50, 50, 50]];
   assert.ok(E.crossTermBS(w, 36, 0.01, 0).noise > 0, 'noise part > 0 for the concentrated region');
 });
+
+test('Balance when it pays (Finding 46, S76; BalanceCost.balance_cost_portLin): the plug-in cost decides, the readout is the gap to the cross-fitted level, and the rule beats always balancing with unequal noise', () => {
+  const world = E.makeWorld({ rho: 0.3, T: 5, noiseSpread: 2 }), { data } = E.draw(world, E.rng(3)), wt = data.w.map(sum), wall = sum(wt);
+  const cf = E.crossFitLevel(data);
+  for (const id of ['vc', 'blup', 'bs']) {
+    const raw = E.MODELS[id].fit(data), f = E.fitWith(id, data, { balance: 'auto' });
+    if (E.MODELS[id].balanced) { assert.deepEqual(f.rates, raw.rates, `${id} left alone`); continue; }
+    const b = f.balanceAuto;
+    assert.ok(b && b.available, `${id} rule available`);
+    assert.equal(b.on, b.cost < 0, `${id} balanced iff the cost is negative`);
+    close(b.errTarget ** 2 - b.errFit ** 2, b.cost, 1e-12, `${id} cost = target error² − own error²`);
+    close(b.D, cf.level - sum(wt.map((x, j) => x * raw.rates[j])) / wall, 1e-12, `${id} readout: gap to the cross-fitted level`);
+    const want = b.on ? cf.level : sum(wt.map((x, j) => x * raw.rates[j])) / wall;
+    close(sum(wt.map((x, j) => x * f.rates[j])) / wall, want, 1e-10, `${id} portfolio level as chosen`);
+    assert.equal(f.steps[f.steps.length - 1].lean, E.BALANCE_AUTO_STEP.lean);
+  }
+  assert.ok(E.recipeSteps('vc', { balance: 'auto' }).some((s) => s === E.BALANCE_AUTO_STEP), 'recipe step');
+  const n = 300, auto = E.simulate(world, ['vc'], n, 11, 1, { balance: 'auto' }), on = E.simulate(world, ['vc'], n, 11, 1, { balance: 'crossFit' });
+  assert.ok(auto.vc.mse < on.vc.mse, `auto cheaper than always on: ${auto.vc.mse} vs ${on.vc.mse}`);
+  assert.ok(auto.vc.balancedShare < 0.2, `rarely balanced with σⱼ spread 2: ${auto.vc.balancedShare}`);
+  assert.ok(auto.vc.raw && auto.vc.raw.bias, 'unbalanced bias reported');
+});
