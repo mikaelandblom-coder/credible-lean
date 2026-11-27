@@ -2540,7 +2540,11 @@ and the optimism of the winning score itself, which needs a further fold.
     (GLS on the pair table, \hb{res:crossed_pool}{50}) and in the default
     (Section~\ref{sec:estimation}). Open are tables with few pairs per class
     (two each in a two-by-two table), where the estimates are noisy and can be
-    negative, and the default does worse when the effects are weak.
+    negative, and the default does worse when the effects are weak. In
+    simulation (S70) restricted maximum likelihood on the cell means, with the
+    noise table plugged in, is never more than a few points worse than the
+    default and gains most where the effects are weak or absent; open are a
+    proof, the switch in the app, and when to fit rows and columns at all.
   \item \emph{A fit for the group model} that pools the within- and
     across-group pair estimates into one $\widehat{\phi\tau^2}$ with no
     hand-set choices, and its behaviour in simulation (Section~\ref{sec:groups}).

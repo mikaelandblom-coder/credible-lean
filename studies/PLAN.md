@@ -363,6 +363,11 @@ One chat per step; none needs Lean except step 5.
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
 Finished items are in `studies/PLAN-done.md`.
+- [ ] Crossed fit by REML (2026-11-27, S70, `studies/runs/crossed-small.js`): add `reml` as a fit option of
+  `app/crossed.js` (projected Fisher scoring on the cell means, the default's `Σ̂`, start from the default's `θ̂`),
+  with a Node test, and make it the default if S70's grid plus `crossed-fit.js`'s larger tables agree (S70: worse
+  than the default by at most 5 points in 17 of 128 worlds, better in 69). Badge "not proved yet". Show how
+  often the raw moment estimates were negative.
 - [ ] Cohort trend lines step (2026-11-27, `LineResidualsMoments.integral_correctedLambda_pooled`): level + slope
   per cohort, `ŝ²` and `ρ̂ŝ²` with SUR divisors `T − 2p + tr(PᵢPⱼ)` (handbook `res:lineResid`), corrected `Λ̂`,
   joint damped BLUP (S67); show the 2 × 2 `Z`. Engine helpers exist in `studies/runs/vector-lambda-shocks.js`.

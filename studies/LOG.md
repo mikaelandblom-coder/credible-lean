@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S69, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S70, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -102,6 +102,7 @@ continue the numbering here; the full text and its trust label are below.
 | S67 | `runs/vector-lambda-shocks.js` | Model the shocks: corrected `Λ̂` and the joint BLUP |
 | S68 | `runs/pretest-merge.js` | Merging when the gap looks small loses to both rules (exact, normal) |
 | S69 | `runs/group-fit.js` | Fit `φτ²` by one GLS pass on the pairs; groups or not matters more |
+| S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 
 ## Observations
 
@@ -931,3 +932,25 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     GLS1 (one pass, no hand-set choices); a second pass does not pay. The weights move the blend little; the
     decision that matters is whether to fit groups at all, which belongs to a held-out score
     (`CrossFit.integral_heldOutScore_sub`), not to the in-sample fit.
+
+### Small crossed tables (2026-11-27, `studies/runs/crossed-small.js`; paper, open directions)
+- S70. *[numerical]* **Small crossed tables: REML on the cell means is never much worse than the default and
+    often far better.** Tables 2×2, 3×2, 3×3, 4×3, T = 10, effect mixes both / row only / weak / none
+    (α, β, γ as `crossed-fit.js`, plus all zero), ρ ∈ {0, 0.5}, volume spread 0 or 1, regimes app and
+    thesis (128 worlds, 1000 draws, common random numbers). Fits: the default (inverse-variance pools, clip),
+    **REML** on the cell means `μ̂ ~ N(μ1, Σ̂ + L(θ))` with the default's noise table, `θ ≥ 0` by projected
+    Fisher scoring, and **shrink** (each clipped variance times the plug-in `θ̂²/(θ̂² + V̂)`, `V̂` the
+    normal-theory variance of the raw estimate on `K̂`). The raw default estimates are negative in 20–65% of
+    draws even with real effects (2×2: α̂² 0.3–0.5, γ̂² 0.3–0.65). Observed cells' error in % of the floor,
+    paired against the default: REML worse in 17 of 128 worlds (by at most +5.3 points, 2×2 weak, ρ = 0.5,
+    spread 1, thesis regime), better in 69 (down to −60 in 2×2, −181 in 4×3 with no effects), mean −16.
+    Shrink: worse in 53 (up to +26: real effects at high credibility, where it shrinks a well-estimated
+    variance), better in 56, mean −24. Means by mix (default / REML / shrink / thesis fit / best blend):
+    both 117 / 117 / 125 / 126 / 119, row only 124 / 123 / 125 / 135 / 129, weak 144 / 136 / 131 / 133 / 109,
+    none 285 / 230 / 193 / 188 / 100. The default's loss with weak effects is the clip: a positive-part
+    estimate stays positive in half the draws when the truth is about 0, and the predictor then splits
+    noise into rows and columns. **Consequence.** REML is a candidate default for crossed fits at every table
+    size visited (not proved; the worst case is small and inside 2 SE of zero in most worlds); shrinking wins
+    only where the effects are near zero and costs where they are real, so it is not a default. Whether to fit
+    rows and columns at all when effects may be absent belongs to a held-out score
+    (`CrossFit.integral_heldOutScore_sub`), as for groups (S69).

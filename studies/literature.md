@@ -1509,3 +1509,25 @@ normality). Used: the pair form makes the choice a Gauss–Markov problem on the
 (`pairPool_blue_optimal`), the MINQUE idea restricted to pools of pair estimators. New here: correlated
 noise across cohorts is allowed (the pair estimator's cross term), and the class of unbiased pools is
 explicit (`Σ b = 0`, `Σ_across b = ½`).
+
+### 10z. Small crossed tables: negative and noisy variance estimates (2026-11-27, for S70)
+From search results and earlier reads; the 1969 and 1992 texts not read in full.
+- **Truncation.** Klotz, Milton & Zacks (1969), *Mean square efficiency of estimators of variance
+  components*, JASA 64, 1383 (balanced one-way layout): the unbiased ANOVA estimator is inadmissible in
+  mean squared error; its positive part and modified ML/REML estimators beat it, and the truncated
+  ANOVA estimator is itself inadmissible. Our clip is that positive part, at the level of each variance
+  (`ConeProjection.hsq_proj_le`: never further from the truth than the raw estimate).
+- **REML, bounded at zero.** REML software (SAS `VARCOMP`, `lme4`) constrains components to `≥ 0`; for
+  Dannenburg's crossed model Fung & Xu (2009; §8 above, read in full) report that ML/REML under
+  normality beat Dannenburg's moment estimators in simulation. REML's estimating equations are
+  quadratic in the data, unbiased for any noise family at the truth, so as a fit it needs no
+  distributional assumption; only its weighting is normal-theory (I-MINQUE, §10y).
+- **Shrinking an unbiased estimate.** For unbiased `θ̂` with variance `V`, the MSE-best multiple is
+  `cθ̂`, `c = θ²/(θ² + V)` (the classical result behind Stein-type and "adjusted" estimators; Li &
+  Lahiri 2010's adjusted REML, §10p, keeps `τ̂² > 0` by a different route). With `V > θ²` the
+  estimate's noise exceeds its value, `c < 1/2`, and truncation alone leaves most of the error.
+  The plug-in `ĉ` is not optimal; S70 tests it.
+- **Not found:** a study of crossed credibility estimators on tables as small as 2×2; the actuarial
+  sources (Dannenburg 1995, Goulet 1998 §8.3) report only a large coefficient of variation.
+- Used in S70: REML on the cell means with the noise table plugged in, and the plug-in shrink, both
+  against the default (inverse variance, clip).
