@@ -26,6 +26,7 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- [ ] Group fit (2026-11-27, `Model.phiTauPool_blue_optimal`): a line in the group section: unbiased pools of pairs for `φτ²` are `Σ b = 0`, `Σ_across b = ½`; the best is GLS on the pair table with design `(2, 2[across])`. Add with the fitted recipe once the study (next) says which plug-in to use.
 - [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.

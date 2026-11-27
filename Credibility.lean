@@ -38,6 +38,7 @@ import Credibility.ConeProjection
 import Credibility.GroupWeights
 import Credibility.Hierarchical
 import Credibility.HierarchicalMoments
+import Credibility.GroupPoolWeights
 import Credibility.KMeans
 import Credibility.KMeansBridge
 import Credibility.Trend

@@ -1497,3 +1497,15 @@ For `CrossFit.lean`, `PreTestNormal.lean` (Finding 43), paper §Open directions 
   cluster the levels of a hierarchical factor from embeddings / credibility estimates and choose
   the number of clusters by information criteria fitted on the same data; no selection correction.
   Used: Diao & Weng's pruning is the precedent for the app's criterion (cross-fitted score).
+
+### 10y. Estimating the group variance in hierarchical credibility (2026-11-27; from memory, not fetched)
+For `GroupPoolWeights.lean` (PLAN G4). **Bühlmann & Gisler (2005), ch. 6**: hierarchical credibility
+estimates the variance components bottom-up, a Bühlmann–Straub `τ̂²` within each group, pooled, then the
+between-group variance from the spread of the group means minus their estimated noise; each step is a
+moment estimator, unbiased for its weights but not chosen for least variance. **Nested ANOVA / Henderson
+III / MINQUE** (Rao 1971; Searle, Casella & McCulloch 1992, ch. 5): locally best quadratic unbiased
+estimators need the fourth moments (normal: second moments), so they are iterated (I-MINQUE = REML under
+normality). Used: the pair form makes the choice a Gauss–Markov problem on the pair covariance table
+(`pairPool_blue_optimal`), the MINQUE idea restricted to pools of pair estimators. New here: correlated
+noise across cohorts is allowed (the pair estimator's cross term), and the class of unbiased pools is
+explicit (`Σ b = 0`, `Σ_across b = ½`).

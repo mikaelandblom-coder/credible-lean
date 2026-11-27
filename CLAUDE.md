@@ -115,7 +115,8 @@ A map by topic; each file's module docstring has the details and Lean names.
   (mixed-model equations), `ObservedBest` (collective mean given the levels).
 - Plug-in BLUP (estimated moments): `PlugInSymmetric`, `PlugIn` (exact MSE),
   `PlugInNormal`, `PlugInMix` (part way from blend to BLUP).
-- Hierarchical (groups): `Hierarchical`, `GroupWeights`, `HierarchicalMoments`.
+- Hierarchical (groups): `Hierarchical`, `GroupWeights`, `HierarchicalMoments`, `GroupPoolWeights`
+  (best pool of pair estimators for `φτ²`).
 - Crossed levels: `Crossed`, `CrossedEstimation`, `CrossedMoments`,
   `CrossedPoolWeights`, `CrossedPoolNormal`.
 - Card data (`notes/card-data.md`): `Season`, `Factor`, `FactorMoments`,

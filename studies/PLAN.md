@@ -192,6 +192,11 @@ the floor line and in the tests.
   *Proved 2026-11-22 (`Model.phiTauPooled_unbiasedG`): weights summing to one on the pairs
   across groups and on the pairs within groups, any choice (e.g. `wᵢ*wⱼ*`). Which weights
   minimise the variance needs fourth moments (open). The app has no group fit yet, so no badge.*
+  *Best weights proved 2026-11-27 (`Model.phiTauPool_blue_optimal`, `GroupPoolWeights.lean`): the unbiased
+  pools are exactly those with `Σ b = 0`, `Σ_across b = ½`; the least-variance one is Gauss–Markov on the
+  pair covariance table `V` with design `(2, 2[across])` (`pairPool_blue_optimal`, any design). Next: the
+  plug-in fit (`V` from a first pass; under normal noise `V` from second moments, `CrossedPoolNormal`) in a
+  study (S69 or next free number) against volume weights and the Bühlmann–Gisler estimators.*
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
   *Proved 2026-11-22 (`BlendMoments.errVar_clipZ_le_iff`, Finding 36): for a fixed `z`, clipping
   never increases the error iff the best `z*` is in `[0, 1]`; otherwise clipping `z*` costs

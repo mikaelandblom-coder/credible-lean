@@ -705,6 +705,57 @@ itself, evaluated on noise-free data.
   Linearity: the across sum has expectation $2\tau^2$, the within sum $2\tau^2 - 2\phi\tau^2$.
 \end{proof}
 
+\begin{definition}[Pair design]\label{def:pairDesign}
+  \lean{Credibility.Model.pairDesign, Credibility.Model.pairBLUE, Credibility.Model.groupDesign}
+  \leanok
+  \uses{def:pairHat}
+  For a set $S$ of pairs whose estimators have means $x_p^T\beta$, the design $X$ has rows $x_p$;
+  the pool weights $V^{-1}X(X^TV^{-1}X)^{-1}x_0$ on the pair covariance table $V$. With group
+  levels $x_p = (2, 2[g(i) \ne g(j)])$, $\beta = ((1-\phi)\tau^2, \phi\tau^2)$.
+\end{definition}
+
+\begin{lemma}[Constraints of a pool]\label{lem:pairDesign_mulVec}
+  \lean{Credibility.Model.transpose_pairDesign_mulVec, Credibility.Model.groupDesign_injective}
+  \leanok
+  \uses{def:pairDesign}
+  $(X^Tb)_k = \sum_{p \in S} b_p x_{pk}$. With one pair within a group and one across groups in $S$,
+  the group design has full column rank.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand; the within pair gives $2\beta_1 = 0$, then the across pair $2\beta_2 = 0$.
+\end{proof}
+
+\begin{theorem}[The best pool for a design]\label{thm:pairPool_blue}
+  \lean{Credibility.Model.pairPool_blue_optimal}
+  \leanok
+  \uses{def:pairDesign, thm:pairPool_gls, thm:Blup_optimal}
+  If $V \succ 0$ and $X$ has full column rank, the weights $V^{-1}X(X^TV^{-1}X)^{-1}x_0$ have the
+  least variance among all pools with $X^Tb = x_0$ (those unbiased for $x_0^T\beta$), for any random
+  cells with these moment tables. Distribution-free.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:pairDesign_mulVec, thm:pairPool_gls, thm:Blup_optimal}
+  The variance is $b^TVb$ (Theorem~\ref{thm:pairPool_gls}); Gauss--Markov is
+  Theorem~\ref{thm:Blup_optimal} with $\ell = 0$, $v = 0$.
+\end{proof}
+
+\begin{corollary}[The best pool for $\phi\tau^2$, PLAN G4]\label{cor:phiTauPool_blue}
+  \lean{Credibility.Model.phiTauPool_blue_optimal}
+  \leanok
+  \uses{thm:pairPool_blue, cor:phiTauPooled}
+  Over all ordered pairs, the pools unbiased for $\phi\tau^2$ are those with $\sum_p b_p = 0$ and
+  $\sum_{\mathrm{across}} b_p = \tfrac12$ (Corollary~\ref{cor:phiTauPooled} is this with
+  $b = a/2$ across and $-b/2$ within). With a pair of each kind, the weights of
+  Theorem~\ref{thm:pairPool_blue} for $x_0 = (0, 1)$ have the least variance among them.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pairPool_blue, lem:pairDesign_mulVec}
+  The two constraints are $X^Tb = (0, 1)$.
+\end{proof}
+
 \begin{remark}[Finding 13: with groups the plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
   \uses{thm:estimation_G, cor:KHat_G_iff, cor:phiTauHat, rem:hier_bridge4}
   $\widehat{\tau^2}$ averages $\tfrac12(\hmu_i - \hmu_j)^2$ over pairs of
