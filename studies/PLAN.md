@@ -196,7 +196,10 @@ the floor line and in the tests.
   pools are exactly those with `Σ b = 0`, `Σ_across b = ½`; the least-variance one is Gauss–Markov on the
   pair covariance table `V` with design `(2, 2[across])` (`pairPool_blue_optimal`, any design). Next: the
   plug-in fit (`V` from a first pass; under normal noise `V` from second moments, `CrossedPoolNormal`) in a
-  study (S69 or next free number) against volume weights and the Bühlmann–Gisler estimators.*
+  study against volume weights and the Bühlmann–Gisler estimators.* *S69 (2026-11-27): one GLS pass from
+  the volume-weighted pools; it matches the true-`V` pool and cuts the SD of `φ̂τ²` by ~18% against volume
+  weights (equal to BG), of `λ̂` by 10–15%. The app's step 4 uses it. Its choice between groups and no groups
+  is the larger decision (S69: ±4–15 points): by held-out score (`CrossFit`), not by in-sample fit.*
 - **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
   *Proved 2026-11-22 (`BlendMoments.errVar_clipZ_le_iff`, Finding 36): for a fixed `z`, clipping
   never increases the error iff the best `z*` is in `[0, 1]`; otherwise clipping `z*` costs
@@ -551,7 +554,7 @@ Finished items are in `studies/PLAN-done.md`.
   *Criterion settled 2026-11-27 (`CrossFit.integral_heldOutScore`, handbook `res:heldout`):* leave one year
   out, choose the cut and fit on the other years, score on the left-out year; compare cuts (and one group)
   by the difference of the averaged scores (the noise price cancels, `integral_heldOutScore_sub`). Next: a
-  study (S69) of the cross-fitted cut against one group in S61's worlds, short histories (`T = 3–5`)
+  study (next free S number) of the cross-fitted cut against one group in S61's worlds, short histories (`T = 3–5`)
   included, before the app step; the winning score is optimistic (`integral_min_score_le`), so report the
   chosen cut's error from an outer fold. Never merge a pair by its observed gap (Finding 43).
 - [ ] *Parked (owner, 2026-11-25: a size trend is niche; tariffs usually carry size already).* Volume trend as a

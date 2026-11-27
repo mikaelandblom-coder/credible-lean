@@ -1038,6 +1038,19 @@ covariance of the cohort estimates $K_G$.
   With several groups the thesis $\widehat{\tau^2}$ lands between $(1-\phi)\tau^2$ and $\tau^2$: estimate $\phi\tau^2$ from pairs.
 \end{caveat}
 
+\begin{result}[The best pool of pairs]\label{res:groups_pool}
+  Weights $b$ on all pairs give an unbiased estimate $\sum_p b_p\widehat P_p$ of $\phi\tau^2$ for every
+  $\tau^2, \phi$ iff $\sum_p b_p = 0$ and $\sum_{\mathrm{across}} b_p = \tfrac12$. With $V$ the covariance
+  table of the $\widehat P_p$ and design rows $x_p = (2, 2[\text{across}])$, the least-variance one is
+  $b = V^{-1}X(X^TV^{-1}X)^{-1}(0, 1)^T$; with $x_0 = (1, 0)$ it estimates $(1-\phi)\tau^2$.
+  \lean{Credibility.Model.phiTauPool_blue_optimal}
+  \lean{Credibility.Model.pairPool_blue_optimal}
+\end{result}
+\use One pass: volume-weighted pools first, then $V$ from them under the normal formulas $\Cov(\widehat P_p, \widehat P_q) = 2\Cov(D_p, D_q)^2 + c_pc_q\Var\hat\sigma^2$. It reaches the true-$V$ pool's spread (S69).
+\begin{caveat}
+  With few groups $\phi\tau^2$ stays very noisy whatever the weights (SD 2--9 times its value with 2--4 groups); whether to use groups at all matters more than the weights.
+\end{caveat}
+
 \begin{result}[Each group's own effect: Henderson's equations]\label{res:groupEffect}
   Let $0 < \phi < 1$, $A$ the covariance of the estimates for the non-shared part
   $(1-\phi)\tau^2$, and $Z$ the cohorts-by-groups design. Solve Henderson's mixed-model equations

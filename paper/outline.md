@@ -92,7 +92,7 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] §Open directions, "A fit for the group model" (2026-11-27): the best pool of pairs is now known (`phiTauPool_blue_optimal`); update once the plug-in fit is simulated.
+- [ ] §Open directions, "A fit for the group model" (2026-11-27): settled in principle (`phiTauPool_blue_optimal`, handbook `res:groups_pool`) and in simulation (S69: one GLS pass; φτ² stays noisy with few groups; groups or not is the bigger choice). Mark it done and move the open part to "groups or not, by held-out score".
 - [ ] From the external review (2026-11-25), still open: the novelty check of the "new here" claims against full
   texts (literature chat; OpenAlex/Semantic Scholar allowed in Default), and figures for the main study results.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering

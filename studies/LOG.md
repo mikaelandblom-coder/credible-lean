@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S68, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S69, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -101,6 +101,7 @@ continue the numbering here; the full text and its trust label are below.
 | S66 | `runs/vector-lambda-damp.js` | Weight the moment `Λ̂` by exposure and damp its off-diagonals |
 | S67 | `runs/vector-lambda-shocks.js` | Model the shocks: corrected `Λ̂` and the joint BLUP |
 | S68 | `runs/pretest-merge.js` | Merging when the gap looks small loses to both rules (exact, normal) |
+| S69 | `runs/group-fit.js` | Fit `φτ²` by one GLS pass on the pairs; groups or not matters more |
 
 ## Observations
 
@@ -913,3 +914,20 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     `notes/merging-cohorts.md` §4 with the thesis blend: `+0.0004` (`τ²/V = 0.1`) to `+0.14` (`τ²/V = 5`) at
     the tie. **Consequence.** No threshold is safe (Finding 43, proved:
     `PreTest.lt_gapRisk_of_tie`); decide merges and cuts on held-out years (`CrossFit.integral_heldOutScore`).
+
+### Fitting the group variance (2026-11-27, `studies/runs/group-fit.js`, PLAN G4)
+- S69. *[numerical]* **Fit `φτ²` by one GLS pass on the pairs; groups or not matters more.** J = 12 cohorts in
+    2 (8 + 4) or 4 (5 + 3 + 2 + 2) groups, T = 3 or 6, φ = 0.3 or 0.7, exponential or normal noise, volumes
+    lognormal, 2000 draws per world. Fits of `θ = φτ²` and `λ = (1 − φ)τ²` from the pair estimators: volume
+    weights (`phiTauPooled_unbiasedG`), Bühlmann–Gisler bottom-up, and Gauss–Markov on the pair table
+    (`phiTauPool_blue_optimal`) with `V` from the volume-weighted pass under normal formulas (GLS1), once more
+    (GLS2), or from the true parameters (GLS*). SD of `θ̂` in units of `θ`, mean over the 16 worlds: vol 4.18,
+    BG 3.43, GLS1 3.43, GLS2 3.42, GLS* 3.34 (range 1.8–9): with 2–4 groups `φτ²` is barely identified.
+    `λ̂`: GLS1 10–15% below vol and BG. Bias: BG's `θ̂` −0.1 to −0.85 (it clips `λ̂` in its noise term);
+    the others within ±0.4 (Monte Carlo SE ≈ 0.1–0.2); GLS1's `λ̂` up to +0.8 in the hardest world
+    (2 groups, T = 3, φ = 0.7, skewed). Blend MSE in % of the BLUP with true parameters: vol 125.6, BG 125.7,
+    GLS1 124.6, GLS2 125.3, GLS* 123.1 (means; all within 1–4 points in each world). Ignoring the groups
+    (one `τ̂²`): +4 to +15 at φ = 0.7, but −1 to −6 at φ = 0.3, T = 3. **Consequence.** The app's group fit is
+    GLS1 (one pass, no hand-set choices); a second pass does not pay. The weights move the blend little; the
+    decision that matters is whether to fit groups at all, which belongs to a held-out score
+    (`CrossFit.integral_heldOutScore_sub`), not to the in-sample fit.
