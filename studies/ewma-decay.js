@@ -1,4 +1,4 @@
-// Temporal decay (studies/PLAN.md, Pending; literature §10l, Morris 2026): an EWMA weighting of
+// Temporal decay (studies/PLAN-done.md; literature §10l, Morris 2026): an EWMA weighting of
 // each cohort's own years, λ fitted, against the BLUP in the monthly card world (app/monthly.js:
 // AR(1) factor φ per month, shock C, process noise s²/w, cohort × calendar-month season fixed).
 // EWMA at a fixed λ is a predictor from aggregated data (own annual means), so its excess over the

@@ -1,4 +1,4 @@
-// OBP collective mean against Bühlmann–Straub when the levels trend with volume (PLAN Pending, "OBP
+// OBP collective mean against Bühlmann–Straub when the levels trend with volume (PLAN-done.md, "OBP
 // collective mean"; literature §10p; Credibility/ObservedBest.lean, Finding 41).
 // Purpose: decide. Does the observed best predictor's collective mean (weights ∝ uⱼ(1 − zⱼ)²,
 // `Core.obpMean`) or grouping with a common τ² (`group_optimal_contiguous`) pay against BS (b ∝ z)?

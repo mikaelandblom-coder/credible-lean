@@ -1,4 +1,4 @@
-// Decide (studies/PLAN.md, Pending: crossed): the crossed fit's pair weights and its truncation at 0.
+// Decide (studies/PLAN-done.md: crossed levels): the crossed fit's pair weights and its truncation at 0.
 // Pair weights per class: equal, ∝ wᵢ*wⱼ* (Dannenburg's volume weights, with the full noise
 // correction), or inverse variance 1/(E(μ̂ᵢ − μ̂ⱼ)²)² from a first equal-weight pass (no settings); truncation: clip each variance at 0 (Euclidean projection) or least squares on the
 // three pool equations with θ ≥ 0 (projection in their metric). Both are unbiased before truncation

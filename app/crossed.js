@@ -1,6 +1,6 @@
 /*
  * Crossed levels: a table of cells with a row and a column (country × car type), the thesis noise
- * on top, and the fit from the data alone (notes/crossed-2x2.md; studies/PLAN.md, Pending: crossed;
+ * on top, and the fit from the data alone (notes/crossed-2x2.md; studies/PLAN-done.md: crossed levels;
  * Lean: Credibility/Crossed.lean, CrossedEstimation.lean, CrossedMoments.lean).
  *
  * One file, run by the page and by the tests under Node (app/crossed.test.js). Uses engine.js for
@@ -246,7 +246,7 @@
    * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
    * provisional, from studies/crossed-fit.js (1000 draws × 96 worlds: inverse variance + clip is never clearly
    * worse than equal weights and better in 59 worlds; least squares loses to clip in 67): a hypothesis for the
-   * worlds it visits, until the general targets in PLAN.md (Pending: crossed) are proved.
+   * worlds it visits, until the general targets in PLAN-done.md (crossed levels) are proved.
    */
   function fit(data, opts) {
     const o = Object.assign({ weights: 'iv', trunc: 'clip' }, opts || {});

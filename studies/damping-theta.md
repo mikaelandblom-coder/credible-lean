@@ -1,4 +1,6 @@
-Absorbed into paper §7 and §8 on 2026-11-16; kept as the working record.
+The log of all numbered simulation studies (S1–S67, index below). It began as the damping study,
+hence the name, which Lean docstrings cite. Its first part was absorbed into paper §7 and §8 on
+2026-11-16.
 
 # Damping θ and the common-covariance fit: a numerical study
 
@@ -8,8 +10,8 @@ output in `damping-theta.out.txt`). It uses the app engine's world (motor by reg
 1000 draws for every column (common random numbers). Entries: exposure-weighted MSE of the rates
 relative to the floor (100 = best blend with known parameters).
 
-The study findings are numbered S1–S29 (cited as "finding S19" in `studies/` and `app/`), so
-they do not clash with the findings 1–16 of `FINDINGS.md`. Each carries a label for how far it
+The study findings are numbered S1, S2, … (cited as "finding S19" in `studies/` and `app/`), so
+they do not clash with the numbered findings of `FINDINGS.md`. Each carries a label for how far it
 can be trusted if the simulated world changes:
 
 - *[exact]*: follows from a formula in the second moments or a proved theorem; no simulation,
@@ -23,6 +25,81 @@ can be trusted if the simulated world changes:
 A finding with two labels has parts of both kinds; the text says which part is which. Statements
 about the floor (true `K` and `τ²`, fixed weights) are linear rules, so they can always be computed
 exactly (`exact-balance.js`) and should be, rather than simulated.
+
+## Index (S1–S67)
+
+One row per observation: number, script (output in the matching `.out.txt`), headline. Later chats
+continue the numbering here; the full text and its trust label are below.
+
+| S | Script | Headline |
+|---|---|---|
+| S1 | `damping-theta.js` | The best fixed θ grows with the correlation and with the data |
+| S2 | `damping-theta.js` | θ = 1 (no damping) is risky |
+| S3 | `damping-theta.js` | A shrinkage rule from data is near the best fixed θ |
+| S4 | `damping-theta.js` | The common-covariance fit (G1 as stated) breaks down when volumes differ |
+| S5 | `damping-theta.js` | A common *correlation* works best overall |
+| S6 | `damping-theta.js` | At ρ = 0, BS is still slightly better |
+| S7 | `damping-dist.js` | The best fixed θ depends on the distribution |
+| S8 | `damping-dist.js` | The θ̂ rule tracks the best θ under every law |
+| S9 | `damping-dist.js` | The fit can beat the floor under heavy tails |
+| S10 | `damping-dist.js` | Per-region variances are fragile with short histories |
+| S11 | `damping-vhat.js` | It is worse than the normal-theory rule |
+| S12 | `damping-vhat.js` | The fault is the target, not V̂ |
+| S13 | `damping-vhat.js` | Why: Σ̂ from the same years as the means, so GLS cancels the shock (hypothesis H4) |
+| S14 | `damping-vhat.js` | Cross-validation (leave one year out) is no help |
+| S15 | `damping-vhat.js` | A common correlation needs no damping |
+| S16 | `damping-vhat.js` | Correlated BS |
+| S17 | `damping-vhat.js` | Credibility for the variances fixes that |
+| S18 | `msep.js` | Plugging the estimates into the known-parameter MSE understates the error |
+| S19 | `msep.js` | The jackknife MSEP is right on average within about ±15% |
+| S20 | `msep.js` | The estimation part g₃ is 6–50% of the MSEP |
+| S21 | `msep-terms.js` | The cross term C follows the excess kurtosis, not the skewness |
+| S22 | `msep-terms.js` | The jackknife g₃ is good with T = 10 (0.87–1.15 of the true E[d²]) and too large with T = 5 (up to 2.7×) |
+| S23 | `msep-terms.js` | The jackknife MSEP has no C at all |
+| S24 | `sure.js` | SURE-chosen τ² (Xie–Kou–Brown style) is worse than the moment fit everywhere |
+| S25 | `sure.js` | SURE as an error estimate for the moment fit is right on average within −30% / +15% |
+| S26 | `sure.js` | Neither predicts the error of one particular data set |
+| S27 | `vc-balance.js` | Negative b and off-balance are properties of the optimum, not of the fit |
+| S28 | `vc-balance.js` | Forcing exposure balance is not cheap |
+| S29 | `vc-balance.js` | z > 1 is harmless |
+| S30 | `blup-pairs.js` | BLUP on corrBS's `K̂` never loses to corrBS |
+| S31 | `blup-pairs.js` | The blend form is expensive with country structure |
+| S32 | `blup-pairs.js` | BLUP on the full `K̂` is high-variance |
+| S33 | `taper.js` | The taper does not beat damping for the blend |
+| S34 | `taper.js` | Not the rule's fault: the shape does not help even at its best fixed ρ |
+| S35 | `taper.js` | corrBS stays best |
+| S36 | `taper-blup.js` | With many ordered regions the taper pays, through the BLUP |
+| S37 | `taper-blup.js` | With few regions or one common ρ it does not |
+| S38 | `damping-cumulant.js` | The formula is right and the kurtosis term is large |
+| S39 | `damping-cumulant.js` | The covariance-form θ̂ damps more than S3, and that hurts at high ρ |
+| S40 | `damping-cumulant.js` | Why S3 works: its V is the correlation's, not the covariance's |
+| S41 | `damping-corr-exact.js` | Normal theory reproduces S3, and the true cumulants hardly move it |
+| S42 | `damping-corr-exact.js` | With infinite kurtosis the exact rule fails |
+| S43 | `ewma-decay.js` | EWMA loses because it sees only its own cohort |
+| S44 | `ewma-decay.js` | A size-dependent λ comes out of the model for free |
+| S45 | `ewma-decay.js` | Fitted, the plug-in BLUP stays best |
+| S46 | `taper-signal.js` | The signal is safe |
+| S47 | `taper-signal.js` | …but timid where the taper matters |
+| S48 | `taper-signal.js` | The regime matters as much as the method |
+| S49 | `taper-signal.js` | Leave-one-year-out is bolder but noisier, and not better overall |
+| S50 | `regime-check.js` | corrBS's lead holds in every regime |
+| S51 | `regime-check.js` | The thesis's own shape keeps the gaps large |
+| S52 | `regime-check.js` | The BLUP on corrBS's `K̂` beats corrBS wherever ρ ≥ 0.6, in every regime |
+| S53 | `price-formula.js` | The oracle part decides the sign |
+| S54 | `price-formula.js` | Estimating one correlation is free; estimating J variances is not |
+| S55 | `price-formula.js` | Why gaps shrink at high z |
+| S56 | `price-laws.js` | The laws hold for z ≥ 0.6, and reverse below |
+| S57 | `gain-price.js` | The verdict picks the better variances |
+| S58 | `gain-price.js` | The bound decides better than the exact form |
+| S59 | `obp-mean.js` | With known parameters the OBP mean pays only under a trend, and fails with a σⱼ spread |
+| S60 | `obp-mean.js` | Fitted, the OBP mean is a wash |
+| S61 | `obp-mean.js` | Never cut the sorted estimates by SURE |
+| S62 | `obp-mean.js` | A trend is a fixed effect |
+| S63 | `rho-channel.js` | Balance to the cross-fitted level, not to exposure |
+| S64 | `held-out-theta.js` | Choosing θ on a held-out year costs more than it can gain; take θ = 1 |
+| S65 | `vector-lambda.js` | With known `Λ` every correlation pays; fitted, the diagonal wins almost everywhere |
+| S66 | `vector-lambda-damp.js` | Weight the moment `Λ̂` by exposure and damp its off-diagonals |
+| S67 | `vector-lambda-shocks.js` | Model the shocks: corrected `Λ̂` and the joint BLUP |
 
 ## Observations
 

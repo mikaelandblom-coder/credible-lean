@@ -170,6 +170,12 @@ and the blueprint; the others point to it. Don't restate across them.
   the source line via `find/` (no doc-gen4). Deployed to GitHub Pages from
   `main`.
 
+## Studies
+Simulation scripts `studies/*.js`, outputs `*.out.txt`. Numbered observations
+S1, S2, … are logged in `studies/damping-theta.md` (index at its top; add a row
+for each new one). `studies/PLAN.md` is the app plan and its open Pending list;
+finished items move to `studies/PLAN-done.md`.
+
 ## Literature and upstream
 - Fetch open-access copies only (preprints, theses, repositories; never
   library or publisher PDFs): `bash scripts/fetch_paper.sh <url> [name]`

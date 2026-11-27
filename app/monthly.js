@@ -1,6 +1,6 @@
 /*
  * Monthly cohort world with a common AR(1) factor, and its MINQUE fit
- * (notes/card-data.md Steps 5 and 7; studies/PLAN.md, Pending: Henderson III fit).
+ * (notes/card-data.md Steps 5 and 7; studies/PLAN-done.md: Henderson III fit).
  *
  * One file, run by the page and by the tests under Node (app/monthly.test.js).
  * No dependencies. Kept apart as in engine.js (PLAN.md §1, principle 1):
