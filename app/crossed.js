@@ -104,7 +104,8 @@
    * X = 1): d = K⁻¹ℓ + (1 − 1ᵀK⁻¹ℓ) b. For an observed cell ℓ is its column of L; for a cell
    * without data ℓ = α²[same row] + β²[same column] (Crossed.cellCov).
    */
-  function blupD(K, b, ell) {
+  function blupD(K, b, ell) { return blupDSolve(K, b, ell); }
+  function blupDSolve(K, b, ell) {
     const k = E.solve(K, ell), s = sum(k);
     return k.map((x, i) => x + (1 - s) * b[i]);
   }
@@ -119,7 +120,10 @@
    * row, col: of all cells; obs: indices of the observed cells; K over the observed cells.
    */
   function predictors(K, row, col, obs, a2, b2, g2) {
-    const { b, s2 } = gls(K), n = obs.length;
+    // one inverse of K for all cells (n³), not a solve per cell (n⁴); solves only if K is not numerically PD
+    const f = invLogDet(K), Ki = f && f.Ki;
+    const { b, s2 } = Ki ? (() => { const u = Ki.map((r) => sum(r)), t = sum(u); return { b: u.map((x) => x / t), s2: 1 / t }; })() : gls(K), n = obs.length;
+    const blupD = (K, b, ell) => { if (!Ki) return blupDSolve(K, b, ell); const k = mulVec(Ki, ell), c = sum(k); return k.map((x, i) => x + (1 - c) * b[i]); };
     const out = [];
     for (let j = 0; j < row.length; j++) {
       const ell = obs.map((i) => (row[i] === row[j] ? a2 : 0) + (col[i] === col[j] ? b2 : 0) + (i === j ? g2 : 0));
@@ -243,29 +247,64 @@
 
   // ---------------------------------------------------------------- REML on the cell means (studies/runs/crossed-small.js, S70)
 
-  const inv = (A) => A.map((_, k) => E.solve(A, A.map((_, i) => (i === k ? 1 : 0)))); // A symmetric: columns = rows
-  const mul = (A, B) => A.map((r) => B[0].map((_, j) => sum(r.map((x, k) => x * B[k][j]))));
-  const tr = (A) => sum(A.map((r, i) => r[i]));
-
-  /** P = K⁻¹ − K⁻¹11ᵀK⁻¹/1ᵀK⁻¹1, the REML projection (P1 = 0). */
-  function projP(K) {
-    const Ki = inv(K), u = Ki.map((r) => sum(r)), s = sum(u);
-    return Ki.map((r, i) => r.map((x, j) => x - (u[i] * u[j]) / s));
+  /**
+   * K⁻¹ and log|K| from one Cholesky factor K = RRᵀ (n³ in all, against n⁴ for n solves); null if K is not
+   * positive definite.
+   */
+  function invLogDet(K) {
+    const R = E.cholesky(K);
+    if (!R) return null;
+    const n = K.length, Ri = R.map(() => new Array(n).fill(0)); // R⁻¹, lower triangular
+    for (let c = 0; c < n; c++) {
+      Ri[c][c] = 1 / R[c][c];
+      for (let i = c + 1; i < n; i++) {
+        let v = 0;
+        for (let k = c; k < i; k++) v -= R[i][k] * Ri[k][c];
+        Ri[i][c] = v / R[i][i];
+      }
+    }
+    const Ki = K.map(() => new Array(n).fill(0)); // K⁻¹ = R⁻ᵀR⁻¹
+    for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) {
+      let v = 0;
+      for (let k = i; k < n; k++) v += Ri[k][i] * Ri[k][j];
+      Ki[i][j] = v; Ki[j][i] = v;
+    }
+    return { Ki, logDet: 2 * sum(R.map((r, i) => Math.log(r[i]))) };
   }
 
-  /** The restricted log-likelihood −½(log|K| + log 1ᵀK⁻¹1 + mᵀPm), up to a constant; −∞ if K is not positive definite. */
-  function remlLik(K, m) {
-    const Lc = E.cholesky(K);
-    if (!Lc) return -Infinity;
-    const ld = 2 * sum(Lc.map((r, i) => Math.log(r[i]))), u = E.solve(K, K.map(() => 1)), P = projP(K);
-    return -0.5 * (ld + Math.log(sum(u)) + dot(m, mulVec(P, m)));
+  /** P = K⁻¹ − K⁻¹11ᵀK⁻¹/1ᵀK⁻¹1 (the REML projection, P1 = 0) and the restricted log-likelihood
+   *  −½(log|K| + log 1ᵀK⁻¹1 + mᵀPm) up to a constant (−∞ and P = null if K is not positive definite). */
+  function remlParts(K, m) {
+    const f = invLogDet(K);
+    if (!f) return { P: null, lik: -Infinity };
+    const u = f.Ki.map((r) => sum(r)), s = sum(u), P = f.Ki.map((r, i) => r.map((x, j) => x - (u[i] * u[j]) / s));
+    const Pm = mulVec(P, m);
+    return { P, Pm, lik: -0.5 * (f.logDet + Math.log(s) + dot(m, Pm)) };
   }
+  const projP = (K) => remlParts(K, K.map(() => 0)).P;
+  const remlLik = (K, m) => remlParts(K, m).lik;
 
-  /** The REML score ∂ℓ/∂θₖ = −½tr(PGₖ) + ½mᵀPGₖPm and Fisher information ½tr(PGₖPGₗ), θ = (α², β², γ²). */
-  function remlScore(m, Sig, G, th) {
-    const K = Sig.map((r, i) => r.map((x, j) => x + th[0] * G[0][i][j] + th[1] * G[1][i][j] + th[2] * G[2][i][j]));
-    const P = projP(K), Pm = mulVec(P, m), PG = G.map((g) => mul(P, g));
-    return { K, score: G.map((g, k) => -0.5 * tr(PG[k]) + 0.5 * quad(g, Pm)), info: PG.map((a) => PG.map((b) => 0.5 * tr(mul(a, b)))) };
+  /**
+   * The REML score ∂ℓ/∂θₖ = −½tr(PGₖ) + ½mᵀPGₖPm and Fisher information ½tr(PGₖPGₗ), θ = (α², β², γ²), for
+   * Gₖ = [same label] (labels: rows, columns, cells). With Sᵢ_g = Σ_{l in g} Pᵢₗ, (PGₖ)ᵢⱼ = Sᵢ,label(j): every
+   * term costs n², not n³.
+   */
+  function remlScore(parts, labels) {
+    const { P, Pm } = parts, n = P.length;
+    const PG = labels.map((lab) => {
+      const G = Math.max(...lab) + 1, S = P.map((r) => { const a = new Array(G).fill(0); r.forEach((x, l) => { a[lab[l]] += x; }); return a; });
+      return S.map((a) => lab.map((g) => a[g]));
+    });
+    const score = labels.map((lab, k) => {
+      const G = Math.max(...lab) + 1, t = new Array(G).fill(0);
+      Pm.forEach((x, l) => { t[lab[l]] += x; });
+      let tr = 0;
+      for (let i = 0; i < n; i++) tr += PG[k][i][i];
+      return -0.5 * tr + 0.5 * sum(t.map((x) => x * x));
+    });
+    const trAB = (A, B) => { let v = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) v += A[i][j] * B[j][i]; return v; };
+    const info = PG.map((a) => PG.map((b) => 0.5 * trAB(a, b)));
+    return { score, info };
   }
 
   /**
@@ -276,14 +315,14 @@
    * Returns { theta, iter, score, lik, lik0 } (lik0: at theta0).
    */
   function remlTheta(m, Sig, row, col, theta0) {
-    const G = [0, 1, 2].map((k) => levelCov(row, col, k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0));
-    const Kof = (th) => Sig.map((r, i) => r.map((x, j) => x + th[0] * G[0][i][j] + th[1] * G[1][i][j] + th[2] * G[2][i][j]));
-    const scale = tr(Sig) / Sig.length;
-    const lik0 = remlLik(Kof(theta0), m);
-    let th = theta0.map((x) => Math.max(x, 1e-3 * scale)), lik = remlLik(Kof(th), m), it = 0;
-    if (lik0 > lik) { th = theta0.slice(); lik = lik0; }
+    const labels = [row, col, row.map((_, i) => i)];
+    const Kof = (th) => Sig.map((r, i) => r.map((x, j) => x + (row[i] === row[j] ? th[0] : 0) + (col[i] === col[j] ? th[1] : 0) + (i === j ? th[2] : 0)));
+    const scale = sum(Sig.map((r, i) => r[i])) / Sig.length;
+    const p0 = remlParts(Kof(theta0), m), lik0 = p0.lik;
+    let th = theta0.map((x) => Math.max(x, 1e-3 * scale)), cur = remlParts(Kof(th), m), it = 0;
+    if (lik0 > cur.lik) { th = theta0.slice(); cur = p0; }
     for (; it < 50; it++) {
-      const { score, info } = remlScore(m, Sig, G, th);
+      const { score, info } = remlScore(cur, labels);
       const free = [0, 1, 2].filter((k) => th[k] > 0 || score[k] > 0);
       if (!free.length) break;
       let step;
@@ -292,12 +331,12 @@
       for (let h = 0; h < 30; h++, t /= 2) {
         const nt = th.slice();
         free.forEach((k, i) => { nt[k] = Math.max(0, th[k] + t * step[i]); });
-        const nl = remlLik(Kof(nt), m);
-        if (nl >= lik - 1e-12) { done = Math.abs(nl - lik) < 1e-10; th = nt; lik = nl; moved = true; break; }
+        const np = remlParts(Kof(nt), m);
+        if (np.lik >= cur.lik - 1e-12) { done = Math.abs(np.lik - cur.lik) < 1e-10; th = nt; cur = np; moved = true; break; }
       }
       if (!moved || done) break;
     }
-    return { theta: th, iter: it, score: remlScore(m, Sig, G, th).score, lik, lik0 };
+    return { theta: th, iter: it, score: cur.P ? remlScore(cur, labels).score : [NaN, NaN, NaN], lik: cur.lik, lik0 };
   }
 
   /**

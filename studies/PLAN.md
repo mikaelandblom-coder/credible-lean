@@ -63,6 +63,12 @@ Rules (helpers in `studies/runs/lib.js`):
 5. **Say where the ranges come from.** Engine worlds: anchored by the thesis regime above. The
    monthly card world (`app/monthly.js`: γ, s², w0) has no anchor yet; its ratios s²/(wγ) and φ should
    be set from the owner's card data (summary moments only) before its studies are cited as practice.
+6. **Keep runs short (2026-11-27, S71: 27 min → 48 s).** Run worlds in parallel on all cores
+   (`lib.mapWorlds`, heaviest first; `lib.args` gives `--jobs`), rerun only the fits that changed (`--only=a,b`:
+   same seed, so the other rows are unchanged), and profile before a long run (`node --prof`). In the
+   engines, factor a matrix once per fit and reuse it, never one solve per column or per cell (n³, not n⁴).
+   Write long runs' output to the scratchpad and copy it in when done. Count a paired difference as a
+   win or loss only beyond float noise (`lib.sig(d, tol)`): identical fits differ by ~10⁻¹⁶.
 
 ## 2. What the user sees
 
