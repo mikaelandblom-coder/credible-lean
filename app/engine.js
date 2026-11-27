@@ -513,6 +513,7 @@
     taperSignal: 'taper when Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²] < Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]⁺, R = ρ̂^d, V_d = (1 − r̄_d²)²/(T − 1)',
     gainPrice: 'region variances when (MSE on K̂ with one pooled σ̂² − MSE on K̂) / MSE on K̂ > Σⱼ wⱼ* ẑⱼ(1 − ẑⱼ)·2/(T − 1)·MSEⱼ / Σⱼ wⱼ* MSEⱼ',
     balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
+    balanceCf: 'rateⱼ + D,  D = L̂cf − Σᵢ wᵢ* rateᵢ/w**,  L̂cf = Σₛ πₛ Σᵢ c̄ᵢ⁽ˢ⁾ Xᵢₛ,  c̄⁽ˢ⁾ = Σⱼ (wⱼ*/w**) d̂⁽ʲ⁾ from the pooled BLUP fitted without year s',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
   };
 
@@ -1270,13 +1271,54 @@
    * to 1, so the plug-in MSE stays exact on K̂. The common shift is the best balanced correction when
    * cov(rateⱼ − μⱼ, D) is the same for every region (Core.commonShift_optimal).
    */
-  function balanceFit(f, data) {
+  /**
+   * The cross-fitted portfolio level (Finding 35, S63): for each year s, the pooled BLUP's weights from
+   * corrBS's parameters fitted without year s (ρ̂, σ̂² from residuals, τ̂² from the other years' means),
+   * on the full design; their exposure-weighted row c̄⁽ˢ⁾ applied to year s's cells, summed with the year
+   * shares πₛ. With year shares common to the regions its bias is the level channel Σₛ πₛ Σᵢ cov(c̄ᵢ⁽ˢ⁾, μᵢ)
+   * only, any distribution (Core.Estimates.integral_crossFit_sub), 0 when the weights are uncorrelated
+   * with the levels (integral_crossFit_sub_eq_zero). Null when the year shares differ by region (the
+   * identity is then not exact) or T < 3. `cbar` is Σₛ πₛ c̄⁽ˢ⁾ (sums to 1), for the first-order weights.
+   */
+  const cfCache = new WeakMap();
+  function crossFitLevel(data) {
+    if (cfCache.has(data)) return cfCache.get(data);
+    const J = data.X.length, T = data.X[0].length, wt = data.w.map(sum), wall = sum(wt);
+    const pi = Array.from({ length: T }, (_, t) => sum(data.w.map((row) => row[t])) / wall);
+    const common = data.w.every((row, i) => row.every((x, t) => Math.abs(x / wt[i] - pi[t]) <= 1e-9 * Math.max(pi[t], 1e-300)));
+    let res = null;
+    if (common && T >= 3) {
+      const S = data.w.map((ri) => data.w.map((rj) => sum(ri.map((x, t) => Math.sqrt(x * rj[t])))));
+      let level = 0; const cbar = new Array(J).fill(0);
+      for (let s = 0; s < T; s++) {
+        const sub = { w: data.w.map((row) => row.filter((_, t) => t !== s)), X: data.X.map((row) => row.filter((_, t) => t !== s)) };
+        const p = vcEstimate(sub, { pooled: true }), sd = p.s2.map(Math.sqrt);
+        const K = S.map((row, i) => row.map((x, j) => (i === j ? p.s2[i] / wt[i] + p.t2 : p.rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
+        const c = new Array(J).fill(0);
+        for (let j = 0; j < J; j++) blupWeight(K, p.t2, j).forEach((x, i) => { c[i] += wt[j] / wall * x; });
+        level += pi[s] * sum(c.map((x, i) => x * data.X[i][s]));
+        c.forEach((x, i) => { cbar[i] += pi[s] * x; });
+      }
+      res = { level, cbar, pi };
+    }
+    cfCache.set(data, res);
+    return res;
+  }
+
+  /**
+   * opts.target 'crossFit' (the page's switch since 2026-11-27, owner's decision on S63): shift to the
+   * cross-fitted level L̂cf instead of the exposures; falls back to exposure balance when crossFitLevel is
+   * null. Then the portfolio level is L̂cf in every draw, so its bias is the cross-fit's level channel
+   * whatever the fit. The weights shown are first order (c̄ in place of the year-specific c̄⁽ˢ⁾).
+   */
+  function balanceFit(f, data, opts) {
     const { wt, m } = cohortMeans(data), wall = sum(wt);
-    const D = sum(wt.map((x, j) => x * (m[j] - f.rates[j]))) / wall;
-    const out = Object.assign({}, f, { rates: f.rates.map((x) => x + D), shift: D, balanced: true });
+    const cf = opts && opts.target === 'crossFit' ? crossFitLevel(data) : null;
+    const D = cf ? cf.level - sum(wt.map((x, j) => x * f.rates[j])) / wall : sum(wt.map((x, j) => x * (m[j] - f.rates[j]))) / wall;
+    const out = Object.assign({}, f, { rates: f.rates.map((x) => x + D), shift: D, balanced: true, balanceTarget: cf ? 'crossFit' : 'exposure' });
     const W = weightsOf(f);
     if (W) {
-      const g = wt.map((x, i) => (x - sum(W.map((d, k) => wt[k] * d[i]))) / wall);
+      const g = wt.map((x, i) => ((cf ? cf.cbar[i] * wall : x) - sum(W.map((d, k) => wt[k] * d[i]))) / wall);
       out.weights = W.map((d) => d.map((x, i) => x + g[i]));
       out.c = out.weights.map((d, j) => d[j]);
       if (f.K) out.levelMSE = out.weights.map((d, j) => linMse(f.K, f.tau2, j, d));
@@ -1285,17 +1327,25 @@
     out.flags = Object.assign({}, f.flags, { offBalance: false });
     out.warnings = (f.warnings || []).filter(off);
     out.notes = (f.notes || []).filter(off);
-    out.steps = (f.steps || []).concat([Object.assign({}, BALANCE_STEP, { values: [D], note: `D = ${D >= 0 ? '+' : '−'}${(100 * Math.abs(D)).toFixed(2)}% of the tariff; ` + BALANCE_STEP.note })]);
+    if (cf) out.weightsApprox = true;
+    const st = cf ? BALANCE_CF_STEP : BALANCE_STEP, fb = opts && opts.target === 'crossFit' && !cf ? 'cross-fitted level not available (year shares differ by region, or T < 3): exposure balance instead; ' : '';
+    out.steps = (f.steps || []).concat([Object.assign({}, st, { values: [D], note: `D = ${D >= 0 ? '+' : '−'}${(100 * Math.abs(D)).toFixed(2)}% of the tariff; ` + fb + st.note })]);
     return out;
   }
 
   /** The BLUP on corrBS's K̂, balanced (kept for the tests; on the page it is BLUP with the switch on). */
   function fitBLUPBal(data) { return balanceFit(fitBLUP(data), data); }
 
-  /** A model's fit, balanced when opts.balance (models already balanced on exposures are left alone). */
+  /** opts.balance: true (exposures) or 'crossFit' → balanceFit's target. */
+  const balOpts = (opts) => ({ target: opts && opts.balance === 'crossFit' ? 'crossFit' : 'exposure' });
+  /**
+   * A model's fit, balanced when opts.balance. Models already balanced on exposures (BS, own, pool) are
+   * left alone under either target: their portfolio level is unbiased in every world already.
+   */
+  const needsBal = (id, opts) => !!(opts && opts.balance) && !MODELS[id].balanced;
   function fitWith(id, data, opts) {
     const f = MODELS[id].fit(data);
-    return opts && opts.balance && !MODELS[id].balanced ? balanceFit(f, data) : f;
+    return needsBal(id, opts) ? balanceFit(f, data, balOpts(opts)) : f;
   }
 
   /**
@@ -1442,12 +1492,16 @@
   /** The balance step the switch appends (any model not already balanced). */
   const BALANCE_STEP = { name: 'balance', formula: F.balance, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_portfolio_sub_of_balanced', note: 'balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw, so the portfolio level is unbiased in every world (Finding 35); with skewed claims the unbalanced rates are too low on average. The best balanced correction by a common term when cov(rateⱼ − μⱼ, D) is equal for all regions (Core.commonShift_optimal); under strong correlation it costs accuracy' };
 
+  /** The cross-fitted balance step (the switch's target since 2026-11-27). */
+  const BALANCE_CF_STEP = { name: 'balance', formula: F.balanceCf, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_crossFit_sub_eq_zero', note: 'one common shift to the cross-fitted portfolio level: each year priced with weights fitted without it, so its noise cannot steer its own weight (Finding 35). With year shares common to the regions the level\'s bias is only the levels\' channel, any distribution (Core.Estimates.integral_crossFit_sub), 0 when the weights are uncorrelated with the levels (ρ̂, σ̂² from residuals); τ̂² from the means keeps a small part. Studies S63: unbiased in ten worlds, at most 1 MSE point dearer than exposure balance without correlation and 2–46 points cheaper under ρ = 0.6. Not balanced on exposures; plug-in MSE first order (year weights averaged)' };
+
   /** A recipe's steps, with the balance step before the premium when opts.balance. */
   function recipeSteps(id, opts) {
     const br = opts && opts.branch, st = br ? RECIPES[id].steps.filter((x) => !x.branch || x.branch === br) : RECIPES[id].steps;
-    if (!(opts && opts.balance) || MODELS[id].balanced) return st;
+    if (!needsBal(id, opts)) return st;
+    const B = opts.balance === 'crossFit' ? BALANCE_CF_STEP : BALANCE_STEP;
     const k = st.findIndex((x) => x.name === 'premium');
-    return k < 0 ? st.concat([BALANCE_STEP]) : st.slice(0, k).concat([BALANCE_STEP], st.slice(k));
+    return k < 0 ? st.concat([B]) : st.slice(0, k).concat([B], st.slice(k));
   }
   function corrSteps(common, taper) {
     const steps = [
@@ -1593,7 +1647,7 @@
    * region and exposure-weighted (`own`, `other`, `ownW`, `otherW`).
    */
   function simulate(world, ids, n, seed, nextFactor, opts) {
-    const bal = !!(opts && opts.balance);
+    const bal = !!(opts && opts.balance), bo = balOpts(opts);
     const r = rng(seed), rn = rng((seed ^ 0x5bd1e995) >>> 0), fl = floorBlend(world);
     const Dstar = fl.K.map((_, j) => blupWeight(fl.K, world.truth.tau2, j));
     const wt = world.w.map(sum), wall = sum(wt);
@@ -1616,14 +1670,14 @@
       const A = br.map((x, j) => x - levels[j]);
       mm.forEach((x, i) => { mSum[i] += x; });
       for (const id of ids) {
-        const raw = MODELS[id].fit(data), f = bal && !MODELS[id].balanced ? balanceFit(raw, data) : raw;
+        const raw = MODELS[id].fit(data), f = needsBal(id, opts) ? balanceFit(raw, data, bo) : raw;
         const e = weightedSE(data, f.rates, levels), g = fe(f.rates, Y), er = weightedSE(data, raw.rates, levels);
         acc[id].rs += er; acc[id].rss += er * er;
         acc[id].s += e; acc[id].ss += e * e; acc[id].f += g; acc[id].ff += g * g; if (f.warnings.length) acc[id].warn++;
         const B = f.rates.map((x, j) => x - br[j]), b2 = wsum(B.map((x) => x * x)), c2 = 2 * wsum(B.map((x, j) => A[j] * x));
         acc[id].b += b2; acc[id].bb += b2 * b2; acc[id].c += c2; acc[id].cc += c2 * c2;
         addBias(acc[id], f.rates, levels);
-        const W = weightsOf(f);
+        const W = f.weightsApprox ? null : weightsOf(f);
         if (W) { cd[id].n++; W.forEach((d, j) => d.forEach((x, i) => { cd[id].d[j][i] += x; cd[id].dm[j][i] += x * mm[i]; })); }
         for (const k in f.flags) if (f.flags[k]) {
           acc[id].flags[k] = (acc[id].flags[k] || 0) + 1;
@@ -1645,7 +1699,7 @@
       for (const k in acc[id].expected) expected[k] = acc[id].expected[k] / n;
       out[id] = { mse: mean, se: Math.sqrt(v / n), fmse: fm, fse: Math.sqrt(fv / n), warnShare: acc[id].warn / n, flags, expected };
       const se = (x, xx) => Math.sqrt(Math.max(xx / n - (x / n) ** 2, 0) / n);
-      if (bal && ids.includes(id) && !MODELS[id].balanced) out[id].raw = { mse: acc[id].rs / n, se: se(acc[id].rs, acc[id].rss) };
+      if (bal && ids.includes(id) && needsBal(id, opts)) out[id].raw = { mse: acc[id].rs / n, se: se(acc[id].rs, acc[id].rss) };
       if (id !== 'floor') out[id].bias = { mean: acc[id].m / n, se: se(acc[id].m, acc[id].mm), region: acc[id].rm.map((x) => x / n), regionSe: acc[id].rm.map((x, j) => se(x, acc[id].rmm[j])) };
       if (ids.includes(id)) {
         const bm = acc[id].b / n, cm = acc[id].c / n;
@@ -1967,7 +2021,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, crossFitLevel, BALANCE_CF_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate, SHRINK_W0,
   };

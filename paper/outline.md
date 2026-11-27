@@ -114,9 +114,6 @@ may need a paragraph.)
   pair covariance table; balanced table: equal weights exact; normal noise: inverse variance ∝ (θ + nₚ)⁻², equal for
   strong effects, large cells favoured for weak ones. A sentence in "Fitting crossed levels" replacing the
   simulation ranking by this explanation.
-- [ ] Cross-fitted rate's bias proved (2026-11-26, handbook `res:randomWeights`): with year weights common to the
-  regions, cross-fitting leaves only the level channel `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)`; a sentence where Finding 35's
-  remedies are discussed, once the owner decides on balancing to the cross-fitted level.
 - *Done 2026-11-26:* crossed levels moved from "Open directions" to a result: paragraph "Crossed
   levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
   directions" keeps "Fitting crossed levels" (now: choice of pair weights, simulation, small

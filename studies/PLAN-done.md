@@ -381,3 +381,24 @@ what was built, studied and proved. Order as they stood in the plan.
   Two side results: grouping by cuts of the sorted estimates chosen by SURE is 2–74% worse than BS (S61,
   see "Grouping cohorts" above), and a volume trend as a design column `[1, log w]` (BLUP) gains 3–35% at a
   trend ≥ τ for a price of 0.5–12% without one (S62).
+- [x] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the
+  pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
+  needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:
+  leave-one-year-out cross-fitting of `ρ̂`, `σ̂²` (weights from the other years), exactly unbiased in
+  that channel for any distribution, without forcing exposure balance. *Studied 2026-11-26* (S63,
+  `studies/runs/rho-channel.js`, 4000 draws): the cross-fit is unbiased in all ten worlds but costs 4–17 points as
+  a predictor; the BLUP shifted to the cross-fitted portfolio level is unbiased and costs ≤ 1 point against
+  exposure balance without correlation and 2–46 points less with it (ρ = 0.6). `ρ̂` is about half the channel.
+  **Owner to decide:** let the balance switch balance to the cross-fitted level (`balanceFit` with a target
+  level; recipe step, Node test). Lean first: the cross-fitted level's bias is the level channel only
+  (S63 "Consequence", a corollary of `Core.Estimates.integral_randomLin_sub`; **lean** chat).
+  *Lean done 2026-11-26:* `Core.Estimates.integral_crossFit_sub` (common year weights, weights independent of
+  their year's noise: bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)`, any distribution). The app's proportional volumes give
+  common year weights, so the identity applies there; only the owner's decision remains. *2026-11-27:*
+  `integral_crossFit_sub_eq_zero`: exactly unbiased when the cross-fitted weights are uncorrelated with the
+  levels (residual-only `ρ̂`, `σ̂²`, `residual_eq_noise`); a `τ̂²` from all years keeps a level channel.
+  *Built 2026-11-27 (owner's decision):* `balanceFit(f, data, { target: 'crossFit' })` with `crossFitLevel`
+  (pooled BLUP refitted without each year; exposure balance when year shares differ by region or `T < 3`); the
+  page's switch uses it; models already exposure-balanced are left alone; step `BALANCE_CF_STEP`; Node test
+  "Balance to the cross-fitted level" (exact level, common shift, fallback; unbiased and cheaper than exposure
+  balance at ρ = 0.6, T = 5). Plug-in MSE of the shifted rates is first order (year weights averaged).

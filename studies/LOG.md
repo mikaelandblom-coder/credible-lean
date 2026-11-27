@@ -766,7 +766,7 @@ visible at β = 0. Parked by the owner (2026-11-25): a size trend is niche, tari
     (its `σ̂ⱼ²` channel). The region-specific cross-fit alone over-corrects (+0.10 default, +0.33 `T = 4`),
     likely the level channel (`τ̂²` from the other years' means, skewed levels); not checked.
 
-**Consequence (candidate, owner to decide).** The balance switch could balance to the cross-fitted portfolio
+**Consequence (decided 2026-11-27: in the app, `balanceFit` with `target: 'crossFit'`, test "Balance to the cross-fitted level").** The balance switch could balance to the cross-fitted portfolio
 level instead of the exposures. General target before building it (CLAUDE.md, general results first): with
 year weights `πₛ` common to the regions (proportional volumes, as in the app) and weights `d̂⁽ˢ⁾` summing to 1
 and independent of year `s`'s noise, `Σₛ πₛ d̂⁽ˢ⁾ᵀXₛ` has bias `Σₛ πₛ Σᵢ cov(d̂ᵢ⁽ˢ⁾, μᵢ)` (levels only;

@@ -1092,3 +1092,32 @@ test('shrinking noise shape (params.shrink): skewness ∝ 1/√w, excess kurtosi
   let ku = 0; for (let k = 0; k < 300; k++) ku += E.noiseShape(E.draw(world, r).data).kurt;
   assert.ok(ku / 300 > 2, `without shrink the shape stays (kurtosis 3): ${ku / 300}`);
 });
+
+test('Balance to the cross-fitted level (Finding 35, S63; Core.Estimates.integral_crossFit_sub): exact level, common shift, fallback, unbiased and cheaper than exposure balance under correlation', () => {
+  const world = E.makeWorld({ rho: 0.6, T: 5 }), { data } = E.draw(world, E.rng(5)), wt = data.w.map(sum), wall = sum(wt);
+  const cf = E.crossFitLevel(data);
+  close(sum(cf.cbar), 1, 1e-12, 'c̄ sums to 1');
+  close(sum(cf.pi), 1, 1e-12, 'year shares');
+  const shifted = { w: data.w, X: data.X.map((row) => row.map((x) => x + 0.3)) };
+  close(E.crossFitLevel(shifted).level, cf.level + 0.3, 1e-10, 'translation equivariant');
+  for (const id of Object.keys(E.MODELS)) {
+    const raw = E.MODELS[id].fit(data), f = E.fitWith(id, data, { balance: 'crossFit' });
+    if (E.MODELS[id].balanced) { assert.deepEqual(f.rates, raw.rates, `${id} left alone`); continue; }
+    close(sum(wt.map((x, j) => x * f.rates[j])) / wall, cf.level, 1e-10, `${id} at the cross-fitted level`);
+    f.rates.forEach((x, j) => close(x, raw.rates[j] + f.shift, 1e-12, `${id} common shift`));
+    assert.equal(f.balanceTarget, 'crossFit');
+    if (f.weights) f.weights.forEach((d) => close(sum(d), 1, 1e-12, `${id} weights sum to 1`));
+    assert.equal(f.steps[f.steps.length - 1].lean, E.BALANCE_CF_STEP.lean);
+  }
+  assert.ok(E.recipeSteps('blup', { balance: 'crossFit' }).some((s) => s === E.BALANCE_CF_STEP), 'recipe step');
+  const odd = { w: data.w.map((row, i) => (i === 0 ? row.map((x, t) => x * (1 + 0.1 * t)) : row)), X: data.X };
+  assert.equal(E.crossFitLevel(odd), null, 'year shares differ: no cross-fitted level');
+  const fb = E.fitWith('blup', odd, { balance: 'crossFit' }), m = E.cohortMeans(odd).m, wo = odd.w.map(sum);
+  assert.equal(fb.balanceTarget, 'exposure');
+  close(sum(wo.map((x, j) => x * fb.rates[j])), sum(wo.map((x, j) => x * m[j])), 1e-10, 'fallback: exposure balance');
+  const n = 1200, raw = E.simulate(world, ['blup'], n, 31), ex = E.simulate(world, ['blup'], n, 31, 1, { balance: true }), c = E.simulate(world, ['blup'], n, 31, 1, { balance: 'crossFit' });
+  assert.ok(raw.blup.bias.mean < -4 * raw.blup.bias.se, `unbalanced prices low: ${raw.blup.bias.mean}`);
+  assert.ok(Math.abs(c.blup.bias.mean) < 4 * c.blup.bias.se, `cross-fitted unbiased: ${c.blup.bias.mean} ± ${c.blup.bias.se}`);
+  assert.ok(c.blup.mse < ex.blup.mse, `cheaper than exposure balance: ${c.blup.mse} vs ${ex.blup.mse}`);
+  assert.equal(c.blup.covDiag, undefined, 'first-order weights: no covariance diagnosis');
+});

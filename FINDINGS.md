@@ -598,9 +598,11 @@ Gaps, extra hypotheses and new results found while formalizing.
    promises unbiasedness for known `K` only. Remedies in the app (`blupPool`, the balance switch, on by default;
    `studies/PLAN.md`): without correlation the common shift to exposure balance removes the bias at
    no MSE cost, and the pooled `σ̂²` also removes it but gives up real variance differences; under
-   correlation the shift costs about 20% more MSE, and the pooled `σ̂²` leaves the `ρ̂` channel. Candidate (S63, simulated, not yet in the app): shift to the leave-one-year-out cross-fitted
-   portfolio level instead of the exposure-balanced one: unbiased in every world studied, and under `ρ = 0.6` 2–46 MSE points
-   cheaper than exposure balance.
+   correlation the shift costs about 20% more MSE, and the pooled `σ̂²` leaves the `ρ̂` channel. Adopted 2026-11-27 (owner; S63, app's balance switch):
+   shift to the leave-one-year-out cross-fitted portfolio level instead of the exposure-balanced one: unbiased in every
+   world studied, and under `ρ = 0.6` 2–46 MSE points cheaper than exposure balance; its bias is the level channel only
+   (`Core.Estimates.integral_crossFit_sub`, 0 for weights blind to the levels: `integral_crossFit_sub_eq_zero`). Exposure
+   balance stays the fallback when year shares differ by region.
 36. **Clipping `z` to `[0, 1]` is harmless exactly when the best `z` lies in `[0, 1]` (new; PLAN G3;
    Lean: `BlendMoments.errVar_clipZ_le_iff`, `errVar_clipZ_le`, `errVar_clipZ_bestZ`).** The thesis
    clips in eq. (34) without saying what it costs. The error variance is the parabola

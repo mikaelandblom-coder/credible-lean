@@ -196,7 +196,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       <div><label for="m-ref">Reference</label><select id="m-ref"></select></div>
     </div>
     <div class="feature">
-      <input type="checkbox" id="f-balance" checked><label for="f-balance">Balance the total premium <span class="sub">(shift every rate by the same amount so the rates match the exposure-weighted region means: no under-pricing of the portfolio, at some accuracy cost under strong correlation; Finding 35)</span></label>
+      <input type="checkbox" id="f-balance" checked><label for="f-balance">Balance the total premium <span class="sub">(shift every rate by the same amount so the portfolio level is the cross-fitted one, each year priced with weights fitted without it: no under-pricing of the portfolio, and under correlation far cheaper than matching the exposure-weighted means; Finding 35, studies S63)</span></label>
     </div>
     <div class="row">
       <label for="s-next">Next year's volume <span class="sub">(× this year's mean wⱼ*/T, for the premium)</span></label><input type="range" id="s-next" min="0.25" max="3" step="0.05" value="1"><output id="o-next"></output>
@@ -381,6 +381,8 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   showRho();
   rhoBox.addEventListener('change', () => { state.rhoOn = rhoBox.checked; showRho(); update(); });
   rhoIn.addEventListener('input', () => { state.rhoVal = +rhoIn.value; showRho(); update(); });
+  // The switch balances to the cross-fitted portfolio level (owner, 2026-11-27; S63); the engine falls back to exposures when it can't.
+  const balTarget = () => (state.balance ? 'crossFit' : false);
   $('f-balance').addEventListener('change', (e) => { state.balance = e.target.checked; update(); });
   // Normal noise and Lomax claims exclude each other: ticking one unticks the other.
   const lomaxBox = $('f-lomax'), lomaxIn = $('s-lomax'), lomaxOut = $('o-lomax');
@@ -568,7 +570,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const r = E.rng(state.seed);
     const { levels, data } = E.draw(world, r);
     lastData = data;
-    const bo = { balance: state.balance }, fit = E.fitWith(state.fit, data, bo), ref = E.fitWith(state.ref, data, bo);
+    const bo = { balance: balTarget() }, fit = E.fitWith(state.fit, data, bo), ref = E.fitWith(state.ref, data, bo);
     // Typical error (jackknife MSEP) of the first slot whose model has one: an average-case error, not an interval.
     // It is the unbalanced fit's: with the switch on, a balanced slot has none (its premium uses the exact plug-in MSE).
     const hasJk = (id, f) => E.MODELS[id].msep && !f.balanced;
@@ -725,7 +727,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { state.recipeOf = b.dataset.k; renderRecipe(); }));
     const id = state[state.recipeOf], r = E.RECIPES[id];
     const notation = E.recipeNotation(id).map((n) => `<div><span class="sym">${esc(n.sym)}</span>${esc(n.text)}</div>`).join('');
-    const steps = E.recipeSteps(id, { balance: state.balance }).map((s) => {
+    const steps = E.recipeSteps(id, { balance: balTarget() }).map((s) => {
       const badge = s.badge === 'proved'
         ? `<span class="badge proved">proved</span>`
         : `<span class="badge open">not proved yet${s.gap ? ' · ' + s.gap : ''}</span>`;
@@ -741,7 +743,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       <ol class="recipe">${steps}</ol>`;
   }
   $('b-copy').addEventListener('click', () => {
-    const text = E.recipeText(state[state.recipeOf], { balance: state.balance }), btn = $('b-copy');
+    const text = E.recipeText(state[state.recipeOf], { balance: balTarget() }), btn = $('b-copy');
     const done = (ok) => { btn.textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { btn.textContent = 'Copy as text'; }, 1500); };
     const fallback = () => {
       const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
@@ -762,7 +764,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     $('headline').style.opacity = 0.5;
     const step = () => {
       if (my !== job) return;
-      parts.push(E.simulate(world, ids, CHUNK, (state.seed * 7919 + done + 1) >>> 0, state.next, { balance: state.balance }));
+      parts.push(E.simulate(world, ids, CHUNK, (state.seed * 7919 + done + 1) >>> 0, state.next, { balance: balTarget() }));
       done += CHUNK;
       if (done < N) { setTimeout(step, 0); return; }
       const merged = {};
@@ -866,11 +868,12 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     const cdg = res[state.fit].covDiag, sg = (x) => `${x >= 0 ? '+' : '−'}${pct(Math.abs(x), 2)}`;
     const covLine = cdg ? ` Behind the fit's bias, Σᵢ cov(d̂ᵢ, μ̂ᵢ) over the draws: own weight ${sg(cdg.ownW)}, the other regions' weights ${sg(cdg.otherW)}, total ${sg(cdg.ownW + cdg.otherW)} (in expectation the bias, for any weights summing to 1 <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Estimates.integral_randomLin_sub" target="_blank" rel="noopener" style="color:var(--accent)">integral_randomLin_sub</a>; 0 for a balanced fit <a href="../find/#doc/Credibility.Core.Estimates.integral_portfolio_sub_of_balanced" target="_blank" rel="noopener" style="color:var(--accent)">integral_portfolio_sub_of_balanced</a>).` : '';
     const rawF = res[state.fit].raw, costLine = rawF ? ` <b>Cost of balancing</b> the fit: mean squared error ${sg((res[state.fit].mse - rawF.mse) / rawF.mse).replace('%', '%')} against the unbalanced fit; untick “Balance the total premium” to compare its bias.` : '';
+    const cfText = 'Shifted to the cross-fitted portfolio level in every draw: each year priced with weights fitted without it, so the level carries only the levels\' channel, 0 when the weights are uncorrelated with the levels <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Estimates.integral_crossFit_sub_eq_zero" target="_blank" rel="noopener" style="color:var(--accent)">integral_crossFit_sub_eq_zero</a> (Finding 35, S63). ';
     $('bias-many').innerHTML = `<b>Bias</b> (mean error of the rates, exposure-weighted, ±2 SE): fit ${bi(state.fit)}, reference ${bi(state.ref)}, oracle ${bi('floorBlup')}; the fit's most biased region is ${worst[1] + 1} at ${worst[0] >= 0 ? '+' : '−'}${pct(Math.abs(worst[0]), 2)}. ` +
       (state.fit === 'blup'
-        ? `${rawF ? 'Balanced on exposures in every draw, so the portfolio level is unbiased in every world (Finding 35). ' : ''}This fit is even and translation invariant, so it is unbiased under symmetric noise <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric" target="_blank" rel="noopener" style="color:var(--accent)">blup_plugIn_unbiased_of_symmetric</a>` +
+        ? `${rawF ? cfText : ''}This fit is even and translation invariant, so it is unbiased under symmetric noise <span class="badge proved">proved</span> <a href="../find/#doc/Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric" target="_blank" rel="noopener" style="color:var(--accent)">blup_plugIn_unbiased_of_symmetric</a>` +
           (state.normal ? '.' : `; the noise here is skewed, which the theorem does not cover${off ? ': it prices low here, likely because a region with high noise draws has both a high mean and a high σ̂ⱼ², so it gets less weight' : ''}. Tick “Normal noise” to compare.`)
-        : `${res[state.fit].raw || E.MODELS[state.fit].balanced ? 'Balanced on exposures in every draw, so the portfolio level is unbiased in every world (Finding 35). ' : ''}The oracle is unbiased in any world (linear, weights summing to 1).${off ? ' Here the fit is biased: watch out for under-pricing the portfolio.' : ''}`) + covLine + costLine;
+        : `${res[state.fit].raw ? cfText : E.MODELS[state.fit].balanced ? 'Balanced on exposures in every draw, so the portfolio level is unbiased in every world (Finding 35). ' : ''}The oracle is unbiased in any world (linear, weights summing to 1).${off ? ' Here the fit is biased: watch out for under-pricing the portfolio.' : ''}`) + covLine + costLine;
     $('n-draws').textContent = N.toLocaleString();
   }
 

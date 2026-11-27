@@ -728,7 +728,7 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   \lean{Credibility.Core.Estimates.integral_crossFit_sub_eq_zero}
   \lean{Credibility.Core.Estimates.residual_eq_noise}
 \end{result}
-\use Fixed weights never bias; to protect the total, shift all rates (Result~\ref{res:commonShift}). Cross-fitting removes the noise channel; region-specific year weights break exactness.
+\use Fixed weights never bias; to protect the total, shift all rates to the cross-fitted level (S63: far cheaper than exposure balance under correlation), or to exposure balance (Result~\ref{res:commonShift}) when year shares differ by region, which breaks exactness.
 \begin{caveat}
   Skewed claims with region-specific variances price the portfolio 0.4--2.4\% too low; a pooled $\hat\sigma^2$ or the shift removes it.
 \end{caveat}
@@ -1813,7 +1813,7 @@ which has the details. The paper explains each where it belongs.
   \lean{Credibility.Factor.tableK_posDef_iff}
   \lean{Credibility.Factor.tableK_counter_phi}
   \lean{Credibility.Factor.tableK_counter_month}
-  \item[{35. Skewed claims and per-cohort variances under-price (simulated).}] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio.
+  \item[{35. Skewed claims and per-cohort variances under-price (simulated).}] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio, cheapest by a shift to the cross-fitted level (S63).
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
   \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$.

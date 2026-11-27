@@ -1316,7 +1316,13 @@ value is rough (\file{studies/runs/skew-bias.js}). Two remedies need no estimate
 it. A pooled variance removes most of it. Balance removes it at portfolio level in
 every world: fitted rates that reproduce the exposure-weighted total of the cohort
 estimates are unbiased for the portfolio however they were built (Section~\ref{sec:balance}).
-A single cohort can still be priced too low.
+A single cohort can still be priced too low. Under correlation that balance is expensive, and a
+cheaper target serves the same purpose: shift all rates to the \emph{cross-fitted} portfolio
+level, each year priced with weights fitted without it, so a year's noise cannot steer its own
+weight. With year shares common to the cohorts its bias runs only through the levels, and is
+zero when the weights come from residuals alone (\hb{res:randomWeights}{30}). In the app's
+worlds it was unbiased, cost at most one point more than exposure balance without correlation
+and 2--46 points less under $\rho = 0.6$ (S63); the app's balance switch uses it.
 
 Two data-only estimates of the fitted error were tried. A jackknife that
 re-fits the parameters with one year deleted (Jiang, Lahiri and Wan 2002) is
