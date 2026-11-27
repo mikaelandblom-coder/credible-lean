@@ -624,6 +624,7 @@ lemma cov_common [IsProbabilityMeasure P] [DecidableEq ι] (s : J → Finset ι)
   rw [covariance_const_mul_right, hZZ]
   ring
 
+omit [MeasurableSpace Ω] in
 /-- A component common to all observations of a cohort passes through weights summing to one:
 `Σₜ aₜ(Xₜ + C) = Σₜ aₜXₜ + C`. -/
 lemma cohortEst_eq {T : Type*} (s : Finset T) {a : T → ℝ} (ha : ∑ t ∈ s, a t = 1)

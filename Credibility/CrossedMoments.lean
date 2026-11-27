@@ -79,6 +79,7 @@ noncomputable def cohortEst (j : J) : Ω → ℝ := fun ω => ∑ t, M.a j t * N
 /-- The row and column effects as one family over `A ⊕ B`. -/
 def effects : A ⊕ B → Ω → ℝ := Sum.elim N.rowEff N.colEff
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 /-- The common component is `Core.common` with the two effects `inl (row j)`, `inr (col j)` and
 loadings `√α²`, `√β²`. -/
 lemma common_eq (j : J) :
@@ -87,20 +88,24 @@ lemma common_eq (j : J) :
   funext ω
   simp [common, Core.common, effects, Finset.sum_pair (Sum.inl_ne_inr)]
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 lemma effects_memLp (k : A ⊕ B) : MemLp (N.effects k) 2 P := by
   cases k
   exacts [N.rowEff_memLp _, N.colEff_memLp _]
 
+omit [Fintype J] [Fintype A] [Fintype B] in
 /-- The row and column effects pass through the cell weights (`Σₜ aⱼₜ = 1`). -/
 lemma cohortEst_eq [Nonempty T] (j : J) :
     N.cohortEst α2 β2 μ j = fun ω => N.toNoise.cohortEst μ j ω + N.common α2 β2 j ω := by
   have hs : ∑ t ∈ univ, M.a j t = 1 := by rw [← M.toUnequal_a]; exact M.toUnequal.sum_a_univ j
   exact Core.cohortEst_eq univ hs (fun t => N.toNoise.obs μ j t) (N.common α2 β2 j)
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 lemma memLp_common (j : J) : MemLp (N.common α2 β2 j) 2 P := by
   rw [common_eq]
   exact Core.memLp_common _ _ N.effects_memLp j
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 lemma integral_common [IsProbabilityMeasure P] (j : J) : P[N.common α2 β2 j] = 0 := by
   rw [common_eq]
   exact Core.integral_common _ _ N.effects_memLp
@@ -108,11 +113,13 @@ lemma integral_common [IsProbabilityMeasure P] (j : J) : P[N.common α2 β2 j] =
 
 variable [IsProbabilityMeasure P]
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] [IsProbabilityMeasure P] in
 /-- The effects are orthonormal: `cov(Zₖ, Zₗ) = [k = l]` over `A ⊕ B`. -/
 lemma cov_effects (k l : A ⊕ B) : cov[N.effects k, N.effects l; P] = if k = l then 1 else 0 := by
   cases k <;> cases l <;> simp [effects, N.cov_row_row, N.cov_col_col, N.cov_row_col,
     covariance_comm (N.colEff _) (N.rowEff _)]
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 /-- `cov(common i, common j) = α²[row i = row j] + β²[col i = col j]` (`Core.cov_common`). -/
 lemma cov_common {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (i j : J) :
     cov[N.common α2 β2 i, N.common α2 β2 j; P]
@@ -125,18 +132,21 @@ lemma cov_common {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (i j : J) :
     Matrix.smul_apply, smul_eq_mul, Model.sameGroup, of_apply]
   split_ifs <;> nlinarith
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 /-- The common component is uncorrelated with anything the row and column effects are. -/
 lemma cov_common_of {Y : Ω → ℝ} (hY : MemLp Y 2 P) (h1 : ∀ a, cov[N.rowEff a, Y; P] = 0)
     (h2 : ∀ b, cov[N.colEff b, Y; P] = 0) (j : J) : cov[N.common α2 β2 j, Y; P] = 0 := by
   rw [common_eq]
   exact Core.cov_common_of _ _ N.effects_memLp hY (fun k => by cases k; exacts [h1 _, h2 _]) j
 
-lemma cov_eff_trueMean {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η j; P] = 0) (j : J) :
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
+lemma cov_eff_trueMean {Z : Ω → ℝ} (_hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η j; P] = 0) (j : J) :
     cov[Z, N.toNoise.trueMean μ j; P] = 0 := by
   rw [show N.toNoise.trueMean μ j = fun ω => μ + Real.sqrt M.τ2 * N.η j ω from rfl,
     covariance_const_add_right (((N.η_memLp j).const_mul _).integrable (by norm_num)),
     covariance_const_mul_right, hη, mul_zero]
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 lemma cov_eff_obs {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η j; P] = 0)
     (hε : ∀ j t, cov[Z, N.ε j t; P] = 0) (j : J) (t : T) :
     cov[Z, N.toNoise.obs μ j t; P] = 0 := by
@@ -144,6 +154,7 @@ lemma cov_eff_obs {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η 
     covariance_add_right hZ (N.toNoise.memLp_trueMean μ j) ((N.ε_memLp j t).const_mul _),
     N.cov_eff_trueMean μ hZ hη, covariance_const_mul_right, hε, mul_zero, add_zero]
 
+omit [Fintype J] [Fintype A] [Fintype B] in
 lemma cov_eff_cohortEst {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z, N.η j; P] = 0)
     (hε : ∀ j t, cov[Z, N.ε j t; P] = 0) (j : J) :
     cov[Z, N.toNoise.cohortEst μ j; P] = 0 := by
@@ -152,9 +163,11 @@ lemma cov_eff_cohortEst {Z : Ω → ℝ} (hZ : MemLp Z 2 P) (hη : ∀ j, cov[Z,
       (fun t _ => (N.toNoise.memLp_obs μ j t).const_mul _) hZ]
   exact sum_eq_zero fun t _ => by rw [covariance_const_mul_right, N.cov_eff_obs μ hZ hη hε, mul_zero]
 
+omit [Fintype J] [Fintype T] [Fintype A] [Fintype B] in
 lemma memLp_obs (j : J) (t : T) : MemLp (N.obs α2 β2 μ j t) 2 P :=
   (N.toNoise.memLp_obs μ j t).add (N.memLp_common α2 β2 j)
 
+omit [Fintype J] [Fintype A] [Fintype B] in
 /-- The observations are unbiased: `E[μⱼₜ] = μ`. -/
 theorem obs_mean (j : J) (t : T) : P[N.obs α2 β2 μ j t] = μ := by
   rw [show N.obs α2 β2 μ j t = fun ω => N.toNoise.obs μ j t ω + N.common α2 β2 j ω from rfl,
@@ -162,6 +175,7 @@ theorem obs_mean (j : J) (t : T) : P[N.obs α2 β2 μ j t] = μ := by
       ((N.memLp_common α2 β2 j).integrable (by norm_num)), N.toNoise.obs_mean μ j t,
     N.integral_common, add_zero]
 
+omit [Fintype J] [Fintype A] [Fintype B] in
 /-- **Eq. (16) with crossed levels is the actual covariance**:
 `cov(μᵢₜ, μⱼₛ) = σᵢₜσⱼₛρᵢⱼδₜₛ + α²[same row] + β²[same column] + γ²[i = j]`. -/
 theorem cov_obs {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (i j : J) (t s : T) :
@@ -179,6 +193,7 @@ theorem cov_obs {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (i j : J) (t
   simp only [Matrix.add_apply, Matrix.smul_apply, smul_eq_mul, Model.sameGroup, of_apply]
   ring
 
+omit [Fintype A] [Fintype B] in
 /-- §2.8 in true expectation with crossed levels: for any quadratic form of the data,
 `E[Σₚ,q Qₚq μₚ μq]` is `Ecov` for the table `obsCovX`. So `UnbiasedX f θ` means `E f = θ`
 for any random variables with these moments. -/
@@ -189,6 +204,7 @@ theorem integral_quad {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (Q : J
     (fun _ _ _ => ⟨trivial, trivial⟩) (fun p _ => N.memLp_obs α2 β2 μ p.1 p.2)
     (fun p _ => N.obs_mean α2 β2 μ p.1 p.2) (fun p q _ _ => N.cov_obs μ hα hβ p.1 q.1 p.2 q.2)
 
+omit [Fintype A] [Fintype B] in
 /-- An estimator unbiased with crossed levels (`UnbiasedX`) has that expectation in fact. -/
 theorem integral_of_unbiasedX {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2)
     {f : (J × T → ℝ) → ℝ} {θ : ℝ} (hf : M.UnbiasedX row col α2 β2 M.τ2 f θ) :
@@ -218,6 +234,7 @@ theorem crossed_integral {w : J → T → ℝ} (sig : J → ℝ)
 
 /-! ### The cell estimates and levels as a Core moment layer -/
 
+omit [Fintype J] [Fintype A] [Fintype B] in
 /-- The crossed `K` with the thesis noise is `K + α²S_row + β²S_col`. -/
 lemma K_eq [Nonempty T] (α2 β2 : ℝ) :
     Crossed.K row col α2 β2 M.τ2 M.errCov
@@ -225,6 +242,7 @@ lemma K_eq [Nonempty T] (α2 β2 : ℝ) :
   rw [Crossed.K, Crossed.levelCov, M.errCov_eq]
   abel
 
+omit [Fintype J] [Fintype T] [DecidableEq T] [Fintype A] [Fintype B] in
 lemma levelCov_eq (α2 β2 : ℝ) :
     Crossed.levelCov row col α2 β2 M.τ2
       = M.τ2 • (1 : Matrix J J ℝ) + (α2 • Model.sameGroup row + β2 • Model.sameGroup col) := by
@@ -278,6 +296,7 @@ theorem blup_mse_optimal [Nonempty T] {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0
   (N.toEstimates μ hα hβ).blup_mse_optimal
     (Crossed.K_posDef_of_gamma row col hα hβ M.τ2_pos (M.errCov_posSemidef hρ)) j d hd
 
+omit [Fintype A] [Fintype B] in
 /-- …and the actual mean squared error of any such predictor is `linMse` for the crossed `K`,
 `L`: the closed forms of `Crossed.lean` (`sum_linMse_blup`, `sum_linMse_blend`) are true errors. -/
 theorem mse_portLin [Nonempty T] {α2 β2 : ℝ} (hα : 0 ≤ α2) (hβ : 0 ≤ β2) (j : J) (d : J → ℝ)

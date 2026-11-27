@@ -666,7 +666,7 @@ omit [Fintype J] [Fintype T] [Fintype G] in
 /-- The table `obsCovG` is symmetric, so `UnbiasedG` fixes the value (`UnbiasedCov.unique`). -/
 lemma obsCovG_symm (φ : ℝ) (p q : J × T) :
     M.obsCovG grp φ q.1 p.1 q.2 p.2 = M.obsCovG grp φ p.1 q.1 p.2 q.2 := by
-  simp only [obsCovG, levelCovG_apply, of_apply, M.ρ_symm q.1 p.1, eq_comm (a := q.2),
+  simp only [obsCovG, levelCovG_apply, M.ρ_symm q.1 p.1, eq_comm (a := q.2),
     eq_comm (a := q.1), eq_comm (a := grp q.1)]
   ring
 
@@ -955,12 +955,12 @@ theorem phiTauPooled_unbiasedG (hT : 2 ≤ Fintype.card T) (φ : ℝ) (a b : J �
     (fun X => by ring) ?_
   have h1 : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 ≠ grp p.2,
       a p * (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp p.1 = grp p.2 then 1 else 0)) = 2 * M.τ2 := by
-    rw [Finset.sum_congr rfl fun p hp => by rw [if_neg (Finset.mem_filter.mp hp).2]]
+    rw [Finset.sum_congr rfl fun p hp => by rw [ite_eq_right (Finset.mem_filter.mp hp).2]]
     simp only [mul_zero, sub_zero, ← Finset.sum_mul, ha, one_mul]
   have h2 : ∑ p ∈ (Finset.univ : Finset J).offDiag with grp p.1 = grp p.2,
       b p * (2 * M.τ2 - 2 * (φ * M.τ2) * (if grp p.1 = grp p.2 then 1 else 0))
         = 2 * M.τ2 - 2 * (φ * M.τ2) := by
-    rw [Finset.sum_congr rfl fun p hp => by rw [if_pos (Finset.mem_filter.mp hp).2]]
+    rw [Finset.sum_congr rfl fun p hp => by rw [ite_eq_left (Finset.mem_filter.mp hp).2]]
     simp only [mul_one, ← Finset.sum_mul, hb, one_mul]
   rw [h1, h2]
   ring

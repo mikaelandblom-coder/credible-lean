@@ -70,7 +70,7 @@ theorem sum_mul_sq_sub_noise_eq_pairs {ι : Type*} [DecidableEq ι] (s : Finset 
         - u b * (u a * v a) - u a * (u b * v b)) / (2 * U ^ 2) := fun a b => by ring
   have hUd : ∑ i ∈ s, u i = U := rfl
   simp only [e1, e2, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_div,
-    ← Finset.sum_mul, ← Finset.mul_sum, Finset.sum_neg_distrib, hUd]
+    ← Finset.sum_mul, ← Finset.mul_sum, hUd]
   rw [show ∑ k ∈ s, u k / U * (1 - u k / U) * v k
       = (∑ k ∈ s, u k * v k) / U - (∑ k ∈ s, u k ^ 2 * v k) / U ^ 2 by
     rw [Finset.sum_div, Finset.sum_div, ← Finset.sum_sub_distrib]
@@ -338,6 +338,7 @@ noncomputable def grpVolume {G : Type*} (w : J → T → ℝ) (S : Finset J) (gr
   ∑ k ∈ S, if grp k = g then wtot w k else 0
 
 omit [Fintype J] [DecidableEq T] hw hσ in
+omit [DecidableEq J] in
 /-- `Σ_g U_g² = Σ_{k, l ∈ S} uₖuₗ[g(k) = g(l)]`. -/
 lemma sum_grpVolume_sq {G : Type*} [Fintype G] [DecidableEq G] (S : Finset J) (grp : J → G) :
     ∑ g, grpVolume w S grp g ^ 2
@@ -348,7 +349,7 @@ lemma sum_grpVolume_sq {G : Type*} [Fintype G] [DecidableEq G] (S : Finset J) (g
   rw [Finset.sum_comm]
   refine Finset.sum_congr rfl fun b _ => ?_
   by_cases h : grp a = grp b
-  · simp [h, Finset.sum_ite_eq']
+  · simp [h]
   · simp only [h, ite_false, mul_zero]
     refine Finset.sum_eq_zero fun g _ => ?_
     by_cases ha : grp a = g

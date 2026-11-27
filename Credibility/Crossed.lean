@@ -86,6 +86,7 @@ def design : Matrix n (A ⊕ T) ℝ :=
 noncomputable def effectCov (α2 β2 : ℝ) : Matrix (A ⊕ T) (A ⊕ T) ℝ :=
   diagonal (Sum.elim (fun _ => α2) (fun _ => β2))
 
+omit [Fintype n] in
 /-- `K = Z G Zᵀ + R` with the crossed design `Z`, `G = diag(α², β²)` and `R = γ²·I + Σ`. -/
 lemma K_eq_mixed (α2 β2 γ2 : ℝ) (S : Matrix n n ℝ) :
     K row col α2 β2 γ2 S
@@ -101,20 +102,23 @@ lemma K_eq_mixed (α2 β2 γ2 : ℝ) (S : Matrix n n ℝ) :
   simp [design, Matrix.mul_apply, Fintype.sum_sum_type, Matrix.one_apply, Function.swap, eq_comm]
   ring
 
+omit [Fintype n] [DecidableEq n] in
 /-- The covariance of the cells with row effect `a` (`Z G e_a`): `α²·[row j = a]`. -/
 lemma design_effect_inl (α2 β2 : ℝ) (a : A) :
     design row col *ᵥ (effectCov α2 β2 *ᵥ Pi.single (Sum.inl a) 1) = α2 • grpOne row a := by
   ext j
-  simp [design, effectCov, mulVec, dotProduct, Fintype.sum_sum_type, grpOne,
+  simp [design, effectCov, mulVec, dotProduct, grpOne,
     Pi.single_apply, diagonal, eq_comm]
 
+omit [Fintype n] [DecidableEq n] in
 /-- The covariance of the cells with column effect `t`: `β²·[col j = t]`. -/
 lemma design_effect_inr (α2 β2 : ℝ) (t : T) :
     design row col *ᵥ (effectCov α2 β2 *ᵥ Pi.single (Sum.inr t) 1) = β2 • grpOne col t := by
   ext j
-  simp [design, effectCov, mulVec, dotProduct, Fintype.sum_sum_type, grpOne,
+  simp [design, effectCov, mulVec, dotProduct, grpOne,
     Pi.single_apply, diagonal, eq_comm]
 
+omit [Fintype A] [Fintype T] in
 lemma effectCov_posDef {α2 β2 : ℝ} (hα : 0 < α2) (hβ : 0 < β2) :
     (effectCov (A := A) (T := T) α2 β2).PosDef :=
   posDef_diagonal_iff.2 fun k => by cases k <;> simp [hα, hβ]
@@ -146,6 +150,7 @@ theorem colEffect_eq_blup [Nonempty n] {α2 β2 γ2 : ℝ} (hα : 0 < α2) (hβ 
 
 /-! ### No column effect: Bridge 4 with the rows as groups -/
 
+omit [Fintype n] [Fintype A] [Fintype T] in
 /-- With `β² = 0` the crossed `L` is the group level covariance `L_G` of Bridge 4 with the
 rows as groups, `τ² = α² + γ²` and `φ = α²/(α² + γ²)`. -/
 theorem levelCov_beta_zero {α2 γ2 : ℝ} (h : α2 + γ2 ≠ 0) :
@@ -155,6 +160,7 @@ theorem levelCov_beta_zero {α2 γ2 : ℝ} (h : α2 + γ2 ≠ 0) :
   have h2 : α2 / (α2 + γ2) * (α2 + γ2) = α2 := by field_simp
   rw [h1, h2, zero_smul, add_zero, add_comm]
 
+omit [Fintype A] [Fintype T] in
 /-- …so for a thesis model `M` with `τ² = α² + γ²` and its noise `Σ`, the crossed `K` is
 `K_G` (`Model.KG`), and every Bridge 4 result (`Model.glsWeight_KG`, `Model.bestZ_G_eq`,
 `Unequal.groupEffect_eq_blup`) applies to it. -/
@@ -163,6 +169,7 @@ theorem K_beta_zero {J Tm : Type*} [Fintype J] [DecidableEq J] [Fintype Tm] [Dec
     K grp col α2 0 γ2 M.errCov = M.KG grp (α2 / M.τ2) := by
   rw [K, Model.KG, levelCov_beta_zero grp col (hτ ▸ M.τ2_pos.ne'), hτ]
 
+omit [Fintype A] [Fintype T] in
 /-- **Bridge 4 as a corollary**: with `β² = 0` the crossed best predictor of every cell level
 is the group one (`Core.blupWeight` for `K_G`, `L_G`), rows as groups. -/
 theorem blupWeight_beta_zero {J Tm : Type*} [Fintype J] [DecidableEq J] [Fintype Tm]
@@ -261,8 +268,7 @@ lemma mulVec_KBal (α2 β2 γ2 σ2 : ℝ) (v : A × T → ℝ) (p : A × T) :
       = α2 * (if p.1 = q.1 then v q else 0) + β2 * (if p.2 = q.2 then v q else 0)
         + (γ2 + σ2) * (if p = q then v q else 0) := by
     intro q
-    simp only [KBal, K, Matrix.add_apply, levelCov_apply, smul_apply, Matrix.one_apply,
-      smul_eq_mul]
+    simp only [KBal, K, Matrix.add_apply, levelCov_apply]
     by_cases h1 : p.1 = q.1 <;> by_cases h2 : p.2 = q.2 <;> by_cases h3 : p = q <;>
       simp [h1, h2, h3] <;> ring
   have hr : ∑ q : A × T, (if p.1 = q.1 then v q else 0) = ∑ t, v (p.1, t) := by
@@ -276,6 +282,7 @@ lemma mulVec_KBal (α2 β2 γ2 σ2 : ℝ) (v : A × T → ℝ) (p : A × T) :
   simp only [mulVec, dotProduct, h, Finset.sum_add_distrib, ← Finset.mul_sum, hr, hc,
     Finset.sum_ite_eq, Finset.mem_univ, ite_true]
 
+omit [Fintype A] in
 lemma sum_row_layer (c : A × T) (w1 wr wc wd : ℝ) (a : A) :
     ∑ t, layer c w1 wr wc wd (a, t)
       = Fintype.card T * w1 + (Fintype.card T * wr + wd) * (if a = c.1 then 1 else 0) + wc := by
@@ -285,6 +292,7 @@ lemma sum_row_layer (c : A × T) (w1 wr wc wd : ℝ) (a : A) :
     ring
   · simp [layer, Finset.sum_add_distrib, Prod.ext_iff, ha, Finset.sum_ite_eq']
 
+omit [Fintype T] in
 lemma sum_col_layer (c : A × T) (w1 wr wc wd : ℝ) (t : T) :
     ∑ a, layer c w1 wr wc wd (a, t)
       = Fintype.card A * w1 + wr + (Fintype.card A * wc + wd) * (if t = c.2 then 1 else 0) := by
@@ -305,6 +313,7 @@ lemma mulVec_layer (α2 β2 γ2 σ2 : ℝ) (c : A × T) (w1 wr wc wd : ℝ) :
   simp only [layer]
   ring
 
+omit [Fintype A] [Fintype T] in
 /-- Row `c` of `L` is the layer vector `(0, α², β², γ²)`. -/
 lemma LBal_eq_layer (α2 β2 γ2 : ℝ) (c : A × T) :
     LBal α2 β2 γ2 c = layer c 0 α2 β2 γ2 := by
@@ -436,6 +445,7 @@ lemma blendWeight_KBal [Nonempty A] [Nonempty T] {α2 β2 γ2 σ2 : ℝ} (hα : 
     glsWeight_KBal hα hβ hγ hσ, layer, Pi.single_apply]
   ring
 
+omit [Fintype A] [Fintype T] in
 lemma layer_sub (c : A × T) (u1 ur uc ud v1 vr vc vd : ℝ) :
     layer c u1 ur uc ud - layer c v1 vr vc vd = layer c (u1 - v1) (ur - vr) (uc - vc) (ud - vd) := by
   funext p; simp only [layer, Pi.sub_apply]; ring
@@ -648,6 +658,7 @@ term common to all cells, which cancels in every contrast. -/
 noncomputable def KBalρ (α2 β2 γ2 σ2 ρ : ℝ) : Matrix (A × T) (A × T) ℝ :=
   K Prod.fst Prod.snd α2 β2 γ2 (σ2 • ((1 - ρ) • (1 : Matrix (A × T) (A × T) ℝ) + ρ • vecMulVec 1 1))
 
+omit [Fintype A] [Fintype T] in
 lemma KBalρ_eq (α2 β2 γ2 σ2 ρ : ℝ) :
     (KBalρ α2 β2 γ2 σ2 ρ : Matrix (A × T) (A × T) ℝ)
       = KBal α2 β2 γ2 (σ2 * (1 - ρ)) + (σ2 * ρ) • vecMulVec 1 1 := by

@@ -493,7 +493,7 @@ theorem moments_gap_posDef_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × 
     fun ha => by simp [ha]⟩
   have h0 : ((sel P i)ᵀ * (sel P j - glsW K)) *ᵥ a = 0 := by
     rw [← mulVec_mulVec]; simp only [mulVecLin_apply] at ha; rw [ha, mulVec_zero]
-  rw [Matrix.mul_sub, sel_transpose_mul_sel, if_neg hij, zero_sub,
+  rw [Matrix.mul_sub, sel_transpose_mul_sel, ite_eq_right hij, zero_sub,
     sel_transpose_mul_glsW_of_blockDiag hK hb, neg_mulVec, neg_eq_zero] at h0
   have hdet : ((blk K i)⁻¹ * (info K)⁻¹).det ≠ 0 := by
     rw [det_mul]
@@ -519,11 +519,11 @@ theorem moments_bestZ_of_blockDiag [Nonempty J] {K : Matrix (J × P) (J × P) �
       sel_transpose_mul_mul_sel_of_blockDiag hLb, ite_mul, zero_mul, Finset.sum_ite_eq,
       Finset.mem_univ, ite_true]
     rw [Matrix.mul_assoc]
-  rw [moments_bestZ hK hL, hLW, sel_transpose_mul_mul_sel_of_blockDiag hLb, if_pos rfl,
-    sel_transpose_mul_mul_sel_of_blockDiag hb, if_pos rfl]
+  rw [moments_bestZ hK hL, hLW, sel_transpose_mul_mul_sel_of_blockDiag hLb, ite_eq_left rfl,
+    sel_transpose_mul_mul_sel_of_blockDiag hb, ite_eq_left rfl]
   -- `(Λ - ΛK⁻¹S)(K - S)⁻¹ = ΛK⁻¹(K - S)(K - S)⁻¹`
   have hKj : IsUnit (blk K j).det := isUnit_iff_ne_zero.2 (blk_posDef hK j).det_pos.ne'
-  rw [sel_transpose_mul_mul_sel_of_blockDiag hb, if_pos rfl] at hGu
+  rw [sel_transpose_mul_mul_sel_of_blockDiag hb, ite_eq_left rfl] at hGu
   have : blk L j - blk L j * ((blk K j)⁻¹ * (info K)⁻¹)
       = blk L j * (blk K j)⁻¹ * (blk K j - (info K)⁻¹) := by
     rw [Matrix.mul_assoc, Matrix.mul_sub, nonsing_inv_mul _ hKj, Matrix.mul_sub, Matrix.mul_one]
@@ -722,11 +722,11 @@ theorem hachemeister_bestZ_of_blockDiag [Nonempty J] {Φ : Matrix (J × T) (J ×
     rw [isCohortBlockDiag_iff] at hLb ⊢
     intro i k hik
     rw [hachK, Matrix.mul_add, Matrix.add_mul, hLb i k hik, hachM_noise_blockDiag hΦ hΦb hY,
-      if_neg hik, add_zero]
+      ite_eq_right hik, add_zero]
   refine moments_bestZ_buhlmannGisler (hachK_posDef hΦ hY hL) hKb
     (by simpa [conjTranspose_eq_transpose_of_trivial] using hL.isHermitian.eq) hLb
     (S := fun j => (gram Y Φ j)⁻¹) (fun k => ?_) hA hij
-  rw [blk_eq, hachK, Matrix.mul_add, Matrix.add_mul, hachM_noise_blockDiag hΦ hΦb hY, if_pos rfl,
+  rw [blk_eq, hachK, Matrix.mul_add, Matrix.add_mul, hachM_noise_blockDiag hΦ hΦb hY, ite_eq_left rfl,
     ← blk_eq, hA]
 
 end Hachemeister

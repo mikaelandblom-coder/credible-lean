@@ -166,12 +166,14 @@ theorem cohortEst_scale (j : J) (ω : Ω) :
   simp only [cohortEst, cohortLin, a_scale, obsVal_scale, mul_sum]
   exact sum_congr rfl fun t _ => by ring
 
+omit [Fintype T] in
 theorem portEst_scale (ω : Ω) :
     (N.scale c hc).portEst (c * μ) ω = c * N.portEst μ ω := by
   simp only [portEst, Core.portEst, Core.portLin, K_scale, glsWeight_smul _ (pow_pos hc 2).ne',
     mul_sum]
   exact sum_congr rfl fun j _ => by rw [cohortEst_scale]; ring
 
+omit [Fintype T] in
 theorem blend_scale (j : J) (z : ℝ) (ω : Ω) :
     (N.scale c hc).blend (c * μ) j z ω = c * N.blend μ j z ω := by
   simp only [blend, Core.blend]
@@ -191,6 +193,7 @@ theorem detrend_obs (year : T → ℤ) (j : J) (t : T) (ω : Ω) :
   rw [show (N.detrend g hg n).obsVal ((1 + g) ^ n * μ) j t ω = (1 + g) ^ n * N.obsVal μ j t ω
     from h, ← mul_assoc, ← zpow_add₀ h1, sub_add_cancel, zpow_natCast]
 
+omit [Fintype T] in
 /-- **Step 2: relativities are trend-free.** The fitted relativity `blendⱼ / μ̂` of the
 restated data, with the model's own best `zⱼ`, is that of the untrended world for the
 same outcome `ω`: it does not depend on the trend `g` or the target year `n`. The trend
