@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S70, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S77, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S77 | `runs/group-choice.js` | Groups or none on held-out years: regret 0.9 / max 4.0 though its picks barely follow φ; the stakes are small (−10 to +7 points) |
 | S76 | `runs/balance-rule.js` | Balance iff the plug-in cost on K̂ is negative: regret 0.5 / max 6.9 (never 0.4 / 12.2, always 22.2 / 205.6, held-out 10.3 / 99.2) |
 | S75 | `runs/balance-cost.js` | Cost of balancing = E(T − μ̄)² − E(r̄ − μ̄)², exact per draw; cross-fitted level 1.2–2.2× corrBS's own error with σⱼ spread 2 |
 | S74 | `runs/blup-verdict.js` | The bootstrapped gain-against-price verdict for the BLUP adds nothing; S72's BLUP loss is the balance switch (corrBS itself +22 mean, up to +206 points balanced) |
@@ -1039,3 +1040,21 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     on −15 to +80, off down to −190 (app σⱼ×2). **Consequence.** In MSE the plug-in rule is never-balance with
     the upside kept; a pricing actuary who must not under-price cannot get that from MSE alone (the bias is
     small in MSE but not in premium). Owner decision: app default, and whether to show the bias next to it.
+
+### Groups or none (2026-11-27, `studies/runs/group-choice.js`; paper, open directions)
+- S77. *[numerical]* **Groups or none on held-out years: low regret because little is at stake, not because the
+    score sees φ.** The app's world with group levels (J = 8, regions j mod G), G ∈ {2, 4}, φ ∈ {0, 0.3, 0.7},
+    T ∈ {5, 10}, ρ ∈ {0, 0.5}, regimes app / thesis; 48 worlds, 2000 draws. Rules: always groups
+    (`fitGroupLevels`, S69's GLS pass), never (BLUP on corrBS's `K̂`), held-out (the app's `fitGroups`: groups iff
+    the leave-one-year-out score is lower), and "θ̂ > 0" (groups iff the raw GLS `φτ²^` is positive, the plug-in
+    gain on `K̂` with no price). Groups − none, points of the floor: −9.7 (app G = 2, φ = 0.7, T = 10) to +6.9
+    (app G = 4, φ = 0, T = 5); with φ = 0 groups cost 0 to +7, at φ = 0.7 they gain up to 10 at app volume and
+    0–4 at thesis volume. Regret against the better fixed rule in each world, mean / max (worse in): always
+    1.4 / 6.9 (18 of 48), never 1.3 / 9.7 (11), held-out **0.9 / 4.0** (20), θ̂ > 0 1.4 / 4.7 (26). Held-out
+    picks groups in 38–54% of draws whatever φ (φ = 0: 38–49%; φ = 0.7: 44–54%), so per draw it is close to a
+    coin flip; it wins on regret by mixing the two rules, and in a few worlds lands below both. θ̂ > 0 follows φ
+    (35–90%) but is too keen at φ = 0 (35–55%: a raw estimate is positive half the time when the truth is 0, as
+    for the crossed clip, S70). **Consequence.** The app's rule stays: lowest mean and worst-case regret, no
+    tuning. The stakes of the choice are small at J = 8 (at most 10 points of the floor either way), so a
+    sharper rule is not worth chasing; parked. The general statement is the held-out score's unbiasedness
+    (`CrossFit.integral_heldOutScore_sub`); its regret here holds only in these worlds.

@@ -2010,11 +2010,15 @@ squared error (\hb{res:crossed}{47}).
     first, volume-weighted pass is as good as knowing it (\hb{res:groups_pool}{45}).
     With two to four groups $\phi\tau^2$ stays noisy whatever the weights, so
     whether to use groups at all matters more: the app decides it on held-out
-    years (\hb{res:heldout}{55}).
+    years (\hb{res:heldout}{55}). That score is unbiased in every world, but one
+    portfolio's score is noisy: in simulation it picked groups in 38--54\% of
+    draws whatever the shared share. It still had the least regret against the
+    better fixed rule (at most 4 points of the floor, against 7 for always and 10
+    for never), because with eight regions little is at stake either way (S77).
 \end{itemize}
 
 \see \hbsec{sec:groups}{9}, \hb{res:phi}{41}, \hb{res:groups}{42}, \hb{res:twostage}{43}, \hb{res:est_groups}{44}, \hb{res:groups_pool}{45} ·
-\app{World} ``Group levels'', fit ``BLUP groups'' (S69) ·
+\app{World} ``Group levels'', fit ``BLUP groups'' (S69, S77) ·
 \finding{13} ·
 \file{studies/literature.md} §3 ·
 not in the thesis.
@@ -2566,11 +2570,11 @@ about the layer that assumes a noise family.
 \paragraph{Where to look first.}
 
 In order of expected payoff, with the reasons given below: the winner's curse
-of choosing cohorts from the same data; whether to use groups, and rows and
-columns, by held-out score; REML for crossed tables in theory; and a few
+of choosing cohorts from the same data; whether to fit rows and columns, by
+held-out score; REML for crossed tables in theory; and a few
 classical extensions that are short corollaries of what is already proved.
-Crossed levels, the default fit, trend lines and the fit of the group model,
-open in earlier versions, are now in (Sections~\ref{sec:groups},
+Crossed levels, the default fit, trend lines and the fit of the group model
+with its choice of groups or none, open in earlier versions, are now in (Sections~\ref{sec:groups},
 \ref{sec:estimation} and~\ref{sec:vector}).
 
 \paragraph{Choosing cohorts from the same data.}
@@ -2604,14 +2608,6 @@ and the optimism of the winning score itself, which needs a further fold.
     (\finding{44}); the app warns about such tables. Open too is when to fit
     rows and columns at all, which, as for groups, belongs to a held-out score
     (\hb{res:heldout}{55}).
-  \item \emph{Groups or not, by held-out score.} The fit of the group model is
-    settled: one GLS pass on the pair table is the best pool in principle
-    (\hb{res:groups_pool}{45}) and as good as knowing its covariances in
-    simulation (S69), and it is the app's fit ``BLUP groups''
-    (Section~\ref{sec:groups}). What matters more is whether to use groups at
-    all: ignoring them cost 4--15 points at a large shared share and gained
-    1--6 at a small one with short histories (S69). The app chooses on
-    held-out years; that choice's regret in simulation is open.
   \item \emph{A covariance table that knows the group structure.} The
     one-correlation $\hat K$ is wrong when correlation differs between pairs
     (regions in countries), and there the blend form costs most.

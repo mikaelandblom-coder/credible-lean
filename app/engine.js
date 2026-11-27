@@ -1730,7 +1730,7 @@
     const none = RECIPES.blup.steps.filter((x) => ['τ̂²', 'K̂'].includes(x.name)).concat(BLUP_TAIL.filter((x) => x.name !== 'premium')).map((x) => Object.assign({}, x, { branch: 'none' }));
     const g = (name, formula, lean, note) => Object.assign({ name, formula, badge: 'proved', lean, branch: 'groups' }, note ? { note } : {});
     RECIPES.grp = {
-      intro: 'Regions in groups (countries) share a level. The variance is split into the shared part φτ² and the regional part λ = (1 − φ)τ², from pairs of regions within and across groups, and every region is priced by the BLUP with that level table; whether groups pay is decided on held-out years. Nothing to tune (studies S69).',
+      intro: 'Regions in groups (countries) share a level. The variance is split into the shared part φτ² and the regional part λ = (1 − φ)τ², from pairs of regions within and across groups, and every region is priced by the BLUP with that level table; whether groups pay is decided on held-out years (lowest regret of the rules tried, at most 4 points of the floor, though one portfolio’s score is noisy). Nothing to tune (studies S69, S77).',
       branches: { groups: 'the held-out score is smaller with groups', none: 'the held-out score is not smaller with groups' },
       steps: shared.concat([
         g('pairs P̂ᵢⱼ', F.grpPairs, 'Credibility.Model.pairHat_unbiasedG', 'the noise estimates of eq. (39), unbiased for any correlation; Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j (corrBS’s noise table) builds V̂ and K̂'),

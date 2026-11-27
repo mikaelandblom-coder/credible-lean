@@ -12,6 +12,9 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-27
+- §8.2 Groups: the held-out choice of groups or none in simulation (S77: least regret,
+  at most 4 points, though its picks barely follow the shared share); the open item
+  "groups or not" removed from §10.
 - §5 choice table: crossed groupings now start with REML on the cell means (S70, S71);
   a new row for groups sharing a level (one GLS pass; groups or none on held-out years).
 - §10 Open directions: the group fit marked done, its open part now "groups or not, by
