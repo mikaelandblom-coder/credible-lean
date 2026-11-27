@@ -46,6 +46,7 @@ import Credibility.ShockMoments
 import Credibility.Cumulants
 import Credibility.FitStatistics
 import Credibility.LineResiduals
+import Credibility.LineResidualsMoments
 import Credibility.VarianceFunction
 import Credibility.Crossed
 import Credibility.CrossedEstimation

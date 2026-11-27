@@ -261,4 +261,47 @@ theorem unbiasedMean_cross_of_shape (σ2 ρ : ℝ) {U₀ : Matrix T B ℝ} {a : 
     linarith
   simpa only [heq] using unbiasedMean_cross σ2 ρ hw h hij (by rw [heq]; exact hT')
 
+variable (w U) in
+/-- The pooled residual variance `ŝ² = (1/J) Σⱼ Σₜ ẽⱼₜ² / (T - p)`. -/
+noncomputable def s2Pool (X : J × T → ℝ) : ℝ :=
+  (Fintype.card J : ℝ)⁻¹ * ∑ j, ((Fintype.card T - Fintype.card B : ℝ)⁻¹
+    * ∑ t, resid w U X j t * resid w U X j t)
+
+variable (w U) in
+/-- The pooled cross-cohort covariance with SUR divisors,
+`ρ̂ŝ² = (1/(J(J-1))) Σᵢ≠ⱼ Σₜ ẽᵢₜẽⱼₜ / tr((I - Pᵢ)(I - Pⱼ))`. -/
+noncomputable def rhoS2Pool (X : J × T → ℝ) : ℝ :=
+  ((univ : Finset J).offDiag.card : ℝ)⁻¹ * ∑ x ∈ (univ : Finset J).offDiag,
+    ((trace (((1 : Matrix T T ℝ) - hat w U x.1) * ((1 : Matrix T T ℝ) - hat w U x.2)))⁻¹
+      * ∑ t, resid w U X x.1 t * resid w U X x.2 t)
+
+/-- The pooled residual variance is unbiased for `σ²`, for any volumes. -/
+theorem unbiasedMean_s2Pool [Nonempty J] (σ2 ρ : ℝ) (hw : ∀ j t, 0 < w j t)
+    (h : ∀ j, IsUnit ((white w U j)ᵀ * white w U j).det)
+    (hT : Fintype.card B < Fintype.card T) :
+    UnbiasedMean (lineCov w σ2 ρ) (blockDesign U) (s2Pool w U) σ2 := by
+  refine ((UnbiasedMean.sum univ fun j _ => unbiasedMean_s2 σ2 ρ hw h hT j).const_mul
+    (Fintype.card J : ℝ)⁻¹).congr (fun X => rfl) ?_
+  have : (Fintype.card J : ℝ) ≠ 0 := by exact_mod_cast Fintype.card_ne_zero
+  simp only [sum_const, card_univ, nsmul_eq_mul]
+  field_simp
+
+/-- The pooled cross-cohort covariance with SUR divisors is unbiased for `σ²ρ`, for any volumes
+and designs (`J ≥ 2`, nonzero traces). -/
+theorem unbiasedMean_rhoS2Pool (σ2 ρ : ℝ) (hw : ∀ j t, 0 < w j t)
+    (h : ∀ j, IsUnit ((white w U j)ᵀ * white w U j).det) (hJ : 1 < Fintype.card J)
+    (htr : ∀ i j : J, i ≠ j →
+      trace (((1 : Matrix T T ℝ) - hat w U i) * ((1 : Matrix T T ℝ) - hat w U j)) ≠ 0) :
+    UnbiasedMean (lineCov w σ2 ρ) (blockDesign U) (rhoS2Pool w U) (σ2 * ρ) := by
+  refine ((UnbiasedMean.sum _ fun x hx =>
+    unbiasedMean_cross σ2 ρ hw h (mem_offDiag.1 hx).2.2 (htr _ _ (mem_offDiag.1 hx).2.2)).const_mul
+    ((univ : Finset J).offDiag.card : ℝ)⁻¹).congr (fun X => rfl) ?_
+  have hne : ((univ : Finset J).offDiag.card : ℝ) ≠ 0 := by
+    have : 0 < (univ : Finset J).offDiag.card := by
+      rw [offDiag_card, card_univ]
+      exact Nat.sub_pos_of_lt (Nat.lt_mul_self_iff.2 hJ)
+    exact_mod_cast this.ne'
+  simp only [sum_const, nsmul_eq_mul]
+  field_simp
+
 end Credibility.LineResiduals

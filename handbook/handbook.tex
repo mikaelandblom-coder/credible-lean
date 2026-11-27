@@ -1647,9 +1647,14 @@ covary in any way. This gives the joint $K$ and $L$ of the matrix blend.
   \lean{Credibility.LineResiduals.trace_one_sub_hat_mul}
   \lean{Credibility.LineResiduals.unbiasedMean_s2}
   \lean{Credibility.LineResiduals.unbiasedMean_cross}
+  Pooled over cohorts and pairs, they make $\hat N$, and the corrected $\hat\Lambda$ of
+  Result~\ref{res:vecSpread} of the fitted lines is unbiased when the lines themselves vary.
   \lean{Credibility.LineResiduals.unbiasedMean_cross_of_shape}
+  \lean{Credibility.LineResiduals.unbiasedMean_s2Pool}
+  \lean{Credibility.LineResiduals.unbiasedMean_rhoS2Pool}
+  \lean{Credibility.LineResiduals.integral_correctedLambda_pooled}
 \end{result}
-\use Plug both into $\hat N$ for the corrected $\hat\Lambda$ (Result~\ref{res:vecSpread}); $p = 1$ is Result~\ref{res:pooled}.
+\use $\hat N_{ji} = \hat s^2_{ji}\,G_jW_j^{-1/2}W_i^{-1/2}G_i^{\mathsf T}$, $G_j$ the fit's coefficient map; $p = 1$ is Result~\ref{res:pooled}.
 \begin{caveat}
   Dividing by $T - p$ under unequal exposure shapes biases $\hat\rho$ towards $0$.
 \end{caveat}

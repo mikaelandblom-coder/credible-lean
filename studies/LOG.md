@@ -897,5 +897,6 @@ for any weights with `Σω = 1` and estimates with a common mean; the corrected 
 weighted lines of `p` coefficients, so `ŝ²` (divisor `T − p`) is unbiased for any volumes, and S67's
 `ρ̂ŝ²` (divisor `T − 2`) exactly when the hat matrices agree, as in S67's world (`wⱼₜ = wⱼ·1.05ᵗ`,
 `hat_eq_of_shape`). There `N̂` is linear in `ŝ²` and `ρ̂ŝ²`, so `E N̂ = N` and the corrected `Λ̂` is
-unbiased (composition not formalized). With unequal shapes S67's `ρ̂` is biased towards 0; the
+unbiased: composed with random lines in `LineResidualsMoments.lean`
+(`integral_correctedLambda_lines`; pooled SUR version `integral_correctedLambda_pooled`). With unequal shapes S67's `ρ̂` is biased towards 0; the
 divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`) fixes it.
