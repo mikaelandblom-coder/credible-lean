@@ -3,7 +3,8 @@
 Working title: *Credibility from second moments: a guide* (owner to confirm;
 see the end).
 
-The paper is the up-to-date version of the thesis and the first complete
+The paper is the main document of the project (it grew out of the 2023
+thesis, but "the thesis" always means that original) and the first complete
 source for a reader who wants to understand or cite the work. It explains
 the concepts; it does not carry the formulas or the proofs.
 
@@ -81,6 +82,13 @@ the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers
 
 Old section numbers in dated notes ("Absorbed into paper §n") use the old
 numbering; the "Was" column translates them.
+
+## Version and changelog (owner, 2026-11-27)
+
+The title page says "version of <date>, commit <hash>" (`paper/version.tex`,
+written by CI from the last commit to `paper.tex`) and links
+`paper/CHANGELOG.md`, so a downloaded PDF can be checked against the latest.
+Each change a reader would notice gets a dated line there, in the same commit.
 
 ## Absorbing the notes
 

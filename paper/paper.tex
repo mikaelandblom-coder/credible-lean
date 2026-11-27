@@ -1,4 +1,4 @@
-% The paper: the up-to-date version of the thesis, explained in words.
+% The paper: the main document of the project, explained in words (it grew out of the 2023 thesis).
 % Concepts, and the ten or so formulas that carry them; every formula lives in
 % the handbook (cited by number with \hb),
 % proofs in Lean and the blueprint (Lean names appear only in the concordance of
@@ -50,7 +50,12 @@
 % Working title (owner to confirm: paper/outline.md, "Open choices").
 \title{Credibility from second moments: a guide}
 \author{M.~Andblom}
-\date{Draft}
+% The version line: paper/version.tex, written by CI (date and commit of the
+% last change to this file). Changes are listed in paper/CHANGELOG.md.
+\input{version}
+\date{Draft, version of \paperversion\\[0.5ex]
+  {\small Latest version: \href{\site/paper.pdf}{paper.pdf};
+  what changed since: \href{\repo/paper/CHANGELOG.md}{changelog}}}
 
 \begin{document}
 \maketitle
@@ -209,9 +214,9 @@ them instead of repeating them.
 
 The work comes in four documents, one for each kind of content.
 \begin{itemize}
-  \item \emph{The paper} (this one) explains. It is the up-to-date version of
-    the master thesis it grew out of (Andblom, Stockholm University, 2023:2)
-    and the first thing to read or cite. Each topic is one concept: what
+  \item \emph{The paper} (this one) explains. It is the main document of the work:
+    it grew out of the master thesis (Andblom, Stockholm University, 2023:2),
+    corrects and extends it, and is the first thing to read or cite. Each topic is one concept: what
     it is, the idea in plain words, and what to watch out for. It displays
     the formulas the story needs (the model, $K$, the weights, the factor,
     the best linear predictor) and no proofs.

@@ -46,7 +46,7 @@ The full list, including where the thesis needed an extra hypothesis, is in
 
 | | For | |
 |---|---|---|
-| **[Paper](https://mikaelandblom-coder.github.io/credible-lean/paper/)** ([pdf](https://mikaelandblom-coder.github.io/credible-lean/paper.pdf)) | understanding: the up-to-date thesis, concepts and intuition (draft) | `paper/` |
+| **[Paper](https://mikaelandblom-coder.github.io/credible-lean/paper/)** ([pdf](https://mikaelandblom-coder.github.io/credible-lean/paper.pdf)) | understanding: the main document, concepts and key formulas, from the 2023 thesis on (draft; [changelog](paper/CHANGELOG.md)) | `paper/` |
 | **[Handbook](https://mikaelandblom-coder.github.io/credible-lean/handbook.pdf)** | using: the formulas, with notes on when to use them (draft) | `handbook/` |
 | **[App](https://mikaelandblom-coder.github.io/credible-lean/app/)** | seeing: pick a world, draw data, compare fitted models with the best blend (preview) | `app/` |
 | **[Thesis proposal](https://mikaelandblom-coder.github.io/credible-lean/thesis-proposal.pdf)** | a master thesis: extensions of the 2023 thesis to derive, review and test on card data (draft for discussion) | `studies/thesis-topics/` |

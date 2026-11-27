@@ -104,7 +104,10 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
+      # Full history: the paper's title page shows the date of its last change.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # TeX: a small TeX Live (the official installer, only the packages in
       # .github/texlive-packages.txt), cached. Installing texlive from apt on
@@ -175,6 +178,11 @@ jobs:
       - name: Build paper
         working-directory: paper
         run: |
+          # Version line on the title page (paper/version.tex): date and commit
+          # of the last change to the paper, so a downloaded PDF says which it is.
+          v=$(git log -1 --format='%cs, commit %h' -- paper.tex)
+          printf '\\newcommand{\\paperversion}{%s}\n' "$v" > version.tex
+          cat version.tex
           latexmk -xelatex -interaction=nonstopmode -halt-on-error paper.tex
           cp paper.pdf ../blueprint/web/paper.pdf
           plastex -c plastex.cfg paper.tex

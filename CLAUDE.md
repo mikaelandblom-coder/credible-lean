@@ -153,7 +153,9 @@ Commit each closed `sorry` separately, with a short message, after:
 4. Ask for each of app, handbook, paper and thesis proposal: does it need
    this? Update it in the same commit, or add a line under "Pending" in
    `studies/PLAN.md`, `handbook/outline.md`, `paper/outline.md` or
-   `studies/thesis-topics/outline.md`.
+   `studies/thesis-topics/outline.md`. A paper change a reader would notice
+   also gets a line in `paper/CHANGELOG.md` (newest first); the title page's
+   version line (date, commit) is written by CI.
 5. After pushing a `.tex` change, check the Blueprint run on `main` (GitHub MCP
    `actions_list`; TeX isn't installed in sessions) and fix it if it fails. Its
    jobs `lean` and `docs` take about 2 minutes; don't wait for `deploy`.
@@ -163,6 +165,11 @@ counted as proved must not depend on one (even through a lemma), and no axioms
 beyond `propext`, `Classical.choice`, `Quot.sound`.
 
 ## Four documents, one home per kind of content (owner, 2026-11-16)
+Words (owner, 2026-11-27): **thesis** means only the original 2023 thesis
+(`thesis/original/`); **thesis proposal** is the draft for upcoming thesis work
+(`studies/thesis-topics/proposal.tex`); **paper** is the main repo document
+below. The paper grew out of the thesis but is not "the thesis", and the
+proposal is not "the thesis" either.
 A formula lives in the handbook, an explanation in the paper, a proof in Lean
 and the blueprint; the others point to it. Don't restate across them.
 - **App** (`app/`, plan in `studies/PLAN.md`): an interactive app for
@@ -175,8 +182,9 @@ and the blueprint; the others point to it. Don't restate across them.
   citing the paper for context. `scripts/handbook_check.py` (CI) fails if a link
   is not a proved declaration: renaming or moving a linked theorem means
   updating the link. Built to `handbook.pdf`.
-- **Paper** (`paper/paper.tex`, outline `paper/outline.md`): the up-to-date
-  thesis and the first complete source for a reader. Explains concepts,
+- **Paper** (`paper/paper.tex`, outline `paper/outline.md`): the main
+  document of the project: concepts and key formulas, from the 2023 thesis
+  on, and the first complete source for a reader. Explains concepts,
   organized for lookup; shows the ~10 formulas that carry the story and cites
   handbook numbers for the rest; no proofs, and Lean names only in the
   concordance (Appendix A). `scripts/paper_check.py` (CI) checks citations; run
