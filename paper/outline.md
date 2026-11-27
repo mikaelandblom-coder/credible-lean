@@ -100,6 +100,10 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- [ ] S72 (2026-11-27, `runs/recommended-fit.js`) qualifies two claims: §BLUP "beats the fitted blend in every correlated
+  world tried" and the choice table's row "ρ̂ ≳ 0.6 → the BLUP (S52)". With the balance switch on, the BLUP loses up to
+  22 points of the floor with a wide σⱼ spread at low volume (ρ = 0.3–0.6) and wins clearly only at ρ = 0.9 or equal σⱼ;
+  the row needs "and similar noise variances", the paragraph the balanced/unbalanced distinction.
 - [ ] §Open directions, "Small crossed tables" (2026-11-27, S70, S71): REML on the cell means is now the app's crossed
   default (better than the pair pools in 48 of 96 larger-table worlds, worse in 9 by at most 3 points); the paragraph
   may say so, and that Finding 44's 2×2 warning is shown.
