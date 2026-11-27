@@ -14,7 +14,8 @@ the error `Aᵀx - μⱼ` has mean `0` and true error covariance `E[(Aᵀx - μ�
 equal to `linMse K L j A`; for the matrix blend `μ̂ + Z(μ̂ⱼ - μ̂)` it is
 `(moments K L j).errVar Z`. So the BLUP and `bestZ` results of `CoreVector` are statements
 about real random vectors. `integral_spread` gives the expected weighted spread of vector
-estimates under any noise covariance between cohorts (the corrected moment `Λ̂`, S67).
+estimates under any noise covariance between cohorts, and `integral_correctedLambda` that the
+moment `Λ̂` corrected by an unbiased `N̂` is unbiased (S67).
 
 Nothing is re-proved: centring each component by its mean gives a `Core.Estimates K L 0`
 over the index set `J × P` (`VecEstimates.centred`), and each entry of the error covariance
@@ -402,6 +403,71 @@ theorem integral_spread {Pr : Measure Ω} [IsProbabilityMeasure Pr] (est : J × 
       - ∑ k, w k * N k x p r + T)) = w x * (1 - 2 * w x + S) * Λ p r + w x * N x x p r
       - w x * ∑ l, w l * N x l p r - w x * ∑ k, w k * N k x p r + w x * T := fun x => by ring
   simp only [hx, sum_add_distrib, sum_sub_distrib, ← sum_mul, e1, e2, e3, hw]
+  ring
+
+/-- The weighted spread `Σⱼ ωⱼ(β̂ⱼ - β̄)(β̂ⱼ - β̄)ᵀ`, `β̄ = Σⱼ ωⱼβ̂ⱼ`, of vector estimates. -/
+noncomputable def spread (w : J → ℝ) (est : J × P → Ω → ℝ) (ω : Ω) : Matrix P P ℝ :=
+  Matrix.of fun p r => ∑ j, w j * ((est (j, p) ω - ∑ k, w k * est (k, p) ω)
+    * (est (j, r) ω - ∑ k, w k * est (k, r) ω))
+
+/-- The corrected moment estimate
+`Λ̂ = (Σⱼ ωⱼ(β̂ⱼ - β̄)(β̂ⱼ - β̄)ᵀ - Σⱼ ωⱼN̂ⱼⱼ + Σᵢ Σₖ ωᵢωₖN̂ᵢₖ) / (1 - Σⱼ ωⱼ²)`, with an
+estimate `N̂` of the noise covariance within and between cohorts. -/
+noncomputable def correctedLambda (w : J → ℝ) (est : J × P → Ω → ℝ)
+    (Nh : Ω → J → J → Matrix P P ℝ) (ω : Ω) : Matrix P P ℝ :=
+  (1 - ∑ j, w j ^ 2)⁻¹ • (spread w est ω - ∑ j, w j • Nh ω j j
+    + ∑ i, ∑ k, (w i * w k) • Nh ω i k)
+
+omit [DecidableEq J] [Fintype P] [DecidableEq P] in
+/-- Each entry of the spread is integrable. -/
+theorem integrable_spread {Pr : Measure Ω} (w : J → ℝ) {est : J × P → Ω → ℝ}
+    (hL2 : ∀ x, MemLp (est x) 2 Pr) (p r : P) :
+    Integrable (fun ω => spread w est ω p r) Pr := by
+  have hm : ∀ j q, MemLp (fun ω => est (j, q) ω - ∑ k, w k * est (k, q) ω) 2 Pr := fun j q =>
+    (hL2 _).sub (memLp_finsetSum _ fun k _ => (hL2 (k, q)).const_mul (w k))
+  simp only [spread, Matrix.of_apply]
+  exact integrable_finsetSum _ fun j _ => ((hm j p).integrable_mul (hm j r)).const_mul (w j)
+
+/-- **The corrected moment `Λ̂` is unbiased** for any noise covariance between cohorts:
+with estimates `β̂ⱼ` as in `integral_spread`, weights `Σⱼ ωⱼ = 1` with `Σⱼ ωⱼ² ≠ 1`, and any
+integrable estimates `N̂ᵢₖ` with `E N̂ᵢₖ = Nᵢₖ`, `E Λ̂ = Λ`. No distribution, and nothing on how
+`N̂` is built beyond its mean. -/
+theorem integral_correctedLambda {Pr : Measure Ω} [IsProbabilityMeasure Pr]
+    (est : J × P → Ω → ℝ) (b : P → ℝ) (Λ : Matrix P P ℝ) (N : J → J → Matrix P P ℝ)
+    (hL2 : ∀ x, MemLp (est x) 2 Pr) (hmean : ∀ x, Pr[est x] = b x.2)
+    (hcov : ∀ j i p r, cov[est (j, p), est (i, r); Pr] = (if j = i then Λ p r else 0) + N j i p r)
+    (w : J → ℝ) (hw : ∑ j, w j = 1) (hw2 : ∑ j, w j ^ 2 ≠ 1)
+    (Nh : Ω → J → J → Matrix P P ℝ) (hNi : ∀ i k p r, Integrable (fun ω => Nh ω i k p r) Pr)
+    (hN : ∀ i k p r, Pr[fun ω => Nh ω i k p r] = N i k p r) :
+    Matrix.of (fun p r => Pr[fun ω => correctedLambda w est Nh ω p r]) = Λ := by
+  have hS := integral_spread est b Λ N hL2 hmean hcov w hw
+  ext p r
+  have hA : Pr[fun ω => spread w est ω p r]
+      = ((1 - ∑ j, w j ^ 2) • Λ + ∑ j, w j • N j j - ∑ i, ∑ k, (w i * w k) • N i k) p r := by
+    simpa [spread] using congrFun (congrFun hS p) r
+  have iB : Integrable (fun ω => ∑ j, w j * Nh ω j j p r) Pr :=
+    integrable_finsetSum _ fun j _ => (hNi j j p r).const_mul _
+  have iC : Integrable (fun ω => ∑ i, ∑ k, w i * w k * Nh ω i k p r) Pr :=
+    integrable_finsetSum _ fun i _ => integrable_finsetSum _ fun k _ => (hNi i k p r).const_mul _
+  have hB : Pr[fun ω => ∑ j, w j * Nh ω j j p r] = ∑ j, w j * N j j p r := by
+    rw [integral_finsetSum _ fun j _ => (hNi j j p r).const_mul _]
+    simp only [integral_const_mul, hN]
+  have hC : Pr[fun ω => ∑ i, ∑ k, w i * w k * Nh ω i k p r] = ∑ i, ∑ k, w i * w k * N i k p r := by
+    rw [integral_finsetSum _ fun i _ =>
+      integrable_finsetSum _ fun k _ => (hNi i k p r).const_mul _]
+    refine sum_congr rfl fun i _ => ?_
+    rw [integral_finsetSum _ fun k _ => (hNi i k p r).const_mul _]
+    simp only [integral_const_mul, hN]
+  have h1 : (1 - ∑ j, w j ^ 2) ≠ 0 := sub_ne_zero.2 (Ne.symm hw2)
+  simp only [Matrix.of_apply, correctedLambda, Matrix.smul_apply, Matrix.add_apply,
+    Matrix.sub_apply, Matrix.sum_apply, smul_eq_mul]
+  have iAB : Integrable (fun ω => spread w est ω p r - ∑ j, w j * Nh ω j j p r) Pr :=
+    (integrable_spread w hL2 p r).sub iB
+  rw [integral_const_mul, integral_add iAB iC,
+    integral_sub (integrable_spread w hL2 p r) iB, hA, hB, hC]
+  simp only [Matrix.add_apply, Matrix.sub_apply, Matrix.smul_apply, Matrix.sum_apply,
+    smul_eq_mul]
+  field_simp
   ring
 
 end CoreVector

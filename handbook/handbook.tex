@@ -1613,9 +1613,17 @@ covary in any way. This gives the joint $K$ and $L$ of the matrix blend.
       = \Bigl(1 - \sum_j\omega_j^2\Bigr)\Lambda + \sum_j\omega_jN_{jj}
         - \sum_i\sum_k\omega_i\omega_kN_{ik}.
   \]
+  So with any estimate of $N$ with $\mathbb{E}\hat N = N$ and $\sum_j\omega_j^2 \ne 1$, the
+  corrected moment
+  \[
+    \hat\Lambda = \frac{\sum_j \omega_j(\hat\beta_j - \bar\beta)(\hat\beta_j - \bar\beta)^{\mathsf T}
+      - \sum_j\omega_j\hat N_{jj} + \sum_i\sum_k\omega_i\omega_k\hat N_{ik}}{1 - \sum_j\omega_j^2}
+  \]
+  is unbiased: $\mathbb{E}\hat\Lambda = \Lambda$.
   \lean{Credibility.CoreVector.integral_spread}
+  \lean{Credibility.CoreVector.integral_correctedLambda}
 \end{result}
-\use Moment $\hat\Lambda$: subtract both noise terms (with unbiased $\hat N$), divide by $1 - \sum_j\omega_j^2$.
+\use $P = 1$, $\omega_j = w_{j*}/w_{**}$: the correction is the $\hat c_j$ of $\widehat{\tau^2}$ (Result~\ref{res:estimation}).
 \begin{caveat}
   Dropping the cross term $\sum_{i \ne k}\omega_i\omega_kN_{ik}$ (shared shocks) biases $\hat\Lambda$ down (study S67).
 \end{caveat}

@@ -892,4 +892,6 @@ near the oracle. General target (**lean** chat): the corrected moment identity a
 `ω` (a matrix version of §2.8's expectation under correlated noise, `Expectation.lean` / `UnequalEstimation`),
 so the corrected `Λ̂` is unbiased for any noise covariance between cohorts. *Proved 2026-11-27:*
 `CoreVector.integral_spread` (`CoreVectorMoments.lean`, blueprint `thm:CV_spread`, handbook `res:vecSpread`),
-for any weights with `Σω = 1` and estimates with a common mean.
+for any weights with `Σω = 1` and estimates with a common mean; the corrected `Λ̂` is unbiased for any
+`N̂` with `E N̂ = N` (`CoreVector.integral_correctedLambda`). Open: that S67's `N̂` (from `ŝ²`, `ρ̂` of the
+line residuals) has `E N̂ = N`.

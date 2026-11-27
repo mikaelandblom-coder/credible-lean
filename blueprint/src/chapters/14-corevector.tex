@@ -725,6 +725,44 @@ severity) are such predictors, and so is the matrix blend.
   $\sum_j\omega_jN_{jj} - \sum_{i,k}\omega_i\omega_kN_{ik}$.
 \end{proof}
 
+\begin{definition}[The corrected moment $\hat\Lambda$]\label{def:CV_correctedLambda}
+  \lean{Credibility.CoreVector.spread, Credibility.CoreVector.correctedLambda}
+  \leanok
+  For vector estimates $\hat\beta_j$, weights $\omega$ and random matrices $\hat N_{ik}$
+  (an estimate of the noise covariance), the spread is
+  $S = \sum_j \omega_j(\hat\beta_j - \bar\beta)(\hat\beta_j - \bar\beta)^\top$ with
+  $\bar\beta = \sum_j\omega_j\hat\beta_j$, and
+  \[
+    \hat\Lambda = \frac{S - \sum_j \omega_j\hat N_{jj} + \sum_i\sum_k \omega_i\omega_k\hat N_{ik}}
+                       {1 - \sum_j \omega_j^2}.
+  \]
+\end{definition}
+
+\begin{theorem}[The corrected $\hat\Lambda$ is unbiased]\label{thm:CV_correctedLambda}
+  \lean{Credibility.CoreVector.integral_correctedLambda,
+        Credibility.CoreVector.integrable_spread}
+  \leanok
+  \uses{def:CV_correctedLambda}
+  Under the moments of Theorem~\ref{thm:CV_spread}, with $\sum_j\omega_j = 1$,
+  $\sum_j\omega_j^2 \ne 1$ and integrable $\hat N_{ik}$ with $\mathbb E\hat N_{ik} = N_{ik}$:
+  $\mathbb E\hat\Lambda = \Lambda$, for every distribution and every way of building $\hat N$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_spread}
+  Linearity of the expectation and Theorem~\ref{thm:CV_spread}.
+\end{proof}
+
+\begin{remark}[The thesis's $\hat\tau^2$ has the same correction]
+  For $P = 1$ and $\omega_j = w_{j*}/w_{**}$ the correction
+  $\sum_j\omega_j\hat N_{jj} - \sum_{i,k}\omega_i\omega_k\hat N_{ik}$ equals
+  $\sum_j \omega_j\hat c_j$ with the thesis's $\hat c_j = \sum_i(\delta_{ij} - \omega_i)
+  \widehat{\sigma^2_{ij}\rho_{ij}}$ (eqs.~37--41), and $(1 - \sum_j\omega_j^2)$ is the thesis's
+  denominator over $w_{**}$. The scalar unbiasedness (Corollary~\ref{cor:estimation}) is
+  proved separately, at the level of given second moments; deriving it from
+  Theorem~\ref{thm:CV_correctedLambda} is open.
+\end{remark}
+
 \section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
 
 \begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}
