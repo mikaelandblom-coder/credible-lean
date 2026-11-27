@@ -4,6 +4,7 @@
 // three pool equations with θ ≥ 0 (projection in their metric). Both are unbiased before truncation
 // (Model.crossed_unbiasedX) and both projections are never further from the truth in their own
 // metric (ConeProjection.hsq_proj_le), so only the rates' error can decide.
+// Also REML on the cell means from iv-clip (S70, studies/runs/crossed-small.js; C.fit method 'reml').
 // Also: the ANOVA statistics (volume weights, noise cross term omitted, Finding 42), the thesis fit
 // (corrBS: no rows or columns) and the best blend with the true K (the floor of the blend form).
 // Full factorial: table × effect mix × ρ × volume spread × regime; common random numbers.
@@ -24,7 +25,7 @@ const mixes = { // (α, β, γ): spreads of the row, column and cell effects
 const worlds = L.grid({ table: ['3x2', '4x3', '6x4'], mix: Object.keys(mixes), rho: [0, 0.5], spread: [0, 1], regime: ['app', 'thesis'] });
 const ids = C.VARIANTS.map((v) => v.id);
 console.log(`draws per world: ${N}; observed cells' summed squared error in % of the floor; differences vs equal-clip ± 2 SE`);
-console.log('world                              | eq-clip | eq-nnls | vol-clip | vol-nnls | iv-clip | anova | thesis | best blend | eq-nnls − eq-clip | vol-clip − eq-clip');
+console.log(`world                              | ${ids.join(' | ')} | thesis | best blend | eq-nnls − eq-clip | vol-clip − eq-clip | reml − iv-clip`);
 const rows = [];
 for (const p of worlds) {
   const [nr, nc] = p.table.split('x').map(Number), [alpha, beta, gamma] = mixes[p.mix];
@@ -33,13 +34,14 @@ for (const p of worlds) {
   const f = L.meanSE(s.obs.floor).m, rel = (id) => (100 * L.meanSE(s.obs[id]).m / f).toFixed(0).padStart(5);
   const dN = L.paired(s.obs['equal-nnls'], s.obs['equal-clip']), dV = L.paired(s.obs['vol-clip'], s.obs['equal-clip']);
   const dVN = L.paired(s.obs['vol-nnls'], s.obs['equal-clip']), dI = L.paired(s.obs['iv-clip'], s.obs['equal-clip']), dIV = L.paired(s.obs['iv-clip'], s.obs['vol-clip']);
+  const dR = L.paired(s.obs.reml, s.obs['iv-clip']);
   const name = `${p.table} ${p.mix.padEnd(7)} ρ=${p.rho} spread=${p.spread} ${p.regime}`;
-  console.log(`${name.padEnd(34)} | ${ids.map(rel).join('   | ')}  | ${rel('thesis')}  |  ${rel('floorBlend')}     | ${L.pm(dN, 100 / f).padEnd(17)} | ${L.pm(dV, 100 / f)}`);
+  console.log(`${name.padEnd(34)} | ${ids.map(rel).join('   | ')}  | ${rel('thesis')}  |  ${rel('floorBlend')}     | ${L.pm(dN, 100 / f).padEnd(17)} | ${L.pm(dV, 100 / f).padEnd(18)} | ${L.pm(dR, 100 / f)}`);
   // variance errors: RMSE of (α̂², β̂², γ̂²) after truncation, relative to τ² = α² + β² + γ²
   const tau2 = alpha ** 2 + beta ** 2 + gamma ** 2;
   const rm = (id) => Math.sqrt(L.meanSE(s.used[id].map((e) => L.sum(e.map((x) => x * x)))).m) / tau2;
   const bias = (id, k) => L.meanSE(s.raw[id].map((e) => e[k])).m / tau2;
-  rows.push({ p, f, dN, dV, dVN, dI, dIV, rel: Object.fromEntries(ids.concat(['thesis', 'floorBlend']).map((id) => [id, L.meanSE(s.obs[id]).m / f])),
+  rows.push({ p, f, dN, dV, dVN, dI, dIV, dR, rel: Object.fromEntries(ids.concat(['thesis', 'floorBlend']).map((id) => [id, L.meanSE(s.obs[id]).m / f])),
     rmse: Object.fromEntries(ids.map((id) => [id, rm(id)])), biasG: Object.fromEntries(ids.map((id) => [id, bias(id, 2)])) });
 }
 
@@ -57,14 +59,15 @@ console.log(`  volume + clip:         ${summary('dV')}`);
 console.log(`  volume + least sq.:    ${summary('dVN')}`);
 console.log(`  inverse var. + clip:   ${summary('dI')}`);
 console.log(`  inverse var. vs volume + clip: ${summary('dIV')}`);
+console.log(`  REML vs inverse var. + clip:   ${summary('dR')}`);
 const mean = (f) => L.sum(rows.map(f)) / rows.length;
 console.log('\nMean over the grid, % of the floor:');
 for (const id of ids.concat(['thesis', 'floorBlend'])) console.log(`  ${id.padEnd(11)} ${(100 * mean((r) => r.rel[id])).toFixed(1)}`);
-console.log('\nBy subgrid (mean % of the floor: eq-clip / vol-clip / iv-clip / anova / thesis / best blend):');
+console.log('\nBy subgrid (mean % of the floor: eq-clip / vol-clip / iv-clip / reml / anova / thesis / best blend):');
 for (const [axis, vals] of [['spread', [0, 1]], ['rho', [0, 0.5]], ['mix', Object.keys(mixes)], ['table', ['3x2', '4x3', '6x4']], ['regime', ['app', 'thesis']]]) {
   for (const v of vals) {
     const sub = rows.filter((r) => r.p[axis] === v), m = (id) => (100 * L.sum(sub.map((r) => r.rel[id])) / sub.length).toFixed(1);
-    console.log(`  ${axis}=${v}`.padEnd(18) + ` ${m('equal-clip')} / ${m('vol-clip')} / ${m('iv-clip')} / ${m('anova-clip')} / ${m('thesis')} / ${m('floorBlend')}`);
+    console.log(`  ${axis}=${v}`.padEnd(18) + ` ${m('equal-clip')} / ${m('vol-clip')} / ${m('iv-clip')} / ${m('reml')} / ${m('anova-clip')} / ${m('thesis')} / ${m('floorBlend')}`);
   }
 }
 console.log('\nγ̂² bias before truncation, in % of τ², at ρ = 0.5 (mean over those worlds): ' +
