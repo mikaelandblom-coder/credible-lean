@@ -92,58 +92,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] Forecasting the line (2026-11-27, `CoreVector.VecEstimates.forecast_mse_optimal`, handbook
-  `res:vecForecast`): one sentence in the trend section that any forecast horizon is a fixed `c`, best
-  among all unbiased linear predictors, with error `cᵀ linMse(A*) c`.
-- [ ] Vector levels (2026-11-27, `CoreVector.integral_spread`): one sentence that the moment `Λ̂` of the
-  cohort trend lines, corrected for the noise covariance within and between cohorts, is unbiased for any
-  distribution (handbook `res:vecSpread`; S67), given any `N̂` with `E N̂ = N` (`integral_correctedLambda`);
-  the thesis's `τ̂²` correction `Σ ωⱼ ĉⱼ` is its scalar case. Its `N̂` from the lines' residuals
-  (`LineResiduals.lean`, handbook `res:lineResid`): SUR divisors, `T − p` only for equal exposure shapes.
-- [ ] "Beyond the blend" (2026-11-26, `Core.blupWeight_dotProduct`): one sentence that `d*` is the GLS mean plus the
-  regression of `μⱼ` on the residuals, the blend being its row cut to `z eⱼ` (best `z` = eq. (26)); shrinking a fraction
-  `θ` towards `d*` leaves `(1-θ)²` of the excess (handbook `res:blup_residual`). The row to report is the zero-sum one,
-  `d* − b` (`res:blup_gauge`): least `K`-norm, and the blend's is `z(eⱼ − b)`. With fitted moments
-  (`res:plugIn_mix`): the mix's error is the straight line minus `θ(1−θ)S`, best `θ = ½ + gain/(2S)`;
-  chosen on a held-out year by regression (`res:plugIn_proxy`), exact unless a common shock links the years, but one year is too noisy to beat `θ = 1` (S64: price `ΔᵀWΣWΔ/ΔᵀWΔ`, proved 2026-11-27, handbook `res:heldOut_price`; its bias under a persistent factor: `res:heldOut_bias`).
-- [ ] "Fitting crossed levels" in Open directions (2026-11-26): the pair weights have a provisional default from simulation
-  (`studies/runs/crossed-fit.js`: inverse variance from an equal-weight pass, clip at 0; 130% of the floor against
-  157% for the thesis fit on average, but worse with weak effects); move it to §5 "Which fit to use" and keep the small-table
-  caveat open.
-- [ ] Crossed pool weights proved (2026-11-26, handbook `res:crossed_pool`): the best unbiased pool is GLS on the
-  pair covariance table; balanced table: equal weights exact; normal noise: inverse variance ∝ (θ + nₚ)⁻², equal for
-  strong effects, large cells favoured for weak ones. A sentence in "Fitting crossed levels" replacing the
-  simulation ranking by this explanation.
-- *Done 2026-11-26:* crossed levels moved from "Open directions" to a result: paragraph "Crossed
-  levels." in §Groups (model, K, three factors, blend's loss, a cell without data); "Open
-  directions" keeps "Fitting crossed levels" (now: choice of pair weights, simulation, small
-  tables); the unbiased pair estimators are in the §Groups paragraph.
-- *Done 2026-11-26 (crossed wrap-up):* §Groups one-liner and "Crossed levels." paragraph cover all
-  crossed results (equicorrelated noise, best common factor, moment layer, pair estimators,
-  Dannenburg's two-way system exactly, Finding 42); abstract (crossed levels, 42 findings),
-  conclusion and appendix "Beyond the thesis" updated.
-- *Done 2026-11-25 (external review):* abstract and introduction around three contributions (new /
-  classical marked), "Words used", the assumptions table (§2.1), "Which fit to use" and "How the
-  studies were run" (§5), a Conclusion (§11), Lean names moved to the handbook. Still open from the
-  review: the novelty check against full texts (literature chat, OpenAlex/Semantic Scholar now
-  allowed in Default), figures for the main study results.
-- *Done 2026-11-25 (review):* the fourth-moment layer and the variance function (§7); Finding 35's
-  first-order prediction (§5); damping S38–S42 and tapering S46–S48 (§5); recency weighting S43–S45
-  (§3.4). "Given the levels" stays in §6: it is a statement about the true MSE (given the level), not
-  about higher moments.
-- *Done 2026-11-25 (later):* "Groups with their own collective mean" (§ Choosing the cohorts,
-  Finding 41, contrast with Finding 14); "Given the levels" (error given the level, SURE, the OBP
-  collective mean `∝ u(1 − z)²`, next to "What 'best' means"); normal noise with known mean
-  makes the best linear predictor `E[Y | x]` ("What 'normal' means here"). Then the OBP study (S59–S62):
-  "Given the levels" now says the averaged answer wins as a fit and a volume trend goes in the design.
-  S61 (cuts of sorted estimates chosen by SURE) in the watch-out of § Choosing the cohorts.
-- *Done 2026-11-25:* "Is a richer fit worth its price?" (§ Estimating the parameters: gain against
-  price, laws (a) and (b), the cross term with Findings 37–40); one sentence on the cross term in
-  "What 'normal' means here"; a watch-out in "What 'best' means" (MSE averaged over the collective,
-  not per cohort; literature §10p); "The group effects, as mixed-model software computes them"
-  (Henderson's equations, § Groups and shared levels).
-- *Done 2026-11-24:* "What 'normal' means here" (§ Why the moments are real): normal theory as zero third
-  and fourth cumulants, noise vs levels, estimate the cumulants instead of testing normality.
+- [ ] From the external review (2026-11-25), still open: the novelty check of the "new here" claims against full
+  texts (literature chat; OpenAlex/Semantic Scholar allowed in Default), and figures for the main study results.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

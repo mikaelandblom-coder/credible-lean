@@ -889,6 +889,34 @@ $\rho = 0$; on a fully estimated $\hat K$ it is noisy (\app{Models},
 ``BLUP''; \file{studies/PLAN.md} 3c, \file{studies/LOG.md}
 S30--S32).
 
+\paragraph{What the blend leaves out.}
+
+The best predictor reads as the GLS mean plus the regression of $\mu_j$ on
+every cohort's residual (\hb{res:blup_residual}{23}). The blend is the same
+rule with the residual row cut down to cohort $j$'s own residual times $z$,
+and the best $z$ for that cut is eq.~(26). Many rows describe the same
+predictor; the one to report is the row that sums to zero, $d^* - b$ for the
+best predictor against $z(e_j - b)$ for the blend: it has the least norm, and
+its off-diagonal entries are what cohort $j$ borrows beyond its GLS share
+(\hb{res:blup_gauge}{24}). Going part way helps less than one might expect:
+moving a fraction $\theta$ of the way from any unbiased rule to the best
+predictor leaves $(1-\theta)^2$ of its excess, so halfway removes three
+quarters.
+
+With fitted moments the trade is two-sided. For every distribution, the
+error of the mix is the straight line between the errors of the fitted blend
+and the fitted predictor, minus $\theta(1-\theta)S$, with $S$ the mean
+square of their disagreement, and the best fraction is
+$\theta^* = \tfrac12 + \text{gain}/(2S)$ (\hb{res:plugIn_mix}{32}). $S$ can be
+estimated from the data; the gain cannot. Regressing a held-out year's error
+of the blend on the disagreement estimates $\theta^*$ exactly, unless a shock
+that persists across years links the held-out year to the fitted ones
+(\hb{res:plugIn_proxy}{33}, \hb{res:heldOut_bias}{35}). But one year is too
+noisy: the choice pays a price of at least $\sigma^2(1 - \rho)$ with equal
+noise levels, whatever the fits (\hb{res:heldOut_price}{34}), which in the
+app's worlds was 7--14 times the gain available (S64). So keep $\theta = 1$,
+the fitted best predictor.
+
 \paragraph{Any target, any design.}
 
 The same idea reaches much further (Goldberger 1962; in geostatistics,
@@ -1218,12 +1246,16 @@ for each data situation. ``S'' numbers are study findings
   Skewed claims & a pooled noise variance, or balance & \finding{35} \\
   Several correlated quantities & the matrix best predictor, not the matrix blend & \finding{22} \\
   Monthly data, persistent demand & the predictor on a constrained factor table, $\phi$ from a long index & Section~\ref{sec:factor} \\
+  Crossed groupings (row $\times$ column) & pair estimators pooled by inverse variance from an equal-weight pass, clipped at $0$ & \file{studies/runs/crossed-fit.js}, \hb{res:crossed_pool}{49} \\
   Any richer fit & only if its gain exceeds its price & \hb{res:bsPrice}{36} \\
   \bottomrule
 \end{tabular}
 \end{center}
-For groups that share a level the model and its estimators are proved, but
-no fit has been tested yet (Section~\ref{sec:groups}).
+For crossed groupings the default reaches 130\% of the floor on average
+against 157\% for the thesis fit, but does worse when the effects are weak,
+and small tables stay open (Section~\ref{sec:open}). For groups that share a
+level the model and its estimators are proved, but no fit has been tested yet
+(Section~\ref{sec:groups}).
 
 \paragraph{How the studies were run.}
 
@@ -2215,7 +2247,21 @@ the estimate vectors, with a $K$ built from the design and the noise. With
 independent cohorts this gives the classical Hachemeister factor. With
 correlated cohorts it is new: a shock in one year moves every cohort's
 data that year, so it correlates their fitted lines, and the best
-credibility matrix accounts for that.
+credibility matrix accounts for that. Any forecast from the line, its level
+next year or three years out, is a fixed combination of level and slope, so
+the joint best predictor gives the best unbiased forecast at every horizon,
+with its error from the same matrix (\hb{res:vecForecast}{63}).
+
+Fitting it needs the spread $\Lambda$ of the true lines. The spread of the
+fitted lines, corrected for the noise covariance within and between cohorts,
+is unbiased for it under any distribution, given any unbiased estimate of
+that noise covariance (\hb{res:vecSpread}{66}); the thesis's correction of
+$\hat\tau^2$ is its one-dimensional case, and leaving out the part shared
+between cohorts biases $\hat\Lambda$ down (S67). The noise covariance comes
+from the lines' residuals (\hb{res:lineResid}{67}), as in seemingly unrelated
+regressions: dividing by $T - p$ is right only when the cohorts' exposures
+have the same shape over the years; otherwise each pair has its own divisor,
+and the plain one biases $\hat\rho$ towards zero.
 
 \paragraph{A known common trend.} When every cohort shares one known trend,
 there is no line to fit: restate every year to the target year and blend.
@@ -2465,9 +2511,15 @@ already proved.
 \paragraph{Fitting crossed levels.}
 
 Section~\ref{sec:groups} has the crossed model's predictor and unbiased
-estimators of its three variances, for any weights on the pairs. Open: which
-weights, chosen from the data with no hand-set choices; what the fitted
-predictor costs in simulation; and small tables, where each class has few pairs
+estimators of its three variances, for any weights on the pairs. The weights
+are settled in principle: the best unbiased pool of a class is GLS on the
+covariance table of its pair estimators (\hb{res:crossed_pool}{49}). In a
+balanced table equal weights are exactly best. Under normal noise the
+inverse-variance weights are $\propto (\theta + n_p)^{-2}$, with $\theta$ the
+class's variance and $n_p$ the pair's noise: equal when the effects are
+strong, favouring large cells when they are weak. That explains the
+simulation ranking behind the default fit (Section~\ref{sec:estimation},
+``Which fit to use''). Open: small tables, where each class has few pairs
 (two each in a two-by-two table) and the estimates are noisy and can be
 negative.
 
