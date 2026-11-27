@@ -30,7 +30,7 @@ page target is dropped: it is a reference, not a read.
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
 - *Done 2026-11-26:* `res:blup_residual` after `res:blup` (GLS mean plus predicted residuals, the
-  blend as the row `z eⱼ`, `(1−θ)²`), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`), `res:plugIn_proxy` (`θ` on a held-out
+  blend as the row `z eⱼ`, `(1−θ)²`), `res:blup_gauge` (2026-11-27: zero-sum row, least `K`-norm), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`), `res:plugIn_proxy` (`θ` on a held-out
   year, its exact bias, clipping), `res:heldOut_price` (2026-11-27: the price `ΔᵀWΣWΔ/ΔᵀWΔ`, S64 target 1),
   `res:heldOut_bias` (2026-11-27: the factor model's held-out bias, S64 target 2).
 - *Done 2026-11-26:* `res:crossed_pool` after `res:crossed_est`: Var of a pair pool = aᵀVa, GLS on V is the

@@ -1116,6 +1116,106 @@ theorem blendWeight_eq_residualWeight (K : Matrix J J ℝ) (j : J) (z : ℝ) :
   simp only [blendWeight, residualWeight, dotProduct_smul, one_dotProduct, smul_eq_mul,
     Finset.sum_pi_single', mem_univ, ite_true, mul_one]
 
+/-! #### The gauge of the residual row
+
+The residuals have `bᵀ(x - (bᵀx)1) = 0`, so a row `c` is fixed only up to adding `a·b`
+(`residualWeight_eq_iff`). Each class has exactly one row with zero sum, `d - b` for the
+weights `d`; it is the row of least `K`-norm, and `dᵀKd = s² + (d - b)ᵀK(d - b)`. For the blend
+it is `z(eⱼ - b)`: the weight on cohort `j` beyond its GLS share. -/
+
+/-- With `Σc = 0` the weights are `b + c`. -/
+theorem residualWeight_of_sum_eq_zero (K : Matrix J J ℝ) {c : J → ℝ} (hc : ∑ i, c i = 0) :
+    residualWeight K c = glsWeight K + c := by
+  rw [residualWeight, one_dotProduct, hc, sub_zero, one_smul, add_comm]
+
+/-- **The gauge**: two rows give the same weights iff they differ by a multiple of `b`. -/
+theorem residualWeight_eq_iff [Nonempty J] (hK : K.PosDef) (c c' : J → ℝ) :
+    residualWeight K c = residualWeight K c' ↔ ∃ a : ℝ, c - c' = a • glsWeight K := by
+  constructor
+  · intro h
+    refine ⟨∑ i, c i - ∑ i, c' i, funext fun i => ?_⟩
+    have := congrFun h i
+    simp only [residualWeight, one_dotProduct, Pi.add_apply, Pi.smul_apply, smul_eq_mul] at this
+    simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
+    linarith
+  · rintro ⟨a, ha⟩
+    have hc : c = c' + a • glsWeight K := by rw [← ha]; abel
+    have hs : ∑ i, c i = ∑ i, c' i + a := by
+      simp only [hc, Pi.add_apply, Pi.smul_apply, smul_eq_mul, sum_add_distrib, ← mul_sum,
+        sum_glsWeight hK, mul_one]
+    funext i
+    simp only [residualWeight, one_dotProduct, Pi.add_apply, Pi.smul_apply, smul_eq_mul, hs]
+    rw [hc]
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring
+
+/-- For unbiased weights `d` (`Σd = 1`), the zero-sum row `d - b` gives back `d`. -/
+theorem residualWeight_sub_glsWeight [Nonempty J] (hK : K.PosDef) {d : J → ℝ}
+    (hd : ∑ i, d i = 1) : residualWeight K (d - glsWeight K) = d := by
+  rw [residualWeight_of_sum_eq_zero K (by simp [sum_sub_distrib, hd, sum_glsWeight hK])]
+  abel
+
+/-- **Each class has exactly one zero-sum row.** -/
+theorem existsUnique_sum_eq_zero_row [Nonempty J] (hK : K.PosDef) (c : J → ℝ) :
+    ∃! c₀ : J → ℝ, ∑ i, c₀ i = 0 ∧ residualWeight K c₀ = residualWeight K c := by
+  have hs : ∑ i, residualWeight K c i = 1 := by
+    simp only [residualWeight, one_dotProduct, Pi.add_apply, Pi.smul_apply, smul_eq_mul,
+      sum_add_distrib, ← mul_sum, sum_glsWeight hK]
+    ring
+  refine ⟨residualWeight K c - glsWeight K, ⟨by simp [sum_sub_distrib, hs, sum_glsWeight hK],
+    residualWeight_sub_glsWeight hK hs⟩, ?_⟩
+  rintro c₀ ⟨h0, h⟩
+  rw [← h, residualWeight_of_sum_eq_zero K h0]
+  abel
+
+/-- Adding `a·b` to a zero-sum row adds `a²s²` to its `K`-norm (`bᵀKc₀ = s²Σc₀ = 0`). -/
+theorem quadForm_add_smul_glsWeight [Nonempty J] (hK : K.PosDef) {c₀ : J → ℝ}
+    (h0 : ∑ i, c₀ i = 0) (a : ℝ) :
+    (c₀ + a • glsWeight K) ⬝ᵥ (K *ᵥ (c₀ + a • glsWeight K))
+      = c₀ ⬝ᵥ (K *ᵥ c₀) + a ^ 2 * (invTotal K)⁻¹ := by
+  have hKb : ∀ x : J → ℝ, x ⬝ᵥ (K *ᵥ glsWeight K) = (∑ i, x i) * (invTotal K)⁻¹ := fun x => by
+    rw [mulVec_glsWeight hK]; simp [dotProduct, ← sum_mul]
+  have hsym := dotProduct_mulVec_comm_of_isHermitian hK.isHermitian (glsWeight K) c₀
+  rw [mulVec_add, mulVec_smul, dotProduct_add, dotProduct_smul, add_dotProduct, add_dotProduct,
+    smul_dotProduct, smul_dotProduct, hKb (glsWeight K), hsym, hKb c₀, h0, sum_glsWeight hK]
+  simp only [smul_eq_mul]
+  ring
+
+/-- **The zero-sum row has the least `K`-norm** among all rows giving the same weights. -/
+theorem quadForm_le_of_residualWeight_eq [Nonempty J] (hK : K.PosDef) {c₀ c : J → ℝ}
+    (h0 : ∑ i, c₀ i = 0) (h : residualWeight K c = residualWeight K c₀) :
+    c₀ ⬝ᵥ (K *ᵥ c₀) ≤ c ⬝ᵥ (K *ᵥ c) := by
+  obtain ⟨a, ha⟩ := (residualWeight_eq_iff hK c c₀).mp h
+  have hc : c = c₀ + a • glsWeight K := by rw [← ha]; abel
+  rw [hc, quadForm_add_smul_glsWeight hK h0]
+  have := (inv_pos.mpr (invTotal_pos hK)).le
+  nlinarith [sq_nonneg a]
+
+/-- **Pythagoras for unbiased weights**: `dᵀKd = s² + (d - b)ᵀK(d - b)`, the variance of the
+GLS mean plus that of the zero-sum correction. -/
+theorem quadForm_eq_invTotal_add [Nonempty J] (hK : K.PosDef) {d : J → ℝ}
+    (hd : ∑ i, d i = 1) :
+    d ⬝ᵥ (K *ᵥ d) = (invTotal K)⁻¹ + (d - glsWeight K) ⬝ᵥ (K *ᵥ (d - glsWeight K)) := by
+  have h0 : ∑ i, (d - glsWeight K) i = 0 := by
+    simp [sum_sub_distrib, hd, sum_glsWeight hK]
+  have := quadForm_add_smul_glsWeight hK h0 1
+  rw [one_smul, sub_add_cancel] at this
+  rw [this]; ring
+
+/-- The best predictor's zero-sum row is `d* - b`. -/
+theorem residualWeight_blupWeight_sub (hK : K.PosDef) (L : Matrix J J ℝ) (j : J) :
+    residualWeight K (blupWeight K L j - glsWeight K) = blupWeight K L j := by
+  have : Nonempty J := ⟨j⟩
+  exact residualWeight_sub_glsWeight hK (sum_blupWeight hK L j)
+
+/-- The blend's zero-sum row is `z(eⱼ - b)`: its diagonal is `z(1 - bⱼ)`, the weight on cohort
+`j` beyond its GLS share. -/
+theorem blendWeight_sub_glsWeight (K : Matrix J J ℝ) (j : J) (z : ℝ) :
+    blendWeight K j z - glsWeight K = z • (Pi.single j 1 - glsWeight K) := by
+  funext i
+  simp only [blendWeight, Pi.sub_apply, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  ring
+
 /-- …and the best predictor in that restricted family is the blend with `bestZ`
 (eq. (26)), whenever cohort `j` is not the whole portfolio (`b ≠ eⱼ`). -/
 theorem blendWeight_bestZ_optimal (hK : K.PosDef) (L : Matrix J J ℝ) (j : J)

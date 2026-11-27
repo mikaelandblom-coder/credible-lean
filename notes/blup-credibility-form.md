@@ -26,8 +26,10 @@ For the thesis model `L = τ²I`, `K = τ²I + V`: `Z = τ²(τ²I + V)⁻¹`, t
 (literature §10, Jewell 1973, Bühlmann–Gisler ch. 7). Reading: `Zⱼⱼ` is cohort `j`'s own credibility,
 `Zⱼᵢ` what it borrows from cohort `i`'s residual.
 
-Gauge: since `1ᵀK⁻¹r = 0`, row `j` of `Z` is defined only up to adding `c·1ᵀK⁻¹`. Fix it for reporting,
-e.g. the row with least norm in the `K` metric, or the one with zero `b`-weighted sum. To settle.
+Gauge: since `1ᵀK⁻¹r = 0`, row `j` of `Z` is defined only up to adding `c·1ᵀK⁻¹`. *Settled 2026-11-27*
+(`Core.residualWeight_eq_iff`, `existsUnique_sum_eq_zero_row`, `quadForm_le_of_residualWeight_eq`): the
+two candidates coincide, the row of least `K`-norm is the one with zero (plain) sum, `d* − b`, and
+`d*ᵀKd* = s² + (d* − b)ᵀK(d* − b)`. The blend's is `z(eⱼ − b)`, diagonal `z(1 − bⱼ)`; report that.
 
 The blend is the same form with row `j` restricted to `z eⱼᵀ` (plus the gauge): `μ̂ + z(μ̂ⱼ − μ̂)`.
 Optimising that one number gives eq. (7). The blend is the BLUP iff `ℓⱼ − z K eⱼ` is constant, i.e.

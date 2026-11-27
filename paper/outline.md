@@ -94,7 +94,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - [ ] "Beyond the blend" (2026-11-26, `Core.blupWeight_dotProduct`): one sentence that `d*` is the GLS mean plus the
   regression of `μⱼ` on the residuals, the blend being its row cut to `z eⱼ` (best `z` = eq. (26)); shrinking a fraction
-  `θ` towards `d*` leaves `(1-θ)²` of the excess (handbook `res:blup_residual`). With fitted moments
+  `θ` towards `d*` leaves `(1-θ)²` of the excess (handbook `res:blup_residual`). The row to report is the zero-sum one,
+  `d* − b` (`res:blup_gauge`): least `K`-norm, and the blend's is `z(eⱼ − b)`. With fitted moments
   (`res:plugIn_mix`): the mix's error is the straight line minus `θ(1−θ)S`, best `θ = ½ + gain/(2S)`;
   chosen on a held-out year by regression (`res:plugIn_proxy`), exact unless a common shock links the years, but one year is too noisy to beat `θ = 1` (S64: price `ΔᵀWΣWΔ/ΔᵀWΔ`, proved 2026-11-27, handbook `res:heldOut_price`; its bias under a persistent factor: `res:heldOut_bias`).
 - [ ] "Fitting crossed levels" in Open directions (2026-11-26): the pair weights have a provisional default from simulation

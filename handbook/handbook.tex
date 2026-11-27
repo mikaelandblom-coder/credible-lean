@@ -540,6 +540,25 @@ $E Y = x_0^\top\beta$ for unknown $\beta$ (one mean; a season; a mean per compon
   The excess falls only as $(1-\theta)^2$: going halfway to $d^*$ removes three quarters of the blend's loss, not half.
 \end{caveat}
 
+\begin{result}[Which residual row to report]\label{res:blup_gauge}
+  Rows $c$, $c'$ give the same predictor iff $c - c' = a\,b$ (the residuals have $b^\top r = 0$). Each
+  predictor has exactly one row with zero sum, $d - b$; it has the least $K$-norm, and
+  \[
+    d^\top Kd = s^2 + (d - b)^\top K(d - b),
+  \]
+  the GLS mean's variance plus the correction's. Zero-sum rows: $d^* - b$ for the best predictor,
+  $z(e_j - b)$ for the blend.
+  \lean{Credibility.Core.residualWeight_eq_iff}
+  \lean{Credibility.Core.existsUnique_sum_eq_zero_row}
+  \lean{Credibility.Core.quadForm_le_of_residualWeight_eq}
+  \lean{Credibility.Core.quadForm_eq_invTotal_add}
+  \lean{Credibility.Core.blendWeight_sub_glsWeight}
+\end{result}
+\use Report $d^* - b$: its diagonal $d^*_j - b_j$ compares with the blend's $z(1 - b_j)$, its off-diagonals are what cohort $j$ borrows beyond its GLS share.
+\begin{caveat}
+  $(LK^{-1})_{j\cdot}$ is another row of the same predictor; its entries change with the gauge, so don't compare them across models.
+\end{caveat}
+
 % ===========================================================================
 \section{Estimating the parameters}\label{sec:estimation}
 

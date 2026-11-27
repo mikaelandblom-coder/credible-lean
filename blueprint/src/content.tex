@@ -3499,6 +3499,37 @@ lost by not using the best of them all?
   variance \eqth{6}, minimised at $z^*$ when the gap $K_{jj} - s^2 = (e_j - b)^TK(e_j - b)$ is positive.
 \end{proof}
 
+\begin{theorem}[The gauge of the residual row]\label{thm:Core_residual_gauge}
+  \lean{Credibility.Core.residualWeight_of_sum_eq_zero, Credibility.Core.residualWeight_eq_iff,
+        Credibility.Core.residualWeight_sub_glsWeight, Credibility.Core.existsUnique_sum_eq_zero_row,
+        Credibility.Core.quadForm_add_smul_glsWeight, Credibility.Core.quadForm_le_of_residualWeight_eq,
+        Credibility.Core.quadForm_eq_invTotal_add}
+  \leanok
+  \uses{def:Core_residualWeight}
+  Let $K \succ 0$. Rows $c$, $c'$ give the same weights iff $c - c' = a\,b$ for some $a$. Each class has
+  exactly one row with $\sum_i c_i = 0$; for unbiased weights $d$ it is $d - b$, with weights $b + (d - b) = d$.
+  If $\sum_i c_{0,i} = 0$ then $(c_0 + ab)^TK(c_0 + ab) = c_0^TKc_0 + a^2s^2$, so the zero-sum row
+  has the least $K$-norm in its class, and $d^TKd = s^2 + (d - b)^TK(d - b)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_residualWeight, lem:mulVec_glsWeight, lem:sum_glsWeight}
+  Compare coefficients: $c + (1 - 1^Tc)b = c' + (1 - 1^Tc')b$ iff $c - c' = (1^Tc - 1^Tc')b$, using
+  $\sum_i b_i = 1$. For the norm, $b^TKc_0 = s^2\,1^Tc_0 = 0$ and $b^TKb = s^2$ since $Kb = s^2 1$.
+\end{proof}
+
+\begin{corollary}[Zero-sum rows of the best predictor and of the blend]\label{cor:Core_gauge_rows}
+  \lean{Credibility.Core.residualWeight_blupWeight_sub, Credibility.Core.blendWeight_sub_glsWeight}
+  \leanok
+  \uses{thm:Core_residual_gauge, def:Core_blup}
+  The zero-sum row of $d^*$ is $d^* - b$; that of the blend is $z(e_j - b)$, with diagonal $z(1 - b_j)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_residual_gauge, lem:Core_blup_foc}
+  $\sum_i d^*_i = 1$ (Lemma~\ref{lem:Core_blup_foc}); $w(z) - b = z(e_j - b)$ by definition.
+\end{proof}
+
 \begin{theorem}[Shrinking towards the best predictor]\label{thm:Core_shrink_blup}
   \lean{Credibility.Core.linMse_add_smul_blupWeight_sub}
   \leanok
