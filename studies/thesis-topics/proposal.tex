@@ -234,9 +234,13 @@ frequency weighted by volume and severity by claim counts.}
  \item Joint and separate prediction coincide when the components do not covary. Is the converse
    true?
  \item The bias of the pure premium as a product of two predictions,
-   $E[\hat f\hat s] - E[fs]$.}
+   $E[\hat f\hat s] - E[fs]$.
+ \item Fitting the joint $K$: the spread of the cohort estimates, corrected for their noise within
+   and between cohorts, is unbiased for the level covariance under any distribution (Results
+   \hb{res:vecSpread}, \hb{res:lineResid}). In simulation a joint fit pays when the years carry
+   common shocks and is nearly free otherwise. Is that so on the cards?}
 {Do frequency and severity residuals covary, and does a joint fit predict better?}
-{Results \hb{res:vector}, \hb{res:freqsev_joint}, \hb{res:prodBias}}{medium}
+{Results \hb{res:vector}, \hb{res:freqsev_joint}, \hb{res:prodBias}, \hb{res:vecSpread}}{medium}
 
 \ext{E7. A known demand index}
 {If a public series (passenger statistics) tracks demand, use it as a covariate with a
@@ -281,8 +285,10 @@ $\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \tau^2\delta_{ij}$; noise as in 
  \item Unbiased moment estimators of $\sigma_a^2$ and $\tau^2$, and why the 2023 $\hat\tau^2$ is
    biased when cards share a country level.
  \item Tier within a country as a known difference (a fixed effect) or as part of the card's own
-   level? If some tiers do turn out comparable across countries, a crossed tier effect is new
-   ground.}
+   level? If some tiers turn out comparable across countries, model tier as a crossed level
+   (country $\times$ tier): $K$, its estimators and the best pool weights are in Results
+   \hb{res:crossed}, \hb{res:crossed_est}, \hb{res:crossed_pool}. The open question is whether
+   the cards support a tier effect, not its theory.}
 {Do cards of one country resemble each other beyond their own experience?}
 {Results \hb{res:phi}--\hb{res:est_groups}}{medium}
 
@@ -406,7 +412,12 @@ draws.) ``No evidence of a difference'' is then a result in itself, and so is fi
 statement in the handbook is wrong or of little practical use. Score squared error and also interval
 coverage per card (A6). With so little power, \emph{combining} fits may beat choosing one
 (forecast combination): two predictors' best blend is the credibility factor itself, with
-correlated errors. This is an idea, not tested.
+correlated errors. Choosing that blend on held-out data has the same power problem, and it is
+exact here: the error of a mix of the fitted blend and the fitted best predictor is a parabola in
+the mix (Result \hb{res:plugIn_mix}); one held-out year adds a price that does not shrink with
+the data (Result \hb{res:heldOut_price}), and a common factor linking the held-out month to the
+fitted ones biases the choice (Result \hb{res:heldOut_bias}). Hold out several periods, or keep
+the theory's full weight on the best predictor.
 
 \section{The application: travel insurance on payment cards}\label{sec:cards}
 
