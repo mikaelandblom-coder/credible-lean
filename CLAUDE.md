@@ -70,7 +70,8 @@ tactics.
   and block `Γ`, per-cohort dynamics `δᵢⱼGᵢ` (`KG`), `ℓ`, `v` for the 12-month target, Step 1/2 as
   corollaries; fitted tables `tableK` (any `A ⪰ 0`, no `τ²`: `≻ 0` when every `ŝⱼ² > 0`, not with `ŝ² ≥ 0` alone: Finding 30; with some `ŝⱼ² = 0` iff `(Â + Ĉ)_ZZ ≻ 0` given `Φ ≻ 0` and a common month: Finding 34)
   → `Credibility/Factor.lean`; its moment layer (`Factor.Cells`: random cells over
-  all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE)
+  all months with any covariance table, `Cells.toTarget` into `Core.Target`, true MSE; a held-out month
+  `Factor.HeldOut`: the bias of choosing `θ` on it is `Σ w λ A λ Γ_{t h}`, zero for iid shocks, S64)
   → `Credibility/FactorMoments.lean`
 - extension: when the factor cancels from relativities (`notes/card-data.md` Step 4, Finding 31):
   exact extra variance `gᵀΓg` of any linear statistic, relativities with equal loadings and month

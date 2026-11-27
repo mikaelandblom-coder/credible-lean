@@ -937,7 +937,7 @@ One chat per step; none needs Lean except step 5.
   common shock (the plug-in BLUP is within 0.7 of the best fixed `θ`), pooled over years too; the price of
   one held-out year is exactly `ΔᵀWΣWΔ/ΔᵀWΔ ≥ σ²(1 − ρ)`, 7–14× the gain available. So no `θ̂` step: keep
   `θ = 1`, show `S` only. Lean target 1 of S64 done 2026-11-27 (`integral_wLoss_heldOutTheta`,
-  `le_heldOutPrice`); target 2 open. Gauge of `Z`'s rows to settle.
+  `le_heldOutPrice`); target 2 done 2026-11-27 (`Factor.HeldOut.integral_wsum_noise`). Gauge of `Z`'s rows to settle.
 - [ ] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the
   pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
   needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:

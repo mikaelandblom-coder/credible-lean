@@ -732,7 +732,8 @@ General targets (Lean, **lean** chat, `PlugInMix.lean`, moment layer):
    `E[(e₀ + θ̂Δ)ᵀW(e₀ + θ̂Δ)] = (e₀ + θ̃Δ)ᵀW(e₀ + θ̃Δ) + ΔᵀWΣWΔ/ΔᵀWΔ`; hence `θ̂` beats a fixed `θ₀` in mean
    iff `ΔᵀWΔ(θ₀ − θ̃)² > ΔᵀWΣWΔ/ΔᵀWΔ`, and the price is ≥ `λmin(W^½ΣW^½)`. (Conditioning on the fit is
    the fixed `e₀, Δ`; `integral_quad_of_cov` gives the quadratic.) Clipping: `mixLoss_clip_le` per draw.
-2. *Open (2026-11-27): first state the held-out deviation `ε` in terms of `Cells` and its means.* *The persistent-shock bias.* In `FactorMoments` with fixed weights: `E[Δε] = Σⱼ wⱼ Σᵢ (d − ŵ)ⱼᵢ
+2. *Done 2026-11-27* (`FactorMoments.lean`: `Factor.HeldOut` with levels `μⱼ`, `ε = X_{(j,h)} − μⱼ`;
+   `cov_X_noise`, `integral_wsum_noise`, `_eq_zero`, `_ar1`; handbook `res:heldOut_bias`). *The persistent-shock bias.* In `FactorMoments` with fixed weights: `E[Δε] = Σⱼ wⱼ Σᵢ (d − ŵ)ⱼᵢ
    cov(μ̂ᵢ, εⱼₜ)`, `cov(μ̂ᵢ, εⱼₜ) = λᵢλⱼ Σₛ aᵢₛ Γₛₜ` (0 iff the held-out month/year is uncorrelated with the
    fitted ones under `Γ`; AR(1): `Σₛ aᵢₛ φ^(T−s)`). A one-line corollary once the cross-covariance of
    `Cells` with a held-out cell is stated.

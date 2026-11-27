@@ -5022,6 +5022,37 @@ are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter 
   and~\ref{thm:Factor_card}.
 \end{proof}
 
+\begin{definition}[Cells, levels and a held-out month]\label{def:Factor_HeldOut}
+  \lean{Credibility.Factor.HeldOut, Credibility.Factor.HeldOut.noise}
+  \leanok
+  \uses{def:Factor}
+  Square-integrable random cells $X_{(j,t)}$ over all months with the table of
+  Definition~\ref{def:Factor}, and levels $\mu_j$ with $\cov(X_{(i,t)}, \mu_j) = \tau^2\delta_{ij}$. The
+  proxy noise of a held-out month $h$ is $\varepsilon_j = X_{(j,h)} - \mu_j$.
+\end{definition}
+
+\begin{theorem}[The bias of choosing $\theta$ on a held-out month]\label{thm:Factor_heldOut_bias}
+  \lean{Credibility.Factor.HeldOut.cov_X_noise, Credibility.Factor.HeldOut.cov_lin_noise,
+        Credibility.Factor.HeldOut.integral_wsum_noise,
+        Credibility.Factor.HeldOut.integral_wsum_noise_eq_zero,
+        Credibility.Factor.HeldOut.integral_wsum_noise_ar1}
+  \leanok
+  \uses{def:Factor_HeldOut, def:Factor_ar1}
+  For $t \ne h$, $\cov(X_{(i,t)}, \varepsilon_j) = \lambda_i\lambda_j\Gamma_{th}$. Hence for fixed weights
+  $A_j$ on the fitted cells (months $\ne h$), $\Delta_j = \sum_p A_{jp}X_p$, cohort weights $w$ and
+  $\mathbb E\varepsilon_j = 0$:
+  $\mathbb E\bigl[\sum_j w_j\Delta_j\varepsilon_j\bigr] = \sum_j w_j\sum_p A_{jp}\lambda_{p_1}\lambda_j\Gamma_{p_2h}$,
+  for every distribution. It is $0$ if $\Gamma_{th} = 0$ for all $t \ne h$ (iid shocks), and with
+  $\Gamma = $ AR(1) it is $\gamma\sum_j w_j\lambda_j\sum_p A_{jp}\lambda_{p_1}\varphi^{|p_2 - h|}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Factor_HeldOut}
+  In $\cov(X_{(i,t)}, X_{(j,h)}) - \cov(X_{(i,t)}, \mu_j)$ the shock term has $\delta_{th} = 0$ and the
+  level term $\tau^2\delta_{ij}$ cancels; covariance is bilinear, and $\mathbb E[\Delta_j\varepsilon_j]
+  = \cov(\Delta_j, \varepsilon_j)$ when $\mathbb E\varepsilon_j = 0$.
+\end{proof}
+
 \section*{When the factor cancels from relativities (card data, Step 4)}
 
 \begin{definition}[Month profile of a statistic]\label{def:Factor_profile}
