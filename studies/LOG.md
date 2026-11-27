@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S74 | `runs/blup-verdict.js` | The bootstrapped gain-against-price verdict for the BLUP adds nothing; S72's BLUP loss is the balance switch (corrBS itself +22 mean, up to +206 points balanced) |
 | S73 | `runs/blup-price.js` | The BLUP's weight price over the blend on corrBS's `K̂`: +32 to +38 points with a σⱼ spread at app volume, ≤ +4 with equal σⱼ; no sign in general |
 
 ## Observations
@@ -1001,3 +1002,19 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     (J = 2–5, 20000 directions): the BLUP's first-order price is the lower one in 11.7%. **Consequence.** The
     first-order law (`Core.tendsto_blupPrice`, `tendsto_blendPrice`) is the general target S72 asked for;
     with a `Var θ̂` for corrBS it gives `gainPrice` a BLUP column (gain against price, as for the variances).
+- S74. *[numerical]* **A data-side verdict for the BLUP by gain against bootstrapped price adds nothing, and
+    S72's BLUP loss is the balance switch's.** S72's grid (56 worlds, 400 draws, gamma noise). Rule "price": the
+    BLUP iff its exact gain on `K̂` exceeds its extra squared weight error over the blend, by a parametric
+    bootstrap from the fit (60 normal draws from `K̂`, refit corrBS; Butar & Lahiri 2003; Finding 45's quantity
+    with clipping and shrinkage kept). Balanced (cross-fitted level, as S72): price − corrBS mean −0.5, range
+    −14.3 to +21.3, the same as always-BLUP (−0.5, −14.3 to +21.4); regret against the better of the two in each
+    world 1.5 mean (held-out 1.6). It picks the BLUP in 38–99% of draws where the BLUP loses, so it does not
+    find the draws that hurt. **Without balancing** the BLUP wins: raw BLUP − raw corrBS worse in 6 of 56, at
+    most +6.2 (app ρ = 0.3, σⱼ×2, T = 5, ± 9.2), mean −8.0, down to −71.9. **The balance switch itself**:
+    balanced corrBS − raw corrBS worse in 35 of 56, mean +21.8, up to +205.6 points (app ρ = 0.9, σⱼ×2, T = 5);
+    +49.5 even at ρ = 0 (app σⱼ×2, T = 5); thesis volume +4 to +39; within ±12 with equal σⱼ. So S73's weight
+    price (+32 at app ρ = 0.3, σⱼ×2) overstates the raw loss (+6): the cross term `2E[AB]` (gamma noise) is
+    about −25 points there. **Consequence.** The BLUP-versus-corrBS question closes: unbalanced the BLUP is the
+    better fit across the grid; balanced the comparison is dominated by the balance step's own cost, largest with
+    unequal noise variances at low volume. Next general target: the MSE cost of balancing to the cross-fitted
+    level (a common shift: its variance plus its bias, against the portfolio bias it removes).

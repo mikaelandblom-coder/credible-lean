@@ -106,6 +106,8 @@ may need a paragraph.)
   the row needs "and similar noise variances", the paragraph the balanced/unbalanced distinction.
   *Why, 2026-11-27 (Finding 45, S73):* the BLUP's weights pay a larger estimation price than the blend's on the
   same `K̂` there (+32 to +38 points against a gain of 3–12); one sentence in §BLUP, citing the handbook line.
+  *Correction, S74:* that weight price is not the actual loss (cross term about −25); unbalanced the BLUP wins
+  (worse in 6 of 56, ≤ +6), and the balanced loss is mostly the balance step's own cost. The sentence should say that.
 - [ ] §Open directions, "Small crossed tables" (2026-11-27, S70, S71): REML on the cell means is now the app's crossed
   default (better than the pair pools in 48 of 96 larger-table worlds, worse in 9 by at most 3 points); the paragraph
   may say so, and that Finding 44's 2×2 warning is shown.

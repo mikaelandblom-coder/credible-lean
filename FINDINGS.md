@@ -797,7 +797,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    Size (S73, J = 8, T = 5, weights on corrBS's `K̂`): at app volume with σⱼ spread 2 and ρ = 0.3–0.6 the
    BLUP's extra price is +32 to +38 points of the floor against a gain of 3–12; with equal σⱼ it is at most
    +4. So `Engine.gainPrice`'s "none extra" understates the BLUP's price exactly where S72 saw it lose.
-   Not covered: the cross term `2E[AB]` of `PlugIn.lean`, and the second-order terms; `Var θ̂` for the
-   corrBS fit (ρ̂, σ̃ⱼ², τ̂²) is not derived, so the formula is not yet a data-side verdict.
+   Not covered: the cross term `2E[AB]` of `PlugIn.lean`, and the second-order terms. These matter: under
+   gamma noise the raw BLUP loses only +6 there (S74), so the cross term is about −25 points, and a
+   bootstrapped gain-against-price verdict picks no better than always-BLUP (S74). S72's loss of the
+   balanced BLUP is mostly the balance switch's own cost (S74).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

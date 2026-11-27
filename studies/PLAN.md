@@ -443,7 +443,14 @@ Finished items are in `studies/PLAN-done.md`.
   gain-against-price verdict for the BLUP as for the variances. *Price stated 2026-11-27 (Finding 45, S73,
   `BlupPrice.lean`):* first order `rᵀQr` against the blend's law, no sign in general, +32 to +38 points at app
   volume with σⱼ spread 2. Still open: `Var θ̂` of corrBS's (ρ̂, σ̃ⱼ², τ̂²) (delta method), then the BLUP column
-  in `gainPrice` and its formula line (`F.gainPrice` "none extra" is wrong).
+  in `gainPrice` and its formula line (`F.gainPrice` "none extra" is wrong). *S74 (2026-11-27):* the
+  bootstrapped verdict adds nothing (regret 1.5 against held-out 1.6), and the BLUP wins unbalanced (worse in
+  6 of 56, ≤ +6); so no BLUP column. Fix the formula line only: "none extra" → the weight price, cross term
+  unknown.
+- [ ] Balance switch cost with unequal σⱼ (2026-11-27, S74, owner decision): balancing to the cross-fitted level
+  costs corrBS +21.8 points of the floor on average over S72's grid, up to +205.6 (app volume, σⱼ spread 2, T = 5),
+  +49.5 even at ρ = 0. The default is "on". General target first: the MSE of the common shift to the cross-fitted
+  level against the portfolio bias it removes (`Core.Estimates.integral_crossFit_sub` gives the bias side).
 - [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A

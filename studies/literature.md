@@ -112,6 +112,10 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   Used 2026-11-27 (`Credibility/BlupPrice.lean`, Finding 45): Das, Jiang & Rao's general form (their
   eq. (3.4), arXiv math/0406455) `g₃ = tr{(∂d)ᵀΣ(∂d)·Var θ̂}` for two families on the same `K̂`: the BLUP's
   weight derivative `Q(Δℓ − ΔK d*)` and the blend's. No comparison of `g₃` across predictor families found.
+- Butar & Lahiri (2003, JSPI) parametric bootstrap for `g₃` (no derivatives); Hall & Maiti (2006, JRSS-B)
+  bias-corrected bootstrap MSE (from secondary sources: abstracts and citing papers). Used 2026-11-27
+  (`studies/runs/blup-verdict.js`, S74): bootstrapped weight price of the BLUP over the blend on corrBS's `K̂`
+  as a choice rule; it adds nothing, because the cross term (not in `g₃`) is large under skewed noise.
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
   estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
   approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:
