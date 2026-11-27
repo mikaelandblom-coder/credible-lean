@@ -1,4 +1,5 @@
 # TeX Live packages for the docs job (blueprint, handbook, paper; xelatex).
+# pgf, pgfplots: the paper's figures; dvisvgm: their SVGs on the web page (plasTeX).
 # Installed on top of scheme-basic and cached: editing this file reinstalls.
 collection-xetex
 collection-latexrecommended
@@ -13,3 +14,6 @@ unicode-math
 lm
 lm-math
 titlesec
+pgf
+pgfplots
+dvisvgm

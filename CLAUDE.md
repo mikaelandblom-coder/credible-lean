@@ -189,7 +189,9 @@ and the blueprint; the others point to it. Don't restate across them.
   organized for lookup; shows the ~10 formulas that carry the story and cites
   handbook numbers for the rest; no proofs, and Lean names only in the
   concordance (Appendix A). `scripts/paper_check.py` (CI) checks citations; run
-  it with `--fix` after renumbering the handbook. Built to `/paper/`.
+  it with `--fix` after renumbering the handbook. Study figures (pgfplots) live in
+  `paper/figures/`, written by `scripts/paper_figures.py` from the `.out.txt`
+  files; CI fails if they drift (`--check`). Built to `/paper/`.
 - **Blueprint** (`leanblueprint`): the proof ledger (statements, proofs,
   dependency graph, findings as remarks), a condensed §2 of the thesis. One
   file per chapter in `blueprint/src/chapters/` (`NN-topic.tex`, in reading

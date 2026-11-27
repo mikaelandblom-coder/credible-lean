@@ -12,6 +12,11 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-27
+- Figures for the main study results (from the external review): Figure 1 in §3.4,
+  the fitted BLUP against the fitted blend with and without the balance shift (S72,
+  S74); Figure 2 in §4, the cost of balancing by noise-variance spread (S75); Figure 3
+  in §5, REML and the thesis fit against the pools on crossed tables (S71). Drawn
+  from the study outputs by `scripts/paper_figures.py`.
 - §8.2 Groups: the held-out choice of groups or none in simulation (S77: least regret,
   at most 4 points, though its picks barely follow the shared share); the open item
   "groups or not" removed from §10.

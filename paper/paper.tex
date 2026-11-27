@@ -13,6 +13,11 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{booktabs}
 \usepackage{xcolor}
+% Study figures: paper/figures/*.tex, written by scripts/paper_figures.py from
+% studies/runs/*.out.txt (do not edit them by hand).
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
 % Links: internal ones (sections, contents) in the text colour, external ones
 % (handbook, Lean, repository) in a muted dark blue. For no colour at all,
 % use \usepackage[hidelinks]{hyperref} instead.
@@ -902,6 +907,20 @@ is mostly the balance step's own cost (Section~\ref{sec:balance}). On a
 fully estimated $\hat K$ the BLUP is noisy (\app{Models}, ``BLUP'';
 \file{studies/PLAN.md} 3c, \file{studies/LOG.md} S30--S32).
 
+\begin{figure}[t]
+  \centering
+  \input{figures/fig-blup}
+  \caption{The fitted BLUP against the fitted blend on the same one-correlation
+    $\hat K$, in points of the floor (below zero: the BLUP is better), with
+    $\pm 2$ standard errors. Eight cohorts, five years, gamma noise, 400 draws
+    per world; note the different vertical scales. Not shifted, the BLUP gains
+    as $\rho$ grows and barely loses at $\rho \le 0.3$; shifted to balance with
+    unequal noise variances at app volume it loses, and that loss is the shift's
+    (Section~\ref{sec:balance}). Data: S74 (\file{studies/runs/blup-verdict.out.txt}),
+    the grid of S72.}
+  \label{fig:blup}
+\end{figure}
+
 \paragraph{What the blend leaves out.}
 
 The best predictor reads as the GLS mean plus the regression of $\mu_j$ on
@@ -1104,6 +1123,20 @@ be evaluated on the fitted $\hat K$: balance iff the target's error minus the
 fit's is negative there. That rule lost at most 7 points of the floor against
 the better of always and never balancing in each world, where a held-out
 score lost up to 99 (S76); the app's switch now balances only when it pays.
+Figure~\ref{fig:balance} shows the ratio of the two errors in each world.
+
+\begin{figure}[t]
+  \centering
+  \input{figures/fig-balance}
+  \caption{The cost of the balance shift: the portfolio error of the
+    cross-fitted level $T$ over that of the fit's own exposure-weighted rate
+    $\bar r$, one point per world (56 worlds, 400 draws each; the three study
+    regimes are offset sideways). Above one the shift costs, by exactly the
+    difference (\hb{res:balanceCost}{31}). With equal noise variances the two
+    levels are about as good; with a spread the cross-fitted level is up to
+    $2.2$ times worse. Data: S75 (\file{studies/runs/balance-cost.out.txt}).}
+  \label{fig:balance}
+\end{figure}
 What the squared error does not show is the sign: the unbalanced fit keeps its
 portfolio bias under skewed claims (Section~\ref{sec:estimation},
 \finding{35}), down to $-1.9\%$ of the tariff at app volume with unequal
@@ -1307,10 +1340,23 @@ draws. Restricted maximum likelihood (REML) on the cell means, with the noise
 table plugged in and the pools as its start, reaches 126\%; in 96 larger-table
 worlds it was better in 48 and worse in 9, by at most 3 points of the floor
 (S71), and in 128 small-table worlds worse by at most 5 (S70). It is the
-app's crossed default, not yet proved (Section~\ref{sec:open}). For groups
+app's crossed default, not yet proved (Section~\ref{sec:open};
+Figure~\ref{fig:crossed}). For groups
 that share a level the fit is one GLS pass on the pair table
 (\hb{res:groups_pool}{45}); its weights move the blend little, and whether to
 fit groups at all is decided on held-out years (Section~\ref{sec:groups}).
+
+\begin{figure}[t]
+  \centering
+  \input{figures/fig-crossed}
+  \caption{Crossed tables: each fit's error against the inverse-variance pools
+    clipped at $0$, in \% of the floor, one point per world (tables $3\times2$
+    to $6\times4$, 96 worlds, 1000 draws each). Below the diagonal the fit beats
+    the pools. REML on the cell means (left) sits on or below it, most clearly
+    where the pools are poor; the thesis fit (right, wider scale) is often far
+    above. Data: S71 (\file{studies/runs/crossed-fit.out.txt}).}
+  \label{fig:crossed}
+\end{figure}
 
 \paragraph{How the studies were run.}
 
