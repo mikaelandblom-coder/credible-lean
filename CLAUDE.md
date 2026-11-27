@@ -122,7 +122,7 @@ A map by topic; each file's module docstring has the details and Lean names.
   `FactorRelativity`, `FactorEstimation`, `Shock`, `ShockMoments`, `FreqSev`
   (frequency × severity), `Trend` (known common trend).
 - Vector levels: `CoreVector`, `CoreVectorMoments`.
-- Fitting: `FitStatistics`, `LineResiduals`, `LineResidualsMoments` (per-cohort line fits, corrected `Λ̂`), `VarianceFunction`, `ConeProjection` (valid PSD
+- Fitting: `FitStatistics`, `FitCrossTerm` (first-order cross term of the plug-in), `LineResiduals`, `LineResidualsMoments` (per-cohort line fits, corrected `Λ̂`), `VarianceFunction`, `ConeProjection` (valid PSD
   estimates), `OffDiagonal`, `Damping`.
 - Cohorts and grouping: `Merging`, `KMeans`, `KMeansBridge`.
 
