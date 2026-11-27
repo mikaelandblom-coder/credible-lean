@@ -1568,6 +1568,20 @@ matrix $Z_j$.
 \lean{Credibility.CoreVector.VecEstimates.mse_blend}
 \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
 
+\begin{result}[Forecasting the line]\label{res:vecForecast}
+  For any fixed combination $c$ of the components, e.g.\ a cohort line's level at the next
+  period, $c = (1, T + 1)$, the forecast $c^{\mathsf T}\hat\mu_j^{\mathrm{BLUP}}$ has the smallest
+  mean squared error for $c^{\mathsf T}\mu_j$ among all linear predictors $d^{\mathsf T}x$ unbiased
+  for it ($U^{\mathsf T}d = c$), for every distribution, with error
+  $E(c^{\mathsf T}\hat\mu_j^{\mathrm{BLUP}} - c^{\mathsf T}\mu_j)^2 = c^{\mathsf T}\,\mathrm{linMse}(A^\ast)\,c$.
+  \lean{Credibility.CoreVector.VecEstimates.forecast_mse_optimal}
+  \lean{Credibility.CoreVector.VecEstimates.mse_forecast_blup}
+\end{result}
+\use Fit the joint BLUP of level and slope once; every forecast horizon is a $c$, with its error bar from the same matrix.
+\begin{caveat}
+  The target is the line's level, not next year's claim. A new year's noise uncorrelated with the data and the levels only adds its variance; noise correlated with the data (a persistent factor) needs the general target $Y$ of Result~\ref{res:blup}.
+\end{caveat}
+
 \subsection*{Frequency times severity}
 
 Two components, frequency $F$ (claims per card, weighted by cards) and severity

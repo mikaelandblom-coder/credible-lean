@@ -11,7 +11,7 @@ have mean `(Uⱼb)ₜ` and covariance `lineCov + D(I ⊗ Λ)Dᵀ`: each cohort's
 common `b` with covariance `Λ` (`levelM`, `design_levelM_apply`), plus the year-correlated noise.
 
 * A form unbiased for every *fixed* line stays unbiased when the lines are random
-  (`Model.UnbiasedMean.add_design` in `FactorEstimation`: adding `DMDᵀ` to the table, `M`
+  (`Model.UnbiasedMean.add_design` in `FactorHenderson`: adding `DMDᵀ` to the table, `M`
   symmetric), so the residual
   estimators of `LineResiduals.lean` keep their expectations.
 * The fitted lines `β̂ⱼ = GⱼXⱼ` (`fitW`, `LineData.coef`) have mean `b` and covariance

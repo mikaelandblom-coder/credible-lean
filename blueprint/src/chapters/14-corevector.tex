@@ -697,6 +697,49 @@ severity) are such predictors, and so is the matrix blend.
   (Lemma~\ref{lem:Core_moments_lin}).
 \end{proof}
 
+\begin{lemma}[Selecting a cohort]\label{lem:CV_sel_mulVec}
+  \lean{Credibility.CoreVector.VecEstimates.sel_mulVec_apply,
+        Credibility.CoreVector.VecEstimates.sum_sel_mulVec_mul}
+  \leanok
+  $E_jc$ is $c$ on cohort $j$ and $0$ elsewhere, so $\sum_x (E_jc)_x f_x = \sum_p c_p f_{(j,p)}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Unfold $E_j$; sum over cohorts first.
+\end{proof}
+
+\begin{lemma}[A combination of one cohort's levels as a target]\label{lem:CV_toTarget}
+  \lean{Credibility.CoreVector.VecEstimates.toTarget}
+  \leanok
+  \uses{def:CV_Estimates, def:Blup_Target}
+  For any $c$, the stacked estimates and $Y = c^\top\mu_j$ are data and a general target
+  (Definition~\ref{def:Blup_Target}) with $X = U$, $x_0 = c$, $\beta = m$, $\ell = LE_jc$ and
+  $v = (E_jc)^\top L E_jc$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_centred, lem:CV_sel_mulVec}
+  The means and covariances are linear in $E_jc$ (Lemma~\ref{lem:CV_sel_mulVec}), and
+  $L$ is symmetric (Lemma~\ref{lem:CV_centred}).
+\end{proof}
+
+\begin{theorem}[Forecasting a combination of the components]\label{thm:CV_forecast}
+  \lean{Credibility.CoreVector.VecEstimates.forecast_mse_optimal,
+        Credibility.CoreVector.VecEstimates.mse_forecast_blup}
+  \leanok
+  \uses{lem:CV_toTarget}
+  If $K \succ 0$, for any $c$ (a cohort line's level at the next period: $c = (1, T + 1)$) the
+  forecast $c^\top(A^{\ast\top}x)$ has the smallest true mean squared error for $c^\top\mu_j$ among
+  all linear predictors $d^\top x$ with $U^\top d = c$, not only among $c^\top(A^\top x)$; its error is
+  $c^\top\,\mathrm{linMse}(A^\ast)\,c$. For every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_toTarget, lem:CV_sel_mulVec, lem:CV_blupW_eq_blup, thm:Blup_mse_true, lem:CV_blup_foc}
+  $c^\top(A^{\ast\top}x) = (A^\ast c)^\top x$ and $A^\ast c$ is the general target's best predictor
+  (Lemma~\ref{lem:CV_blupW_eq_blup}); Theorem~\ref{thm:Blup_mse_true}.
+\end{proof}
+
 \begin{theorem}[The expected weighted spread of vector estimates]\label{thm:CV_spread}
   \lean{Credibility.CoreVector.integral_spread}
   \leanok

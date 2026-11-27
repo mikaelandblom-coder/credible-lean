@@ -354,6 +354,8 @@ Finished items are in `studies/PLAN-done.md`.
 - [ ] Cohort trend lines step (2026-11-27, `LineResidualsMoments.integral_correctedLambda_pooled`): level + slope
   per cohort, `ŝ²` and `ρ̂ŝ²` with SUR divisors `T − 2p + tr(PᵢPⱼ)` (handbook `res:lineResid`), corrected `Λ̂`,
   joint damped BLUP (S67); show the 2 × 2 `Z`. Engine helpers exist in `studies/runs/vector-lambda-shocks.js`.
+  *Forecast (2026-11-27, `CoreVector.VecEstimates.forecast_mse_optimal`, handbook `res:vecForecast`):*
+  show next period's level `a + b(T+1)` per cohort as `cᵀ·BLUP`, with the error bar `cᵀ linMse c` (world vs fit).
 - [ ] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
   with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
   `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use

@@ -15,7 +15,10 @@ equal to `linMse K L j A`; for the matrix blend `μ̂ + Z(μ̂ⱼ - μ̂)` it is
 `(moments K L j).errVar Z`. So the BLUP and `bestZ` results of `CoreVector` are statements
 about real random vectors. `integral_spread` gives the expected weighted spread of vector
 estimates under any noise covariance between cohorts, and `integral_correctedLambda` that the
-moment `Λ̂` corrected by an unbiased `N̂` is unbiased (S67).
+moment `Λ̂` corrected by an unbiased `N̂` is unbiased (S67). `forecast_mse_optimal`: for any fixed
+combination `c` of the components (a cohort line's next level, `c = (1, T + 1)`), the BLUP's
+forecast `cᵀ(A*ᵀx)` beats every linear predictor unbiased for `cᵀμⱼ`, with error
+`cᵀ linMse(A*) c` (`mse_forecast_blup`), through the general target (`toTarget`).
 
 Nothing is re-proved: centring each component by its mean gives a `Core.Estimates K L 0`
 over the index set `J × P` (`VecEstimates.centred`), and each entry of the error covariance
@@ -297,6 +300,98 @@ theorem integral_mul_pred_sub {A : Matrix (J × P) P ℝ} (hA : (stack J P)ᵀ *
     exact sum_congr rfl fun _ _ => sum_congr rfl fun _ _ => by ring
   simp only at e2
   linarith [hq]
+
+/-! ### Forecasting a combination of the components (the cohort line's next level) -/
+
+omit [Fintype J] [Fintype P] [DecidableEq P] in
+/-- `Eⱼc` (`sel P j *ᵥ c`) puts `c` on cohort `j` and `0` elsewhere. -/
+theorem sel_mulVec_apply [Fintype P] [DecidableEq P] (j : J) (c : P → ℝ) (i : J) (q : P) :
+    (sel P j *ᵥ c) (i, q) = if i = j then c q else 0 := by
+  simp only [sel, mulVec, dotProduct, ite_mul, one_mul, zero_mul]
+  by_cases h : i = j <;> simp [h]
+
+omit [DecidableEq J] in
+/-- A sum against `Eⱼc` reads cohort `j` only: `Σₓ (Eⱼc)ₓ fₓ = Σₚ cₚ f₍ⱼ,ₚ₎`. -/
+theorem sum_sel_mulVec_mul [DecidableEq J] (j : J) (c : P → ℝ) (f : J × P → ℝ) :
+    ∑ x, (sel P j *ᵥ c) x * f x = ∑ p, c p * f (j, p) := by
+  rw [Fintype.sum_prod_type]
+  simp only [sel_mulVec_apply, ite_mul, zero_mul]
+  rw [sum_comm]
+  simp
+
+/-- The stacked estimates and a combination `cᵀμⱼ` of cohort `j`'s levels (e.g. a cohort line's
+level at the next period, `c = (1, T + 1)`) as data and target: `X = U`, `x₀ = c`, `β = m`,
+`ℓ = LEⱼc`, `v = (Eⱼc)ᵀLEⱼc`. -/
+noncomputable def toTarget (j : J) (c : P → ℝ) :
+    Core.Target K (L *ᵥ (sel P j *ᵥ c)) ((sel P j *ᵥ c) ⬝ᵥ (L *ᵥ (sel P j *ᵥ c)))
+      (stack J P) c m Pr where
+  x := E.est
+  Y ω := ∑ x, (sel P j *ᵥ c) x * E.level x ω
+  x_memLp := E.est_memLp
+  Y_memLp := memLp_finsetSum _ fun x _ => (E.level_memLp x).const_mul _
+  x_mean x := by
+    rw [E.est_mean]
+    simp [stack, mulVec, dotProduct]
+  Y_mean := by
+    rw [integral_finsetSum _ fun x _ => ((E.level_memLp x).const_mul _).integrable (by norm_num)]
+    simp only [integral_const_mul, E.level_mean]
+    rw [sum_sel_mulVec_mul j c (fun x => m x.2)]
+    rfl
+  cov_x x y := E.cov_est x y
+  cov_x_Y x := by
+    rw [covariance_fun_sum_right (fun y => (E.level_memLp y).const_mul _) (E.est_memLp x)]
+    simp only [covariance_const_mul_right]
+    rw [mulVec, dotProduct]
+    refine sum_congr rfl fun y _ => ?_
+    rw [covariance_comm, E.cov_level_est, ← transpose_apply L x y, E.centred.transpose_L]
+    ring
+  var_Y := by
+    generalize sel P j *ᵥ c = s
+    rw [← covariance_self (memLp_finsetSum _ fun x _ =>
+      (E.level_memLp x).const_mul (s x)).aestronglyMeasurable.aemeasurable,
+      covariance_fun_sum_fun_sum (fun x => (E.level_memLp x).const_mul _)
+        (fun y => (E.level_memLp y).const_mul _)]
+    simp only [covariance_const_mul_left, covariance_const_mul_right, E.cov_level, dotProduct,
+      mulVec, mul_sum]
+    exact sum_congr rfl fun _ _ => sum_congr rfl fun _ _ => by ring
+
+/-- **The forecast in true MSE**: for any combination `c` of the components (the line's level at
+the next period, `c = (1, T + 1)`), the BLUP's forecast `cᵀ(A*ᵀx)` has the smallest actual mean
+squared error for `cᵀμⱼ` among all linear predictors `dᵀx` unbiased for it (`Uᵀd = c`), for
+every distribution with these moments. Not only among `cᵀ(Aᵀx)` with `UᵀA = I`: every
+unbiased `d` competes. A corollary of `Core.Target.blup_mse_optimal`. -/
+theorem forecast_mse_optimal [Nonempty J] (hK : K.PosDef) (j : J) (c : P → ℝ)
+    {d : J × P → ℝ} (hd : (stack J P)ᵀ *ᵥ d = c) :
+    Pr[fun ω => (c ⬝ᵥ ((blupW K L j)ᵀ *ᵥ E.vec ω) - c ⬝ᵥ fun p => E.level (j, p) ω) ^ 2]
+      ≤ Pr[fun ω => (d ⬝ᵥ E.vec ω - c ⬝ᵥ fun p => E.level (j, p) ω) ^ 2] := by
+  have hY : ∀ ω, (c ⬝ᵥ fun p => E.level (j, p) ω) = (E.toTarget j c).Y ω := fun ω => by
+    simp only [toTarget]
+    rw [sum_sel_mulVec_mul]
+    rfl
+  have hB : ∀ ω, c ⬝ᵥ ((blupW K L j)ᵀ *ᵥ E.vec ω)
+      = Core.portLin (E.toTarget j c).x
+          (Core.blup K (stack J P) (L *ᵥ (sel P j *ᵥ c)) c) ω := fun ω => by
+    rw [← blupW_mulVec_eq_blup hK, dotProduct_mulVec, vecMul_transpose, Core.portLin]
+    rfl
+  simp_rw [hY, hB]
+  exact (E.toTarget j c).blup_mse_optimal hK stack_mulVec_injective hd
+
+/-- …and its error is `cᵀ linMse(A*) c`, the BLUP's error covariance read in the direction `c`. -/
+theorem mse_forecast_blup [Nonempty J] (hK : K.PosDef) (j : J) (c : P → ℝ) :
+    Pr[fun ω => (c ⬝ᵥ ((blupW K L j)ᵀ *ᵥ E.vec ω) - c ⬝ᵥ fun p => E.level (j, p) ω) ^ 2]
+      = c ⬝ᵥ (linMse K L j (blupW K L j) *ᵥ c) := by
+  have hY : ∀ ω, (c ⬝ᵥ fun p => E.level (j, p) ω) = (E.toTarget j c).Y ω := fun ω => by
+    simp only [toTarget]
+    rw [sum_sel_mulVec_mul]
+    rfl
+  have hB : ∀ ω, c ⬝ᵥ ((blupW K L j)ᵀ *ᵥ E.vec ω)
+      = Core.portLin (E.toTarget j c).x (blupW K L j *ᵥ c) ω := fun ω => by
+    rw [dotProduct_mulVec, vecMul_transpose, Core.portLin]
+    rfl
+  simp_rw [hY, hB]
+  rw [(E.toTarget j c).mse_portLin
+      (by rw [mulVec_mulVec, stack_transpose_mul_blupW hK, one_mulVec]),
+    dotProduct_linMse_mulVec E.centred.transpose_L]
 
 end VecEstimates
 

@@ -92,6 +92,9 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- [ ] Forecasting the line (2026-11-27, `CoreVector.VecEstimates.forecast_mse_optimal`, handbook
+  `res:vecForecast`): one sentence in the trend section that any forecast horizon is a fixed `c`, best
+  among all unbiased linear predictors, with error `cᵀ linMse(A*) c`.
 - [ ] Vector levels (2026-11-27, `CoreVector.integral_spread`): one sentence that the moment `Λ̂` of the
   cohort trend lines, corrected for the noise covariance within and between cohorts, is unbiased for any
   distribution (handbook `res:vecSpread`; S67), given any `N̂` with `E N̂ = N` (`integral_correctedLambda`);

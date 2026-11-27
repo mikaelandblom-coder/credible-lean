@@ -1443,3 +1443,13 @@ residual variance `eⱼᵀWⱼeⱼ/(T − k)` is the Hachemeister / regression-c
 (Bühlmann & Gisler 2005, ch. 8). Used: both, in the whitened weighted form, with the thesis's
 `δₜₛ` noise. New here: only the link to the thesis's pair estimator (`p = 1`, handbook
 `res:pooled`) and to the corrected `Λ̂` of the vector levels.
+
+### 10w. Forecasting with the regression credibility estimator (2026-11-27, for `CoreVectorMoments.forecast_mse_optimal`)
+From memory, not fetched. In Hachemeister's regression credibility the premium for a future period
+is `yᵀβ̂ⱼ`, the credibility estimate of the coefficients read at the future regressor `y`
+(Hachemeister 1975; Bühlmann & Gisler 2005, §8.2–8.3); the optimality of a linear functional of
+the BLUP is the standard "BLUP of `cᵀβ` is `cᵀ·BLUP(β)`" of mixed models (Henderson 1975; Robinson
+1991, *That BLUP is a good thing*, Stat. Sci., §5). Used: that statement, at the `K` level with
+correlated cohorts and in true MSE, and only through the existing general target (`Core.Target`).
+New here: nothing beyond the correlated-`K` setting; next year's *claim* (level plus new noise) is
+the general target with its own `ℓ` and `v`.
