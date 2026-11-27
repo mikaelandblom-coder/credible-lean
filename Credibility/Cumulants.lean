@@ -11,6 +11,8 @@ three Gaussian pairings). Nothing is assumed about the distribution: the tables 
 by the moments, and `κ₃ = κ₄ = 0` is the Gaussian case.
 
 * `varQuad A C m κ₃ κ₄ = 2 tr(ACAC) + 4 (Am)ᵀC(Am) + 4 Σ Aᵢⱼ (Am)ₖ κ₃ᵢⱼₖ + Σ Aᵢⱼ Aₖₗ κ₄ᵢⱼₖₗ`;
+* `HasFourthCumulant Z m C κ₄ P`: the fourth central moments of the cells are `κ₄` plus the
+  three Gaussian pairings of `C` (the hypothesis every fourth-order result here takes);
 * `variance_quad_of_cumulants`: it is the actual variance of `xᵀAx` for any random cells in
   `L⁴` with these moments (`A` symmetric).
 
@@ -118,6 +120,15 @@ lemma memLp_quadForm {Z : ι → Ω → ℝ} (hZ : ∀ i, MemLp (Z i) 4 P) (A : 
   have h : MemLp (fun ω => Z i ω * Z j ω) 2 P := (hZ i).mul (hZ j) (p := 4) (q := 4) (r := 2)
   simpa [mul_assoc] using h.const_mul (A i j)
 
+omit [Fintype ι] in
+/-- The cells `Zᵢ` have fourth cumulants `κ₄` about the means `m`, with covariances `C`: their
+fourth central moments are `κ₄ᵢⱼₖₗ + CᵢⱼCₖₗ + CᵢₖCⱼₗ + CᵢₗCⱼₖ` (the cumulant plus the three
+Gaussian pairings). `κ₄ = 0` is the Gaussian case. -/
+def HasFourthCumulant (Z : ι → Ω → ℝ) (m : ι → ℝ) (C : Matrix ι ι ℝ)
+    (κ₄ : ι → ι → ι → ι → ℝ) (P : Measure Ω) : Prop :=
+  ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
+    = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k
+
 variable [IsProbabilityMeasure P]
 
 /-- **Variance of a quadratic estimator** from moments up to order four. For random cells
@@ -129,8 +140,7 @@ theorem variance_quad_of_cumulants (Z : ι → Ω → ℝ) (A C : Matrix ι ι �
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P = κ₃ i j k)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k) :
+    (h4 : HasFourthCumulant Z m C κ₄ P) :
     variance (fun ω => ∑ i, ∑ j, A i j * Z i ω * Z j ω) P = varQuad A C m κ₃ κ₄ := by
   obtain ⟨e, he⟩ : ∃ e : ι → Ω → ℝ, e = fun i ω => Z i ω - m i := ⟨_, rfl⟩
   have hZe : ∀ i ω, Z i ω = e i ω + m i := fun i ω => by simp [he]
@@ -1231,11 +1241,8 @@ theorem variance_sampleCov (Z : J × T → Ω → ℝ) (μ : J → ℝ) (V : Mat
     (k : J → J → J → J → ℝ) (hT : 2 ≤ Fintype.card T)
     (hZ : ∀ p, MemLp (Z p) 4 P) (hm : ∀ p, ∫ ω, Z p ω ∂P = μ p.1)
     (hc : ∀ p q, covariance (Z p) (Z q) P = (V ⊗ₖ (1 : Matrix T T ℝ)) p q)
-    (h4 : ∀ p q r s, ∫ ω, (Z p ω - μ p.1) * (Z q ω - μ q.1) * (Z r ω - μ r.1) * (Z s ω - μ s.1) ∂P
-      = (if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0)
-        + (V ⊗ₖ (1 : Matrix T T ℝ)) p q * (V ⊗ₖ (1 : Matrix T T ℝ)) r s
-        + (V ⊗ₖ (1 : Matrix T T ℝ)) p r * (V ⊗ₖ (1 : Matrix T T ℝ)) q s
-        + (V ⊗ₖ (1 : Matrix T T ℝ)) p s * (V ⊗ₖ (1 : Matrix T T ℝ)) q r)
+    (h4 : HasFourthCumulant Z (fun p => μ p.1) (V ⊗ₖ (1 : Matrix T T ℝ))
+      (fun p q r s => if p.2 = q.2 ∧ q.2 = r.2 ∧ r.2 = s.2 then k p.1 q.1 r.1 s.1 else 0) P)
     (i j : J) :
     variance (fun ω => (∑ t, (Z (i, t) ω - (∑ u, Z (i, u) ω) / Fintype.card T)
         * (Z (j, t) ω - (∑ u, Z (j, u) ω) / Fintype.card T)) / ((Fintype.card T : ℝ) - 1)) P

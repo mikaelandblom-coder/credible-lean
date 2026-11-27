@@ -102,8 +102,7 @@ theorem covariance_quad_of_cumulants (Z : ι → Ω → ℝ) (A B C : Matrix ι 
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P = κ₃ i j k)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k) :
+    (h4 : HasFourthCumulant Z m C κ₄ P) :
     covariance (fun ω => ∑ i, ∑ j, A i j * Z i ω * Z j ω)
       (fun ω => ∑ i, ∑ j, B i j * Z i ω * Z j ω) P = covQuad A B C m κ₃ κ₄ := by
   have hCs : ∀ i j, C j i = C i j := fun i j => by rw [← hc, ← hc, covariance_comm]
@@ -183,8 +182,7 @@ theorem covariance_symQuad (Z : ι → Ω → ℝ) (c : K → ℝ) (u v : K → 
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P = κ₃ i j k)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k) :
+    (h4 : HasFourthCumulant Z m C κ₄ P) :
     covariance (fun ω => ∑ k, c k * (u k ⬝ᵥ fun i => Z i ω) * (v k ⬝ᵥ fun i => Z i ω))
       (fun ω => ∑ k, c' k * (u' k ⬝ᵥ fun i => Z i ω) * (v' k ⬝ᵥ fun i => Z i ω)) P
       = covQuad (symQuad c u v) (symQuad c' u' v') C m κ₃ κ₄ := by
@@ -336,8 +334,7 @@ theorem covariance_stat (Z : J × T → Ω → ℝ) (w : J → T → ℝ) (s s' 
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P = κ₃ i j k)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k) :
+    (h4 : HasFourthCumulant Z m C κ₄ P) :
     covariance (fun ω => s.eval w fun i => Z i ω) (fun ω => s'.eval w fun i => Z i ω) P
       = covQuad (s.mat w) (s'.mat w) C m κ₃ κ₄ := by
   simp only [Stat.eval_eq]
@@ -350,8 +347,7 @@ theorem variance_stat (Z : J × T → Ω → ℝ) (w : J → T → ℝ) (s : Sta
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) ∂P = κ₃ i j k)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k) :
+    (h4 : HasFourthCumulant Z m C κ₄ P) :
     variance (fun ω => s.eval w fun i => Z i ω) P = varQuad (s.mat w) C m κ₃ κ₄ := by
   have hX : MemLp (fun ω => s.eval w fun i => Z i ω) 2 P := by
     have e : (fun ω => s.eval w fun i => Z i ω)
@@ -617,8 +613,7 @@ theorem covariance_meanStat_resStat (Z : J × T → Ω → ℝ) (a : J → T →
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ i.1)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - μ i.1) * (Z j ω - μ j.1) * (Z k ω - μ k.1) ∂P = 0)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ i.1) * (Z j ω - μ j.1) * (Z k ω - μ k.1)
-        * (Z l ω - μ l.1) ∂P = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k)
+    (h4 : HasFourthCumulant Z (fun i => μ i.1) C κ₄ P)
     (hres : ∀ i j t, meanCoef a i ⬝ᵥ (C *ᵥ resCoef a j t) = 0) :
     covariance
       (fun ω => ∑ k, c k * (meanComb a (β k) ⬝ᵥ fun i => Z i ω)
@@ -657,8 +652,7 @@ theorem covariance_statB_eq (Z : J × T → Ω → ℝ) (w : J → T → ℝ) (h
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ i.1)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - μ i.1) * (Z j ω - μ j.1) * (Z k ω - μ k.1) ∂P = 0)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ i.1) * (Z j ω - μ j.1) * (Z k ω - μ k.1)
-        * (Z l ω - μ l.1) ∂P = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k)
+    (h4 : HasFourthCumulant Z (fun i => μ i.1) C κ₄ P)
     (hres : ∀ i j t, meanCoef (shares w) i ⬝ᵥ (C *ᵥ resCoef (shares w) j t) = 0) :
     covariance (fun ω => Stat.B.eval w fun i => Z i ω) (fun ω => s.eval w fun i => Z i ω) P
       = ∑ p, ∑ q, ∑ r, ∑ t, Stat.B.mat w p q * s.mat w r t * κ₄ p q r t := by
@@ -710,8 +704,7 @@ theorem variance_sum_sq_lin {ι K : Type*} [Fintype ι] [Fintype K] (Z : ι → 
     (C : Matrix ι ι ℝ) (m : ι → ℝ) (κ₄ : ι → ι → ι → ι → ℝ)
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = m i)
     (hc : ∀ i j, covariance (Z i) (Z j) P = C i j)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - m i) * (Z j ω - m j) * (Z k ω - m k) * (Z l ω - m l) ∂P
-      = κ₄ i j k l + C i j * C k l + C i k * C j l + C i l * C j k)
+    (h4 : HasFourthCumulant Z m C κ₄ P)
     (c : K → ℝ) (u : K → ι → ℝ) (hu : ∀ k, u k ⬝ᵥ m = 0) :
     variance (fun ω => ∑ k, c k * (u k ⬝ᵥ fun i => Z i ω) ^ 2) P
       = ∑ k, ∑ k', c k * c k' * (2 * (u k ⬝ᵥ (C *ᵥ u k')) ^ 2
@@ -948,10 +941,7 @@ theorem variance_statP_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω →
     (τ2 σsq w μ κL κN : ℝ) (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsK4 κL κN w i j k l
-        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
-        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    (h4 : HasFourthCumulant Z (fun _ => μ) (bsCov τ2 σsq w) (bsK4 κL κN w) P) :
     variance (fun ω => statP (fun _ _ => w) fun i => Z i ω) P
       = 2 * σsq ^ 2 / (Fintype.card J * ((Fintype.card T : ℝ) - 1))
         + κN / (Fintype.card J * Fintype.card T) := by
@@ -1020,10 +1010,7 @@ theorem variance_statB_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω →
     (τ2 σsq w μ κL κN : ℝ) (hw : w ≠ 0) (hT : 2 ≤ Fintype.card T)
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsK4 κL κN w i j k l
-        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
-        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    (h4 : HasFourthCumulant Z (fun _ => μ) (bsCov τ2 σsq w) (bsK4 κL κN w) P) :
     variance (fun ω => statB (fun _ _ => w) fun i => Z i ω) P
       = 2 * (Fintype.card T * w) ^ 2 * (τ2 + σsq / (w * Fintype.card T)) ^ 2
           * ((Fintype.card J : ℝ) - 1)
@@ -1132,10 +1119,7 @@ theorem covariance_statB_statP_of_balanced_cumulants [Nonempty J] (Z : J × T �
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) ∂P = 0)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsK4 κL κN w i j k l
-        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
-        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    (h4 : HasFourthCumulant Z (fun _ => μ) (bsCov τ2 σsq w) (bsK4 κL κN w) P) :
     covariance (fun ω => statB (fun _ _ => w) fun i => Z i ω)
       (fun ω => statP (fun _ _ => w) fun i => Z i ω) P
       = κN * ((Fintype.card J : ℝ) - 1) / (Fintype.card J * Fintype.card T) := by
@@ -1200,10 +1184,7 @@ theorem bsPrice_of_balanced_cumulants [Nonempty J] (Z : J × T → Ω → ℝ) (
     (hZ : ∀ i, MemLp (Z i) 4 P) (hm : ∀ i, ∫ ω, Z i ω ∂P = μ)
     (hc : ∀ i j, covariance (Z i) (Z j) P = bsCov τ2 σsq w i j)
     (h3 : ∀ i j k, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) ∂P = 0)
-    (h4 : ∀ i j k l, ∫ ω, (Z i ω - μ) * (Z j ω - μ) * (Z k ω - μ) * (Z l ω - μ) ∂P
-      = bsK4 κL κN w i j k l
-        + bsCov τ2 σsq w i j * bsCov τ2 σsq w k l + bsCov τ2 σsq w i k * bsCov τ2 σsq w j l
-        + bsCov τ2 σsq w i l * bsCov τ2 σsq w j k) :
+    (h4 : HasFourthCumulant Z (fun _ => μ) (bsCov τ2 σsq w) (bsK4 κL κN w) P) :
     (1 - 1 / (Fintype.card J : ℝ)) * (τ2 + σsq / (w * Fintype.card T))
         * zHatVar (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
           (variance (fun ω => (statP (fun _ _ => w) fun i => Z i ω) / (Fintype.card T * w)) P)

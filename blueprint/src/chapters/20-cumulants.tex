@@ -14,6 +14,14 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
      + 4\sum_{ijk} A_{ij}(Am)_k\,\kappa_{3,ijk} + \sum_{ijkl} A_{ij}A_{kl}\,\kappa_{4,ijkl}. \]
 \end{definition}
 
+\begin{definition}[Fourth cumulants]\label{def:hasFourthCumulant}
+  \lean{Credibility.Cumulants.HasFourthCumulant}
+  \leanok
+  Cells $Z_i$ have fourth cumulants $\kappa_4$ about means $m$, with covariances $C$, if
+  $\mathbb E[e_ie_je_ke_l] = \kappa_{4,ijkl} + C_{ij}C_{kl} + C_{ik}C_{jl} + C_{il}C_{jk}$,
+  where $e_i = Z_i - m_i$.
+\end{definition}
+
 \begin{lemma}[Integrability of products]\label{lem:cumulants_integrable}
   \lean{Credibility.Cumulants.abs_mul4_le, Credibility.Cumulants.integrable_pow4,
         Credibility.Cumulants.integrable_mul4, Credibility.Cumulants.integrable_mul3,
@@ -33,7 +41,7 @@ is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
 \begin{theorem}[The variance of a quadratic estimator]\label{thm:variance_quad_of_cumulants}
   \lean{Credibility.Cumulants.variance_quad_of_cumulants}
   \leanok
-  \uses{def:varQuad}
+  \uses{def:varQuad, def:hasFourthCumulant}
   Let $Z_i$ be random variables in $L^4$ with means $m_i$, covariances $C_{ij}$,
   $\mathbb E[e_ie_je_k] = \kappa_{3,ijk}$ and
   $\mathbb E[e_ie_je_ke_l] = \kappa_{4,ijkl} + C_{ij}C_{kl} + C_{ik}C_{jl} + C_{il}C_{jk}$,
