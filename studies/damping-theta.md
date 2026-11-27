@@ -735,3 +735,28 @@ General targets (Lean, **lean** chat, `PlugInMix.lean`, moment layer):
    cov(μ̂ᵢ, εⱼₜ)`, `cov(μ̂ᵢ, εⱼₜ) = λᵢλⱼ Σₛ aᵢₛ Γₛₜ` (0 iff the held-out month/year is uncorrelated with the
    fitted ones under `Γ`; AR(1): `Σₛ aᵢₛ φ^(T−s)`). A one-line corollary once the cross-covariance of
    `Cells` with a held-out cell is stated.
+
+### Vector levels: which `Λ` to fit (2026-11-27, `studies/vector-lambda.js`, owner's question)
+Frequency × severity with a level and a slope per cohort (`P = 4`, Hachemeister centred as Bühlmann–Gisler),
+independent cohorts, the matrix BLUP with three fitted structures for `Λ̂` (unbiased moment estimate,
+projected PSD within the structure): diagonal, block per component, full. Grid: level–slope correlation
+`rab ∈ {0, 0.7}`, frequency–severity correlation `rFY ∈ {0, −0.6}`, `J ∈ {10, 30}`, `T ∈ {5, 8}`, frequency
+level credibility `z_F ∈ {0.5, 0.85}` (severity noise 4×); 2000 draws, MSE of next year's level in % above the
+full oracle, ± 2 SE ≤ 6.
+- S65. *[numerical]* **With known `Λ` every correlation pays; fitted, the diagonal wins almost everywhere.**
+    Oracle: ignoring `rFY = −0.6` costs 2–3 (F) and 4–13 (Y), ignoring `rab = 0.7` 3–19. Fitted: the
+    diagonal `Λ̂` costs 8–62, the block one 8–86, the full one 10–109. Full is never better than block
+    (best −0.9 ± 0.7). Block beats diagonal only for the well-measured component with a level–slope
+    correlation (`rab = 0.7`, F at `z_F = 0.85`: 7.9–27.4 against 22.3–33.8; F at `z_F = 0.5`, `J = 30`, `T = 8`
+    narrowly; Y only at `J = 30`, `T = 8`, `z_F = 0.85`: 16.5 against 20.1); everywhere else the
+    off-diagonals' estimation noise exceeds their gain: block loses up to 32 points to diagonal, full up to 59. The frequency–severity
+    correlation never paid as fitted. Conditions: independent cohorts, normal levels, the unweighted
+    moment estimator; a better `Λ̂` (weighted, REML, GEE) shrinks every price, and may move the edge.
+
+**Consequence (hypothesis).** The app's "cohort trend lines" step fits diagonal `Λ̂` by default (four
+scalar credibilities after centring) and treats off-diagonal entries as an optional extra chosen by gain
+against price (S57), not by their size. Candidates to test next: damp the off-diagonals of `Λ̂` with a
+data-chosen θ (`OffDiagonal.lean` keeps PSD, `Damping.lean`'s `θ*`), a better `Λ̂`, and year shocks
+(correlated cohorts, where `K` is not block diagonal). General target: with known moments the order
+full ≤ block ≤ diagonal is a restricted-predictor statement (`blupW_optimal`); fitted, the plug-in
+MSE `mse(d*) + E B² + 2E[AB]` (`PlugIn.lean`) is the place to state when an extra entry pays.

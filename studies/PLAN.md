@@ -743,6 +743,10 @@ One chat per step; none needs Lean except step 5.
   the bivariate best predictor `blupW` never does. Show both, or the predictor. Hachemeister
   with correlated cohorts is proved too (`hachemeister_bestZ`): an app step "cohort trend
   lines" (level + slope per cohort, shared year shocks) would show `Z` as a 2 × 2 matrix.
+  *Studied 2026-11-27 (S65, `studies/vector-lambda.js`):* fit `Λ̂` diagonal by default (level, slope,
+  F, Y as four scalar credibilities after centring); a block (full) `Λ̂` loses up to 32 (59) points against it
+  to estimation noise and wins only for a well-measured component with a strong
+  level–slope correlation. Next: damped off-diagonals (θ from data), year shocks, a better `Λ̂`.
   Also proved: with independent cohorts the bivariate blend is the best predictor, and with
   no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
   bivariate one, so the app's fourth fit only matters when cohorts or components correlate.

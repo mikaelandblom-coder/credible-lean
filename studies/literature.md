@@ -268,6 +268,19 @@ Read in full from casact.org (allowlisted in **lean** on 2026-11-19), except whe
   cohorts × components (year shocks correlate cohorts) and the matrix GLS
   `μ̂ = (UᵀK⁻¹U)⁻¹UᵀK⁻¹x`; the best `Zⱼ` is `(Lⱼⱼ - EⱼᵀLW)(Kⱼⱼ - (UᵀK⁻¹U)⁻¹)⁻¹`.
 
+### 7b. Estimating the structure matrix `Λ` (2026-11-27, for S65; from search results, not read)
+- De Vylder (1981), ASTIN Bull. 12(2), 115–131, and *Parameter estimation in credibility theory*
+  (ASTIN Bull.): Hachemeister's estimate of the covariance matrix is unsymmetric (symmetrised in
+  practice), and no unbiased estimator of it is PSD in every sample. Used: why S65 projects onto
+  the PSD cone (`ConeProjection.lean`).
+- Lo, Fung & Zhu, GEE estimators of the structural parameters for regression credibility (ASTIN
+  Bull.): beat Hachemeister's in simulations. Fung & Xu (2009, *Variance*): ML/REML. Not used yet:
+  candidates for a better `Λ̂` in S65's next step.
+- Multivariate Fay–Herriot (Datta et al. 1991, unstructured random-effect covariance; Benavent &
+  Morales 2016; parametric bootstrap intervals arXiv:2006.14820): borrowing across components is
+  reported as a gain over univariate models; no diagonal-versus-full comparison found. S65 is
+  that comparison for our setting.
+
 ## 8. Correlated noise across cohorts: prior art and foundation (2026-11-19)
 Owner's question: the thesis (§2.2.3) found no reference for correlated *observation noise*
 across cohorts in the same period. Re-searched by web; publisher pages were not reachable from
