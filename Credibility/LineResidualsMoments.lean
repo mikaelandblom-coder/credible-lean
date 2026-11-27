@@ -1,6 +1,6 @@
 import Credibility.LineResiduals
 import Credibility.CoreVectorMoments
-import Credibility.FactorEstimation
+import Credibility.FactorHenderson
 
 /-!
 # The moment layer for the cohort lines (extension, distribution-free)

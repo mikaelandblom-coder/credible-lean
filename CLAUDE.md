@@ -119,7 +119,7 @@ A map by topic; each file's module docstring has the details and Lean names.
 - Crossed levels: `Crossed`, `CrossedEstimation`, `CrossedMoments`,
   `CrossedPoolWeights`, `CrossedPoolNormal`.
 - Card data (`notes/card-data.md`): `Season`, `Factor`, `FactorMoments`,
-  `FactorRelativity`, `FactorEstimation`, `Shock`, `ShockMoments`, `FreqSev`
+  `FactorRelativity`, `FactorEstimation`, `FactorHenderson` (Henderson III / MINQUE), `Shock`, `ShockMoments`, `FreqSev`
   (frequency × severity), `Trend` (known common trend).
 - Vector levels: `CoreVector`, `CoreVectorMoments`.
 - Fitting: `FitStatistics`, `FitCrossTerm` (first-order cross term of the plug-in), `LineResiduals`, `LineResidualsMoments` (per-cohort line fits, corrected `Λ̂`), `VarianceFunction`, `ConeProjection` (valid PSD

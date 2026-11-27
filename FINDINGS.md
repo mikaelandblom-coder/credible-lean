@@ -634,7 +634,7 @@ Gaps, extra hypotheses and new results found while formalizing.
 
 38. **Estimating the noise variance flips the sign of the noise kurtosis in the plug-in's cross term
    (new; `studies/literature.md` §10m; Lean: `Cumulants.crossTerm_of_balanced_cumulants`,
-   `crossTerm_of_balanced_cumulants_known`, in `FitStatistics.lean`).** Expected (Chen, Lahiri &
+   `crossTerm_of_balanced_cumulants_known`, in `FitCrossTerm.lean`).** Expected (Chen, Lahiri &
    Rao 2025, `D` known): the first-order cross term `2E[AB]` of the Bühlmann–Straub plug-in, relative
    to `(1 − z)τ²`, has the level part `−2z(1 − z)γL/J`. Found, balanced world, levels and noise with
    fourth cumulants `κL`, `κN/w²` (`γL = κL/τ⁴`, `γN = κN/σ⁴`), `ẑ = 1 − v̂/S²` linearized:
@@ -669,7 +669,7 @@ Gaps, extra hypotheses and new results found while formalizing.
 
 39. **Heavy-tailed noise can raise the Bühlmann–Straub plug-in's MSE: Finding 38's sign fails when a
    region's volume sits in one year (new; Lean: `Cumulants.crossTerm_bs_pos_example`, with
-   `crossTerm_bs_noise_pos_value`, in `FitStatistics.lean`; `studies/runs/cross-term.js` for the general
+   `crossTerm_bs_noise_pos_value`, in `FitCrossTerm.lean`; `studies/runs/cross-term.js` for the general
    term).** Expected (Finding 38, numerics with even years): the first-order cross term `2E[AB]` is
    ≤ 0 whenever `κL, κN ≥ 0`. Found: the *level* part is ≤ 0 in every world tried (random volumes,
    J = 2–11, T = 2–11, 300 000 worlds × regions; *proved 2026-11-25 for any volumes*,

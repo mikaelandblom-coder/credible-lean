@@ -13,6 +13,7 @@ import Credibility.Factor
 import Credibility.FactorMoments
 import Credibility.FactorRelativity
 import Credibility.FactorEstimation
+import Credibility.FactorHenderson
 import Credibility.Core
 import Credibility.CoreMoments
 import Credibility.RandomWeights

@@ -1,4 +1,4 @@
-// Tests for app/monthly.js: the Lean results of FactorEstimation.lean (card-data Step 5), checked
+// Tests for app/monthly.js: the Lean results of FactorEstimation.lean and FactorHenderson.lean (card-data Step 5), checked
 // numerically, plus unbiasedness by simulation with a fixed seed. Run: node --test app/monthly.test.js
 'use strict';
 const test = require('node:test');
