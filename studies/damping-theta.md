@@ -725,13 +725,14 @@ region-specific year weights `aᵢₛ` the cross-fit is not exactly translation 
 
 **Consequence.** No θ̂ step in the app: the fitted BLUP stands (θ = 1), the path stays a display of `S`.
 General targets (Lean, **lean** chat, `PlugInMix.lean`, moment layer):
-1. *The price of one held-out year.* For fixed `e₀, Δ ∈ ℝᴶ`, `W = diag(w) ≻ 0`, `ΔᵀWΔ > 0` and a random
+1. *Done 2026-11-27* (`integral_heldOutTheta`, `integral_sq_heldOutTheta_sub`, `integral_wLoss_heldOutTheta`,
+   `integral_wLoss_heldOutTheta_lt_iff`, `le_heldOutPrice`; handbook `res:heldOut_price`). *The price of one held-out year.* For fixed `e₀, Δ ∈ ℝᴶ`, `W = diag(w) ≻ 0`, `ΔᵀWΔ > 0` and a random
    `ε` with mean 0 and covariance table `Σ` (any distribution), `θ̂ = −ΔᵀW(e₀ − ε)/ΔᵀWΔ` has
    `E θ̂ = θ̃ = −ΔᵀWe₀/ΔᵀWΔ`, `Var θ̂ = ΔᵀWΣWΔ/(ΔᵀWΔ)²`, and
    `E[(e₀ + θ̂Δ)ᵀW(e₀ + θ̂Δ)] = (e₀ + θ̃Δ)ᵀW(e₀ + θ̃Δ) + ΔᵀWΣWΔ/ΔᵀWΔ`; hence `θ̂` beats a fixed `θ₀` in mean
    iff `ΔᵀWΔ(θ₀ − θ̃)² > ΔᵀWΣWΔ/ΔᵀWΔ`, and the price is ≥ `λmin(W^½ΣW^½)`. (Conditioning on the fit is
    the fixed `e₀, Δ`; `integral_quad_of_cov` gives the quadratic.) Clipping: `mixLoss_clip_le` per draw.
-2. *The persistent-shock bias.* In `FactorMoments` with fixed weights: `E[Δε] = Σⱼ wⱼ Σᵢ (d − ŵ)ⱼᵢ
+2. *Open (2026-11-27): first state the held-out deviation `ε` in terms of `Cells` and its means.* *The persistent-shock bias.* In `FactorMoments` with fixed weights: `E[Δε] = Σⱼ wⱼ Σᵢ (d − ŵ)ⱼᵢ
    cov(μ̂ᵢ, εⱼₜ)`, `cov(μ̂ᵢ, εⱼₜ) = λᵢλⱼ Σₛ aᵢₛ Γₛₜ` (0 iff the held-out month/year is uncorrelated with the
    fitted ones under `Γ`; AR(1): `Σₛ aᵢₛ φ^(T−s)`). A one-line corollary once the cross-covariance of
    `Cells` with a held-out cell is stated.

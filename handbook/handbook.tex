@@ -768,7 +768,29 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
 \end{result}
 \use Fit on years $1..T-1$, regress year $T$'s error of the blend on $\Delta$ across cohorts; clipping to $[0,1]$ never hurts when $|M_0 - M_1| \le S$. In practice the fitted BLUP ($\theta = 1$) is as good as the best fixed $\theta$ and better than $\hat\theta$.
 \begin{caveat}
-  A shock that persists across years (a factor with autocorrelation) correlates $\varepsilon$ with $\Delta$ and biases $\hat\theta$ by $E[\Delta\varepsilon]/E\Delta^2$; a shock independent across years does not, but it does not average out over cohorts. Given the fit, $\hat\theta$ pays $\Delta^\top W\Sigma W\Delta/\Delta^\top W\Delta \ge \sigma^2(1-\rho)$ (weights $W$, held-out noise table $\Sigma$) over the draw's best $\theta$; in simulation that is 7--14 times the gain, so keep $\theta = 1$ (S64).
+  A shock that persists across years (a factor with autocorrelation) correlates $\varepsilon$ with $\Delta$ and biases $\hat\theta$ by $E[\Delta\varepsilon]/E\Delta^2$; a shock independent across years does not, but it does not average out over cohorts. Given the fit, $\hat\theta$ pays a price over the draw's best $\theta$ (Result~\ref{res:heldOut_price}); in simulation that is 7--14 times the gain, so keep $\theta = 1$ (S64).
+\end{caveat}
+
+\begin{result}[The price of one held-out year]\label{res:heldOut_price}
+  Given the fit (blend errors $e_0$, disagreement $\Delta$ on the cohorts, weights $W$), the
+  held-out year's noise $\varepsilon$ has mean 0 and covariance table $\Sigma$ (any distribution).
+  Then $\hat\theta = \tilde\theta + \Delta^\top W\varepsilon/\Delta^\top W\Delta$ is unbiased for the draw's
+  best $\tilde\theta = -\Delta^\top We_0/\Delta^\top W\Delta$, and
+  \[
+    E\,L(\hat\theta) = L(\tilde\theta) + \frac{\Delta^\top W\Sigma W\Delta}{\Delta^\top W\Delta},
+    \qquad \frac{\Delta^\top W\Sigma W\Delta}{\Delta^\top W\Delta} \ge \lambda_{\min}(W^{1/2}\Sigma W^{1/2}),
+  \]
+  with $L(\theta) = (e_0 + \theta\Delta)^\top W(e_0 + \theta\Delta)$. So $\hat\theta$ beats a fixed
+  $\theta_0$ iff $\Delta^\top W\Delta(\theta_0 - \tilde\theta)^2$ exceeds the price.
+  \lean{Credibility.integral_heldOutTheta}
+  \lean{Credibility.integral_sq_heldOutTheta_sub}
+  \lean{Credibility.integral_wLoss_heldOutTheta}
+  \lean{Credibility.integral_wLoss_heldOutTheta_lt_iff}
+  \lean{Credibility.le_heldOutPrice}
+\end{result}
+\use Equal $\sigma_j$, correlation $\rho$: the price is at least $\sigma^2(1-\rho)$, whatever the fits; compare it with the room $S(1-\tilde\theta)^2$ before tuning anything on one year.
+\begin{caveat}
+  A common shock makes it worse than $\lambda_{\min}$: $\Delta$ lies along the shock's direction.
 \end{caveat}
 
 \begin{result}[What fitting Bühlmann--Straub costs, to first order]\label{res:bsPrice}

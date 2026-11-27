@@ -1,5 +1,6 @@
 import Credibility.PlugIn
 import Credibility.Core
+import Credibility.Expectation
 
 /-!
 # Mixing two predictors: the path from the plug-in blend to the plug-in BLUP (distribution-free)
@@ -226,7 +227,7 @@ theorem proxy_neg_div_eq {e₀ Δ ε : Ω → ℝ} (h₀ : MemLp e₀ 2 P) (hΔ 
   have hpt : ∀ ω, (e₀ ω - ε ω) * Δ ω = e₀ ω * Δ ω - Δ ω * ε ω := fun ω => by ring
   simp_rw [hpt]
   have e := integral_sub (h₀.integrable_mul hΔ) (hΔ.integrable_mul hε)
-  simp only [Pi.sub_apply, Pi.mul_apply] at e
+  simp only [Pi.mul_apply] at e
   rw [e]
   field_simp
   ring
@@ -250,6 +251,173 @@ theorem integral_mul_eq_zero_of_indepFun {Δ ε : Ω → ℝ} (hind : Δ ⟂ᵢ[
   have := hind.integral_mul_eq_mul_integral hΔ hε
   simp only [Pi.mul_apply] at this
   rw [this, h0, mul_zero]
+
+/-! ### The price of one held-out year (S64, target 1)
+
+Given the fit, the blend's errors `e₀` on the cohorts and the disagreement `Δ` of the two fitted
+predictions are fixed vectors; the held-out year adds its noise `ε` (mean 0, covariance table
+`C`, any distribution). With weights `W = diag(w)` and `D = ΔᵀWΔ > 0`, the weighted loss
+`(e₀ + θΔ)ᵀW(e₀ + θΔ)` is a parabola with minimum at the draw's own best fraction
+`θ̃ = -ΔᵀWe₀/D`, and the held-out regression `θ̂ = -ΔᵀW(e₀ - ε)/D = θ̃ + ΔᵀWε/D` is unbiased for
+it. Its mean loss exceeds the best by the price `ΔᵀWCWΔ/D`, a Rayleigh quotient of
+`W^½CW^½`, so at least its smallest eigenvalue, whatever the fits. -/
+
+section HeldOut
+
+variable {J : Type*} [Fintype J]
+
+/-- The weighted product `xᵀWy = Σⱼ wⱼxⱼyⱼ`. -/
+def wDot (w x y : J → ℝ) : ℝ := ∑ j, w j * x j * y j
+
+/-- The weighted loss `(e₀ + θΔ)ᵀW(e₀ + θΔ)` of the fraction `θ` on the cohorts. -/
+def wLoss (w e₀ Δ : J → ℝ) (θ : ℝ) : ℝ := wDot w (e₀ + θ • Δ) (e₀ + θ • Δ)
+
+/-- The draw's own best fraction `θ̃ = -ΔᵀWe₀/ΔᵀWΔ`. -/
+noncomputable def drawTheta (w e₀ Δ : J → ℝ) : ℝ := -wDot w Δ e₀ / wDot w Δ Δ
+
+/-- The held-out regression `θ̂ = -ΔᵀW(e₀ - ε)/ΔᵀWΔ`. -/
+noncomputable def heldOutTheta (w e₀ Δ ε : J → ℝ) : ℝ := -wDot w Δ (e₀ - ε) / wDot w Δ Δ
+
+/-- `ΔᵀWCWΔ`. -/
+def heldOutNum (w Δ : J → ℝ) (C : Matrix J J ℝ) : ℝ :=
+  ∑ i, ∑ j, w i * Δ i * C i j * (w j * Δ j)
+
+/-- The price `ΔᵀWCWΔ/ΔᵀWΔ` of choosing `θ` on one held-out year. -/
+noncomputable def heldOutPrice (w Δ : J → ℝ) (C : Matrix J J ℝ) : ℝ :=
+  heldOutNum w Δ C / wDot w Δ Δ
+
+/-- `(e₀ + θΔ)ᵀW(e₀ + θΔ) = e₀ᵀWe₀ + 2θΔᵀWe₀ + θ²ΔᵀWΔ`. -/
+theorem wLoss_expand (w e₀ Δ : J → ℝ) (θ : ℝ) :
+    wLoss w e₀ Δ θ = wDot w e₀ e₀ + 2 * θ * wDot w Δ e₀ + θ ^ 2 * wDot w Δ Δ := by
+  simp only [wLoss, wDot, Pi.add_apply, Pi.smul_apply, smul_eq_mul, Finset.mul_sum,
+    ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl fun j _ => by ring
+
+/-- The weighted loss is a parabola around the draw's best fraction:
+`L(θ) = L(θ̃) + ΔᵀWΔ (θ - θ̃)²`. -/
+theorem wLoss_eq (w e₀ Δ : J → ℝ) (hD : wDot w Δ Δ ≠ 0) (θ : ℝ) :
+    wLoss w e₀ Δ θ
+      = wLoss w e₀ Δ (drawTheta w e₀ Δ) + wDot w Δ Δ * (θ - drawTheta w e₀ Δ) ^ 2 := by
+  rw [wLoss_expand, wLoss_expand, drawTheta]
+  field_simp
+  ring
+
+/-- `θ̂ = θ̃ + ΔᵀWε/ΔᵀWΔ`. -/
+theorem heldOutTheta_eq (w e₀ Δ ε : J → ℝ) (hD : wDot w Δ Δ ≠ 0) :
+    heldOutTheta w e₀ Δ ε = drawTheta w e₀ Δ + (∑ j, w j * Δ j * ε j) / wDot w Δ Δ := by
+  have h : wDot w Δ (e₀ - ε) = wDot w Δ e₀ - ∑ j, w j * Δ j * ε j := by
+    simp only [wDot, Pi.sub_apply, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun j _ => by ring
+  rw [heldOutTheta, drawTheta, h]
+  field_simp
+  ring
+
+/-- For a fixed `θ₀`: `L(θ₀) - L(θ̃) = ΔᵀWΔ (θ₀ - θ̃)²` is the room a held-out choice can gain. -/
+theorem wLoss_sub_drawTheta (w e₀ Δ : J → ℝ) (hD : wDot w Δ Δ ≠ 0) (θ₀ : ℝ) :
+    wLoss w e₀ Δ θ₀ - wLoss w e₀ Δ (drawTheta w e₀ Δ)
+      = wDot w Δ Δ * (θ₀ - drawTheta w e₀ Δ) ^ 2 := by
+  rw [wLoss_eq w e₀ Δ hD θ₀]; ring
+
+/-- **The price is at least the smallest eigenvalue of `W^½CW^½`**: if every eigenvalue of
+`M = (√wᵢ Cᵢⱼ √wⱼ)` is at least `m`, then `m ≤ ΔᵀWCWΔ/ΔᵀWΔ`, whatever `Δ`. -/
+theorem le_heldOutPrice [DecidableEq J] (w Δ : J → ℝ) (hw : ∀ j, 0 ≤ w j)
+    (hD : 0 < wDot w Δ Δ) (C : Matrix J J ℝ)
+    (hM : (Matrix.of fun i j => Real.sqrt (w i) * C i j * Real.sqrt (w j)).IsHermitian)
+    {m : ℝ} (hm : ∀ i, m ≤ hM.eigenvalues i) : m ≤ heldOutPrice w Δ C := by
+  set y : J → ℝ := fun j => Real.sqrt (w j) * Δ j
+  have hs : ∀ j, Real.sqrt (w j) * Real.sqrt (w j) = w j := fun j => Real.mul_self_sqrt (hw j)
+  have hyy : y ⬝ᵥ y = wDot w Δ Δ := by
+    simp only [y, dotProduct, wDot]
+    exact Finset.sum_congr rfl fun j _ => by linear_combination (Δ j * Δ j) * hs j
+  have hyM : y ⬝ᵥ ((Matrix.of fun i j => Real.sqrt (w i) * C i j * Real.sqrt (w j)) *ᵥ y)
+      = heldOutNum w Δ C := by
+    simp only [y, dotProduct, mulVec, Matrix.of_apply, heldOutNum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    have hij : Real.sqrt (w i) * Real.sqrt (w i) * (Real.sqrt (w j) * Real.sqrt (w j))
+        = w i * w j := by rw [hs i, hs j]
+    linear_combination (Δ i * C i j * Δ j) * hij
+  have := hM.mul_dotProduct_le_dotProduct_mulVec hm y
+  rw [hyy, hyM] at this
+  rw [heldOutPrice, le_div_iff₀ hD]
+  exact this
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+
+omit [IsProbabilityMeasure P] in
+lemma memLp_wsum (a : J → ℝ) {ε : J → Ω → ℝ} (hε : ∀ j, MemLp (ε j) 2 P) :
+    MemLp (fun ω => ∑ j, a j * ε j ω) 2 P := by
+  exact memLp_finsetSum (μ := P) (p := 2) Finset.univ
+    (f := fun j ω => a j * ε j ω) fun j _ => (hε j).const_mul (a j)
+
+/-- `E(aᵀε)² = aᵀCa` for noise with mean 0 and covariance table `C` (any distribution),
+from `Model.integral_quad_of_cov`. -/
+theorem integral_sq_wsum (a : J → ℝ) (ε : J → Ω → ℝ) (C : Matrix J J ℝ)
+    (hε : ∀ j, MemLp (ε j) 2 P) (hm : ∀ j, P[ε j] = 0)
+    (hc : ∀ i j, covariance (ε i) (ε j) P = C i j) :
+    P[fun ω => (∑ j, a j * ε j ω) ^ 2] = ∑ i, ∑ j, a i * C i j * a j := by
+  have h := Model.integral_quad_of_cov (J := J) (T := Unit) (P := P) (fun p => ε p.1)
+    (fun p q => C p.1 q.1) 0 (fun p q => a p.1 * a q.1) (fun _ => True)
+    (fun _ _ _ => ⟨trivial, trivial⟩) (fun p _ => hε p.1) (fun p _ => hm p.1)
+    (fun p q _ _ => hc p.1 q.1)
+  simp only [Model.quad, Model.Ecov, Fintype.sum_prod_type, Finset.univ_unique,
+    Finset.sum_singleton, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    add_zero] at h
+  rw [← Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ =>
+    (show a i * a j * C i j = a i * C i j * a j by ring), ← h]
+  congr 1
+  funext ω
+  show (∑ j, a j * ε j ω) ^ 2 = _
+  rw [sq, Finset.sum_mul_sum]
+  exact Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => by ring
+
+variable (w e₀ Δ : J → ℝ) {ε : J → Ω → ℝ} {C : Matrix J J ℝ}
+
+/-- **The held-out fraction is unbiased for the draw's best one**: `E θ̂ = θ̃`. -/
+theorem integral_heldOutTheta (hD : wDot w Δ Δ ≠ 0) (hε : ∀ j, MemLp (ε j) 2 P)
+    (hm : ∀ j, P[ε j] = 0) :
+    P[fun ω => heldOutTheta w e₀ Δ (fun j => ε j ω)] = drawTheta w e₀ Δ := by
+  simp_rw [heldOutTheta_eq w e₀ Δ _ hD]
+  have hi := (memLp_wsum (fun j => w j * Δ j) hε).integrable one_le_two
+  rw [integral_add (integrable_const _) (hi.div_const _), integral_const, integral_div,
+    integral_finsetSum _ fun j _ => ((hε j).integrable one_le_two).const_mul _]
+  simp [integral_const_mul, hm]
+
+/-- **The spread of the held-out fraction**: `E(θ̂ - θ̃)² = ΔᵀWCWΔ/(ΔᵀWΔ)²`, its variance. -/
+theorem integral_sq_heldOutTheta_sub (hD : wDot w Δ Δ ≠ 0) (hε : ∀ j, MemLp (ε j) 2 P)
+    (hm : ∀ j, P[ε j] = 0) (hc : ∀ i j, covariance (ε i) (ε j) P = C i j) :
+    P[fun ω => (heldOutTheta w e₀ Δ (fun j => ε j ω) - drawTheta w e₀ Δ) ^ 2]
+      = heldOutNum w Δ C / wDot w Δ Δ ^ 2 := by
+  simp_rw [heldOutTheta_eq w e₀ Δ _ hD, add_sub_cancel_left, div_pow]
+  rw [integral_div, integral_sq_wsum _ ε C hε hm hc, heldOutNum]
+
+/-- **The price of one held-out year**: `E[(e₀ + θ̂Δ)ᵀW(e₀ + θ̂Δ)] = L(θ̃) + ΔᵀWCWΔ/ΔᵀWΔ`,
+for every distribution of the held-out noise with mean 0 and covariance table `C`. -/
+theorem integral_wLoss_heldOutTheta (hD : wDot w Δ Δ ≠ 0) (hε : ∀ j, MemLp (ε j) 2 P)
+    (hm : ∀ j, P[ε j] = 0) (hc : ∀ i j, covariance (ε i) (ε j) P = C i j) :
+    P[fun ω => wLoss w e₀ Δ (heldOutTheta w e₀ Δ (fun j => ε j ω))]
+      = wLoss w e₀ Δ (drawTheta w e₀ Δ) + heldOutPrice w Δ C := by
+  simp_rw [wLoss_eq w e₀ Δ hD (heldOutTheta w e₀ Δ _)]
+  have hi := ((memLp_wsum (fun j => w j * Δ j) hε).sub (memLp_const (drawTheta w e₀ Δ))
+    |>.add (memLp_const (drawTheta w e₀ Δ))).integrable_sq
+  have hsq : Integrable (fun ω => (heldOutTheta w e₀ Δ (fun j => ε j ω)
+      - drawTheta w e₀ Δ) ^ 2) P := by
+    simp_rw [heldOutTheta_eq w e₀ Δ _ hD, add_sub_cancel_left, div_pow]
+    exact ((memLp_wsum (fun j => w j * Δ j) hε).integrable_sq).div_const _
+  rw [integral_add (integrable_const _) (hsq.const_mul _), integral_const, integral_const_mul,
+    integral_sq_heldOutTheta_sub w e₀ Δ hD hε hm hc, heldOutPrice]
+  simp only [probReal_univ, one_smul]
+  field_simp
+
+/-- **When the held-out choice beats a fixed fraction**: in mean, `θ̂` beats a fixed `θ₀`
+iff the room `ΔᵀWΔ(θ₀ - θ̃)²` exceeds the price `ΔᵀWCWΔ/ΔᵀWΔ`. -/
+theorem integral_wLoss_heldOutTheta_lt_iff (hD : wDot w Δ Δ ≠ 0) (hε : ∀ j, MemLp (ε j) 2 P)
+    (hm : ∀ j, P[ε j] = 0) (hc : ∀ i j, covariance (ε i) (ε j) P = C i j) (θ₀ : ℝ) :
+    P[fun ω => wLoss w e₀ Δ (heldOutTheta w e₀ Δ (fun j => ε j ω))] < wLoss w e₀ Δ θ₀
+      ↔ heldOutPrice w Δ C < wDot w Δ Δ * (θ₀ - drawTheta w e₀ Δ) ^ 2 := by
+  rw [integral_wLoss_heldOutTheta w e₀ Δ hD hε hm hc, wLoss_eq w e₀ Δ hD θ₀]
+  constructor <;> intro h <;> linarith
+
+end HeldOut
 
 namespace Core
 namespace Target

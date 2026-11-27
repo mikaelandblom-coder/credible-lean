@@ -3711,6 +3711,66 @@ This section assumes symmetric noise; nothing else depends on it.
   Theorem~\ref{thm:plugIn_mix}.
 \end{proof}
 
+\begin{definition}[The held-out fraction and its price]\label{def:heldOut}
+  \lean{Credibility.wDot, Credibility.wLoss, Credibility.drawTheta, Credibility.heldOutTheta,
+        Credibility.heldOutNum, Credibility.heldOutPrice}
+  \leanok
+  For fixed $e_0, \Delta \in \mathbb R^J$ (given the fit), weights $W = \mathrm{diag}(w)$ and a
+  held-out noise $\varepsilon$: the weighted loss $L(\theta) = (e_0 + \theta\Delta)^TW(e_0 + \theta\Delta)$,
+  the draw's best fraction $\tilde\theta = -\Delta^TWe_0/\Delta^TW\Delta$, the held-out fraction
+  $\hat\theta = -\Delta^TW(e_0 - \varepsilon)/\Delta^TW\Delta$ and, for a table $C$, the price
+  $\Delta^TWCW\Delta/\Delta^TW\Delta$.
+\end{definition}
+
+\begin{lemma}[The loss is a parabola around the draw's best fraction]\label{lem:wLoss_eq}
+  \lean{Credibility.wLoss_expand, Credibility.wLoss_eq, Credibility.heldOutTheta_eq,
+        Credibility.wLoss_sub_drawTheta}
+  \leanok
+  \uses{def:heldOut}
+  If $\Delta^TW\Delta \ne 0$: $L(\theta) = L(\tilde\theta) + \Delta^TW\Delta\,(\theta - \tilde\theta)^2$ and
+  $\hat\theta = \tilde\theta + \Delta^TW\varepsilon/\Delta^TW\Delta$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand $L$ as a quadratic in $\theta$ and complete the square.
+\end{proof}
+
+\begin{theorem}[The price of one held-out year]\label{thm:heldOut_price}
+  \lean{Credibility.memLp_wsum, Credibility.integral_sq_wsum, Credibility.integral_heldOutTheta,
+        Credibility.integral_sq_heldOutTheta_sub, Credibility.integral_wLoss_heldOutTheta,
+        Credibility.integral_wLoss_heldOutTheta_lt_iff}
+  \leanok
+  \uses{lem:wLoss_eq, thm:integral_quad_cov}
+  Let $\Delta^TW\Delta \ne 0$ and $\varepsilon$ square integrable with mean $0$ and
+  $\cov(\varepsilon_i, \varepsilon_j) = C_{ij}$ (any distribution). Then
+  $\mathbb E(a^T\varepsilon)^2 = a^TCa$, $\mathbb E\hat\theta = \tilde\theta$,
+  $\mathbb E(\hat\theta - \tilde\theta)^2 = \Delta^TWCW\Delta/(\Delta^TW\Delta)^2$, and
+  \[
+    \mathbb E\,L(\hat\theta) = L(\tilde\theta) + \frac{\Delta^TWCW\Delta}{\Delta^TW\Delta}.
+  \]
+  Hence $\hat\theta$ beats a fixed $\theta_0$ in mean iff
+  $\Delta^TWCW\Delta/\Delta^TW\Delta < \Delta^TW\Delta\,(\theta_0 - \tilde\theta)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:wLoss_eq, thm:integral_quad_cov}
+  $(a^T\varepsilon)^2$ is a quadratic form with mean-$0$ cells
+  (Theorem~\ref{thm:integral_quad_cov}); with $a = W\Delta$ substitute
+  $\hat\theta - \tilde\theta = a^T\varepsilon/\Delta^TW\Delta$ into Lemma~\ref{lem:wLoss_eq}.
+\end{proof}
+
+\begin{theorem}[The price is at least the smallest eigenvalue]\label{thm:heldOut_price_ge}
+  \lean{Credibility.le_heldOutPrice}
+  \leanok
+  \uses{def:heldOut}
+  If $w \ge 0$, $\Delta^TW\Delta > 0$ and every eigenvalue of the symmetric
+  $M = W^{1/2}CW^{1/2}$ is at least $m$, then $m \le \Delta^TWCW\Delta/\Delta^TW\Delta$, whatever $\Delta$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $y = W^{1/2}\Delta$ the price is the Rayleigh quotient $y^TMy/y^Ty$.
+\end{proof}
+
 \begin{theorem}[The plug-in predictor under normal noise]\label{thm:Blup_plugIn_normal}
   \lean{Credibility.Core.Target.resid, Credibility.Core.Target.resid_mul,
         Credibility.Core.Target.eq_resid_add, Credibility.Core.Target.plugIn_mse_of_normal,
