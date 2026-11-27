@@ -58,3 +58,4 @@ import Credibility.CrossedEstimation
 import Credibility.CrossedMoments
 import Credibility.CrossedPoolWeights
 import Credibility.CrossedPoolNormal
+import Credibility.CrossedSmall

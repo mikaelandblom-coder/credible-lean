@@ -659,3 +659,99 @@ Distribution layer: here the cells are jointly normal.
   noise on one factor and independent standard normal $A$, $B$ on the other, as in
   Theorem~\ref{thm:G_exists_noise}.
 \end{proof}
+
+\section{Small tables: one degree of freedom per variance}\label{sec:crossed_small}
+
+In a $2\times 2$ table the four cell means span the mean, one row contrast $r = (1,1,-1,-1)$, one
+column contrast $c = (1,-1,1,-1)$ and one interaction contrast $v = rc$. Each variance has one
+degree of freedom, and no volume changes that.
+
+\begin{lemma}[Dropping positive parts of $K$]\label{lem:small_trace_nonneg}
+  \lean{Credibility.CrossedSmall.trace_mul_nonneg, Credibility.CrossedSmall.trace_mul_mul_mul_nonneg,
+    Credibility.CrossedSmall.sq_mul_trace_le}
+  \leanok
+  For $X, Y \succeq 0$, $\operatorname{tr}(XY) \ge 0$. Hence for symmetric $A$, $\theta \ge 0$ and
+  $G, R \succeq 0$: $\theta^2\operatorname{tr}(AGAG) \le \operatorname{tr}(AKAK)$ with $K = \theta G + R$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $Y = B^TB$, so $\operatorname{tr}(XY) = \operatorname{tr}(BXB^T) \ge 0$. Expand $\operatorname{tr}(AKAK)$:
+  the cross terms are $\operatorname{tr}((AGA)R)$ and $\operatorname{tr}((ARA)R)$, both $\ge 0$.
+\end{proof}
+
+\begin{lemma}[The contrasts of a $2\times 2$ table]\label{lem:small_contrasts}
+  \lean{Credibility.CrossedSmall.trace_mul_vecMulVec, Credibility.CrossedSmall.sameRow_eq,
+    Credibility.CrossedSmall.sameCol_eq, Credibility.CrossedSmall.one_eq,
+    Credibility.CrossedSmall.trace_mul_sameRow, Credibility.CrossedSmall.trace_mul_sameCol,
+    Credibility.CrossedSmall.four_mul_trace, Credibility.CrossedSmall.trace_half_sq,
+    Credibility.CrossedSmall.dotProduct_sq_le}
+  \leanok
+  \uses{lem:sameGroup}
+  $[\text{same row}] = \tfrac12(\mathbf 1\mathbf 1^T + rr^T)$, $[\text{same column}] =
+  \tfrac12(\mathbf 1\mathbf 1^T + cc^T)$, $I = \tfrac14(\mathbf 1\mathbf 1^T + rr^T + cc^T + vv^T)$. For
+  $A\mathbf 1 = 0$: $\operatorname{tr}(A[\text{row}]) = r^TAr/2$, $4\operatorname{tr}A = r^TAr + c^TAc
+  + v^TAv$, and $\operatorname{tr}(ASAS) = (\operatorname{tr}AS)^2$ for $S = [\text{row}]$ or
+  $[\text{column}]$. For symmetric $A$, $(v^TAv)^2 \le \operatorname{tr}(A^2)\,\|v\|^4$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Entrywise for the three identities; $AS = \tfrac12 (Ar)r^T$ when $A\mathbf 1 = 0$; Cauchy--Schwarz
+  on $\sum_{ij}A_{ij}v_iv_j$.
+\end{proof}
+
+\begin{lemma}[$K$ of a $2\times 2$ table by layer]\label{lem:small_K}
+  \lean{Credibility.CrossedSmall.trace_mul_K, Credibility.CrossedSmall.K_eq_row,
+    Credibility.CrossedSmall.K_eq_col, Credibility.CrossedSmall.K_eq_cell}
+  \leanok
+  \uses{def:crossed}
+  $\operatorname{tr}(AK) = \alpha^2\operatorname{tr}(A[\text{row}]) + \beta^2\operatorname{tr}(A[\text{col}])
+  + \gamma^2\operatorname{tr}A + \operatorname{tr}(A\Sigma)$, and $K$ is each layer plus a positive
+  semidefinite rest.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The definition of $K$.
+\end{proof}
+
+\begin{theorem}[A $2\times 2$ table cannot estimate its variances]\label{thm:small_bound}
+  \lean{Credibility.CrossedSmall.sq_le_trace_row, Credibility.CrossedSmall.sq_le_trace_col,
+    Credibility.CrossedSmall.sq_le_trace_cell}
+  \leanok
+  \uses{def:crossed}
+  Let $\hat\mu^TA\hat\mu - c$, with $A$ symmetric and $A\mathbf 1 = 0$, be unbiased for $\alpha^2$
+  (respectively $\beta^2$, $\gamma^2$) for all $\alpha^2, \beta^2, \gamma^2 \ge 0$, the noise
+  covariance $\Sigma \succeq 0$ known. Then its Gaussian variance $2\operatorname{tr}(AKAK)$ is at
+  least $2\alpha^4$ (respectively $2\beta^4$, $2\gamma^4$), for every $\Sigma$ and every volume.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:small_trace_nonneg, lem:small_contrasts, lem:small_K, lem:sameGroup}
+  Unbiasedness fixes $\operatorname{tr}(A[\text{row}]) = 1$ (row); Lemma~\ref{lem:small_trace_nonneg}
+  keeps only $\alpha^4\operatorname{tr}(ASAS) = \alpha^4(\operatorname{tr}AS)^2 = \alpha^4$. For the cell:
+  $\operatorname{tr}(A[\text{row}]) = \operatorname{tr}(A[\text{col}]) = 0$ and $\operatorname{tr}A = 1$
+  give $v^TAv = 4 = \|v\|^2$, so $\operatorname{tr}(A^2) \ge 1$.
+\end{proof}
+
+\begin{theorem}[As random variables]\label{thm:small_variance}
+  \lean{Credibility.CrossedSmall.varQuad_of_gaussian,
+    Credibility.CrossedSmall.two_mul_sq_le_variance_cell, Credibility.CrossedSmall.bestMultiple_le_third}
+  \leanok
+  \uses{thm:small_bound}
+  For random cell means with common mean, covariance $K$ and Gaussian third and fourth cumulants,
+  such an estimator of $\gamma^2$ has $\Var \ge 2\gamma^4$: coefficient of variation at least
+  $\sqrt 2$, and its mean-squared-error-best multiple $\theta^2/(\theta^2 + \Var)$ is at most $1/3$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:small_bound, thm:variance_quad_of_cumulants}
+  Theorem~\ref{thm:variance_quad_of_cumulants} with zero cumulants and $A\mathbf 1 = 0$ gives
+  $\Var = 2\operatorname{tr}(AKAK)$; then Theorem~\ref{thm:small_bound}.
+\end{proof}
+
+\begin{remark}[Finding 44]\label{rem:finding44}
+  In a $2\times 2$ table every unbiased, mean-free quadratic estimate of a crossed variance has standard
+  deviation at least $\sqrt 2$ times its value, at any volume: more exposure shrinks $\Sigma$ only, and
+  the bound is the $\Sigma = 0$ one. So truncation at zero leaves most of the error, and the best
+  multiple is below $1/3$. Only more rows or columns help. Simulation (S70): REML on the cell means is
+  never more than a few points worse than the default and gains most where effects are weak.
+\end{remark}

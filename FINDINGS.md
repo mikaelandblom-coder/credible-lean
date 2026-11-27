@@ -769,4 +769,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    whose score is unbiased for the chosen rule's error for every distribution
    (`CrossFit.integral_heldOutScore`).
 
+44. **A 2×2 crossed table cannot estimate its variances, at any volume (new; proved:
+   `CrossedSmall.sq_le_trace_row`, `_col`, `_cell`, `two_mul_sq_le_variance_cell`).** The four cell means
+   of a 2×2 table span the mean, one row contrast, one column contrast and one interaction contrast, so
+   each of `α²`, `β²`, `γ²` has one degree of freedom. Every estimator `μ̂ᵀAμ̂ − c` that does not depend on
+   the common mean (`A1 = 0`) and is unbiased for one of them whatever the three are (noise covariance
+   `Σ ⪰ 0` known, any volumes, any correlations) has Gaussian variance `2 tr(AKAK) ≥ 2θ²`; with Gaussian
+   third and fourth cumulants that is its actual variance. So its standard deviation is at least `√2`
+   times its value, more exposure shrinks only `Σ` and never this bound, and the MSE-best multiple
+   `θ²/(θ² + V)` is at most `1/3` (`bestMultiple_le_third`). Sharp: for `γ²` with `Σ = 0` the interaction
+   contrast `D = v·μ̂/2` gives `D² − 0` with variance exactly `2γ⁴`. The pair pools of `crossed_unbiasedX`
+   with fixed weights are such estimators. Consequence: the raw estimates are negative in 20–65% of draws
+   even with real effects (S70), clipping keeps most of the error, and only more rows or columns help;
+   in practice merge small classifications or fit without the crossed layer, decided on held-out years.
+   Not covered: estimated noise (adds its own variance under normal noise, independent of the means for
+   noise independent over time; not proved) and kurtosis below the Gaussian.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
