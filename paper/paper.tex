@@ -2503,25 +2503,12 @@ about the layer that assumes a noise family.
 
 \paragraph{Where to look first.}
 
-In order of expected payoff, with the reasons given below: fitting crossed levels; the
-winner's curse of choosing cohorts from the same data; a fit for the group
-model; and a few classical extensions that are short corollaries of what is
-already proved.
-
-\paragraph{Fitting crossed levels.}
-
-Section~\ref{sec:groups} has the crossed model's predictor and unbiased
-estimators of its three variances, for any weights on the pairs. The weights
-are settled in principle: the best unbiased pool of a class is GLS on the
-covariance table of its pair estimators (\hb{res:crossed_pool}{49}). In a
-balanced table equal weights are exactly best. Under normal noise the
-inverse-variance weights are $\propto (\theta + n_p)^{-2}$, with $\theta$ the
-class's variance and $n_p$ the pair's noise: equal when the effects are
-strong, favouring large cells when they are weak. That explains the
-simulation ranking behind the default fit (Section~\ref{sec:estimation},
-``Which fit to use''). Open: small tables, where each class has few pairs
-(two each in a two-by-two table) and the estimates are noisy and can be
-negative.
+In order of expected payoff, with the reasons given below: the winner's curse
+of choosing cohorts from the same data; a fit for the group model; small
+crossed tables; and a few classical extensions that are short corollaries of
+what is already proved. Crossed levels, the default fit and trend lines,
+open in earlier versions, are now in (Sections~\ref{sec:groups},
+\ref{sec:estimation} and~\ref{sec:vector}).
 
 \paragraph{Choosing cohorts from the same data.}
 
@@ -2533,10 +2520,19 @@ not see that they were chosen; cutting the sorted estimates where that estimate
 is smallest was 2--74\% worse than one group in every simulated world (S61). Open:
 how large the curse is in general, and a correction for it, as the price of
 estimation corrects a fitted model's error (Section~\ref{sec:estimation}).
+Two candidates are in place: cross-fitting, which already removes a
+selection-like bias from the balance step (\finding{35}), and the gain
+against price with the choice counted in the price. The same question arises
+for merging two cohorts whose gap looks small by chance.
 
 \paragraph{Fits.}
 
 \begin{itemize}
+  \item \emph{Small crossed tables.} The crossed fit is settled in principle
+    (GLS on the pair table, \hb{res:crossed_pool}{49}) and in the default
+    (Section~\ref{sec:estimation}). Open are tables with few pairs per class
+    (two each in a two-by-two table), where the estimates are noisy and can be
+    negative, and the default does worse when the effects are weak.
   \item \emph{A fit for the group model} that pools the within- and
     across-group pair estimates into one $\widehat{\phi\tau^2}$ with no
     hand-set choices, and its behaviour in simulation (Section~\ref{sec:groups}).
@@ -2545,19 +2541,19 @@ estimation corrects a fitted model's error (Section~\ref{sec:estimation}).
     (regions in countries), and there the blend form costs most.
   \item \emph{A sharper taper signal}, one that scores the two predictors
     directly rather than the two tables (S47).
-  \item \emph{The default fit.} On the studies so far the best linear
-    predictor on the one-correlation table beats the correlated
-    Bühlmann--Straub blend wherever $\rho \ge 0.6$ and ties elsewhere (S52);
-    whether to make it the default, giving up the blend form, is a choice
-    still to make.
+  \item \emph{The mix's gain.} The best share of the way from the fitted
+    blend to the fitted predictor needs the gain of the predictor, which the
+    data do not give directly; a held-out year estimates it at a known price
+    (\hb{res:plugIn_mix}{32}). A cheaper or sharper estimate of the gain is
+    open.
   \item \emph{Lean:} the unbiasedness of the credibility-weighted variances,
     and these variances with unequal lengths.
 \end{itemize}
 
 \paragraph{Time.}
 
-Period shocks, a persistent factor with any dynamics, a season and a known
-trend are in (Sections~\ref{sec:factor} and~\ref{sec:vector}). Open:
+Period shocks, a persistent factor with any dynamics, a season, a known
+trend and trend lines per cohort (forecast and fit, \hb{res:vecForecast}{63}) are in (Sections~\ref{sec:factor} and~\ref{sec:vector}). Open:
 \begin{itemize}
   \item \emph{Evolutionary credibility.} Levels that drift as a random walk or
     an AR(1) (Gerber and Jones 1975; Bühlmann and Gisler 2005, ch.~10). With
@@ -2565,9 +2561,8 @@ trend are in (Sections~\ref{sec:factor} and~\ref{sec:vector}). Open:
     target's covariances with the data are free. Open are the recursive
     (Kalman-filter) form for long histories and estimating the dynamics with
     guarantees (the profile over the AR coefficient is only consistent).
-  \item \emph{Trend lines.} The target as next period's level on the line,
-    and estimators for the line model's $K$; and an estimated common trend,
-    which unlike a known one moves relativities (\finding{21}).
+  \item \emph{An estimated common trend}, which unlike a known one moves
+    relativities (\finding{21}).
 \end{itemize}
 
 \paragraph{Short classical extensions.}
