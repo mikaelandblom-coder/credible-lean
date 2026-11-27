@@ -72,9 +72,9 @@ function chol(A) {
 }
 
 // --- random numbers (seeded, so every fit sees the same draws) ---
-let seed = 12345;
-const unif = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return (seed + 0.5) / 2147483648; };
-const normal = () => Math.sqrt(-2 * Math.log(unif())) * Math.cos(2 * Math.PI * unif());
+// The app's seeded mulberry32 (polar normals). An LCG mod 2³¹ used before 2026-11-27 had serially
+// correlated draws: ŝ² 2–3% high and a cohort's slope noise 2% low, a −100% bias in Λ̂'s slope variance.
+const normal = require('../app/engine.js').rng(12345).normal;
 
 // Structures: which entries of Λ a fit keeps (P order a_F, b_F, a_Y, b_Y; component of index i is i >> 1).
 const keep = { diag: (i, j) => i === j, block: (i, j) => (i >> 1) === (j >> 1), full: () => true };
