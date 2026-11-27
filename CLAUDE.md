@@ -38,6 +38,22 @@ tactics.
   `sorry`s to tackle and any state the next chat can't get from the repo (open
   questions, dead ends tried). After the prompt, ask "Do you want to continue
   here?" so the owner can reply "Yes" to go on in the same chat.
+- Direction (owner, 2026-11-27): no fixed goal, but move towards results
+  useful to a pricing actuary with real portfolio data, under assumptions such
+  data typically meet. Exploring is welcome when it is labelled as such. So
+  every next-chat prompt answers in one line each:
+  - **Who uses it?** The practitioner question it answers; if none yet,
+    label the prompt *exploration*.
+  - **How common is the assumption?** Typical data (unequal volumes, short
+    histories, skewed claims) or a corner of parameter space?
+  - **Does it generalize?** A statement for every world, or a ranking in the
+    worlds a study visits?
+- Edge cases get logged, not chased: a result that matters only under an
+  obscure assumption gets its line in `FINDINGS.md` (or "Parked" in
+  `studies/PLAN.md`) with its counterexample, and the thread moves on.
+- Depth check: after about three chats on one thread (e.g. S65 → S66 → S67),
+  the prompt says what the thread has gained for practice and asks:
+  "Continue, or park it and return to <the main thread>?"
 
 ## Rules
 - Theorem statements are the spec. Never weaken or change one to make it
