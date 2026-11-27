@@ -1,0 +1,1101 @@
+\chapter{Extension: a shared group level}\label{ch:hierarchical}
+% Not in the thesis: first bridge to two-level credibility (Finding 6).
+% Lean: Credibility/Hierarchical.lean; rank-one and block-diagonal K in Core.lean,
+% BlendMoments.shift in Blend.lean, group weights in GroupWeights.lean
+
+Not in the thesis. A first step towards hierarchical credibility
+(Remark~\ref{rem:merge_reading}): the cohort levels $\mu_j$ share a fraction
+$\phi$ of their variance $\tau^2$, so $\operatorname{cov}(\mu_i,\mu_j) = \phi\tau^2$
+for $i \ne j$. The thesis is $\phi = 0$; one common level is $\phi = 1$.
+
+\begin{definition}[Level covariance and $K_\phi$]\label{def:Kphi}
+  \lean{Credibility.Model.levelCov, Credibility.Model.errCov, Credibility.Model.Kφ}
+  \leanok
+  \uses{def:shrinkOffDiag, def:K}
+  The level covariance is $\tau^2 (\mathbf 1\mathbf 1^T)^\phi$, with entries
+  $\tau^2$ on the diagonal and $\phi\tau^2$ off it. The error covariance is
+  $\Sigma_{ij} = \sigma^2_{ij}\rho_{ij}$, and
+  $K_\phi = \tau^2(\mathbf 1\mathbf 1^T)^\phi + \Sigma$.
+\end{definition}
+
+\begin{lemma}[Entries of the level covariance]\label{lem:levelCov_apply}
+  \lean{Credibility.Model.levelCov_apply}
+  \leanok
+  \uses{def:Kphi}
+  $\tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij} = \tau^2$ if $i = j$ and $\phi\tau^2$ otherwise.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Unfold the damping.
+\end{proof}
+
+\begin{lemma}[$\phi = 0$ is the thesis]\label{lem:Kphi_zero}
+  \lean{Credibility.Model.Kφ_zero, Credibility.Model.errCov_eq}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$, then $K_0 = K$ and $\Sigma = K - \tau^2 I$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:K_apply, lem:levelCov_apply}
+  Compare entries with $K_{ij} = \sigma^2_{ij}\rho_{ij} + \tau^2\delta_{ij}$.
+\end{proof}
+
+\begin{lemma}[The error covariance is positive semidefinite]\label{lem:errCov_posSemidef}
+  \lean{Credibility.Model.errCov_eq_toUnequal, Credibility.Model.errCov_posSemidef}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$ and $(\rho_{ij}) \succeq 0$, then $\Sigma \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_errCov_posSemidef}
+  Lemma~\ref{lem:U_errCov_posSemidef} with $T_j = T$: every block is a
+  principal submatrix of $(\rho_{ij})$.
+\end{proof}
+
+\begin{theorem}[$K_\phi$ is positive definite]\label{thm:Kphi_posDef}
+  \lean{Credibility.Model.Kφ_posDef}
+  \leanok
+  \uses{def:Kphi}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then
+  $K_\phi \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:shrinkOffDiag_posDef, lem:errCov_posSemidef}
+  $\mathbf 1\mathbf 1^T \succeq 0$ has unit diagonal, so
+  $(\mathbf 1\mathbf 1^T)^\phi \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef},
+  and $\tau^2 > 0$. Adding $\Sigma \succeq 0$ keeps it positive definite.
+\end{proof}
+
+\begin{lemma}[One common level]\label{lem:Kphi_one}
+  \lean{Credibility.Model.Kφ_one}
+  \leanok
+  \uses{def:Kphi}
+  $K_1 = \Sigma + \tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply}
+  Compare entries.
+\end{proof}
+
+\begin{remark}[The rank-one term of Finding 5]\label{rem:Kphi_rankOne}
+  \uses{lem:Kphi_one, lem:Kphi_zero, rem:equalCov}
+  In general $K_\phi = \Sigma + (1-\phi)\tau^2 I + \phi\tau^2\mathbf 1\mathbf 1^T$:
+  the thesis $K$ with $\tau^2$ replaced by $(1-\phi)\tau^2$, plus a rank-one
+  term along $\mathbf 1$. This is the structure behind Finding~5: a rank-one
+  term along $\mathbf 1$ does not change the direction of $K^{-1}\mathbf 1$.
+  At $\phi = 1$ the diagonal part is gone and $K_1$ is singular whenever
+  $\Sigma$ is, so positive definiteness needs $\phi < 1$ in general.
+\end{remark}
+
+\section{The shared level drops out of credibility}\label{sec:hier_bridge2}
+
+The remark above, proved: a rank-one term along $\mathbf 1$ moves neither the
+GLS weights nor the credibility factors. Write $\phi\tau^2 = c$ and let
+$M_\phi$ be the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
+
+\begin{lemma}[Inverse with a rank-one term along $\mathbf 1$]\label{lem:Kinv_one_add_rankOne}
+  \lean{Credibility.Core.Kinv_one_add_rankOne}
+  \leanok
+  \uses{def:glsWeight}
+  If $K$ and $K + c\mathbf 1\mathbf 1^T$ are positive definite, then
+  $1 + c\,\mathbf 1^TK^{-1}\mathbf 1 > 0$ and
+  $(K + c\mathbf 1\mathbf 1^T)^{-1}\mathbf 1
+    = K^{-1}\mathbf 1 / (1 + c\,\mathbf 1^TK^{-1}\mathbf 1)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invTotal_pos, lem:Core_Kinv_one_eq}
+  With $w = K^{-1}\mathbf 1$ and $S = \mathbf 1^Tw$,
+  $(K + c\mathbf 1\mathbf 1^T)w = (1 + cS)\mathbf 1$: Lemma~\ref{lem:Core_Kinv_one_eq}. Positivity:
+  $w^T(K + c\mathbf 1\mathbf 1^T)w = (1+cS)S > 0$ and $S > 0$.
+\end{proof}
+
+\begin{theorem}[Rank-one invariance of the GLS weights]\label{thm:glsWeight_add_rankOne}
+  \lean{Credibility.Core.glsWeight_add_rankOne, Credibility.Core.invTotal_inv_add_rankOne}
+  \leanok
+  \uses{def:glsWeight}
+  Under the same hypotheses, $b(K + c\mathbf 1\mathbf 1^T) = b(K)$, and (with
+  $J \ne \emptyset$) $s^2(K + c\mathbf 1\mathbf 1^T) = s^2(K) + c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Kinv_one_add_rankOne, lem:invTotal_pos}
+  The factor $1/(1+cS)$ cancels in $b = K^{-1}\mathbf 1/\mathbf 1^TK^{-1}\mathbf 1$,
+  and $(1+cS)/S = 1/S + c$.
+\end{proof}
+
+\begin{definition}[Shifting the blend moments]\label{def:shift}
+  \lean{Credibility.BlendMoments.shift}
+  \leanok
+  \uses{def:errVar}
+  Add $c$ to all six second moments of the blend: what a common component
+  of variance $c$ in $\hmu_j$, $\hmu$ and $\mu_j$ does.
+\end{definition}
+
+\begin{lemma}[A common component cancels]\label{lem:shift}
+  \lean{Credibility.BlendMoments.errVar_shift, Credibility.BlendMoments.gap_shift,
+    Credibility.BlendMoments.bestZ_shift}
+  \leanok
+  \uses{def:shift, def:bestZ}
+  Shifting leaves the error variance (for every $z$), the curvature and
+  $z^\ast$ unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  In $z\hmu_j + (1-z)\hmu - \mu_j$ the common part has coefficient
+  $z + (1-z) - 1 = 0$.
+\end{proof}
+
+\begin{lemma}[$K_\phi$ is a thesis $K$ plus a rank-one term]\label{lem:Kphi_eq}
+  \lean{Credibility.Model.withLevel, Credibility.Model.levelCov_eq, Credibility.Model.Kφ_eq}
+  \leanok
+  \uses{def:Kphi, def:K}
+  $\tau^2(\mathbf 1\mathbf 1^T)^\phi = (1-\phi)\tau^2 I + \phi\tau^2\mathbf 1\mathbf 1^T$,
+  so for $T \ge 1$ and $\phi < 1$,
+  $K_\phi = K(M_\phi) + \phi\tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCov_apply, lem:Kphi_zero}
+  Compare entries; then $\Sigma = K(M_\phi) - (1-\phi)\tau^2 I$ by
+  Lemma~\ref{lem:Kphi_zero}, since $\Sigma$ does not involve $\tau^2$.
+\end{proof}
+
+\begin{theorem}[Weights and portfolio variance with a shared level]\label{thm:glsWeight_Kphi}
+  \lean{Credibility.Model.glsWeight_Kφ, Credibility.Model.s2_Kφ}
+  \leanok
+  \uses{lem:Kphi_eq, def:Model.b}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then
+  $b(K_\phi) = b(M_\phi)$ and $s^2(K_\phi) = s^2(M_\phi) + \phi\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Kphi_eq, thm:glsWeight_add_rankOne, thm:Kphi_posDef, lem:K_posDef}
+  Theorem~\ref{thm:glsWeight_add_rankOne} with $K = K(M_\phi)$ and $c = \phi\tau^2$.
+\end{proof}
+
+\begin{definition}[Blend moments with a shared level]\label{def:momentsPhi}
+  \lean{Credibility.Model.momentsφ}
+  \leanok
+  \uses{def:Kphi, def:errVar, def:glsWeight}
+  As Definition~\ref{def:moments}, with $b$ and $s^2$ from $K_\phi$,
+  $\cov(\hmu_j,\hmu) = (K_\phi b)_j$ and
+  $\cov(\hmu,\mu_j) = \sum_i b_i\cov(\mu_i,\mu_j)
+    = (\tau^2(\mathbf 1\mathbf 1^T)^\phi b)_j$.
+\end{definition}
+
+\begin{lemma}\label{lem:momentsPhi_level}
+  \lean{Credibility.Model.momentsφ_eq_levelMoments}
+  \leanok
+  \uses{def:momentsPhi, def:Core.levelMoments}
+  The blend moments with a shared level are those of
+  Definition~\ref{def:Core.levelMoments} for $K_\phi$,
+  $L = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ and $d = \tau^2 + \sigma^2_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $L_{jj} = \tau^2$.
+\end{proof}
+
+\begin{theorem}[The shared level drops out]\label{thm:momentsPhi}
+  \lean{Credibility.Model.momentsφ_eq, Credibility.Model.errVar_momentsφ,
+    Credibility.Model.bestZ_momentsφ}
+  \leanok
+  \uses{def:momentsPhi, def:shift, def:moments}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, the blend moments
+  with a shared level are those of $M_\phi$ shifted by $\phi\tau^2$. Hence the
+  error variance of every blend, and the best credibility factor, are those of
+  the thesis model with $\tau^2$ replaced by $(1-\phi)\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:glsWeight_Kphi, lem:mulVec_glsWeight, lem:sum_glsWeight, lem:Kphi_eq,
+    thm:Kphi_posDef, lem:K_posDef, lem:shift}
+  By Theorem~\ref{thm:glsWeight_Kphi},
+  $\cov(\hmu,\mu_j) = \phi\tau^2 + (1-\phi)\tau^2 b_j$ (using $\sum b_i = 1$), and
+  $\cov(\hmu_j,\hmu) = s^2(K_\phi) = s^2(M_\phi) + \phi\tau^2$. The other moments
+  are $\tau^2 = (1-\phi)\tau^2 + \phi\tau^2$ plus terms without $\tau^2$.
+  Then Lemma~\ref{lem:shift}.
+\end{proof}
+
+\begin{theorem}[Eq.\ (26) with a shared level]\label{thm:bestZ_phi_eq}
+  \lean{Credibility.Model.bestZ_φ_eq}
+  \leanok
+  \uses{def:momentsPhi}
+  Under the same hypotheses, with $b$ and $s^2$ from $K_\phi$,
+  \[
+    z_j = \frac{(1-b_j)(1-\phi)\tau^2}{(1-\phi)\tau^2 + \sigma^2_{jj} - (s^2 - \phi\tau^2)}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:momentsPhi, thm:bestZ_eq, thm:glsWeight_Kphi, lem:K_posDef}
+  Theorem~\ref{thm:bestZ_eq} for $M_\phi$, rewritten with
+  Theorem~\ref{thm:glsWeight_Kphi}.
+\end{proof}
+
+\begin{remark}[Reading]\label{rem:hier_reading}
+  \uses{thm:momentsPhi}
+  Credibility only sees the non-shared part $(1-\phi)\tau^2$ of the level
+  variance: the shared component enters $\hmu_j$, $\hmu$ and $\mu_j$ with
+  coefficient $1$ and cancels in the error of every blend. The §2.8 estimators
+  see the same part (Section~\ref{sec:hier_bridge3}), so plugging them in is
+  already right.
+\end{remark}
+
+\section{The estimators see the non-shared part}\label{sec:hier_bridge3}
+
+With a shared level, $\cov(\mu_{it},\mu_{js}) =
+\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij}$.
+The shared part $\phi\tau^2$ is the same for every pair, exactly like the
+unknown mean $\mu^2$ in the second moment, and the §2.8 estimators are built
+to ignore $\mu$. No inverse is involved, so the results hold for every $\phi$,
+including the singular case $\phi = 1$.
+
+\begin{definition}[Expectation with a shared level]\label{def:Ephi}
+  \lean{Credibility.Model.obsCovφ, Credibility.Model.Eφ, Credibility.Model.Unbiasedφ}
+  \leanok
+  \uses{def:unbiased, def:Kphi}
+  As Definition~\ref{def:unbiased}, with $\bar K^{ts}_{ij}$ replaced by
+  $\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + \tau^2(\mathbf 1\mathbf 1^T)^\phi_{ij}$.
+\end{definition}
+
+\begin{corollary}[The §2.8 estimators with a shared level]\label{cor:estimation_phi}
+  \lean{Credibility.Model.sigRhoHat_unbiasedφ, Credibility.Model.tauHat_unbiasedφ,
+    Credibility.Model.KHat_unbiasedφ}
+  \leanok
+  \uses{def:Ephi, def:estimators, def:Kphi}
+  In the setting of Corollary~\ref{cor:estimation} ($T \ge 2$, and $J \ge 2$
+  for the last two), for every $\phi$: $\widehat{\sigma^2_{ij}\rho_{ij}}$ is
+  unbiased for $\sigma^2_{ij}\rho_{ij}$, $\widehat{\tau^2}$ for $(1-\phi)\tau^2$,
+  and $\hat K_{ij}$ for $(K_\phi - \phi\tau^2\mathbf 1\mathbf 1^T)_{ij}$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:estimation_G, lem:EG_const, lem:levelCov_apply}
+  The case of one group in Section~\ref{sec:hier_bridge5}
+  (Theorem~\ref{thm:estimation_G}): then the table is the one here
+  (Lemma~\ref{lem:EG_const}) and $\pi = 1$, so $\tau^2 - \phi\tau^2\pi = (1-\phi)\tau^2$.
+\end{proof}
+
+\begin{remark}[Reading: the plug-in is right, $\phi$ is not identified]\label{rem:hier_bridge3}
+  \uses{cor:estimation_phi, thm:momentsPhi}
+  $\hat K$ estimates $K(M_\phi)$, the thesis $K$ with $(1-\phi)\tau^2$, and by
+  Section~\ref{sec:hier_bridge2} that is all the blend needs: the thesis
+  procedure, applied unchanged, estimates the right weights and $z_j$. The
+  price: the shared part $\phi\tau^2$ is invisible to the data, as $\mu$ is.
+  At $\phi = 1$, $\widehat{\tau^2}$ has expectation $0$. One portfolio cannot
+  tell a shared level from the mean; estimating $\phi$ needs several groups
+  (the hierarchical setting).
+\end{remark}
+
+\section{Several groups, each with its own shared level}\label{sec:hier_bridge4}
+
+Cohorts fall into groups $g = g(j)$. Each group has its own shared level:
+$\cov(\mu_i,\mu_j) = \tau^2$ if $i = j$, $\phi\tau^2$ if $g(i) = g(j)$, and $0$
+across groups, so the level covariance is block diagonal. With
+$\mathbf 1_g$ the indicator of group $g$, it is
+$(1-\phi)\tau^2 I + \phi\tau^2\sum_g \mathbf 1_g\mathbf 1_g^T$: one rank-one term
+per group. These are no longer along $\mathbf 1$, so Section~\ref{sec:hier_bridge2}
+does not apply to the whole portfolio, only block by block. First a Core fact.
+
+\begin{definition}[Blocks]\label{def:block}
+  \lean{Credibility.Core.groupBlock, Credibility.Core.IsBlockDiag}
+  \leanok
+  For $g \colon J \to G$, the block $K_g$ of $K$ is its restriction to the
+  cohorts of group $g$. $K$ is block diagonal if $K_{ij} = 0$ whenever
+  $g(i) \ne g(j)$.
+\end{definition}
+
+\begin{lemma}\label{lem:block_posDef}
+  \lean{Credibility.Core.groupBlock_posDef, Credibility.Core.sum_eq_sum_groupBlock}
+  \leanok
+  \uses{def:block}
+  Blocks of a positive definite matrix are positive definite. A sum over $J$
+  of terms vanishing outside group $g$ is a sum over the group.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A principal submatrix of a positive definite matrix (Mathlib).
+\end{proof}
+
+\begin{theorem}[$K^{-1}\mathbf 1$ for block-diagonal $K$]\label{thm:Kinv_one_blockDiag}
+  \lean{Credibility.Core.Kinv_one_blockDiag, Credibility.Core.invTotal_blockDiag}
+  \leanok
+  \uses{def:block, def:glsWeight}
+  If $K \succ 0$ is block diagonal, then $(K^{-1}\mathbf 1)_j = (K_g^{-1}\mathbf 1)_j$
+  with $g = g(j)$, and $\mathbf 1^TK^{-1}\mathbf 1 = \sum_g \mathbf 1^TK_g^{-1}\mathbf 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:block_posDef, lem:Core_Kinv_one_eq}
+  The vector assembled from the $K_g^{-1}\mathbf 1$ solves $Kx = \mathbf 1$ block by
+  block (Lemma~\ref{lem:Core_Kinv_one_eq}). Then sum over each group.
+\end{proof}
+
+\begin{theorem}[Two-stage GLS]\label{thm:glsWeight_blockDiag}
+  \lean{Credibility.Core.glsWeight_blockDiag}
+  \leanok
+  \uses{thm:Kinv_one_blockDiag, def:invVarWeight}
+  If $K \succ 0$ is block diagonal, then
+  $b_j(K) = b_j(K_g)\cdot w_g$ with $g = g(j)$, where $w$ are the
+  inverse-variance weights (23) of the groups with group variances
+  $s_g^2 = 1/\mathbf 1^TK_g^{-1}\mathbf 1$: GLS within each group, then
+  inverse-variance weighting of the group estimates.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Kinv_one_blockDiag, lem:block_posDef, lem:invTotal_pos}
+  Divide $(K_g^{-1}\mathbf 1)_j$ by $\mathbf 1^TK^{-1}\mathbf 1
+  = \sum_h 1/s_h^2$, and multiply and divide by $1/s_g^2 \neq 0$.
+\end{proof}
+
+\begin{definition}[Group indicators and group weights]\label{def:groupWeight}
+  \lean{Credibility.grpOne, Credibility.groupWeight}
+  \leanok
+  For a grouping $g(\cdot)$, the indicators $\mathbf 1_g$ and the total
+  weight $B_g = \sum_{g(i) = g} b_i$ a weight vector $b$ gives to group $g$.
+  The same sum is the exposure $W_a$ of a cohort of units in
+  Section~\ref{sec:kmeans_bridge}.
+\end{definition}
+
+\begin{lemma}[A group weight sums over the group]\label{lem:groupWeight_eq_filter}
+  \lean{Credibility.groupWeight_eq_filter}
+  \leanok
+  \uses{def:groupWeight}
+  $B_g = \sum_{i \,:\, g(i) = g} b_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Drop the zero terms.
+\end{proof}
+
+\begin{definition}[Group levels]\label{def:KG}
+  \lean{Credibility.Model.sameGroup, Credibility.Model.levelCovG, Credibility.Model.KG}
+  \leanok
+  \uses{def:Kphi, def:groupWeight, def:shrinkOffDiag}
+  The same-group matrix $S_{ij} = [g(i) = g(j)]$, the level covariance
+  $L_G = \tau^2 S^\phi$ (damped as in Definition~\ref{def:shrinkOffDiag}:
+  $\tau^2$ on the diagonal, $\phi\tau^2$ within a group, $0$ across) and
+  $K_G = L_G + \Sigma$. With one group $S = \mathbf 1\mathbf 1^T$, and $L_G$
+  is the $L_\phi$ of Section~\ref{sec:hier_bridge2}.
+\end{definition}
+
+\begin{lemma}[The same-group matrix]\label{lem:sameGroup}
+  \lean{Credibility.Model.sameGroup_const, Credibility.Model.sameGroup_eq_sum,
+    Credibility.Model.sameGroup_posSemidef, Credibility.Model.levelCovG_apply}
+  \leanok
+  \uses{def:KG}
+  $S = \sum_g \mathbf 1_g\mathbf 1_g^T \succeq 0$, and $S = \mathbf 1\mathbf 1^T$
+  with one group. Entrywise, $(L_G)_{ij}$ is $\tau^2$ if $i = j$, $\phi\tau^2$
+  if $i \ne j$ are in the same group, and $0$ otherwise.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\sum_g (\mathbf 1_g)_i(\mathbf 1_g)_j = [g(i) = g(j)]$; a sum of
+  $vv^T \succeq 0$.
+\end{proof}
+
+\begin{lemma}[The level covariance with groups]\label{lem:levelCovG_eq}
+  \lean{Credibility.Model.levelCovG_apply', Credibility.Model.levelCovG_eq_add_sameGroup,
+    Credibility.Model.levelCovG_eq, Credibility.Model.levelCovG_const}
+  \leanok
+  \uses{def:KG}
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S
+  = (1-\phi)\tau^2 I + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$. With one group,
+  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ (Section~\ref{sec:hier_bridge2}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sameGroup}
+  Compare entries with Lemma~\ref{lem:sameGroup}.
+\end{proof}
+
+\begin{lemma}[$K_G$ is a thesis $K$ plus one rank-one term per group]\label{lem:KG_eq}
+  \lean{Credibility.Model.KG_eq_toUnequal, Credibility.Model.KG_eq_add_sameGroup,
+    Credibility.Model.KG_eq}
+  \leanok
+  \uses{def:KG, def:U_KG, lem:levelCovG_eq}
+  $K_G$ is that of Definition~\ref{def:U_KG} with $T_j = T$, and for
+  $T \ge 1$ and $\phi < 1$, $K_G = K(M_\phi) + \phi\tau^2 S
+  = K(M_\phi) + \phi\tau^2\sum_g\mathbf 1_g\mathbf 1_g^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:errCov_posSemidef, lem:U_KG_eq, lem:U_full, lem:sameGroup}
+  The error covariances agree (Lemma~\ref{lem:errCov_posSemidef}); then
+  Lemma~\ref{lem:U_KG_eq} with $T_j = T$ (Lemma~\ref{lem:U_full}).
+\end{proof}
+
+\begin{theorem}[$K_G$ is positive definite]\label{thm:KG_posDef}
+  \lean{Credibility.Model.KG_posDef}
+  \leanok
+  \uses{def:KG}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then $K_G \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_KG_posDef, lem:KG_eq}
+  The case $T_j = T$ of Theorem~\ref{thm:U_KG_posDef} (Lemma~\ref{lem:KG_eq}): every
+  block $R_t$ is all of $(\rho_{ij}) \succeq 0$.
+\end{proof}
+
+\begin{lemma}[Blocks of $K_G$]\label{lem:block_KG}
+  \lean{Credibility.Model.KG_isBlockDiag, Credibility.Model.block_KG}
+  \leanok
+  \uses{def:KG, def:block}
+  If $\rho_{ij} = 0$ whenever $g(i) \ne g(j)$ (errors uncorrelated across
+  groups), $K_G$ is block diagonal. For $T \ge 1$ and $\phi < 1$ its blocks are
+  $K(M_\phi)_g + \phi\tau^2\mathbf 1\mathbf 1^T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCovG_eq, lem:K_apply}
+  Compare entries.
+\end{proof}
+
+\begin{theorem}[Weights and portfolio variance with group levels]\label{thm:glsWeight_KG}
+  \lean{Credibility.Model.glsWeight_KG, Credibility.Model.s2_KG}
+  \leanok
+  \uses{thm:glsWeight_blockDiag, lem:block_KG}
+  Let $T \ge 1$, $(\rho_{ij}) \succeq 0$, $0 \le \phi < 1$, errors uncorrelated
+  across groups, and every group non-empty. With $s'^2_g = s^2(K(M_\phi)_g)$,
+  \[
+    b_j(K_G) = b_j\bigl(K(M_\phi)_g\bigr)\cdot
+      \frac{(s'^2_g + \phi\tau^2)^{-1}}{\sum_h (s'^2_h + \phi\tau^2)^{-1}},
+    \qquad
+    s^2(K_G) = \Bigl(\sum_g (s'^2_g + \phi\tau^2)^{-1}\Bigr)^{-1}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:glsWeight_blockDiag, thm:Kinv_one_blockDiag, lem:block_KG, thm:KG_posDef,
+    lem:K_posDef, lem:block_posDef, thm:glsWeight_add_rankOne}
+  Theorem~\ref{thm:glsWeight_blockDiag}, with Theorem~\ref{thm:glsWeight_add_rankOne}
+  on each block.
+\end{proof}
+
+\begin{definition}[Blend moments with group levels]\label{def:momentsG}
+  \lean{Credibility.Model.momentsG}
+  \leanok
+  \uses{def:KG, def:momentsPhi}
+  As Definition~\ref{def:momentsPhi}, with $K_G$ and $L_G$ in place of
+  $K_\phi$ and $\tau^2(\mathbf 1\mathbf 1^T)^\phi$.
+\end{definition}
+
+\begin{lemma}\label{lem:momentsG_level}
+  \lean{Credibility.Model.momentsG_eq_levelMoments, Credibility.Model.momentsG_eq_toUnequal}
+  \leanok
+  \uses{def:momentsG, def:Core.levelMoments, def:U_KG}
+  The blend moments with group levels are those of
+  Definition~\ref{def:Core.levelMoments} for $K_G$, $L_G$ and
+  $d = \tau^2 + \sigma^2_{jj}$, i.e.\ those of Definition~\ref{def:U_KG} with $T_j = T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:KG_eq, lem:U_full}
+  $(L_G)_{jj} = \tau^2$; then Lemma~\ref{lem:KG_eq} and Lemma~\ref{lem:U_full}.
+\end{proof}
+
+\begin{theorem}[Eq.\ (26) with group levels]\label{thm:bestZ_G_eq}
+  \lean{Credibility.Model.bestZ_G_eq}
+  \leanok
+  \uses{def:momentsG}
+  If $T \ge 1$, $(\rho_{ij}) \succeq 0$ and $0 \le \phi < 1$, then with $b$, $s^2$
+  from $K_G$ and $g = g(j)$,
+  \[
+    z_j = \frac{(1-\phi)\tau^2(1 - b_j) + \phi\tau^2(1 - B_g)}{\tau^2 + \sigma^2_{jj} - s^2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_bestZ_G_eq, lem:momentsG_level, lem:KG_eq, lem:U_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_G_eq} (Lemmas~\ref{lem:momentsG_level},
+  \ref{lem:KG_eq} and~\ref{lem:U_full}).
+\end{proof}
+
+\begin{remark}[Reading: what the between-group variance adds]\label{rem:hier_bridge4}
+  \uses{thm:glsWeight_KG, thm:bestZ_G_eq}
+  Within a group, the shared level drops out as in
+  Section~\ref{sec:hier_bridge2}: the weights are the thesis weights for
+  $(1-\phi)\tau^2$. Across groups it does not. Each group estimate has
+  variance $s'^2_g + \phi\tau^2$, and the groups are weighted by its inverse,
+  i.e.\ in proportion to the group credibility factor
+  $\phi\tau^2/(\phi\tau^2 + s'^2_g)$ (the Bühlmann--Gisler form). A large
+  between-group variance pushes the group weights towards equal, whatever the
+  group sizes, and $s^2$ is a harmonic combination: with $G$ alike groups it
+  is $(s'^2 + \phi\tau^2)/G$, not $s'^2 + \phi\tau^2$. In $z_j$, each level
+  component counts with the weight the portfolio puts outside what it shares
+  with $j$: $1 - b_j$ for the own part, $1 - B_g$ for the group part. With one
+  group ($B_g = 1$) this is Theorem~\ref{thm:bestZ_phi_eq}. With singleton
+  groups ($B_g = b_j$) it is eq.\ (26). Shrinking towards the whole portfolio
+  is now a compromise. The natural next step is to shrink towards the group
+  estimate, which is three-level hierarchical credibility.
+\end{remark}
+
+\section{The estimators with group levels}\label{sec:hier_bridge5}
+
+With group levels, $\cov(\mu_{it},\mu_{js}) =
+\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$. The shared part
+$\phi\tau^2$ is no longer common to all pairs, so it no longer acts like the
+mean. Instead, the change in expectation can be read off from the estimator
+itself, evaluated on noise-free data.
+
+\begin{definition}[Expectation with group levels]\label{def:EG}
+  \lean{Credibility.Model.obsCovG, Credibility.Model.EG, Credibility.Model.UnbiasedG,
+    Credibility.Model.grpData}
+  \leanok
+  \uses{def:unbiased, def:KG}
+  As Definition~\ref{def:unbiased}, with $\bar K^{ts}_{ij}$ replaced by
+  $\sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$. The pattern
+  $\mathbf 1_g$ is the data that are $1$ on every cell of a cohort in group
+  $g$ and $0$ elsewhere.
+\end{definition}
+
+\begin{theorem}[Transfer of unbiasedness to group levels]\label{thm:unbiasedG_of}
+  \lean{Credibility.Model.sum_quad_grpData, Credibility.Model.EG_eq,
+    Credibility.Model.unbiasedG_of, Credibility.Model.obsCovG_symm}
+  \leanok
+  \uses{def:EG, lem:E_congr}
+  If $f$ is unbiased for $\theta$ in the thesis model, then with group levels
+  it is unbiased for
+  \[
+    \theta - \phi\tau^2\Big(\sum_j f(\mathbf 1_{\{j\}}) - \sum_g f(\mathbf 1_g)\Big),
+  \]
+  for every $\phi$. The table is symmetric, so the value is unique
+  (Lemma~\ref{lem:E_congr}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $(L_G)_{ij} = \tau^2\delta_{ij} - \phi\tau^2\delta_{ij} + \phi\tau^2[g(i) = g(j)]$,
+  and $[g(i) = g(j)] = \sum_g \mathbf 1_g(i)\mathbf 1_g(j)$, so the extra
+  terms are $\phi\tau^2$ times the quadratic form at the patterns.
+\end{proof}
+
+\begin{definition}[Share of within-group pairs]\label{def:withinShare}
+  \lean{Credibility.withinShare}
+  \leanok
+  \uses{def:KG}
+  For weights $W_j > 0$, with $W_g$ the total weight of group $g$,
+  \[
+    \pi = \frac{\sum_g W_g^2 - \sum_j W_j^2}{(\sum_j W_j)^2 - \sum_j W_j^2}
+        = \frac{\sum_{i \ne j,\, g(i) = g(j)} W_iW_j}{\sum_{i \ne j} W_iW_j}.
+  \]
+\end{definition}
+
+\begin{lemma}\label{lem:withinShare}
+  \lean{Credibility.groupWeight_id, Credibility.sum_groupWeight,
+    Credibility.sum_groupWeight_sq, Credibility.sq_sum_sub_sum_groupWeight_sq,
+    Credibility.withinShare_eq_pairs, Credibility.sq_sum_sub_sum_sq_pos,
+    Credibility.withinShare_eq_one_iff}
+  \leanok
+  \uses{def:withinShare}
+  The two forms of $\pi$ agree. With $J \ge 2$ the denominator is positive,
+  and $\pi = 1$ if and only if there is one group.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(\sum_j W_j)^2 - \sum_g W_g^2 = \sum_{g(i) \ne g(j)} W_iW_j$, a sum of
+  positive terms over the pairs across groups.
+\end{proof}
+
+\begin{lemma}[One group is a shared level]\label{lem:EG_const}
+  \lean{Credibility.Model.obsCovG_const, Credibility.Model.unbiasedG_iff_unbiasedφ,
+    Credibility.Model.withinShare_const}
+  \leanok
+  \uses{def:EG, def:Ephi, def:withinShare}
+  With one group, the table of Definition~\ref{def:EG} is that of
+  Definition~\ref{def:Ephi}, so unbiasedness with group levels is unbiasedness
+  with a shared level. And $\pi = 1$ for the weights $w_{j*}$ ($J \ge 2$, $T \ge 1$).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCovG_eq, lem:withinShare}
+  $L_G = \tau^2(\mathbf 1\mathbf 1^T)^\phi$ with one group (Lemma~\ref{lem:levelCovG_eq});
+  $\pi = 1$ by Lemma~\ref{lem:withinShare}.
+\end{proof}
+
+\begin{theorem}[The §2.8 estimators with group levels]\label{thm:estimation_G}
+  \lean{Credibility.Model.muHat_grpData, Credibility.Model.sigRhoHat_grpData,
+    Credibility.Model.tauHat_grpData, Credibility.Model.sum_tauHat_grpData,
+    Credibility.Model.sigRhoHat_unbiasedG, Credibility.Model.tauHat_unbiasedG,
+    Credibility.Model.KHat_unbiasedG}
+  \leanok
+  \uses{def:EG, def:estimators, def:withinShare}
+  In the setting of Corollary~\ref{cor:estimation}, with $\pi$ for the
+  weights $w_{j*}$: $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for
+  $\sigma^2_{ij}\rho_{ij}$, $\widehat{\tau^2}$ for $\tau^2 - \phi\tau^2\pi$,
+  and $\hat K_{ij}$ for $\sigma^2_{ij}\rho_{ij} + (\tau^2 - \phi\tau^2\pi)\delta_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedG_of, cor:estimation, lem:withinShare}
+  Theorem~\ref{thm:unbiasedG_of}. On noise-free data $\widehat{\sigma^2\rho} = 0$
+  and $\hmu_j = \mathbf 1_g(j)$, so $\widehat{\tau^2}(\mathbf 1_g) =
+  (W_g - W_g^2/w_{**})/(w_{**} - \sum_j w_{j*}^2/w_{**})$. Summed over the
+  cohorts this is $1$, over the groups $1 - \pi$.
+\end{proof}
+
+\begin{corollary}[$\hat K$ fits the blend only with one group]\label{cor:KHat_G_iff}
+  \lean{Credibility.Model.KHat_unbiasedG_iff}
+  \leanok
+  \uses{thm:estimation_G, def:KG}
+  Let $T \ge 2$, $J \ge 2$, $\phi \ne 0$. Then $\hat K_{ij}$ is unbiased for
+  $(K_G)_{ij} - \phi\tau^2[g(i) = g(j)]$ (the thesis $K$ for $(1-\phi)\tau^2$)
+  for all $i, j$ if and only if there is one group.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:estimation_G, lem:withinShare, lem:levelCovG_eq}
+  On the diagonal the two values differ by $\phi\tau^2(1 - \pi)$.
+\end{proof}
+
+\begin{definition}[Pair estimator]\label{def:pairHat}
+  \lean{Credibility.Model.pairHat}
+  \leanok
+  \uses{def:estimators}
+  $\widehat{P}_{ij} = (\hmu_i - \hmu_j)^2 - \big(\widehat{\sigma^2_{ii}\rho_{ii}}
+  + \widehat{\sigma^2_{jj}\rho_{jj}} - 2\widehat{\sigma^2_{ij}\rho_{ij}}\big)$.
+\end{definition}
+
+\begin{theorem}[Pairs within and across groups]\label{thm:pairHat_G}
+  \lean{Credibility.Model.pairHat_unbiased, Credibility.Model.sum_pairHat_grpData,
+    Credibility.Model.pairHat_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  Let $T \ge 2$ and $i \ne j$. In the thesis model $\widehat P_{ij}$ is unbiased
+  for $2\tau^2$; with group levels, for $2\tau^2 - 2\phi\tau^2[g(i) = g(j)]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:estimation, thm:unbiasedG_of}
+  $\mathbb E(\hmu_i - \hmu_j)^2 = K_{ii} + K_{jj} - 2K_{ij}$. On the patterns,
+  $\sum_g \widehat P_{ij}(\mathbf 1_g) = 2[g(i) \ne g(j)]$.
+\end{proof}
+
+\begin{corollary}[$\phi\tau^2$ is identified]\label{cor:phiTauHat}
+  \lean{Credibility.Model.phiTauHat_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  If $i \ne j$ are in one group and $k$ in another, then
+  $(\widehat P_{ik} - \widehat P_{ij})/2$ is unbiased for $\phi\tau^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_G}
+  Linearity.
+\end{proof}
+
+\begin{corollary}[Pooled pairs, PLAN G4]\label{cor:phiTauPooled}
+  \lean{Credibility.Model.phiTauPooled_unbiasedG}
+  \leanok
+  \uses{def:pairHat, def:EG}
+  Let $a$ be weights on the ordered pairs $i \ne k$ across groups and $b$ on the
+  ordered pairs $i \ne j$ within a group, each summing to one. Then
+  $\bigl(\sum_{\mathrm{across}} a_{ik}\widehat P_{ik} - \sum_{\mathrm{within}} b_{ij}\widehat P_{ij}\bigr)/2$
+  is unbiased for $\phi\tau^2$, for any such weights.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_G}
+  Linearity: the across sum has expectation $2\tau^2$, the within sum $2\tau^2 - 2\phi\tau^2$.
+\end{proof}
+
+\begin{remark}[Finding 13: with groups the plug-in fails, but $\phi$ becomes identifiable]\label{rem:hier_bridge5}
+  \uses{thm:estimation_G, cor:KHat_G_iff, cor:phiTauHat, rem:hier_bridge4}
+  $\widehat{\tau^2}$ averages $\tfrac12(\hmu_i - \hmu_j)^2$ over pairs of
+  cohorts, weighted by $w_{i*}w_{j*}$. A pair within a group shares $\phi\tau^2$,
+  a pair across groups does not, so $\widehat{\tau^2}$ lands between the
+  non-shared part $(1-\phi)\tau^2$ (one group, Section~\ref{sec:hier_bridge3})
+  and the full $\tau^2$ (singleton groups, the thesis), at $\tau^2 - \phi\tau^2\pi$.
+  With several groups, the thesis procedure applied unchanged therefore
+  overstates the within-group level variance, and it has no estimate of the
+  group-level variance $\phi\tau^2$ that the group weights need
+  (Remark~\ref{rem:hier_bridge4}). Splitting the pairs fixes both: pairs within
+  a group estimate $2(1-\phi)\tau^2$, pairs across groups $2\tau^2$, and their
+  difference $2\phi\tau^2$. So $\phi$ is identifiable as soon as some group
+  has two cohorts and there are two groups; as a ratio of two unbiased
+  estimators, $\hat\phi$ itself is not unbiased. Pooling the pairs efficiently
+  (weights per pair, truncation at $0$) is the estimation part of hierarchical
+  credibility and is left open.
+\end{remark}
+
+\section{The moments with group levels are real}\label{sec:hier_moments}
+% Lean: Credibility/HierarchicalMoments.lean
+
+Sections~\ref{sec:hier_bridge4} and~\ref{sec:hier_bridge5} take the level
+covariance $L_G$ as given numbers. Here it is the covariance of actual random
+levels, and the blend is the moment layer of Section~\ref{sec:core_moments}
+for $K_G$ and $L_G$.
+
+\begin{definition}[Moment assumptions with group levels]\label{def:NoiseG}
+  \lean{Credibility.Model.NoiseG,
+        Credibility.Model.NoiseG.common, Credibility.Model.NoiseG.trueMean,
+        Credibility.Model.NoiseG.obs, Credibility.Model.NoiseG.cohortEst,
+        Credibility.Model.NoiseG.portEst, Credibility.Model.NoiseG.blend}
+  \leanok
+  \uses{def:Noise, def:KG}
+  Let $\phi < 1$. On a probability space: $\eta_j$, $\varepsilon_{jt}$ as in
+  Definition~\ref{def:Noise}, and group effects $\gamma_g$, square integrable,
+  centred, of unit variance, uncorrelated with each other and with all
+  $\eta_j$, $\varepsilon_{jt}$. No distribution is assumed. With $g = g(j)$,
+  \[
+    \mu_j = \mu + \sqrt{(1-\phi)\tau^2}\,\eta_j + \sqrt{\phi\tau^2}\,\gamma_g,
+    \qquad \mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt},
+  \]
+  $\hmu_j = \sum_t a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$ with the GLS
+  weights of $K_G$. Write $R = \phi\tau^2 S$ (Definition~\ref{def:KG}) for the
+  covariance of the group components $\sqrt{\phi\tau^2}\gamma_{g(j)}$.
+\end{definition}
+
+\begin{lemma}[Back to unequal lengths]\label{lem:G_toUnequal}
+  \lean{Credibility.Model.NoiseG.toUnequal, Credibility.Model.NoiseG.ofUnequal,
+        Credibility.Model.NoiseG.toUnequal_trueMean, Credibility.Model.NoiseG.toUnequal_obsVal,
+        Credibility.Model.NoiseG.toUnequal_cohortEst, Credibility.Model.NoiseG.toUnequal_portEst,
+        Credibility.Model.NoiseG.toUnequal_blend}
+  \leanok
+  \uses{def:NoiseG, def:U_NoiseG, lem:moments_full}
+  If $T \ne \emptyset$, random variables as in Definition~\ref{def:NoiseG} are
+  those of Definition~\ref{def:U_NoiseG} with $T_j = T$, and conversely; the
+  levels, observations, cohort and portfolio estimates and the blend are the
+  same.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_full, lem:KG_eq}
+  Lemma~\ref{lem:moments_full} for $\eta$, $\varepsilon$; the weights $a_{jt}$
+  (Lemma~\ref{lem:U_full}) and $K_G$ (Lemma~\ref{lem:KG_eq}) agree.
+\end{proof}
+
+\begin{theorem}[The covariances with group levels are the actual ones]\label{thm:G_cov_obs}
+  \lean{Credibility.Model.NoiseG.memLp_obs, Credibility.Model.NoiseG.obs_mean,
+        Credibility.Model.NoiseG.cov_obs, Credibility.Model.NoiseG.cov_cohortEst,
+        Credibility.Model.NoiseG.cov_trueMean}
+  \leanok
+  \uses{def:NoiseG, def:EG, def:KG}
+  $\mathbb E\mu_{jt} = \mu$, and for $0 \le \phi < 1$:
+  $\cov(\mu_{it},\mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$
+  (the table of Definition~\ref{def:EG}), $\cov(\mu_i,\mu_j) = (L_G)_{ij}$ and,
+  if $T \ne \emptyset$, $\cov(\hmu_i,\hmu_j) = (K_G)_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_G_cov_obs, lem:G_toUnequal, lem:KG_eq}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_cov_obs}
+  (Lemma~\ref{lem:G_toUnequal}).
+\end{proof}
+
+\begin{theorem}[The expectation with group levels is the actual one]\label{thm:G_integral_quad}
+  \lean{Credibility.Model.NoiseG.integral_quad}
+  \leanok
+  \uses{def:NoiseG, def:EG}
+  For $0 \le \phi < 1$ and any quadratic form of the data,
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr]$ is the expectation of
+  Definition~\ref{def:EG}. So ``unbiased with group levels''
+  (Theorem~\ref{thm:estimation_G}, Corollary~\ref{cor:phiTauHat}) means
+  unbiased for any random variables with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_G_cov_obs, lem:G_toUnequal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_cov_obs}: every cell is observed.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with group levels]\label{thm:G_bestZ_mse}
+  \lean{Credibility.Model.NoiseG.moments_eq, Credibility.Model.NoiseG.mse_blend,
+        Credibility.Model.NoiseG.bestZ_mse_optimal}
+  \leanok
+  \uses{def:NoiseG, def:momentsG, thm:bestZ_G_eq, thm:bestZ_optimal}
+  Let $0 \le \phi < 1$, $T \ne \emptyset$ and $K_G \succ 0$
+  (Theorem~\ref{thm:KG_posDef}). Each field of
+  Definition~\ref{def:momentsG} is the moment it names, the blend is unbiased,
+  its mean squared error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the
+  factor $z_j$ of Theorem~\ref{thm:bestZ_G_eq} minimises it over $z$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_G_bestZ_mse, lem:G_toUnequal, lem:KG_eq, lem:momentsG_level, thm:bestZ_optimal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_bestZ_mse} (Lemmas~\ref{lem:G_toUnequal},
+  \ref{lem:KG_eq} and~\ref{lem:momentsG_level}).
+\end{proof}
+
+\begin{theorem}[The group-level assumptions are consistent iff $\rho \succeq 0$]\label{thm:G_exists_noise}
+  \lean{Credibility.Model.exists_noiseG_iff}
+  \leanok
+  \uses{def:NoiseG, thm:exists_noise}
+  Let $\phi < 1$ and $T \ne \emptyset$. Random variables $\eta$, $\varepsilon$,
+  $\gamma$ as in Definition~\ref{def:NoiseG} exist on some probability space if
+  and only if $\rho$ is positive semidefinite: the group effects add no
+  constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_G_exists_noise, lem:G_toUnequal}
+  The case $T_j = T$ of Theorem~\ref{thm:U_G_exists_noise}
+  (Lemma~\ref{lem:G_toUnequal}): every block $R_t$ is all of $\rho$.
+\end{proof}
+
+\subsection*{Group levels with unequal lengths}
+% Lean: Credibility/Hierarchical.lean (namespace Unequal), Credibility/HierarchicalMoments.lean (start)
+
+Group levels combine with cohort-dependent lengths (Chapter~\ref{ch:unequal}):
+only the error covariance $\Sigma$ changes (shared periods only), so $K_G$
+stays positive definite under the block condition, and the moment layer is
+that of Definition~\ref{def:U_Noise} plus the group component.
+
+\begin{definition}[Group levels with unequal lengths]\label{def:U_KG}
+  \lean{Credibility.Unequal.withLevel, Credibility.Unequal.KG, Credibility.Unequal.momentsG}
+  \leanok
+  \uses{def:KG, def:U_errCov, def:Core.levelMoments}
+  For the model of Definition~\ref{def:Unequal}: $M_\phi$ with level variance
+  $(1-\phi)\tau^2$, $K_G = L_G + \Sigma$ with $\Sigma$ of
+  Definition~\ref{def:U_errCov}, and the blend moments of
+  Definition~\ref{def:Core.levelMoments} for $K_G$, $L_G$ and
+  $d = \tau^2 + \sigma^2_{jj}$.
+\end{definition}
+
+\begin{lemma}\label{lem:U_KG_eq}
+  \lean{Credibility.Unequal.KG_eq_add_sameGroup, Credibility.Unequal.momentsG_eq_levelMoments'}
+  \leanok
+  \uses{def:U_KG}
+  For $\phi < 1$, $K_G = K(M_\phi) + \phi\tau^2 S$, and $d = (K_G)_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCovG_eq, lem:U_K_eq_errCov}
+  $L_G = (1-\phi)\tau^2 I + \phi\tau^2 S$ (Lemma~\ref{lem:levelCovG_eq}) and
+  $K(M_\phi) = \Sigma + (1-\phi)\tau^2 I$ (Lemma~\ref{lem:U_K_eq_errCov}).
+\end{proof}
+
+\begin{theorem}[$K_G$ is positive definite with unequal lengths]\label{thm:U_KG_posDef}
+  \lean{Credibility.Unequal.KG_posDef}
+  \leanok
+  \uses{def:U_KG}
+  If every block $R_t$ is positive semidefinite and $0 \le \phi < 1$, then
+  $K_G \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:shrinkOffDiag_posDef, lem:sameGroup, lem:U_errCov_posSemidef}
+  $S \succeq 0$ has unit diagonal, so $S^\phi \succ 0$ by
+  Theorem~\ref{thm:shrinkOffDiag_posDef}, and $\Sigma \succeq 0$ by
+  Lemma~\ref{lem:U_errCov_posSemidef}.
+\end{proof}
+
+\begin{lemma}[$K_G$ as a mixed-model covariance]\label{lem:U_KG_mixed}
+  \lean{Credibility.Unequal.KG_eq_mixed, Credibility.Unequal.grpDesign,
+        Credibility.Unequal.sameGroup_eq_grpDesign}
+  \leanok
+  \uses{def:U_KG}
+  With $Z$ the $J \times G$ group design, $Z_{jg} = [g(j) = g]$, $S = ZZ^T$, and for $\phi < 1$,
+  $K_G = Z(\phi\tau^2 I)Z^T + K(M_\phi)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_KG_eq}
+  Lemma~\ref{lem:U_KG_eq} and $S = ZZ^T$.
+\end{proof}
+
+\begin{theorem}[Small form of $K_G^{-1}$]\label{thm:U_KG_inv_eq}
+  \lean{Credibility.Unequal.KG_inv_eq}
+  \leanok
+  \uses{lem:U_KG_mixed, thm:inv_mul_mul_transpose_add}
+  Let $Z$ be the group design and $A = K(M_\phi)$ (Lemma~\ref{lem:U_KG_mixed}). If every block $R_t$ is positive semidefinite and $0 < \phi < 1$, then
+  \[
+    K_G^{-1} = A^{-1} - A^{-1}Z\bigl(Z^TA^{-1}Z + (\phi\tau^2)^{-1}I\bigr)^{-1}Z^TA^{-1}.
+  \]
+  Besides $A^{-1}$ (diagonal when errors are uncorrelated) only a matrix of the size of the
+  number of groups is inverted, and errors may be correlated across groups.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_KG_mixed, thm:U_K_posDef, thm:inv_mul_mul_transpose_add}
+  $K_G = A + Z(\phi\tau^2 I)Z^T$ (Lemma~\ref{lem:U_KG_eq}), $A \succ 0$
+  (Theorem~\ref{thm:U_K_posDef}), then Theorem~\ref{thm:inv_mul_mul_transpose_add}.
+\end{proof}
+
+\begin{theorem}[Hierarchical credibility by Henderson's equations]\label{thm:U_groupEffect_blup}
+  \lean{Credibility.Unequal.groupEffect_eq_blup, Credibility.Unequal.groupMean_eq_gls,
+        Credibility.Unequal.onesCol, Credibility.Unequal.onesCol_injective}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, lem:U_KG_mixed}
+  Under the hypotheses of Theorem~\ref{thm:U_KG_inv_eq}, let $(\hat m, \hat b)$ solve the
+  mixed-model equations for the cohort estimates $x$ with $X = \mathbf 1$, the group design
+  $Z$, $G = \phi\tau^2 I$ and $R = A$. Then $\hat b_g$ is the best linear unbiased predictor
+  of the group effect, with $K = K_G$ and $\cov(x, b_g) = \phi\tau^2\mathbf 1_g$, and
+  $\hat m = \sum_j b_j x_j$ with the GLS weights of $K_G$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, thm:hendersonMME, lem:U_KG_mixed, thm:U_K_posDef,
+        thm:U_KG_posDef, lem:mme_dot}
+  $K_G = Z(\phi\tau^2 I)Z^T + A$ (Lemma~\ref{lem:U_KG_mixed}) and $Z\phi\tau^2 e_g = \phi\tau^2\mathbf 1_g$,
+  so Theorem~\ref{thm:hendersonMME_eq_blup} applies. The fixed-effect row of
+  Theorem~\ref{thm:hendersonMME} is $(\mathbf 1^TK_G^{-1}\mathbf 1)\hat m = \mathbf 1^TK_G^{-1}x$.
+\end{proof}
+
+\begin{theorem}[Eq.\ (26) with group levels and unequal lengths]\label{thm:U_bestZ_G_eq}
+  \lean{Credibility.Unequal.bestZ_G_eq}
+  \leanok
+  \uses{def:U_KG}
+  Under the hypotheses of Theorem~\ref{thm:U_KG_posDef}, the formula of
+  Theorem~\ref{thm:bestZ_G_eq} holds with $b$, $s^2$ from this $K_G$ and
+  $\sigma^2_{jj}$ over $T_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_KG_posDef, lem:levelCovG_eq, thm:Core_levelMoments_bestZ_eq}
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} with
+  $\cov(\hmu,\mu_j) = (L_Gb)_j = (1-\phi)\tau^2 b_j + \phi\tau^2 B_g$
+  (Lemma~\ref{lem:levelCovG_eq}).
+\end{proof}
+
+\begin{definition}[Moment assumptions with group levels on observed cells]\label{def:U_NoiseG}
+  \lean{Credibility.Unequal.NoiseG,
+        Credibility.Unequal.NoiseG.common, Credibility.Unequal.NoiseG.trueMean,
+        Credibility.Unequal.NoiseG.obsVal, Credibility.Unequal.NoiseG.cohortEst,
+        Credibility.Unequal.NoiseG.portEst, Credibility.Unequal.NoiseG.blend}
+  \leanok
+  \uses{def:U_Noise, def:NoiseG, def:U_KG}
+  As Definition~\ref{def:NoiseG}, with $\eta$, $\varepsilon$ as in
+  Definition~\ref{def:U_Noise} for level variance $(1-\phi)\tau^2$ (noise only
+  on observed cells), $\gamma_g$ uncorrelated with the observed
+  $\varepsilon_{jt}$, $\hmu_j = \sum_{t\in T_j} a_{jt}\mu_{jt}$, and GLS weights
+  of $K_G$ (Definition~\ref{def:U_KG}).
+\end{definition}
+
+\begin{lemma}[The group effect is a common component]\label{lem:U_G_moments_lin}
+  \lean{Credibility.Unequal.NoiseG.common_eq,
+        Credibility.Unequal.NoiseG.cohortEst_eq, Credibility.Unequal.NoiseG.memLp_common,
+        Credibility.Unequal.NoiseG.integral_common, Credibility.Unequal.NoiseG.cov_common,
+        Credibility.Unequal.NoiseG.cov_γ_trueMean, Credibility.Unequal.NoiseG.cov_γ_obsVal,
+        Credibility.Unequal.NoiseG.cov_γ_cohortEst,
+        Credibility.Unequal.NoiseG.cov_common_trueMean,
+        Credibility.Unequal.NoiseG.cov_common_obsVal,
+        Credibility.Unequal.NoiseG.cov_common_cohortEst,
+        Credibility.Unequal.NoiseG.memLp_obsVal,
+        Credibility.Unequal.NoiseG.addCommon, Credibility.Unequal.NoiseG.toEstimates}
+  \leanok
+  \uses{def:U_NoiseG, def:Core_Estimates, lem:Core_addCommon, lem:levelCovG_eq, lem:U_KG_eq}
+  Let $0 \le \phi < 1$. Since $\sum_{t\in T_j} a_{jt} = 1$, $\hmu_j$ and $\mu_j$
+  are those of Definition~\ref{def:U_Noise} for $(1-\phi)\tau^2$ plus
+  $\sqrt{\phi\tau^2}\gamma_{g(j)}$, so they are estimates and levels in the
+  sense of Definition~\ref{def:Core_Estimates} for $K_G$ and $L_G$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_moments_lin, lem:Core_common}
+  Lemma~\ref{lem:Core_addCommon} applied to Lemma~\ref{lem:U_moments_lin} for
+  level variance $(1-\phi)\tau^2$ and $C_j = \sqrt{\phi\tau^2}\gamma_{g(j)}$;
+  $\phi \ge 0$ gives $\cov(C_i,C_j) = R_{ij}$, and $K_G = K(M_\phi) + R$,
+  $L_G = (1-\phi)\tau^2 I + R$ (Lemmas~\ref{lem:U_KG_eq}
+  and~\ref{lem:levelCovG_eq}).
+\end{proof}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:U_G_cov_obs}
+  \lean{Credibility.Unequal.NoiseG.obsVal_mean, Credibility.Unequal.NoiseG.cov_obsVal,
+        Credibility.Unequal.NoiseG.cov_cohortEst, Credibility.Unequal.NoiseG.cov_trueMean,
+        Credibility.Unequal.NoiseG.integral_quad}
+  \leanok
+  \uses{def:U_NoiseG, def:EG, def:U_KG}
+  For $0 \le \phi < 1$ and observed cells $t\in T_i$, $s\in T_j$:
+  $\mathbb E\mu_{jt} = \mu$,
+  $\cov(\mu_{it},\mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}\delta_{ts} + (L_G)_{ij}$,
+  $\cov(\mu_i,\mu_j) = (L_G)_{ij}$ and $\cov(\hmu_i,\hmu_j) = (K_G)_{ij}$. A
+  quadratic form reading only observed cells has the expectation of
+  Definition~\ref{def:EG}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin, thm:U_cov_obs, thm:integral_quad_cov}
+  Bilinearity on top of Theorem~\ref{thm:U_cov_obs} for $(1-\phi)\tau^2$; the
+  covariances of $\hmu$ and $\mu$ are part of Lemma~\ref{lem:U_G_moments_lin};
+  the quadratic form by Theorem~\ref{thm:integral_quad_cov} with $S$ the
+  observed cells.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with group levels and unequal lengths]\label{thm:U_G_bestZ_mse}
+  \lean{Credibility.Unequal.NoiseG.moments_eq, Credibility.Unequal.NoiseG.mse_blend,
+        Credibility.Unequal.NoiseG.bestZ_mse_optimal}
+  \leanok
+  \uses{def:U_NoiseG, def:U_KG, thm:U_bestZ_G_eq}
+  If $0 \le \phi < 1$ and $K_G \succ 0$ (Theorem~\ref{thm:U_KG_posDef}), each
+  blend moment is the moment it names, the mean squared error is \eqth{6}, and
+  if $\Var(\hmu_j - \hmu) > 0$ the factor of Theorem~\ref{thm:U_bestZ_G_eq}
+  minimises it, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin, lem:U_KG_eq, thm:Core_bestZ_mse, thm:bestZ_optimal}
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
+  Lemma~\ref{lem:U_G_moments_lin}.
+\end{proof}
+
+\begin{lemma}[The group effects as a target]\label{lem:U_G_groupTarget}
+  \lean{Credibility.Unequal.NoiseG.groupEffect, Credibility.Unequal.NoiseG.memLp_groupEffect,
+        Credibility.Unequal.NoiseG.cov_cohortEst_groupEffect,
+        Credibility.Unequal.NoiseG.variance_groupEffect,
+        Credibility.Unequal.NoiseG.toGroupTarget}
+  \leanok
+  \uses{def:U_NoiseG, def:Blup_Target}
+  Let $0 \le \phi < 1$ and $b_g = \sqrt{\phi\tau^2}\gamma_g$. Then $\cov(\hmu_j, b_g) =
+  \phi\tau^2[g(j) = g]$ and $\Var b_g = \phi\tau^2$, so the cohort estimates and $b_g$ are data
+  and target as in Definition~\ref{def:Blup_Target} with $X = \mathbf 1$, $\beta = \mu$,
+  $x_0 = 0$, $K = K_G$, $\ell = \phi\tau^2\mathbf 1_g$, $v = \phi\tau^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_moments_lin}
+  $\hmu_j$ is the estimate for $(1-\phi)\tau^2$, uncorrelated with every $\gamma$, plus
+  $\sqrt{\phi\tau^2}\gamma_{g(j)}$ (Lemma~\ref{lem:U_G_moments_lin}); the $\gamma_g$ are
+  uncorrelated with unit variance. Means and $K_G$ as in Theorem~\ref{thm:U_G_cov_obs}.
+\end{proof}
+
+\begin{theorem}[Henderson's equations predict the group effects best, in true MSE]\label{thm:U_G_groupEffect_mse}
+  \lean{Credibility.Unequal.NoiseG.groupEffect_mse_optimal,
+        Credibility.Unequal.NoiseG.mse_groupEffect_blup,
+        Credibility.Unequal.NoiseG.mme_groupEffect_mse_optimal}
+  \leanok
+  \uses{lem:U_G_groupTarget, thm:U_groupEffect_blup}
+  If $K_G \succ 0$, the best linear unbiased predictor of $b_g$ (weights $d$ with
+  $\sum_j d_j = 0$) for $K_G$ and $\ell = \phi\tau^2\mathbf 1_g$ has the smallest actual mean
+  squared error, equal to $\phi\tau^2 - \ell^TK_G^{-1}\ell + (\mathbf 1^TK_G^{-1}\ell)^2 /
+  \mathbf 1^TK_G^{-1}\mathbf 1$. With every block $R_t$ positive semidefinite and $0 < \phi$, the
+  $\hat b_g$ of the mixed-model equations of Theorem~\ref{thm:U_groupEffect_blup}, solved for
+  each draw, has this error: for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_G_groupTarget, thm:Blup_mse_true, thm:U_groupEffect_blup, thm:U_KG_posDef}
+  Theorem~\ref{thm:Blup_mse_true} for the target of Lemma~\ref{lem:U_G_groupTarget}; by
+  Theorem~\ref{thm:U_groupEffect_blup} the mixed-model solution is that predictor in every draw
+  ($K_G \succ 0$ by Theorem~\ref{thm:U_KG_posDef}).
+\end{proof}
+
+\begin{theorem}[Consistent iff every block is PSD, with group levels]\label{thm:U_G_exists_noise}
+  \lean{Credibility.Unequal.exists_noiseG_iff, Credibility.Unequal.Noise.comp}
+  \leanok
+  \uses{def:U_NoiseG, thm:U_exists_noise}
+  Let $\phi < 1$. Random variables as in Definition~\ref{def:U_NoiseG} exist on
+  some probability space iff every block $R_t$ is positive semidefinite: as
+  without unequal lengths, group effects add no constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_exists_noise}
+  Necessity: forgetting $\gamma$ leaves random variables as in
+  Definition~\ref{def:U_Noise} for level variance $(1-\phi)\tau^2$, whose
+  blocks are those of $M$; apply Theorem~\ref{thm:U_exists_noise}. Sufficiency: take such
+  $\eta$, $\varepsilon$ on $\Omega_0$ (Theorem~\ref{thm:U_exists_noise}) and
+  independent standard normal $\gamma_g$, one per group, on $\mathbb{R}^G$
+  (an infinite product measure if there are infinitely many groups). On
+  $\Omega_0 \times \mathbb{R}^G$ with the product measure, $\gamma$ is
+  uncorrelated with $\eta$ and $\varepsilon$ by independence of the factors,
+  and the $\gamma_g$ with each other. As before, the Gaussians are only a
+  witness.
+\end{proof}

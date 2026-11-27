@@ -202,9 +202,9 @@ def proof_lines(row) -> int:
 
 def blueprint_statements():
     """(kind, label, title, \\lean names, proof \\uses, proved) per blueprint environment."""
-    from blueprint_check import CONTENT, ENV, PROOF  # lazy: blueprint_check imports this file
+    from blueprint_check import ENV, PROOF, read_content  # lazy: blueprint_check imports this file
 
-    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    text = read_content()
     out = []
     for m in ENV.finditer(text):
         kind, body = m.group(1), m.group(2)

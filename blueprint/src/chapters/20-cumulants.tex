@@ -1,0 +1,1037 @@
+\chapter{Extension: moments up to order four}\label{ch:cumulants}
+
+The second-moment core gives the expectation of every quadratic estimator. Its variance
+needs moments up to order four. They enter as given tables, like the covariance: the third
+cumulant $\kappa_3$ (third central moment) and the fourth cumulant $\kappa_4$ (fourth central
+moment minus its three Gaussian pairings). No distribution is assumed; $\kappa_3 = \kappa_4 = 0$
+is the Gaussian case. Plan: \texttt{notes/fourth-moments.md}.
+
+\begin{definition}[Variance of a quadratic form]\label{def:varQuad}
+  \lean{Credibility.Cumulants.varQuad}
+  \leanok
+  For a matrix $A$, a covariance $C$, a mean $m$ and tables $\kappa_3$, $\kappa_4$,
+  \[ V(A) = 2\operatorname{tr}(ACAC) + 4\,(Am)^\top C (Am)
+     + 4\sum_{ijk} A_{ij}(Am)_k\,\kappa_{3,ijk} + \sum_{ijkl} A_{ij}A_{kl}\,\kappa_{4,ijkl}. \]
+\end{definition}
+
+\begin{lemma}[Integrability of products]\label{lem:cumulants_integrable}
+  \lean{Credibility.Cumulants.abs_mul4_le, Credibility.Cumulants.integrable_pow4,
+        Credibility.Cumulants.integrable_mul4, Credibility.Cumulants.integrable_mul3,
+        Credibility.Cumulants.integrable_mul2, Credibility.Cumulants.sum_mul_sum_eq,
+        Credibility.Cumulants.integrable_sum_mul_sum, Credibility.Cumulants.integral_sum_mul_sum,
+        Credibility.Cumulants.holder442}
+  \leanok
+  $4|abcd| \le a^4 + b^4 + c^4 + d^4$, so products of up to four $L^4$ functions are integrable on
+  a probability space, and the integral of a product of two finite linear combinations is the
+  double sum of the integrals of the products.
+\end{lemma}
+\begin{proof}
+  \leanok
+  AM--GM twice; then dominated by an integrable function, and linearity.
+\end{proof}
+
+\begin{theorem}[The variance of a quadratic estimator]\label{thm:variance_quad_of_cumulants}
+  \lean{Credibility.Cumulants.variance_quad_of_cumulants}
+  \leanok
+  \uses{def:varQuad}
+  Let $Z_i$ be random variables in $L^4$ with means $m_i$, covariances $C_{ij}$,
+  $\mathbb E[e_ie_je_k] = \kappa_{3,ijk}$ and
+  $\mathbb E[e_ie_je_ke_l] = \kappa_{4,ijkl} + C_{ij}C_{kl} + C_{ik}C_{jl} + C_{il}C_{jk}$,
+  where $e_i = Z_i - m_i$, and let $A$ be symmetric. Then
+  $\operatorname{Var}(\sum_{ij} A_{ij}Z_iZ_j) = V(A)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:varQuad, lem:cumulants_integrable}
+  $Z^\top AZ - \mathbb E = U + W$ with $U = \sum A_{ij}(e_ie_j - C_{ij})$ and
+  $W = 2(Am)^\top e$. Then $\mathbb E U^2$ is a fourth moment minus $\sum A_{ij}A_{kl}C_{ij}C_{kl}$,
+  $\mathbb E UW$ a third moment and $\mathbb E W^2 = 4(Am)^\top C(Am)$; the two remaining pairings
+  give $2\operatorname{tr}(ACAC)$ by the symmetry of $A$ and $C$. Products of four $L^4$ functions are
+  integrable by $4|abcd| \le a^4 + b^4 + c^4 + d^4$.
+\end{proof}
+
+\begin{lemma}[Reordering sums]\label{lem:cumulants_sums}
+  \lean{Credibility.Cumulants.sum_comm_last3, Credibility.Cumulants.sum_comm_last4,
+        Credibility.Cumulants.diag_transpose_mul_mul}
+  \leanok
+  A finite sum can be moved from the inside to the outside, and
+  $(B^\top AB)_{ss} = \sum_{ij} B_{is}A_{ij}B_{js}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange two finite sums at a time.
+\end{proof}
+
+\begin{theorem}[Independent sources]\label{thm:varQuad_sources}
+  \lean{Credibility.Cumulants.varQuad_sources}
+  \leanok
+  \uses{def:varQuad}
+  If the cumulant tables are $\kappa_{3,ijk} = \sum_s c_{3,s}B_{is}B_{js}B_{ks}$ and
+  $\kappa_{4,ijkl} = \sum_s c_{4,s}B_{is}B_{js}B_{ks}B_{ls}$ (cells $m + B\xi$ with independent
+  sources $\xi_s$ of cumulants $c_{3,s}$, $c_{4,s}$), then with $M = B^\top AB$ and $a = B^\top Am$
+  \[ V(A) = 2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am) + 4\sum_s c_{3,s}M_{ss}a_s + \sum_s c_{4,s}M_{ss}^2. \]
+  A source drops out of the non-Gaussian part when $M_{ss} = 0$, i.e.\ when the estimator cancels
+  its loading.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:varQuad, lem:cumulants_sums}
+  Insert the tables, move the sum over sources to the front, and factor.
+\end{proof}
+
+\section{Third moments}
+
+\begin{lemma}[Integrability with three moments]\label{lem:cumulants_integrable3}
+  \lean{Credibility.Cumulants.abs_mul3_le, Credibility.Cumulants.integrable_abs_pow3,
+        Credibility.Cumulants.integrable_mul3_of_L3, Credibility.Cumulants.integrable_mul2_of_L3}
+  \leanok
+  $3|abc| \le |a|^3 + |b|^3 + |c|^3$, so products of up to three $L^3$ functions are integrable
+  on a probability space.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $x^3 + y^3 + z^3 - 3xyz = \tfrac12(x+y+z)\bigl((x-y)^2 + (y-z)^2 + (z-x)^2\bigr)$.
+\end{proof}
+
+\begin{definition}[Cubic and mixed moments]\label{def:eCubic}
+  \lean{Credibility.Cumulants.eCubic, Credibility.Cumulants.covQuadLin}
+  \leanok
+  $E_3(T) = \sum_{ijk} T_{ijk}(\kappa_{3,ijk} + m_iC_{jk} + m_jC_{ik} + m_kC_{ij} + m_im_jm_k)$ and
+  $V_{2,1}(A, b) = 2(Am)^\top Cb + \sum_{ijk} A_{ij}b_k\kappa_{3,ijk}$.
+\end{definition}
+
+\begin{theorem}[Expectation of a cubic estimator]\label{thm:integral_cubic_of_cumulants}
+  \lean{Credibility.Cumulants.integral_cubic_of_cumulants}
+  \leanok
+  \uses{def:eCubic}
+  For random cells in $L^3$ with means $m$, covariances $C$ and third central moments
+  $\kappa_3$, $\mathbb E\sum_{ijk}T_{ijk}Z_iZ_jZ_k = E_3(T)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable3}
+  Write $Z_i = e_i + m_i$, expand each product into eight terms and use $\mathbb E e_i = 0$.
+\end{proof}
+
+\begin{theorem}[Covariance of a quadratic and a linear estimator]\label{thm:covariance_quad_lin_of_cumulants}
+  \lean{Credibility.Cumulants.covariance_quad_lin_of_cumulants}
+  \leanok
+  \uses{def:eCubic}
+  For random cells in $L^3$ with means $m$, covariances $C$, third central moments $\kappa_3$ and a
+  symmetric $A$, $\operatorname{cov}(\sum A_{ij}Z_iZ_j, \sum b_kZ_k) = V_{2,1}(A, b)$. With
+  symmetric cells ($\kappa_3 = 0$) only the Gaussian term remains.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:eCubic, lem:cumulants_integrable, lem:cumulants_integrable3}
+  As for the variance: $Z^\top AZ - \mathbb E = U + W$ and $b^\top Z - \mathbb E = b^\top e$; then
+  $\mathbb E[Ub^\top e]$ is a third moment and $\mathbb E[Wb^\top e] = 2(Am)^\top Cb$.
+\end{proof}
+
+\begin{theorem}[Third moment of residuals]\label{thm:integral_cubic_residuals}
+  \lean{Credibility.Cumulants.integral_cubic_residuals}
+  \leanok
+  Let $X_t = L + e_t$ with any common level $L$ and centred noise in $L^3$ whose third moments
+  vanish off the diagonal (e.g.\ independent over years), $\mathbb E e_t^3 = k_t$. For weights
+  $\sum a_t = 1$, residuals $r_t = X_t - \sum_s a_sX_s$ and any $c_t$,
+  $\mathbb E\sum_t c_tr_t^3 = \sum_t c_t\sum_s(\delta_{ts} - a_s)^3k_s$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_cubic_of_cumulants}
+  The level cancels: $r_t = \sum_s(\delta_{ts} - a_s)e_s$, so $\sum c_tr_t^3$ is a cubic form in the
+  centred noise. Theorem~\ref{thm:integral_cubic_of_cumulants} with mean $0$ and a diagonal table.
+\end{proof}
+
+\begin{theorem}[The app's third-cumulant estimate is unbiased]\label{thm:kappaHat_unbiased}
+  \lean{Credibility.Cumulants.kappaHat_unbiased}
+  \leanok
+  In one region with volumes $w_t > 0$, third cumulant $\kappa/w_t^q$ of the noise,
+  $a_t = w_t/\sum w$, the estimate
+  $\hat\kappa = \sum_t w_t^qr_t^3 / \sum_t w_t^q\sum_s(\delta_{ts} - a_s)^3w_s^{-q}$
+  (\texttt{noiseDiagnostics} in the app) has $\mathbb E\hat\kappa = \kappa$ whenever the denominator is not $0$.
+  No distribution is assumed, and nothing about the level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_cubic_residuals}
+  Theorem~\ref{thm:integral_cubic_residuals} with $c_t = w_t^q$, $k_t = \kappa/w_t^q$.
+\end{proof}
+
+\begin{theorem}[Fitted variance and fitted mean under skew]\label{thm:covariance_resVar_mean}
+  \lean{Credibility.Cumulants.covariance_resVar_mean}
+  \leanok
+  Cells $X_t = L + e_t$ with any level $L\in L^3$ and centred noise in $L^3$ whose third moments
+  vanish off the diagonal, $\mathbb Ee_t^3 = k_t$, and whose squares are uncorrelated with the level.
+  For $\sum a_t = 1$, $\hat\mu = \sum_sa_sX_s$, $r_t = X_t - \hat\mu$ and any $c_t$,
+  $\operatorname{cov}(\sum_tc_tr_t^2, \hat\mu) = \sum_sa_sk_s\sum_tc_t(\delta_{ts} - a_s)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The level cancels in the residuals, and its part of $\hat\mu - \mathbb E\hat\mu$ meets only
+  products $e_te_u$; the noise part gives third moments, diagonal by assumption.
+\end{proof}
+\begin{remark}[Finding 35 (c)]
+  This is the ingredient of the skew channel: under right skew a cohort's fitted variance rises
+  with its fitted mean, so weights $\propto 1/\hat\sigma^2$ covary negatively with the estimates
+  and the fit under-prices (Finding 35 (a), Theorem~\ref{thm:Core_randomLin_bias}; first order
+  through $\partial d_i/\partial\hat\sigma_k^2$).
+\end{remark}
+
+\begin{corollary}[The bias of variance-driven weights]\label{cor:randomLin_resVar_bias}
+  \lean{Credibility.Core.Estimates.integral_randomLin_affine_sub,
+        Credibility.Core.Estimates.integral_randomLin_resVar_sub}
+  \leanok
+  \uses{thm:Core_randomLin_bias, thm:covariance_resVar_mean}
+  Let the weights be $\hat d_i = a_i + b_i\hat\sigma_i^2$ with $\hat\sigma_i^2 \in L^2$ and
+  $\sum_i\hat d_i = 1$ in every draw. Then $\mathbb E(\hat d^T\hmu - \mu_j)
+  = \sum_ib_i\cov(\hat\sigma_i^2, \hmu_i)$. If each $\hmu_i = \sum_sw_{is}X_{is}$ and
+  $\hat\sigma_i^2 = \sum_tc_{it}r_{it}^2$ come from cells as in
+  Theorem~\ref{thm:covariance_resVar_mean} (third moments $k_{it}$), the bias is
+  $\sum_ib_i\sum_sw_{is}k_{is}\sum_tc_{it}(\delta_{ts} - w_{is})^2$: zero under symmetric noise.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_randomLin_bias, thm:covariance_resVar_mean}
+  Theorem~\ref{thm:Core_randomLin_bias}; constants drop out of a covariance, so
+  $\cov(\hat d_i, \hmu_i) = b_i\cov(\hat\sigma_i^2, \hmu_i)$, which
+  Theorem~\ref{thm:covariance_resVar_mean} evaluates.
+\end{proof}
+
+\section{Independent sources}
+
+\begin{lemma}[Moments of independent centred sources]\label{lem:moments_indep}
+  \lean{Credibility.Cumulants.integral_mul4_indep_of_ne, Credibility.Cumulants.integral_mul3_indep_of_ne,
+        Credibility.Cumulants.integral_mul2_indep_of_ne, Credibility.Cumulants.integral_mul4_indep_pair,
+        Credibility.Cumulants.integral_mul4_indep, Credibility.Cumulants.integral_mul3_indep,
+        Credibility.Cumulants.integral_mul2_indep}
+  \leanok
+  For independent centred sources $\xi_s$ with variances $v_s$, third moments $c_{3,s}$ and fourth
+  moments $c_{4,s} + 3v_s^2$: $\mathbb E\xi_s\xi_t = \delta_{st}v_s$,
+  $\mathbb E\xi_s\xi_t\xi_u = \delta_{stu}c_{3,s}$ and
+  $\mathbb E\xi_s\xi_t\xi_u\xi_w = \delta_{stuw}c_{4,s} + \delta_{st}\delta_{uw}v_sv_u
+  + \delta_{su}\delta_{tw}v_sv_t + \delta_{sw}\delta_{tu}v_sv_t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A source that appears once is independent of the product of the others, so the expectation
+  is $0$. Otherwise the indices are all equal, or form two pairs of different sources, whose
+  squares are independent.
+\end{proof}
+
+\begin{theorem}[Variance under independent sources]\label{thm:variance_quad_of_sources}
+  \lean{Credibility.Cumulants.variance_quad_of_sources}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, thm:varQuad_sources}
+  Let $Z_i = m_i + \sum_s B_{is}\xi_s$ for independent centred sources $\xi_s$ in $L^4$ (levels,
+  shocks, cell noise, or AR(1) innovations), as in Lemma~\ref{lem:moments_indep}, and $A$
+  symmetric. With $C = B\operatorname{diag}(v)B^\top$, $M = B^\top AB$ and $a = B^\top Am$,
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = 2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am)
+     + 4\sum_s c_{3,s}M_{ss}a_s + \sum_s c_{4,s}M_{ss}^2. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, thm:varQuad_sources, lem:moments_indep, lem:cumulants_integrable}
+  By Lemma~\ref{lem:moments_indep}, pushed through $B$, the cells have covariance $C$ and the source
+  form of the cumulant tables; then Theorems~\ref{thm:variance_quad_of_cumulants}
+  and~\ref{thm:varQuad_sources}.
+\end{proof}
+
+\begin{theorem}[Mean under independent sources]\label{thm:integral_quad_of_sources}
+  \lean{Credibility.Cumulants.integral_quad_of_sources}
+  \leanok
+  With the cells of Theorem~\ref{thm:variance_quad_of_sources} and any $A$,
+  $\operatorname{E}\sum A_{ij}Z_iZ_j = \sum A_{ij}(m_im_j + C_{ij})$, $C = B\operatorname{diag}(v)B^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:moments_indep, lem:cumulants_integrable}
+  Expand $(m_i + e_i)(m_j + e_j)$; the centred cells have mean $0$ and second moments $C$.
+\end{proof}
+
+\section{The variance of a sample covariance (G2)}
+
+\begin{lemma}[Centering and year-diagonal tables]\label{lem:sampleCov_algebra}
+  \lean{Credibility.Cumulants.centering, Credibility.Cumulants.trace_centering_sq,
+        Credibility.Cumulants.sum_yearDiag'}
+  \leanok
+  With $H = I - \mathbf 1\mathbf 1^\top/T$, $\operatorname{tr}H^2 = T - 1$; a table that vanishes
+  off the year diagonal sums over one year index.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+
+\begin{theorem}[Variance of a sum of products of linear statistics]\label{thm:variance_sum_mul_lin}
+  \lean{Credibility.Cumulants.variance_sum_mul_lin}
+  \leanok
+  For cells $e_p$ in $L^4$ with second moments $C$ and fourth moments
+  $\kappa_{4,pqrs} + C_{pq}C_{rs} + C_{pr}C_{qs} + C_{ps}C_{qr}$, and vectors $u_t$, $v_t$,
+  \[ \operatorname{Var}\sum_t(u_t^\top e)(v_t^\top e) = \sum_{t,t'}\bigl[(u_t^\top Cu_{t'})(v_t^\top Cv_{t'})
+     + (u_t^\top Cv_{t'})(v_t^\top Cu_{t'}) + \kappa_4(u_t, v_t, u_{t'}, v_{t'})\bigr]. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable}
+  $\operatorname{E}Q^2 - (\operatorname{E}Q)^2$, each term a fourth moment of the cells; the pairing
+  $C_{pq}C_{rs}$ cancels against $(\operatorname{E}Q)^2$.
+\end{proof}
+
+\begin{definition}[Residual coefficients and year-diagonal covariance]\label{def:resCross}
+  \lean{Credibility.Cumulants.resCross, Credibility.Cumulants.resCoef, Credibility.Cumulants.yearCov}
+  \leanok
+  The residual $r_{ct} = X_{ct} - \sum_sa_{cs}X_{cs}$ has coefficients $\delta_{ts} - a_{cs}$ on
+  cohort $c$; $N\otimes$ years is the covariance $N_s$ in year $s$ and none across years;
+  $G^{bc}_{tt'} = \sum_s(\delta_{ts} - a_{bs})(\delta_{t's} - a_{cs})N_{s,bc}$.
+\end{definition}
+
+\begin{lemma}[Covariance of two residuals]\label{lem:resCoef_dot}
+  \lean{Credibility.Cumulants.resCoef_dot}
+  \leanok
+  \uses{def:resCross}
+  The residual coefficient vectors give $\operatorname{cov}(r_{bt}, r_{ct'}) = G^{bc}_{tt'}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only cohort $b$, cohort $c$ and equal years contribute.
+\end{proof}
+
+\begin{theorem}[Variance of the shock-covariance estimator]\label{thm:variance_crossResid}
+  \lean{Credibility.Cumulants.variance_crossResid}
+  \leanok
+  \uses{def:resCross}
+  Cells $X_{ct} = L_c + e_{ct}$ with any random levels and noise in $L^4$, uncorrelated across
+  years with covariance $N_s$ in year $s$, whose fourth cumulants vanish unless all four cells are
+  in the same year ($k_s$ there). For weights $\sum_ta_{ct} = 1$ and any $D$,
+  \[ \operatorname{Var}\frac{\sum_tr_{it}r_{jt}}{D} = \frac{1}{D^2}\Bigl(\sum_{t,t'}\bigl[G^{ii}_{tt'}G^{jj}_{tt'}
+     + G^{ij}_{tt'}G^{ji}_{tt'}\bigr] + \sum_s(1 - a_{is} - a_{js} + Ta_{is}a_{js})^2k_{s,ijij}\Bigr). \]
+  With $D = \sum_td_{ijt}$ this is the variance of $\hat C_{ij}$ in the shock model.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_mul_lin, lem:resCoef_dot, lem:sampleCov_algebra}
+  The levels cancel in the residuals; Theorem~\ref{thm:variance_sum_mul_lin} with the residual
+  coefficients, and the cumulant term sums over one year.
+\end{proof}
+
+\begin{theorem}[Variance of a sample covariance]\label{thm:variance_sampleCov}
+  \lean{Credibility.Cumulants.variance_sampleCov}
+  \leanok
+  Cells $Z_{at}$ in $L^4$ with means $\mu_a$, covariance $V\otimes I$ and fourth cumulants that
+  vanish unless all four cells are in the same year, where they are $k_{abde}$ (e.g.\ independent
+  years). For $T\ge 2$ and
+  $\hat s_{ij} = \sum_t(Z_{it} - \bar Z_i)(Z_{jt} - \bar Z_j)/(T-1)$,
+  \[ \operatorname{Var}\hat s_{ij} = \frac{V_{ii}V_{jj} + V_{ij}^2}{T-1} + \frac{k_{ijij}}{T}, \]
+  also for $i = j$. The first term is the normal-theory variance; skewness does not enter.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_crossResid, lem:sampleCov_algebra}
+  Theorem~\ref{thm:variance_crossResid} with equal weights $1/T$ and $D = T - 1$: then
+  $G^{bc}_{tt'} = H_{tt'}V_{bc}$, $\sum_{tt'}H_{tt'}^2 = T - 1$, and each year's cumulant weight is
+  $(1 - 1/T)^2$.
+\end{proof}
+
+\section{The statistics of the pooled fits: covariances (S53)}
+
+The pooled fits (Bühlmann--Straub, corrBS, the BLUP on corrBS's $\hat K$) depend on the data
+only through three quadratic statistics: the pooled within-region variance $P$, the
+cross-region residual products $Q_n$ and the spread of the region means $B$. Their first-order
+price needs their covariances.
+
+\begin{definition}[Covariance of two quadratic forms]\label{def:covQuad}
+  \lean{Credibility.Cumulants.covQuad}
+  \leanok
+  \uses{def:varQuad}
+  $\mathrm{cov}(A, B) = 2\operatorname{tr}(ACBC) + 4(Am)^\top C(Bm)
+  + 2\sum A_{ij}(Bm)_k\kappa_{3,ijk} + 2\sum B_{ij}(Am)_k\kappa_{3,ijk}
+  + \sum A_{ij}B_{kl}\kappa_{4,ijkl}$.
+\end{definition}
+
+\begin{lemma}[Polarization]\label{lem:varQuad_add}
+  \lean{Credibility.Cumulants.varQuad_add, Credibility.Cumulants.covQuad_self}
+  \leanok
+  \uses{def:covQuad}
+  $\mathrm{cov}(A, A) = V(A)$. For symmetric $C$ and $\kappa_{4,klij} = \kappa_{4,ijkl}$,
+  $V(A + B) = V(A) + 2\,\mathrm{cov}(A, B) + V(B)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:covQuad}
+  Expand; $\operatorname{tr}(BCAC) = \operatorname{tr}(ACBC)$ by cyclicity.
+\end{proof}
+
+\begin{lemma}[Quadratic forms are square integrable]\label{lem:Cumulants_memLp_quadForm}
+  \lean{Credibility.Cumulants.memLp_quadForm}
+  \leanok
+  A quadratic form in cells in $L^4$ is in $L^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cumulants_integrable}
+  Hölder with exponents $4, 4, 2$.
+\end{proof}
+
+\begin{theorem}[The covariance of two quadratic estimators]\label{thm:covariance_quad_of_cumulants}
+  \lean{Credibility.Cumulants.covariance_quad_of_cumulants}
+  \leanok
+  \uses{def:covQuad}
+  Under the hypotheses of Theorem~\ref{thm:variance_quad_of_cumulants}, for symmetric $A$, $B$:
+  $\cov(Z^\top AZ, Z^\top BZ) = \mathrm{cov}(A, B)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_cumulants, lem:varQuad_add, lem:Cumulants_memLp_quadForm}
+  $\Var(X + Y) = \Var X + 2\cov(X, Y) + \Var Y$ with $X + Y = Z^\top(A + B)Z$, and
+  Lemma~\ref{lem:varQuad_add}; $C$ and $\kappa_4$ are symmetric as moments.
+\end{proof}
+
+\begin{lemma}[Sums of products of linear statistics]\label{lem:symQuad}
+  \lean{Credibility.Cumulants.symQuad, Credibility.Cumulants.symQuad_symm,
+        Credibility.Cumulants.sum_symQuad, Credibility.Cumulants.symQuad_mulVec}
+  \leanok
+  $\sum_k c_k(u_k^\top x)(v_k^\top x) = x^\top Ax$ with the symmetric
+  $A = \sum_k c_k(u_kv_k^\top + v_ku_k^\top)/2$, and
+  $Ay = \sum_k (c_k/2)((v_k^\top y)u_k + (u_k^\top y)v_k)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange finite sums.
+\end{proof}
+
+\begin{theorem}[Covariance of sums of products]\label{thm:covariance_symQuad}
+  \lean{Credibility.Cumulants.covariance_symQuad}
+  \leanok
+  \uses{lem:symQuad, def:covQuad}
+  Two statistics $\sum_k c_k(u_k^\top Z)(v_k^\top Z)$ have the covariance $\mathrm{cov}(A, A')$
+  of their matrices.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:symQuad, thm:covariance_quad_of_cumulants}
+  Lemma~\ref{lem:symQuad} and Theorem~\ref{thm:covariance_quad_of_cumulants}.
+\end{proof}
+
+\begin{definition}[The statistics $P$, $Q_n$, $B$]\label{def:fitStats}
+  \lean{Credibility.Cumulants.shares, Credibility.Cumulants.regionMean,
+        Credibility.Cumulants.meanCoef, Credibility.Cumulants.meanComb,
+        Credibility.Cumulants.statP, Credibility.Cumulants.statQn, Credibility.Cumulants.statB,
+        Credibility.Cumulants.spreadWeight, Credibility.Cumulants.Stat,
+        Credibility.Cumulants.Stat.eval, Credibility.Cumulants.Stat.Idx,
+        Credibility.Cumulants.Stat.coef, Credibility.Cumulants.Stat.left,
+        Credibility.Cumulants.Stat.right, Credibility.Cumulants.Stat.mat}
+  \leanok
+  \uses{lem:symQuad}
+  Cells $x_{jt}$ with volumes $w_{jt}$, $W_j = \sum_t w_{jt}$, $a_{jt} = w_{jt}/W_j$, region means
+  $\bar x_j = \sum_t a_{jt}x_{jt}$, residuals $r_{jt} = x_{jt} - \bar x_j$:
+  $P = \sum_{jt} w_{jt}r_{jt}^2/(J(T - 1))$,
+  $Q_n = \sum_{i<j}\sum_t\sqrt{w_{it}w_{jt}}\,r_{it}r_{jt}$,
+  $B = \sum_j W_j(\bar x_j - \bar x)^2$ with $\bar x = \sum_j W_j\bar x_j/\sum_j W_j$.
+  Each is $\sum_k c_k(u_k^\top x)(v_k^\top x)$, with matrix $A_s$.
+\end{definition}
+
+\begin{lemma}[The statistics as sums of products]\label{lem:fitStats_eval}
+  \lean{Credibility.Cumulants.resCoef_dotProduct, Credibility.Cumulants.meanComb_dotProduct,
+        Credibility.Cumulants.meanComb_spread_dotProduct, Credibility.Cumulants.Stat.eval_eq}
+  \leanok
+  \uses{def:fitStats}
+  $r_{jt}$ and $\bar x_j - \bar x$ are linear in the cells, so each statistic is its sum of
+  products.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand the coefficient vectors.
+\end{proof}
+
+\begin{theorem}[Exact variances and covariances of $P$, $Q_n$, $B$]\label{thm:covariance_stat}
+  \lean{Credibility.Cumulants.covariance_stat, Credibility.Cumulants.variance_stat}
+  \leanok
+  \uses{def:fitStats, def:covQuad}
+  For cells in $L^4$ with any moment tables $m$, $C$, $\kappa_3$, $\kappa_4$, any two of the
+  statistics have $\cov(s, s') = \mathrm{cov}(A_s, A_{s'})$, and $\Var s = V(A_s)$. Under normal
+  cells these are the trace formulas $2\operatorname{tr}(A_sCA_{s'}C) + 4(A_sm)^\top C(A_{s'}m)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:fitStats_eval, thm:covariance_symQuad}
+  Lemma~\ref{lem:fitStats_eval} and Theorem~\ref{thm:covariance_symQuad}.
+\end{proof}
+
+\begin{lemma}[When the region means and the residuals are uncorrelated]\label{lem:meanResid_uncorr}
+  \lean{Credibility.Cumulants.resCoef_dotProduct_regionConst,
+        Credibility.Cumulants.mulVec_resCoef,
+        Credibility.Cumulants.meanCoef_dotProduct_resCoef_eq_zero}
+  \leanok
+  \uses{def:fitStats}
+  With $\sum_t a_{jt} = 1$, residuals annihilate region-constant vectors. If
+  $C_{(it),(ju)} = \Lambda_{ij} + \delta_{tu}D_{t,ij}$ (a level covariance plus year noise) and
+  $a_{it}D_{t,ij}$ does not depend on $t$, then $\cov(\bar x_i, r_{jt}) = 0$. This holds for
+  uncorrelated regions with $D_{t,ii} = \sigma_i^2/w_{it}$, and for
+  $D_{t,ij} = V_{ij}/\sqrt{w_{it}w_{jt}}$ with proportional volumes $w_{it} = W_iv_t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Cr_{jt})_{(i,u)} = D_{u,ij}(\delta_{tu} - a_{ju})$, so
+  $\cov(\bar x_i, r_{jt}) = c_{ij} - c_{ij}\sum_u a_{ju} = 0$.
+\end{proof}
+
+\begin{theorem}[Means and residuals covary only through $\kappa_4$]\label{thm:covariance_meanStat_resStat}
+  \lean{Credibility.Cumulants.covariance_meanStat_resStat}
+  \leanok
+  \uses{def:fitStats, lem:symQuad}
+  Cells with region-constant means, no third cumulants and region means uncorrelated with the
+  residuals. Then a statistic $S$ of the region means and a statistic $R$ of the residuals
+  (sums of products) have $\cov(S, R) = \sum A_{S,ij}A_{R,kl}\kappa_{4,ijkl}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_symQuad, lem:symQuad, lem:fitStats_eval, lem:meanResid_uncorr}
+  $A_Rm = 0$, because residuals annihilate region-constant means; this removes the mean term and one
+  skewness term, and $\kappa_3 = 0$ removes the other. $A_RCy$ is uncorrelated with every region
+  mean, so $A_SCA_R = 0$ and the trace term vanishes.
+\end{proof}
+
+\begin{theorem}[$\cov(B, P) = \cov(B, Q_n) = 0$]\label{thm:covariance_statB}
+  \lean{Credibility.Cumulants.covariance_statB_eq, Credibility.Cumulants.covariance_statB_eq_zero}
+  \leanok
+  \uses{thm:covariance_stat}
+  Under the conditions of Theorem~\ref{thm:covariance_meanStat_resStat} (positive region volumes),
+  $\cov(B, P)$ and $\cov(B, Q_n)$ are the fourth-cumulant term alone, hence $0$ when the fourth
+  cumulants vanish too (e.g.\ normal cells).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_meanStat_resStat}
+  Theorem~\ref{thm:covariance_meanStat_resStat} with $S = B$ and $R = P$ or $Q_n$.
+\end{proof}
+
+\begin{remark}[{Finding 37: $B$ is uncorrelated with $P$ and $Q_n$ only under three conditions}]\label{rem:covB}
+  The study's claim (S53) needs more than vanishing third cumulants: also vanishing fourth
+  cumulants, and region means uncorrelated with the residuals, which fails for correlated regions
+  with non-proportional volumes. See \texttt{FINDINGS.md}.
+\end{remark}
+
+\begin{definition}[Bühlmann--Straub's $\hat\tau^2$ from the statistics]\label{def:bsTau2Hat}
+  \lean{Credibility.Cumulants.bsTau2Hat}
+  \leanok
+  \uses{def:fitStats}
+  $\hat\tau^2 = (B - (J - 1)P)/(W - \sum_j W_j^2/W)$ with $W = \sum_j W_j$.
+\end{definition}
+
+\begin{theorem}[The balanced identity]\label{thm:bsZ_balanced}
+  \lean{Credibility.Cumulants.bsZ_bsTau2Hat_of_balanced, Credibility.Cumulants.statB_of_balanced}
+  \leanok
+  \uses{def:bsTau2Hat, def:bsZ}
+  With equal region volumes $W_j = W_0$, $B = W_0\sum_j(\bar x_j - \bar x)^2$ with the plain average,
+  and the fitted factor $W_0/(W_0 + P/\hat\tau^2)$ is exactly $\hat z = 1 - \hat v/S^2$ with
+  $\hat v = P/W_0$ and $S^2 = B/((J - 1)W_0)$, the sample variance of the region means
+  (when $\hat\tau^2 \ne 0$ and $B \ne 0$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $W - \sum_jW_j^2/W = (J - 1)W_0$, so $\hat\tau^2 = S^2 - \hat v$.
+\end{proof}
+
+\begin{lemma}[First-order variance of $\hat z$]\label{lem:zHatVar}
+  \lean{Credibility.Cumulants.zHatVar, Credibility.Cumulants.zHatVar_eq}
+  \leanok
+  The delta-method variance of $\hat z = 1 - \hat v/S^2$ at $(v, s)$ is
+  $s^{-2}\Var\hat v - 2vs^{-3}\cov(\hat v, S^2) + v^2s^{-4}\Var S^2$; with
+  $\cov(\hat v, S^2) = 0$ (Theorem~\ref{thm:covariance_statB}) it is
+  $(1 - z)^2(\mathrm{CV}^2(\hat v) + \mathrm{CV}^2(S^2))$, $z = 1 - v/s$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Algebra.
+\end{proof}
+
+\begin{theorem}[Law (a): the first-order price of fitting Bühlmann--Straub]\label{thm:bsPrice_balanced}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced, Credibility.Cumulants.bsPrice_le_of_balanced}
+  \leanok
+  \uses{lem:zHatVar}
+  Balanced world, $J$ regions, $T$ years, $s = \tau^2 + v$, $z = \tau^2/s$, normal-theory
+  $\mathrm{CV}^2(\hat v) = 2/(J(T - 1))$ and $\mathrm{CV}^2(S^2) = 2/(J - 1)$
+  (Theorem~\ref{thm:variance_sampleCov} with $\kappa_4 = 0$). The curvature $(1 - 1/J)s$ of the
+  blend's error times the first-order variance of $\hat z$, relative to $(1 - z)\tau^2$, is
+  \[ \frac2J\Bigl(1 + \frac{J - 1}{J(T - 1)}\Bigr)\frac{1 - z}{z} \le \frac2J\,\frac T{T - 1}\,\frac{1 - z}z. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:zHatVar}
+  Lemma~\ref{lem:zHatVar}; $(1 - 1/J)\cdot 2/(J - 1) = 2/J$ and $(J - 1)/J \le 1$.
+\end{proof}
+
+\begin{lemma}[First-order price of an own factor]\label{lem:ownPrice}
+  \lean{Credibility.Cumulants.zOwnVar, Credibility.Cumulants.zOwnVar_eq,
+        Credibility.Cumulants.ownPrice_eq}
+  \leanok
+  For a region's own factor $\hat z = \tau^2/(\tau^2 + \hat v)$ ($\tau^2$ fixed), the delta-method
+  variance at $v$ is $(\tau^2/s^2)^2\Var\hat v = z^2(1 - z)^2\,\mathrm{CV}^2(\hat v)$
+  ($\partial z/\partial\log v = -z(1 - z)$). With $\mathrm{CV}^2(\hat v) = c$, the curvature
+  $(1 - 1/J)s$ times it, relative to $(1 - z)\tau^2$, is $(1 - 1/J)\,z(1 - z)\,c$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Algebra, with $1 - z = v/s$ and $sz = \tau^2$.
+\end{proof}
+
+\begin{theorem}[Law (b): the price of own variances]\label{thm:ownPrice_balanced}
+  \lean{Credibility.Cumulants.ownPrice_sub_pooled_of_balanced,
+        Credibility.Cumulants.ownPrice_sub_pooled_le_of_balanced}
+  \leanok
+  \uses{lem:ownPrice}
+  Balanced world, $J$ regions, $T$ years. With the normal-theory $\mathrm{CV}^2 = 2/(T - 1)$ of a
+  region's own $\hat v_j$ and $2/(J(T - 1))$ of one pooled $\hat v$, the extra first-order price of
+  own factors over pooled ones, relative to $(1 - z)\tau^2$, is
+  \[ \Bigl(1 - \frac1J\Bigr)^2 z(1 - z)\,\frac2{T - 1} \;\le\; z(1 - z)\,\frac2{T - 1}
+     \;\le\; \frac1{2(T - 1)}. \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:ownPrice}
+  Lemma~\ref{lem:ownPrice} with $c = 2/(T - 1)$ minus $c = 2/(J(T - 1))$:
+  $(1 - 1/J)(1 - 1/J)$. Then $(1 - 1/J)^2 \le 1$ and $z(1 - z) \le 1/4$.
+\end{proof}
+\begin{corollary}[An own factor against Bühlmann--Straub's]\label{cor:ownPrice_vs_bsPrice}
+  \lean{Credibility.Cumulants.ownPrice_eq_sq_mul_bsPrice}
+  \leanok
+  \uses{lem:ownPrice, lem:zHatVar}
+  For the same $\mathrm{CV}^2(\hat v) = c$, the price of the noise in $\hat v$ for an own factor at
+  fixed $\tau^2$, $(1 - 1/J)z(1 - z)c$, is $z^2$ times its price in law (a), where
+  $\hat z = 1 - \hat v/S^2$ at fixed $S^2$: $(1 - 1/J)\frac{1 - z}{z}c$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:ownPrice, lem:zHatVar}
+  Lemmas~\ref{lem:ownPrice} and~\ref{lem:zHatVar} (with $\Var S^2 = 0$):
+  $\partial z/\partial\log v$ is $-z(1 - z)$ against $-(1 - z)$.
+\end{proof}
+\begin{remark}[Law (b) overstates by $(1 - 1/J)^{-2}$]
+  The study's law (b), $z(1 - z)\cdot 2/(T - 1)$, drops two factors $1 - 1/J$: one from the blend's
+  curvature $\Var(\hmu_j - \hmu)$, one because the pooled $\hat v$ is noisy too. At $J = 8$ that is a
+  factor $1.31$, part of the overstatement $1.1$--$2\times$ seen for $z \ge 0.6$ (study S56).
+\end{remark}
+
+\begin{lemma}[Variance of a sum of squared linear statistics]\label{lem:variance_sum_sq_lin}
+  \lean{Credibility.Cumulants.variance_sum_sq_lin}
+  \leanok
+  If each $u_k$ annihilates the mean, then
+  $\Var\sum_k c_k(u_k^\top Z)^2 = \sum_{kk'} c_kc_{k'}\bigl(2(u_k^\top Cu_{k'})^2
+  + \kappa_4(u_k, u_k, u_{k'}, u_{k'})\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_mul_lin}
+  Centre the cells; Theorem~\ref{thm:variance_sum_mul_lin} with $u = cu$, $v = u$.
+\end{proof}
+
+\begin{lemma}[The balanced table]\label{lem:bsCov}
+  \lean{Credibility.Cumulants.bsCov, Credibility.Cumulants.shares_const,
+        Credibility.Cumulants.resCoef_dotProduct_bsCov,
+        Credibility.Cumulants.meanComb_dotProduct_bsCov,
+        Credibility.Cumulants.spreadWeight_const, Credibility.Cumulants.sum_centering_mul,
+        Credibility.Cumulants.sum_centering_sq}
+  \leanok
+  \uses{def:fitStats}
+  Equal volumes $w$, independent regions, $\cov(x_{it}, x_{ju}) = \delta_{ij}(\tau^2 + \delta_{tu}\sigma^2/w)$.
+  Then $\cov(r_{jt}, r_{j't'}) = \delta_{jj'}(\sigma^2/w)(\delta_{tt'} - 1/T)$,
+  $\cov(\sum_i\beta_i\bar x_i, \sum_i\gamma_i\bar x_i) = (\tau^2 + \sigma^2/(wT))\sum_i\beta_i\gamma_i$,
+  the spread weights are $\delta_{ij} - 1/J$, and $\sum_{tt'}(\delta_{tt'} - 1/T)^2 = T - 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:meanResid_uncorr}
+  Lemma~\ref{lem:meanResid_uncorr} for $C r_{jt}$; finite sums.
+\end{proof}
+
+\begin{theorem}[Exact variances of $P$ and $B$ in the balanced world]\label{thm:variance_stat_balanced}
+  \lean{Credibility.Cumulants.variance_statP_of_balanced,
+        Credibility.Cumulants.variance_statB_of_balanced}
+  \leanok
+  \uses{lem:bsCov, def:fitStats}
+  With the balanced table, a common mean and no fourth cumulants,
+  $\Var P = 2\sigma^4/(J(T - 1))$ and $\Var B = 2(wT)^2s^2(J - 1)$ with $s = \tau^2 + \sigma^2/(wT)$;
+  so $\mathrm{CV}^2(\hat v) = 2/(J(T - 1))$ and $\mathrm{CV}^2(S^2) = 2/(J - 1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_stat_balanced_cumulants}
+  Theorem~\ref{thm:variance_stat_balanced_cumulants} with $\kappa_L = \kappa_N = 0$.
+\end{proof}
+
+\begin{theorem}[Law (a) from the cells]\label{thm:bsPrice_balanced_cells}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced_cells}
+  \leanok
+  \uses{thm:bsPrice_balanced}
+  In the balanced world with no third and fourth cumulants, the first-order price of
+  Bühlmann--Straub's fitted factor, computed from the actual variances and covariance of $\hat v$
+  and $S^2$, is $(2/J)(1 + (J - 1)/(J(T - 1)))(1 - z)/z$ relative to $(1 - z)\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bsPrice_balanced_cumulants}
+  Theorem~\ref{thm:bsPrice_balanced_cumulants} with $\kappa_L = \kappa_N = 0$.
+\end{proof}
+
+\begin{definition}[Fourth cumulants of balanced cells]\label{def:bsK4}
+  \lean{Credibility.Cumulants.bsK4}
+  \leanok
+  \uses{lem:bsCov}
+  Cells $\mu + L_j + e_{jt}$ with independent levels of fourth cumulant $\kappa_L$ and independent
+  noise of fourth cumulant $\kappa_N/w^2$: $\kappa_{4,pqrs} = \kappa_L$ when the four cells are in one
+  region, plus $\kappa_N/w^2$ when they are one cell.
+\end{definition}
+
+\begin{lemma}[The fourth-cumulant term]\label{lem:sum_bsK4}
+  \lean{Credibility.Cumulants.sum_mul4_indicator, Credibility.Cumulants.sum4_sum_comm,
+        Credibility.Cumulants.sum_bsK4, Credibility.Cumulants.sum_symQuad_mul_symQuad,
+        Credibility.Cumulants.sum_resCoef_region, Credibility.Cumulants.sum_resCoef_sq,
+        Credibility.Cumulants.sum_centering_sq_col}
+  \leanok
+  \uses{def:bsK4, lem:symQuad}
+  $\sum u_pu_qu'_ru'_s\kappa_{4,pqrs} = \kappa_L\sum_i(\sum_tu_{it})^2(\sum_tu'_{it})^2
+  + (\kappa_N/w^2)\sum_c u_c^2u'^2_c$. Residuals sum to zero over a region, so levels drop out of
+  every residual statistic; $\sum_k r_k(c)^2 = 1 - 1/T$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Each indicator product factors into four sums.
+\end{proof}
+
+\begin{theorem}[Var $P$, Var $B$ and $\cov(B, P)$ with fourth cumulants]\label{thm:variance_stat_balanced_cumulants}
+  \lean{Credibility.Cumulants.variance_statP_of_balanced_cumulants,
+        Credibility.Cumulants.variance_statB_of_balanced_cumulants,
+        Credibility.Cumulants.covariance_statB_statP_of_balanced_cumulants}
+  \leanok
+  \uses{def:bsK4, lem:bsCov, def:fitStats}
+  Balanced table, common mean, fourth cumulants $\kappa_L$, $\kappa_N/w^2$ (and no third cumulants
+  for the covariance):
+  $\Var P = 2\sigma^4/(J(T - 1)) + \kappa_N/(JT)$,
+  $\Var B = 2(wT)^2s^2(J - 1) + (wT)^2(\kappa_L + \kappa_N/(w^2T^3))(J - 1)^2/J$,
+  $\cov(B, P) = \kappa_N(J - 1)/(JT)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:variance_sum_sq_lin, lem:sum_bsK4, lem:bsCov, lem:fitStats_eval, thm:covariance_statB}
+  Lemma~\ref{lem:variance_sum_sq_lin} (Theorem~\ref{thm:covariance_statB} for the covariance), then
+  Lemma~\ref{lem:sum_bsK4} for the $\kappa_4$ terms and Lemma~\ref{lem:bsCov} for the rest.
+\end{proof}
+
+\begin{theorem}[Law (a) with fourth cumulants: the corrected price]\label{thm:bsPrice_balanced_cumulants}
+  \lean{Credibility.Cumulants.bsPrice_of_balanced_cumulants}
+  \leanok
+  \uses{lem:zHatVar, thm:variance_stat_balanced_cumulants}
+  With $\gamma_N = \kappa_N/\sigma^4$ the excess kurtosis of the noise, the first-order price relative to
+  $(1 - z)\tau^2$ is
+  \[ \Bigl(1 - \frac1J\Bigr)\frac{1 - z}z\Bigl(\frac2{J(T - 1)} + \frac2{J - 1} + \frac{\kappa_L}{Js^2}
+     + \frac{\gamma_Nz^2}{JT}\Bigr). \]
+  Noise kurtosis raises $\Var\hat v$, $\Var S^2$ and $\cov(\hat v, S^2)$; together they leave $\gamma_Nz^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_stat_balanced_cumulants}
+  Insert the three moments in $\mathrm{zHatVar}$; algebra.
+\end{proof}
+
+\begin{lemma}[Two linear statistics times a sum of squares]\label{lem:integral_lin_lin_sumSq}
+  \lean{Credibility.Cumulants.lin_lin_sumSq_eq, Credibility.Cumulants.integrable_lin_lin_sumSq,
+        Credibility.Cumulants.integral_lin_lin_sumSq, Credibility.Cumulants.integral_lin_mul_lin}
+  \leanok
+  For $X$ in $L^4$ with second moments $C$ and fourth moments $\kappa_4 + CC + CC + CC$,
+  $\operatorname{E}[(a^\top X)(b^\top X)] = a^\top Cb$ and
+  \[ \operatorname{E}\Bigl[(a^\top X)(b^\top X)\sum_k c_k(u_k^\top X)^2\Bigr]
+     = \sum_k c_k\bigl((a^\top Cb)(u_k^\top Cu_k) + 2(a^\top Cu_k)(b^\top Cu_k) + \kappa_4(a, b, u_k, u_k)\bigr). \]
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand into fourfold products and integrate term by term.
+\end{proof}
+
+\begin{definition}[Levels and noise as primitives]\label{def:primCells}
+  \lean{Credibility.Cumulants.cellsOf, Credibility.Cumulants.pullCoef, Credibility.Cumulants.primVar, Credibility.Cumulants.primK4, Credibility.Cumulants.zHatLin}
+  \leanok
+  \uses{def:fitStats, lem:zHatVar}
+  The primitives $X = (L, e)$ on $J \sqcup (J\times T)$ give the cells $x_{jt} = \mu + L_j + e_{jt}$; a linear
+  statistic $u$ of the cells loads $\sum_tu_{it}$ on $L_i$ and $u_{it}$ on $e_{it}$. Equal volumes: second
+  moments $\operatorname{diag}(\tau^2, \sigma^2/w)$, fourth cumulants $\kappa_L$, $\kappa_N/w^2$ on the diagonal only.
+  The linearized error of $\hat z = 1 - \hat v/S^2$ at $(v, s)$ is $-(\hat v - v)/s + (v/s^2)(S^2 - s)$.
+\end{definition}
+
+\begin{lemma}[Cells from primitives]\label{lem:primCells}
+  \lean{Credibility.Cumulants.dotProduct_cellsOf}
+  \leanok
+  \uses{def:primCells}
+  $u^\top x = \mu\sum u + (\text{pull of }u)^\top X$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Split the sum over cells into levels and noise.
+\end{proof}
+
+\begin{theorem}[The first-order cross term of the plug-in]\label{thm:crossTerm_balanced_cumulants}
+  \lean{Credibility.Cumulants.crossTerm_of_balanced_cumulants,
+        Credibility.Cumulants.crossTerm_of_balanced_cumulants_known}
+  \leanok
+  \uses{def:primCells, thm:Blup_plugIn_mse}
+  In the balanced world with fourth cumulants, the first-order cross term $2\operatorname{E}[AB]$ of the
+  exact MSE (Theorem~\ref{thm:Blup_plugIn_mse}) for Bühlmann--Straub's fitted $\hat z$, relative to
+  $(1 - z)\tau^2$, is, with $\gamma_L = \kappa_L/\tau^4$ and $\gamma_N = \kappa_N/\sigma^4$,
+  \[ -2\Bigl(1 - \frac1J\Bigr)\frac{z(1 - z)}J\Bigl(\gamma_L + \frac{\gamma_N}T\Bigr)
+     \quad(D = \sigma^2/(wT)\text{ estimated by }\hat v), \qquad
+     2\Bigl(1 - \frac1J\Bigr)\frac{1 - z}J\Bigl(-z\gamma_L + (1 - z)\frac{\gamma_N}T\Bigr)
+     \quad(D\text{ known}). \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:crossTerm_bs, lem:integral_errW, lem:bsAlpha, lem:integral_lin_lin_sumSq}
+  Equal volumes in Theorem~\ref{thm:crossTerm_bs}: all $z_i = z$, $\alpha = ze_j + (1 - z)\mathbf 1/J$,
+  $\lambda = -z(1 - z)(e_j - \mathbf 1/J)$ and $\mathrm{zHatLin} = -z(1 - z)\hat\varepsilon$, so the integrands agree.
+  With $D$ known, only $S^2$ moves: Lemma~\ref{lem:integral_errW} for $B$ and
+  Lemma~\ref{lem:integral_lin_lin_sumSq} for $\operatorname{E}[A(\bar x_j - \bar x)] = 0$.
+\end{proof}
+
+\begin{remark}[Finding 38: estimating $D$ flips the noise part]
+  With $D$ known the result is Chen, Lahiri and Rao's $2g_4$ (up to $1 - 1/J$): heavy-tailed levels
+  lower the MSE, heavy-tailed noise raises it. With $D$ estimated from the same cells the noise part
+  changes sign and matches the level part. Added to the kurtosis terms of law (a)
+  (Theorem~\ref{thm:bsPrice_balanced_cumulants}), the total first-order effect of kurtosis is
+  $-(1 - 1/J)z(1 - z)(\gamma_L + \gamma_N/T)/J$: heavy tails of either kind lower the first-order MSE
+  of the plug-in.
+\end{remark}
+
+\begin{definition}[Any volumes: primitives, Bühlmann--Straub's weights and their direction]\label{def:primCellsW}
+  \lean{Credibility.Cumulants.primVarW, Credibility.Cumulants.diagK4, Credibility.Cumulants.primK4W, Credibility.Cumulants.linW, Credibility.Cumulants.errW,
+        Credibility.Cumulants.bsZk, Credibility.Cumulants.bsAlpha, Credibility.Cumulants.bsLambda, Credibility.Cumulants.bsEps}
+  \leanok
+  \uses{def:primCells, def:bsTau2Hat}
+  As in Definition~\ref{def:primCells} with noise variance $\sigma^2/w_{it}$ and fourth cumulant
+  $\kappa_N/w_{it}^2$ per cell. With $W_i = \sum_tw_{it}$ and $k = \sigma^2/\tau^2$: $z_i = W_i/(W_i + k)$,
+  $Z = \sum z_i$, $b = z/Z$, the prediction weights $\alpha_i = z_j\delta_{ij} + (1 - z_j)b_i$ on the region
+  means, $\lambda_i = -\bigl(z_j(1 - z_j)(\delta_{ij} - b_i) + (1 - z_j)(z_i(1 - z_i) - Sb_i)/Z\bigr)$ with
+  $S = \sum z(1 - z)$, and $\hat\varepsilon = \hat\sigma^2/\sigma^2 - \hat\tau^2/\tau^2$.
+\end{definition}
+
+\begin{lemma}[The primitives' algebra, any volumes]\label{lem:primCellsW}
+  \lean{Credibility.Cumulants.sum_diagK4, Credibility.Cumulants.dotProduct_diagonal_primVarW, Credibility.Cumulants.sum_shares,
+        Credibility.Cumulants.shares_div, Credibility.Cumulants.sum_mul_regionMean, Credibility.Cumulants.sum_meanComb,
+        Credibility.Cumulants.pullCoef_meanComb_shares, Credibility.Cumulants.sum_mul_regionMean_cellsOf,
+        Credibility.Cumulants.errW_dotProduct, Credibility.Cumulants.statP_cellsOfW, Credibility.Cumulants.sum_spreadWeight,
+        Credibility.Cumulants.statB_cellsOfW, Credibility.Cumulants.sum_pos_of_pos, Credibility.Cumulants.linW_cov_linW,
+        Credibility.Cumulants.linW_cov_res, Credibility.Cumulants.sum_mul_sum_diag, Credibility.Cumulants.errW_cov,
+        Credibility.Cumulants.sum_resCoef_sq_w, Credibility.Cumulants.sum_spreadWeight_sq}
+  \leanok
+  \uses{def:primCellsW}
+  $\operatorname{cov}(\sum\beta_i\bar x_i, \sum\gamma_i\bar x_i) = \sum_i\beta_i\gamma_i(\tau^2 + \sigma^2/W_i)$; region means and
+  residuals are uncorrelated; the cumulant weights of $P$ on a noise cell are $w_c(1 - a_c)/(J(T - 1))$,
+  those of $B$ are $W_i(1 - W_i/W)$ on $L_i$ and $a_{it}^2W_i(1 - W_i/W)$ on $e_{it}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:fitStats_eval, lem:sum_bsK4, lem:primCells}
+  As Lemma~\ref{lem:primCells}, with $a_{it}/w_{it} = 1/W_i$ in place of equal shares.
+\end{proof}
+
+\begin{lemma}[Bühlmann--Straub's weights and their derivative]\label{lem:bsAlpha}
+  \lean{Credibility.Cumulants.bsZk_pos, Credibility.Cumulants.sum_bsAlpha, Credibility.Cumulants.sum_bsLambda,
+        Credibility.Cumulants.bsAlpha_mul_var, Credibility.Cumulants.bsAlpha_errW_cov, Credibility.Cumulants.bsZk_hasDerivAt, Credibility.Cumulants.bsAlpha_hasDerivAt,
+        Credibility.Cumulants.bsAlpha_const, Credibility.Cumulants.bsLambda_const}
+  \leanok
+  \uses{def:primCellsW}
+  $\sum\alpha = 1$, $\sum\lambda = 0$, $d\alpha_i/dk = \lambda_i/k$, and at the true $k$,
+  $\alpha_i(\tau^2 + \sigma^2/W_i) - \tau^2\delta_{ij} = (1 - z_j)\tau^2/Z$ for every $i$: the error has the same
+  covariance with every region mean, so none with any contrast. Equal volumes: $\alpha_i = z\delta_{ij} + (1 - z)/J$,
+  $\lambda_i = -z(1 - z)(\delta_{ij} - 1/J)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $z_i(\tau^2 + \sigma^2/W_i) = \tau^2$; $dz_i/dk = -z_i(1 - z_i)/k$ and the quotient rule.
+\end{proof}
+
+\begin{lemma}[The error and a spread against $P$ and $B$, any volumes]\label{lem:integral_errW}
+  \lean{Credibility.Cumulants.integral_errW_linW_statP, Credibility.Cumulants.integral_errW_linW_statB}
+  \leanok
+  \uses{def:primCellsW}
+  If $A = \alpha^\top\bar x - (\mu + L_j)$ is uncorrelated with $\lambda^\top\bar x$ (and, for $B$, with every
+  spread), then with $h_i = \sum_ta_{it}^2$:
+  $\operatorname{E}[A(\lambda^\top\bar x)P] = \frac{\kappa_N}{J(T - 1)}\sum_i\alpha_i\lambda_i(1 - h_i)/W_i$ and
+  $\operatorname{E}[A(\lambda^\top\bar x)B] = \sum_i\lambda_i(1 - W_i/W)\bigl(\kappa_LW_i(\alpha_i - \delta_{ij}) + \kappa_Nh_i\alpha_i/W_i\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_lin_lin_sumSq, lem:primCellsW}
+  Lemma~\ref{lem:integral_lin_lin_sumSq}; the $C$ terms vanish; Lemma~\ref{lem:primCellsW} for the $\kappa_4$ term.
+\end{proof}
+
+\begin{theorem}[The first-order cross term, any volumes]\label{thm:crossTerm_bs}
+  \lean{Credibility.Cumulants.crossTerm_bs_of_cumulants}
+  \leanok
+  \uses{def:primCellsW, thm:Blup_plugIn_mse}
+  Bühlmann--Straub's weights depend on $(\hat\sigma^2, \hat\tau^2)$ only through $k$, so at first order
+  $B = \hat\varepsilon\,\lambda^\top\bar x$ (Lemma~\ref{lem:bsAlpha}). With $c = W - \sum W_i^2/W$,
+  \[ 2\operatorname{E}[A\hat\varepsilon\,\lambda^\top\bar x] = 2\Bigl(\Bigl(\frac1{\sigma^2} + \frac{J - 1}{c\tau^2}\Bigr)T_P
+     - \frac{T_B}{c\tau^2}\Bigr), \]
+  $T_P$, $T_B$ the two moments of Lemma~\ref{lem:integral_errW}. Equal volumes give
+  Theorem~\ref{thm:crossTerm_balanced_cumulants}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:integral_errW, lem:bsAlpha, lem:integral_lin_lin_sumSq}
+  $\hat\varepsilon$ is linear in $P$ and $B$; Lemma~\ref{lem:bsAlpha} gives the covariance conditions,
+  Lemma~\ref{lem:integral_errW} the two moments.
+\end{proof}
+
+\begin{theorem}[Heavy-tailed noise can raise the plug-in's MSE]\label{thm:crossTerm_bs_pos_example}
+  \lean{Credibility.Cumulants.wce, Credibility.Cumulants.crossTerm_bs_noise_pos_value, Credibility.Cumulants.crossTerm_bs_pos_example}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  $J = T = 2$, volumes $(1, 8)$ and $(10, 10)$, $\tau^2 = 1$, $\sigma^2 = 20$, $\kappa_L = 0$, $\kappa_N = 1$: the first-order
+  cross term of region 0 is positive.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  Theorem~\ref{thm:crossTerm_bs}, then evaluate the finite sums.
+\end{proof}
+
+\begin{remark}[Finding 39: the noise part has no sign]
+  Region 0 holds $8/9$ of its volume in one year, so its mean is nearly one cell: its noise kurtosis
+  reaches $S^2$ in full but the pooled $\hat\sigma^2$ hardly, and the negative channel through $\hat\sigma^2$ no
+  longer wins. With $J = 8$, $T = 5$ and one such region the exact cross term is $+7.5\%$ of its MSE by
+  simulation. The level part has a sign (Theorem~\ref{thm:crossTerm_bs_level_nonpos}).
+\end{remark}
+
+\begin{theorem}[The level part of the cross term is $\le 0$, any volumes]\label{thm:crossTerm_bs_level_nonpos}
+  \lean{Credibility.Cumulants.sum_mul_sum_sq_le_of_monovary, Credibility.Cumulants.bsZk_spread_monovary, Credibility.Cumulants.bsLevel_sum_nonneg, Credibility.Cumulants.crossTerm_bs_level_nonpos}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  With $\kappa_L \ge 0$ and $\kappa_N = 0$ the cross term of Theorem~\ref{thm:crossTerm_bs} is $\le 0$ for any
+  positive volumes: $\sum_i \lambda_i (1 - W_i/W) W_i (\alpha_i - \delta_{ij}) \ge 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:crossTerm_bs}
+  With $m_i = W_i(1 - W_i/W)$, $Z = \sum z$, $R = \sum_{i \ne j} z_i$, $s' = \sum_{i \ne j} z_i^2$, the sum is
+  $(1 - z_j)^2/Z^3$ times
+  $m_j z_j R (R^2 + s') + z_j \sum_{i \ne j} m_i z_i^2 (R + z_i) + \bigl(R \sum_{i \ne j} m_i z_i^3 - s' \sum_{i \ne j} m_i z_i^2\bigr)$.
+  The last bracket is Chebyshev's sum inequality with weights $z_i$: $m_i z_i$ increases with $z_i$, since
+  $W_i \le W_l$ and $W_i + W_l \le W$ give $m_i \le m_l$. And $c = W - \sum W_i^2/W \ge 0$.
+\end{proof}
+
+\begin{remark}[Finding 40: not for the BLUP on corrBS's $\hat K$]
+  For any fit that sees the data only through $(P, Q_n, B)$ the level part is
+  $(\kappa_L/c)\, \tfrac{d}{d\tau^2} \sum_p m_p (d_{jp} - \delta_{pj})^2$: more $\hat\tau^2$ must pull the weights towards
+  the own region. For the plug-in BLUP this fails: $J = 3$, $T = 2$, $\rho = 0.99$, $\tau^2 = 1/20$, $\sigma^2 = 1$,
+  volumes $(0.2^2, 0.23^2)$, $(0.13^2, 0.14^2)$, $(35^2, 44^2)$, region 1 gives $+0.12\%$ of its MSE per unit $\gamma_L$
+  (exact rational check). In the worlds searched it stays below $+0.4\%$, and needs strong correlation and
+  very uneven volumes.
+\end{remark}
+
+\begin{remark}[Finding 38 for any volumes]
+  Every $\lambda_i$, $\alpha_i$ and weight in Theorem~\ref{thm:crossTerm_bs} is explicit; on unbalanced worlds
+  (region sizes $16\times$ apart) the term is negative in every region, for levels and for noise, and
+  matches simulation (\texttt{studies/cross-term.js}); with one region's volume in a single year the
+  noise part turns positive (Theorem~\ref{thm:crossTerm_bs_pos_example}).
+\end{remark}
+
+\begin{lemma}[The gap between two blends is a quadratic in $z$]\label{lem:Core_linMse_lineWeight}
+  \lean{Credibility.Core.linMse_lineWeight, Credibility.Core.linMse_lineWeight_sub}
+  \leanok
+  \uses{def:Core_blup}
+  For symmetric $K$, any collective weights $b$ and $c = e_j - b$:
+  $\mathrm{mse}_j(ze_j + (1 - z)b) = \mathrm{mse}_j(b) + 2z\,c^\top(Kb - \ell) + z^2c^\top Kc$.
+  So the gap between two blends with collective weights $b$, $b'$ and the same $z$ is
+  $\Delta_0 + 2z\Delta_1 + z^2\Delta_2$ with $\Delta_0 = \mathrm{mse}_j(b) - \mathrm{mse}_j(b')$,
+  $\Delta_1 = c^\top(Kb - \ell) - c'^\top(Kb' - \ell)$, $\Delta_2 = c^\top Kc - c'^\top Kc'$; it is
+  $0$ at $z = 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_linMse_pythagoras}
+  $ze_j + (1 - z)b = b + zc$; expand and use $b^\top Kc = c^\top Kb$.
+\end{proof}
+
+\section{Under a variance function (distribution layer)}
+
+Under a variance function the noise cumulants depend on the cell's own mean, which is random:
+the noise is uncorrelated with the level but not independent of it. The levels are a random
+point $a\sim\mu$; given them the noise has the law $\kappa(a)$. The joint law is $\mu\otimes\kappa$.
+This section assumes a noise family (\texttt{VarianceFunction.lean}); nothing in the core uses it.
+
+\begin{theorem}[Law of total variance]\label{thm:variance_compProd}
+  \lean{Credibility.VarianceFunction.variance_compProd}
+  \leanok
+  For $f\in L^2(\mu\otimes\kappa)$ with every section $f(a,\cdot)\in L^2(\kappa(a))$,
+  $\operatorname{Var} f = \operatorname{E}_a\operatorname{Var}(f\mid a) + \operatorname{Var}_a\operatorname{E}(f\mid a)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\operatorname{Var}f = \operatorname{E}f^2 - (\operatorname{E}f)^2$, integrate in two steps, and
+  $\operatorname{E}(f\mid a)^2 \le \operatorname{E}(f^2\mid a)$ makes the conditional mean square integrable.
+\end{proof}
+
+\begin{lemma}[Quadratic forms of $L^4$ cells]\label{lem:memLp_quad}
+  \lean{Credibility.VarianceFunction.memLp_quad}
+  \leanok
+  A quadratic form in $L^4$ cells is in $L^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Cumulants_memLp_quadForm}
+  Lemma~\ref{lem:Cumulants_memLp_quadForm} for the cells $m + B\xi$.
+\end{proof}
+
+\begin{theorem}[Variance with level-dependent noise cumulants]\label{thm:variance_quad_of_conditional_sources}
+  \lean{Credibility.VarianceFunction.variance_quad_of_conditional_sources}
+  \leanok
+  Given the levels $a$, let the cells be $Z = m(a) + B\xi$ with sources independent and centred
+  under $\kappa(a)$, with variances $v_s(a)$, third moments $c_{3,s}(a)$ and fourth cumulants
+  $c_{4,s}(a)$, and let the estimator be in $L^2(\mu\otimes\kappa)$. With $C(a) = B\operatorname{diag}(v(a))B^\top$
+  and $M = B^\top AB$, $A$ symmetric,
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = \operatorname{E}_a\Bigl[2\operatorname{tr}(ACAC) + 4(Am)^\top C(Am)
+     + 4\sum_s c_{3,s}M_{ss}(B^\top Am)_s + \sum_s c_{4,s}M_{ss}^2\Bigr]
+     + \operatorname{Var}_a\Bigl(\sum A_{ij}(m_im_j + C_{ij})\Bigr). \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_compProd, lem:memLp_quad, thm:variance_quad_of_sources, thm:integral_quad_of_sources}
+  The law of total variance (cumulance); given $a$, Theorems~\ref{thm:variance_quad_of_sources}
+  and~\ref{thm:integral_quad_of_sources} under $\kappa(a)$.
+\end{proof}
+
+\begin{definition}[Cumulants of the variance function $\mu^p$]\label{def:tweedie}
+  \lean{Credibility.VarianceFunction.tweedieVar, Credibility.VarianceFunction.tweedieκ₃,
+        Credibility.VarianceFunction.tweedieκ₄}
+  \leanok
+  For dispersion $\varphi/w$ and mean $\mu$: $V = \tfrac{\varphi}{w}\mu^p$,
+  $\kappa_3 = (\tfrac{\varphi}{w})^2p\,\mu^{2p-1}$, $\kappa_4 = (\tfrac{\varphi}{w})^3p(2p-1)\,\mu^{3p-2}$,
+  from $\kappa_{n+1} = \tfrac{\varphi}{w}V(\mu)\,d\kappa_n/d\mu$ (Tweedie). $p = 0$: normal; $p = 1$: Poisson-like.
+\end{definition}
+
+\begin{lemma}[Trace with a diagonal covariance]\label{lem:trace_mul_diagonal}
+  \lean{Credibility.VarianceFunction.trace_mul_diagonal_mul_diagonal}
+  \leanok
+  For symmetric $A$, $\operatorname{tr}(ADAD) = \sum_{ij}A_{ij}^2d_id_j$ with $D = \operatorname{diag}(d)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand the trace.
+\end{proof}
+
+\begin{theorem}[Variance under the variance function $\mu^p$]\label{thm:variance_quad_of_powerVariance}
+  \lean{Credibility.VarianceFunction.variance_quad_of_powerVariance}
+  \leanok
+  \uses{def:tweedie, thm:variance_quad_of_conditional_sources}
+  Given the levels, let the cell noises be independent and centred with the cumulants of
+  Definition~\ref{def:tweedie} at their own mean $m_i(a)$, and $A$ symmetric. Then
+  \[ \operatorname{Var}\Bigl(\sum A_{ij}Z_iZ_j\Bigr) = \operatorname{E}_a\Bigl[2\sum_{ij}A_{ij}^2V_iV_j
+     + 4\sum_i V_i(Am)_i^2 + 4\sum_i\kappa_{3,i}A_{ii}(Am)_i + \sum_i\kappa_{4,i}A_{ii}^2\Bigr]
+     + \operatorname{Var}_a\Bigl(m^\top Am + \sum_i A_{ii}V_i\Bigr). \]
+  The cumulants are averaged over the levels exactly, not taken at the mean level.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_conditional_sources, lem:trace_mul_diagonal}
+  Theorem~\ref{thm:variance_quad_of_conditional_sources} with the cells as sources ($B = 1$).
+\end{proof}

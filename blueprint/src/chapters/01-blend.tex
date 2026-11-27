@@ -1,0 +1,113 @@
+\chapter{The best credibility factor}\label{ch:blend}
+% Thesis §2.1.1, eqs. (6)-(7). Lean: Credibility/Blend.lean
+
+Fix a cohort $j$ and suppose the blend is unbiased. Its error variance is a
+quadratic in $z$ whose coefficients are six second moments.
+
+\begin{definition}[Blend moments and error variance]\label{def:errVar}
+  \lean{Credibility.BlendMoments, Credibility.BlendMoments.errVar}
+  \leanok
+  Given $\Var(\hmu_j)$, $\Var(\hmu)$, $\Var(\mu_j)$, $\cov(\hmu_j, \hmu)$,
+  $\cov(\hmu_j, \mu_j)$ and $\cov(\hmu, \mu_j)$, let
+  \begin{align*}
+    E(z) = \Var(z\hmu_j + (1-z)\hmu - \mu_j)
+      &= z^2\Var(\hmu_j) + (1-z)^2\Var(\hmu) + \Var(\mu_j)
+         + 2z(1-z)\cov(\hmu_j, \hmu) \\
+      &\quad - 2z\cov(\hmu_j, \mu_j) - 2(1-z)\cov(\hmu, \mu_j),
+  \end{align*}
+  as in \eqth{6}.
+\end{definition}
+
+\begin{definition}[Curvature and the general credibility factor]\label{def:bestZ}
+  \lean{Credibility.BlendMoments.gap, Credibility.BlendMoments.bestZ}
+  \leanok
+  \uses{def:errVar}
+  Let $g = \Var(\hmu_j - \hmu) = \Var(\hmu) - 2\cov(\hmu_j, \hmu) + \Var(\hmu_j)$
+  and
+  \[
+    z^* = \frac{\Var(\hmu) - \cov(\hmu_j, \hmu) + \cov(\hmu_j, \mu_j) - \cov(\hmu, \mu_j)}{g},
+  \]
+  the general credibility factor \eqth{7}.
+\end{definition}
+
+\begin{lemma}[Vertex form]\label{lem:errVar_eq}
+  \lean{Credibility.BlendMoments.errVar_eq}
+  \leanok
+  \uses{def:bestZ}
+  If $g \neq 0$ then $E(z) = E(z^*) + g\,(z - z^*)^2$ for all $z$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides are quadratics in $z$ with leading coefficient $g$; since
+  $g z^*$ equals the numerator of $z^*$, their linear and constant terms
+  agree too.
+\end{proof}
+
+\begin{theorem}[Eq.\ (7) is optimal]\label{thm:bestZ_optimal}
+  \lean{Credibility.BlendMoments.bestZ_optimal}
+  \leanok
+  \uses{lem:errVar_eq}
+  If $g > 0$ then $E(z^*) \le E(z)$ for all $z$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $g(z - z^*)^2 \ge 0$.
+\end{proof}
+
+\begin{theorem}[\ldots and unique]\label{thm:bestZ_unique}
+  \lean{Credibility.BlendMoments.bestZ_unique}
+  \leanok
+  \uses{lem:errVar_eq}
+  If $g > 0$ and $E(z) \le E(z^*)$ then $z = z^*$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Then $g(z - z^*)^2 \le 0$, so $(z - z^*)^2 = 0$.
+\end{proof}
+
+\begin{definition}[Clipping, \eqth{34}]\label{def:clipZ}
+  \lean{Credibility.BlendMoments.clipZ}
+  \leanok
+  $\operatorname{clip}(z) = \max(0, \min(z, 1))$.
+\end{definition}
+
+\begin{lemma}\label{lem:clipZ}
+  \lean{Credibility.BlendMoments.clipZ_mem, Credibility.BlendMoments.clipZ_of_mem,
+        Credibility.BlendMoments.sq_clipZ_sub_le}
+  \leanok
+  \uses{def:clipZ}
+  $\operatorname{clip}(z) \in [0, 1]$, it fixes $[0, 1]$, and for $b \in [0, 1]$,
+  $(\operatorname{clip}(z) - b)^2 \le (z - b)^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Cases $z < 0$, $z \in [0, 1]$, $z > 1$.
+\end{proof}
+
+\begin{theorem}[When clipping is harmless, PLAN G3]\label{thm:clipZ}
+  \lean{Credibility.BlendMoments.errVar_clipZ_le, Credibility.BlendMoments.errVar_clipZ_bestZ,
+        Credibility.BlendMoments.errVar_clipZ_le_iff}
+  \leanok
+  \uses{def:clipZ, lem:errVar_eq, thm:bestZ_unique}
+  Let $g > 0$. Then $E(\operatorname{clip} z) \le E(z)$ for all $z$ if and only if
+  $z^* \in [0, 1]$. Clipping the best factor costs
+  $E(\operatorname{clip} z^*) - E(z^*) = g\,(\operatorname{clip} z^* - z^*)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:clipZ}
+  $E(z) = E(z^*) + g(z - z^*)^2$ (Lemma~\ref{lem:errVar_eq}), and clipping moves $z$
+  towards every point of $[0, 1]$ (Lemma~\ref{lem:clipZ}). Conversely, apply the hypothesis
+  at $z = z^*$ and use uniqueness (Theorem~\ref{thm:bestZ_unique}).
+\end{proof}
+
+\begin{remark}[{Finding 36: clipping $z$ is harmless exactly when the true $z$ is in $[0,1]$}]\label{rem:clipZ}
+  \uses{thm:clipZ, thm:z1_gt_one_iff}
+  With known moments, eq.~\eqth{34} never hurts when $z^* \in [0, 1]$ and always hurts at
+  $z^*$ otherwise, by $g\,\operatorname{dist}(z^*, [0, 1])^2$. For two cohorts $z_1^* > 1$
+  below the singularity iff $\sigma_1 < \sigma_2\rho$ (Theorem~\ref{thm:z1_gt_one_iff}).
+  For an estimated $\hat z$ the statement is about the deterministic error curve, not the
+  error in a draw.
+\end{remark}
+
+% ---------------------------------------------------------------------------

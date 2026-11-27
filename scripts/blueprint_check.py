@@ -41,11 +41,20 @@ CONTENT = ROOT / "blueprint" / "src" / "content.tex"
 THM = "theorem|lemma|proposition|corollary"
 ENV = re.compile(r"\\begin\{(" + THM + r"|definition)\}(.*?)\\end\{\1\}", re.S)
 PROOF = re.compile(r"\s*\\begin\{proof\}(.*?)\\end\{proof\}", re.S)
+INPUT = re.compile(r"(?<!\\)\\input\{([^}]*)\}")
+
+
+def read_content(path=CONTENT):
+    """content.tex with each \\input{file} replaced by that file (paths relative
+    to blueprint/src, as TeX resolves them), comments stripped."""
+    text = re.sub(r"(?<!\\)%.*", "", path.read_text())
+    src = CONTENT.parent
+    return INPUT.sub(lambda m: read_content(src / (m.group(1) + ".tex")), text)
 
 
 def blueprint():
     """Map each \\lean name to (label, proof ok)."""
-    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    text = read_content()
     out, errors = {}, []
     for m in ENV.finditer(text):
         kind, body = m.group(1), m.group(2)
@@ -65,7 +74,7 @@ def blueprint():
 
 def uses_edges():
     """(proved \\lean names, [(used label, its \\lean names)]) per proved statement."""
-    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    text = read_content()
     done = {r["name"] for f in SRC.glob("*.lean") for r in scan(f)[1] if r["done"]}
     labels, entries = {}, []
     for m in ENV.finditer(text):
@@ -87,7 +96,7 @@ def uses_edges():
 
 def components():
     """Connected components of the dependency graph, largest first."""
-    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    text = read_content()
     adj, line = {}, {}
     for m in ENV.finditer(text):
         body = m.group(2)
@@ -124,7 +133,7 @@ def components():
 
 def decls():
     """Every \\lean name in the blueprint, in order, without repeats."""
-    text = re.sub(r"(?<!\\)%.*", "", CONTENT.read_text())
+    text = read_content()
     names = [n.strip() for g in re.findall(r"\\lean\{([^}]*)\}", text) for n in g.split(",")]
     return list(dict.fromkeys(n for n in names if n))
 

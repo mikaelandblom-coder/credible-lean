@@ -1,0 +1,439 @@
+\chapter{Extension: one-dimensional weighted k-means}\label{ch:kmeans}
+% Not in the thesis: README "Later goals -> Small lemmas" (a).
+% Lean: Credibility/KMeans.lean
+
+Not in the thesis. Grouping cohorts by a scalar (e.g.\ their estimated
+means) with weighted k-means: optimal groups are intervals of the sorted
+values, so they can be found exactly by dynamic programming (Fisher 1958;
+Nielsen \& Nock, arXiv:1403.2485).
+
+\begin{definition}[Weighted k-means cost]\label{def:kmeansCost}
+  \lean{Credibility.kmeansCost}
+  \leanok
+  For points $x_i \in \mathbb{R}$ with weights $w_i$, labels $c_i$ and
+  centers $\mu_a$, the cost is $\sum_i w_i (x_i - \mu_{c_i})^2$.
+\end{definition}
+
+\begin{lemma}[Relabelling one point]\label{lem:kmeansCost_update}
+  \lean{Credibility.kmeansCost_update}
+  \leanok
+  \uses{def:kmeansCost}
+  Moving point $j$ to label $b$ changes the cost by
+  $w_j\bigl((x_j-\mu_b)^2 - (x_j-\mu_{c_j})^2\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only the $j$-th term changes.
+\end{proof}
+
+\begin{lemma}[Nearest center]\label{lem:kmeans_nearest}
+  \lean{Credibility.kmeans_nearest}
+  \leanok
+  \uses{def:kmeansCost}
+  If all $w_i > 0$ and $(c,\mu)$ minimises the cost, every point sits at a
+  nearest center: $(x_j-\mu_{c_j})^2 \le (x_j-\mu_b)^2$ for all $j$, $b$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:kmeansCost_update}
+  Otherwise moving $j$ to $b$ lowers the cost, by Lemma~\ref{lem:kmeansCost_update}.
+\end{proof}
+
+\begin{theorem}[Optimal groups are intervals]\label{thm:kmeans_contiguous}
+  \lean{Credibility.kmeans_contiguous}
+  \leanok
+  \uses{def:kmeansCost}
+  If all $w_i > 0$ and $(c,\mu)$ minimises the cost, then
+  $x_i < x_j < x_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:kmeans_nearest}
+  Let $a = c_i = c_l$ and suppose $b = c_j \ne a$. If $\mu_a \ne \mu_b$:
+  $f(t) = (t-\mu_a)^2 - (t-\mu_b)^2 = (\mu_b-\mu_a)(2t-\mu_a-\mu_b)$ is affine
+  and nonconstant, with $f(x_i) \le 0$, $f(x_l) \le 0$ and $f(x_j) \ge 0$ by
+  Lemma~\ref{lem:kmeans_nearest}, impossible for $x_i < x_j < x_l$. If
+  $\mu_a = \mu_b$: relabel group $b$ as $a$ (cost unchanged) and give a point
+  of $\{i,l\}$ that is not at $\mu_a$ (one exists since $x_i \ne x_l$) the
+  freed label $b$ with center at itself; the cost drops strictly.
+\end{proof}
+
+\section{Choosing cohorts: pooling is weighted k-means}\label{sec:kmeans_bridge}
+% Lean: Credibility/KMeansBridge.lean; notes/kmeans-bridge.md
+
+Units $i$ have fixed levels $x_i$ and unbiased, uncorrelated estimates
+$X_i$ with $\operatorname{Var} X_i = 1/w_i$ (exposure $w_i > 0$). Labels
+$c$ put them into cohorts; cohort $a$ pools by inverse variance,
+$\bar X_a = \sum_{c(i)=a} w_i X_i / W_a$, so $\mathbb E \bar X_a = \bar x_a$
+and $\operatorname{Var} \bar X_a = 1/W_a$.
+
+\begin{definition}[Cohort weight, mean and pooling loss]\label{def:poolLoss}
+  \lean{Credibility.cohortMean, Credibility.poolVar, Credibility.poolLoss}
+  \leanok
+  \uses{def:kmeansCost, def:invVarWeight, def:groupWeight}
+  $W_a = \sum_{c(i)=a} w_i$ (the group weight of Definition~\ref{def:groupWeight}). Cohort $a$ pools with the inverse-variance
+  weights $a_i$ of \eqth{23} for the variances $\sigma_i^2 = 1/w_i$ of its
+  units: $\bar x_a = \mathbb E\bar X_a = \sum_{c(i)=a} a_i x_i$ and
+  $\Var \bar X_a = \sum_{c(i)=a} a_i^2 \sigma_i^2$. The exposure-weighted
+  total MSE of pooling is
+  $L(c) = \sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
+  = \sum_i w_i\bigl((\bar x_{c(i)} - x_i)^2 + \Var \bar X_{c(i)}\bigr)$.
+\end{definition}
+
+\begin{lemma}[The pooled mean and variance]\label{lem:cohortMean_eq}
+  \lean{Credibility.invVarWeight_cohort, Credibility.cohortMean_eq, Credibility.poolVar_eq_sum}
+  \leanok
+  \uses{def:poolLoss}
+  The weights \eqth{23} are $a_i = w_i / W_a$, so
+  $\bar x_a = \sum_{c(i)=a} w_i x_i / W_a$ and
+  $\Var \bar X_a = \sum_{c(i)=a} (w_i/W_a)^2 / w_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(1/w_i)^{-1} = w_i$.
+\end{proof}
+
+\begin{lemma}[The pooled variance is $1/W_a$]\label{lem:poolVar_eq}
+  \lean{Credibility.poolVar_eq}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\Var \bar X_{c(i)} = 1/W_{c(i)}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:invVarWeight_value}
+  The minimal value $(\sum \sigma_i^{-2})^{-1}$ of
+  Lemma~\ref{lem:invVarWeight_value}, with $\sigma_i^{-2} = w_i$.
+\end{proof}
+
+\begin{lemma}[Pooling by exposure is the best unbiased pooling]\label{lem:poolVar_le}
+  \lean{Credibility.poolVar_le}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$ and weights $u_i$ on the units of cohort $a$ sum to one,
+  then $\Var \bar X_a \le \sum_{c(i)=a} u_i^2 / w_i$: no other unbiased
+  pooling of the cohort has a smaller variance.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:invVarWeight_optimal}
+  Theorem~\ref{thm:invVarWeight_optimal} with $\sigma_i^2 = 1/w_i$.
+\end{proof}
+
+\begin{lemma}[Used cohorts have positive weight]\label{lem:groupWeight_pos}
+  \lean{Credibility.groupWeight_pos}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $W_{c(i)} > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:groupWeight_eq_filter}
+  A sum of positive terms, one of them $w_i$.
+\end{proof}
+
+\begin{lemma}[One per cohort]\label{lem:sum_div_groupWeight}
+  \lean{Credibility.sum_div_groupWeight}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\sum_i w_i / W_{c(i)} = \#\{\text{nonempty cohorts}\}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:groupWeight_pos}
+  Sum cohort by cohort: each gives $W_a / W_a = 1$.
+\end{proof}
+
+\begin{lemma}[Deviations are orthogonal to cohort constants]\label{lem:sum_mul_sub_cohortMean}
+  \lean{Credibility.sum_mul_sub_cohortMean}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then $\sum_i w_i (x_i - \bar x_{c(i)})\, g_{c(i)} = 0$
+  for any $g$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:groupWeight_pos, lem:cohortMean_eq}
+  Within cohort $a$ the sum is $g_a\bigl(\sum_{c(i)=a} w_i x_i - W_a \bar x_a\bigr) = 0$.
+\end{proof}
+
+\begin{lemma}[Relabelling cohorts]\label{lem:poolLoss_comp}
+  \lean{Credibility.groupWeight_comp, Credibility.cohortMean_comp, Credibility.poolLoss_comp}
+  \leanok
+  \uses{def:poolLoss}
+  Renaming the labels by an injective map $f$ changes no cohort weight or
+  mean, and leaves $L(f \circ c) = L(c)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortMean_eq}
+  $f(c(i)) = f(a)$ iff $c(i) = a$.
+\end{proof}
+
+\begin{lemma}[Cohort means are the best centers]\label{lem:kmeansCost_cohortMean_le}
+  \lean{Credibility.kmeansCost_cohortMean_le}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then for fixed labels $c$ and any centers $\mu$, the
+  k-means cost at $\bar x$ is at most the cost at $\mu$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_mul_sub_cohortMean}
+  Expand $(x_i - \mu_a)^2$ around $\bar x_a$: the cross term vanishes since
+  $\sum_{c(i)=a} w_i (x_i - \bar x_a) = 0$, and the rest is
+  $\sum_i w_i (\bar x_{c(i)} - \mu_{c(i)})^2 \ge 0$.
+\end{proof}
+
+\begin{theorem}[Pooling is weighted k-means]\label{thm:pool_mse_eq_kmeansCost}
+  \lean{Credibility.pool_mse_eq_kmeansCost}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$, then
+  $L(c) = \sum_i w_i (x_i - \bar x_{c(i)})^2 + \#\{\text{nonempty cohorts}\}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_div_groupWeight, lem:poolVar_eq}
+  $\Var \bar X_{c(i)} = 1/W_{c(i)}$ (Lemma~\ref{lem:poolVar_eq}), and each
+  nonempty cohort contributes $\sum_{c(i)=a} w_i / W_a = 1$
+  (Lemma~\ref{lem:sum_div_groupWeight}).
+\end{proof}
+
+\begin{corollary}[Optimal pooled cohorts are intervals]\label{cor:pool_optimal_contiguous}
+  \lean{Credibility.pool_optimal_contiguous}
+  \leanok
+  \uses{def:poolLoss}
+  If all $w_i > 0$ and $c$ minimises $L$ among labellings into the labels
+  $\kappa$ (at most $|\kappa|$ cohorts), then $x_i < x_j < x_l$ and
+  $c_i = c_l$ imply $c_j = c_i$, for any variances $1/w_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:pool_mse_eq_kmeansCost, lem:kmeansCost_cohortMean_le, lem:poolLoss_comp, thm:kmeans_contiguous}
+  Restrict the labels to the $m$ used by $c$. For $c'$ with these labels and
+  any centers $\mu'$, by Lemma~\ref{lem:kmeansCost_cohortMean_le} and
+  Theorem~\ref{thm:pool_mse_eq_kmeansCost},
+  $\mathrm{cost}(c',\mu') \ge \mathrm{cost}(c',\bar x') = L(c') - m(c')
+  \ge L(c) - m = \mathrm{cost}(c, \bar x)$, since $m(c') \le m$. So
+  $(c, \bar x)$ is jointly k-means optimal, and
+  Theorem~\ref{thm:kmeans_contiguous} applies.
+\end{proof}
+
+\begin{remark}[Finding 14: when optimal cohorts are intervals]\label{rem:kmeans_bridge}
+  \uses{cor:pool_optimal_contiguous, thm:blend_optimal_contiguous, cor:group_optimal_contiguous}
+  Units with fixed levels $x_i$ and uncorrelated estimates of variance $v_i$
+  are grouped into at most $k$ cohorts, each pooled by inverse variance
+  ($w_i = 1/v_i$). Then
+  $\sum_i w_i\,\mathbb E(\bar X_{c(i)} - x_i)^2
+  = \sum_i w_i (x_i - \bar x_{c(i)})^2 + \#\text{cohorts}$, a weighted
+  k-means cost (Theorem~\ref{thm:pool_mse_eq_kmeansCost}), so the optimal cohorts
+  are intervals of the sorted levels, for any $v_i$
+  (Corollary~\ref{cor:pool_optimal_contiguous}).
+  With unequal $v_i$ this fails for the unweighted MSE and for a credibility
+  blend towards a known $\mu$: with $x = (-\tfrac12, 0, \tfrac12)$, $\mu = 0$,
+  $\tau^2 = \tfrac12$, $v = (16, \tfrac12, 16)$ and at most two cohorts,
+  $\{1,3\}\{2\}$ has total MSE $0.680$ and the best intervals $0.742$. The
+  noisy middle cohort sits at $\mu$ and is better served by the collective
+  than by a neighbour. With a common variance the blend's optimal cohorts are
+  intervals again (Theorem~\ref{thm:blend_optimal_contiguous}).
+  Not to be confused with Corollary~\ref{cor:group_optimal_contiguous} (Finding 41): there nothing
+  is pooled, each cohort keeps its estimate and is blended towards a free group mean, the k-means
+  weights are $u_j(1-z_j)^2$ (the noisy cohorts count most, not the large ones), any $D_j$ is
+  allowed but $\tau^2$ must be common, and there is no cost per group, so it only bites for a fixed
+  number of groups.
+\end{remark}
+
+\subsection{Common variance: the credibility blend}
+
+Now $\operatorname{Var} X_i = V$ for all units. Cohort $a$ has $n_a$ units,
+$\bar X_a$ is their plain mean ($\mathbb E \bar X_a = \bar x_a$,
+$\operatorname{Var} \bar X_a = V/n_a$), and each unit is predicted by the
+blend $\mu + z_a(\bar X_a - \mu)$ with $\mu$, $\tau^2$ known. K-means does
+not apply, but a swap argument does.
+
+\begin{definition}[The credibility factor of a cohort]\label{def:sizeZ}
+  \lean{Credibility.sizeMoments, Credibility.sizeZ}
+  \leanok
+  \uses{def:bestZ}
+  For a cohort of $n$ units, take the moments of the blend
+  $z\bar X_a + (1-z)\mu$ with $\mu$ known: $\Var(\bar X_a) = \tau^2 + V/n$,
+  $\cov(\bar X_a, \mu_a) = \Var(\mu_a) = \tau^2$, and the collective $\mu$
+  constant. Its credibility factor $z_n$ is the best factor \eqth{7} of
+  these moments.
+\end{definition}
+
+\begin{lemma}[$z_n = n\tau^2/(n\tau^2 + V)$]\label{lem:sizeZ_eq}
+  \lean{Credibility.sizeZ_eq}
+  \leanok
+  \uses{def:sizeZ}
+  If $n > 0$ and $n\tau^2 + V > 0$, then $z_n = n\tau^2/(n\tau^2 + V)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \eqth{7} reads $\tau^2/(\tau^2 + V/n)$.
+\end{proof}
+
+\begin{theorem}[$z_n$ is the best credibility factor]\label{thm:sizeZ_optimal}
+  \lean{Credibility.sizeZ_optimal}
+  \leanok
+  \uses{def:sizeZ}
+  If $n > 0$, $V \ge 0$ and $\tau^2 > 0$, then $z_n$ minimises the error
+  variance \eqth{6} of these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bestZ_optimal}
+  The curvature $\tau^2 + V/n$ is positive, so
+  Theorem~\ref{thm:bestZ_optimal} applies.
+\end{proof}
+
+\begin{definition}[Blend loss]\label{def:blendLoss}
+  \lean{Credibility.blendLoss, Credibility.blendGain, Credibility.blendF}
+  \leanok
+  \uses{def:poolLoss, def:sizeZ}
+  $f_n = z_n(2 - z_n)/n$, and the total MSE is
+  $B(c) = \sum_i \bigl((\mu + z_{n_a}(\bar x_a - \mu) - x_i)^2 + z_{n_a}^2 V/n_a\bigr)$,
+  $a = c(i)$.
+\end{definition}
+
+\begin{lemma}[The blend pools by \eqth{23}]\label{lem:blend_pool_eq}
+  \lean{Credibility.blend_pool_eq}
+  \leanok
+  \uses{def:blendLoss}
+  If $V > 0$, give every unit the exposure $w_i = 1/V$. Then the pooled mean
+  and variance of Definition~\ref{def:poolLoss} are the plain mean
+  $\bar x_a$ and $V/n_a$ used in $B$: the blend shrinks the \eqth{23} pool
+  of each cohort.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:cohortMean_eq, lem:poolVar_eq}
+  With equal weights $1/V$ cancels in the mean, and
+  $1/W_a = 1/(n_a/V) = V/n_a$ (Lemma~\ref{lem:poolVar_eq}).
+\end{proof}
+
+\begin{lemma}[Only size and sum matter]\label{lem:blendLoss_eq}
+  \lean{Credibility.blendLoss_eq}
+  \leanok
+  \uses{def:blendLoss}
+  With $S_a = \sum_{c(i)=a}(x_i - \mu)$,
+  $B(c) = \sum_i (x_i - \mu)^2 - \sum_a \bigl(f_{n_a} S_a^2 - z_{n_a}^2 V\bigr)$,
+  the sum over nonempty cohorts.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:groupWeight_pos, lem:cohortMean_eq}
+  With $y_i = x_i - \mu$ and $\bar x_a - \mu = S_a/n_a$, unit $i$ has MSE
+  $(z S_a/n_a - y_i)^2 + z^2V/n_a$; summing over the cohort gives
+  $\sum y_i^2 - (2z - z^2) S_a^2/n_a + z^2 V$.
+\end{proof}
+
+\begin{lemma}[Swapping two units]\label{lem:groupWeight_swap}
+  \lean{Credibility.groupWeight_swap}
+  \leanok
+  Swapping units $i$, $j$ of different cohorts adds $y_j - y_i$ to the sum
+  $\sum_{c(k)=c(i)} y_k$, subtracts it from the sum of $c(j)$, and leaves
+  the other cohorts' sums unchanged.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:groupWeight_eq_filter}
+  Reindex the sum by the swap; only the terms of $i$ and $j$ change.
+\end{proof}
+
+\begin{lemma}[Positive weights]\label{lem:blendF_pos}
+  \lean{Credibility.blendF_pos}
+  \leanok
+  \uses{def:blendLoss}
+  If $V \ge 0$, $\tau^2 > 0$ and $n > 0$, then $f_n > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sizeZ_eq}
+  $0 < z_n \le 1$ by Lemma~\ref{lem:sizeZ_eq}, so $z_n(2 - z_n) > 0$.
+\end{proof}
+
+\begin{lemma}[Swap formula]\label{lem:blendLoss_swap}
+  \lean{Credibility.blendLoss_swap}
+  \leanok
+  \uses{def:blendLoss}
+  Swapping $i \in A$ and $j \in B \ne A$ changes $B(c)$ by
+  $-\bigl(2d(f_A S_A - f_B S_B) + (f_A + f_B)d^2\bigr)$, $d = x_j - x_i$,
+  where $f_A = f_{n_A}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:blendLoss_eq, lem:groupWeight_swap}
+  The swap keeps all sizes, hence all $f$ and $z$, and moves $d$ from $S_B$
+  to $S_A$ (Lemma~\ref{lem:groupWeight_swap}); expand in
+  Lemma~\ref{lem:blendLoss_eq}.
+\end{proof}
+
+\begin{theorem}[Optimal blend cohorts are intervals]\label{thm:blend_optimal_contiguous}
+  \lean{Credibility.blend_optimal_contiguous}
+  \leanok
+  \uses{def:blendLoss}
+  If $V \ge 0$, $\tau^2 > 0$ and $c$ minimises $B$ among labellings into
+  $\kappa$, then $x_i < x_j < x_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:blendLoss_swap, lem:blendF_pos, lem:groupWeight_pos}
+  Suppose $c_j = B \ne A = c_i$ and let $D = f_A S_A - f_B S_B$, with
+  $f_A, f_B > 0$ (Lemma~\ref{lem:blendF_pos}). Swapping $i$, $j$
+  ($d = x_j - x_i > 0$) cannot lower $B$, so by Lemma~\ref{lem:blendLoss_swap}
+  $2dD \le -(f_A + f_B)d^2 < 0$ and $D < 0$. Swapping $l$, $j$
+  ($d = x_j - x_l < 0$) gives $D > 0$ in the same way.
+\end{proof}
+
+\begin{lemma}[With one common $\tau^2$ the group loss is a k-means cost]\label{lem:groupLoss_eq}
+  \lean{Credibility.groupLoss, Credibility.groupLoss_eq}
+  \leanok
+  \uses{def:kmeansCost, thm:Core_blend_given_level}
+  Cohorts keep their estimates (level $\theta_j$, noise $D_j$, weight $u_j$) and are blended
+  towards their group's mean $m_g$ with $z_j = \tau^2/(\tau^2 + D_j)$ and one fixed $\tau^2$. The
+  oracle loss (Theorem~\ref{thm:Core_blend_given_level})
+  $\sum_j u_j\bigl[z_j^2D_j + (1-z_j)^2(m_{c(j)} - \theta_j)^2\bigr]$ equals
+  $\sum_j u_jz_j^2D_j + \mathrm{cost}(u(1-z)^2, \theta, c, m)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Term by term; the first part does not depend on $(c, m)$.
+\end{proof}
+
+\begin{corollary}[Optimal groups with one common $\tau^2$ are intervals]\label{cor:group_optimal_contiguous}
+  \lean{Credibility.group_optimal_contiguous}
+  \leanok
+  \uses{lem:groupLoss_eq}
+  If all $u_j, D_j > 0$, $\tau^2 > 0$ and $(c, m)$ minimises the oracle loss, then
+  $\theta_i < \theta_j < \theta_l$ and $c_i = c_l$ imply $c_j = c_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:groupLoss_eq, thm:kmeans_contiguous}
+  By Lemma~\ref{lem:groupLoss_eq}, $(c, m)$ minimises the k-means cost with weights
+  $u_j(1-z_j)^2 = u_jD_j^2/(\tau^2 + D_j)^2 > 0$; apply Theorem~\ref{thm:kmeans_contiguous}.
+\end{proof}
+
+\begin{remark}[Finding 41: a \texorpdfstring{$\tau^2$}{tau squared} per group breaks intervals]\label{rem:group_variances}
+  \uses{thm:blend_optimal_contiguous, cor:group_optimal_contiguous}
+  Now cohorts are not pooled: each keeps its estimate (level $\theta_j$, noise $D_j$) and is blended
+  towards its group's own mean $m_g$. If each group also has its own $\tau_g^2$, the optimal groups
+  need not be intervals, even with a common $D$. With $D = 1$,
+  $\theta = (-5, -0.2, -0.1, 0, 0.1, 0.2, 5)$ and two groups, $\{-5, 5\}$ and the middle have
+  oracle MSE $2.021$ against $4.663$ for the best intervals. A group costs
+  $n D s^2/(s^2 + D) \le nD$, concave in its spread $s^2$, so a group that does not shrink collects the
+  outliers of both tails. With one common $\tau^2$ the loss for fixed $\tau^2$ is a weighted k-means
+  cost with weights $u_j(1 - z_j)^2$, and the optimal groups are intervals
+  (Corollary~\ref{cor:group_optimal_contiguous}; \texttt{notes/group-variances.md}). This is not
+  the pooling result of Remark~\ref{rem:kmeans_bridge}: the same k-means theorem, but other weights
+  and no cost per group.
+\end{remark}
+
+\begin{remark}[No cap needed]
+  Swaps keep the set of used labels and all cohort sizes, so the theorem
+  holds for exactly $k$, at most $k$, or any constraint on the sizes. It
+  breaks for unequal variances because then $z_a$ depends on which units
+  share a cohort, not only on how many (Remark~\ref{rem:kmeans_bridge}).
+\end{remark}

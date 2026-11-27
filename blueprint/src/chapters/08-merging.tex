@@ -1,0 +1,110 @@
+\chapter{Extension: when merging two cohorts pays off}\label{ch:merging}
+% Not in the thesis: Result A of notes/merging-cohorts.md (Case A).
+% Lean: Credibility/Merging.lean
+
+Not in the thesis; it answers the question of
+Remark~\ref{rem:equalZ_grouping}. Take two cohorts on their own, as in
+Chapter~\ref{ch:two}, with $\mu$ estimated from the pair. Let
+$v_j = \sigma_j^2$ be the error variances, $c$ the error covariance
+($c = \sigma_1\sigma_2\rho$ in Chapter~\ref{ch:two}),
+$V = \operatorname{Var}(\hmu_1 - \hmu_2)$ and $d = \mathbb{E}(\mu_1-\mu_2)^2$
+the true gap between the levels. An unbiased linear predictor of $\mu_1$ is
+$\hmu_1 - \beta(\hmu_1 - \hmu_2)$. A working model with gap variance $x$ uses
+$\beta(x) = (v_1 - c)/(V + x)$: keeping the cohorts separate (the thesis model)
+is $x = 2\tau^2$, merging them ($\mu_1 = \mu_2$) is $x = 0$. Under the thesis
+model $\beta(2\tau^2)$ is the weight $(1 - z_1)b_2$ of \eqth{32}.
+
+\begin{definition}[Merging quantities]\label{def:merging}
+  \lean{Credibility.Merging.V, Credibility.Merging.moments, Credibility.Merging.mse,
+        Credibility.Merging.weight, Credibility.Merging.Q,
+        Credibility.Merging.excessLoss}
+  \leanok
+  \uses{def:bestZ}
+  $V = v_1 + v_2 - 2c$ and $Q = (v_1 - c)^2 + (v_2 - c)^2$. The predictor
+  $\hmu_1 - \beta(\hmu_1 - \hmu_2)$ is the blend $z\hmu_1 + (1-z)\hmu_2$ with
+  $z = 1 - \beta$, so its mean squared error $\operatorname{mse}_1(\beta)$ is
+  \eqth{6} at $z = 1 - \beta$, for the second moments
+  $\mathbb E(\hmu_1 - \mu_1)^2 = v_1$,
+  $\mathbb E(\hmu_2 - \mu_1)^2 = v_2 + d$ and
+  $\mathbb E(\hmu_1 - \mu_1)(\hmu_2 - \mu_1) = c$; likewise for cohort 2. The
+  weight under a working gap variance $x$ is $\beta_j(x) = 1 - z^*$, with
+  $z^*$ the factor \eqth{7} when the gap is $x$. The excess loss of the
+  working value $d_w$ is
+  $\Delta L(d_w) = \sum_{j=1}^2 \bigl(\operatorname{mse}_j(\beta_j(d_w)) -
+  \operatorname{mse}_j(\beta_j(d))\bigr)$.
+\end{definition}
+
+\begin{lemma}[Closed forms]\label{lem:merging_apply}
+  \lean{Credibility.Merging.mse_apply, Credibility.Merging.weight_eq}
+  \leanok
+  \uses{def:merging}
+  $\operatorname{mse}_j(\beta) = v_j - 2\beta(v_j - c) + \beta^2(V + d)$, and
+  $\beta_j(x) = (v_j - c)/(V + x)$ if $V + x \ne 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand \eqth{6} and \eqth{7}; the curvature is $V + x$.
+\end{proof}
+
+\begin{lemma}[Excess-loss identity]\label{lem:mse_eq}
+  \lean{Credibility.Merging.mse_eq}
+  \leanok
+  \uses{def:merging}
+  If $V + d \ne 0$, then
+  $\operatorname{mse}_j(\beta) = \operatorname{mse}_j(\beta^*) + (V + d)(\beta - \beta^*)^2$
+  with $\beta^* = (v_j - c)/(V + d)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:errVar_eq}
+  Lemma~\ref{lem:errVar_eq}: \eqth{6} is a parabola with vertex at \eqth{7}
+  and curvature $V + d$.
+\end{proof}
+
+\begin{lemma}[Closed form of the excess loss]\label{lem:excessLoss_eq}
+  \lean{Credibility.Merging.excessLoss_eq}
+  \leanok
+  \uses{lem:mse_eq}
+  If $V + d \ne 0$ and $V + d_w \ne 0$, then
+  \[
+    \Delta L(d_w) = Q\,(V + d)\Bigl(\frac{1}{V + d_w} - \frac{1}{V + d}\Bigr)^2.
+  \]
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mse_eq, lem:merging_apply}
+  By Lemma~\ref{lem:mse_eq} cohort $j$ contributes $(V + d)(\beta_j(d_w) - \beta_j(d))^2$,
+  and $\beta_j(d_w) - \beta_j(d) = (v_j - c)\bigl(1/(V + d_w) - 1/(V + d)\bigr)$.
+\end{proof}
+
+\begin{theorem}[Result A: midpoint rule]\label{thm:merge_iff}
+  \lean{Credibility.Merging.merge_iff}
+  \leanok
+  \uses{lem:excessLoss_eq}
+  Let $\tau^2 > 0$, $V > 0$, $Q > 0$ and $d \ge 0$. Merging beats keeping the
+  cohorts separate, $\Delta L(0) < \Delta L(2\tau^2)$, if and only if
+  \[
+    d\,(V + \tau^2) < V\tau^2, \qquad\text{i.e.}\qquad d < \frac{V\tau^2}{V + \tau^2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:excessLoss_eq}
+  The common factor $Q(V + d) > 0$ cancels. With $t = 1/(V + d)$,
+  \[
+    \Bigl(\frac{1}{V + 2\tau^2} - t\Bigr)^2 - \Bigl(\frac1V - t\Bigr)^2
+    = \frac{4\tau^2\bigl(V\tau^2 - d(V + \tau^2)\bigr)}{V^2(V + 2\tau^2)^2(V + d)}.
+  \]
+  So merging wins iff $t$ lies above the midpoint of $1/V$ and $1/(V + 2\tau^2)$.
+\end{proof}
+
+\begin{remark}\label{rem:merge_reading}
+  \uses{thm:merge_iff}
+  The condition involves only $V$, $\tau^2$ and $d$, not $z_1$ against $z_2$.
+  Correlation enters through $V = \sigma_1^2 + \sigma_2^2 - 2\sigma_1\sigma_2\rho$:
+  $\rho > 0$ makes merging harder. Under the thesis model $d = 2\tau^2$, and
+  $2\tau^2(V + \tau^2) > V\tau^2$, so merging never pays. Because $Q$ is a
+  common factor, each cohort on its own prefers the same choice.
+\end{remark}
+
+% ---------------------------------------------------------------------------

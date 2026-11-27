@@ -1,0 +1,385 @@
+\chapter{Extension: tapering and damping off-diagonal entries}\label{ch:offdiag}
+% Not in the thesis: README "Later goals -> Small lemmas" (b), generalized by the
+% Schur product theorem. Lean: Credibility/OffDiagonal.lean
+
+Not in the thesis. A general fact about matrices: multiplying a covariance
+matrix entrywise by a correlation matrix (\emph{tapering}, as in
+Furrer--Genton--Nychka 2006) keeps it a covariance matrix. Damping the
+correlations by a common factor $\rho$ and the distance taper
+$\rho^{|t_i-t_j|}$ are two instances. $A \odot B$ is the entrywise
+(Hadamard) product.
+
+\begin{lemma}[A floor under a positive definite matrix]\label{lem:posDef_floor}
+  \lean{Matrix.PosDef.exists_posSemidef_sub_smul_one}
+  \leanok
+  If $A \succ 0$, then $A - cI \succeq 0$ for some $c > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Take $c$ the least eigenvalue of $A$; the spectrum of $A - cI$ is that of
+  $A$ shifted by $-c$.
+\end{proof}
+
+\begin{theorem}[Schur product theorem, Oppenheim-type]\label{thm:posDef_hadamard_of_diag_pos}
+  \lean{Credibility.posDef_hadamard_of_diag_pos}
+  \leanok
+  If $A \succ 0$, $B \succeq 0$ and $B_{ii} > 0$ for all $i$, then
+  $A \odot B \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posDef_floor}
+  With $c$ from Lemma~\ref{lem:posDef_floor},
+  $A \odot B = (A - cI)\odot B + c\operatorname{diag}(B_{ii})$: positive
+  semidefinite by the Schur product theorem (Mathlib), plus a positive
+  definite diagonal.
+\end{proof}
+
+\begin{theorem}[Tapering keeps a covariance matrix]\label{thm:hadamard_corr}
+  \lean{Credibility.posSemidef_hadamard_of_corr, Credibility.posDef_hadamard_of_corr,
+    Credibility.hadamard_diag_of_corr}
+  \leanok
+  Let $R \succeq 0$ with $R_{ii} = 1$ (a correlation matrix). Then
+  $(R\odot K)_{ii} = K_{ii}$; if $K \succeq 0$ then $R \odot K \succeq 0$, and if
+  $K \succ 0$ then $R \odot K \succ 0$. $R$ itself need not be definite
+  (e.g.\ $R = \mathbf 1\mathbf 1^T$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:posDef_hadamard_of_diag_pos}
+  The semidefinite case is the Schur product theorem; the definite case is
+  Theorem~\ref{thm:posDef_hadamard_of_diag_pos} with $A = K$, $B = R$.
+\end{proof}
+
+\section{Mixed-model algebra: Henderson's equations}
+
+General matrix lemmas for $V = ZGZ^T + R$, ported from Stat-Lean (Apache 2.0). They give a small
+form of $V^{-1}$ when the number of random effects is small.
+
+\begin{lemma}[Positive definite blocks]\label{lem:mme_posDef}
+  \lean{Matrix.PosDef.mul_mul_transpose_add, Matrix.PosDef.transpose_mul_inv_mul_add_inv}
+  \leanok
+  If $G \succ 0$ and $R \succ 0$, then $ZGZ^T + R \succ 0$ and $Z^TR^{-1}Z + G^{-1} \succ 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  A congruence of a positive definite matrix is positive semidefinite; add a positive definite one.
+\end{proof}
+
+\begin{theorem}[Push-through identity]\label{thm:pushThrough}
+  \lean{Matrix.pushThrough}
+  \leanok
+  \uses{lem:mme_posDef}
+  If $G \succ 0$ and $R \succ 0$, then
+  $GZ^T(ZGZ^T + R)^{-1} = (Z^TR^{-1}Z + G^{-1})^{-1}Z^TR^{-1}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef}
+  $(Z^TR^{-1}Z + G^{-1})\,GZ^T = Z^TR^{-1}(ZGZ^T + R)$; multiply by the two inverses.
+\end{proof}
+
+\begin{theorem}[Binomial inverse]\label{thm:inv_mul_mul_transpose_add}
+  \lean{Matrix.inv_mul_mul_transpose_add}
+  \leanok
+  \uses{lem:mme_posDef}
+  If $G \succ 0$ and $R \succ 0$, then
+  $(ZGZ^T + R)^{-1} = R^{-1} - R^{-1}Z(Z^TR^{-1}Z + G^{-1})^{-1}Z^TR^{-1}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef}
+  Multiply the right side by $ZGZ^T + R$ on the left: $(ZGZ^T + R)R^{-1}Z = ZG(Z^TR^{-1}Z + G^{-1})$,
+  so the product is $I$.
+\end{proof}
+
+\begin{theorem}[Henderson's mixed-model equations]\label{thm:hendersonMME}
+  \lean{Matrix.hendersonMME}
+  \leanok
+  \uses{thm:pushThrough}
+  Let $G \succ 0$, $R \succ 0$, $V = ZGZ^T + R$. Then $(\hat\beta, \hat b)$ solves
+  \[
+    \begin{pmatrix} X^TR^{-1}X & X^TR^{-1}Z \\ Z^TR^{-1}X & Z^TR^{-1}Z + G^{-1}\end{pmatrix}
+    \begin{pmatrix}\hat\beta \\ \hat b\end{pmatrix}
+    = \begin{pmatrix} X^TR^{-1}y \\ Z^TR^{-1}y\end{pmatrix}
+  \]
+  if and only if $\hat b = GZ^TV^{-1}(y - X\hat\beta)$ (the BLUP) and
+  $X^TV^{-1}X\hat\beta = X^TV^{-1}y$ (GLS).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:mme_posDef, thm:pushThrough, thm:inv_mul_mul_transpose_add}
+  By the push-through identity the second block row is $(Z^TR^{-1}Z + G^{-1})(\hat b - \text{BLUP}) = 0$,
+  and the precision block is invertible. Given that, the binomial inverse turns
+  $X^TR^{-1}Z\,GZ^TV^{-1}$ into $X^TR^{-1} - X^TV^{-1}$, so the first row is the GLS equation.
+\end{proof}
+
+\begin{lemma}[Symmetric forms]\label{lem:mme_dot}
+  \lean{Credibility.Core.dotProduct_transpose_mulVec, Credibility.Core.dotProduct_mulVec_of_symm,
+        Credibility.Core.transpose_eq_of_posDef, Credibility.Core.MMESolution}
+  \leanok
+  $u^T(A^Tw) = (Au)^Tw$; for $S = S^T$, $u^T(Sv) = (Su)^Tv$; a positive definite matrix is
+  symmetric. $\mathrm{MME}(\hat\beta, \hat b; y)$ denotes the system of
+  Theorem~\ref{thm:hendersonMME}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Transposition.
+\end{proof}
+
+\begin{theorem}[The mixed-model solution is the BLUP]\label{thm:hendersonMME_eq_blup}
+  \lean{Credibility.Core.hendersonMME_eq_blup}
+  \leanok
+  \uses{thm:hendersonMME, def:Blup}
+  Let $X$ have full column rank, $G \succ 0$, $R \succ 0$. If $(\hat\beta, \hat b)$ solves the
+  mixed-model equations for $y$, then $\hat b_k = d^{*T}y$ with $d^*$ the best linear unbiased
+  predictor of Theorem~\ref{thm:Blup_optimal} for $K = ZGZ^T + R$, $\ell = ZGe_k$, $x_0 = 0$:
+  the prediction of a random effect $b_k$ with $\cov(b) = G$, $\cov(y, b_k) = ZGe_k$, $E b_k = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hendersonMME, lem:mme_posDef, lem:mme_dot, lem:Blup_foc}
+  By Theorem~\ref{thm:hendersonMME}, $\hat b = GZ^TV^{-1}(y - X\hat\beta)$ with $\hat\beta$ the GLS
+  estimate, so $\hat b_k = \ell^TV^{-1}(y - X\hat\beta)$. Expanding $d^*$ with $x_0 = 0$ gives
+  $d^{*T}y = \ell^TV^{-1}y - \ell^TV^{-1}X(X^TV^{-1}X)^{-1}X^TV^{-1}y$, the same.
+\end{proof}
+
+\section{Damping}
+
+\begin{definition}[Damped matrix]\label{def:shrinkOffDiag}
+  \lean{Credibility.shrinkOffDiag}
+  \leanok
+  For a square matrix $A$ and $\rho\in\mathbb{R}$, $A^\rho$ has the entries
+  $A^\rho_{ii} = A_{ii}$ and $A^\rho_{ij} = \rho A_{ij}$ for $i \ne j$.
+\end{definition}
+
+\begin{lemma}[Convex combination]\label{lem:shrinkOffDiag_eq}
+  \lean{Credibility.shrinkOffDiag_eq}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $A^\rho = \rho A + (1-\rho)\operatorname{diag}(A_{11},\dots,A_{nn})$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries.
+\end{proof}
+
+\begin{lemma}[Damping is tapering]\label{lem:shrinkOffDiag_hadamard}
+  \lean{Credibility.shrinkOffDiag_eq_hadamard, Credibility.shrinkOffDiag_one_eq,
+    Credibility.posSemidef_ones}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $A^\rho = (\mathbf 1\mathbf 1^T)^\rho \odot A$, and
+  $(\mathbf 1\mathbf 1^T)^\rho = \rho\,\mathbf 1\mathbf 1^T + (1-\rho) I$ with
+  $\mathbf 1\mathbf 1^T \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; $\mathbf 1\mathbf 1^T$ is a Gram matrix.
+\end{proof}
+
+\begin{theorem}[Damping keeps positive (semi)definiteness]\label{thm:shrinkOffDiag_posDef}
+  \lean{Credibility.posSemidef_shrinkOffDiag, Credibility.posDef_shrinkOffDiag}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  If $A \succeq 0$ and $0 \le \rho \le 1$, then $A^\rho \succeq 0$. If moreover
+  $\rho < 1$ and $A_{ii} > 0$ for all $i$, then $A^\rho \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:shrinkOffDiag_hadamard, thm:hadamard_corr, thm:posDef_hadamard_of_diag_pos}
+  By Lemma~\ref{lem:shrinkOffDiag_hadamard}, $A^\rho$ is $A$ tapered by
+  $R = \rho\,\mathbf 1\mathbf 1^T + (1-\rho)I$, a correlation matrix for
+  $\rho\in[0,1]$ (Theorem~\ref{thm:hadamard_corr}). For $\rho < 1$, $R \succ 0$
+  and Theorem~\ref{thm:posDef_hadamard_of_diag_pos} applies with $A$ only
+  semidefinite.
+\end{proof}
+
+\begin{theorem}[Damping does not always repair]\label{thm:shrinkOffDiag_negOne}
+  \lean{Credibility.posSemidef_shrinkOffDiag_negOne_iff}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  Let $A$ be the $3 \times 3$ table with unit diagonal and all off-diagonal
+  entries $-1$; it is not positive semidefinite. For $\rho \ge 0$,
+  $A^\rho \succeq 0$ if and only if $\rho \le 1/2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Along $x = (1, 1, 1)$ the form is $3 - 6\rho$. For $\rho \le 1/2$ it is
+  $(1 - 2\rho)\|x\|^2 + \rho\sum_{i<j}(x_i - x_j)^2 \ge 0$.
+\end{proof}
+
+\section{Damping as shrinkage (PLAN G2)}
+
+\begin{definition}[Shrinkage loss]\label{def:dampLoss}
+  \lean{Credibility.Damping.loss, Credibility.Damping.signal, Credibility.Damping.noise,
+        Credibility.Damping.bestTheta}
+  \leanok
+  For estimates $\hat s_i$ ($i \in S$) with means $s_i$ and variances $V_i$ (given numbers),
+  $L(\theta) = \mathbb{E}\sum_i(\theta\hat s_i - s_i)^2
+  = \sum_i \bigl(\theta^2(s_i^2 + V_i) - 2\theta s_i^2 + s_i^2\bigr)$, and
+  $\theta^* = \sum s_i^2 / (\sum s_i^2 + \sum V_i)$.
+\end{definition}
+
+\begin{theorem}[The optimal damping]\label{thm:bestTheta}
+  \lean{Credibility.Damping.loss_eq_poly, Credibility.Damping.loss_eq,
+        Credibility.Damping.bestTheta_optimal, Credibility.Damping.bestTheta_mem,
+        Credibility.Damping.loss_bestTheta, Credibility.Damping.loss_one,
+        Credibility.Damping.loss_zero, Credibility.Damping.bestTheta_single}
+  \leanok
+  \uses{def:dampLoss}
+  If $\sum s_i^2 + \sum V_i > 0$: $L(\theta) = L(\theta^*) + (\sum s_i^2 + \sum V_i)(\theta - \theta^*)^2$,
+  so $\theta^*$ is optimal, with $L(\theta^*) = \sum s^2 \sum V / (\sum s^2 + \sum V)$,
+  $L(1) = \sum V$, $L(0) = \sum s^2$, and $\theta^* \in [0, 1]$ when all $V_i \ge 0$.
+  For one entry, $\theta^* = s^2/(s^2 + V)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Complete the square.
+\end{proof}
+
+\begin{theorem}[A safe $\theta$]\label{thm:dampSafe}
+  \lean{Credibility.Damping.loss_le_one_iff, Credibility.Damping.loss_le_zero_iff,
+        Credibility.Damping.safe_iff}
+  \leanok
+  \uses{def:dampLoss, thm:bestTheta}
+  Let $\sum s^2 + \sum V > 0$ and $V_i \ge 0$. Then $L(\theta) \le L(1)$ iff
+  $\theta \in [2\theta^* - 1, 1]$, $L(\theta) \le L(0)$ iff $\theta \in [0, 2\theta^*]$, and
+  $\theta$ beats both iff $|\theta - \theta^*| \le \min(\theta^*, 1 - \theta^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  By the parabola, $L(\theta) \le L(c)$ iff $|\theta - \theta^*| \le |c - \theta^*|$.
+\end{proof}
+
+\begin{remark}[The damping rule]\label{rem:dampRule}
+  \uses{thm:bestTheta}
+  The app's $\hat\theta = \bar r^2/(\bar r^2 + (1 - \bar r^2)^2/(T-1))$ is the one-entry
+  $\theta^*$ with $s = \rho$ replaced by $\bar r$ and $V$ by the normal-theory variance of a
+  sample correlation: a plug-in, not itself proved optimal. $V$ needs fourth moments, so no
+  two-moment theorem can fix $\theta$ (study S7). The loss is that of the covariance table;
+  the rates want less damping (S12), so the link to the rates' error stays numerical.
+\end{remark}
+
+\begin{corollary}[The optimally damped table is valid]\label{cor:shrinkOffDiag_bestTheta}
+  \lean{Credibility.Damping.posSemidef_shrinkOffDiag_bestTheta,
+        Credibility.Damping.posDef_shrinkOffDiag_bestTheta}
+  \leanok
+  \uses{thm:bestTheta, thm:shrinkOffDiag_posDef}
+  If $A \succeq 0$ and all $V_i \ge 0$, then $A^{\theta^*} \succeq 0$. If moreover
+  $\sum V_i > 0$ and $A_{ii} > 0$ for all $i$, then $A^{\theta^*} \succ 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:bestTheta, thm:shrinkOffDiag_posDef}
+  $\theta^* \in [0, 1]$ (Theorem~\ref{thm:bestTheta}), and $\theta^* < 1$ when $\sum V > 0$;
+  then Theorem~\ref{thm:shrinkOffDiag_posDef}.
+\end{proof}
+
+\section{The distance taper}
+
+\begin{definition}[Distance taper]\label{def:distTaper}
+  \lean{Credibility.distTaper}
+  \leanok
+  For positions $t_i \in \mathbb N$ and $\rho\in\mathbb R$,
+  $R_{ij} = \rho^{|t_i - t_j|}$. With $t_i = i$ it is the Kac--Murdock--Szeg\H{o}
+  matrix (the correlation of an AR(1) process). Its diagonal is $1$.
+\end{definition}
+
+\begin{lemma}[A product of two-block matrices]\label{lem:distTaper_prod}
+  \lean{Credibility.posSemidef_twoBlock, Credibility.posSemidef_prod_twoBlock,
+    Credibility.card_separating, Credibility.distTaper_eq_prod}
+  \leanok
+  \uses{def:distTaper}
+  For a gap $k$, let $B^{(k)}_{ij} = 1$ if $t_i$ and $t_j$ are on the same side
+  of $k$ ($t_i \le k \iff t_j \le k$), and $\rho$ otherwise. Then
+  $B^{(k)} = \rho\,\mathbf 1\mathbf 1^T + (1-\rho)(uu^T + vv^T)$ ($u$, $v$ the
+  side indicators) is $\succeq 0$ for $\rho\in[0,1]$, and
+  $R = B^{(0)} \odot \dots \odot B^{(N-1)}$ for $N \ge \max_i t_i$: exactly
+  $|t_i - t_j|$ gaps separate $t_i$ and $t_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; the separating gaps are $[\min, \max)$. A Hadamard product of
+  positive semidefinite matrices is positive semidefinite (Schur).
+\end{proof}
+
+\begin{theorem}[The distance taper keeps a covariance matrix]\label{thm:distTaper}
+  \lean{Credibility.distTaper_self, Credibility.distTaper_posSemidef, Credibility.posSemidef_distTaper_hadamard,
+    Credibility.posDef_distTaper_hadamard}
+  \leanok
+  \uses{def:distTaper}
+  For $\rho \in [0,1]$ and any positions (ties allowed), $R \succeq 0$; hence
+  $R \odot K \succeq 0$ if $K \succeq 0$ and $R \odot K \succ 0$ if $K \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:distTaper_prod, thm:hadamard_corr}
+  Lemma~\ref{lem:distTaper_prod} and Theorem~\ref{thm:hadamard_corr}.
+\end{proof}
+
+\begin{remark}[No Kac--Murdock--Szeg\H{o} algebra needed]
+  The usual proofs that the KMS matrix is positive (semi)definite use its
+  Cholesky factor or tridiagonal inverse, which need distinct, equally spaced
+  positions. The two-block factorization needs neither: ties are allowed, so
+  $R$ is then only semidefinite, but tapering still keeps $K \succ 0$
+  (Theorem~\ref{thm:hadamard_corr}). Real positions (the exponential kernel
+  $e^{-a|t_i-t_j|}$) would need a limit argument and are not formalized.
+\end{remark}
+
+\section{Application: a damped plug-in $\hat K$}
+
+In practice $K$ is estimated: plug $\hat\sigma_{jt}$ and $\hat\rho_{ij}$ into the
+model (with unequal lengths, Chapter~\ref{ch:unequal}, the thesis being $T_j = T$).
+The estimate $\hat\tau^2$ can be $\le 0$, and truncated at zero
+$\hat K = \hat\Sigma + \hat\tau^2 I$ is only positive \emph{semi}definite
+(Remark~\ref{rem:posdef}). Damping the correlations repairs this.
+
+\begin{lemma}[Every cohort has positive variance]\label{lem:U_sigma2_self_pos}
+  \lean{Credibility.Unequal.σ2_self_pos}
+  \leanok
+  \uses{def:U_errCov}
+  $\sigma^2_{jj} > 0$ for every $j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\sigma^2_{jj} = \sum_{t \in T_j} (a_{jt}\sigma_{jt})^2$, and $T_j$ is not empty.
+\end{proof}
+
+\begin{lemma}[Damping $\rho$ is damping $\Sigma$]\label{lem:U_shrinkOffDiag_errCov}
+  \lean{Credibility.Unequal.shrinkOffDiag_errCov}
+  \leanok
+  \uses{def:U_errCov, def:shrinkOffDiag}
+  $\Sigma^\theta_{ij} = \sigma^2_{ij}\,\rho^\theta_{ij}$: damping the
+  correlations by $\theta$ damps the off-diagonal of $\Sigma$ by $\theta$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Compare entries; $\rho_{jj} = 1$.
+\end{proof}
+
+\begin{theorem}[A damped plug-in $\hat K$ is positive definite]\label{thm:U_dampedK_posDef}
+  \lean{Credibility.Unequal.dampedK_posDef}
+  \leanok
+  \uses{lem:U_shrinkOffDiag_errCov}
+  If $(\hat\rho_{ij}) \succeq 0$, $0 \le \theta < 1$ and $\hat\tau^2 \ge 0$, then
+  $\hat K = \hat\Sigma^\theta + \hat\tau^2 I \succ 0$. So $b$, $s^2$ and $z_j$
+  are defined even when $\hat\tau^2$ is truncated at zero.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_errCov_posSemidef, lem:U_sigma2_self_pos, thm:shrinkOffDiag_posDef}
+  $\hat\Sigma \succeq 0$ (Lemma~\ref{lem:U_errCov_posSemidef}) with positive
+  diagonal (Lemma~\ref{lem:U_sigma2_self_pos}), so
+  $\hat\Sigma^\theta \succ 0$ by Theorem~\ref{thm:shrinkOffDiag_posDef};
+  adding $\hat\tau^2 I \succeq 0$ keeps it.
+\end{proof}
+
+\begin{remark}[Finding 1 in practice]\label{rem:damped_plugin}
+  \uses{thm:U_dampedK_posDef, rem:posdef}
+  Without damping, $\hat\tau^2 = 0$ and a singular $\hat\rho$ (e.g.\ two
+  cohorts with $\hat\rho_{12} = 1$ and proportional $\hat\sigma$) give a
+  singular $\hat K$. Any $\theta < 1$ fixes this, and $\theta$ close to $1$
+  changes $\hat K$ little. Damping does not make an indefinite $\hat\rho$
+  positive semidefinite: that hypothesis stays.
+\end{remark}

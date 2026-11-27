@@ -1,0 +1,286 @@
+\chapter{Extension: shock plus process noise}\label{ch:shock}
+% Not in the thesis. Lean: Credibility/Shock.lean (Finding 23, notes/roadmap.md §2)
+
+Remark~\ref{rem:shock_volume}: a period shock should not shrink with volume. Per period a
+shock with covariance $C \succeq 0$ across cohorts (one shock with loadings $\lambda$:
+$C = \lambda\lambda^\top$), process noise $s_j^2/w_{jt}$ and cohort levels with variance
+$\tau^2$. Only these second moments are assumed.
+
+\begin{lemma}[Weighted sums of PSD matrices]\label{lem:posSemidef_weightedSum}
+  \lean{Credibility.posSemidef_weightedSum, Credibility.posSemidef_loadings}
+  \leanok
+  If every $N_t \succeq 0$, then $\bigl(\sum_t a_{it}a_{jt}(N_t)_{ij}\bigr)_{ij} \succeq 0$
+  for any $a$. Also $\lambda\lambda^\top \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $x^\top(\cdot)x = \sum_t y_t^\top N_t y_t$ with $(y_t)_j = a_{jt}x_j$.
+\end{proof}
+
+\begin{definition}[Shock plus process noise]\label{def:Shock}
+  \lean{Credibility.Shock, Credibility.Shock.obsCov, Credibility.Shock.cov,
+        Credibility.Shock.noise, Credibility.Shock.K, Credibility.Shock.errCov}
+  \leanok
+  \uses{def:obsCov}
+  $\tau^2 > 0$, $C \succeq 0$, $s_j^2 > 0$, volumes $w_{jt} > 0$, and
+  \[
+    \cov(\mu_{it}, \mu_{js}) = \delta_{ts}\bigl(C_{ij} + \delta_{ij}s_i^2/w_{it}\bigr)
+      + \tau^2\delta_{ij}.
+  \]
+  For cohort weights $a_{jt}$, $K_{ij} = \sum_{t,s} a_{it}a_{js}\cov(\mu_{it}, \mu_{js})$
+  is the covariance of $\hmu_j = \sum_t a_{jt}\mu_{jt}$, and
+  $\Sigma_{ij} = \sum_t a_{it}a_{jt}(C + \mathrm{diag}(s^2/w_{\cdot t}))_{ij}$.
+\end{definition}
+
+\begin{theorem}[$K$ and its positive definiteness]\label{thm:Shock_K}
+  \lean{Credibility.Shock.C_symm, Credibility.Shock.cov_symm, Credibility.Shock.noise_apply,
+        Credibility.Shock.noise_posSemidef, Credibility.Shock.K_eq_errCov,
+        Credibility.Shock.K_apply, Credibility.Shock.errCov_posSemidef,
+        Credibility.Shock.K_posDef}
+  \leanok
+  \uses{def:Shock}
+  If each cohort's weights sum to one,
+  $K_{ij} = \bigl(\sum_t a_{it}a_{jt}\bigr)C_{ij}
+    + \delta_{ij}\bigl(s_i^2\sum_t a_{it}^2/w_{it} + \tau^2\bigr)$, $K = \Sigma + \tau^2 I$
+  with $\Sigma \succeq 0$, so $K \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum}
+  Each period's noise $C + \mathrm{diag}(s^2/w_{\cdot t})$ is PSD; then
+  Lemma~\ref{lem:posSemidef_weightedSum}.
+\end{proof}
+
+\begin{definition}[The blend and inverse-variance weights]\label{def:Shock_moments}
+  \lean{Credibility.Shock.moments, Credibility.Shock.invVarA}
+  \leanok
+  \uses{def:Core.moments, def:invVarWeight}
+  The blend moments are those of Definition~\ref{def:Core.moments} for this $K$, $\tau^2$
+  and $v_j = \Sigma_{jj}$. Inverse-variance weights \eqth{23} use the cell variance
+  $\sigma_{jt}^2 = C_{jj} + s_j^2/w_{jt}$.
+\end{definition}
+
+\begin{corollary}[The credibility factor]\label{cor:Shock_bestZ}
+  \lean{Credibility.Shock.bestZ_eq, Credibility.Shock.sigmaSq_pos, Credibility.Shock.sum_invVarA}
+  \leanok
+  \uses{def:Shock_moments, thm:Shock_K}
+  For any weights summing to one (e.g.\ the inverse-variance ones),
+  $z_j = (1 - b_j)\tau^2/(\tau^2 + \Sigma_{jj} - s^2)$ with $b$, $s^2$ from this $K$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, lem:sum_invVarWeight}
+  Theorem~\ref{thm:Core_bestZ_eq} with $K \succ 0$ (Theorem~\ref{thm:Shock_K}).
+\end{proof}
+
+\section*{Estimation (\S2.8)}
+
+With residuals $r_{jt} = \mu_{jt} - \hmu_j$ the level and the mean cancel within a cohort.
+Write $d_{ijt} = 1 - a_{it} - a_{jt} + \sum_s a_{is}a_{js}$ and
+$h_{jt} = (1 - 2a_{jt})/w_{jt} + \sum_s a_{js}^2/w_{js}$.
+
+\begin{definition}[Residuals and estimators]\label{def:Shock_estimators}
+  \lean{Credibility.Shock.res, Credibility.Shock.d, Credibility.Shock.h,
+        Credibility.Shock.crossHat, Credibility.Shock.sqSum, Credibility.Shock.dSum,
+        Credibility.Shock.hSum, Credibility.Shock.det, Credibility.Shock.CdiagHat,
+        Credibility.Shock.s2Hat, Credibility.Shock.CHat}
+  \leanok
+  \uses{def:Shock}
+  $\hat C_{ij} = \sum_t r_{it}r_{jt}/\sum_t d_{ijt}$ for $i \ne j$. For weightings $u$, $v$
+  of the periods, $Q_j(u) = \sum_t u_{jt}r_{jt}^2$ with coefficients
+  $\alpha_j(u) = \sum_t u_{jt}d_{jjt}$, $\beta_j(u) = \sum_t u_{jt}h_{jt}$ and
+  $\Delta_j = \alpha_j(u)\beta_j(v) - \alpha_j(v)\beta_j(u)$;
+  $\hat C_{jj} = (\beta_j(v)Q_j(u) - \beta_j(u)Q_j(v))/\Delta_j$ and
+  $\hat s_j^2 = (\alpha_j(u)Q_j(v) - \alpha_j(v)Q_j(u))/\Delta_j$.
+\end{definition}
+
+\begin{lemma}[Residual products]\label{lem:Shock_unbiased_res}
+  \lean{Credibility.Shock.unbiased_res}
+  \leanok
+  \uses{def:Shock_estimators, def:unbiased}
+  If each cohort's weights sum to one,
+  $\mathbb E[r_{it}r_{jt}] = d_{ijt}C_{ij} + \delta_{ij}h_{it}s_i^2$ under this table.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:unbiased_linear}
+  A product of two linear forms whose coefficients sum to zero
+  (Lemma~\ref{lem:unbiased_linear}); the $\tau^2$ term cancels for the same reason.
+\end{proof}
+
+\begin{theorem}[Unbiased estimators of $C$ and $s^2$]\label{thm:Shock_unbiased}
+  \lean{Credibility.Shock.crossHat_unbiased, Credibility.Shock.sum_d_pos,
+        Credibility.Shock.sqSum_unbiased, Credibility.Shock.CdiagHat_unbiased,
+        Credibility.Shock.s2Hat_unbiased, Credibility.Shock.CHat_unbiased}
+  \leanok
+  \uses{def:Shock_estimators}
+  $\hat C_{ij}$ ($i \ne j$) is unbiased when $\sum_t d_{ijt} \ne 0$, e.g.\ for positive
+  weights and $T \ge 2$, where $\sum_t d_{ijt} = T - 2 + T\sum_t a_{it}a_{jt} > 0$.
+  $\mathbb E\,Q_j(u) = \alpha_j(u)C_{jj} + \beta_j(u)s_j^2$, so $\hat C_{jj}$ and
+  $\hat s_j^2$ are unbiased when $\Delta_j \ne 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Shock_unbiased_res, lem:unbiased_linear}
+  Linear combinations of Lemma~\ref{lem:Shock_unbiased_res}; on the diagonal, Cramer's rule.
+\end{proof}
+
+\begin{theorem}[Shock and process noise need volume variation]\label{thm:Shock_not_unbiased}
+  \lean{Credibility.Shock.not_unbiased_s2_of_const}
+  \leanok
+  \uses{def:Shock, def:unbiased}
+  If cohort $j$ has the same volume in every period, no function of the data is unbiased for
+  $s_j^2$ in every model with these volumes.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:unbiased_linear}
+  Moving $s_j^2/(2w_j)$ from the process noise into $C_{jj}$ leaves the table unchanged but
+  halves $s_j^2$; an estimator has one expectation (Lemma~\ref{lem:unbiased_linear}).
+\end{proof}
+
+\begin{remark}[Two periods never separate them]\label{rem:Shock_two_periods}
+  With $T = 2$ the residuals of a cohort are proportional,
+  $r_{j1} = a_{j2}(\mu_{j1} - \mu_{j2})$ and $r_{j2} = -a_{j1}(\mu_{j1} - \mu_{j2})$, so every
+  $Q_j(u)$ is a multiple of one square and $\Delta_j = 0$. With exposure weights,
+  $u = 1$ and $v = w$, three periods and varying volumes suffice
+  (Theorem~\ref{thm:Shock_det_expo_neg}).
+\end{remark}
+
+\begin{corollary}[Exposure weights]\label{cor:Shock_expo}
+  \lean{Credibility.Shock.wtot, Credibility.Shock.expo, Credibility.Shock.wtot_pos,
+        Credibility.Shock.sum_expo, Credibility.Shock.dSum_expo_w,
+        Credibility.Shock.hSum_expo_w, Credibility.Shock.dSum_expo_one,
+        Credibility.Shock.hSum_expo_one}
+  \leanok
+  \uses{thm:Shock_unbiased}
+  With $a_{jt} = w_{jt}/w_{j*}$:
+  $\mathbb E\sum_t w_{jt}r_{jt}^2 = (w_{j*} - \sum_t w_{jt}^2/w_{j*})C_{jj} + (T-1)s_j^2$ and
+  $\mathbb E\sum_t r_{jt}^2 = (T - 2 + T\sum_t (w_{jt}/w_{j*})^2)C_{jj}
+    + (\sum_t 1/w_{jt} - T/w_{j*})s_j^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  Algebra in $\alpha_j$, $\beta_j$ of Definition~\ref{def:Shock_estimators}.
+\end{proof}
+
+\begin{lemma}[A volume inequality]\label{lem:detGap}
+  \lean{Credibility.two_mul_detGap_eq, Credibility.detGap_pos}
+  \leanok
+  For $w_t > 0$, $t \in T$, with $W = \sum_t w_t$, $Q = \sum_t w_t^2$, $R = \sum_t 1/w_t$,
+  $n = |T|$, let $F = (W^2 - Q)(WR - n^2) - 2(n-1)(nQ - W^2)$. Then
+  \[
+    2F = \sum_{i,k} \frac{(w_i - w_k)^2}{w_i w_k}
+      \Bigl((W - w_i - w_k)^2 + (Q - w_i^2 - w_k^2)\Bigr),
+  \]
+  and $F > 0$ if $n \ge 3$ and the $w_t$ are not all equal.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The identity: write $(w_i-w_k)^2/(w_iw_k) = w_i/w_k + w_k/w_i - 2$, expand, and sum each
+  monomial into $W$, $Q$, $R$, $n$. Every term is $\ge 0$ (for $i = k$ it is $0$). For
+  $w_t \ne w_{t'}$ a third period $m$ gives $Q - w_t^2 - w_{t'}^2 \ge w_m^2 > 0$.
+\end{proof}
+
+\begin{theorem}[The determinant is negative]\label{thm:Shock_det_expo_neg}
+  \lean{Credibility.Shock.det_expo_neg}
+  \leanok
+  \uses{cor:Shock_expo, lem:detGap}
+  With exposure weights, $u = 1$ and $v = w$: if $T \ge 3$ and the volumes $w_{jt}$ of
+  cohort $j$ are not all equal, then $\Delta_j < 0$. So $\hat C_{jj}$ and $\hat s_j^2$ are
+  defined and unbiased.
+\end{theorem}
+\begin{proof}
+  \leanok
+  By Corollary~\ref{cor:Shock_expo}, $\Delta_j w_{j*}^2 = -F$ for the volumes of cohort $j$
+  (Lemma~\ref{lem:detGap}). At $T = 2$, $F = 0$.
+\end{proof}
+
+\begin{definition}[Between-cohort spread, $\hat\Sigma$, $\hat\tau^2$, $\hat K$]\label{def:Shock_tauHat}
+  \lean{Credibility.Shock.muHat, Credibility.Shock.between, Credibility.Shock.errCovHat,
+        Credibility.Shock.tauHat, Credibility.Shock.KHat}
+  \leanok
+  \uses{def:Shock_estimators}
+  For portfolio weights $x_j$ summing to one, $B = \sum_j x_j(\hmu_j - \sum_i x_i\hmu_i)^2$,
+  $\hat\Sigma_{ij} = (\sum_t a_{it}a_{jt})\hat C_{ij} + \delta_{ij}\hat s_i^2\sum_t a_{it}^2/w_{it}$,
+  \[
+    \hat\tau^2 = \frac{B - \sum_j x_j\hat\Sigma_{jj} + x^\top\hat\Sigma x}{1 - \sum_j x_j^2},
+    \qquad \hat K = \hat\Sigma + \hat\tau^2 I.
+  \]
+\end{definition}
+
+\begin{theorem}[Unbiased $\hat\tau^2$ and $\hat K$]\label{thm:Shock_tauHat}
+  \lean{Credibility.Shock.unbiased_contrast, Credibility.Shock.errCov_apply,
+        Credibility.Shock.between_unbiased, Credibility.Shock.errCovHat_unbiased,
+        Credibility.Shock.tauHat_unbiased, Credibility.Shock.sum_sq_lt_one,
+        Credibility.Shock.KHat_unbiased}
+  \leanok
+  \uses{def:Shock_tauHat, thm:Shock_K}
+  If each cohort's weights sum to one and $\sum_j x_j = 1$,
+  $\mathbb E B = \tau^2(1 - \sum_j x_j^2) + \sum_j x_j\Sigma_{jj} - x^\top\Sigma x$. Under the
+  conditions of Theorem~\ref{thm:Shock_unbiased} and $\sum_j x_j^2 \ne 1$ (e.g.\ positive $x$
+  and $J \ge 2$), $\hat\Sigma$, $\hat\tau^2$ and every entry of $\hat K$ are unbiased.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Shock_unbiased, lem:unbiased_linear}
+  For contrasts $\sum_j c_j = 0$, $\mathbb E[(c^\top\hmu)(c'^\top\hmu)] = c^\top K c'$
+  (Lemma~\ref{lem:unbiased_linear}); so $\mathbb E B = \sum_j x_jK_{jj} - x^\top Kx$ with
+  $K = \Sigma + \tau^2 I$. The rest is linearity.
+\end{proof}
+
+\section*{The moment layer: real random cells}
+% Lean: Credibility/ShockMoments.lean
+
+\begin{definition}[Random cells with the shock table]\label{def:Shock_Cells}
+  \lean{Credibility.Shock.Cells, Credibility.Shock.Cells.data, Credibility.Shock.Cells.est,
+        Credibility.Shock.Cells.blend}
+  \leanok
+  \uses{def:Shock}
+  On any probability space: square-integrable cells $\mu_{jt}$ and levels $\mu_j$ of mean
+  $\mu$, with $\cov(\mu_{it},\mu_{js}) = \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it})
+  + \tau^2\delta_{ij}$ and $\cov(\mu_i,\mu_{js}) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$.
+  No distribution is assumed. $\hmu_j = \sum_t a_{jt}\mu_{jt}$.
+\end{definition}
+
+\begin{theorem}[$K$ is the actual covariance]\label{thm:Shock_Cells_toEstimates}
+  \lean{Credibility.Shock.Cells.est_def, Credibility.Shock.Cells.memLp_est,
+        Credibility.Shock.Cells.integral_est, Credibility.Shock.Cells.cov_est,
+        Credibility.Shock.Cells.cov_level_est, Credibility.Shock.Cells.toEstimates,
+        Credibility.Shock.moments_eq_levelMoments}
+  \leanok
+  \uses{def:Shock_Cells, thm:Shock_K, def:Core_Estimates}
+  If each cohort's weights sum to one, $\cov(\hmu_i,\hmu_j) = K_{ij}$ and
+  $\cov(\mu_i,\hmu_j) = \tau^2\delta_{ij}$: the $(\hmu_j)$, $(\mu_j)$ are estimates and levels
+  in the sense of Definition~\ref{def:Core_Estimates} with this $K$ and $L = \tau^2 I$, and
+  the blend moments are those of Definition~\ref{def:Core.levelMoments} with $d = K_{jj}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE]\label{thm:Shock_Cells_bestZ_mse}
+  \lean{Credibility.Shock.Cells.mse_blend, Credibility.Shock.Cells.bestZ_mse_optimal}
+  \leanok
+  \uses{thm:Shock_Cells_toEstimates, thm:Core_bestZ_mse}
+  The actual mean squared error of the blend is $\mathrm{errVar}(z)$, eq.~(6), and
+  $z_j$ of Corollary~\ref{cor:Shock_bestZ} minimises it.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates of
+  Theorem~\ref{thm:Shock_Cells_toEstimates}; $K \succ 0$ by Theorem~\ref{thm:Shock_K}.
+\end{proof}
+
+\begin{theorem}[The estimators are unbiased in true expectation]\label{thm:Shock_Cells_integral}
+  \lean{Credibility.Shock.Cells.integral_of_unbiasedCov, Credibility.Shock.Cells.integral_KHat}
+  \leanok
+  \uses{def:Shock_Cells, thm:integral_quad_cov, thm:Shock_tauHat}
+  An estimator unbiased under the shock table has that expectation for any random cells of
+  Definition~\ref{def:Shock_Cells}; in particular $\mathbb E\hat K_{ij} = K_{ij}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Theorem~\ref{thm:integral_quad_cov} with every cell observed.
+\end{proof}

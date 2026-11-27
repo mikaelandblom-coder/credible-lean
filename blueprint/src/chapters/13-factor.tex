@@ -1,0 +1,1037 @@
+\chapter{Extension: a common factor over months}\label{ch:factor}
+% Not in the thesis. Lean: Credibility/Factor.lean (notes/card-data.md Step 3, Finding 25)
+
+Monthly cells $X_{jt}$ (cohort $j$, month $t$) share a latent demand factor $F_t$ with loadings
+$\lambda_j$ and autocovariance $\Gamma \succeq 0$ over all months, past and future, on top of
+the shock and process noise of Chapter~\ref{ch:shock}. Only second moments are assumed. The data
+are the observed cells, any injective map $c : n \to J \times T$ (cohorts enter and leave).
+
+\begin{definition}[The common factor model]\label{def:Factor}
+  \lean{Credibility.Factor, Credibility.Factor.toShock, Credibility.Factor.obsCov,
+        Credibility.Factor.K, Credibility.Factor.factorPart, Credibility.Factor.shockPart,
+        Credibility.Factor.levelPart, Credibility.Factor.cellNoise}
+  \leanok
+  \uses{def:Shock}
+  $\tau^2 > 0$, $C \succeq 0$, $s_j^2 > 0$, $w_{jt} > 0$, loadings $\lambda_j$, $\Gamma \succeq 0$,
+  and
+  \[
+    \cov(X_{it}, X_{js}) = \lambda_i\lambda_j\Gamma_{ts} + \delta_{ts}C_{ij}
+      + \delta_{ts}\delta_{ij}s_i^2/w_{it} + \tau^2\delta_{ij}.
+  \]
+  $K$ is this table on the observed cells.
+\end{definition}
+
+\begin{definition}[Fitted table]\label{def:Factor_tableK}
+  \lean{Credibility.Factor.tableK}
+  \leanok
+  For a factor table $A$ (any $J\times J$ matrix), a correlation $\Phi$ over months, $C$,
+  $s^2$, volumes $w$ and observed cells $p = (i,t)$, $q = (j,s)$:
+  $\hat K_{pq} = A_{ij}\Phi_{ts} + \delta_{ts}C_{ij} + \delta_{pq}s_i^2/w_{it}$. No level
+  $\tau^2$; $A = \lambda\lambda^\top$, $\Phi = \Gamma$ is the factor part of $K$.
+\end{definition}
+
+\begin{theorem}[Valid fitted tables give $\hat K \succ 0$]\label{thm:Factor_tableK}
+  \lean{Credibility.Factor.tableK_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  If $A \succeq 0$, $\Phi \succeq 0$, $C \succeq 0$, $s_j^2 > 0$ and $w > 0$, then
+  $\hat K \succ 0$ for any observed cells.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\hat K = \mathrm{diag}(s^2/w) + A^{c}\odot\Phi^{c} + C^{c}\odot I^{c}$, with $M^c$ the
+  matrix $M$ read at the cells' cohorts or months. Both Hadamard products are $\succeq 0$
+  (Schur product theorem), the diagonal is positive.
+\end{proof}
+
+\begin{lemma}[$\hat s^2 \ge 0$ is not enough]\label{lem:Factor_tableK_singular}
+  \lean{Credibility.Factor.tableK_not_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  If a cohort $j$ observed in some cell has $A_{jj} = C_{jj} = s_j^2 = 0$, then $\hat K$ is
+  not positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  That cell's diagonal entry is $0$.
+\end{proof}
+
+\begin{remark}[Finding 30]
+  Clipping the fit to valid tables gives $\hat s^2 \ge 0$, not $> 0$. Theorem~\ref{thm:Factor_tableK}
+  needs $\hat s_j^2 > 0$; if all three variances of a cohort are clipped to $0$, $\hat K$ is
+  singular (Lemma~\ref{lem:Factor_tableK_singular}). The projection of $\gamma\lambda\lambda^\top$
+  need not be rank one, so the fitted $\hat K$ is a $\hat K$ of Definition~\ref{def:Factor_tableK},
+  not of a factor model, and Theorem~\ref{thm:Factor_K} does not apply to it directly.
+\end{remark}
+
+\begin{theorem}[Valid tables with some $\hat s_j^2 = 0$]\label{thm:Factor_tableK_iff}
+  \lean{Credibility.Factor.panelK, Credibility.Factor.tableK_eq_submatrix,
+        Credibility.Factor.panelK_eq, Credibility.Factor.panelK_posDef,
+        Credibility.Factor.tableK_posDef_of_zero, Credibility.Factor.posDef_zero_of_tableK,
+        Credibility.Factor.tableK_posDef_iff}
+  \leanok
+  \uses{def:Factor_tableK}
+  Let $Z = \{j : s_j^2 = 0\}$, the cells distinct, $A \succeq 0$, $C \succeq 0$, $s^2 \ge 0$,
+  $w > 0$. If $\Phi \succ 0$ and $(A + C)_{ZZ} \succ 0$, then $\hat K \succ 0$. Conversely, if
+  $\hat K \succ 0$ and the cohorts in $Z$ are observed in a common month, then
+  $(A + C)_{ZZ} \succ 0$. So with $\Phi \succ 0$ and a common month (a full panel):
+  $\hat K \succ 0 \iff (A + C)_{ZZ} \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\hat K$ is the panel table $\mathrm{diag}(s^2/w) + A \otimes \Phi + C \otimes I$ at the cells.
+  If $x^\top(\cdot)x = 0$, each PSD part kills $x$: $x = 0$ off $Z$, $(A \otimes \Phi)x = 0$ gives
+  $(A \otimes I)x = 0$ since $I \otimes \Phi$ is invertible, so $(A + C)_{ZZ}$ kills each month's
+  column of $x$. Conversely, a $v$ with $v^\top(A + C)_{ZZ}v = 0$ has $Av = Cv = 0$, and $v$ placed
+  in the common month is a nonzero null vector of $\hat K$.
+\end{proof}
+
+\begin{lemma}[Both extra conditions are needed]\label{lem:Factor_tableK_counter}
+  \lean{Credibility.Factor.tableK_counter_phi, Credibility.Factor.tableK_counter_month}
+  \leanok
+  \uses{def:Factor_tableK}
+  $\Phi = 0$, $A = I$, $C = 0$, $s^2 = 0$: $(A + C)_{ZZ} = I \succ 0$ but $\hat K = 0$. Two cohorts
+  with $s^2 = 0$ observed in different months, $A = 0$, $\Phi = I$,
+  $C = (1, -1)(1, -1)^\top$: $\hat K = I \succ 0$ but $(A + C)_{ZZ} = C$ is singular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+\begin{remark}[Finding 34]
+  Expected: valid tables give $\hat K \succ 0$ iff $(A + C)_{ZZ} \succ 0$ (the app's check
+  \texttt{degenerateTable}). True with two conditions the app meets ($\Phi$ an AR(1) with
+  $|\varphi| < 1$, a full panel), false without either
+  (Lemma~\ref{lem:Factor_tableK_counter}). With cohorts entering and leaving, the check is
+  only sufficient for $\hat K \succ 0$, not necessary.
+\end{remark}
+
+\begin{theorem}[$K \succ 0$]\label{thm:Factor_K}
+  \lean{Credibility.Factor.K_eq_parts, Credibility.Factor.factorPart_posSemidef,
+        Credibility.Factor.shockPart_posSemidef, Credibility.Factor.levelPart_posSemidef,
+        Credibility.Factor.K_posDef}
+  \leanok
+  \uses{def:Factor}
+  For any observed cells, $K \succ 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_tableK, lem:posSemidef_weightedSum}
+  $K = \hat K + \tau^2(\delta_{ij})$ with $\hat K$ of Definition~\ref{def:Factor_tableK} at
+  $A = \lambda\lambda^\top \succeq 0$, $\Phi = \Gamma$: positive definite by
+  Theorem~\ref{thm:Factor_tableK}, plus a PSD level part. (The parts lemmas split $K$ as
+  $\mathrm{diag}(s^2/w) + B^\top\Gamma B + (\delta_{ts}C_{ij}) + \tau^2(\delta_{ij})$, the shock
+  part a weighted sum, Lemma~\ref{lem:posSemidef_weightedSum}.)
+\end{proof}
+
+\begin{lemma}[Shock as a special case]\label{lem:Factor_shock}
+  \lean{Credibility.Factor.obsCov_eq_shock, Credibility.Factor.obsCov_eq_shock_loadings}
+  \leanok
+  \uses{def:Factor}
+  $\Gamma = 0$ gives the table of Definition~\ref{def:Shock}. $C = 0$, $\Gamma = I$ gives it
+  with the rank-one shock $C = \lambda\lambda^\top$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct.
+\end{proof}
+
+\begin{definition}[AR(1) and block factors]\label{def:Factor_ar1}
+  \lean{Credibility.Factor.ar1, Credibility.Factor.ar1L, Credibility.Factor.ar1D,
+        Credibility.Factor.block}
+  \leanok
+  AR(1): $\Gamma_{ts} = \gamma\varphi^{|t-s|}$. A break at known dates: months in regimes
+  $r(t)$, $\Gamma_{ts} = (G_{r(t)})_{ts}$ if $r(t) = r(s)$, else $0$.
+\end{definition}
+
+\begin{theorem}[AR(1) is a valid $\Gamma$]\label{thm:Factor_ar1}
+  \lean{Credibility.Factor.ar1_sum_sq, Credibility.Factor.ar1_sum_eq, Credibility.Factor.ar1_eq,
+        Credibility.Factor.ar1_posSemidef}
+  \leanok
+  \uses{def:Factor_ar1}
+  $\gamma\varphi^{|t-s|} \succeq 0$ for $\gamma \ge 0$ and $|\varphi| \le 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\varphi^{|t-s|} = (LDL^\top)_{ts}$ with $L_{tk} = \varphi^{t-k}$ ($k \le t$) and
+  $D = \mathrm{diag}(1, 1-\varphi^2, \dots)$: the factor in its innovations, started in its
+  stationary law, so $\sum_{k \le t}\varphi^{2(t-k)}D_k = 1$.
+\end{proof}
+
+\begin{corollary}[The app's fitted table]\label{cor:Factor_tableK_ar1}
+  \lean{Credibility.Factor.tableK_ar1_posDef}
+  \leanok
+  \uses{def:Factor_tableK}
+  With $\Phi_{ts} = \varphi^{|t-s|}$, $|\varphi| \le 1$, $A \succeq 0$, $C \succeq 0$ and every
+  $s_j^2 > 0$: $\hat K \succ 0$. This is the table the app builds from the projection of the
+  unbiased fit onto valid tables (Chapter~\ref{ch:coneproj}) when every $\hat s_j^2 > 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_tableK, thm:Factor_ar1}
+  Theorem~\ref{thm:Factor_tableK} with $\Phi \succeq 0$ from Theorem~\ref{thm:Factor_ar1}.
+\end{proof}
+
+\begin{lemma}[AR(1) with $|\varphi| < 1$ is positive definite]\label{lem:Factor_ar1_posDef}
+  \lean{Credibility.Factor.ar1_posDef}
+  \leanok
+  \uses{def:Factor_ar1}
+  $\gamma\varphi^{|t-s|} \succ 0$ for $\gamma > 0$ and $|\varphi| < 1$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_ar1}
+  In $LDL^\top$ (Theorem~\ref{thm:Factor_ar1}) $L$ is unit lower triangular, so invertible,
+  and $D = \mathrm{diag}(1, 1-\varphi^2, \dots) \succ 0$.
+\end{proof}
+
+\begin{corollary}[The app's check is exact]\label{cor:Factor_tableK_ar1_iff}
+  \lean{Credibility.Factor.tableK_ar1_posDef_iff}
+  \leanok
+  \uses{def:Factor_tableK}
+  With $\Phi_{ts} = \varphi^{|t-s|}$, $|\varphi| < 1$, valid tables ($A, C \succeq 0$, $s^2 \ge 0$),
+  distinct cells and the cohorts with $s_j^2 = 0$ observed in a common month (a full panel):
+  $\hat K \succ 0$ iff $(A + C)_{ZZ} \succ 0$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_tableK_iff, lem:Factor_ar1_posDef}
+  Theorem~\ref{thm:Factor_tableK_iff} with $\Phi \succ 0$ from
+  Lemma~\ref{lem:Factor_ar1_posDef}.
+\end{proof}
+
+\begin{theorem}[A break at known dates]\label{thm:Factor_block}
+  \lean{Credibility.Factor.block_posSemidef, Credibility.Factor.regime_posSemidef}
+  \leanok
+  \uses{def:Factor_ar1}
+  If every block $G_r \succeq 0$, the block $\Gamma \succeq 0$. In particular a constant level
+  per regime, $\Gamma_{ts} = \gamma_{r(t)}$ within a regime, with $\gamma_r \ge 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum}
+  Lemma~\ref{lem:posSemidef_weightedSum} with $a_{tr} = [r(t) = r]$.
+\end{proof}
+
+\begin{definition}[The 12-month target]\label{def:Factor_target}
+  \lean{Credibility.Factor.ell, Credibility.Factor.var}
+  \leanok
+  \uses{def:Factor, def:Blup}
+  $Y = \sum_t b_tX_{j_0t}$ ($b_t = 1$ on the next 12 months),
+  $\ell_i = \cov(X_i, Y)$, $v = \mathrm{Var}\,Y$.
+\end{definition}
+
+\begin{lemma}[$\ell$ and $v$]\label{lem:Factor_target}
+  \lean{Credibility.Factor.ell_apply_of_future, Credibility.Factor.var_eq}
+  \leanok
+  \uses{def:Factor_target}
+  If $b$ vanishes on the month of cell $(i,t)$,
+  $\ell_{(i,t)} = \lambda_i\lambda_{j_0}(\Gamma b)_t + \tau^2\delta_{ij_0}\sum_s b_s$: only the
+  factor and the cohort level link the past to the target. And
+  $v = \lambda_{j_0}^2 b^\top\Gamma b + \sum_t b_t^2(C_{j_0j_0} + s_{j_0}^2/w_{j_0t})
+    + \tau^2(\sum_t b_t)^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct.
+\end{proof}
+
+\begin{corollary}[The predictor]\label{cor:Factor_blup}
+  \lean{Credibility.Factor.blup_optimal, Credibility.Factor.predMse_blup,
+        Credibility.Factor.blup_season_optimal}
+  \leanok
+  \uses{def:Factor_target, def:Season}
+  For any design of fixed effects, Theorem~\ref{thm:Blup_optimal} and
+  Theorem~\ref{thm:Blup_mse} hold for this $K$, $\ell$, $v$; with an estimated season, the
+  design of Definition~\ref{def:Season} and $x_0 = S(b)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_K, thm:Blup_optimal, thm:Blup_mse, lem:Season_design}
+  $K \succ 0$ (Theorem~\ref{thm:Factor_K}).
+\end{proof}
+
+\begin{theorem}[Finding 25: negative weights under AR(1)]\label{thm:Factor_neg}
+  \lean{Credibility.Factor.exAR1, Credibility.Factor.exCells, Credibility.Factor.blup_exAR1,
+        Credibility.Factor.blup_neg_of_ar1}
+  \leanok
+  \uses{def:Factor_target, def:Factor_ar1}
+  Two cohorts observed in months $0, 1$; AR(1) with $\gamma = 1$, $\varphi = 1/2$, loadings $1$,
+  $C = 0$, $s^2/w = 1/2$, $\tau^2 = 1$; one common mean. The predictor of cohort $0$ in month
+  $2$ has weights $(11/30, 8/15, -1/30, 2/15)$ on cells $(0,0), (0,1), (1,0), (1,1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, thm:Factor_K}
+  $Kd - \ell = \tfrac12\mathbf 1$ and $\sum_i d_i = 1$
+  (Corollary~\ref{cor:Blup_eq_of_normal}).
+\end{proof}
+
+\begin{remark}[Finding 25]\label{rem:factor_neg}
+  \uses{thm:Factor_neg}
+  Positive autocorrelation and a balanced panel do not keep the weights positive: cohort $1$'s
+  change from month $0$ to $1$ tracks the factor, which persists into month $2$.
+\end{remark}
+
+\begin{definition}[Per-card dynamics]\label{def:Factor_card}
+  \lean{Credibility.Factor.obsCovG, Credibility.Factor.KG, Credibility.Factor.cohortPart,
+        Credibility.Factor.ellG, Credibility.Factor.varG}
+  \leanok
+  \uses{def:Factor_target}
+  Each cohort's own deviation evolves with autocovariance $G_j \succeq 0$ (e.g.\ per-cohort
+  AR(1), $G_j = \gamma_j\varphi_j^{|t-s|}$), independent across cohorts: the table gains
+  $\delta_{ij}(G_i)_{ts}$. $K$, $\ell$, $v$ as before for this table.
+\end{definition}
+
+\begin{theorem}[Per-card dynamics: $K \succ 0$ and the predictor]\label{thm:Factor_card}
+  \lean{Credibility.Factor.KG_eq_add, Credibility.Factor.ellG_eq, Credibility.Factor.varG_eq,
+        Credibility.Factor.cohortPart_posSemidef, Credibility.Factor.KG_posDef,
+        Credibility.Factor.blupG_optimal}
+  \leanok
+  \uses{def:Factor_card}
+  $K$ gains $\delta_{ij}(G_i)_{ts} \succeq 0$, so $K \succ 0$; $\ell$ gains
+  $\delta_{ij_0}(G_{j_0}b)_t$ and $v$ gains $b^\top G_{j_0}b$. Theorem~\ref{thm:Blup_optimal}
+  holds for this $K$, $\ell$, $v$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:posSemidef_weightedSum, thm:Factor_K, thm:Blup_optimal}
+  The per-cohort part is a weighted sum (Lemma~\ref{lem:posSemidef_weightedSum}) with
+  $a_{(i,t),j} = [i = j]$; add it to $K \succ 0$ (Theorem~\ref{thm:Factor_K}).
+\end{proof}
+
+\section*{The moment layer: real random cells}
+
+\begin{definition}[Random cells with a covariance table]\label{def:Factor_Cells}
+  \lean{Credibility.Factor.Cells, Credibility.Factor.targetMean, Credibility.Factor.Cells.target,
+        Credibility.Factor.Cells.toTarget}
+  \leanok
+  \uses{def:Blup_Target}
+  Square-integrable random cells $X_{(j,t)}$ over all months, past and future, with means
+  $\mathbb E X = D\beta$ and $\cov(X_{it}, X_{js})$ given by a table. For observed cells and
+  the target $Y = \sum_t b_tX_{j_0t}$ they are data and a target in the sense of
+  Definition~\ref{def:Blup_Target}, with $K$, $\ell$, $v$ read off the table and
+  $x_0 = \sum_t b_tD_{(j_0,t)}$.
+\end{definition}
+
+\begin{theorem}[The factor model's predictor in true MSE]\label{thm:Factor_mse_true}
+  \lean{Credibility.Factor.Cells.blup_mse_optimal, Credibility.Factor.Cells.mse_blup,
+        Credibility.Factor.Cells.blupG_mse_optimal}
+  \leanok
+  \uses{def:Factor_Cells, def:Factor_card}
+  For any random cells with the table of Definition~\ref{def:Factor} (or with per-cohort
+  dynamics), the predictor of Corollary~\ref{cor:Factor_blup} minimises the true mean squared
+  error among unbiased linear predictors, and its true error is that of
+  Theorem~\ref{thm:Blup_mse}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_mse_true, thm:Factor_K, thm:Factor_card}
+  Theorem~\ref{thm:Blup_mse_true}, with $K \succ 0$ from Theorems~\ref{thm:Factor_K}
+  and~\ref{thm:Factor_card}.
+\end{proof}
+
+\begin{definition}[Cells, levels and a held-out month]\label{def:Factor_HeldOut}
+  \lean{Credibility.Factor.HeldOut, Credibility.Factor.HeldOut.noise}
+  \leanok
+  \uses{def:Factor}
+  Square-integrable random cells $X_{(j,t)}$ over all months with the table of
+  Definition~\ref{def:Factor}, and levels $\mu_j$ with $\cov(X_{(i,t)}, \mu_j) = \tau^2\delta_{ij}$. The
+  proxy noise of a held-out month $h$ is $\varepsilon_j = X_{(j,h)} - \mu_j$.
+\end{definition}
+
+\begin{theorem}[The bias of choosing $\theta$ on a held-out month]\label{thm:Factor_heldOut_bias}
+  \lean{Credibility.Factor.HeldOut.cov_X_noise, Credibility.Factor.HeldOut.cov_lin_noise,
+        Credibility.Factor.HeldOut.integral_wsum_noise,
+        Credibility.Factor.HeldOut.integral_wsum_noise_eq_zero,
+        Credibility.Factor.HeldOut.integral_wsum_noise_ar1}
+  \leanok
+  \uses{def:Factor_HeldOut, def:Factor_ar1}
+  For $t \ne h$, $\cov(X_{(i,t)}, \varepsilon_j) = \lambda_i\lambda_j\Gamma_{th}$. Hence for fixed weights
+  $A_j$ on the fitted cells (months $\ne h$), $\Delta_j = \sum_p A_{jp}X_p$, cohort weights $w$ and
+  $\mathbb E\varepsilon_j = 0$:
+  $\mathbb E\bigl[\sum_j w_j\Delta_j\varepsilon_j\bigr] = \sum_j w_j\sum_p A_{jp}\lambda_{p_1}\lambda_j\Gamma_{p_2h}$,
+  for every distribution. It is $0$ if $\Gamma_{th} = 0$ for all $t \ne h$ (iid shocks), and with
+  $\Gamma = $ AR(1) it is $\gamma\sum_j w_j\lambda_j\sum_p A_{jp}\lambda_{p_1}\varphi^{|p_2 - h|}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Factor_HeldOut}
+  In $\cov(X_{(i,t)}, X_{(j,h)}) - \cov(X_{(i,t)}, \mu_j)$ the shock term has $\delta_{th} = 0$ and the
+  level term $\tau^2\delta_{ij}$ cancels; covariance is bilinear, and $\mathbb E[\Delta_j\varepsilon_j]
+  = \cov(\Delta_j, \varepsilon_j)$ when $\mathbb E\varepsilon_j = 0$.
+\end{proof}
+
+\section*{When the factor cancels from relativities (card data, Step 4)}
+
+\begin{definition}[Month profile of a statistic]\label{def:Factor_profile}
+  \lean{Credibility.Factor.quadTab, Credibility.Factor.profile, Credibility.Factor.relCoef}
+  \leanok
+  \uses{def:Factor}
+  A linear statistic, or the error of a linear predictor, is $\sum_p a_pX_p$ for coefficients
+  $a$ over all cells $J \times T$. Its variance under a table is
+  $\sum_p\sum_q a_pa_q\,\mathrm{tab}(p,q)$, and its loading-weighted month profile is
+  $g_t = \sum_j \lambda_j a_{jt}$. The relativity $z(\hmu_j - \sum_i b_i\hmu_i)$ of cohort
+  estimates $\hmu_i = \sum_t \alpha_{it}X_{it}$ has $a_{it} = z(\delta_{ij} - b_i)\alpha_{it}$.
+\end{definition}
+
+\begin{theorem}[The exact factor term]\label{thm:Factor_quadTab}
+  \lean{Credibility.Factor.quadTab_eq, Credibility.Factor.quadTab_shock_le,
+        Credibility.Factor.quadTab_eq_shock_iff, Credibility.Factor.profile_sub,
+        Credibility.Factor.profile_eq_zero_of_equal}
+  \leanok
+  \uses{def:Factor_profile, lem:Factor_shock}
+  For any coefficients $a$,
+  $\Var_{\mathrm{Factor}}(\sum aX) = \Var_{\mathrm{Shock}}(\sum aX) + g^\top\Gamma g$. The term is
+  $\ge 0$, so ignoring the factor understates the error; for $\Gamma \succ 0$ it vanishes iff
+  $g = 0$. The profile is linear in $a$. Equal loadings and a contrast within every month
+  ($\sum_j a_{jt} = 0$) give $g = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The table is $\lambda_i\lambda_j\Gamma_{ts}$ plus the Shock table; the first part sums to
+  $g^\top\Gamma g$. Then $\Gamma \succeq 0$, resp.\ $\succ 0$.
+\end{proof}
+
+\begin{theorem}[Relativities need no factor model]\label{thm:Factor_relCoef}
+  \lean{Credibility.Factor.profile_relCoef, Credibility.Factor.quadTab_relCoef,
+        Credibility.Factor.relCoef_factor_free, Credibility.Factor.quadTab_relCoef_eq_shock,
+        Credibility.Shock.expo_eq_of_proportional}
+  \leanok
+  \uses{def:Factor_profile, cor:Shock_expo}
+  The relativity has profile $g_t = z(\lambda_j\alpha_{jt} - \sum_i b_i\lambda_i\alpha_{it})$ and
+  extra variance $z^2 g^\top\Gamma g$ (with $g$ taken for $z = 1$). With equal loadings, the same
+  weight profile $\alpha_{it} = \alpha_t$ in every cohort and $\sum_i b_i = 1$, the factor cancels:
+  the relativity has the variance of the factor-free model, whatever $\Gamma$. Exposure weights
+  have the same profile when volumes are proportional.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab}
+  Theorem~\ref{thm:Factor_quadTab}; $\sum_i b_i\lambda\alpha_t = \lambda\alpha_t$.
+\end{proof}
+
+\begin{lemma}[Counterexamples]\label{lem:Factor_relCoef_counter}
+  \lean{Credibility.Factor.diffCoef, Credibility.Factor.extra_loadings,
+        Credibility.Factor.ar1_half_profile, Credibility.Factor.extra_entry,
+        Credibility.Factor.extra_profile}
+  \leanok
+  \uses{def:Factor_profile}
+  Equal loadings and the same months are not enough: the weights must have the same profile.
+  Two months, AR(1) factor $\Gamma_{ts} = \gamma\varphi^{|t-s|}$, equal loadings, the difference
+  $\hmu_0 - \hmu_1$: a cohort entering in the second month (weights $(\tfrac12,\tfrac12)$ against
+  $(0, 1)$) and two cohorts in both months with weights $(\tfrac34,\tfrac14)$ and
+  $(\tfrac14,\tfrac34)$ both keep $\gamma(1-\varphi)/2$, zero only for $\varphi = 1$ (a factor
+  constant over the window). Unequal loadings $\lambda = (1, 2)$ keep $\Gamma_{tt}$ in a single
+  month.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab}
+  Theorem~\ref{thm:Factor_quadTab}: in both two-month examples the profile is
+  $(\tfrac12, -\tfrac12)$.
+\end{proof}
+
+\begin{remark}[Finding 31]
+  Expected: equal loadings and cohorts observed in the same months make the factor drop out of
+  relativities. Needed in addition: the same weight profile over months
+  (Lemma~\ref{lem:Factor_relCoef_counter}). Practice: compute relativities on a common window
+  with common month weights, or keep the factor in the fit.
+\end{remark}
+
+\begin{theorem}[In true variance]\label{thm:Factor_rel_true}
+  \lean{Credibility.Factor.Cells.variance_lin, Credibility.Factor.Cells.variance_lin_eq,
+        Credibility.Factor.Cells.variance_relCoef}
+  \leanok
+  \uses{def:Factor_Cells, def:Factor_profile}
+  For any random cells with a covariance table, $\Var(\sum aX) = \sum_p\sum_q a_pa_q\,
+  \mathrm{tab}(p,q)$. So Theorems~\ref{thm:Factor_quadTab} and~\ref{thm:Factor_relCoef} hold
+  for the true variance, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_quadTab, thm:Factor_relCoef}
+  Bilinearity of the covariance.
+\end{proof}
+
+\section*{Estimation, part 1: what the data identify}
+
+Write $\Sigma_h(i,j)$ for the covariance of cohorts $i$, $j$ at months $t$, $t + h$. Across
+cohorts at lag $h \ge 1$ only the factor is left; at lag $0$ the factor and the shock add up.
+
+\begin{theorem}[Equal tables, equal predictors]\label{thm:Factor_congr}
+  \lean{Credibility.Factor.K_congr, Credibility.Factor.ell_congr, Credibility.Factor.var_congr,
+        Credibility.Factor.blup_congr}
+  \leanok
+  \uses{cor:Factor_blup}
+  Two factor models with the same table have the same $K$, $\ell$, $v$, hence the same
+  predictor and the same error for every weight vector.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $K$, $\ell$, $v$ are read off the table.
+\end{proof}
+
+\begin{theorem}[(I1) The scale of loadings and factor]\label{thm:Factor_rescale}
+  \lean{Credibility.Factor.rescale, Credibility.Factor.obsCov_rescale,
+        Credibility.Factor.obsCovG_rescale, Credibility.Factor.blup_rescale}
+  \leanok
+  \uses{def:Factor, def:Factor_card}
+  $(\lambda, \Gamma) \mapsto (a\lambda, a^{-2}\Gamma)$, $a \ne 0$ (a sign flip included), leaves
+  the table (with or without per-cohort dynamics) and the predictor unchanged. So the
+  normalisation (exposure-weighted mean loading $1$) is a presentation choice.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_congr}
+  $a\lambda_i\,a\lambda_j\,a^{-2}\Gamma_{ts} = \lambda_i\lambda_j\Gamma_{ts}$; then
+  Theorem~\ref{thm:Factor_congr}.
+\end{proof}
+
+\begin{theorem}[(I2) Lag $0$ sees only $C + \gamma\lambda\lambda^\top$]\label{thm:Factor_lag0}
+  \lean{Credibility.Factor.obsCov_eq_of_lag0, Credibility.Factor.blup_eq_of_lag0}
+  \leanok
+  \uses{def:Factor}
+  Let two factor models have the same $\tau^2$, $s^2$, volumes and lagged factor part
+  $\lambda_i\lambda_j\Gamma_{ts}$ ($t \ne s$), constant factor variances $\Gamma_{tt} = \gamma$,
+  $\Gamma'_{tt} = \gamma'$, and $C + \gamma\lambda\lambda^\top = C' + \gamma'\lambda'\lambda'^\top$.
+  Then they have the same table, so the same $K$, $\ell$, $v$, predictor and errors. With a
+  stationary $\Gamma$ the split of the lag-$0$ covariance between shock and factor is not
+  identified, and the predictor does not need it.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_congr}
+  At $t = s$ the table is $C_{ij} + \gamma\lambda_i\lambda_j$ plus terms that agree; at
+  $t \ne s$ only the lagged factor part and $\tau^2\delta_{ij}$. Then
+  Theorem~\ref{thm:Factor_congr}.
+\end{proof}
+
+\begin{theorem}[(I3) Lags $\ge 1$ across cohorts see only the factor]\label{thm:Factor_lagged}
+  \lean{Credibility.Factor.obsCovG_of_ne, Credibility.Factor.obsCovG_self_of_ne,
+        Credibility.Factor.factor_eq_of_obsCovG_eq}
+  \leanok
+  \uses{def:Factor_card}
+  For $i \ne j$ and $t \ne s$ the table with per-cohort dynamics is
+  $\lambda_i\lambda_j\Gamma_{ts}$: no $C$, $s^2/w$, $\tau^2$ or $G$. For $i = j$, $t \ne s$ it is
+  $\lambda_i^2\Gamma_{ts} + \tau^2 + (G_i)_{ts}$. So two models with the same table have the
+  same lagged cross-card factor part, whatever their $C$, $s^2$, $\tau^2$, $G$: a common
+  factor and per-cohort dynamics only are told apart by the lagged cross-moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Read off the table; for the last claim apply the first to both models.
+\end{proof}
+
+\begin{definition}[The year-on-year lagged cross-product]\label{def:Factor_yoy}
+  \lean{Credibility.Factor.covG, Credibility.Factor.cohortSeason,
+        Credibility.Factor.yoy}
+  \leanok
+  \uses{def:Factor_card, def:unbiased_mean}
+  For cohorts $i$, $j$ and months $t$, $u = t - 12$, $s$, $v = s - 12$:
+  $(X_{it} - X_{iu})(X_{js} - X_{jv})$. The means follow a season per cohort and calendar month,
+  $\mathbb E X_{jt} = \beta_{j,\mathrm{mon}(t)}$ (it contains a cohort mean and a common
+  season); months with the same calendar month have the same design row.
+\end{definition}
+
+\begin{theorem}[The year-on-year cross-product is unbiased]\label{thm:Factor_yoy}
+  \lean{Credibility.Factor.cohortSeason_row, Credibility.Factor.yoy_unbiased,
+        Credibility.Factor.yoy_unbiased_factor,
+        Credibility.Factor.yoyPooled_unbiased, Credibility.Factor.Cells.integral_yoy}
+  \leanok
+  \uses{def:Factor_yoy, thm:Factor_lagged, thm:integral_quad_mean}
+  For any design whose rows agree for cohort $i$ in months $t$, $u$, the year-on-year
+  cross-product is unbiased for every $\beta$, with expectation
+  $\Sigma(i,j,t,s) - \Sigma(i,j,t,v) - \Sigma(i,j,u,s) + \Sigma(i,j,u,v)$ in the table.
+  For $i \ne j$ and months distinct across the two cohorts this is
+  $\lambda_i\lambda_j(\Gamma_{ts} - \Gamma_{tv} - \Gamma_{us} + \Gamma_{uv})$; with
+  $s = t + h$ and a stationary $\Gamma$, $\lambda_i\lambda_j(2\Gamma(h) - \Gamma(h-12) -
+  \Gamma(h+12))$ for $h \ge 1$, $h \ne 12$. A weighted sum over month quadruples is unbiased
+  for the weighted sum, and for random cells with means $D\beta$ and this table the true
+  expectation is that value.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean, thm:Factor_lagged, thm:integral_quad_mean}
+  Differences of cells with the same design row annihilate the design
+  (Theorem~\ref{thm:unbiased_mean}); the four table entries are lagged cross-card entries
+  (Theorem~\ref{thm:Factor_lagged}); linearity for the pooled sum;
+  Theorem~\ref{thm:integral_quad_mean} for the true expectation.
+\end{proof}
+
+\begin{theorem}[(I4) Loadings from three cohorts, not from two]\label{thm:Factor_three}
+  \lean{Credibility.Factor.load_sq_of_three, Credibility.Factor.obsCovG_eq_of_trade,
+        Credibility.Factor.exTwo, Credibility.Factor.two_cohorts_not_identified}
+  \leanok
+  \uses{thm:Factor_lagged}
+  For distinct cohorts $i, j, k$ with $\lambda_j, \lambda_k \ne 0$ and $t \ne s$,
+  $\Sigma(i,j)\Sigma(i,k)/\Sigma(j,k) = \lambda_i^2\Gamma_{ts}$ (Anderson--Rubin). With two
+  cohorts this fails: models that agree in $\lambda_i\lambda_j$ ($i \ne j$) and in
+  $G_i + \lambda_i^2\Gamma$ have the same table; loadings $(2, \tfrac12)$ with $G = (0, \tfrac34 I)$
+  and loadings $(1, 1)$ with $G = (3I, 0)$, $\Gamma = I$, are an example.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_lagged}
+  The three entries are $\lambda_i\lambda_j\Gamma_{ts}$, $\lambda_i\lambda_k\Gamma_{ts}$,
+  $\lambda_j\lambda_k\Gamma_{ts}$ (Theorem~\ref{thm:Factor_lagged}). For the trade, compare the
+  table entry by entry.
+\end{proof}
+
+\begin{theorem}[(I5) An AR(1) factor from its cross-moments]\label{thm:Factor_ar1_id}
+  \lean{Credibility.Factor.obsCovG_ar1, Credibility.Factor.obsCovG_ar1_lag0,
+        Credibility.Factor.ar1_identified, Credibility.Factor.factorToShock,
+        Credibility.Factor.ar1_zero_eq_shock}
+  \leanok
+  \uses{thm:Factor_lagged, thm:Factor_lag0}
+  Let $\Gamma_{ts} = \gamma\varphi^{|t-s|}$ and $i \ne j$. Then
+  $\Sigma_h(i,j) = \gamma\lambda_i\lambda_j\varphi^h$ for $h \ge 1$ and
+  $\Sigma_0(i,j) = \gamma\lambda_i\lambda_j + C_{ij}$, so $\Sigma_2 = \varphi\Sigma_1$; if
+  $\varphi \ne 0$ and $\gamma\lambda_i\lambda_j \ne 0$, then $\varphi = \Sigma_2/\Sigma_1$,
+  $\gamma\lambda_i\lambda_j = \Sigma_1^2/\Sigma_2$ and $C_{ij} = \Sigma_0 - \Sigma_1^2/\Sigma_2$.
+  With $\varphi = 0$ the table is that of the shock $C + \gamma\lambda\lambda^\top$ without a
+  factor: nothing separates them.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_lagged, thm:Factor_lag0}
+  Theorem~\ref{thm:Factor_lagged} and the definition of $\Gamma$; for $\varphi = 0$,
+  Theorem~\ref{thm:Factor_lag0} with $\gamma' = 0$.
+\end{proof}
+
+\begin{theorem}[The shock estimators under a factor]\label{thm:Factor_shock_bias}
+  \lean{Credibility.Factor.resQuad, Credibility.Factor.res_unbiased,
+        Credibility.Factor.crossHat_factor_unbiased}
+  \leanok
+  \uses{def:Shock_estimators, def:Factor_yoy}
+  For the within-card residuals of Definition~\ref{def:Shock_estimators} under the factor
+  table, $\mathbb E[r_{it}r_{jt}]$ is the shock value of Lemma~\ref{lem:Shock_unbiased_res}
+  plus $\lambda_i\lambda_j(e_t - a_i)^\top\Gamma(e_t - a_j)$ plus, for $i = j$,
+  $(e_t - a_i)^\top G_i(e_t - a_i)$. So for $i \ne j$, $\hat C_{ij}$ is unbiased for
+  $C_{ij} + \lambda_i\lambda_j\sum_t(e_t - a_i)^\top\Gamma(e_t - a_j)/\sum_t d_{ijt}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Shock_unbiased_res, lem:unbiased_linear}
+  Split the table into factor, shock and per-cohort parts. The shock part of the expectation
+  is the value of Lemma~\ref{lem:Shock_unbiased_res}, since an estimator has one expectation
+  (Lemma~\ref{lem:unbiased_linear}); the other parts are the quadratic forms in
+  $e_t - a_i$, $e_t - a_j$. Then sum over $t$.
+\end{proof}
+
+\begin{theorem}[Finding 26: the shock fit absorbs only part of the factor]\label{thm:Factor_crossHat_ar1}
+  \lean{Credibility.Factor.crossHat_ar1_two}
+  \leanok
+  \uses{thm:Factor_shock_bias}
+  Two months, equal weights $a_{jt} = \tfrac12$, AR(1) $\Gamma_{ts} = \gamma\varphi^{|t-s|}$:
+  $\hat C_{ij}$ ($i \ne j$) is unbiased for $C_{ij} + (1-\varphi)\gamma\lambda_i\lambda_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_bias}
+  $\sum_t d_{ijt} = 1$ and $\sum_t (e_t - a)^\top\Gamma(e_t - a) = \gamma(1-\varphi)$.
+\end{proof}
+
+\begin{remark}[Finding 26]\label{rem:factor_shock_bias}
+  For $0 < \varphi < 1$ and $\gamma\lambda_i\lambda_j \ne 0$, the shock fit's $\hat C_{ij}$ is
+  unbiased neither for $C_{ij}$ nor for the lag-$0$ covariance $C_{ij} + \gamma\lambda_i\lambda_j$:
+  demeaning each cohort removes the part of the factor its months share. The ends are
+  $\varphi = 0$ (a rank-one shock, $C + \gamma\lambda\lambda^\top$) and a constant factor ($C$).
+\end{remark}
+
+\begin{lemma}[Regrouping a bilinear double sum]\label{lem:sum_mul_sum_bilin}
+  \lean{Credibility.Factor.sum_mul_sum_bilin}
+  \leanok
+  $\sum_{k,l} f_kg_l\,p_k^\top\Gamma q_l = \bigl(\sum_k f_kp_k\bigr)^\top\Gamma\bigl(\sum_l g_lq_l\bigr)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand and exchange the four sums.
+\end{proof}
+
+\begin{theorem}[The between-cohort spread under a factor]\label{thm:Factor_between}
+  \lean{Credibility.Factor.portCovG, Credibility.Factor.portCovG_eq,
+        Credibility.Factor.contrast_factor_unbiased, Credibility.Factor.between_factor_unbiased,
+        Credibility.Factor.between_factor_equal_weights}
+  \leanok
+  \uses{def:Shock_tauHat, def:Factor_yoy}
+  Under the factor table, $\cov(\hat\mu_i, \hat\mu_j) = K_{ij} + \lambda_i\lambda_j a_i^\top\Gamma a_j
+  + \delta_{ij}a_i^\top G_ia_i$, and for $\sum_j x_j = 1$ the spread
+  $\sum_j x_j(\hat\mu_j - \sum_i x_i\hat\mu_i)^2$ is unbiased for the value of
+  Theorem~\ref{thm:Shock_tauHat}'s spread plus $\sum_j x_j v_j^\top\Gamma v_j$,
+  $v_j = \lambda_ja_j - \sum_i x_i\lambda_ia_i$, plus $\sum_k x_k(1-x_k)a_k^\top G_ka_k$. With
+  equal weights $a_j = \alpha$ the factor term is
+  $\sum_j x_j(\lambda_j - \bar\lambda)^2\,\alpha^\top\Gamma\alpha$, $\bar\lambda = \sum_i x_i\lambda_i$:
+  a shock fit reads loading dispersion, and per-cohort dynamics, as heterogeneity $\tau^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Shock_tauHat, lem:unbiased_linear, lem:sum_mul_sum_bilin}
+  Products of contrasts as in Theorem~\ref{thm:Shock_tauHat}; split $\cov(\hat\mu_i,\hat\mu_j)$;
+  the shock part has the known value (one estimator, one expectation,
+  Lemma~\ref{lem:unbiased_linear}); regroup the factor part with
+  Lemma~\ref{lem:sum_mul_sum_bilin}; $\sum_j x_j(\delta_{jk} - x_k)^2 = x_k(1 - x_k)$.
+\end{proof}
+
+\begin{theorem}[$\hat C_{jj}$, $\hat s_j^2$, $\hat\Sigma$ and $\hat\tau^2$ under a factor]\label{thm:Factor_shock_diag}
+  \lean{Credibility.Factor.resExtra, Credibility.Factor.resExtraSum,
+        Credibility.Factor.CdiagBias, Credibility.Factor.s2Bias, Credibility.Factor.errCovBias,
+        Credibility.Factor.betweenBias, Credibility.Factor.tauBias,
+        Credibility.Factor.sqSum_factor_unbiased, Credibility.Factor.CdiagHat_factor_unbiased,
+        Credibility.Factor.s2Hat_factor_unbiased, Credibility.Factor.errCovHat_factor_unbiased,
+        Credibility.Factor.tauHat_factor_unbiased}
+  \leanok
+  \uses{def:Shock_estimators, def:Shock_tauHat, thm:Factor_shock_bias, thm:Factor_between}
+  Under the factor table let
+  $F_j(u) = \sum_t u_{jt}\bigl(\lambda_j^2(e_t - a_j)^\top\Gamma(e_t - a_j) + (e_t - a_j)^\top G_j(e_t - a_j)\bigr)$.
+  Then $\sum_t u_{jt}r_{jt}^2$ is unbiased for $d_j(u)C_{jj} + h_j(u)s_j^2 + F_j(u)$, so by
+  Cramer's rule $\hat C_{jj}$ is unbiased for $C_{jj} + (h_j(v)F_j(u) - h_j(u)F_j(v))/\Delta_j$
+  and $\hat s_j^2$ for $s_j^2 + (d_j(u)F_j(v) - d_j(v)F_j(u))/\Delta_j$. Every entry of
+  $\hat\Sigma$ is unbiased for $\Sigma_{ij} + B_{ij}$ ($B$ from these two biases on the
+  diagonal and from Theorem~\ref{thm:Factor_shock_bias} off it), and $\hat\tau^2$ for
+  $\tau^2 + (b - \sum_j x_jB_{jj} + \sum_{ij}x_ix_jB_{ij})/(1 - \sum_j x_j^2)$, $b$ the
+  spread's extra term of Theorem~\ref{thm:Factor_between}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_bias, thm:Factor_between, lem:unbiased_linear}
+  Sum Theorem~\ref{thm:Factor_shock_bias} over $t$ with weights $u$; then the same linear
+  combinations as in Theorems~\ref{thm:Shock_unbiased} and~\ref{thm:Shock_tauHat}, now with
+  Theorem~\ref{thm:Factor_between} for the spread.
+\end{proof}
+
+\begin{corollary}[Independent months: the factor is a rank-one shock]\label{cor:Factor_shock_diag_indep}
+  \lean{Credibility.Factor.resQuad_smul_one, Credibility.Factor.CdiagHat_s2Hat_indep}
+  \leanok
+  \uses{thm:Factor_shock_diag}
+  With $\Gamma = \gamma I$ and $G = 0$, $(e_t - a_i)^\top\Gamma(e_t - a_j) = \gamma d_{ijt}$, so
+  $\hat C_{jj}$ is unbiased for $C_{jj} + \gamma\lambda_j^2$ and $\hat s_j^2$ for $s_j^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_shock_diag}
+  $F_j(u) = \gamma\lambda_j^2 d_j(u)$; Cramer's rule returns $\gamma\lambda_j^2$ for the shock and
+  $0$ for the process noise.
+\end{proof}
+
+\begin{definition}[Henderson III for a table linear in its parameters]\label{def:henderson}
+  \lean{Credibility.Model.linTable, Credibility.Model.hendersonMat, Credibility.Model.henderson,
+        Credibility.Model.minqueR, Credibility.Model.minqueForms}
+  \leanok
+  \uses{def:unbiased_mean}
+  For a table $\sum_l\theta_lV_l$ and quadratic forms $Q_k$ (one per parameter), the system is
+  $H_{kl} = \sum_{p,q}(Q_k)_{pq}(V_l)_{pq}$ and $\hat\theta = H^{-1}(X^\top Q_kX)_k$ (Henderson
+  1953). MINQUE for a prior table $W$ (Rao 1971) takes $Q_k = RV_kR$,
+  $R = W^{-1} - W^{-1}D(D^\top W^{-1}D)^{-1}D^\top W^{-1}$.
+\end{definition}
+
+\begin{lemma}[Forms are linear in their matrix]\label{lem:quad_sum}
+  \lean{Credibility.Model.quad_sum, Credibility.Model.sum_lin_mul_lin,
+        Credibility.Model.quad_eq_dotProduct, Credibility.Model.quad_design_eq_zero,
+        Credibility.Model.minqueR_mul}
+  \leanok
+  \uses{def:henderson}
+  $X^\top(\sum_kc_kQ_k)X = \sum_kc_kX^\top Q_kX$; a form with $QD = 0$ vanishes at every mean
+  $D\beta$; $RD = 0$ when $D^\top W^{-1}D$ is nonsingular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Exchange sums; $(D\beta)^\top Q D\beta = (D\beta)^\top(QD)\beta$; $(D^\top W^{-1}D)^{-1}(D^\top W^{-1}D) = I$.
+\end{proof}
+
+\begin{theorem}[Henderson III and MINQUE are unbiased]\label{thm:henderson_unbiased}
+  \lean{Credibility.Model.henderson_unbiased, Credibility.Model.minque_unbiased}
+  \leanok
+  \uses{def:henderson, thm:unbiased_mean}
+  If $Q_kD = 0$ for every $k$ and $H$ is nonsingular, every $\hat\theta_l$ is unbiased for
+  $\theta_l$, for every $\theta$ and every $\beta$. In particular MINQUE, for any prior $W$
+  with $D^\top W^{-1}D$ and its system nonsingular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:quad_sum, thm:unbiased_mean}
+  $\hat\theta_l$ is the form $\sum_k(H^{-1})_{lk}Q_k$; its expectation is
+  $\sum_k(H^{-1})_{lk}(H\theta)_k = \theta_l$, the means drop out since $Q_kD = 0$.
+\end{proof}
+
+\begin{theorem}[Henderson III / MINQUE given the factor's shape]\label{thm:Factor_henderson}
+  \lean{Credibility.Factor.Par, Credibility.Factor.shapeTable, Credibility.Factor.shapeBasis,
+        Credibility.Factor.shapePar, Credibility.Factor.shapeTable_eq_linTable,
+        Credibility.Factor.henderson_shape_unbiased, Credibility.Factor.covG_zero_eq_shapeTable,
+        Credibility.Factor.henderson_factor_unbiased}
+  \leanok
+  \uses{thm:henderson_unbiased, def:Factor_yoy}
+  Given the factor's shape $\Gamma = \gamma\Gamma_0$ (e.g.\ AR(1) with a known $\varphi$), and
+  without per-cohort dynamics, the table is linear in a symmetric $A$, a symmetric $C$, $s^2$
+  and $\tau^2$:
+  $A_{ij}(\Gamma_0)_{ts} + \delta_{ts}(C_{ij} + \delta_{ij}s_i^2/w_{it}) + \tau^2\delta_{ij}$,
+  with $A = \gamma\lambda\lambda^\top$. So Henderson III (MINQUE included) with invariant forms
+  and a nonsingular system is unbiased for $\gamma\lambda_i\lambda_j$, $C_{ij}$, $s_j^2$ and
+  $\tau^2$ whatever the fixed effects. With $A = 0$ this is the setting of the shock fit: its closed-form $\hat C$, $\hat s^2$
+  (Theorem~\ref{thm:Shock_not_unbiased} and before) are Henderson III with particular forms, not
+  yet derived from this theorem (owner, 2026-11-21: tie them in at a third instance).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:henderson_unbiased}
+  Expand $\sum_l\theta_lV_l$ entry by entry; then Theorem~\ref{thm:henderson_unbiased}.
+\end{proof}
+
+\begin{lemma}[When the Henderson system is nonsingular]\label{lem:henderson_singular}
+  \lean{Credibility.Model.hendersonMat_mulVec, Credibility.Model.hendersonMat_det_eq_zero,
+        Credibility.Model.hendersonMat_det_eq_zero_of_smul,
+        Credibility.Model.dotProduct_hendersonMat_self,
+        Credibility.Model.hendersonMat_self_det_ne_zero,
+        Credibility.Model.exists_hendersonMat_det_ne_zero_iff,
+        Credibility.Model.dotProduct_hendersonMat, Credibility.Model.sum_mul_eq_trace,
+        Credibility.Model.hendersonMat_det_eq_zero_of_design,
+        Credibility.Model.single_sub_single_ne_zero, Credibility.Model.linTable_single_sub,
+        Credibility.Model.sum_mul_mul_transpose_eq_zero,
+        Credibility.Model.hendersonMat_det_eq_zero_of_mod_design}
+  \leanok
+  \uses{def:henderson}
+  If $\sum_lc_lV_l = 0$ for some $c \ne 0$ (in particular if two basis tables are
+  proportional), $H$ is singular for every choice of forms. Conversely, if the $V_l$ are
+  linearly independent, the forms $Q_k = V_k$ give a nonsingular $H$ (the Gram matrix of the
+  tables). So some system is nonsingular iff the table determines $\theta$; invariance
+  $Q_kD = 0$ can only lose rank on top of this, and does for a table $V_l = DND^\top$ in the
+  span of the design: its column of $H$ is $\operatorname{tr}(Q_k^\top DND^\top) = 0$. In
+  general invariant forms see the tables only modulo $\{YD^\top\}$: if
+  $\sum_lc_lV_l = YD^\top$ with $c \ne 0$, $H$ is singular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(Hc)_k = \sum_{p,q}(Q_k)_{pq}(\sum_lc_lV_l)_{pq}$. With $Q = V$,
+  $c^\top Hc = \sum_{p,q}(\sum_lc_lV_l)_{pq}^2$, which vanishes only if $\sum_lc_lV_l = 0$.
+  For the design, cycle the trace: $\operatorname{tr}(D^\top Q_k^\top DN) = 0$ since $Q_kD = 0$.
+\end{proof}
+
+\begin{theorem}[No contrast free of the fixed effects, nothing estimable]\label{thm:unbiased_cells}
+  \lean{Credibility.Model.unbiasedMean_eq_zero_of_cells}
+  \leanok
+  \uses{thm:unbiased_mean}
+  If every cell is alone in some column of the design, every quadratic estimator unbiased for
+  all $\beta$ has expectation $0$ under any symmetric table.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean}
+  $D^\top(Q + Q^\top)D = 0$ reads $Q_{pq} + Q_{qp} = 0$ entry by entry, so
+  $\sum_{p,q}Q_{pq}C_{pq} = 0$ for symmetric $C$.
+\end{proof}
+
+\begin{theorem}[When the MINQUE system is nonsingular]\label{thm:minque_nonsingular}
+  \lean{Credibility.Model.minque_det_ne_zero_iff,
+        Credibility.Model.PosSemidef.exists_eq_transpose_mul_self,
+        Credibility.Model.transpose_mul_minqueR, Credibility.Model.minqueR_mul_mul,
+        Credibility.Model.minqueR_transpose}
+  \leanok
+  \uses{def:henderson, lem:henderson_singular}
+  For a positive definite prior $W$, $D^\top W^{-1}D$ nonsingular and symmetric basis tables,
+  the MINQUE system is nonsingular iff the projected tables $RV_kR$ are linearly independent
+  (Rao 1971). An independent basis with a full-rank design is not enough
+  (Theorem~\ref{thm:Factor_card_level}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular}
+  $D^\top R = 0$ and $RWR = R$. With $S = \sum_lc_lV_l$ and $N = RSR$,
+  $(Hc)_k = \operatorname{tr}(V_kN)$, so $N = 0$ gives $Hc = 0$. Conversely
+  $c^\top Hc = \operatorname{tr}(NS) = \operatorname{tr}(WNWN)$; writing $W = B^\top B$ (spectral
+  theorem) this is $\|BNB^\top\|^2$, so $Hc = 0$ forces $BNB^\top = 0$, $WNW = 0$, $N = 0$.
+\end{proof}
+
+\begin{theorem}[Singular shape systems: constant volumes, independent months]\label{thm:Factor_henderson_singular}
+  \lean{Credibility.Factor.ShockPar, Credibility.Factor.shockBasis,
+        Credibility.Factor.shapeBasis_s2_eq_smul, Credibility.Factor.hendersonMat_shock_det_eq_zero,
+        Credibility.Factor.hendersonMat_shape_det_eq_zero_of_const,
+        Credibility.Factor.shapeBasis_one_inl, Credibility.Factor.hendersonMat_shape_one_det_eq_zero,
+        Credibility.Factor.shapeTable_one_eq, Credibility.Factor.shapeTable_symm,
+        Credibility.Factor.not_unbiased_shape_one, Credibility.Factor.not_unbiased_factor_of_indep}
+  \leanok
+  \uses{thm:Factor_henderson, lem:henderson_singular, thm:unbiased_mean, thm:Factor_ar1_id}
+  (1) If cohort $j$ has a constant volume $w_j$, its process-noise table is $1/w_j$ times its
+  shock variance table, so the system of the shock part ($A = 0$), and of the full shape, is
+  singular for every choice of forms: $s_j^2$ needs volume variation
+  (cf.\ Theorem~\ref{thm:Shock_not_unbiased}).
+  (2) With independent months $\Gamma_0 = I$ the tables of $A_{ij}$ and $C_{ij}$ coincide: the
+  system is singular, the table depends on $A$ and $C$ only through $A + C$, and no function of
+  the data is unbiased for $A_z$ for every parameter set, nor for $\gamma\lambda_i\lambda_j$ in
+  every factor model with $\Gamma = \gamma I$ when $\gamma\lambda_i\lambda_j \ne 0$
+  (the rank-one shock of Corollary~\ref{cor:Factor_shock_diag_indep}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular, thm:Factor_henderson, thm:unbiased_mean, thm:Factor_ar1_id}
+  (1) and the singularity in (2) by Lemma~\ref{lem:henderson_singular}. For the rest, the
+  parameter sets $(A, C)$ and $(0, A + C)$ (for the factor model: the model and its factor moved
+  into the shock) give the same symmetric table, and an estimator has one expectation under it.
+\end{proof}
+
+\begin{theorem}[Cohort-specific means hide the cohort level]\label{thm:Factor_card_level}
+  \lean{Credibility.Factor.cohortSeason_apply_eq, Credibility.Factor.classTable_eq_cohortSeason,
+        Credibility.Factor.shapeBasis_tau_eq_cohortSeason,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero,
+        Credibility.Factor.exists_independent_singular}
+  \leanok
+  \uses{lem:henderson_singular, thm:Factor_henderson, def:Factor_yoy}
+  The cohort-level table $I\otimes\mathbf 1\mathbf 1^\top$ is $DED^\top$ for the cohort season $D$
+  ($E_{(j,m),(j',m')} = \delta_{jj'}$), so every invariant shape system is singular under a cohort
+  season, and $\tau^2$ must be left out. Minimal case: one cohort, two months, a common mean,
+  tables $I$ and $\mathbf 1\mathbf 1^\top$: independent, $D^\top D = 2$, every invariant
+  system singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:henderson_singular}
+  Each cell has one nonzero entry in $D$; then Lemma~\ref{lem:henderson_singular}.
+\end{proof}
+
+\begin{theorem}[What else the cohort season hides]\label{thm:Factor_season_collapse}
+  \lean{Credibility.Factor.cohortSeason_col, Credibility.Factor.unbiasedMean_cohortSeason_eq_zero,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shape,
+        Credibility.Factor.hendersonMat_cohortSeason_det_eq_zero_of_shapeG}
+  \leanok
+  \uses{thm:Factor_card_level, thm:unbiased_cells, thm:Factor_hendersonG}
+  Under a cohort season: with one cell per cohort and calendar month (one year of data) nothing
+  is estimable. If $\Gamma_0 = aI + g(\mathrm{mon}\,t, \mathrm{mon}\,s)$ (AR(1) at $\varphi = 0$
+  or $1$, or any calendar pattern), $A_z - aC_z$ lies in the span of the design; likewise $g_j$
+  against $aC_{jj}$ for per-cohort dynamics $G_0$ of that form. In both cases every invariant
+  system is singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_cells, lem:henderson_singular, thm:Factor_card_level}
+  One year: each cell is alone in its column; Theorem~\ref{thm:unbiased_cells}. The shapes:
+  the combination is a table that sees only cohort and calendar month, hence $DFD^\top$;
+  Lemma~\ref{lem:henderson_singular}.
+\end{proof}
+
+\begin{remark}[Finding 27]
+  Under cohort-specific fixed means, Henderson III / MINQUE (Theorems~\ref{thm:Factor_henderson},
+  \ref{thm:Factor_hendersonG}) never has a nonsingular system with $\tau^2$ among the
+  parameters: the cohort level is what the design already fits.
+\end{remark}
+
+\begin{remark}[Finding 28]
+  Under a cohort season the data see the covariance only through within-calendar-month
+  contrasts across years: one year identifies nothing, and a factor (or per-cohort dynamics)
+  that repeats with the calendar, the constant factor $\varphi = 1$ included, is absorbed by
+  the season. A sufficient condition for the rest: Theorem~\ref{thm:Factor_season_nonsingular}.
+\end{remark}
+
+\begin{lemma}[MINQUE through contrasts]\label{lem:minque_contrasts}
+  \lean{Credibility.Model.minqueR_mul_mulVec,
+        Credibility.Model.dotProduct_mulVec_eq_zero_of_minqueR,
+        Credibility.Model.transpose_mulVec_single_sub,
+        Credibility.Model.single_sub_dotProduct_mulVec,
+        Credibility.Model.minque_det_ne_zero_of_diff,
+        Credibility.Model.minque_det_eq_zero_of_mod_design}
+  \leanok
+  \uses{thm:minque_nonsingular}
+  For $W \succ 0$, $D^\top W^{-1}D$ nonsingular and symmetric tables: if no $c \ne 0$ makes every
+  double difference $S_{pr} - S_{ps} - S_{qr} + S_{qs}$ of $S = \sum_kc_kV_k$ vanish ($p, q$ and
+  $r, s$ cells with equal rows of $D$), the MINQUE system is nonsingular. If
+  $\sum_kc_kV_k = YD^\top + DY^\top$ for some $c \ne 0$, it is singular.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:minque_nonsingular}
+  For a contrast $a$ ($D^\top a = 0$), $RWa = a$; so $RSR = 0$ gives
+  $a^\top Sb = a^\top WRSRWb = 0$, and $e_p - e_q$ is a contrast. Conversely $RD = 0$ and
+  $D^\top R = 0$ give $R(YD^\top + DY^\top)R = 0$. Then Theorem~\ref{thm:minque_nonsingular}.
+\end{proof}
+
+\begin{theorem}[A table in the span of the design]\label{thm:unbiased_add_design}
+  \lean{Credibility.Model.UnbiasedMean.add_design}
+  \leanok
+  \uses{thm:unbiased_mean}
+  An estimator unbiased for $\theta$ under $C$ for every $\beta$ stays unbiased under
+  $C + DND^\top$ for any symmetric $N$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean, lem:henderson_singular}
+  $D^\top(Q + Q^\top)D = 0$, so $2\sum_{pq}Q_{pq}(DND^\top)_{pq}
+  = \operatorname{tr}(D^\top(Q + Q^\top)DN) = 0$.
+\end{proof}
+
+\begin{theorem}[Nonsingular under the cohort season]\label{thm:Factor_season_nonsingular}
+  \lean{Credibility.Factor.SeasonPar, Credibility.Factor.seasonBasis,
+        Credibility.Factor.seasonBasis_transpose, Credibility.Factor.sum_smul_seasonBasis_apply,
+        Credibility.Factor.minque_cohortSeason_det_ne_zero,
+        Credibility.Factor.minque_cohortSeason_det_eq_zero_of_volume,
+        Credibility.Factor.cohortSeason_mulVec_injective, Credibility.Factor.cohortSeason_det_isUnit}
+  \leanok
+  \uses{lem:minque_contrasts, def:Factor_yoy, thm:Factor_card_level}
+  Under a cohort season, with the parameters $(A, C, s^2)$ ($\tau^2$ dropped), any number of cohorts
+  and any prior $W \succ 0$, the MINQUE system is nonsingular if (i) $\Gamma_0$ has a nonzero
+  double difference $\Gamma_0(t_1,t_2) - \Gamma_0(t_1,u_2) - \Gamma_0(u_1,t_2) + \Gamma_0(u_1,u_2)$
+  for same-calendar-month pairs $(t_1, u_1)$, $(t_2, u_2)$ with no month in common, and (ii) each
+  cohort has two same-calendar-month pairs with different $1/w_{jt} + 1/w_{ju}$. With two years,
+  (ii) is needed: if $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$ is the same for every $m$, the system is
+  singular for every prior and shape. $D^\top W^{-1}D$ is nonsingular when every calendar month
+  occurs.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:minque_contrasts, def:Factor_yoy}
+  Lemma~\ref{lem:minque_contrasts} with the pairs: (i) leaves only $A$ in the double
+  difference, so $A = 0$; then a pair against itself gives $2C_{ij}$, and for $i = j$
+  $2C_{jj} + s_j^2(1/w_{jt} + 1/w_{ju})$; (ii) gives $s_j^2 = 0$, $C_{jj} = 0$. Necessity: with
+  $h$ the constant, $2V_{s_j} - hV_{C_{jj}}$ is $\operatorname{diag}(x, -x)$ within each calendar
+  month, which is $YD^\top + DY^\top$.
+\end{proof}
+
+\begin{theorem}[Two years, AR(1): MINQUE estimates the factor model]\label{thm:Factor_season_unbiased}
+  \lean{Credibility.Factor.henderson_season_unbiased, Credibility.Factor.ar1Cal,
+        Credibility.Factor.ar1Cal_symm, Credibility.Factor.minque_ar1_two_years_det_ne_zero,
+        Credibility.Factor.minque_ar1_two_years_unbiased}
+  \leanok
+  \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
+        thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
+  Under a cohort season, Henderson III / MINQUE without $\tau^2$ is unbiased for $A_{ij}$,
+  $C_{ij}$, $s_j^2$ whatever $\tau^2$. Two years of calendar months, $\Gamma = \gamma\Gamma_0$
+  with $\Gamma_0$ AR(1), $0 < \varphi < 1$, and volumes as in (ii): for every prior
+  $W \succ 0$ MINQUE is nonsingular and unbiased for $\gamma\lambda_i\lambda_j$, $C_{ij}$ and
+  $s_j^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_season_nonsingular, thm:unbiased_add_design, thm:henderson_unbiased,
+        thm:Factor_card_level, def:Factor_ar1, thm:Factor_henderson}
+  The cohort level is $DED^\top$ (Theorem~\ref{thm:Factor_card_level}), so
+  Theorem~\ref{thm:unbiased_add_design} adds it to Theorem~\ref{thm:henderson_unbiased}. For
+  AR(1), January and February give $2\varphi - \varphi^{11} - \varphi^{13} > 0$; then
+  Theorem~\ref{thm:Factor_season_nonsingular}.
+\end{proof}
+
+\begin{remark}[Finding 29]
+  With two years under a cohort season, $s_j^2$ is separated from $C_{jj}$ only by volumes that
+  vary over the calendar: a volume that changes only from one year to the next leaves the
+  MINQUE system singular. The year-on-year differences see the process noise only through
+  $1/w_{j,(0,m)} + 1/w_{j,(1,m)}$.
+\end{remark}
+
+\begin{theorem}[Henderson III with per-cohort dynamics of known shape]\label{thm:Factor_hendersonG}
+  \lean{Credibility.Factor.ParG, Credibility.Factor.shapeTableG, Credibility.Factor.shapeBasisG,
+        Credibility.Factor.shapeParG, Credibility.Factor.shapeTableG_eq_linTable,
+        Credibility.Factor.henderson_shapeG_unbiased, Credibility.Factor.covG_eq_shapeTableG,
+        Credibility.Factor.henderson_factorG_unbiased,
+        Credibility.Factor.hendersonMat_shapeG_one_det_eq_zero}
+  \leanok
+  \uses{thm:Factor_henderson, lem:henderson_singular}
+  With per-cohort dynamics $G_j = g_jG_0$ of known shape $G_0$ and $\Gamma = \gamma\Gamma_0$, the
+  table adds $\delta_{ij}g_i(G_0)_{ts}$, one basis table $E_{jj}\otimes G_0$ per cohort. Henderson
+  III with invariant forms and a nonsingular system is unbiased for $\gamma\lambda_i\lambda_j$,
+  $C_{ij}$, $s_j^2$, $\tau^2$ and $g_j$ whatever the fixed effects. White noise $G_0 = I$ is the
+  shock variance table again: the system is singular.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_henderson, thm:henderson_unbiased, lem:henderson_singular}
+  Split the sum over the parameters into the shape part (Theorem~\ref{thm:Factor_henderson}) and
+  the per-cohort part; then Theorem~\ref{thm:henderson_unbiased}. For $G_0 = I$,
+  Lemma~\ref{lem:henderson_singular}.
+\end{proof}

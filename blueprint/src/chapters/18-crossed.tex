@@ -1,0 +1,661 @@
+\chapter{Extension: crossed levels}\label{ch:crossed}
+% Not in the thesis: notes/crossed-2x2.md, paper "Open directions". Lean: Credibility/Crossed.lean
+
+Not in the thesis. The cells $j$ of a table carry a row $r(j)$ (a country) and a column
+$c(j)$ (a car type), and their levels are
+$\mu_j = \mu + \alpha A_{r(j)} + \beta B_{c(j)} + \gamma C_j$ with $A$, $B$, $C$
+uncorrelated, mean $0$, variance $1$. Only first and second moments are assumed. With
+$\beta^2 = 0$ this is Chapter~\ref{ch:hierarchical} with the rows as groups; with
+$\alpha^2 = \beta^2 = 0$ it is the thesis. The best predictor is the general one
+(Theorem~\ref{thm:Blup_optimal}); what is new is $K$, its positive
+definiteness and the closed form in the balanced table.
+
+\begin{definition}[Crossed levels]\label{def:crossed}
+  \lean{Credibility.Crossed.levelCov, Credibility.Crossed.K}
+  \leanok
+  \uses{def:KG}
+  For any set of cells with row and column maps $r$, $c$:
+  $L = \alpha^2 S_r + \beta^2 S_c + \gamma^2 I$ with the same-group matrices
+  $(S_r)_{ij} = [r(i) = r(j)]$, $(S_c)_{ij} = [c(i) = c(j)]$, and $K = L + \Sigma$ for any
+  noise covariance $\Sigma$.
+\end{definition}
+
+\begin{lemma}[$K$ is positive definite]\label{lem:crossed_posDef}
+  \lean{Credibility.Crossed.levelCov_apply, Credibility.Crossed.levelCov_posSemidef,
+    Credibility.Crossed.K_posDef,
+    Credibility.Crossed.K_posDef_of_gamma}
+  \leanok
+  \uses{def:crossed}
+  With $\alpha^2, \beta^2, \gamma^2 \ge 0$: $L \succeq 0$; $K \succ 0$ if $\Sigma \succ 0$; and
+  $K \succ 0$ if $\gamma^2 > 0$ and $\Sigma \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sameGroup}
+  $S_r, S_c \succeq 0$ (Lemma~\ref{lem:sameGroup}); a positive definite plus a positive
+  semidefinite matrix is positive definite.
+\end{proof}
+
+\begin{lemma}[$K$ as a mixed-model covariance]\label{lem:crossed_mixed}
+  \lean{Credibility.Crossed.design, Credibility.Crossed.effectCov, Credibility.Crossed.K_eq_mixed,
+    Credibility.Crossed.design_effect_inl, Credibility.Crossed.design_effect_inr,
+    Credibility.Crossed.effectCov_posDef}
+  \leanok
+  \uses{def:crossed}
+  With the crossed design $Z = [Z_r \mid Z_c]$ (one column per row and per column of the table)
+  and $G = \operatorname{diag}(\alpha^2, \beta^2)$: $K = ZGZ^T + (\gamma^2 I + \Sigma)$. The
+  covariance of the cells with the effect of row $a$ is $ZGe_a = \alpha^2\mathbf 1_{r = a}$,
+  likewise $\beta^2\mathbf 1_{c = t}$ for column $t$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $(ZGZ^T)_{ij} = \alpha^2[r(i) = r(j)] + \beta^2[c(i) = c(j)]$, entrywise.
+\end{proof}
+
+\begin{theorem}[Crossed credibility by Henderson's equations]\label{thm:crossed_henderson}
+  \lean{Credibility.Crossed.rowEffect_eq_blup, Credibility.Crossed.colEffect_eq_blup}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, lem:crossed_mixed}
+  Let $\alpha^2, \beta^2 > 0$, $\gamma^2 I + \Sigma \succ 0$, and let $(\hat m, \hat b)$ solve the
+  mixed-model equations with $X = \mathbf 1$, the crossed design $Z$, $G$ and
+  $R = \gamma^2 I + \Sigma$. Then the estimated row effect $\hat b_a$ is the best linear unbiased
+  predictor of $\alpha A_a$, and $\hat b_t$ that of $\beta B_t$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hendersonMME_eq_blup, lem:crossed_mixed, thm:U_groupEffect_blup}
+  Theorem~\ref{thm:hendersonMME_eq_blup} with Lemma~\ref{lem:crossed_mixed}.
+\end{proof}
+
+\begin{theorem}[No column effect is Bridge 4]\label{thm:crossed_bridge4}
+  \lean{Credibility.Crossed.levelCov_beta_zero, Credibility.Crossed.K_beta_zero,
+    Credibility.Crossed.blupWeight_beta_zero}
+  \leanok
+  \uses{def:crossed, def:KG}
+  With $\beta^2 = 0$ and $\alpha^2 + \gamma^2 \ne 0$, the crossed $L$ is the $L_G$ of
+  Section~\ref{sec:hier_bridge4} with the rows as groups, $\tau^2 = \alpha^2 + \gamma^2$ and
+  $\phi = \alpha^2/(\alpha^2 + \gamma^2)$. For a thesis model with that $\tau^2$ and its noise,
+  $K = K_G$ and the best predictors of all cell levels agree.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:levelCovG_eq, def:KG}
+  $L_G = (1 - \phi)\tau^2 I + \phi\tau^2 S$ (Lemma~\ref{lem:levelCovG_eq}) $= \gamma^2 I + \alpha^2 S_r$.
+\end{proof}
+
+\section{The balanced table}\label{sec:crossed_balanced}
+
+All cells of $A \times T$ observed, $n_A$ rows, $n_T$ columns, $\Sigma = \sigma^2 I$.
+
+\begin{lemma}[Layer vectors]\label{lem:crossed_layer}
+  \lean{Credibility.Crossed.KBal, Credibility.Crossed.LBal, Credibility.Crossed.layer,
+    Credibility.Crossed.mulVec_KBal, Credibility.Crossed.sum_row_layer,
+    Credibility.Crossed.sum_col_layer, Credibility.Crossed.mulVec_layer,
+    Credibility.Crossed.LBal_eq_layer, Credibility.Crossed.sum_layer,
+    Credibility.Crossed.layer_dotProduct, Credibility.Crossed.layer_sub,
+    Credibility.Crossed.layer_dotProduct_layer}
+  \leanok
+  \uses{def:crossed}
+  Around a cell $c$, call $w_1 + w_r[\text{same row}] + w_c[\text{same column}] + w_d[\text{the
+  cell}]$ a layer vector. $K$ maps layer vectors to layer vectors:
+  $(Kv)_p = \alpha^2\sum_t v_{p_1 t} + \beta^2\sum_a v_{a p_2} + (\gamma^2 + \sigma^2)v_p$, row $c$
+  of $L$ is the layer vector $(0, \alpha^2, \beta^2, \gamma^2)$, and sums and inner products of
+  layer vectors are explicit.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:crossed}
+  Sum the indicators over rows and columns.
+\end{proof}
+
+\begin{lemma}[The first-order condition identifies the best predictor]\label{lem:eq_blupWeight_of_mulVec}
+  \lean{Credibility.Core.eq_blupWeight_of_mulVec}
+  \leanok
+  \uses{def:Core_blup}
+  For $K \succ 0$: weights $e$ with $\sum_i e_i = 1$ and $Ke - L_j$ a constant vector are
+  the best predictor's weights $d^*$ for $\mu_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_linMse_pythagoras, thm:Core_blup_optimal, lem:Core_blup_foc}
+  By Lemma~\ref{lem:Core_linMse_pythagoras}, $d^*$ loses $(d^* - e)^TK(d^* - e) \ge 0$
+  against $e$; by uniqueness (Theorem~\ref{thm:Core_blup_optimal}) $e = d^*$.
+\end{proof}
+
+\begin{theorem}[The crossed credibility formula]\label{thm:crossed_balanced}
+  \lean{Credibility.Crossed.zRow, Credibility.Crossed.zCol, Credibility.Crossed.zCell,
+    Credibility.Crossed.blupWeight_KBal, Credibility.Crossed.blup_balanced}
+  \leanok
+  \uses{lem:crossed_layer, def:Core_blup}
+  Let $\alpha^2, \beta^2, \gamma^2 \ge 0$, $\sigma^2 > 0$, and
+  $\lambda_r = n_T\alpha^2 + \gamma^2$, $\lambda_c = n_A\beta^2 + \gamma^2$, $\lambda_i = \gamma^2$,
+  $z_k = \lambda_k/(\lambda_k + \sigma^2)$. The best linear unbiased predictor of $\mu_{at}$ is
+  \[
+    \bar X + z_r(\bar X_{a\cdot} - \bar X) + z_c(\bar X_{\cdot t} - \bar X)
+      + z_i(X_{at} - \bar X_{a\cdot} - \bar X_{\cdot t} + \bar X),
+  \]
+  with weights the layer vector
+  $\bigl((1 - z_r - z_c + z_i)/(n_An_T),\ (z_r - z_i)/n_T,\ (z_c - z_i)/n_A,\ z_i\bigr)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:eq_blupWeight_of_mulVec, lem:crossed_layer, lem:crossed_posDef}
+  By Lemma~\ref{lem:crossed_layer}, $K$ applied to the layer vector minus row $c$ of $L$ has
+  zero row, column and cell coefficients: e.g. for the row,
+  $\alpha^2 z_r + (\gamma^2 + \sigma^2)(z_r - z_i)/n_T - \alpha^2 = 0$. So it is constant, the
+  weights sum to one, and Lemma~\ref{lem:eq_blupWeight_of_mulVec} applies.
+\end{proof}
+
+\begin{theorem}[What the thesis blend loses]\label{thm:crossed_blend_excess}
+  \lean{Credibility.Crossed.glsWeight_KBal, Credibility.Crossed.blendWeight_KBal,
+    Credibility.Crossed.sum_linMse_blend}
+  \leanok
+  \uses{thm:crossed_balanced, def:Core_blup}
+  In the balanced table the GLS weights are $1/(n_An_T)$, and summed over all cells the blend
+  $zX_c + (1 - z)\bar X$ with one common $z$ loses against the best predictor exactly
+  \[
+    (n_A - 1)(\lambda_r + \sigma^2)(z - z_r)^2 + (n_T - 1)(\lambda_c + \sigma^2)(z - z_c)^2
+      + (n_A - 1)(n_T - 1)(\lambda_i + \sigma^2)(z - z_i)^2 .
+  \]
+  Each layer costs its dimension times $(\lambda_k + \sigma^2)(z - z_k)^2$; in the $2 \times 2$
+  table all dimensions are $1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_glsWeight_of_mulVec, thm:Core_blup_optimal, thm:crossed_balanced,
+    lem:crossed_layer, lem:crossed_posDef}
+  $K\mathbf 1 = (n_T\alpha^2 + n_A\beta^2 + \gamma^2 + \sigma^2)\mathbf 1$ gives the GLS
+  weights (Lemma~\ref{lem:Core_glsWeight_of_mulVec}). The loss of the blend in cell $c$ is
+  $(d - d^*)^TK(d - d^*)$ (Theorem~\ref{thm:Core_blup_optimal}), with $d - d^*$ a layer vector;
+  it is the same for every cell, and $n_An_T$ times it is the sum above.
+\end{proof}
+
+\begin{theorem}[The best common factor and the crossed predictor's error]\label{thm:crossed_bestZ}
+  \lean{Credibility.Crossed.layerSignal, Credibility.Crossed.zBlend,
+    Credibility.Crossed.invTotal_KBal, Credibility.Crossed.bestZ_KBal,
+    Credibility.Crossed.sum_linMse_blend_zBlend, Credibility.Crossed.sum_linMse_blup}
+  \leanok
+  \uses{thm:crossed_blend_excess, thm:Core_levelMoments_bestZ_eq}
+  In the balanced table with $n_An_T \ge 2$, let $m_r = n_A - 1$, $m_c = n_T - 1$,
+  $m_i = (n_A - 1)(n_T - 1)$ be the layer dimensions. Every cell's best factor (eq.~(26)) is
+  \[
+    \bar z = \frac{\sum_k m_k\lambda_k}{\sum_k m_k\lambda_k + (n_An_T - 1)\sigma^2},
+  \]
+  $1^TK^{-1}1 = n_An_T/(n_T\alpha^2 + n_A\beta^2 + \gamma^2 + \sigma^2)$, and summed over the table
+  the blend with $z$ costs $W(z - \bar z)^2$ more than with $\bar z$,
+  $W = \sum_k m_k(\lambda_k + \sigma^2)$. The best predictor's total error is
+  $\sigma^2 + \sum_k m_k\lambda_k\sigma^2/(\lambda_k + \sigma^2)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_levelMoments_bestZ_eq, thm:crossed_blend_excess, lem:crossed_layer,
+    lem:crossed_posDef, thm:crossed_balanced}
+  Eq.~(26) (Theorem~\ref{thm:Core_levelMoments_bestZ_eq}) with $b = 1/(n_An_T)$ and
+  $K\mathbf 1 = \kappa\mathbf 1$. The excess of Theorem~\ref{thm:crossed_blend_excess} is a
+  parabola in $z$ with vertex $\sum_k m_k(\lambda_k + \sigma^2)z_k/W = \bar z$. The error of the
+  best predictor: $d^{*T}Kd^* - 2d^{*T}L_c + L_{cc}$ on layer vectors.
+\end{proof}
+
+\begin{lemma}[A common term does not move the best predictor]\label{lem:Core_blupWeight_add_rankOne}
+  \lean{Credibility.Core.blupWeight_add_rankOne, Credibility.Core.linMse_add_rankOne}
+  \leanok
+  \uses{lem:eq_blupWeight_of_mulVec}
+  If $K$ and $K + c\mathbf 1\mathbf 1^T$ are positive definite, both have the same best predictor
+  weights, and $c\mathbf 1\mathbf 1^T$ adds $c(\sum_i d_i)^2$ to the error of any weights $d$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:eq_blupWeight_of_mulVec, lem:Core_blup_foc}
+  $(K + c\mathbf 1\mathbf 1^T)d^* - L_j = (Kd^* - L_j) + c\mathbf 1$ is constant;
+  Lemma~\ref{lem:eq_blupWeight_of_mulVec}.
+\end{proof}
+
+\begin{theorem}[Equicorrelated noise]\label{thm:crossed_equicorr}
+  \lean{Credibility.Crossed.KBalρ, Credibility.Crossed.KBalρ_eq, Credibility.Crossed.KBalρ_posDef,
+    Credibility.Crossed.blupWeight_KBalρ, Credibility.Crossed.blup_balancedρ,
+    Credibility.Crossed.sum_linMse_blendρ}
+  \leanok
+  \uses{thm:crossed_balanced, thm:crossed_blend_excess}
+  With $\Sigma = \sigma^2((1 - \rho)I + \rho\mathbf 1\mathbf 1^T)$ ($K \succ 0$, e.g.\
+  $0 \le \rho < 1$), Theorems~\ref{thm:crossed_balanced} and~\ref{thm:crossed_blend_excess} hold
+  with $\sigma^2(1 - \rho)$ in place of $\sigma^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blupWeight_add_rankOne, thm:glsWeight_add_rankOne, thm:crossed_balanced,
+    thm:crossed_blend_excess, lem:crossed_posDef}
+  $K = K(\sigma^2(1 - \rho)) + \sigma^2\rho\mathbf 1\mathbf 1^T$; Lemma~\ref{lem:Core_blupWeight_add_rankOne}
+  and Theorem~\ref{thm:glsWeight_add_rankOne}.
+\end{proof}
+
+\begin{theorem}[A cell without data]\label{thm:crossed_missing}
+  \lean{Credibility.Crossed.cellCov, Credibility.Crossed.missRow, Credibility.Crossed.missCol,
+    Credibility.Crossed.missing_blup, Credibility.Crossed.missing_predMse}
+  \leanok
+  \uses{def:crossed, def:Blup}
+  The data's covariance with the level of a cell $(a, t)$ without data is
+  $\alpha^2[r(j) = a] + \beta^2[c(j) = t]$. In the $2\times 2$ table without cell $(1,1)$, with
+  $s = \gamma^2 + \sigma^2$ and $D = 4\alpha^2\beta^2 + 4(\alpha^2 + \beta^2)s + 3s^2$, the best
+  linear unbiased predictor has weights $(4\alpha^2\beta^2 + 4\alpha^2 s + s^2)/D$ on the cell in
+  the same row, $(4\alpha^2\beta^2 + 4\beta^2 s + s^2)/D$ on the one in the same column and
+  $(s^2 - 4\alpha^2\beta^2)/D$ on the opposite one, and mean squared error
+  $\gamma^2 + s(12\alpha^2\beta^2 + 4(\alpha^2 + \beta^2)s + s^2)/D$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:crossed_posDef, thm:U_groupEffect_blup}
+  $Ke - \ell = s(2\alpha^2 + s)(2\beta^2 + s)/D \cdot \mathbf 1$ and the weights sum to one;
+  Corollary~\ref{cor:Blup_eq_of_normal}.
+\end{proof}
+
+\section{Estimating the three variances}\label{sec:crossed_estimation}
+% Lean: Credibility/CrossedEstimation.lean
+
+The cohorts of a thesis model (noise $\sigma_{jt}$, correlations $\rho_{ij}$ within a period)
+are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigma_{js}\rho_{ij}
+[t = s] + L_{ij}$ with the crossed $L$ of Definition~\ref{def:crossed}.
+
+\begin{theorem}[From the thesis to crossed levels]\label{thm:unbiasedX_of}
+  \lean{Credibility.Model.obsCovX, Credibility.Model.UnbiasedX, Credibility.Model.obsCovX_symm,
+    Credibility.Model.Ecov_obsCovX_eq, Credibility.Model.unbiasedX_of}
+  \leanok
+  \uses{def:crossed, def:unbiased}
+  An estimator $f$ unbiased for $\theta$ in the thesis model has, with crossed levels,
+  expectation $\theta + (\gamma^2 - \tau^2)\sum_j f(\mathbf 1_j) + \alpha^2\sum_a f(\mathbf 1_{r = a})
+  + \beta^2\sum_b f(\mathbf 1_{c = b})$, evaluated on the noise-free cell, row and column patterns.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedG_of, def:crossed}
+  As Theorem~\ref{thm:unbiasedG_of}: $L = \alpha^2\sum_a \mathbf 1_a\mathbf 1_a^T
+  + \beta^2\sum_b \mathbf 1_b\mathbf 1_b^T + \gamma^2\sum_j e_je_j^T$, and $\sum_{p,q} Q_{pq}
+  d_pd_q = f(d)$ for each pattern $d$.
+\end{proof}
+
+\begin{theorem}[The pair estimators with crossed levels]\label{thm:pairHat_X}
+  \lean{Credibility.Model.sigRhoHat_unbiasedX, Credibility.Model.pairHat_unbiasedX}
+  \leanok
+  \uses{thm:unbiasedX_of, thm:pairHat_G}
+  With $T \ge 2$ and $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$: $\widehat{\sigma^2_{ij}\rho_{ij}}$
+  stays unbiased, and for $i \ne j$ the pair estimator $\widehat P_{ij}$ is unbiased for
+  $2\gamma^2 + 2\alpha^2[r(i) \ne r(j)] + 2\beta^2[c(i) \ne c(j)]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiasedX_of, cor:estimation, thm:pairHat_G, thm:estimation_G}
+  Theorem~\ref{thm:unbiasedX_of} with the thesis expectations ($2\tau^2$ for a pair,
+  Theorem~\ref{thm:pairHat_G}) and the pair estimator on the patterns:
+  $\sum_g \widehat P_{ij}(\mathbf 1_g) = 2[g(i) \ne g(j)]$.
+\end{proof}
+
+\begin{theorem}[The three variances are identified]\label{thm:crossed_identified}
+  \lean{Credibility.Model.sameRowPairs, Credibility.Model.sameColPairs,
+    Credibility.Model.crossPairs, Credibility.Model.pairPool,
+    Credibility.Model.pairPool_unbiasedX, Credibility.Model.sameRowPool_unbiasedX,
+    Credibility.Model.sameColPool_unbiasedX, Credibility.Model.crossPool_unbiasedX,
+    Credibility.Model.crossed_unbiasedX}
+  \leanok
+  \uses{thm:pairHat_X}
+  With weights $r$, $c$, $n$ summing to one on the ordered pairs in the same row (different
+  columns), the same column (different rows) and neither, the pools $\widehat P_r$, $\widehat P_c$,
+  $\widehat P_n$ are unbiased for $2(\beta^2 + \gamma^2)$, $2(\alpha^2 + \gamma^2)$ and
+  $2(\alpha^2 + \beta^2 + \gamma^2)$, so
+  \[
+    \hat\alpha^2 = \tfrac12(\widehat P_n - \widehat P_r), \quad
+    \hat\beta^2 = \tfrac12(\widehat P_n - \widehat P_c), \quad
+    \hat\gamma^2 = \tfrac12(\widehat P_r + \widehat P_c - \widehat P_n)
+  \]
+  are unbiased for $\alpha^2$, $\beta^2$, $\gamma^2$, for any noise correlations.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:pairHat_X}
+  Linearity of unbiasedness over Theorem~\ref{thm:pairHat_X}.
+\end{proof}
+
+\begin{lemma}[Sums of squares are pair averages]\label{lem:sum_sq_pairs}
+  \lean{Credibility.sum_mul_sq_sub_eq_pairs}
+  \leanok
+  \uses{thm:crossed_identified}
+  With $W = \sum_k w_k \ne 0$ and $\bar x = \sum_k w_kx_k/W$:
+  $\sum_k w_k(x_k - \bar x)^2 = \sum_{k,l} w_kw_l(x_k - x_l)^2/(2W)$. So the
+  analysis-of-variance estimators of crossed-classification credibility (Dannenburg 1995;
+  Goulet 1998, eqs.~(67)--(69)) are pools of squared pair differences with weights $\propto w_kw_l$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides equal $\sum_k w_kx_k^2 - (\sum_k w_kx_k)^2/W$.
+\end{proof}
+
+\begin{lemma}[With the noise correction]\label{lem:sum_sq_noise_pairs}
+  \lean{Credibility.sum_offDiag_eq, Credibility.sum_mul_sq_sub_noise_eq_pairs}
+  \leanok
+  \uses{lem:sum_sq_pairs}
+  With weights $u_k$ on a set $S$, $U = \sum_S u_k \ne 0$, $\bar x = \sum_S u_kx_k/U$ and any $v_k$:
+  \[
+    \sum_S \tfrac{u_k}{U}(x_k - \bar x)^2 - \sum_S \tfrac{u_k}{U}\bigl(1 - \tfrac{u_k}{U}\bigr)v_k
+      = \sum_{k \ne l \in S} \frac{u_ku_l}{2U^2}\bigl((x_k - x_l)^2 - v_k - v_l\bigr).
+  \]
+  With $v_k = s^2/u_k$ the correction is $(|S| - 1)s^2/U$, that of Goulet (1998), eqs.~(67)--(69).
+\end{lemma}
+\begin{proof}
+  \leanok
+  Both sides equal $\sum u_kx_k^2/U - (\sum u_kx_k)^2/U^2 - \sum u_kv_k/U + \sum u_k^2v_k/U^2$;
+  the sum over $k \ne l$ is the sum over all pairs minus the diagonal.
+\end{proof}
+
+\begin{theorem}[The exact expectation of the ANOVA statistics]\label{thm:anovaStat}
+  \lean{Credibility.Model.anovaStat, Credibility.Model.anovaStat_unbiasedX,
+    Credibility.Model.sum_offDiag_wtot}
+  \leanok
+  \uses{thm:pairHat_X, lem:sum_sq_noise_pairs}
+  For a set $S$ of cells with volumes $u_k$ and unbiased noise estimates $\hat v_k$ of
+  $\sigma^2_{kk}\rho_{kk}$, the statistic $G = \sum_S (u_k/U)(\hmu_k - \bar\mu)^2 -
+  \sum_S (u_k/U)(1 - u_k/U)\hat v_k$ has, with crossed levels and any noise correlations,
+  expectation $\sum_{k \ne l \in S} \frac{u_ku_l}{2U^2}\bigl(2\gamma^2 + 2\alpha^2[r(k) \ne r(l)]
+  + 2\beta^2[c(k) \ne c(l)] - 2\sigma^2_{kl}\rho_{kl}\bigr)$; and
+  $\sum_{k \ne l \in S} u_ku_l/U^2 = 1 - \sum_S (u_k/U)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_sq_noise_pairs, thm:pairHat_X}
+  By Lemma~\ref{lem:sum_sq_noise_pairs}, $G$ is a pool of $(\hmu_k - \hmu_l)^2 - \hat v_k - \hat v_l
+  = \widehat P_{kl} + (\widehat{\sigma^2_{kk}\rho_{kk}} - \hat v_k)
+  + (\widehat{\sigma^2_{ll}\rho_{ll}} - \hat v_l) - 2\widehat{\sigma^2_{kl}\rho_{kl}}$;
+  Theorem~\ref{thm:pairHat_X}.
+\end{proof}
+
+\begin{theorem}[Goulet's within-row equation, and its bias]\label{thm:anovaStat_row}
+  \lean{Credibility.Model.anovaStat_row_unbiasedX,
+    Credibility.Model.anovaStat_row_unbiasedX_of_uncorr}
+  \leanok
+  \uses{thm:anovaStat}
+  If the cells of $S$ lie in one row and different columns,
+  $E G = (\beta^2 + \gamma^2)(1 - \sum_S (u_k/U)^2) - \sum_{k \ne l \in S}(u_ku_l/U^2)
+  \sigma^2_{kl}\rho_{kl}$. With noise uncorrelated across the cells of $S$ this is Goulet's
+  eq.~(67) (two-way) exactly.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:anovaStat}
+  Theorem~\ref{thm:anovaStat} with $[r(k) \ne r(l)] = 0$, $[c(k) \ne c(l)] = 1$.
+\end{proof}
+
+\begin{theorem}[Goulet's grand equation, and its bias]\label{thm:anovaStat_grand}
+  \lean{Credibility.Model.grpVolume, Credibility.Model.sum_grpVolume_sq,
+    Credibility.Model.sum_offDiag_wtot_ne, Credibility.Model.anovaStat_grand_unbiasedX,
+    Credibility.Model.anovaStat_grand_unbiasedX_of_uncorr}
+  \leanok
+  \uses{thm:anovaStat}
+  For any nonempty set $S$ of cells, with row and column volumes $U_a$, $U_b$,
+  $E G = \alpha^2(1 - \sum_a (U_a/U)^2) + \beta^2(1 - \sum_b (U_b/U)^2) + \gamma^2(1 - \sum_k
+  (u_k/U)^2) - \sum_{k \ne l \in S}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$. With noise uncorrelated
+  across the cells of $S$ this is Goulet's eq.~(69) (two-way) exactly.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:anovaStat}
+  Theorem~\ref{thm:anovaStat}: the weighted share of pairs in different rows is
+  $\sum_{k \ne l}u_ku_l[r(k) \ne r(l)]/U^2 = 1 - \sum_a (U_a/U)^2$, as
+  $\sum_a U_a^2 = \sum_{k,l}u_ku_l[r(k) = r(l)]$; likewise for columns.
+\end{proof}
+
+\begin{remark}[Finding 42]\label{rem:finding42}
+  The classical ANOVA estimators of crossed classification omit the cross term of the noise: with
+  $n$ cells of equal volume $u$ in a row, noise variance $\sigma^2/u$ and correlation $\rho$,
+  $E G = (1 - 1/n)(\beta^2 + \gamma^2 - \rho\sigma^2/u)$. Positive correlation within a period
+  biases them down. The pair estimators of Theorem~\ref{thm:crossed_identified} carry the cross
+  term and stay unbiased.
+\end{remark}
+
+\section{The best pool within a class}\label{sec:crossed_pool_weights}
+% Lean: Credibility/CrossedPoolWeights.lean
+Every pool with weights summing to one on a class is unbiased
+(Theorem~\ref{thm:crossed_identified}); which one has the least variance? The pair estimators
+are quadratic in the data, so their covariance table comes from moments up to order four
+(Theorem~\ref{thm:covariance_quad_of_cumulants}), and the answer is GLS on that table.
+
+\begin{lemma}[The pair estimator is a quadratic form]\label{lem:pool_quadForm}
+  \lean{Credibility.Model.IsQuadForm, Credibility.Model.IsLinForm,
+    Credibility.Model.IsLinForm.add, Credibility.Model.IsLinForm.const_mul,
+    Credibility.Model.IsLinForm.sub, Credibility.Model.isLinForm_eval,
+    Credibility.Model.isLinForm_sum, Credibility.Model.IsQuadForm.add,
+    Credibility.Model.IsQuadForm.const_mul, Credibility.Model.IsQuadForm.sub,
+    Credibility.Model.isQuadForm_sum, Credibility.Model.IsLinForm.mul,
+    Credibility.Model.isLinForm_muHat, Credibility.Model.isQuadForm_sigRhoHat,
+    Credibility.Model.isQuadForm_pairHat, Credibility.Model.symMat,
+    Credibility.Model.symMat_symm, Credibility.Model.quad_symMat}
+  \leanok
+  $\hmu_j$ is linear in the data and $\widehat{\sigma^2_{ij}\rho_{ij}}$ quadratic, so
+  $\widehat P_{ij}(X) = X^\top A_{ij}X$ with the symmetric
+  $(A_{ij})_{ab} = \bigl(f(1_a + 1_b) - f(1_a) - f(1_b)\bigr)/2$, $f = \widehat P_{ij}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Sums, multiples and products of linear forms; polarization.
+\end{proof}
+
+\begin{theorem}[The variance of a combination of quadratic estimators]\label{thm:variance_sum_quad}
+  \lean{Credibility.Cumulants.quadCovTable, Credibility.Cumulants.variance_sum_quad}
+  \leanok
+  \uses{thm:covariance_quad_of_cumulants}
+  For symmetric $A_p$ and cells with the moment tables of
+  Theorem~\ref{thm:variance_quad_of_cumulants}, $\Var\bigl(\sum_p a_p Z^\top A_pZ\bigr) = a^\top Va$
+  with $V_{pq} = \mathrm{cov}(A_p, A_q)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:covariance_quad_of_cumulants, lem:Cumulants_memLp_quadForm}
+  Bilinearity of the covariance and Theorem~\ref{thm:covariance_quad_of_cumulants}.
+\end{proof}
+
+\begin{theorem}[The minimum-variance unbiased combination is GLS]\label{thm:quadPool_gls_optimal}
+  \lean{Credibility.Cumulants.quadPool_gls_optimal}
+  \leanok
+  \uses{thm:variance_sum_quad, thm:glsWeight_optimal}
+  If $V \succ 0$, among weights summing to one the GLS weights $V^{-1}\bu/\bu^TV^{-1}\bu$ give
+  the least variance.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sum_quad, thm:glsWeight_optimal}
+  Theorem~\ref{thm:variance_sum_quad} on both sides, then Theorem~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[The best pair pool]\label{thm:pairPool_gls}
+  \lean{Credibility.Model.pairCovTable, Credibility.Model.pairGLS,
+    Credibility.Model.pairPool_eq_sum_subtype, Credibility.Model.sum_pairGLS,
+    Credibility.Model.variance_pairPool, Credibility.Model.pairPool_gls_optimal}
+  \leanok
+  \uses{lem:pool_quadForm, thm:quadPool_gls_optimal, thm:crossed_identified}
+  For a set $S$ of pairs, the pool $\sum_{p \in S} a_p\widehat P_p$ has variance $a^TVa$,
+  $V_{pq} = \cov(\widehat P_p, \widehat P_q)$ from the moment tables of the cells. If $V \succ 0$,
+  the GLS weights on $V$ sum to one and have the least variance among all weights summing to one:
+  within each class of Theorem~\ref{thm:crossed_identified} they give the minimum-variance unbiased
+  pool. Distribution-free.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:pool_quadForm, thm:variance_sum_quad, thm:glsWeight_optimal, lem:sum_glsWeight}
+  Lemma~\ref{lem:pool_quadForm} writes the pool as $\sum_p a_pZ^\top A_pZ$;
+  Theorems~\ref{thm:variance_sum_quad} and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[Equal weights when the rows of $V$ have equal sums]\label{thm:equalWeight_optimal}
+  \lean{Credibility.equalWeight_optimal, Credibility.mulVec_one_eq_of_transitive}
+  \leanok
+  If $V$ is symmetric, positive semidefinite and $V\bu = c\bu$, the equal weights $1/n$ minimize
+  $b^TVb$ subject to $\sum b = 1$; no $V \succ 0$ needed. If permutations of the index set that
+  leave $V$ invariant carry any index to any other, every row of $V$ has the same sum.
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $b = e + d$, $e = \bu/n$, $\sum d = 0$: $d^TVe = (c/n)\sum d = 0$, so
+  $b^TVb = e^TVe + d^TVd \ge e^TVe$. Row sums: reindex $\sum_r V_{\sigma p, r} = \sum_r
+  V_{\sigma p, \sigma r} = \sum_r V_{pr}$.
+\end{proof}
+
+\begin{lemma}[Relabelling rows and columns]\label{lem:pool_balanced_helpers}
+  \lean{Credibility.Model.pairCovTable_eq_covariance, Credibility.Model.pairHat_comp_perm,
+    Credibility.exists_perm_two, Credibility.Model.cellPerm, Credibility.Model.mem_class_iff}
+  \leanok
+  \uses{lem:pool_quadForm, thm:covariance_quad_of_cumulants}
+  $V_{pq} = \cov(\widehat P_p, \widehat P_q)$ for any random cells with the given moment tables.
+  Relabelling the cohorts by $\pi$ with volumes invariant under $\pi$ relabels the pair estimators.
+  Two points can be carried to any two points with the same coincidence pattern, and each class of
+  a full table is given by its pattern (rows equal or not, columns equal or not).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:pool_quadForm, thm:covariance_quad_of_cumulants}
+  Theorem~\ref{thm:covariance_quad_of_cumulants} with Lemma~\ref{lem:pool_quadForm}; for the two
+  points, $\mathrm{swap}(\tau x', y') \circ \tau$ with $\tau = \mathrm{swap}(x, y)$.
+\end{proof}
+
+\begin{theorem}[Balanced table: equal weights are exactly optimal]\label{thm:pairPool_equal_balanced}
+  \lean{Credibility.Model.pairPool_equal_optimal_of_balanced}
+  \leanok
+  \uses{thm:pairPool_gls, thm:equalWeight_optimal, lem:pool_balanced_helpers}
+  In a full table (rows $A$ $\times$ columns $B$) with the same volumes in every cell, if the
+  mean, covariance, third and fourth cumulant tables of the cells are invariant under permuting
+  rows among themselves and columns among themselves, then within each class the pool with equal
+  weights $1/|S|$ has the least variance among all unbiased pools. Distribution-free.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:pairPool_gls, thm:variance_sum_quad, thm:equalWeight_optimal, lem:pool_balanced_helpers}
+  The relabelled cells have the same moment tables, so the same $V$; a row-and-column permutation
+  maps the pair estimators of a class onto each other, so it leaves $V$ invariant, and it carries
+  any pair of the class to any other (Lemma~\ref{lem:pool_balanced_helpers}). So the rows of $V$
+  have equal sums; $V$ is a covariance table, hence symmetric and positive semidefinite;
+  Theorem~\ref{thm:equalWeight_optimal}.
+\end{proof}
+
+\section{The pair pool under normal noise}\label{sec:crossed_pool_normal}
+% Lean: Credibility/CrossedPoolNormal.lean
+Distribution layer: here the cells are jointly normal.
+
+\begin{lemma}[The fourth moment of a centred normal]\label{lem:gauss_fourth}
+  \lean{Credibility.iteratedDeriv_four_exp_sq, Credibility.integral_pow_four_gaussianReal}
+  \leanok
+  $\int x^4\,d\mathcal N(0, v) = 3v^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The fourth derivative of the moment generating function $e^{vt^2/2}$ at $0$.
+\end{proof}
+
+\begin{theorem}[Variance of a squared normal difference]\label{thm:variance_sq_gaussian}
+  \lean{Credibility.variance_sq_of_hasGaussianLaw, Credibility.Model.muHatDiff,
+    Credibility.Model.variance_sq_muHat_sub_of_normal}
+  \leanok
+  \uses{lem:gauss_fourth}
+  If $D$ is normal with mean $0$, $\Var(D^2) = 2(ED^2)^2$. So with jointly normal cells of a
+  common mean, $\Var\bigl((\hmu_i - \hmu_j)^2\bigr) = 2\bigl(E(\hmu_i - \hmu_j)^2\bigr)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:gauss_fourth}
+  $\Var(D^2) = ED^4 - (ED^2)^2 = 3v^2 - v^2$; $\hmu_i - \hmu_j$ is a linear map of a normal vector,
+  hence normal, with mean $\mu - \mu = 0$.
+\end{proof}
+
+\begin{theorem}[Inverse-variance weights of squared differences]\label{thm:sqIVWeight}
+  \lean{Credibility.sqIVWeight, Credibility.sqIVWeight_div, Credibility.sqIVWeight_anti,
+    Credibility.tendsto_sqIVWeight_atTop}
+  \leanok
+  \uses{def:invVarWeight, thm:variance_sq_gaussian}
+  With $E(\hmu_i - \hmu_j)^2 = \theta + n_p$ ($\theta$ the class value, $n_p$ the noise variance of
+  the difference), Theorem~\ref{thm:variance_sq_gaussian} gives the diagonal of $V$, and the
+  inverse-variance weights $b_p \propto (\theta + n_p)^{-2}$ satisfy
+  $b_p/b_q = \bigl((\theta + n_q)/(\theta + n_p)\bigr)^2$; for $\theta \ge 0$ more precise pairs
+  get more weight; as $\theta \to \infty$ every $b_p \to 1/|S|$ (signal $\gg$ noise: equal
+  weights), while at $\theta = 0$ $b_p \propto n_p^{-2}$ (noise $\gg$ signal: large cells favoured).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_inv_pos}
+  The ratio is direct; $(\theta + n_p)/(\theta + n_r) = 1 + (n_p - n_r)/(\theta + n_r) \to 1$.
+\end{proof}
+
+\begin{remark}[GLS against inverse variance]\label{rem:pool_gls_vs_iv}
+  Inverse variance is GLS on the diagonal of $V$ only: pairs that share a cell are correlated, so
+  the full GLS of Theorem~\ref{thm:pairPool_gls} differs from it in general. The regime split seen
+  in simulation (equal weights best at the thesis level, volume-based weights at low credibility)
+  is the two limits of Theorem~\ref{thm:sqIVWeight}; in a balanced table equal weights are exactly
+  optimal (Theorem~\ref{thm:pairPool_equal_balanced}).
+\end{remark}
+
+\section{The crossed moments are real}\label{sec:crossed_moments}
+% Lean: Credibility/CrossedMoments.lean
+
+\begin{definition}[Random variables with crossed levels]\label{def:noiseX}
+  \lean{Credibility.Model.NoiseX, Credibility.Model.NoiseX.common, Credibility.Model.NoiseX.trueMean,
+    Credibility.Model.NoiseX.obs, Credibility.Model.NoiseX.cohortEst}
+  \leanok
+  \uses{def:crossed}
+  Square-integrable $\eta$, $\varepsilon$ with the moments of the thesis model (level variance
+  $\gamma^2$), and row effects $A_a$ and column effects $B_b$, centred, of unit variance,
+  uncorrelated with each other, with $\eta$ and with $\varepsilon$. Levels
+  $\mu_j = \mu + \gamma\eta_j + \alpha A_{r(j)} + \beta B_{c(j)}$, observations
+  $\mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt}$, cell estimates $\hmu_j = \sum_t a_{jt}\mu_{jt}$.
+\end{definition}
+
+\begin{theorem}[The crossed covariances are the actual ones]\label{thm:noiseX_cov}
+  \lean{Credibility.Model.NoiseX.effects, Credibility.Model.NoiseX.common_eq,
+    Credibility.Model.NoiseX.effects_memLp, Credibility.Model.NoiseX.cov_effects,
+    Credibility.Model.NoiseX.cohortEst_eq, Credibility.Model.NoiseX.memLp_common,
+    Credibility.Model.NoiseX.integral_common, Credibility.Model.NoiseX.cov_common,
+    Credibility.Model.NoiseX.cov_common_of, Credibility.Model.NoiseX.cov_eff_trueMean,
+    Credibility.Model.NoiseX.cov_eff_obs, Credibility.Model.NoiseX.cov_eff_cohortEst,
+    Credibility.Model.NoiseX.memLp_obs, Credibility.Model.NoiseX.obs_mean,
+    Credibility.Model.NoiseX.cov_obs, Credibility.Model.NoiseX.integral_quad,
+    Credibility.Model.NoiseX.integral_of_unbiasedX, Credibility.Model.NoiseX.crossed_integral}
+  \leanok
+  \uses{def:noiseX, thm:unbiasedX_of}
+  For $\alpha^2, \beta^2 \ge 0$: $E\mu_{jt} = \mu$, $\cov(\mu_{it}, \mu_{js})$ is the crossed
+  table of Section~\ref{sec:crossed_estimation}, every quadratic form has the expectation used
+  there, and so the pair estimators of Theorem~\ref{thm:crossed_identified} have expectations
+  $\alpha^2$, $\beta^2$, $\gamma^2$ for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:cov_obs, thm:integral_quad_cov, thm:crossed_identified, lem:Core_common}
+  The row and column component is a common component of orthonormal effects
+  (Lemma~\ref{lem:Core_common}), uncorrelated with $\eta$ and $\varepsilon$, so the covariance
+  is that of the thesis (Theorem~\ref{thm:cov_obs}) plus $\alpha^2[\text{same row}] +
+  \beta^2[\text{same column}]$; then Theorem~\ref{thm:integral_quad_cov}.
+\end{proof}
+
+\begin{theorem}[The crossed predictor in true mean squared error]\label{thm:noiseX_blup}
+  \lean{Credibility.Model.NoiseX.K_eq, Credibility.Model.NoiseX.levelCov_eq,
+    Credibility.Model.NoiseX.addCommon, Credibility.Model.NoiseX.toEstimates,
+    Credibility.Model.NoiseX.blup_mse_optimal, Credibility.Model.NoiseX.mse_portLin}
+  \leanok
+  \uses{def:noiseX, thm:Core_blup_mse, lem:Core_addCommon, lem:moments_full}
+  $\cov(\hmu_i, \hmu_j) = K_{ij}$ and $\cov(\mu_i, \hmu_j) = \cov(\mu_i, \mu_j) = L_{ij}$ with the
+  crossed $K = L + \Sigma$, $L$. So the actual mean squared error of any $\sum_i d_i\hmu_i$ with
+  $\sum_i d_i = 1$ is $d^TKd - 2d^TL_j + L_{jj}$, and if $\rho \succeq 0$ the crossed best predictor
+  has the smallest one, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_mse, lem:crossed_posDef, lem:errCov_posSemidef}
+  The thesis moment layer (Lemma~\ref{lem:moments_full}) plus a common component
+  (Lemma~\ref{lem:Core_addCommon}); then Theorem~\ref{thm:Core_blup_mse}.
+\end{proof}
+
+\begin{theorem}[When such random variables exist]\label{thm:noiseX_exists}
+  \lean{Credibility.Model.exists_noiseX_iff}
+  \leanok
+  \uses{def:noiseX, thm:exists_noise}
+  Random variables with crossed levels exist iff $\rho \succeq 0$: row and column effects add
+  no constraint.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:exists_noise}
+  Necessity by forgetting $A$, $B$ (Theorem~\ref{thm:exists_noise}). Sufficiency: the thesis
+  noise on one factor and independent standard normal $A$, $B$ on the other, as in
+  Theorem~\ref{thm:G_exists_noise}.
+\end{proof}

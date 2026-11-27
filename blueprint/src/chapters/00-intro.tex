@@ -1,0 +1,34 @@
+\chapter*{Introduction}
+
+A portfolio is split into cohorts $j = 1, \dots, J$, observed over periods
+$t = 1, \dots, T$. We want the true key ratio $\mu_j$ of each cohort. Two
+estimates are available: the cohort's own estimate $\hmu_j$, which is
+noisy, and the portfolio estimate $\hmu$, which is stable but ignores
+differences between cohorts. Credibility theory blends them:
+\[
+  \hmu_j^b = z_j \hmu_j + (1 - z_j)\hmu .
+\]
+The classical Bühlmann--Straub model assumes the observations of different
+cohorts are uncorrelated. The thesis drops that assumption: within a
+period, the noise of cohorts $i$ and $j$ has correlation $\rho_{ij}$. The
+weights inside $\hmu_j$ and $\hmu$, and the factor $z_j$, are each chosen to
+minimise an error variance (\eqth{3}--(5)). The result is the credibility
+factor
+\[
+  z_j = \frac{(1 - b_j)\tau^2}{\tau^2 + \sigma_{jj}^2 - s^2},
+\]
+with GLS portfolio weights $\bb = K^{-1}\bu / \bu^T K^{-1} \bu$. It reduces
+to Bühlmann--Straub when the correlations vanish.
+
+The model is distribution-free: as in the thesis, only first and second
+moments are assumed. Here the second moments are taken as given numbers
+throughout: the statements are about the formulas the moments must
+satisfy, not (yet) about random variables.
+
+\paragraph{Notation.} This blueprint follows the thesis notation and
+equation numbers, with one exception: the cohort effect is written
+$\eta_j$ instead of the thesis's $\varepsilon_j$, so that it is not
+confused with the sampling noise $\varepsilon_{jt}$ (see
+Remark~\ref{rem:notation}).
+
+% ---------------------------------------------------------------------------

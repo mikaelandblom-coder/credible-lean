@@ -1,0 +1,116 @@
+\chapter{Extension: valid estimates by projection}\label{ch:coneproj}
+% Not in the thesis: studies/PLAN.md (valid tables, constrainPSD). Lean: Credibility/ConeProjection.lean
+
+Not in the thesis. An unbiased moment estimate $\hat\theta$ of second-moment
+parameters can be invalid (a table that is not positive semidefinite).
+Replace it by its projection onto the valid set in the metric
+$\|v\|_H^2 = v^T H v$; for MINQUE, $H$ is the Hessian of the least squares
+criterion, so the constrained fit is this projection.
+
+\begin{definition}[$H$-norm]\label{def:hsq}
+  \lean{Credibility.ConeProjection.hsq}
+  \leanok
+  $\|v\|_H^2 = v^T H v$; it is $\ge 0$ for $H \succeq 0$.
+\end{definition}
+
+\begin{lemma}[Variational inequality]\label{lem:proj_inner_nonneg}
+  \lean{Credibility.ConeProjection.proj_inner_nonneg, Credibility.ConeProjection.hsq_add_smul,
+    Credibility.ConeProjection.nonneg_of_forall_small, Credibility.ConeProjection.hsq_nonneg}
+  \leanok
+  \uses{def:hsq}
+  Let $H \succeq 0$, $S$ convex, and $p \in S$ minimize
+  $\|x - \hat\theta\|_H$ over $x \in S$. Then
+  $(p - \hat\theta)^T H (x - p) \ge 0$ for every $x \in S$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $p + t(x-p) \in S$ for $t \in (0,1]$, so
+  $0 \le 2t(p-\hat\theta)^T H(x-p) + t^2\|x-p\|_H^2$; divide by $t$ and let
+  $t \to 0$.
+\end{proof}
+
+\begin{theorem}[The projection is closer to the truth]\label{thm:hsq_proj_le}
+  \lean{Credibility.ConeProjection.hsq_proj_add_le, Credibility.ConeProjection.hsq_proj_le,
+    Credibility.ConeProjection.integral_hsq_proj_le}
+  \leanok
+  Let $H \succeq 0$, $S$ convex with $\theta \in S$, and $p$ an $H$-projection
+  of $\hat\theta$ onto $S$. Then
+  \[ \|p - \theta\|_H^2 + \|\hat\theta - p\|_H^2 \le \|\hat\theta - \theta\|_H^2 , \]
+  for every value of $\hat\theta$. Hence for a random $\hat\theta$ with
+  $\mathrm E\|\hat\theta-\theta\|_H^2 < \infty$:
+  $\mathrm E\|p - \theta\|_H^2 \le \mathrm E\|\hat\theta - \theta\|_H^2$.
+  Unbiasedness and the distribution of $\hat\theta$ play no role.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:proj_inner_nonneg}
+  Write $\hat\theta - \theta = (\hat\theta - p) + (p - \theta)$ and expand; the
+  cross term $2(\hat\theta-p)^T H(p-\theta) = 2(p-\hat\theta)^T H(\theta - p)$ is
+  $\ge 0$ by Lemma~\ref{lem:proj_inner_nonneg} with $x = \theta$. Take
+  expectations of the pointwise bound (both sides $\ge 0$).
+\end{proof}
+
+\begin{theorem}[The projection exists and is unique]\label{thm:hsq_proj_exists_unique}
+  \lean{Credibility.ConeProjection.exists_hsq_proj, Credibility.ConeProjection.hsq_proj_unique,
+    Credibility.ConeProjection.exists_mul_dotProduct_le_hsq, Credibility.ConeProjection.continuous_hsq}
+  \leanok
+  For $H \succ 0$ and $S$ closed and nonempty, an $H$-projection of
+  $\hat\theta$ onto $S$ exists; if $S$ is also convex, it is unique.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:hsq_proj_le, lem:posDef_floor}
+  Existence: $\|v\|_H^2 \ge c\, v^Tv$ with $c > 0$
+  (Lemma~\ref{lem:posDef_floor}), so the minimum over $S$ is a minimum over the
+  compact set of points of $S$ no further than a given one. Uniqueness: for two
+  projections $p, p'$, Theorem~\ref{thm:hsq_proj_le} with $\theta = p'$ and with
+  $\theta = p$ adds up to $2\|p - p'\|_H^2 \le 0$.
+\end{proof}
+
+\begin{lemma}[Valid tables form a convex set]\label{lem:convex_setOf_posSemidef}
+  \lean{Credibility.ConeProjection.convex_setOf_posSemidef}
+  \leanok
+  For linear maps $A_k$ from parameters to square matrices,
+  $\{\theta : A_k\theta \succeq 0 \text{ for all } k\}$ is convex. With blocks
+  $\gamma\lambda\lambda^T$, $C$ and the $1\times 1$ block $s^2$ this is the set the
+  app projects onto, and it contains the true parameters.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Sums and nonnegative multiples of positive semidefinite matrices are
+  positive semidefinite.
+\end{proof}
+
+\begin{lemma}[Valid tables form a closed set]\label{lem:isClosed_setOf_posSemidef}
+  \lean{Credibility.ConeProjection.isClosed_setOf_posSemidef}
+  \leanok
+  For finitely many parameters and linear maps $A_k$,
+  $\{\theta : A_k\theta \succeq 0 \text{ for all } k\}$ is closed. With
+  Lemma~\ref{lem:convex_setOf_posSemidef} and Theorem~\ref{thm:hsq_proj_exists_unique}, the
+  projection onto valid tables exists, is unique, and is closer to the truth
+  (Theorem~\ref{thm:hsq_proj_le}); with every $\hat s_j^2 > 0$ it gives
+  $\hat K \succ 0$ (Corollary~\ref{cor:Factor_tableK_ar1}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  An intersection of preimages of the closed positive semidefinite cone under continuous
+  (finite-dimensional) linear maps.
+\end{proof}
+
+\begin{theorem}[Projecting onto valid tables]\label{thm:proj_posSemidef}
+  \lean{Credibility.ConeProjection.existsUnique_proj_posSemidef}
+  \leanok
+  \uses{lem:convex_setOf_posSemidef, lem:isClosed_setOf_posSemidef, thm:hsq_proj_exists_unique,
+    thm:hsq_proj_le}
+  Let $S = \{\theta : A_k\theta \succeq 0 \text{ for all } k\}$ contain the true $\theta$, and
+  $H \succ 0$. Every estimate $\hat\theta$ has an $H$-projection $p$ onto $S$; it is unique, and
+  $\|p - \theta\|_H^2 \le \|\hat\theta - \theta\|_H^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:convex_setOf_posSemidef, lem:isClosed_setOf_posSemidef, thm:hsq_proj_exists_unique,
+    thm:hsq_proj_le}
+  $S$ is closed (Lemma~\ref{lem:isClosed_setOf_posSemidef}), nonempty (it contains $\theta$) and
+  convex (Lemma~\ref{lem:convex_setOf_posSemidef}); then
+  Theorems~\ref{thm:hsq_proj_exists_unique} and~\ref{thm:hsq_proj_le}.
+\end{proof}

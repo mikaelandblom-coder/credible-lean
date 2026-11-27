@@ -21,7 +21,7 @@ tactics.
 - Several chats may run in parallel, each on its own `.lean` file. Before every
   push, run `git pull --rebase origin main`. On a conflict: regenerate
   `PROGRESS.md` with `scripts/progress.py` rather than merging it; keep both
-  sides in `content.tex`, `FINDINGS.md` and `Credibility.lean`; renumber your
+  sides in blueprint chapters, `FINDINGS.md` and `Credibility.lean`; renumber your
   own finding if its number is taken; then rerun `lake build` (not needed if
   the chat touched no `.lean` file) and `scripts/blueprint_check.py`.
 
@@ -73,8 +73,8 @@ reads like the thesis; special cases are corollaries.
 - `Model` is `Unequal` with `obs j = univ`: `Model` results with an `Unequal`
   twin are proved from it.
 - Thesis-facing theorems keep their exact statements and docstrings; only the
-  proof becomes `simpa using <general result>`, and its `\uses{}` in
-  `content.tex` points at the general result.
+  proof becomes `simpa using <general result>`, and its blueprint `\uses{}`
+  points at the general result.
 - Rule of three: generalize when a third instance of a pattern appears, not
   before. Don't go more abstract than the `K` level (e.g. L² projections): the
   blueprint must stay readable as actuarial math.
@@ -125,11 +125,11 @@ A map by topic; each file's module docstring has the details and Lean names.
 ## When you close a `sorry` or log a finding
 Commit each closed `sorry` separately, with a short message, after:
 1. `python3 scripts/progress.py` (keeps `PROGRESS.md` current).
-2. Blueprint: `\leanok` on that proof in `content.tex`; new theorems need an
+2. Blueprint: `\leanok` on that proof in its chapter; new theorems need an
    entry; update `\uses{}` when a proof changes (`scripts/CheckUses.lean`
    checks each edge is a direct reference). `scripts/blueprint_check.py` must
    pass.
-3. A finding: entry in `FINDINGS.md`, a `remark` in `content.tex` next to the
+3. A finding: entry in `FINDINGS.md`, a `remark` in the blueprint next to the
    result it concerns, and a line in the handbook's appendix "Findings"
    (statement or counterexample, Lean links), all in the same commit.
 4. Ask for each of app, handbook and paper: does it need this? Update it in the
@@ -162,9 +162,11 @@ and the blueprint; the others point to it. Don't restate across them.
   handbook numbers for the rest; no proofs, and Lean names only in the
   concordance (Appendix A). `scripts/paper_check.py` (CI) checks citations; run
   it with `--fix` after renumbering the handbook. Built to `/paper/`.
-- **Blueprint** (`blueprint/src/content.tex`, `leanblueprint`): the proof ledger
-  (statements, proofs, dependency graph, findings as remarks), a condensed §2
-  of the thesis. Reached by link, not read front to back. `\lean{}` links go to
+- **Blueprint** (`leanblueprint`): the proof ledger (statements, proofs,
+  dependency graph, findings as remarks), a condensed §2 of the thesis. One
+  file per chapter in `blueprint/src/chapters/` (`NN-topic.tex`, in reading
+  order), listed in `content.tex`; a new chapter is a new file plus its
+  `\input` line. Reached by link, not read front to back. `\lean{}` links go to
   the source line via `find/` (no doc-gen4). Deployed to GitHub Pages from
   `main`.
 

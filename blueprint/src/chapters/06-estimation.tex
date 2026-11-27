@@ -1,0 +1,212 @@
+\chapter{Parameter estimation}\label{ch:estimation}
+% Thesis §2.8. Lean: Credibility/Expectation.lean, Credibility/Estimation.lean
+
+Take $\sigma_{jt} = \sigma_j/\sqrt{w_{jt}}$ with known volumes $w_{jt} > 0$:
+Bühlmann--Straub with a cohort-dependent $\sigma_j$ and correlations
+$\rho_{ij}$. Write $w_{j*} = \sum_t w_{jt}$, $w_{**} = \sum_j w_{j*}$ and
+$S_{ij} = \sum_t \sqrt{w_{it}w_{jt}}$. The estimators below are quadratic
+forms in the data $\mu_{jt}$. For data with mean $\mu$ and a symmetric
+covariance table $C$, the expectation of $\sum Q_{pq}\mu_p\mu_q$ is
+$\sum Q_{pq}(C_{pq} + \mu^2)$. An estimator is \emph{unbiased} for $\theta$
+if it is such a form with expectation $\theta$ for every $\mu$. The thesis
+takes $C = \bar K$ (Definition~\ref{def:obsCov}); the shared-level extension
+(Chapter~\ref{ch:hierarchical}) uses other tables, so the facts below are
+proved once for any symmetric $C$.
+
+\begin{definition}[Expectation of quadratic estimators]\label{def:unbiased}
+  \lean{Credibility.Model.quad, Credibility.Model.Ecov, Credibility.Model.UnbiasedCov,
+        Credibility.Model.cov, Credibility.Model.mom2,
+        Credibility.Model.E, Credibility.Model.Unbiased}
+  \leanok
+  \uses{def:obsCov}
+  $\mathbb{E}^C_\mu\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] =
+  \sum_{p,q} Q_{pq}(C_{pq} + \mu^2)$, indices $p = (j,t)$. The thesis case is
+  $C_{pq} = \bar K_{pq}$, so $C_{pq} + \mu^2$ is the second moment
+  $\mathbb E[\mu_p\mu_q]$.
+\end{definition}
+
+\begin{lemma}[The expectation is well defined]\label{lem:E_congr}
+  \lean{Credibility.Model.Ecov_congr,
+        Credibility.Model.cov_symm, Credibility.Model.E_eq_sum_mom2, Credibility.Model.E_congr}
+  \leanok
+  \uses{def:unbiased}
+  For a symmetric table $C$: if two matrices give the same quadratic form,
+  they give the same expectation. So an estimator has one expectation:
+  unbiasedness fixes the value. $\bar K$ is symmetric.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The difference $D$ has $D_{pq} + D_{qp} = 0$ (polarize with unit vectors),
+  and $C_{pq} + \mu^2$ is symmetric.
+\end{proof}
+
+\begin{definition}[Means from a design]\label{def:unbiased_mean}
+  \lean{Credibility.Model.EcovMean, Credibility.Model.UnbiasedMean}
+  \leanok
+  \uses{def:unbiased}
+  With fixed effects the mean is $m = D\beta$ for a design $D$ and unknown $\beta$:
+  $\mathbb{E}^{C}_{m}\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + m_pm_q)$,
+  and $f$ is unbiased for $\theta$ under $C$ and $D$ if it is a quadratic form with this
+  expectation $\theta$ for every $\beta$.
+\end{definition}
+
+\begin{theorem}[Unbiased for every $\beta$]\label{thm:unbiased_mean}
+  \lean{Credibility.Model.EcovMean_eq, Credibility.Model.Ecov_eq_EcovMean,
+        Credibility.Model.quad_mulVec, Credibility.Model.dotProduct_mulVec_self_eq_zero_iff,
+        Credibility.Model.ecovMean_eq_iff, Credibility.Model.unbiasedCov_iff_unbiasedMean,
+        Credibility.Model.UnbiasedMean.unique, Credibility.Model.UnbiasedMean.congr,
+        Credibility.Model.UnbiasedMean.add, Credibility.Model.UnbiasedMean.const_mul,
+        Credibility.Model.UnbiasedMean.sum, Credibility.Model.UnbiasedMean.of_mul,
+        Credibility.Model.unbiasedMean_mul, Credibility.Model.unbiasedMean_diff_mul}
+  \leanok
+  \uses{def:unbiased_mean, lem:E_congr}
+  A form $Q$ has expectation $\theta$ for all means $D\beta$ iff
+  $\sum_{p,q}Q_{pq}C_{pq} = \theta$ and $D^\top(Q + Q^\top)D = 0$: the form vanishes on the
+  column space of $D$. One mean $\mu$ is the design with one column of ones. Unbiasedness
+  under a design is well defined for a symmetric $C$, linear, and survives passing to a
+  design $DE$ with columns in that of $D$. If $D^\top\ell = 0$, then $(\ell^\top\mu)(m^\top\mu)$
+  is unbiased for $\sum_{p,q}\ell_pm_qC_{pq}$; in particular, if rows $p$, $p'$ of $D$ agree,
+  $(\mu_p - \mu_{p'})(\mu_q - \mu_{q'})$ is unbiased for
+  $C_{pq} - C_{pq'} - C_{p'q} + C_{p'q'}$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:E_congr}
+  The expectation is $\sum Q_{pq}C_{pq} + \beta^\top D^\top QD\beta$; take $\beta = 0$, then
+  polarize with unit vectors: $\beta^\top A\beta = 0$ for all $\beta$ iff $A + A^\top = 0$.
+  Uniqueness is Lemma~\ref{lem:E_congr} at $\beta = 0$; the rest as in
+  Lemma~\ref{lem:unbiased_linear}.
+\end{proof}
+
+\begin{lemma}[Linearity]\label{lem:unbiased_linear}
+  \lean{Credibility.Model.UnbiasedCov.unique,
+        Credibility.Model.UnbiasedCov.congr, Credibility.Model.UnbiasedCov.add,
+        Credibility.Model.UnbiasedCov.const_mul, Credibility.Model.UnbiasedCov.sum,
+        Credibility.Model.unbiasedCov_mul, Credibility.Model.unbiased_mul}
+  \leanok
+  \uses{def:unbiased}
+  For a symmetric table unbiasedness fixes the value; it is preserved by sums and scalar
+  multiples. If $\sum_p \ell_p = 0$,
+  then $(\ell^\top\mu)(m^\top\mu)$ is unbiased for $\sum_{p,q}\ell_p m_q C_{pq}$:
+  the mean drops out.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean}
+  The one-mean case of Theorem~\ref{thm:unbiased_mean}; for the product take
+  $Q_{pq} = \ell_p m_q$.
+\end{proof}
+
+
+\begin{definition}[The estimators, \eqth{39}]\label{def:estimators}
+  \lean{Credibility.Model.wtot, Credibility.Model.wall, Credibility.Model.sqrtSum,
+        Credibility.Model.muHat, Credibility.Model.sigRhoHat, Credibility.Model.cHat,
+        Credibility.Model.tauHat, Credibility.Model.KHat, Credibility.Model.qHat,
+        Credibility.Model.commonCovHat, Credibility.Model.rhoPooled, Credibility.Model.sigCommon,
+        Credibility.Model.cHatCommon, Credibility.Model.tauHatCommon}
+  \leanok
+  With $\hmu_j = \sum_t (w_{jt}/w_{j*})\mu_{jt}$,
+  \begin{align*}
+    \widehat{\sigma^2_{ij}\rho_{ij}} &= \frac{\sum_t \sqrt{w_{it}w_{jt}}(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)}
+      {S_{ij} + (T-2)w_{i*}w_{j*}/S_{ij}}, \qquad
+    \hat c_j = \sum_i \Bigl(\delta_{ij} - \frac{w_{i*}}{w_{**}}\Bigr)\widehat{\sigma^2_{ij}\rho_{ij}},\\
+    \widehat{\tau^2} &= \frac{\sum_j w_{j*}\bigl\{(\hmu_j - \sum_i \frac{w_{i*}}{w_{**}}\hmu_i)^2 - \hat c_j\bigr\}}
+      {w_{**} - \sum_i w_{i*}^2/w_{**}}, \qquad
+    \hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \widehat{\tau^2}\delta_{ij}.
+  \end{align*}
+\end{definition}
+
+\begin{corollary}[Estimation, \eqth{37}--\eqth{41}]\label{cor:estimation}
+  \lean{Credibility.Model.unbiased_dev, Credibility.Model.a_special,
+        Credibility.Model.σ2ρ_special, Credibility.Model.sigRhoHat_unbiased,
+        Credibility.Model.cHat_unbiased, Credibility.Model.tauHat_unbiased,
+        Credibility.Model.KHat_unbiased, Credibility.Model.sigRhoHat_self}
+  \leanok
+  \uses{def:estimators, def:unbiased, def:K}
+  \begin{enumerate}
+    \item For any $\sigma_{jt}$,
+      $\mathbb{E}[(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)]
+       = (1 - a_{it} - a_{jt})\sigma_{it}\sigma_{jt}\rho_{ij} + \sigma^2_{ij}\rho_{ij}$.
+    \item $a_{jt} = w_{jt}/w_{j*}$, as in \eqth{29}, and
+      $\sigma^2_{ij}\rho_{ij} = \dfrac{S_{ij}}{w_{i*}w_{j*}}\,\sigma_i\sigma_j\rho_{ij}$ \eqth{37}.
+    \item If $T \ge 2$, $\widehat{\sigma^2_{ij}\rho_{ij}}$ is unbiased for
+      $\sigma^2_{ij}\rho_{ij}$, and $\hat c_j$ for
+      $c_j = \sum_i (\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$.
+    \item If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}$ is unbiased for $\tau^2$
+      and $\hat K_{ij}$ for $K_{ij}$.
+    \item \eqth{41}: $\widehat{\sigma^2_{jj}\rho_{jj}} = \hat\sigma_j^2/w_{j*}$ with the
+      Bühlmann--Straub $\hat\sigma_j^2 = \frac{1}{T-1}\sum_t w_{jt}(\mu_{jt}-\hmu_j)^2$
+      of \eqth{13}.
+  \end{enumerate}
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:U_unbiased_dev, lem:U_special, thm:U_unbiased, thm:U_sigRhoHat_self,
+        lem:U_full, lem:U_estimators_full}
+  The case $T_j = T$ of Lemmas~\ref{lem:U_unbiased_dev} and~\ref{lem:U_special}
+  and Theorems~\ref{thm:U_unbiased} and~\ref{thm:U_sigRhoHat_self}: then
+  $T_{ij} = T$, the count $n_{ij}$ is $T - 2$, and $T \ge 2$ makes every denominator
+  positive (Lemma~\ref{lem:U_estimators_full}).
+\end{proof}
+
+\begin{corollary}[One common covariance or correlation, PLAN G1]\label{cor:pooled}
+  \lean{Credibility.Model.qHat_unbiased, Credibility.Model.commonCovHat_unbiased,
+        Credibility.Model.rhoPooled_unbiased, Credibility.Model.cHatCommon_unbiased,
+        Credibility.Model.tauHatCommon_unbiased}
+  \leanok
+  \uses{def:estimators, lem:U_qHat, thm:U_pooled, lem:U_count, lem:U_estimators_full}
+  With $Q_{ij} = \sum_t \sqrt{w_{it}w_{jt}}(\mu_{it}-\hmu_i)(\mu_{jt}-\hmu_j)$:
+  $\mathbb{E}Q_{ij} = \sigma_i\sigma_j\rho_{ij}\bigl((T-2) + S_{ij}^2/(w_{i*}w_{j*})\bigr)$.
+  If $T, J \ge 2$ and $\sigma^2_{ij}\rho_{ij} = c$ for $i \ne j$, the average $\hat c$ of the
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ over $i \ne j$ is unbiased for $c$, and so is
+  $\widehat{\tau^2}$ computed with $\hat c$ in place of every off-diagonal
+  $\widehat{\sigma^2_{ij}\rho_{ij}}$ (for $\tau^2$). If $\rho_{ij} = r$ for
+  $i \ne j$, the pooled
+  $\hat\rho = \sum_{i\ne j}Q_{ij}/\sum_{i\ne j}\sigma_i\sigma_j((T-2) + S_{ij}^2/(w_{i*}w_{j*}))$
+  is unbiased for $r$ (denominator nonzero).
+\end{corollary}
+\begin{proof}
+  \leanok
+  The case $T_j = T$ of Lemma~\ref{lem:U_qHat} and Theorem~\ref{thm:U_pooled}, with
+  $n_{ij} = T - 2$ (Lemma~\ref{lem:U_count}).
+\end{proof}
+
+\begin{remark}[Finding 7: sample sizes]\label{rem:estimation_sizes}
+  \uses{cor:estimation}
+  The thesis does not state the conditions $T \ge 2$ and $J \ge 2$. With
+  $T = 1$ the denominator of $\widehat{\sigma^2_{ij}\rho_{ij}}$ is
+  $S_{ij} - w_{i*}w_{j*}/S_{ij} = 0$; with $J = 1$ the denominator of
+  $\widehat{\tau^2}$ is $w_{**} - w_{**} = 0$. Bühlmann--Straub needs the same.
+  A separate typo: \eqth{13} averages the $J$ estimates $\hat\sigma_j^2$
+  with $1/T$; it should be $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$.
+\end{remark}
+
+\begin{corollary}[The classical Bühlmann--Straub $\widehat{\tau^2}$, \eqth{13}]\label{cor:bs_tauHat}
+  \lean{Credibility.Model.sigHatBS, Credibility.Model.tauHatBS,
+        Credibility.Model.tauHatBS_unbiased}
+  \leanok
+  \uses{def:estimators, def:unbiased}
+  Let $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$ (with the corrected $1/J$,
+  Remark~\ref{rem:estimation_sizes}) and
+  \[
+    \widehat{\tau^2}_{\mathrm{BS}} =
+    \frac{\sum_j w_{j*}(\hmu_j - \bar\mu)^2 - (J-1)\hat\sigma^2}{w_{**} - \sum_j w_{j*}^2/w_{**}},
+    \qquad \bar\mu = \sum_j \frac{w_{j*}}{w_{**}}\hmu_j .
+  \]
+  If $T \ge 2$, $J \ge 2$, the cohorts are uncorrelated ($\rho_{ij} = 0$ for $i \ne j$)
+  and $\sigma_j = \sigma$ for all $j$ (the Bühlmann--Straub model), then
+  $\widehat{\tau^2}_{\mathrm{BS}}$ is unbiased for $\tau^2$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:estimation}
+  It differs from the estimator $\widehat{\tau^2}$ of \eqth{39} by
+  $\bigl(\sum_j w_{j*}\hat c_j - (J-1)\hat\sigma^2\bigr)/(w_{**} - \sum_j w_{j*}^2/w_{**})$.
+  Under the assumptions $\sigma^2_{ij}\rho_{ij} = \delta_{ij}\sigma^2/w_{j*}$ by \eqth{37},
+  so $\mathbb{E}\sum_j w_{j*}\hat c_j = \sum_j (1 - w_{j*}/w_{**})\sigma^2 = (J-1)\sigma^2$,
+  and $\hat\sigma_j^2 = w_{j*}\widehat{\sigma^2_{jj}\rho_{jj}}$ \eqth{41} gives
+  $\mathbb{E}\hat\sigma^2 = \sigma^2$. The difference has expectation $0$, and
+  $\widehat{\tau^2}$ is unbiased.
+\end{proof}
+
+% ---------------------------------------------------------------------------

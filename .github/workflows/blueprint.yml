@@ -89,7 +89,7 @@ jobs:
           python3 scripts/blueprint_check.py --uses > "$RUNNER_TEMP/uses.txt"
           lake env lean --run scripts/CheckUses.lean "$RUNNER_TEMP/uses.txt"
 
-      # The \lean names are read from content.tex (the `docs` job checks that
+      # The \lean names are read from the blueprint chapters (the `docs` job checks that
       # this list is the one leanblueprint writes), so no TeX is needed here.
       - name: Check blueprint and handbook against Lean
         run: |

@@ -1,0 +1,434 @@
+\chapter{Two cohorts with time-constant weights}\label{ch:two}
+% Thesis §2.7, eqs. (31)-(34). Lean: Credibility/TwoCohorts.lean
+
+With $J = 2$, $w_{jt} = w_j$ and $\sigma_{jt}^2 = \sigma^2/w_j$, we get
+$a_{jt} = 1/T$ and $\sigma_{ij}^2 = \sigma_i\sigma_j$ with
+$\sigma_i = \sigma/(T w_i)$. Write $\rho = \rho_{12}$ and
+$\kappa_i = \sigma_i^2/\tau^2$. The Lean statements avoid square roots:
+$\sqrt{\kappa_1\kappa_2}\,\rho = \sigma_1\sigma_2\rho/\tau^2$.
+
+\begin{definition}[Two-cohort quantities]\label{def:two}
+  \lean{Credibility.TwoCohorts.K, Credibility.TwoCohorts.D,
+        Credibility.TwoCohorts.s2, Credibility.TwoCohorts.b1}
+  \leanok
+  \[
+    K = \begin{pmatrix} \sigma_1^2 + \tau^2 & \sigma_1\sigma_2\rho \\
+                        \sigma_1\sigma_2\rho & \sigma_2^2 + \tau^2 \end{pmatrix},
+    \qquad D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho,
+  \]
+  $s^2 = \bigl((\sigma_1^2+\tau^2)(\sigma_2^2+\tau^2) - \sigma_1^2\sigma_2^2\rho^2\bigr)/D$
+  and $b_1 = (\sigma_2^2 + \tau^2 - \sigma_1\sigma_2\rho)/D$.
+\end{definition}
+
+\begin{lemma}\label{lem:D_pos}
+  \lean{Credibility.TwoCohorts.D_pos}
+  \leanok
+  \uses{def:two}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ and $\rho \le 1$ then $D > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $D = (\sigma_1 - \sigma_2)^2 + 2\tau^2 + 2\sigma_1\sigma_2(1 - \rho)$.
+\end{proof}
+
+\begin{theorem}[GLS weights for two cohorts]\label{thm:gls_two}
+  \lean{Credibility.TwoCohorts.gls_two}
+  \leanok
+  \uses{lem:D_pos, def:glsWeight}
+  If moreover $|\rho| < 1$, the GLS weight of cohort 1 is $b_1$ and
+  $1/K^{-1}_{**} = s^2$ (\eqth{31} and the display before it).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  $\det K = (\sigma_1^2+\tau^2)(\sigma_2^2+\tau^2) - \sigma_1^2\sigma_2^2\rho^2 > 0$
+  since $\rho^2 < 1$. Invert $K$ by the adjugate formula; the entries of
+  $K^{-1}\bu$ are $(\sigma_2^2+\tau^2-\sigma_1\sigma_2\rho)/\det K$ and
+  $(\sigma_1^2+\tau^2-\sigma_1\sigma_2\rho)/\det K$, which sum to
+  $D/\det K$.
+\end{proof}
+
+\begin{theorem}[Two-cohort credibility factor]\label{thm:z1_eq}
+  \lean{Credibility.TwoCohorts.z1_eq}
+  \leanok
+  \uses{thm:gls_two}
+  Away from the singularity $\tau^2 + \sigma_1^2 = \sigma_1\sigma_2\rho$,
+  \[
+    z_1 = \frac{(1 - b_1)\tau^2}{\tau^2 + \sigma_1^2 - s^2}
+        = \frac{\tau^2}{\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho}
+        = \frac{1}{1 + \kappa_1 - \sqrt{\kappa_1\kappa_2}\,\rho}
+    \qquad\text{\eqth{32}.}
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  With $A = \sigma_1^2 + \tau^2$ and $c = \sigma_1\sigma_2\rho$:
+  $1 - b_1 = (A - c)/D$ and $A D - \det K = (A - c)^2$, so
+  $\tau^2 + \sigma_1^2 - s^2 = (A - c)^2/D$. Cancel $(A - c)/D$.
+  For $|\rho| < 1$ this is also the case $J = 2$ of
+  Theorem~\ref{thm:Core_bestZ_of_equalCov} with $c = \sigma_1\sigma_2\rho$.
+  It is proved directly because the statement only assumes $\rho \le 1$: it is
+  an algebraic identity that holds also where $K$ is not positive definite
+  (e.g.\ $\sigma_1 = \sigma_2 = \tau^2 = 1$, $\rho = -3$).
+\end{proof}
+
+\begin{theorem}[Eq.\ (32) is eq.\ (26)]\label{thm:two_bestZ_eq}
+  \lean{Credibility.TwoCohorts.K_posDef, Credibility.TwoCohorts.bestZ_eq}
+  \leanok
+  \uses{def:Core.moments, thm:Core_bestZ_eq, thm:gls_two, thm:z1_eq}
+  If $|\rho| < 1$, the two-cohort $K$ is positive definite, and away from the
+  singularity the credibility factor of Definition~\ref{def:Core.moments} for
+  this $K$, with $v_i = \sigma_i^2$, is
+  $z_1 = \tau^2/(\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, thm:gls_two, thm:z1_eq}
+  $x^TKx = \tau^2\lVert x\rVert^2 + a^2 + b^2 + 2\rho ab$ with $a = \sigma_1x_1$,
+  $b = \sigma_2x_2$, and $a^2 + b^2 + 2\rho ab
+  = \tfrac{1+\rho}{2}(a+b)^2 + \tfrac{1-\rho}{2}(a-b)^2 \ge 0$. Then
+  Theorem~\ref{thm:Core_bestZ_eq}, with $b_1$ and $s^2$ from
+  Theorem~\ref{thm:gls_two}, and Theorem~\ref{thm:z1_eq}.
+\end{proof}
+
+\begin{theorem}[Weights from credibility factors]\label{thm:b1_eq_z}
+  \lean{Credibility.TwoCohorts.b1_eq_z}
+  \leanok
+  \uses{thm:gls_two, thm:z1_eq}
+  Away from both singularities, with $z_i = \tau^2/(\tau^2 + \sigma_i^2 - \sigma_1\sigma_2\rho)$,
+  \[
+    b_1 = \frac{\kappa_2 + 1 - \sqrt{\kappa_1\kappa_2}\,\rho}
+               {\kappa_1 + \kappa_2 + 2 - 2\sqrt{\kappa_1\kappa_2}\,\rho}
+        = \frac{z_1}{z_1 + z_2}.
+  \]
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:D_pos}
+  With $A_i = \tau^2 + \sigma_i^2 - \sigma_1\sigma_2\rho$ we have $z_i = \tau^2/A_i$,
+  so $z_1/(z_1+z_2) = A_2/(A_1 + A_2)$, and $A_1 + A_2 = D$.
+\end{proof}
+
+\begin{remark}[Finding 4: only for two cohorts]\label{rem:b1_eq_z}
+  \uses{thm:b1_eq_z, thm:exists_b_ne_z, thm:exists_b_ne_z_equalCorr}
+  The second equality is not in the published thesis; it comes from the
+  defence slides. It is the Bühlmann--Straub form $b_j = z_j/z_*$, which
+  therefore survives correlation for any binary split of a portfolio
+  (e.g.\ two segments of a rating factor). For three or more correlated
+  cohorts it fails in general (Theorem~\ref{thm:exists_b_ne_z}), even with
+  equal correlations $\rho_{ij} = \rho$ (Theorem~\ref{thm:exists_b_ne_z_equalCorr}).
+  What carries over is equal \emph{covariances}
+  (Theorem~\ref{thm:b_eq_of_equalCov}).
+\end{remark}
+
+\paragraph{More than two cohorts: equal covariances.}
+With two cohorts there is a single covariance $\sigma_1\sigma_2\rho$. The
+right generalisation is that all cohort pairs share one covariance
+$K_{ij} = \sigma_{ij}^2\rho_{ij} = c$ ($i \ne j$). Then
+$K = \operatorname{diag}(d_j) + c\,uu^\top$ with
+$d_j = \tau^2 + \sigma_{jj}^2 - c$, and the rank-one part lies along $u$.
+
+\begin{lemma}\label{lem:Kinv_one_of_equalCov}
+  \lean{Credibility.Model.K_self, Credibility.Model.K_of_equalCov,
+        Credibility.Model.Kinv_one_of_equalCov}
+  \leanok
+  \uses{lem:K_apply, def:K}
+  $K_{jj} = \tau^2 + \sigma^2_{jj}$, and $K_{ij} = c$ for $i \ne j$. If $K$ is
+  positive definite and all $d_j \ne 0$, then with $v_j = 1/d_j$:
+  $1 + c\,v_* \ne 0$ and $K^{-1}u = v/(1 + c\,v_*)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_Kinv_one_of_equalCov}
+  The first two by Lemma~\ref{lem:K_apply}; then
+  Lemma~\ref{lem:Core_Kinv_one_of_equalCov}.
+\end{proof}
+
+\begin{theorem}[Weights from credibility factors, any $J$]\label{thm:b_eq_of_equalCov}
+  \lean{Credibility.Model.b_eq_of_equalCov}
+  \leanok
+  \uses{lem:Kinv_one_of_equalCov, def:Model.b}
+  Under the same hypotheses, with $z_j = \tau^2/(\tau^2 + \sigma_{jj}^2 - c)$,
+  $b_j = z_j/z_*$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_b_eq_of_equalCov}
+  Theorem~\ref{thm:Core_b_eq_of_equalCov}: $b = K^{-1}u/u^\top K^{-1}u = v/v_*$
+  and $z = \tau^2 v$.
+\end{proof}
+
+\begin{theorem}\label{thm:bestZ_of_equalCov}
+  \lean{Credibility.Model.bestZ_of_equalCov}
+  \leanok
+  \uses{lem:Kinv_one_of_equalCov, thm:bestZ_eq}
+  If moreover $b_j \ne 1$, the proposed factor is
+  $z_j = \tau^2/(\tau^2 + \sigma_{jj}^2 - c)$: eq.~\eqth{32} with
+  $\sigma_1\sigma_2\rho$ replaced by $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_of_equalCov}
+  Theorem~\ref{thm:Core_bestZ_of_equalCov}. The idea:
+  $s^2 = (1 + c\,v_*)/v_* = c + 1/v_*$, so
+  $\tau^2 + \sigma_{jj}^2 - s^2 = d_j - 1/v_* = (v_* - v_j)/(v_j v_*)$ and
+  $1 - b_j = (v_* - v_j)/v_*$. Cancel $v_* - v_j \ne 0$.
+\end{proof}
+
+\begin{theorem}[Finding 5: the converse for three cohorts]\label{thm:equalCov_of_b_eq_z}
+  \lean{Credibility.Model.equalCov_of_b_eq_z}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  With three cohorts, $K \succ 0$ and all $b_j \ne 0$: if $b_j = z_j/z_*$ for every
+  $j$, then $\sigma^2_{ij}\rho_{ij} = c$ for all $i \ne j$, for some $c$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_equalCov_of_b_eq_z, lem:K_apply}
+  Theorem~\ref{thm:Core_equalCov_of_b_eq_z}, and $K_{ij} = \sigma^2_{ij}\rho_{ij}$
+  for $i \ne j$ (Lemma~\ref{lem:K_apply}).
+\end{proof}
+
+\begin{lemma}[One period]\label{lem:sigma2_of_unique}
+  \lean{Credibility.Model.σ2_of_unique}
+  \leanok
+  \uses{def:K}
+  With a single period, $a_{j1} = 1$ and $\sigma^2_{ij} = \sigma_i\sigma_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Eq.~\eqth{23} with one term.
+\end{proof}
+
+\begin{theorem}[Finding 4: three cohorts break $b = z/z_*$]\label{thm:exists_b_ne_z}
+  \lean{Credibility.Model.exists_b_ne_z}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  There is a model with three cohorts, one period and equal noise $\sigma_j = 1$,
+  $K \succ 0$, in which $b_j \ne z_j/z_*$ for some $j$: $\tau^2 = 1$,
+  $\rho_{12} = 1/4$, $\rho_{13} = \rho_{23} = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:equalCov_of_b_eq_z, lem:K_posDef, lem:sigma2_of_unique, lem:Core_glsWeight_of_mulVec}
+  $K = 2I + \tfrac14(e_1e_2^\top + e_2e_1^\top)$ solves $Kx = u$ with
+  $x = (4/9, 4/9, 1/2)$, so no weight is zero
+  (Lemma~\ref{lem:Core_glsWeight_of_mulVec}). The covariances $1/4, 0, 0$ are not
+  equal, so Theorem~\ref{thm:equalCov_of_b_eq_z} rules out $b = z/z_*$.
+\end{proof}
+
+\begin{theorem}[Finding 4: equal correlations are not enough]\label{thm:exists_b_ne_z_equalCorr}
+  \lean{Credibility.Model.exists_b_ne_z_equalCorr}
+  \leanok
+  \uses{def:Model.b, thm:bestZ_eq}
+  There is a model with three cohorts, one period and equal correlations
+  $\rho_{ij} = 1/2$, $K \succ 0$, in which $b_j \ne z_j/z_*$ for some $j$:
+  $\tau^2 = 1$, $\sigma = (1, 1, 2)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:equalCov_of_b_eq_z, lem:K_posDef, lem:sigma2_of_unique, lem:Core_glsWeight_of_mulVec}
+  The covariances are $\sigma_i\sigma_j/2 = 1/2, 1, 1$, and $Kx = u$ with
+  $x = (8/21, 8/21, 1/21)$. As in Theorem~\ref{thm:exists_b_ne_z}.
+\end{proof}
+
+\begin{remark}[Finding 5: equal covariances is the right condition]\label{rem:equalCov}
+  \uses{thm:b_eq_of_equalCov, thm:equalCov_of_b_eq_z}
+  For $J = 3$ the condition is also necessary when all $b_j \ne 0$
+  (Theorem~\ref{thm:equalCov_of_b_eq_z}): $b_j = z_j/z_*$ for all $j$ gives a
+  $\lambda$ with $\sum_{i \ne j} (K_{ij} + \lambda)\, b_i = 0$ for every $j$
+  (Lemma~\ref{lem:Core_exists_shift_of_b_eq_z}; the converse of that lemma holds
+  too, on paper). For $J \ge 4$ it is not necessary: with equal $\sigma_j$, any
+  correlation matrix with equal row sums gives $b = z/z_* = u/J$, whether or not
+  the covariances are equal (on paper, not in Lean). Bühlmann--Straub is the case
+  $c = 0$; two cohorts are the case $c = \sigma_1\sigma_2\rho$.
+\end{remark}
+
+\begin{remark}[Finding 6: equal credibility is not grouping]\label{rem:equalZ_grouping}
+  \uses{thm:b_eq_of_equalCov}
+  Under equal covariances, cohorts with the same $z_j$ get the same weight
+  $b_j$, so $\hmu = \sum_j b_j \hmu_j$ depends on them only through
+  $\sum \hmu_j$. Pooling them loses nothing for $\hmu$. This is not risk
+  grouping, though. Equal $z$ means equal reliability, not equal level:
+  premiums $z\hmu_j + (1-z)\hmu$ still differ. Merging $i$ and $j$ into one
+  risk group assumes $\mu_i = \mu_j$, which changes their covariance from
+  $0$ to $\tau^2$ and hence $K$, every $z$ and $\hmu$.
+
+  When merging pays off (on paper, \texttt{notes/merging-cohorts.md}): in a
+  two-level model, let $d = \mathbb{E}(\mu_1-\mu_2)^2$ and
+  $V = \operatorname{Var}(\hmu_1 - \hmu_2) = \sigma_1^2+\sigma_2^2-2\sigma_1\sigma_2\rho$.
+  For two cohorts on their own, merging lowers the total mean squared error
+  iff $d < V\tau^2/(V+\tau^2)$. Correlation enters only through $V$, and
+  $\rho > 0$ makes merging harder, since the gap $\hmu_1 - \hmu_2$ is then
+  measured more precisely. Equal $z$ plays no role. Under the thesis model,
+  $d = 2\tau^2$, merging never pays. See Chapter~\ref{ch:merging}.
+\end{remark}
+
+\begin{corollary}[Bühlmann--Straub at $\rho = 0$]\label{cor:z1_rho_zero}
+  \lean{Credibility.TwoCohorts.z1_rho_zero}
+  \leanok
+  \uses{thm:two_bestZ_eq}
+  At $\rho = 0$, $z_1 = \tau^2/(\tau^2 + \sigma_1^2) = 1/(1 + \kappa_1)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:two_bestZ_eq}
+  Theorem~\ref{thm:two_bestZ_eq} with $\rho = 0$.
+\end{proof}
+
+Unlike Bühlmann--Straub, $z_1$ now depends on $\kappa_2$ and $\rho$ too. The
+singularity sits at
+$\rho^* = (\tau^2 + \sigma_1^2)/(\sigma_1\sigma_2) = (1+\kappa_1)/\sqrt{\kappa_1\kappa_2}$.
+
+\begin{theorem}[Sign flip past the singularity]\label{thm:z1_neg_iff}
+  \lean{Credibility.TwoCohorts.z1_neg_iff}
+  \leanok
+  \uses{thm:z1_eq}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ then $z_1 < 0$ iff $\rho > \rho^*$
+  (displays after \eqth{32}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\tau^2 > 0$, so $z_1$ has the sign of its denominator
+  $\sigma_1\sigma_2(\rho^* - \rho)$.
+\end{proof}
+
+\begin{theorem}[When the singularity is reachable]\label{thm:singularity_reachable_iff}
+  \lean{Credibility.TwoCohorts.singularity_reachable_iff}
+  \leanok
+  \uses{def:two}
+  If $\sigma_1, \sigma_2, \tau^2 > 0$ then $\rho^* \le 1$ iff
+  $\kappa_2 \ge (1 + \kappa_1)^2/\kappa_1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Both say $(\tau^2 + \sigma_1^2)^2 \le \sigma_1^2\sigma_2^2$, i.e.\
+  $\tau^2 + \sigma_1^2 \le \sigma_1\sigma_2$, as both sides are positive.
+\end{proof}
+
+The thesis shows that $s^2/\tau^2$ \eqth{33} is maximal at $\rho = \rho^*$,
+so $\hmu$ is least accurate there, and proposes clipping
+$\tilde z_i = \max(\min(z_i, 1), 0)$ \eqth{34}. It notes that $z_1 > 1$
+can occur, but not when. The following answers that.
+
+\begin{theorem}[Credibility above one]\label{thm:z1_gt_one_iff}
+  \lean{Credibility.TwoCohorts.z1_gt_one_iff}
+  \leanok
+  \uses{thm:z1_eq}
+  If $\sigma_1, \sigma_2 > 0$ and $\rho < \rho^*$ then
+  $z_1 > 1$ iff $\sigma_1 < \sigma_2\rho$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Below the singularity the denominator $\tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho$
+  is positive, so $z_1 > 1$ iff $\sigma_1^2 < \sigma_1\sigma_2\rho$, i.e.\
+  $\sigma_1 < \sigma_2\rho$.
+\end{proof}
+
+\begin{remark}[Finding 3: when $z_1 > 1$]\label{rem:gt_one}
+  \uses{thm:z1_gt_one_iff}
+  This sharpens §2.7. In terms of $\kappa$: $z_1 > 1$ iff
+  $\sqrt{\kappa_1} < \sqrt{\kappa_2}\,\rho$: cohort 1 is the less noisy one
+  and the correlation is strong enough (``noise cancellation''), so the
+  optimal blend overshoots $\hmu_1$. The condition
+  does not involve $\tau^2$: the Lean statement carries the hypothesis
+  $\tau^2 > 0$, but the proof never uses it, so the condition is
+  independent of the between-cohort variance.
+\end{remark}
+
+\begin{remark}[Finding 17: the blend is continuous through the singularity]\label{rem:sing_continuous}
+  \uses{thm:z1_neg_iff, thm:gls_two}
+  The gap is $\hmu_1 - \hmu = (1 - b_1)(\hmu_1 - \hmu_2)$, and
+  $\tau^2 + \sigma_1^2 - s^2 = (1 - b_1)^2 D$ with
+  $D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho > 0$. So
+  $z_1(\hmu_1 - \hmu) = (\tau^2/D)(\hmu_1 - \hmu_2)$: the best blend
+  $(b_1 + \tau^2/D)\hmu_1 + (b_2 - \tau^2/D)\hmu_2$ is smooth in $\rho$ on
+  $|\rho| < 1$. At $\rho^*$ the weight $b_1$ passes through $1$ and the gap
+  changes sign; $z_1$ flips with it. With the true parameters a negative
+  $z_1$ is therefore the best blend, and clipping it \eqth{34} loses
+  accuracy. A number without the singularity, for any $J$, is the own-data
+  weight $c_j = b_j + z_j(1 - b_j)$, the coefficient of $\hmu_j$ in the
+  blend: $\lVert z_j(e_j - b)\rVert \le \tau^2/\lambda_{\min}(K)$, because
+  $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$ and
+  $\Var(\hmu_j - \hmu) \ge \lambda_{\min}(K)\lVert e_j - b\rVert^2$.
+  Both are proved: Theorems~\ref{thm:two_blend_continuous}
+  and~\ref{thm:Core_bestZ_bounded}, Corollary~\ref{cor:Core_bestZ_bounded_eig}.
+\end{remark}
+
+\begin{theorem}[Two cohorts: the blend is smooth through $\rho^*$]\label{thm:two_blend_continuous}
+  \lean{Credibility.TwoCohorts.bestZ_mul_one_sub_b1}
+  \leanok
+  \uses{thm:two_bestZ_eq, lem:D_pos}
+  If $|\rho| < 1$ and $\tau^2 + \sigma_1^2 \ne \sigma_1\sigma_2\rho$, then
+  $z_1(1 - b_1) = \tau^2/D$ with
+  $D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2\sigma_1\sigma_2\rho$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:two_bestZ_eq, lem:D_pos}
+  With $A = \tau^2 + \sigma_1^2 - \sigma_1\sigma_2\rho$: $z_1 = \tau^2/A$
+  (Theorem~\ref{thm:two_bestZ_eq}) and $1 - b_1 = A/D$, with $D > 0$.
+\end{proof}
+
+\begin{lemma}[The gap variance as a quadratic form]\label{lem:Core_quadForm_gap}
+  \lean{Credibility.Core.quadForm_single_sub_glsWeight}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  If $K$ is positive definite then
+  $(e_j - b)^T K (e_j - b) = K_{jj} - s^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $K(e_j - b) = Ke_j - s^2 u$, $b^TKe_j = (Kb)_j = s^2$ and $(e_j - b)^Tu = 0$.
+\end{proof}
+
+\begin{theorem}[The own-data weight is bounded]\label{thm:Core_bestZ_bounded}
+  \lean{Credibility.Core.abs_bestZ_mul_norm_le, Credibility.Core.abs_bestZ_mul_one_sub_le}
+  \leanok
+  \uses{def:Core.moments, lem:Core_quadForm_gap}
+  Let $K$ be positive definite with $K_{jj} = \tau^2 + v_j$, $\tau^2 \ge 0$, and
+  $x^TKx \ge m\lVert x\rVert^2$ for all $x$, with $m > 0$ (e.g.\
+  $m = \lambda_{\min}(K)$). Then
+  $\lvert z_j\rvert\,\lVert e_j - b\rVert \le \tau^2/m$; in particular
+  $\lvert c_j - b_j\rvert = \lvert z_j(1 - b_j)\rvert \le \tau^2/m$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_eq, lem:Core_quadForm_gap}
+  By Theorem~\ref{thm:Core_bestZ_eq} and Lemma~\ref{lem:Core_quadForm_gap},
+  $z_j = (1 - b_j)\tau^2/q$ with $q = (e_j - b)^TK(e_j - b) \ge m\lVert e_j - b\rVert^2$,
+  and $\lvert 1 - b_j\rvert \le \lVert e_j - b\rVert$. If $b = e_j$ both sides
+  are trivial.
+\end{proof}
+
+\begin{lemma}[Rayleigh bound]\label{lem:rayleigh_eigenvalues}
+  \lean{Matrix.IsHermitian.mul_dotProduct_le_dotProduct_mulVec}
+  \leanok
+  If $A$ is real symmetric and every eigenvalue of $A$ is at least $m$, then
+  $x^TAx \ge m\lVert x\rVert^2$ for all $x$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $A = U\operatorname{diag}(\lambda)U^T$ and $y = U^Tx$:
+  $x^TAx = \sum_i \lambda_i y_i^2 \ge m\lVert y\rVert^2 = m\lVert x\rVert^2$.
+\end{proof}
+
+\begin{corollary}[The bound with $\lambda_{\min}$]\label{cor:Core_bestZ_bounded_eig}
+  \lean{Credibility.Core.abs_bestZ_mul_norm_le_eigenvalues,
+        Credibility.Core.abs_bestZ_mul_one_sub_le_eigenvalues}
+  \leanok
+  \uses{thm:Core_bestZ_bounded, lem:rayleigh_eigenvalues}
+  Let $K$ be positive definite with $K_{jj} = \tau^2 + v_j$ and $\tau^2 \ge 0$. Then
+  $\lvert z_j\rvert\,\lVert e_j - b\rVert \le \tau^2/\lambda_{\min}(K)$ and
+  $\lvert c_j - b_j\rvert \le \tau^2/\lambda_{\min}(K)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_bounded, lem:rayleigh_eigenvalues}
+  Theorem~\ref{thm:Core_bestZ_bounded} with $m = \lambda_{\min}(K) > 0$, by
+  Lemma~\ref{lem:rayleigh_eigenvalues}.
+\end{proof}
+
+% ---------------------------------------------------------------------------

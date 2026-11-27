@@ -1,0 +1,791 @@
+\chapter{Extension: vector levels and a credibility matrix}\label{ch:corevector}
+% Not in the thesis. Lean: Credibility/CoreVector.lean (notes/time-trends.md §3 item 4)
+
+Not in the thesis. Each cohort has a level vector $\mu_j \in \mathbb{R}^P$
+(level and slope, Hachemeister 1975; frequency and severity, Jewell 1973),
+an estimate $\hmu_j$, and the blend is $\hmu + Z(\hmu_j - \hmu)$ with a
+$P \times P$ credibility matrix $Z$. Unlike the multidimensional
+Bühlmann--Straub model (Bühlmann--Gisler 2005, ch.~7) the cohorts may be
+correlated: the stacked estimates have one covariance $K$ over
+cohorts $\times$ components. For random vectors
+$\mathrm{cov}(X, Y) = E[(X - EX)(Y - EY)^\top]$.
+
+\begin{definition}[Matrix blend moments]\label{def:VBM}
+  \lean{Credibility.VecBlendMoments, Credibility.VecBlendMoments.gap,
+        Credibility.VecBlendMoments.cross, Credibility.VecBlendMoments.varRest,
+        Credibility.VecBlendMoments.errVar, Credibility.VecBlendMoments.bestZ}
+  \leanok
+  \uses{def:errVar, def:bestZ}
+  Six $P \times P$ matrices: $\mathrm{Var}(\hmu_j)$, $\mathrm{Var}(\hmu)$,
+  $\mathrm{Var}(\mu_j)$, $\mathrm{cov}(\hmu_j, \hmu)$, $\mathrm{cov}(\hmu_j, \mu_j)$,
+  $\mathrm{cov}(\hmu, \mu_j)$. With $G = \mathrm{Var}(\hmu_j - \hmu)$,
+  $C = \mathrm{cov}(\hmu_j - \hmu, \mu_j - \hmu)$ and $W = \mathrm{Var}(\mu_j - \hmu)$,
+  the error covariance of the blend is
+  $\mathrm{errVar}(Z) = ZGZ^\top - ZC - C^\top Z^\top + W$, and
+  $Z^\ast = C^\top G^{-1}$.
+\end{definition}
+
+\begin{theorem}[Matrix eq.\ (7) is optimal]\label{thm:VBM_optimal}
+  \lean{Credibility.VecBlendMoments.gap_transpose, Credibility.VecBlendMoments.errVar_eq,
+        Credibility.VecBlendMoments.bestZ_optimal,
+        Credibility.VecBlendMoments.bestZ_optimal_dotProduct,
+        Credibility.VecBlendMoments.bestZ_optimal_trace}
+  \leanok
+  \uses{def:VBM}
+  If $\mathrm{Var}(\hmu_j)$ and $\mathrm{Var}(\hmu)$ are symmetric and $G$ is
+  invertible, $\mathrm{errVar}(Z) = \mathrm{errVar}(Z^\ast) + (Z - Z^\ast)G(Z - Z^\ast)^\top$.
+  If moreover $G \succeq 0$, then $\mathrm{errVar}(Z) - \mathrm{errVar}(Z^\ast) \succeq 0$:
+  $Z^\ast$ is best for the trace and for every linear combination $a^\top\mu_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $Z^\ast G = C^\top$ and $GZ^{\ast\top} = C$; expand. The remainder is
+  $DGD^\top \succeq 0$ with $D = Z - Z^\ast$.
+\end{proof}
+
+\begin{theorem}[\ldots and unique]\label{thm:VBM_unique}
+  \lean{Credibility.VecBlendMoments.bestZ_unique}
+  \leanok
+  \uses{def:VBM}
+  If $G \succ 0$ and $\mathrm{tr}\,\mathrm{errVar}(Z) \le \mathrm{tr}\,\mathrm{errVar}(Z^\ast)$,
+  then $Z = Z^\ast$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:VBM_optimal}
+  $\mathrm{tr}(DGD^\top) = \sum_i d_i^\top G d_i$ over the rows $d_i$ of $D$;
+  it is $\le 0$, so every $d_i = 0$.
+\end{proof}
+
+\begin{theorem}[The scalar blend is $P = 1$]\label{thm:VBM_scalar}
+  \lean{Credibility.BlendMoments.toVec, Credibility.BlendMoments.toVec_errVar,
+        Credibility.BlendMoments.toVec_bestZ}
+  \leanok
+  \uses{def:VBM}
+  As $1 \times 1$ matrices, $\mathrm{errVar}$ and $Z^\ast$ are \eqth{6} and \eqth{7}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Compute.
+\end{proof}
+
+\begin{definition}[Matrix GLS weights]\label{def:CV_glsW}
+  \lean{Credibility.CoreVector.stack, Credibility.CoreVector.info,
+        Credibility.CoreVector.glsW}
+  \leanok
+  \uses{def:glsWeight}
+  $U$ stacks $|J|$ identity matrices ($U^\top x = \sum_j x_j$). The information
+  matrix is $I_K = U^\top K^{-1} U$ and the weights are $\mathcal W = K^{-1}U I_K^{-1}$:
+  $\hmu = \mathcal W^\top x = \sum_j B_j\hmu_j$.
+\end{definition}
+
+\begin{lemma}[Matrix GLS weights]\label{lem:CV_glsW}
+  \lean{Credibility.CoreVector.stack_mulVec_injective, Credibility.CoreVector.info_posDef,
+        Credibility.CoreVector.stack_transpose_mul_glsW, Credibility.CoreVector.mul_glsW}
+  \leanok
+  \uses{def:CV_glsW}
+  For $K \succ 0$ (and at least one cohort): $I_K \succ 0$, $\sum_j B_j = U^\top\mathcal W = I$,
+  and $K\mathcal W = U I_K^{-1}$ (matrix version of Lemma~\ref{lem:mulVec_glsWeight}).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_foc}
+  $U$ has full column rank, so $U^\top K^{-1} U \succ 0$ (Lemma~\ref{lem:Blup_foc}); the rest is
+  $K K^{-1} = I$ and $I_K I_K^{-1} = I$.
+\end{proof}
+
+\begin{theorem}[Matrix GLS weights are optimal]\label{thm:CV_glsW_optimal}
+  \lean{Credibility.CoreVector.glsW_optimal}
+  \leanok
+  \uses{def:CV_glsW}
+  For weights $A$ with $U^\top A = I$:
+  $A^\top K A - \mathcal W^\top K \mathcal W \succeq 0$ (matrix version of
+  Theorem~\ref{thm:glsWeight_optimal}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  With $D = A - \mathcal W$, $U^\top D = 0$, so
+  $\mathcal W^\top K D = I_K^{-1}U^\top D = 0$ and the difference is $D^\top K D$.
+\end{proof}
+
+\begin{definition}[Matrix blend moments of cohort $j$]\label{def:CV_moments}
+  \lean{Credibility.CoreVector.sel, Credibility.CoreVector.moments}
+  \leanok
+  \uses{def:VBM, def:CV_glsW, def:Core.levelMoments}
+  $E_j$ picks the block of cohort $j$. For data covariance $K$ and level
+  covariance $L$ (both stacked over cohorts $\times$ components):
+  $\mathrm{Var}(\hmu_j) = K_{jj}$, $\mathrm{Var}(\hmu) = I_K^{-1}$,
+  $\mathrm{Var}(\mu_j) = \mathrm{cov}(\hmu_j, \mu_j) = L_{jj}$,
+  $\mathrm{cov}(\hmu_j, \hmu) = E_j^\top K\mathcal W$,
+  $\mathrm{cov}(\hmu, \mu_j) = \mathcal W^\top L E_j$.
+\end{definition}
+
+\begin{theorem}[Matrix eq.\ (26)]\label{thm:CV_bestZ}
+  \lean{Credibility.CoreVector.sel_transpose_mul_stack, Credibility.CoreVector.moments_covEst,
+        Credibility.CoreVector.moments_gap, Credibility.CoreVector.moments_bestZ}
+  \leanok
+  \uses{def:CV_moments}
+  For $K \succ 0$ and $L^\top = L$: $\mathrm{cov}(\hmu_j, \hmu) = I_K^{-1}$,
+  $\mathrm{Var}(\hmu_j - \hmu) = K_{jj} - I_K^{-1}$ and
+  \[ Z_j^\ast = (L_{jj} - E_j^\top L\mathcal W)\,(K_{jj} - I_K^{-1})^{-1}, \]
+  the matrix version of Theorem~\ref{thm:Core_levelMoments_bestZ_eq}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  $E_j^\top K\mathcal W = E_j^\top U I_K^{-1} = I_K^{-1}$ by Lemma~\ref{lem:CV_glsW}; substitute.
+\end{proof}
+
+\begin{lemma}[Cohort weights]\label{lem:CV_weight}
+  \lean{Credibility.CoreVector.sum_sel_mul_sel_transpose,
+        Credibility.CoreVector.sel_transpose_mul_mul_sel,
+        Credibility.CoreVector.sel_transpose_mul_sel, Credibility.CoreVector.stack_eq_sum_sel,
+        Credibility.CoreVector.weight, Credibility.CoreVector.glsW_transpose_mulVec,
+        Credibility.CoreVector.sum_weight}
+  \leanok
+  \uses{def:CV_moments}
+  $\sum_j E_jE_j^\top = I$, $E_i^\top E_k = \delta_{ik} I$, $U = \sum_j E_j$. With
+  $B_j = (E_j^\top\mathcal W)^\top$: $\hmu = \mathcal W^\top x = \sum_j B_j\hmu_j$ and
+  $\sum_j B_j = I$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  Entrywise; $\mathcal W^\top = \mathcal W^\top\sum_j E_jE_j^\top$ and
+  $\sum_j B_j = (U^\top\mathcal W)^\top$.
+\end{proof}
+
+\begin{theorem}[When the matrix gap is positive definite]\label{thm:CV_gap_posDef}
+  \lean{Credibility.CoreVector.moments_gap_eq_quadForm,
+        Credibility.CoreVector.moments_gap_posDef_iff}
+  \leanok
+  \uses{def:CV_moments}
+  For $K \succ 0$: $K_{jj} - I_K^{-1} = (E_j - \mathcal W)^\top K (E_j - \mathcal W)$, so it is
+  positive definite iff $E_j - \mathcal W$ has full column rank: no combination $a \ne 0$ has
+  its portfolio weights $\mathcal W a$ all on cohort $j$. This is the matrix version of
+  $b \ne e_j$ (Lemma~\ref{lem:Core_quadForm_gap} in the scalar case).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_bestZ, lem:CV_glsW}
+  $E_j^\top K\mathcal W = \mathcal W^\top K E_j = \mathcal W^\top K\mathcal W = I_K^{-1}$;
+  expand. Then $a^\top G a = 0$ iff $(E_j - \mathcal W)a = 0$.
+\end{proof}
+
+\begin{definition}[Independent cohorts]\label{def:CV_blockDiag}
+  \lean{Credibility.CoreVector.IsCohortBlockDiag, Credibility.CoreVector.blk}
+  \leanok
+  \uses{def:CV_moments}
+  $M$ over cohorts $\times$ components is \emph{cohort block diagonal} if
+  $M_{(i,p),(k,q)} = 0$ for $i \ne k$; $M_{jj}$ is its block of cohort $j$.
+\end{definition}
+
+\begin{lemma}[GLS for independent cohorts]\label{lem:CV_blockDiag}
+  \lean{Credibility.CoreVector.sel_transpose_mul_mul_sel_of_blockDiag,
+        Credibility.CoreVector.blk_posDef,
+        Credibility.CoreVector.sel_transpose_mul_inv_mul_sel_of_blockDiag,
+        Credibility.CoreVector.info_of_blockDiag,
+        Credibility.CoreVector.sel_transpose_mul_glsW_of_blockDiag,
+        Credibility.CoreVector.weight_of_blockDiag}
+  \leanok
+  \uses{def:CV_blockDiag, lem:CV_weight}
+  For $K \succ 0$ cohort block diagonal: $K^{-1}$ is block diagonal with blocks
+  $K_{jj}^{-1}$, $I_K = \sum_j K_{jj}^{-1}$, and
+  $B_j = \bigl(\sum_i K_{ii}^{-1}\bigr)^{-1} K_{jj}^{-1}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_weight, lem:CV_glsW}
+  The blocks of $K \succ 0$ are $\succ 0$; the block-diagonal matrix of the $K_{jj}^{-1}$ is a
+  right inverse of $K$. Then $U = \sum_j E_j$.
+\end{proof}
+
+\begin{theorem}[Independent cohorts: $Z_j = L_{jj}K_{jj}^{-1}$]\label{thm:CV_bestZ_blockDiag}
+  \lean{Credibility.CoreVector.moments_gap_posDef_of_blockDiag,
+        Credibility.CoreVector.moments_bestZ_of_blockDiag}
+  \leanok
+  \uses{thm:CV_bestZ, lem:CV_blockDiag}
+  If $K \succ 0$ and $L = L^\top$ are cohort block diagonal and there is a cohort $i \ne j$,
+  then $K_{jj} - I_K^{-1} \succ 0$ and $Z_j^\ast = L_{jj} K_{jj}^{-1}$: estimating $\hmu$
+  changes nothing, as in the scalar Bühlmann--Straub model.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_gap_posDef, lem:CV_blockDiag, thm:CV_bestZ, lem:CV_weight}
+  $E_i^\top(E_j - \mathcal W) = -K_{ii}^{-1}I_K^{-1}$ is invertible, so
+  Theorem~\ref{thm:CV_gap_posDef} applies. $E_j^\top L\mathcal W = L_{jj}K_{jj}^{-1}I_K^{-1}$,
+  so $L_{jj} - E_j^\top L\mathcal W = L_{jj}K_{jj}^{-1}(K_{jj} - I_K^{-1})$.
+\end{proof}
+
+\begin{theorem}[Multidimensional Bühlmann--Straub]\label{thm:CV_buhlmannGisler}
+  \lean{Credibility.CoreVector.moments_bestZ_buhlmannGisler,
+        Credibility.CoreVector.weight_buhlmannGisler}
+  \leanok
+  \uses{thm:CV_bestZ_blockDiag}
+  Independent cohorts with $K_{jj} = \Lambda + S_j$ (level covariance $\Lambda$, noise
+  covariance $S_j$) and independent levels with $L_{jj} = \Lambda$:
+  $Z_j^\ast = \Lambda(\Lambda + S_j)^{-1}$, and for invertible $\Lambda$ the portfolio is the
+  $Z$-weighted mean, $B_j = \bigl(\sum_i Z_i\bigr)^{-1} Z_j$. These are the formulas of
+  Bühlmann--Gisler (1997), $Z_r = A(A + W_r^{-1})^{-1}$, and of the multidimensional
+  Bühlmann--Straub model (Bühlmann--Gisler 2005, \S7.3).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_bestZ_blockDiag, lem:CV_blockDiag}
+  Substitute; $\bigl(\Lambda\sum_i K_{ii}^{-1}\bigr)^{-1}\Lambda = \bigl(\sum_i K_{ii}^{-1}\bigr)^{-1}$.
+\end{proof}
+
+\begin{definition}[Hachemeister's model with correlated cohorts]\label{def:CV_hach}
+  \lean{Credibility.CoreVector.gram, Credibility.CoreVector.indiv,
+        Credibility.CoreVector.hachM, Credibility.CoreVector.design,
+        Credibility.CoreVector.hachK}
+  \leanok
+  \uses{def:CV_blockDiag}
+  Cohort $j$ has observations $X_j \in \mathbb{R}^T$, a design $Y_j$ ($T \times P$) and
+  $X_j = Y_j\beta_j + \varepsilon_j$; the stacked noise has covariance $\Phi$ over
+  cohorts $\times$ periods (not necessarily block diagonal), the stacked $\beta$ has
+  covariance $L$. Each cohort's own GLS line is $b_j = M_jX_j$ with
+  $W_j = Y_j^\top\Phi_{jj}^{-1}Y_j$ and $M_j = W_j^{-1}Y_j^\top\Phi_{jj}^{-1}$. Stacked:
+  $M = \sum_j E_jM_jE_j^\top$, design $D = \sum_j E_jY_jE_j^\top$, and
+  $K = L + M\Phi M^\top$.
+\end{definition}
+
+\begin{lemma}[The lines and their covariance]\label{lem:CV_hach}
+  \lean{Credibility.CoreVector.isCohortBlockDiag_iff, Credibility.CoreVector.blk_eq,
+        Credibility.CoreVector.sel_transpose_mul_sel_mul,
+        Credibility.CoreVector.sel_transpose_mul_sum_sel,
+        Credibility.CoreVector.gram_posDef, Credibility.CoreVector.indiv_mul,
+        Credibility.CoreVector.sel_transpose_mul_hachM,
+        Credibility.CoreVector.hachM_mul_design, Credibility.CoreVector.hachM_mul_cov_mul,
+        Credibility.CoreVector.hachK_posDef}
+  \leanok
+  \uses{def:CV_hach, lem:CV_weight}
+  For $\Phi \succ 0$ and every $Y_j$ of full column rank: $W_j \succ 0$, $M_jY_j = I$, so
+  $MD = I$ and $b = \beta + M\varepsilon$; if $\mathrm{Var}(X) = DLD^\top + \Phi$ then
+  $\mathrm{Var}(b) = M\,\mathrm{Var}(X)M^\top = K$; and $K \succ 0$ when $L \succeq 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_weight, lem:CV_blockDiag}
+  $E_i^\top\sum_k E_kX_k = X_i$. $M^\top$ has the left inverse $D^\top$, so it is injective
+  and $M\Phi M^\top \succ 0$.
+\end{proof}
+
+\begin{theorem}[Hachemeister with correlated cohorts]\label{thm:CV_hachemeister}
+  \lean{Credibility.CoreVector.hachemeister_bestZ}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_bestZ}
+  Under the conditions of Lemma~\ref{lem:CV_hach}, the best credibility matrix of the line
+  of cohort $j$ is matrix eq.\ (26) with $K = L + M\Phi M^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_bestZ}
+  Theorem~\ref{thm:CV_bestZ} with $K \succ 0$.
+\end{proof}
+
+\begin{theorem}[Classical Hachemeister]\label{thm:CV_hachemeister_blockDiag}
+  \lean{Credibility.CoreVector.hachM_noise_blockDiag,
+        Credibility.CoreVector.hachemeister_bestZ_of_blockDiag}
+  \leanok
+  \uses{lem:CV_hach, thm:CV_buhlmannGisler}
+  If the cohorts are independent ($\Phi$ and $L$ cohort block diagonal, $L_{jj} = A$) and
+  there is a second cohort, then $M\Phi M^\top$ is block diagonal with blocks $W_j^{-1}$ and
+  $Z_j^\ast = A(A + W_j^{-1})^{-1}$ (Hachemeister 1975; Bühlmann--Gisler 1997).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_hach, lem:CV_blockDiag, thm:CV_buhlmannGisler}
+  $E_i^\top M\Phi M^\top E_k = M_i\Phi_{ik}M_k^\top$, and
+  $M_j\Phi_{jj}M_j^\top = W_j^{-1}W_jW_j^{-1}$. Then
+  Theorem~\ref{thm:CV_buhlmannGisler} with $\Lambda = A$, $S_j = W_j^{-1}$.
+\end{proof}
+
+\section*{The best linear unbiased predictor and separate blends}
+
+A linear predictor $A^\top x$ of $\mu_j$ from the stacked estimates $x$ ($A$ of size
+$(J \times P) \times P$) is unbiased for any common mean iff $U^\top A = I$. Separate blends
+(one scalar blend per component, on that component's data alone, e.g.\ frequency and
+severity) are such predictors, and so is the matrix blend.
+
+\begin{definition}[Matrix linear predictors]\label{def:CV_blup}
+  \lean{Credibility.CoreVector.linMse, Credibility.CoreVector.blupW,
+        Credibility.CoreVector.blendW}
+  \leanok
+  \uses{def:CV_moments, def:Core_blup}
+  $\mathrm{mse}_j(A) = A^\top KA - A^\top LE_j - E_j^\top LA + E_j^\top LE_j$,
+  $A^\ast = K^{-1}LE_j + W(I - U^\top K^{-1}LE_j)$, and the blend's weights
+  $W + (E_j - W)Z^\top$.
+\end{definition}
+
+\begin{lemma}[Pythagoras for matrix predictors]\label{lem:CV_linMse_pythagoras}
+  \lean{Credibility.CoreVector.linMse_eq_add_of_mul}
+  \leanok
+  \uses{def:CV_blup}
+  Let $K$, $L$ be symmetric and $KE - LE_j = UC$. If $U^\top A = U^\top E$ then
+  $\mathrm{mse}_j(A) = \mathrm{mse}_j(E) + (A-E)^\top K(A-E)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $D = A - E$, $U^\top D = 0$, so the cross terms
+  $D^\top(KE - LE_j) = (U^\top D)^\top C$ and their transposes vanish.
+\end{proof}
+
+\begin{lemma}[The best predictor: first-order condition]\label{lem:CV_blup_foc}
+  \lean{Credibility.CoreVector.stack_transpose_mul_blupW, Credibility.CoreVector.mul_blupW}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$ then $U^\top A^\ast = I$ and
+  $KA^\ast - LE_j = U(U^\top K^{-1}U)^{-1}(I - U^\top K^{-1}LE_j)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW}
+  $U^\top W = I$ and $KW = U(U^\top K^{-1}U)^{-1}$.
+\end{proof}
+
+\begin{lemma}[Every premium is a scalar target]\label{lem:CV_blupW_eq_blup}
+  \lean{Credibility.CoreVector.linMse_transpose,
+        Credibility.CoreVector.dotProduct_linMse_mulVec,
+        Credibility.CoreVector.blupW_mulVec_eq_blup}
+  \leanok
+  \uses{def:CV_blup, def:Blup}
+  For $K$, $L$ symmetric, $\mathrm{mse}_j(A)$ is symmetric and
+  $a^T\mathrm{mse}_j(A)a$ is $\mathrm{mse}(Aa)$ of Definition~\ref{def:Blup} for the
+  target $a^T\mu_j$ ($\ell = LE_ja$, $v = (E_ja)^TL(E_ja)$). If $K \succ 0$ then
+  $A^\ast a$ is the $d^*$ of Definition~\ref{def:Blup} with $X = U$, $x_0 = a$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:CV_blup_foc, lem:CV_glsW}
+  Expand; Corollary~\ref{cor:Blup_eq_of_normal} with Lemma~\ref{lem:CV_blup_foc}
+  ($U$ has full column rank, Lemma~\ref{lem:CV_glsW}).
+\end{proof}
+
+\begin{theorem}[The matrix best linear unbiased predictor]\label{thm:CV_blup_optimal}
+  \lean{Credibility.CoreVector.linMse_eq_blupW_add, Credibility.CoreVector.blupW_optimal,
+        Credibility.CoreVector.blupW_optimal_dotProduct,
+        Credibility.CoreVector.blupW_optimal_trace}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$, $L$ is symmetric and $U^\top A = I$ then
+  $\mathrm{mse}_j(A) = \mathrm{mse}_j(A^\ast) + (A - A^\ast)^\top K(A - A^\ast)$: $A^\ast$ is
+  optimal in the Loewner order, so for every premium $a^\top\mu_j$ and for the trace.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_linMse_pythagoras, lem:CV_blup_foc, thm:Blup_optimal, lem:CV_blupW_eq_blup}
+  Lemma~\ref{lem:CV_linMse_pythagoras} with $E = A^\ast$ (Lemma~\ref{lem:CV_blup_foc}).
+  The Loewner order: for every $a$, Theorem~\ref{thm:Blup_optimal} with $X = U$,
+  $x_0 = a$ (Lemma~\ref{lem:CV_blupW_eq_blup}).
+\end{proof}
+
+\begin{lemma}[The matrix blend as a linear predictor]\label{lem:CV_blendW}
+  \lean{Credibility.CoreVector.stack_transpose_mul_blendW, Credibility.CoreVector.linMse_blendW}
+  \leanok
+  \uses{def:CV_blup, def:VBM}
+  If $K \succ 0$ and $L$ is symmetric, the blend's weights are unbiased and
+  $\mathrm{mse}_j(W + (E_j - W)Z^\top) = \mathrm{errVar}(Z)$ for the moments of
+  Definition~\ref{def:CV_moments}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_glsW, thm:CV_bestZ}
+  $E_j^\top KW = W^\top KE_j = W^\top KW = (U^\top K^{-1}U)^{-1}$, so the cross terms in $Z$
+  cancel; compare coefficients.
+\end{proof}
+
+\begin{theorem}[The price of the matrix blend]\label{thm:CV_blend_price}
+  \lean{Credibility.CoreVector.errVar_eq_blupW_add}
+  \leanok
+  \uses{def:CV_blup, def:VBM}
+  The matrix blend with credibility matrix $Z$ has error covariance
+  $\mathrm{mse}_j(A^\ast) + (A - A^\ast)^\top K(A - A^\ast)$, $A = W + (E_j - W)Z^\top$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blendW, thm:CV_blup_optimal}
+  Theorem~\ref{thm:CV_blup_optimal} with the blend's weights (Lemma~\ref{lem:CV_blendW}).
+\end{proof}
+
+\begin{definition}[Separate weights per component]\label{def:CV_sepW}
+  \lean{Credibility.CoreVector.component, Credibility.CoreVector.sepW}
+  \leanok
+  \uses{def:CV_blup}
+  $K^{(p)} = (K_{(i,p),(k,p)})_{ik}$, the covariance of the $p$-th components across
+  cohorts. Separate weights $a_p \in \mathbb{R}^J$ predict component $p$ by
+  $\sum_k a_{pk}\hmu_{kp}$.
+\end{definition}
+
+\begin{lemma}[Separate predictors]\label{lem:CV_sepW}
+  \lean{Credibility.CoreVector.component_posDef, Credibility.CoreVector.stack_transpose_mul_sepW,
+        Credibility.CoreVector.linMse_sepW_apply}
+  \leanok
+  \uses{def:CV_sepW, def:Core_blup}
+  $K \succ 0$ gives $K^{(p)} \succ 0$; separate weights with $\sum_k a_{pk} = 1$ are
+  unbiased; and if $L$ is symmetric the $(p,p)$ entry of their error covariance is the
+  scalar $\mathrm{mse}_j(a_p)$ for $K^{(p)}$, $L^{(p)}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Only the $p$-th components enter the $(p,p)$ entry.
+\end{proof}
+
+\begin{theorem}[Vector credibility beats separate credibility]\label{thm:CV_beats_separate}
+  \lean{Credibility.CoreVector.trace_linMse_blupW_le_separate}
+  \leanok
+  \uses{thm:CV_blup_optimal, lem:CV_sepW}
+  If $K \succ 0$ and $L$ is symmetric, the summed error variance of the matrix best linear
+  unbiased predictor is at most that of the separate scalar blends (each with the scalar
+  GLS $\hmu$ of its component and any factor $z_p$).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_blup_optimal, lem:CV_sepW, lem:Core_blendWeight}
+  The separate blends have weights $a_p = w(z_p)$ for $K^{(p)}$
+  (Lemma~\ref{lem:Core_blendWeight}); Theorem~\ref{thm:CV_blup_optimal} for the trace and
+  Lemma~\ref{lem:CV_sepW} for its diagonal.
+\end{proof}
+
+\begin{remark}[Finding 22: the matrix blend need not beat separate blends]\label{rem:CV_separate}
+  \uses{thm:CV_beats_separate, thm:CV_blend_price}
+  Separate blends use their own portfolio estimate per component, not the matrix GLS
+  $\hmu$, so they are not a matrix blend with diagonal $Z$, and the matrix blend can lose to
+  them. Three cohorts, $L = I \otimes \Lambda$, $\Lambda = \begin{psmallmatrix}2 & 1\\ 1 &
+  4\end{psmallmatrix}$, noise without frequency--severity covariance,
+  $N_F = \begin{psmallmatrix}5&2&1\\2&1&1\\1&1&5\end{psmallmatrix}$,
+  $N_Y = \begin{psmallmatrix}2&1&2\\1&1&1\\2&1&3\end{psmallmatrix}$, $K = L + N$, cohort 2:
+  summed MSE $1.9768$ for the matrix blend, $1.9726$ for the separate blends and $1.8172$ for
+  the best predictor. With independent cohorts (Bühlmann--Gisler) no such example was found.
+\end{remark}
+
+\section*{When the matrix blend is the best predictor}
+
+\begin{lemma}[Uniqueness of the best predictor]\label{lem:CV_blup_unique}
+  \lean{Credibility.CoreVector.eq_blupW_of_mul, Credibility.CoreVector.mul_blendW}
+  \leanok
+  \uses{def:CV_blup}
+  Let $K \succ 0$. Unbiased weights $A$ with $KA - LE_j = UC$ for some $C$ are $A^\ast$.
+  The blend's weights satisfy $K(W + (E_j - W)Z^\top) = U(I_K^{-1} - I_K^{-1}Z^\top) +
+  KE_jZ^\top$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_foc, lem:CV_glsW}
+  $K(A - A^\ast) = U(C - C^\ast)$, so $A - A^\ast = K^{-1}U(C - C^\ast)$ and
+  $0 = U^\top(A - A^\ast) = I_K(C - C^\ast)$; $I_K$ is invertible. For the blend,
+  $KW = UI_K^{-1}$.
+\end{proof}
+
+\begin{theorem}[When the matrix blend is the best predictor]\label{thm:CV_blend_blup_iff}
+  \lean{Credibility.CoreVector.blendW_eq_blupW_iff}
+  \leanok
+  \uses{def:CV_blup}
+  If $K \succ 0$, the matrix blend with credibility matrix $Z$ is the best linear unbiased
+  predictor iff $LE_j - KE_jZ^\top = UC$ for some $C$: the block
+  $\cov(\hmu_i, \mu_j) - \cov(\hmu_i, \hmu_j)Z^\top$ is the same for every cohort $i$
+  (matrix version of Theorem~\ref{thm:Core_blend_blup_iff}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_foc, lem:CV_blup_unique, lem:CV_blendW}
+  If the weights agree, subtract the blend's $KA$ from the first-order condition. Conversely
+  $KA - LE_j = U(I_K^{-1} - I_K^{-1}Z^\top - C)$ for the blend's unbiased weights $A$;
+  Lemma~\ref{lem:CV_blup_unique}.
+\end{proof}
+
+\begin{theorem}[Independent cohorts: the matrix blend is the best predictor]\label{thm:CV_blend_blup_blockDiag}
+  \lean{Credibility.CoreVector.mul_sel_of_blockDiag,
+        Credibility.CoreVector.blendW_eq_blupW_of_blockDiag,
+        Credibility.CoreVector.blendW_bestZ_eq_blupW_of_blockDiag}
+  \leanok
+  \uses{def:CV_blockDiag, def:CV_blup}
+  If $K \succ 0$ and $L = L^\top$ are cohort block diagonal, the matrix blend with
+  $Z_j = L_{jj}K_{jj}^{-1}$ is the best linear unbiased predictor; with a second cohort this
+  is the best credibility matrix (Theorem~\ref{thm:CV_bestZ_blockDiag}). So in the
+  multidimensional Bühlmann--Straub model nothing is lost by blending, unlike
+  Remark~\ref{rem:CV_separate}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blockDiag, thm:CV_blend_blup_iff, thm:CV_bestZ_blockDiag}
+  $ME_j = E_jM_{jj}$ for block-diagonal $M$, so
+  $LE_j - KE_jZ_j^\top = E_j(L_{jj} - K_{jj}K_{jj}^{-1}L_{jj}) = 0$;
+  Theorem~\ref{thm:CV_blend_blup_iff} with $C = 0$.
+\end{proof}
+
+\begin{theorem}[No cross-component covariance: separate best predictors]\label{thm:CV_blup_separate}
+  \lean{Credibility.CoreVector.IsComponentBlockDiag,
+        Credibility.CoreVector.blupW_eq_sepW_of_componentBlockDiag}
+  \leanok
+  \uses{def:CV_sepW, def:Core_blup}
+  If $K \succ 0$ and $L = L^\top$ have no covariance between different components
+  ($M_{(i,p),(k,q)} = 0$ for $p \ne q$), the matrix best linear unbiased predictor predicts
+  each component $p$ by the scalar best predictor $d^\ast$ for $K^{(p)}$, $L^{(p)}$: the
+  other components carry no information.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_unique, lem:CV_sepW, lem:Core_blup_foc}
+  The separate weights are unbiased, and $KA - LE_j = U\operatorname{diag}(c_p)$ with $c_p$
+  the constant of the scalar first-order condition of component $p$;
+  Lemma~\ref{lem:CV_blup_unique}.
+\end{proof}
+
+\section*{Balance (\S2.9) for the matrix blend}
+
+\begin{definition}[Balanced matrix blends]\label{def:CV_balanced}
+  \lean{Credibility.CoreVector.VecBalanced}
+  \leanok
+  The blends $\hmu_j^b = \hmu + Z_j(\hmu_j - \hmu)$, $\hmu = \sum_i B_i\hmu_i$, are
+  \emph{balanced} for the matrix weights $U_j$ if
+  $\sum_j U_j(\hmu_j - \hmu_j^b) = 0$ for all data $\hmu_j \in \mathbb{R}^P$.
+\end{definition}
+
+\begin{theorem}[Balance of any matrix blend]\label{thm:CV_balance}
+  \lean{Credibility.CoreVector.vecBalanced_iff}
+  \leanok
+  \uses{def:CV_balanced}
+  Let $\sum_j B_j = I$. The blends are balanced for the weights $U_j$ iff
+  $U_j(I - Z_j) = CB_j$ for some matrix $C$ (matrix version of
+  Theorem~\ref{thm:Core_balance}).
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $A_j = U_j(I - Z_j)$,
+  $\sum_j U_j(\hmu_j - \hmu_j^b) = \sum_j (A_j - (\sum_i A_i)B_j)\hmu_j$, zero for all data
+  iff every coefficient is (data $e_q$ in one cohort). Conversely $A_j = CB_j$ gives
+  $\sum_i A_i = C$.
+\end{proof}
+
+\begin{theorem}[Bühlmann--Gisler balance]\label{thm:CV_balance_noise}
+  \lean{Credibility.CoreVector.vecBalanced_of_mul_noise}
+  \leanok
+  \uses{thm:CV_balance, thm:CV_buhlmannGisler}
+  Independent cohorts with $K_{jj} = \Lambda + S_j$, the credibility matrices
+  $Z_j = \Lambda(\Lambda + S_j)^{-1}$ of Theorem~\ref{thm:CV_buhlmannGisler} and the GLS
+  portfolio are balanced for any weights with $U_jS_j = S_0$ the same for every cohort.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_balance, lem:CV_weight, lem:CV_blockDiag, lem:CV_glsW}
+  $U_j(I - Z_j) = U_jS_jK_{jj}^{-1} = S_0K_{jj}^{-1} = CB_j$ with
+  $C = S_0\sum_i K_{ii}^{-1}$.
+\end{proof}
+
+\begin{corollary}[Balance for the volumes]\label{cor:CV_balance_buhlmannGisler}
+  \lean{Credibility.CoreVector.vecBalanced_buhlmannGisler,
+        Credibility.CoreVector.vecBalanced_buhlmannGisler_diag}
+  \leanok
+  \uses{thm:CV_balance_noise}
+  With $S_j = S_0/w_j$ (Bühlmann--Gisler 2005, (7.31)) the blends are balanced for the
+  volumes, $\sum_j w_j(\hmu_j - \hmu_j^b) = 0$; with $S_j = \operatorname{diag}(\sigma_p^2/w_{jp})$
+  (their standard assumption (7.30)) they are balanced componentwise,
+  $\sum_j w_{jp}(\hmu_{jp} - \hmu_{jp}^b) = 0$. This is their Theorem 7.10.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_balance_noise}
+  $U_j = w_jI$, resp.\ $\operatorname{diag}(w_j)$, gives $U_jS_j = S_0$, resp.\
+  $\operatorname{diag}(\sigma^2)$.
+\end{proof}
+
+\section*{The moment layer: real random vectors}
+% Lean: Credibility/CoreVectorMoments.lean
+
+\begin{lemma}[Errors of two linear predictors]\label{lem:CV_moments_lin}
+  \lean{Credibility.Core.Estimates.transpose_L,
+        Credibility.Core.Estimates.cov_portLin_sub_level}
+  \leanok
+  \uses{def:Core_Estimates}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates}, $L$ is symmetric and
+  $\cov(\sum_x d_x\hmu_x - \mu_i, \sum_x d'_x\hmu_x - \mu_k)
+  = d^\top Kd' - (Ld)_k - (Ld')_i + L_{ik}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin}
+  Bilinearity, with Lemma~\ref{lem:Core_moments_lin} for each term.
+\end{proof}
+
+\begin{definition}[Vector estimates and levels]\label{def:CV_Estimates}
+  \lean{Credibility.CoreVector.VecEstimates, Credibility.CoreVector.VecEstimates.vec,
+        Credibility.CoreVector.VecEstimates.err, Credibility.CoreVector.VecEstimates.mse,
+        Credibility.CoreVector.VecEstimates.portEst, Credibility.CoreVector.VecEstimates.blend}
+  \leanok
+  \uses{def:Core_Estimates, def:CV_blup}
+  On a probability space: square-integrable $\hmu_{jp}$ and $\mu_{jp}$, $(j,p) \in J \times P$,
+  with $\mathbb E\hmu_{jp} = \mathbb E\mu_{jp} = m_p$, $\cov(\hmu_x, \hmu_y) = K_{xy}$ and
+  $\cov(\mu_x, \hmu_y) = \cov(\mu_x, \mu_y) = L_{xy}$. No distribution is assumed. The matrix
+  MSE of a random vector $Y$ predicting $\mu_j$ is $\mathbb E[(Y - \mu_j)(Y - \mu_j)^\top]$;
+  the portfolio estimate is $\hmu = W^\top x$ and the blend $\hmu + Z(\hmu_j - \hmu)$.
+\end{definition}
+
+\begin{lemma}[Centring, and the blend as a linear predictor]\label{lem:CV_centred}
+  \lean{Credibility.CoreVector.VecEstimates.centred,
+        Credibility.CoreVector.VecEstimates.sum_mul_mean,
+        Credibility.CoreVector.VecEstimates.err_eq,
+        Credibility.CoreVector.mul_sel_apply,
+        Credibility.CoreVector.sel_transpose_mul_apply,
+        Credibility.CoreVector.sel_transpose_mulVec,
+        Credibility.CoreVector.VecEstimates.blend_eq}
+  \leanok
+  \uses{def:CV_Estimates}
+  $\hmu_{jp} - m_p$ and $\mu_{jp} - m_p$ are estimates and levels over $J \times P$ as in
+  Definition~\ref{def:Core_Estimates}, with mean $0$ and the same $K$, $L$. If $U^\top A = I$
+  then $\sum_x A_{xp}m_{x_2} = m_p$, so the error of $A^\top x$ is that of the centred
+  variables. The blend is $(W + (E_j - W)Z^\top)^\top x$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates, def:CV_blup}
+  Subtracting constants keeps covariances; $(U^\top A)_{qp} = \sum_j A_{(j,q),p}$.
+\end{proof}
+
+\begin{theorem}[$\mathrm{mse}_j(A)$ is the true error covariance]\label{thm:CV_mse_linear}
+  \lean{Credibility.CoreVector.VecEstimates.integral_err,
+        Credibility.CoreVector.VecEstimates.mse_linear}
+  \leanok
+  \uses{def:CV_Estimates, def:CV_blup}
+  If $U^\top A = I$, the error $A^\top x - \mu_j$ has mean $0$ and
+  $\mathbb E[(A^\top x - \mu_j)(A^\top x - \mu_j)^\top] = \mathrm{mse}_j(A)$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_centred, lem:CV_moments_lin, lem:Core_moments_lin}
+  The $(p,r)$ entry is the covariance of two centred linear predictors
+  (Lemmas~\ref{lem:CV_centred} and~\ref{lem:CV_moments_lin}), with $L$ symmetric.
+\end{proof}
+
+\begin{theorem}[The matrix blend and the best predictor in true MSE]\label{thm:CV_mse_blend}
+  \lean{Credibility.CoreVector.VecEstimates.mse_blend,
+        Credibility.CoreVector.VecEstimates.blup_mse_optimal,
+        Credibility.CoreVector.VecEstimates.mse_blend_eq_blup_add,
+        Credibility.CoreVector.VecEstimates.bestZ_mse_optimal}
+  \leanok
+  \uses{def:CV_Estimates, def:CV_moments}
+  If $K \succ 0$: the blend's true error covariance is $\mathrm{errVar}(Z)$ for the moments of
+  Definition~\ref{def:CV_moments}; the best linear unbiased predictor minimises the true error
+  covariance in the Loewner order; the blend loses exactly $(A - A^\ast)^\top K(A - A^\ast)$
+  against it; and if $\Var(\hmu_j - \hmu) \succ 0$ the matrix $Z_j^\ast$ of
+  Theorem~\ref{thm:CV_bestZ} minimises the blend's true error covariance in the Loewner order.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:CV_mse_linear, lem:CV_centred, lem:CV_blendW, lem:CV_blup_foc,
+        thm:CV_blup_optimal, thm:CV_blend_price, thm:VBM_optimal}
+  Theorem~\ref{thm:CV_mse_linear} for the weights of the blend (Lemma~\ref{lem:CV_centred})
+  and of $A^\ast$; then Lemma~\ref{lem:CV_blendW}, Theorems~\ref{thm:CV_blup_optimal},
+  \ref{thm:CV_blend_price} and~\ref{thm:VBM_optimal}.
+\end{proof}
+
+\begin{theorem}[The bias of a product of predictions]\label{thm:CV_prod_bias}
+  \lean{Credibility.CoreVector.VecEstimates.integral_mul_pred_sub}
+  \leanok
+  \uses{def:CV_Estimates}
+  For unbiased weights $A$ ($U^\top A = I$) and components $p$, $r$,
+  $\mathbb E[(A^\top x)_p(A^\top x)_r] - \mathbb E[\mu_{jp}\mu_{jr}]
+    = (A^\top KA)_{pr} - L_{(j,p),(j,r)}$, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_centred, lem:Core_moments_lin}
+  $\mathbb E[XY] = \mathbb EX\,\mathbb EY + \cov(X, Y)$; both predictions have the means of the
+  levels (Lemma~\ref{lem:CV_centred}), and their covariance is $(A^\top KA)_{pr}$
+  (Lemma~\ref{lem:Core_moments_lin}).
+\end{proof}
+
+\section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
+
+\begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}
+  \lean{Credibility.CoreVector.posDef_of_componentBlockDiag}
+  \leanok
+  \uses{lem:CV_sepW, thm:CV_blup_separate}
+  A matrix over $J \times P$ with no covariance between components and positive definite
+  component blocks is positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The quadratic form is the sum of the component forms.
+\end{proof}
+
+\begin{definition}[Frequency $\times$ severity]\label{def:FreqSev}
+  \lean{Credibility.FreqSev, Credibility.FreqSev.lev, Credibility.FreqSev.tab,
+        Credibility.FreqSev.K, Credibility.FreqSev.L, Credibility.FreqSev.Separate,
+        Credibility.FreqSev.wMat}
+  \leanok
+  \uses{def:Factor, def:CV_moments}
+  Each component $p \in P = \{F, Y\}$ has its own table of Definition~\ref{def:Factor}
+  (frequency: volumes are cards; severity: volumes are claim counts), with its own loadings,
+  $\Gamma$, shock, process noise and $\tau_p^2$. Across components, cells have a level covariance
+  $\delta_{ik}T_{pq}$ and any further covariance. Cohort estimates
+  $\hmu_{jp} = \sum_t\alpha_{pjt}X_{jpt}$ give the joint $K$ over cohorts $\times P$, the level
+  vectors the joint $L = (\delta_{ik}T_{pq})$, $T_{pp} = \tau_p^2$. \emph{Separate}: no
+  covariance between components.
+\end{definition}
+
+\begin{theorem}[Joint $=$ separate for frequency and severity]\label{thm:FreqSev_separate}
+  \lean{Credibility.FreqSev.component_K, Credibility.FreqSev.component_K_posDef,
+        Credibility.FreqSev.isComponentBlockDiag_K, Credibility.FreqSev.isComponentBlockDiag_L,
+        Credibility.FreqSev.L_transpose, Credibility.FreqSev.component_L,
+        Credibility.FreqSev.K_posDef_of_separate, Credibility.FreqSev.blupW_eq_separate}
+  \leanok
+  \uses{def:FreqSev}
+  Each component's block of $K$ is the covariance of its estimates under its own table, and is
+  $\succ 0$ for weights summing to one; component $p$ of $L$ is $\tau_p^2 I$. If separate, the
+  joint $K \succ 0$ and the best linear unbiased predictor of $(\mu_{jF}, \mu_{jY})$ predicts
+  each component by the scalar best predictor of its own table alone.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Factor_K, lem:CV_posDef_blockDiag, thm:CV_blup_separate}
+  The block is $A_p^\top K_p A_p$ with $K_p \succ 0$ (Theorem~\ref{thm:Factor_K}) and $A_p$
+  injective; Lemma~\ref{lem:CV_posDef_blockDiag}; Theorem~\ref{thm:CV_blup_separate}.
+\end{proof}
+
+\begin{theorem}[Joint $=$ separate without block diagonality]\label{thm:CV_blupW_kronecker}
+  \lean{Credibility.CoreVector.blupW_kronecker}
+  \leanok
+  \uses{lem:CV_sepW}
+  If $K = K_c \otimes S \succ 0$ and $L = L_c \otimes S$ with $K_c \succ 0$, $L_c$ symmetric, the
+  best predictor uses for every component the scalar weights of $(K_c, L_c)$, whatever $S$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:CV_blup_unique}
+  The first-order condition of Lemma~\ref{lem:CV_blup_unique} with $C = cS$.
+\end{proof}
+
+\begin{remark}[Finding 32]
+  Expected: separate equals joint \emph{iff} there is no cross-component covariance. Only the
+  ``if'' holds. With the same cohort structure in both components (Kronecker $K$ and $L$, as
+  in Zellner's seemingly unrelated regressions with identical regressors) the cross-component
+  covariance $S$ carries no information. So ``do the residuals cross-correlate?'' is a
+  sufficient check, not a necessary one; with unequal volume patterns (cards against claim
+  counts) the Kronecker structure is unlikely, and the check is the practical one.
+\end{remark}
+
+\begin{corollary}[The pure premium of separate predictions]\label{cor:FreqSev_prod}
+  \lean{Credibility.CoreVector.sepW_transpose_mul_mul_sepW_of_ne,
+        Credibility.FreqSev.prodBias_sepW_eq_zero}
+  \leanok
+  \uses{def:FreqSev, thm:CV_prod_bias}
+  Separate weights give uncorrelated predictions of two components when $K$ has no
+  cross-component covariance. So, if separate, the product of the frequency and severity
+  predictions has bias $0$ in Theorem~\ref{thm:CV_prod_bias}; otherwise its bias is
+  $\sum_{ik} a_{Fi}a_{Yk}K_{(i,F),(k,Y)} - T_{FY}$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:FreqSev_separate}
+  The off-diagonal blocks vanish (Theorem~\ref{thm:FreqSev_separate}), and so does $T_{FY}$.
+\end{proof}
+
+\begin{remark}[Finding 33]
+  Expected: the bias of the product $\hat\varphi\hat\psi$ needs the delta method, an
+  approximation. It does not: the bias is exactly a difference of covariances
+  (Theorem~\ref{thm:CV_prod_bias}). What the second moments do not determine is the mean
+  squared error of the product, which needs third and fourth moments.
+\end{remark}

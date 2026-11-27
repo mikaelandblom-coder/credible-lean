@@ -1,0 +1,1869 @@
+\chapter{Extension: the moment layer}\label{ch:moments}
+% Not in the thesis. Lean: Credibility/Moments.lean
+
+Elsewhere the second moments are given numbers and the covariances
+\eqth{16}, \eqth{21} are \emph{defined} from them. Here they become
+theorems about random variables. Nothing is assumed about the distribution:
+every result holds on any probability space, for any random variables with
+the moments of \eqth{15}. This makes the thesis's ``only the first two
+moments matter'' a checked statement.
+
+\begin{definition}[Moment assumptions]\label{def:Noise}
+  \lean{Credibility.Model.Noise, Credibility.Model.Noise.trueMean,
+        Credibility.Model.Noise.obs, Credibility.Model.Noise.cohortEst,
+        Credibility.Model.Noise.portEst, Credibility.Model.Noise.blend}
+  \leanok
+  \uses{def:Model, def:K, def:Model.b}
+  On a probability space, square-integrable random variables $\eta_j$
+  (cohort effects) and $\varepsilon_{jt}$ (sampling noise) with
+  $\mathbb E\eta_j = \mathbb E\varepsilon_{jt} = 0$,
+  $\cov(\eta_i,\eta_j) = \delta_{ij}$, $\cov(\eta_i,\varepsilon_{jt}) = 0$ and
+  $\cov(\varepsilon_{it},\varepsilon_{js}) = \rho_{ij}\delta_{ts}$. They define
+  $\mu_j = \mu + \tau\eta_j$, $\mu_{jt} = \mu_j + \sigma_{jt}\varepsilon_{jt}$,
+  $\hmu_j = \sum_t a_{jt}\mu_{jt}$, $\hmu = \sum_j b_j\hmu_j$ and the blend
+  $z\hmu_j + (1-z)\hmu$.
+\end{definition}
+
+\begin{lemma}[Full series]\label{lem:moments_full}
+  \lean{Credibility.Model.sqrt_τ2_mul, Credibility.Model.Noise.toUnequal,
+        Credibility.Model.Noise.ofUnequal, Credibility.Model.Noise.toUnequal_trueMean,
+        Credibility.Model.Noise.toUnequal_obsVal, Credibility.Model.Noise.toUnequal_cohortLin,
+        Credibility.Model.Noise.toUnequal_cohortEst, Credibility.Model.Noise.toUnequal_portLin,
+        Credibility.Model.Noise.toUnequal_portEst, Credibility.Model.Noise.toUnequal_blend,
+        Credibility.Model.gram_eq_unequal, Credibility.Model.Noise.memLp_trueMean,
+        Credibility.Model.Noise.memLp_obs, Credibility.Model.Noise.toEstimates}
+  \leanok
+  \uses{def:Noise, def:U_Noise, lem:U_full, def:Core_Estimates, lem:U_moments_lin}
+  For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
+  are exactly those of Definition~\ref{def:U_Noise} with $T_j = T$, and they
+  define the same $\mu_j$, $\mu_{jt}$, $\hmu_j$, $\hmu$ and blend. So every
+  result of this chapter is the case $T_j = T$ of the next one. In
+  particular $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
+  Definition~\ref{def:Core_Estimates} with $K$ and $L = \tau^2 I$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Unfold; $a$ and $b$ agree by Lemma~\ref{lem:U_full}.
+\end{proof}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:cov_obs}
+  \lean{Credibility.Model.Noise.obs_mean, Credibility.Model.Noise.cov_obs,
+        Credibility.Model.Noise.cov_cohortEst}
+  \leanok
+  \uses{def:Noise, def:obsCov, def:K}
+  $\mathbb E\mu_{jt} = \mu$, $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$
+  \eqth{16} and $\cov(\hmu_i,\hmu_j) = K_{ij}$ \eqth{21}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_cov_obs, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_cov_obs} ($K = 0$ if
+  $T = \emptyset$). The idea: bilinearity of covariance.
+\end{proof}
+
+\begin{theorem}[The expectation of §2.8 is the actual one]\label{thm:integral_quad}
+  \lean{Credibility.Model.Noise.integral_quad}
+  \leanok
+  \uses{def:Noise, def:unbiased}
+  For any quadratic form,
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$.
+  So ``unbiased'' in Chapter~\ref{ch:estimation} means unbiased for any random
+  variables with the moments of \eqth{15}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_integral_quad, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_integral_quad}: every cell is
+  observed. The idea: $\mathbb E[\mu_p\mu_q] = \cov(\mu_p,\mu_q) + \mathbb E\mu_p\,\mathbb E\mu_q
+  = \bar K_{pq} + \mu^2$.
+\end{proof}
+
+\begin{theorem}[Optimal weights in true variance]\label{thm:weights_true}
+  \lean{Credibility.Model.Noise.var_cohortLin_err,
+        Credibility.Model.Noise.cohortEst_optimal,
+        Credibility.Model.Noise.portEst_optimal}
+  \leanok
+  \uses{def:Noise, def:moments}
+  For weights with $\sum_t c_t = 1$,
+  $\Var(\sum_t c_t\mu_{jt} - \mu_j) = \sum_t c_t^2\sigma_{jt}^2$, so $\hmu_j$
+  has the smallest error variance among unbiased linear cohort estimates.
+  If $K \succ 0$, $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$ whenever
+  $\sum_j d_j = 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_weights_true, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_weights_true}: bilinearity, then
+  the optimality of inverse-variance and GLS weights.
+\end{proof}
+
+\begin{theorem}[The blend moments are the actual ones]\label{thm:moments_eq}
+  \lean{Credibility.Model.Noise.moments_eq, Credibility.Model.Noise.mse_blend}
+  \leanok
+  \uses{def:Noise, def:moments}
+  If $K \succ 0$, each field of Definition~\ref{def:moments} is the moment it
+  names, the blend is unbiased, and
+  $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ is the error variance
+  \eqth{6}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_bestZ_mse, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_mse}: bilinearity; the mean
+  squared error is variance plus squared bias, and the bias vanishes since
+  $\sum_t a_{jt} = \sum_j b_j = 1$.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true mean squared error]\label{thm:bestZ_mse}
+  \lean{Credibility.Model.Noise.bestZ_mse_optimal}
+  \leanok
+  \uses{def:Noise, def:moments}
+  If $K \succ 0$ and $\Var(\hmu_j - \hmu) > 0$, the credibility factor
+  \eqth{7} minimises $\mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]$ over $z$,
+  for every distribution with the moments of \eqth{15}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_bestZ_mse, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_bestZ_mse}; directly,
+  Theorems~\ref{thm:moments_eq} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{lemma}[The joint covariance table]\label{lem:gram_psd}
+  \lean{Credibility.Model.gram_posSemidef}
+  \leanok
+  \uses{def:Noise}
+  If $\rho \succeq 0$, the covariance table $G$ of $(\eta_j)_j$ and
+  $(\varepsilon_{jt})_{jt}$ demanded by Definition~\ref{def:Noise}
+  (identity on the $\eta$ block, $\rho_{ij}\delta_{ts}$ on the $\varepsilon$
+  block, zero across) is positive semidefinite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:U_gram_psd, lem:moments_full}
+  The case $T_j = T$ of Lemma~\ref{lem:U_gram_psd} (for $T = \emptyset$,
+  $G$ is the identity): $x^TGx = \sum_j x_j^2 + \sum_t y_t^T\rho\,y_t$ with
+  $(y_t)_j = x_{jt}$.
+\end{proof}
+
+\begin{theorem}[The assumptions are consistent iff $\rho \succeq 0$]\label{thm:exists_noise}
+  \lean{Credibility.Model.exists_noise_iff}
+  \leanok
+  \uses{def:Noise, lem:gram_psd}
+  For $T \neq \emptyset$, random variables as in Definition~\ref{def:Noise}
+  exist on some probability space if and only if $\rho$ is positive
+  semidefinite.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_exists_noise, lem:moments_full}
+  The case $T_j = T$ of Theorem~\ref{thm:U_exists_noise}: every block is
+  $\rho$. Directly: necessity, $x^T\rho x = \Var(\sum_j x_j\varepsilon_{jt}) \ge 0$.
+  Sufficiency: by Lemma~\ref{lem:gram_psd} there is a Gaussian vector with
+  covariance $G$ (Mathlib's \texttt{multivariateGaussian}); its coordinates
+  are the $\eta_j$ and $\varepsilon_{jt}$. The Gaussian is only a witness
+  that the assumptions are consistent; no result above uses it.
+\end{proof}
+
+\begin{remark}[Finding 11: $\rho \succeq 0$ is no extra assumption]\label{rem:moments_psd}
+  \uses{thm:exists_noise, rem:posdef}
+  Finding~1 needs $\rho \succeq 0$ for $K \succ 0$. By
+  Theorem~\ref{thm:exists_noise} this is not an extra assumption: it holds
+  whenever the model's random variables exist at all.
+\end{remark}
+
+\section{Unequal lengths}
+% Lean: Credibility/UnequalMoments.lean
+
+The same layer for Chapter~\ref{ch:unequal}: random variables are assumed
+only on observed cells $(j,t)$, $t \in T_j$.
+
+\begin{definition}[Moment assumptions on observed cells]\label{def:U_Noise}
+  \lean{Credibility.Unequal.Noise, Credibility.Unequal.Noise.trueMean,
+        Credibility.Unequal.Noise.obsVal, Credibility.Unequal.Noise.cohortLin,
+        Credibility.Unequal.Noise.cohortEst, Credibility.Unequal.Noise.portLin,
+        Credibility.Unequal.Noise.portEst, Credibility.Unequal.Noise.blend}
+  \leanok
+  \uses{def:Noise, def:Unequal, thm:U_bestZ_eq}
+  As Definition~\ref{def:Noise}, but $\varepsilon_{jt}$ is only constrained
+  for $t \in T_j$: $\mathbb E\varepsilon_{jt} = 0$, $\cov(\eta_i,\varepsilon_{jt}) = 0$
+  and $\cov(\varepsilon_{it},\varepsilon_{js}) = \rho_{ij}\delta_{ts}$ for
+  $t \in T_i$, $s \in T_j$. So $\rho_{ij}$ enters only on shared periods.
+  Now $\hmu_j = \sum_{t\in T_j} a_{jt}\mu_{jt}$ and $\hmu = \sum_j b_j\hmu_j$
+  with the $a$, $b$ of Chapter~\ref{ch:unequal}.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions]\label{lem:U_moments_lin}
+  \lean{Credibility.Unequal.Noise.trueMean_def,
+        Credibility.Unequal.Noise.obsVal_def, Credibility.Unequal.Noise.memLp_trueMean,
+        Credibility.Unequal.Noise.memLp_obsVal, Credibility.Unequal.Noise.integral_trueMean,
+        Credibility.Unequal.Noise.cov_η_trueMean, Credibility.Unequal.Noise.cov_ε_trueMean,
+        Credibility.Unequal.Noise.cov_trueMean, Credibility.Unequal.Noise.cov_obsVal_trueMean,
+        Credibility.Unequal.Noise.memLp_cohortLin,
+        Credibility.Unequal.Noise.integral_cohortLin, Credibility.Unequal.Noise.cov_cohortLin,
+        Credibility.Unequal.Noise.cov_cohortLin_trueMean,
+        Credibility.Unequal.Noise.cov_cohortLin_self,
+        Credibility.Unequal.Noise.memLp_cohortEst, Credibility.Unequal.Noise.memLp_portLin,
+        Credibility.Unequal.Noise.cov_portLin, Credibility.Unequal.Noise.cov_cohortEst_portLin,
+        Credibility.Unequal.Noise.cov_portLin_trueMean,
+        Credibility.Unequal.Noise.integral_portLin,
+        Credibility.Unequal.Noise.integral_cohortEst, Credibility.Unequal.Noise.toEstimates,
+        Credibility.Unequal.Noise.moments_eq_levelMoments}
+  \leanok
+  \uses{def:U_Noise, lem:U_sum_a, def:Core_Estimates}
+  For $t \in T_i$: $\cov(\mu_{it},\mu_j) = \cov(\mu_i,\mu_j) = \tau^2\delta_{ij}$;
+  for any weights $\cov(\sum_{t\in T_i} c_t\mu_{it}, \sum_{s\in T_j} c'_s\mu_{js})
+  = \sum_{t\in T_i,s\in T_j} c_tc'_s\bar K_{ij}^{ts}$ and
+  $\cov(\sum_{t\in T_i} c_t\mu_{it}, \mu_j) = (\sum_t c_t)\tau^2\delta_{ij}$;
+  for portfolio weights $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
+  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$,
+  $\cov(\sum_i d_i\hmu_i, \mu_j) = d_j\tau^2$ and
+  $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$. All variables are square
+  integrable. No $T \neq \emptyset$ is needed since $T_j \neq \emptyset$.
+  So $(\hmu_j)$, $(\mu_j)$ are estimates and levels in the sense of
+  Definition~\ref{def:Core_Estimates} with this $K$ and $L = \tau^2 I$, and
+  the blend moments of Theorem~\ref{thm:U_bestZ_eq} are those of
+  Definition~\ref{def:Core.levelMoments} with $d = K_{jj}$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin}
+  Bilinearity of covariance and linearity of expectation within a cohort;
+  the portfolio statements are Lemma~\ref{lem:Core_moments_lin}.
+\end{proof}
+
+\begin{theorem}[The covariances are the actual ones]\label{thm:U_cov_obs}
+  \lean{Credibility.Unequal.Noise.obsVal_mean, Credibility.Unequal.Noise.cov_obsVal,
+        Credibility.Unequal.Noise.cov_cohortEst}
+  \leanok
+  \uses{lem:U_moments_lin, def:obsCov, def:Unequal}
+  For $t \in T_i$, $s \in T_j$: $\mathbb E\mu_{jt} = \mu$,
+  $\cov(\mu_{it},\mu_{js}) = \bar K_{ij}^{ts}$, and
+  $\cov(\hmu_i,\hmu_j) = K_{ij}$ with the $K$ of Definition~\ref{def:Unequal}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance.
+\end{proof}
+
+\begin{theorem}[The expectation of §2.8 is the actual one]\label{thm:U_integral_quad}
+  \lean{Credibility.Unequal.Noise.integral_quad}
+  \leanok
+  \uses{def:U_Noise, def:unbiased}
+  For a quadratic form reading only observed cells ($Q_{pq} \ne 0$ only if
+  $p = (i,t)$ with $t \in T_i$ and $q = (j,s)$ with $s \in T_j$),
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}\mu_p\mu_q\bigr] = \sum_{p,q} Q_{pq}(\bar K_{pq} + \mu^2)$,
+  whatever the unobserved cells hold. So ``unbiased'' in
+  Chapter~\ref{ch:unequal} means unbiased for any random variables with the
+  moments of \eqth{15} on the observed cells.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:U_cov_obs, thm:integral_quad_cov}
+  Theorem~\ref{thm:integral_quad_cov} with $S$ the observed cells, whose
+  moments are Theorem~\ref{thm:U_cov_obs}.
+\end{proof}
+
+\begin{theorem}[Optimal weights in true variance]\label{thm:U_weights_true}
+  \lean{Credibility.Unequal.Noise.var_cohortLin_err,
+        Credibility.Unequal.Noise.cohortEst_optimal, Credibility.Unequal.Noise.portEst_optimal}
+  \leanok
+  \uses{thm:U_cov_obs, thm:U_a_optimal, thm:glsWeight_value, thm:glsWeight_optimal}
+  If $\sum_{t\in T_j} c_t = 1$, then
+  $\Var(\sum_{t\in T_j} c_t\mu_{jt} - \mu_j) = \sum_{t\in T_j} c_t^2\sigma_{jt}^2$,
+  minimised by $a_j$. If $K \succ 0$,
+  $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$ whenever $\sum_j d_j = 1$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_weights_true}
+  Bilinearity and Theorem~\ref{thm:U_a_optimal} within a cohort; the
+  portfolio part is Theorem~\ref{thm:Core_weights_true}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE with unequal lengths]\label{thm:U_bestZ_mse}
+  \lean{Credibility.Unequal.Noise.moments_eq, Credibility.Unequal.Noise.mse_blend,
+        Credibility.Unequal.Noise.bestZ_mse_optimal}
+  \leanok
+  \uses{thm:U_cov_obs, thm:U_bestZ_eq, lem:U_K_apply, thm:bestZ_optimal}
+  If $K \succ 0$, each field of the blend moments of
+  Theorem~\ref{thm:U_bestZ_eq} is the moment it names, the blend is unbiased,
+  its mean squared error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the
+  factor $z_j$ of Theorem~\ref{thm:U_bestZ_eq} minimises it over $z$, for
+  every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:U_moments_lin, thm:Core_bestZ_mse, thm:bestZ_optimal}
+  Theorem~\ref{thm:Core_bestZ_mse} for the estimates and levels of
+  Lemma~\ref{lem:U_moments_lin} ($L = \tau^2 I$): nothing here is specific to
+  unequal lengths beyond $K$ itself.
+\end{proof}
+
+\begin{lemma}[A witness covariance table]\label{lem:U_gram_psd}
+  \lean{Credibility.Unequal.corrAt, Credibility.Unequal.gram,
+        Credibility.Unequal.corrAt_quad_nonneg, Credibility.Unequal.gram_posSemidef}
+  \leanok
+  \uses{def:U_Noise, def:U_errCov}
+  Let $C^t_{ij} = \rho_{ij}$ if $t \in T_i \cap T_j$ and $\delta_{ij}$
+  otherwise (unit noise, uncorrelated, on unobserved cells). If every block
+  $R_t = (\rho_{ij})_{i,j \in J_t}$, $J_t = \{j : t \in T_j\}$, is positive
+  semidefinite, so is the table $G$ with identity on the $\eta$ block,
+  $C^t_{ij}\delta_{ts}$ on the $\varepsilon$ block, zero across.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $v^TC^tv = w^TR_tw + \sum_{j\notin J_t} v_j^2$ with $w = v|_{J_t}$, and
+  $x^TGx = \sum_j x_j^2 + \sum_t v_t^TC^tv_t$ with $(v_t)_j = x_{jt}$.
+\end{proof}
+
+\begin{theorem}[Consistent iff every block is PSD]\label{thm:U_exists_noise}
+  \lean{Credibility.Unequal.exists_noise_iff}
+  \leanok
+  \uses{def:U_Noise, lem:U_gram_psd}
+  Random variables as in Definition~\ref{def:U_Noise} exist on some
+  probability space iff every block $R_t$ is positive semidefinite.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Necessity: $x^TR_tx = \Var(\sum_{j\in J_t} x_j\varepsilon_{jt}) \ge 0$.
+  Sufficiency: a Gaussian vector with covariance $G$
+  (Lemma~\ref{lem:U_gram_psd}), only as a witness.
+\end{proof}
+
+\begin{remark}[Finding 12: the block condition is exactly consistency]\label{rem:U_moments_psd}
+  \uses{thm:U_exists_noise, rem:unequal_posdef, rem:moments_psd}
+  The hypothesis of Theorem~\ref{thm:U_K_posDef} (Finding~8) is not an extra
+  assumption either: it holds whenever the model with unequal lengths is
+  consistent at all. Then $K \succ 0$ and Theorem~\ref{thm:U_bestZ_mse}
+  applies. In particular, correlations of cohorts that never share a period
+  are not even constrained by consistency: the example of
+  Remark~\ref{rem:unequal_posdef} with $\rho_{13} = -0.9$ is realisable.
+\end{remark}
+
+\section{At the level of $K$ and $L$}\label{sec:core_moments}
+% Lean: Credibility/CoreMoments.lean
+
+The blend only sees the cohort estimates $\hmu_j$ and the levels $\mu_j$, so
+its moment layer is proved once, for any covariance $K$ of the estimates and
+any level covariance $L$ (Section~\ref{sec:core}). Each model supplies only
+these two covariances.
+
+\begin{definition}[Estimates and levels]\label{def:Core_Estimates}
+  \lean{Credibility.Core.Estimates, Credibility.Core.portLin, Credibility.Core.portEst,
+        Credibility.Core.blend, Credibility.Core.Estimates.portLin,
+        Credibility.Core.Estimates.portEst, Credibility.Core.Estimates.blend}
+  \leanok
+  \uses{def:Core.levelMoments}
+  On a probability space: square-integrable $\hmu_j$ and $\mu_j$, $j \in J$,
+  with $\mathbb E\hmu_j = \mathbb E\mu_j = \mu$,
+  $\cov(\hmu_i,\hmu_j) = K_{ij}$ and
+  $\cov(\mu_i,\hmu_j) = \cov(\mu_i,\mu_j) = L_{ij}$. Nothing is assumed about
+  the distribution, or about how $\hmu_j$ is built from data. The portfolio
+  estimate is $\hmu = \sum_j b_j\hmu_j$ with the GLS weights of $K$, and the
+  blend is $z\hmu_j + (1-z)\hmu$. These two are defined for any vector of
+  estimates, so every model's portfolio estimate and blend
+  (Definitions~\ref{def:Noise}, \ref{def:U_Noise} and~\ref{def:NoiseG}) is
+  this one, applied to its own $\hmu_j$ and $K$.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions]\label{lem:Core_moments_lin}
+  \lean{Credibility.cov_add_add, Credibility.Core.Estimates.memLp_portLin,
+        Credibility.Core.Estimates.integral_portLin,
+        Credibility.Core.Estimates.cov_portLin,
+        Credibility.Core.Estimates.variance_portLin,
+        Credibility.Core.Estimates.cov_est_portLin,
+        Credibility.Core.Estimates.cov_level_portLin}
+  \leanok
+  \uses{def:Core_Estimates}
+  For portfolio weights $d$, $d'$: $\mathbb E\sum_j d_j\hmu_j = (\sum_j d_j)\mu$,
+  $\cov(\sum_i d_i\hmu_i, \sum_j d'_j\hmu_j) = d^TKd'$,
+  $\cov(\hmu_i, \sum_j d_j\hmu_j) = (Kd)_i$ and
+  $\cov(\mu_i, \sum_j d_j\hmu_j) = (Ld)_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[Eq.\ (6) is the true mean squared error]\label{thm:blend_mse}
+  \lean{Credibility.BlendMoments.integral_sq_blend_sub}
+  \leanok
+  \uses{def:errVar}
+  Let $X$, $Y$, $Z$ be square integrable with a common mean and the six
+  second moments of Definition~\ref{def:errVar} (cohort estimate, portfolio
+  estimate, target). Then
+  $\mathbb E\bigl[(zX + (1-z)Y - Z)^2\bigr]$ is the error variance \eqth{6}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The weights $z$, $1-z$, $-1$ sum to zero, so the error has mean zero and
+  its mean square is its variance; expand it bilinearly.
+\end{proof}
+
+\begin{theorem}[GLS weights in true variance]\label{thm:Core_weights_true}
+  \lean{Credibility.Core.Estimates.portEst_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:glsWeight_value, thm:glsWeight_optimal}
+  If $K \succ 0$ and $\sum_j d_j = 1$, then
+  $\Var(\hmu) = s^2 \le \Var(\sum_j d_j\hmu_j)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin, thm:glsWeight_value, thm:glsWeight_optimal}
+  $\Var(\sum_j d_j\hmu_j) = d^TKd$, then
+  Theorems~\ref{thm:glsWeight_value} and~\ref{thm:glsWeight_optimal}.
+\end{proof}
+
+\begin{theorem}[$z_j$ minimises the true MSE for any $K$ and $L$]\label{thm:Core_bestZ_mse}
+  \lean{Credibility.Core.Estimates.levelMoments_eq, Credibility.Core.Estimates.mse_blend,
+        Credibility.Core.Estimates.bestZ_mse_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_levelMoments_bestZ_eq, thm:bestZ_optimal}
+  If $K \succ 0$, each field of Definition~\ref{def:Core.levelMoments} with
+  $d = K_{jj}$ is the moment it names, the blend is unbiased, its mean squared
+  error is \eqth{6}, and if $\Var(\hmu_j - \hmu) > 0$ the factor $z_j$ of
+  Theorem~\ref{thm:Core_levelMoments_bestZ_eq} minimises it over $z$, for
+  every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin, thm:glsWeight_value, lem:sum_glsWeight, thm:blend_mse, thm:bestZ_optimal}
+  Lemma~\ref{lem:Core_moments_lin} with $d = \bb$ gives the six moments, and
+  $\mathbb E\hmu = \mu$ since $\sum_j b_j = 1$. Then
+  Theorems~\ref{thm:blend_mse} and~\ref{thm:bestZ_optimal}.
+\end{proof}
+
+\begin{corollary}[Forecasting: the same $z_j$ is best for next year]\label{cor:Core_forecast}
+  \lean{Credibility.Core.Estimates.mse_forecast,
+        Credibility.Core.Estimates.bestZ_forecast_optimal}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_bestZ_mse}
+  Let next year's outcome be $Y_j = \mu_j + \varepsilon_j$, with $\mathbb E\varepsilon_j = 0$
+  and $\varepsilon_j$ uncorrelated with every $\hmu_i$ and with $\mu_j$. If $K \succ 0$, then
+  \[
+    \mathbb E[(z\hmu_j + (1-z)\hmu - Y_j)^2] = \mathbb E[(z\hmu_j + (1-z)\hmu - \mu_j)^2]
+      + \Var(\varepsilon_j),
+  \]
+  so if $\Var(\hmu_j - \hmu) > 0$ the factor $z_j$ of Theorem~\ref{thm:Core_bestZ_mse}
+  also minimises the mean squared error of the forecast.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_mse, lem:sum_glsWeight, thm:blend_mse, thm:bestZ_optimal}
+  The target $Y_j$ has the moments of $\mu_j$ except $\Var(Y_j) = L_{jj} + \Var(\varepsilon_j)$:
+  its covariances with $\hmu_j$ and $\hmu = \sum_i b_i\hmu_i$ are unchanged. By
+  Theorem~\ref{thm:blend_mse} the error is \eqth{6} with this variance, which adds the
+  constant $\Var(\varepsilon_j)$; the minimiser stays $z_j$ (Theorem~\ref{thm:bestZ_optimal}).
+\end{proof}
+
+\begin{corollary}[The best balanced blend in true MSE]\label{cor:Core_bestBalanced_mse}
+  \lean{Credibility.Core.Estimates.bestBalanced_mse_optimal}
+  \leanok
+  \uses{thm:Core_bestZ_mse, thm:Core_bestBalanced}
+  If $K \succ 0$, $u_j \ne 0$, $\varphi_j \ge 0$ and $\Var(\hmu_j - \hmu) > 0$,
+  the factors $z(c^*)$ of Theorem~\ref{thm:Core_bestBalanced} with the GLS
+  weights minimise the weighted actual mean squared error
+  $\sum_j\varphi_j\,\mathbb E[(\hmu_j^b - \mu_j)^2]$ among all blends balanced
+  for $u$, for every distribution with these moments.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_bestZ_mse, thm:Core_bestBalanced, lem:sum_glsWeight}
+  The true MSE is \eqth{6} (Theorem~\ref{thm:Core_bestZ_mse}); then
+  Theorem~\ref{thm:Core_bestBalanced}.
+\end{proof}
+
+\begin{theorem}[The correction in true MSE]\label{thm:Core_mse_correct}
+  \lean{Credibility.Core.Estimates.imbalance_eq, Credibility.Core.Estimates.balanced_correct,
+        Credibility.Core.Estimates.mse_correct}
+  \leanok
+  \uses{def:Core_Estimates, lem:Core_imbalance, def:Core_imbalance}
+  Let $K \succ 0$ and $D = \sum_i w_i\hmu_i$ the imbalance of the blends with
+  GLS weights. Then $D = \sum_j u_j(\hmu_j - \hmu_j^b)$, the corrections
+  $\theta_j = \hmu_j^b + c_jD$ with $\sum_j u_jc_j = 1$ are balanced for every
+  outcome, and $\mathbb E[(\theta_j - \mu_j)^2] = \mathrm{MSE}_j(z_j) + 2c_j\kappa_j + c_j^2V$,
+  for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_imbalance, thm:Core_bestZ_mse, lem:Core_moments_lin, lem:mulVec_glsWeight, lem:sum_glsWeight}
+  Both $X = \hmu_j^b - \mu_j$ and $D$ have mean zero, so
+  $\mathbb E[(X + cD)^2] = \Var X + 2c\cov(X, D) + c^2\Var D$. Here
+  $\Var X = \mathrm{MSE}_j$ (Theorem~\ref{thm:Core_bestZ_mse}),
+  $\Var D = w^\top Kw$, and
+  $\cov(X, D) = z_j(Kw)_j + (1 - z_j)\cov(\hmu, D) - (Lw)_j$ with
+  $\cov(\hmu, D) = w^\top K\bb = s^2\sum_iw_i = 0$.
+\end{proof}
+
+\begin{corollary}[The best balanced correction in true MSE]\label{cor:Core_bestCorrection_mse}
+  \lean{Credibility.Core.Estimates.bestCorrection_mse_optimal,
+        Credibility.Core.Estimates.commonShift_mse_optimal}
+  \leanok
+  \uses{thm:Core_mse_correct, thm:Core_bestCorrection, cor:Core_commonShift}
+  If $K \succ 0$, $\varphi_j > 0$ and $\Var D > 0$, the factors $c^*$ minimise
+  $\sum_j\varphi_j\,\mathbb E[(\theta_j - \mu_j)^2]$ among the balanced
+  corrections; if $\varphi = u > 0$ and $\kappa_j$ is the same for all $j$, so
+  does the common shift $D/\sum_iu_i$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_mse_correct, thm:Core_bestCorrection, cor:Core_commonShift}
+  Theorem~\ref{thm:Core_mse_correct}, then Theorem~\ref{thm:Core_bestCorrection}
+  and Corollary~\ref{cor:Core_commonShift}.
+\end{proof}
+
+\begin{corollary}[Independent cohorts: shift all rates]\label{cor:Core_commonShift_diag}
+  \lean{Credibility.Core.Estimates.commonShift_mse_optimal_of_diag}
+  \leanok
+  \uses{cor:Core_bestCorrection_mse, lem:Core_imbalanceCov_diag}
+  For $K = \mathrm{diag}(\tau^2 + v_j)$, $L = \tau^2I$, $|J| \ge 2$, the optimal
+  factors $z^*$ and any exposures $u > 0$ (with $\Var D > 0$), the common shift
+  is the best balanced correction in true MSE for the loss weights $u$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_bestCorrection_mse, lem:Core_imbalanceCov_diag}
+  $\kappa = 0$ by Lemma~\ref{lem:Core_imbalanceCov_diag}.
+\end{proof}
+
+\subsection*{Random weights}
+
+Extension (Finding 35). A fitted blend uses weights estimated from the same data as the
+estimates they weight. Two exact facts, for every distribution with the moments of
+Definition~\ref{def:Core_Estimates}.
+
+\begin{theorem}[The bias of random weights]\label{thm:Core_randomLin_bias}
+  % Lean: Credibility/RandomWeights.lean
+  \lean{Credibility.Core.Estimates.randomLin,
+        Credibility.Core.Estimates.integral_randomLin_sub}
+  \leanok
+  \uses{def:Core_Estimates}
+  Let the weights $\hat d_i$ be square-integrable random variables with
+  $\sum_i \hat d_i = 1$ in every draw. Then
+  $\mathbb E(\hat d^T\hmu - \mu_j) = \sum_i \cov(\hat d_i, \hmu_i)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates}
+  $\cov(\hat d_i, \hmu_i) = \mathbb E[\hat d_i\hmu_i] - \mu\,\mathbb E\hat d_i$, and
+  $\sum_i \mathbb E\hat d_i = 1$, so the sum is $\mathbb E[\hat d^T\hmu] - \mu$.
+\end{proof}
+
+\begin{theorem}[Exposure balance keeps the portfolio unbiased]\label{thm:Core_balanced_unbiased}
+  \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced,
+        Credibility.Core.Estimates.correct_balanced}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_mse_correct}
+  If fitted levels $\hat\theta_j$, built from the data in any way, satisfy
+  $\sum_j u_j\hat\theta_j = \sum_j u_j\hmu_j$ in every draw, then
+  $\mathbb E\sum_j u_j(\hat\theta_j - \mu_j) = 0$. The corrections $\hmu_j^b + c_jD$ with
+  $\sum_j u_jc_j = 1$ are such fits.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_Estimates, thm:Core_mse_correct}
+  By balance the portfolio error is $\sum_j u_j(\hmu_j - \mu_j)$ in every draw, which has
+  mean $0$. The corrections are balanced by Theorem~\ref{thm:Core_mse_correct}.
+\end{proof}
+
+\begin{theorem}[The cross-fitted rate's bias]\label{thm:Core_crossFit_bias}
+  \lean{Credibility.Core.Estimates.integral_crossFit_sub}
+  \leanok
+  \uses{thm:Core_randomLin_bias}
+  For each year $s$ let $X_{\cdot s}$ be estimates of the same levels $\mu_i$ with the moments of
+  Definition~\ref{def:Core_Estimates} (any covariances $K_s$), and let the weights $\hat d^{(s)}$ sum
+  to one and be independent of year $s$'s noise $X_{is} - \mu_i$. With year weights $\pi_s$
+  common to all regions and $\sum_s \pi_s = 1$,
+  \[
+    \mathbb E\Bigl(\sum_s \pi_s \hat d^{(s)\top}X_{\cdot s} - \mu_j\Bigr)
+      = \sum_s \pi_s \sum_i \cov(\hat d^{(s)}_i, \mu_i),
+  \]
+  for every distribution: only the levels enter, so the bias is $0$ for fixed levels.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_randomLin_bias}
+  Since $\sum_s\pi_s = 1$ the error is $\sum_s \pi_s(\hat d^{(s)\top}X_{\cdot s} - \mu_j)$;
+  Theorem~\ref{thm:Core_randomLin_bias} for each year, and
+  $\cov(\hat d^{(s)}_i, X_{is}) = \cov(\hat d^{(s)}_i, \mu_i) + \cov(\hat d^{(s)}_i, X_{is} - \mu_i)$,
+  the last term $0$ by independence.
+\end{proof}
+
+\begin{remark}[Region-specific year weights]\label{rem:crossFit_region_weights}
+  With year weights $a_{is}$ that depend on the region, $\sum_s\sum_i a_{is}\hat d^{(s)}_i \ne 1$ in
+  general: the rate is not translation equivariant, the mean $\mu$ enters the bias, and the identity
+  of Theorem~\ref{thm:Core_crossFit_bias} is not exact (S63).
+\end{remark}
+
+\subsection*{The collective mean given the levels}
+
+Extension (literature \S10p). The results above average over the levels. Here the levels
+$\theta_j$ are fixed: only $\mathbb E\bar x_j = \theta_j$ and $\mathrm{Var}\,\bar x_j = D_j$
+are assumed, and the collective mean $m$ is a fixed number.
+
+\begin{theorem}[The blend's error given the level, and its unbiased estimate]\label{thm:Core_blend_given_level}
+  % Lean: Credibility/ObservedBest.lean
+  \lean{Credibility.Core.integral_quad_centred, Credibility.Core.integral_sq_blend_given_level,
+        Credibility.Core.integral_sure_given_level}
+  \leanok
+  \uses{def:errVar}
+  If $\mathbb E\bar x = \theta$ and $\mathrm{Var}\,\bar x = D$ then for fixed $z$ and $m$
+  \[
+    \mathbb E\bigl(z\bar x + (1-z)m - \theta\bigr)^2 = z^2D + (1-z)^2(m-\theta)^2
+    = \mathbb E\bigl[(1-z)^2(\bar x - m)^2 - 2(1-z)D + D\bigr].
+  \]
+  The bracket is Stein's unbiased risk estimate (SURE) of the error given the level.
+  This is the error \eqth{6} of Definition~\ref{def:errVar} with the level held fixed: the
+  collective mean's error becomes the bias $m - \theta$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The error is $z(\bar x - \theta) + (1-z)(m-\theta)$, and $\bar x - \theta$ has mean $0$ and
+  variance $D$. For the estimate, $\mathbb E(\bar x - m)^2 = D + (m-\theta)^2$ and
+  $(1-z)^2D - 2(1-z)D + D = z^2D$.
+\end{proof}
+
+\begin{theorem}[The observed best predictor's collective mean]\label{thm:Core_obpMean}
+  \lean{Credibility.Core.sum_mul_sq_sub_eq, Credibility.Core.obpMean,
+        Credibility.Core.condRisk_obpMean_le, Credibility.Core.sure_obpMean_le}
+  \leanok
+  \uses{thm:Core_blend_given_level}
+  Let $u_j$ be volumes with $\sum_j u_j(1-z_j)^2 > 0$ and
+  $m^*(a) = \sum_j u_j(1-z_j)^2a_j / \sum_j u_j(1-z_j)^2$. Then $m^*(\theta)$ minimises the
+  total error given the levels, $\sum_j u_j\bigl(z_j^2D_j + (1-z_j)^2(m-\theta_j)^2\bigr)$, and
+  $m^*(\bar x)$ minimises its unbiased estimate
+  $\sum_j u_j\bigl((1-z_j)^2(\bar x_j - m)^2 - 2(1-z_j)D_j + D_j\bigr)$: the collective mean of
+  the observed best predictor (Jiang, Nguyen and Rao 2011; Zhang and Jiang 2025).
+\end{theorem}
+\begin{proof}
+  \leanok
+  For weights $w_j$ with $\sum_j w_j \ne 0$,
+  $\sum_j w_j(m - a_j)^2 = \sum_j w_j(m^* - a_j)^2 + (\sum_j w_j)(m - m^*)^2$ with $m^*$ the
+  $w$-weighted mean. Take $w_j = u_j(1-z_j)^2$; the other terms do not depend on $m$.
+\end{proof}
+
+\subsection*{A general target with fixed effects}
+
+Extension (\texttt{notes/card-data.md}, Step 1). The data $x$ are indexed by observed
+cells, with $K = \cov(x)$; the target is a random $Y$ with $\ell = \cov(x, Y)$ and
+$v = \operatorname{Var} Y$. The means are fixed effects: $E x = X\beta$ and $E Y = x_0^T\beta$ for an
+unknown $\beta$ (one common mean: $X = 1$; a season: one $\beta$ per calendar month).
+This is universal kriging (Goldberger 1962). The level predictor below ($X = 1$,
+$\ell = L_{j\cdot}$) and the matrix one of the vector Blend ($X = U$) are special cases.
+
+\begin{definition}[Linear predictors of a general target]\label{def:Blup}
+  \lean{Credibility.Core.predMse, Credibility.Core.blup}
+  \leanok
+  For weights $d$: $\mathrm{mse}(d) = d^TKd - 2d^T\ell + v$. The best linear unbiased
+  predictor has weights
+  $d^* = K^{-1}\ell + K^{-1}X(X^TK^{-1}X)^{-1}(x_0 - X^TK^{-1}\ell)$.
+\end{definition}
+
+\begin{lemma}[Unbiasedness with fixed effects]\label{lem:Blup_unbiased}
+  \lean{Credibility.Core.unbiased_iff}
+  \leanok
+  \uses{def:Blup}
+  $d^T X\beta = x_0^T\beta$ for every $\beta$ iff $X^Td = x_0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $d^TX\beta = (X^Td)^T\beta$; take $\beta$ a unit vector.
+\end{proof}
+
+\begin{lemma}[Pythagoras for linear predictors]\label{lem:Blup_pythagoras}
+  \lean{Credibility.Core.predMse_eq_add_of_normal}
+  \leanok
+  \uses{def:Blup}
+  Let $K$ be symmetric and $Ke - \ell = Xc$ for some $c$. If $X^Td = X^Te$ then
+  $\mathrm{mse}(d) = \mathrm{mse}(e) + (d-e)^TK(d-e)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The cross term is $2(d-e)^T(Ke - \ell) = 2(X^T(d-e))^Tc = 0$.
+\end{proof}
+
+\begin{lemma}[First-order condition]\label{lem:Blup_foc}
+  \lean{Credibility.Core.info_posDef, Credibility.Core.mulVec_blup,
+        Credibility.Core.transpose_mulVec_blup}
+  \leanok
+  \uses{def:Blup}
+  Let $K \succ 0$ and $X$ of full column rank. Then $X^TK^{-1}X \succ 0$,
+  $Kd^* - \ell = X(X^TK^{-1}X)^{-1}(x_0 - X^TK^{-1}\ell)$ and $X^Td^* = x_0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation.
+\end{proof}
+
+\begin{theorem}[The best linear unbiased predictor of a general target]\label{thm:Blup_optimal}
+  \lean{Credibility.Core.predMse_eq_blup_add, Credibility.Core.blup_optimal,
+        Credibility.Core.blup_unique}
+  \leanok
+  \uses{def:Blup}
+  Let $K \succ 0$ and $X$ of full column rank. If $X^Td = x_0$ then
+  $\mathrm{mse}(d) = \mathrm{mse}(d^*) + (d-d^*)^TK(d-d^*)$. So $d^*$ is the unique
+  minimiser of $\mathrm{mse}$ among unbiased weights.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_pythagoras, lem:Blup_foc}
+  Lemma~\ref{lem:Blup_pythagoras} with $e = d^*$ (Lemma~\ref{lem:Blup_foc}).
+\end{proof}
+
+\begin{corollary}[The first-order condition characterises $d^*$]\label{cor:Blup_eq_of_normal}
+  \lean{Credibility.Core.eq_blup_of_normal}
+  \leanok
+  \uses{def:Blup}
+  If $K \succ 0$, $X$ has full column rank, $Ke - \ell = Xc$ and $X^Te = x_0$, then
+  $e = d^*$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_optimal, lem:Blup_pythagoras, lem:Blup_foc}
+  By Lemma~\ref{lem:Blup_pythagoras} around $e$, $\mathrm{mse}(d^*) \ge \mathrm{mse}(e)$;
+  uniqueness in Theorem~\ref{thm:Blup_optimal}.
+\end{proof}
+
+\begin{theorem}[The error of the best predictor]\label{thm:Blup_mse}
+  \lean{Credibility.Core.predMse_blup}
+  \leanok
+  \uses{def:Blup}
+  With $r = x_0 - X^TK^{-1}\ell$:
+  $\mathrm{mse}(d^*) = v - \ell^TK^{-1}\ell + r^T(X^TK^{-1}X)^{-1}r$. The first two terms
+  are the error when $\beta$ is known; the last is the price of estimating $\beta$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_foc}
+  With $g = (X^TK^{-1}X)^{-1}r$: $Kd^* = \ell + Xg$ and $X^Td^* = x_0$, so
+  $\mathrm{mse}(d^*) = d^{*T}Xg - d^{*T}\ell + v = x_0^Tg - \ell^TK^{-1}\ell
+  - g^TX^TK^{-1}\ell + v$.
+\end{proof}
+
+\begin{lemma}[Aggregated data are restricted weights]\label{lem:Blup_aggregate}
+  \lean{Credibility.Core.predMse_mulVec, Credibility.Core.transpose_mul_mulVec}
+  \leanok
+  \uses{def:Blup}
+  A predictor $c^T(A^Tx)$ from aggregated data (e.g.\ annual totals) has the error of the
+  weights $Ac$ on $x$: $\mathrm{mse}_{A^TKA,\,A^T\ell}(c) = \mathrm{mse}_{K,\ell}(Ac)$, and
+  $(A^TX)^Tc = X^T(Ac)$, so it is unbiased iff $Ac$ is.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $c^TA^Tw = (Ac)^Tw$.
+\end{proof}
+
+\begin{theorem}[Aggregation never helps with known covariances]\label{thm:Blup_aggregate}
+  \lean{Credibility.Core.predMse_blup_le_aggregate,
+        Credibility.Core.predMse_aggregate_eq_blup_add}
+  \leanok
+  \uses{def:Blup}
+  Any unbiased predictor from aggregated data $A^Tx$ loses exactly
+  $(Ac - d^*)^TK(Ac - d^*) \ge 0$ against $d^*$; it is as good only when $d^* = Ac$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_aggregate, thm:Blup_optimal}
+  Theorem~\ref{thm:Blup_optimal} with $d = Ac$ (Lemma~\ref{lem:Blup_aggregate}).
+\end{proof}
+
+\begin{theorem}[Nested designs]\label{thm:Blup_nested}
+  \lean{Credibility.Core.blup_eq_blup_iff_of_nested, Credibility.Core.predMse_blup_nested}
+  \leanok
+  \uses{def:Blup}
+  Let a coarse design be $X_1 = X_2M$ with $x_{01} = M^Tx_{02}$ (e.g.\ one common mean inside
+  one mean per calendar month), both of full column rank, and $K \succ 0$. The fine predictor
+  $d_2^*$ equals the coarse one $d_1^*$ iff $X_2^Td_1^* = x_{02}$. In any case
+  $\mathrm{mse}(d_2^*) = \mathrm{mse}(d_1^*) + (d_2^* - d_1^*)^TK(d_2^* - d_1^*)$: when the
+  coarse model is right, a finer design (an estimated season that is not there) costs this much.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:Blup_foc, lem:Blup_pythagoras}
+  $Kd_1^* - \ell = X_1g = X_2(Mg)$ (Lemma~\ref{lem:Blup_foc}). If $X_2^Td_1^* = x_{02}$,
+  Corollary~\ref{cor:Blup_eq_of_normal} for $X_2$. For the error,
+  Lemma~\ref{lem:Blup_pythagoras} for $X_1$ around $d_1^*$, as
+  $X_1^Td_2^* = M^Tx_{02} = X_1^Td_1^*$.
+\end{proof}
+
+\begin{lemma}[Symmetry is inherited]\label{lem:Blup_symmetry}
+  \lean{Credibility.Core.predMse_comp_equiv, Credibility.Core.blup_comp_equiv}
+  \leanok
+  \uses{def:Blup}
+  If relabelling the cells by a permutation $\sigma$ leaves $K$, $\ell$ and the rows of $X$
+  unchanged, it leaves $\mathrm{mse}$ unchanged, and $d^*_{\sigma(i)} = d^*_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_optimal, lem:Blup_foc}
+  $d^*\circ\sigma$ is unbiased with the same error; uniqueness in
+  Theorem~\ref{thm:Blup_optimal}.
+\end{proof}
+
+\subsection*{The season and the 12-month target}
+
+Extension (\texttt{notes/card-data.md}, Step 2). The season is additive on the rate: a cell
+$i$ (cohort $\times$ month) has mean $\beta_{m(i)}$, one fixed effect per calendar month, and the
+target has mean $\sum_m c_m\beta_m$ ($c_m = 1$: the total over the next 12 months).
+
+\begin{definition}[Season design]\label{def:Season}
+  \lean{Credibility.Season.design, Credibility.Season.monthSum}
+  \leanok
+  \uses{def:Blup}
+  $X_{im} = 1$ if cell $i$ lies in month $m$, else $0$. The month sum of weights $d$ is
+  $S_m(d) = \sum_{m(i) = m} d_i$.
+\end{definition}
+
+\begin{lemma}[The season design]\label{lem:Season_design}
+  \lean{Credibility.Season.design_transpose_mulVec, Credibility.Season.design_mul_one,
+        Credibility.Season.design_mulVec_injective, Credibility.Season.sum_monthSum}
+  \leanok
+  \uses{def:Season}
+  $X^Td = S(d)$, so unbiasedness is $S_m(d) = c_m$ for every month; $X\mathbf 1 = \mathbf 1$
+  (one common mean is nested in the season); $X$ has full column rank when every month is
+  observed; $\sum_m S_m(d) = \sum_i d_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct.
+\end{proof}
+
+\begin{theorem}[When the season drops out]\label{thm:Season_eq_iff}
+  \lean{Credibility.Season.blup_eq_iff}
+  \leanok
+  \uses{def:Season}
+  With $K \succ 0$ and every month observed, the predictor with an estimated season equals the
+  one-mean predictor (target $\sum_m c_m$ times the common mean) iff the one-mean $d^*$ has
+  $S_m(d^*) = c_m$ for every month.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_nested, lem:Season_design}
+  Theorem~\ref{thm:Blup_nested} with $M = \mathbf 1$ (Lemma~\ref{lem:Season_design}).
+\end{proof}
+
+\begin{corollary}[Interchangeable months]\label{cor:Season_interchangeable}
+  \lean{Credibility.Season.blup_eq_of_interchangeable}
+  \leanok
+  \uses{def:Season}
+  Let $c_m = c_0$ for all months. If for any two months some permutation of the cells maps the
+  first month's cells onto the second's and leaves $K$ and $\ell$ unchanged, the season drops
+  out.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Season_eq_iff, lem:Blup_symmetry, lem:Season_design}
+  By Lemma~\ref{lem:Blup_symmetry} the one-mean $d^*$ is invariant, so all $S_m(d^*)$ are
+  equal; they add up to $\sum_m c_0$.
+\end{proof}
+
+\begin{theorem}[Finding 24: the season does not drop out]\label{thm:Season_ne}
+  \lean{Credibility.Season.blup_ne_of_volume}
+  \leanok
+  \uses{def:Season}
+  One cohort, two years of two months, $K = \mathrm{diag}(1, 2, 1, 2)$ (twice the volume in the
+  first month), $\ell = 0$, $c = (1, 1)$: the seasonal and the one-mean predictors differ.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Season_eq_iff, cor:Blup_eq_of_normal}
+  The one-mean $d^* = (2/3, 1/3, 2/3, 1/3)$ (Corollary~\ref{cor:Blup_eq_of_normal}: $Kd^* =
+  \tfrac23\mathbf 1$, $\sum_i d^*_i = 2$) has $S_1(d^*) = 4/3 \ne 1$.
+\end{proof}
+
+\begin{remark}[Finding 24]\label{rem:season}
+  \uses{thm:Season_ne}
+  Whole years do not make the season drop out. Ignoring a real season biases the forecast
+  by $\sum_m (S_m(d^*) - c_m)\beta_m$ (Theorem~\ref{thm:Season_bias}), here $(\beta_1 -
+  \beta_2)/3$: the one-mean predictor leans on the high-volume month.
+\end{remark}
+
+\begin{theorem}[The bias of ignoring the season]\label{thm:Season_bias}
+  \lean{Credibility.Core.Target.integral_bias}
+  \leanok
+  \uses{def:Blup_Target, def:Season}
+  For data and a target as in Definition~\ref{def:Blup_Target} with the season design,
+  $E(d^Tx) - E Y = \sum_m (S_m(d) - c_m)\beta_m$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_moments_lin, lem:Season_design}
+  $E(d^Tx) = (X^Td)^T\beta = S(d)^T\beta$.
+\end{proof}
+
+\begin{lemma}[A known index, Poisson-type variance]\label{lem:Season_known_index}
+  \lean{Credibility.Unequal.a_eq_of_volume}
+  \leanok
+  \uses{def:Unequal}
+  A known multiplicative index $c_t$ is not a fixed effect: the deseasoned rates $X_{jt}/c_t$
+  follow Definition~\ref{def:Unequal}. If $\sigma_{jt}^2 = s^2/\mathrm{vol}_t$ (Poisson-type
+  counts: $\mathrm{vol}_t = c_tw_{jt}$, expected claims), the cell weights are
+  $a_{jt} = \mathrm{vol}_t / \sum_{s\in T_j}\mathrm{vol}_s$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\sigma_{jt}^{-2} = \mathrm{vol}_t/s^2$.
+\end{proof}
+
+\subsection*{The best linear unbiased predictor}
+
+The blend $z\hmu_j + (1-z)\hmu$ is one linear combination $\sum_i d_i\hmu_i$
+with $\sum_i d_i = 1$ (unbiased whatever the common mean $\mu$). How much is
+lost by not using the best of them all?
+
+\begin{definition}[Linear predictors of $\mu_j$]\label{def:Core_blup}
+  \lean{Credibility.Core.linMse, Credibility.Core.blupWeight, Credibility.Core.blendWeight}
+  \leanok
+  \uses{def:glsWeight}
+  Write $\ell = L_{j\cdot}$, so $\ell_i = \cov(\mu_j, \hmu_i)$. For weights $d$:
+  $\mathrm{mse}_j(d) = d^TKd - 2d^T\ell + L_{jj}$. The best linear unbiased
+  predictor has weights $d^* = K^{-1}\ell + (1 - 1^TK^{-1}\ell)\,b$, and the
+  blend has weights $w(z) = z e_j + (1-z)b$, with the GLS weights $b$.
+\end{definition}
+
+\begin{lemma}[First-order condition]\label{lem:Core_blup_foc}
+  \lean{Credibility.Core.sum_blupWeight, Credibility.Core.mulVec_blupWeight}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite then $\sum_i d^*_i = 1$ and
+  $Kd^* - \ell = (1 - 1^TK^{-1}\ell)\,s^2\,1$, a constant vector.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $Kb = s^2 1$ and $\sum_i b_i = 1$.
+\end{proof}
+
+\begin{lemma}[Pythagoras for linear predictors]\label{lem:Core_linMse_pythagoras}
+  \lean{Credibility.Core.linMse_eq_add_of_mulVec,
+        Credibility.Core.dotProduct_mulVec_comm_of_isHermitian}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K$ be symmetric and $Ke - \ell$ a constant vector. If
+  $\sum_i d_i = \sum_i e_i$ then
+  $\mathrm{mse}_j(d) = \mathrm{mse}_j(e) + (d-e)^TK(d-e)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand around $e$. The cross term is $2(d-e)^T(Ke - \ell)$, a constant times
+  $\sum_i (d_i - e_i) = 0$.
+\end{proof}
+
+\begin{lemma}[One common mean is the case $X = 1$]\label{lem:Core_blupWeight_eq_blup}
+  \lean{Credibility.Core.blupWeight_eq_blup,
+        Credibility.Core.replicateCol_one_mulVec_injective,
+        Credibility.Core.replicateCol_one_transpose_mulVec}
+  \leanok
+  \uses{def:Core_blup, def:Blup}
+  If $K \succ 0$, the weights $d^*$ for $\mu_j$ are those of
+  Definition~\ref{def:Blup} with $X = 1$, $x_0 = 1$, $\ell = L_{j\cdot}$, $v = L_{jj}$
+  (so $\mathrm{mse}_j$ is $\mathrm{mse}$ and $X^Td = \sum_i d_i$).
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Blup_eq_of_normal, lem:Core_blup_foc}
+  Corollary~\ref{cor:Blup_eq_of_normal} with Lemma~\ref{lem:Core_blup_foc}.
+\end{proof}
+
+\begin{theorem}[The best linear unbiased predictor]\label{thm:Core_blup_optimal}
+  \lean{Credibility.Core.blupWeight_optimal, Credibility.Core.blupWeight_unique,
+        Credibility.Core.linMse_eq_blupWeight_add}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite and $\sum_i d_i = 1$ then
+  $\mathrm{mse}_j(d) = \mathrm{mse}_j(d^*) + (d-d^*)^TK(d-d^*)$. So $d^*$ is
+  the unique minimiser of $\mathrm{mse}_j$ among unbiased weights.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blup_foc, lem:Core_linMse_pythagoras, thm:Blup_optimal,
+    lem:Core_blupWeight_eq_blup}
+  Lemma~\ref{lem:Core_linMse_pythagoras} with $e = d^*$
+  (Lemma~\ref{lem:Core_blup_foc}); $x^TKx > 0$ for $x \ne 0$. Optimality is also
+  Theorem~\ref{thm:Blup_optimal} with $X = 1$ (Lemma~\ref{lem:Core_blupWeight_eq_blup}).
+\end{proof}
+
+\begin{remark}[Given the levels, the collective mean weights are $(1-z)^2$]\label{rem:obp_weights}
+  \uses{thm:Core_blup_optimal, thm:Core_obpMean}
+  Theorem~\ref{thm:Core_blup_optimal} averages the error over interchangeable levels; there the
+  collective mean's weights $b \propto z$ (Bühlmann--Straub) are best and exposure balanced
+  (\S2.9). For given levels the best weights are $\propto u_j(1-z_j)^2$
+  (Theorem~\ref{thm:Core_obpMean}): the small cohorts, which lean on the collective mean most,
+  count most. The observed best predictor buys robustness to a misspecified collective mean
+  (levels trending with volume) at the price of both properties when the model is right.
+\end{remark}
+
+\begin{lemma}[The blend as a linear predictor]\label{lem:Core_blendWeight}
+  \lean{Credibility.Core.sum_blendWeight, Credibility.Core.mulVec_blendWeight,
+        Credibility.Core.linMse_blendWeight}
+  \leanok
+  \uses{def:Core_blup, def:Core.levelMoments, def:errVar}
+  If $K$ is positive definite then $\sum_i w(z)_i = 1$,
+  $Kw(z) = zK_{\cdot j} + (1-z)s^2 1$, and $\mathrm{mse}_j(w(z))$ is the error
+  variance \eqth{6} for the moments of Definition~\ref{def:Core.levelMoments}.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:mulVec_glsWeight, lem:sum_glsWeight}
+  $Kb = s^2 1$ and $\sum_i b_i = 1$; then compare coefficients.
+\end{proof}
+
+\begin{theorem}[The price of the blend]\label{thm:Core_blend_price}
+  \lean{Credibility.Core.errVar_eq_blupWeight_add}
+  \leanok
+  \uses{def:Core_blup, def:Core.levelMoments}
+  If $K$ is positive definite, the error variance of the blend with factor $z$
+  is $\mathrm{mse}_j(d^*) + (w(z)-d^*)^TK(w(z)-d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_optimal, lem:Core_blendWeight}
+  Theorem~\ref{thm:Core_blup_optimal} with $d = w(z)$.
+\end{proof}
+
+\begin{theorem}[When the blend is the best linear unbiased predictor]\label{thm:Core_blend_blup_iff}
+  \lean{Credibility.Core.blendWeight_eq_blupWeight_iff}
+  \leanok
+  \uses{def:Core_blup}
+  If $K$ is positive definite then $w(z) = d^*$ iff
+  $\cov(\mu_j,\hmu_i) - z\cov(\hmu_i,\hmu_j) = L_{ji} - zK_{ij}$ is the same
+  for every cohort $i$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blup_foc, lem:Core_blendWeight, lem:Core_linMse_pythagoras, thm:Core_blup_optimal}
+  If $w(z) = d^*$, subtract $Kw(z) = zK_{\cdot j} + (1-z)s^2 1$ from the
+  first-order condition. Conversely $Kw(z) - \ell$ is then constant, so by
+  Lemma~\ref{lem:Core_linMse_pythagoras} no unbiased weights beat $w(z)$, and
+  the minimiser is unique.
+\end{proof}
+
+\begin{corollary}[Uncorrelated levels: equal covariances in column $j$]\label{cor:Core_blend_blup_equalCol}
+  \lean{Credibility.Core.exists_blendWeight_eq_blupWeight_iff,
+        Credibility.Core.blendWeight_eq_blupWeight_of_equalCol}
+  \leanok
+  \uses{thm:Core_blend_blup_iff}
+  Let $L = \tau^2 I$, $\tau^2 \ne 0$ and $K$ positive definite. Some blend of
+  cohort $j$ is the best linear unbiased predictor of $\mu_j$ iff
+  $K_{ij} = c$ for all $i \ne j$ with $c \ne K_{jj}$; then
+  $z = \tau^2/(K_{jj} - c)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blend_blup_iff}
+  $\tau^2\delta_{ij} - zK_{ij}$ is constant in $i$ iff $zK_{ij} = zc$ off the
+  diagonal and $\tau^2 = z(K_{jj} - c)$; $z = 0$ would need $\tau^2 = 0$.
+\end{proof}
+
+\begin{definition}[GLS mean plus predicted residuals]\label{def:Core_residualWeight}
+  \lean{Credibility.Core.residualWeight}
+  \leanok
+  \uses{def:Core_blup}
+  For a row $c$, the predictor $\hmu + c^T(\hmu_\cdot - \hmu 1)$ (the GLS mean plus $c$
+  applied to the residuals) has the unbiased weights $c + (1 - 1^Tc)\,b$.
+\end{definition}
+
+\begin{theorem}[The best predictor is the GLS mean plus predicted residuals]\label{thm:Core_blup_residual}
+  \lean{Credibility.Core.blupWeight_dotProduct, Credibility.Core.residualWeight_dotProduct,
+        Credibility.Core.blupWeight_eq_residualWeight, Credibility.Core.mul_inv_row_eq}
+  \leanok
+  \uses{def:Core_residualWeight}
+  If $K$ is symmetric then for every $x$,
+  $d^{*T}x = b^Tx + (LK^{-1})_{j\cdot}\,(x - (b^Tx)\,1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_residualWeight}
+  $d^*$ is the weight of the row $c = K^{-1}L_{j\cdot}$, and $(LK^{-1})_{j\cdot} = K^{-1}L_{j\cdot}$
+  since $K^{-1}$ is symmetric; expand $(c + (1-1^Tc)b)^Tx$.
+\end{proof}
+
+\begin{corollary}[The blend restricts the row to $z e_j$]\label{cor:Core_blend_residual}
+  \lean{Credibility.Core.blendWeight_eq_residualWeight, Credibility.Core.blendWeight_bestZ_optimal}
+  \leanok
+  \uses{thm:Core_blup_residual, lem:Core_blendWeight, def:bestZ}
+  The row $c = z e_j$ gives the blend: $w(z) = z e_j + (1 - z)\,b$. If $K \succ 0$ and
+  $b \ne e_j$, the best $z$ in this family is $z^*$ of \eqth{7} for the moments of
+  Definition~\ref{def:Core.levelMoments}, i.e.\ \eqth{26}.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blendWeight, thm:bestZ_optimal, lem:Core_quadForm_gap, thm:Core_levelMoments_bestZ_eq}
+  $1^T(ze_j) = z$. By Lemma~\ref{lem:Core_blendWeight} $\mathrm{mse}_j(w(z))$ is the error
+  variance \eqth{6}, minimised at $z^*$ when the gap $K_{jj} - s^2 = (e_j - b)^TK(e_j - b)$ is positive.
+\end{proof}
+
+\begin{theorem}[The gauge of the residual row]\label{thm:Core_residual_gauge}
+  \lean{Credibility.Core.residualWeight_of_sum_eq_zero, Credibility.Core.residualWeight_eq_iff,
+        Credibility.Core.residualWeight_sub_glsWeight, Credibility.Core.existsUnique_sum_eq_zero_row,
+        Credibility.Core.quadForm_add_smul_glsWeight, Credibility.Core.quadForm_le_of_residualWeight_eq,
+        Credibility.Core.quadForm_eq_invTotal_add}
+  \leanok
+  \uses{def:Core_residualWeight}
+  Let $K \succ 0$. Rows $c$, $c'$ give the same weights iff $c - c' = a\,b$ for some $a$. Each class has
+  exactly one row with $\sum_i c_i = 0$; for unbiased weights $d$ it is $d - b$, with weights $b + (d - b) = d$.
+  If $\sum_i c_{0,i} = 0$ then $(c_0 + ab)^TK(c_0 + ab) = c_0^TKc_0 + a^2s^2$, so the zero-sum row
+  has the least $K$-norm in its class, and $d^TKd = s^2 + (d - b)^TK(d - b)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:Core_residualWeight, lem:mulVec_glsWeight, lem:sum_glsWeight}
+  Compare coefficients: $c + (1 - 1^Tc)b = c' + (1 - 1^Tc')b$ iff $c - c' = (1^Tc - 1^Tc')b$, using
+  $\sum_i b_i = 1$. For the norm, $b^TKc_0 = s^2\,1^Tc_0 = 0$ and $b^TKb = s^2$ since $Kb = s^2 1$.
+\end{proof}
+
+\begin{corollary}[Zero-sum rows of the best predictor and of the blend]\label{cor:Core_gauge_rows}
+  \lean{Credibility.Core.residualWeight_blupWeight_sub, Credibility.Core.blendWeight_sub_glsWeight}
+  \leanok
+  \uses{thm:Core_residual_gauge, def:Core_blup}
+  The zero-sum row of $d^*$ is $d^* - b$; that of the blend is $z(e_j - b)$, with diagonal $z(1 - b_j)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_residual_gauge, lem:Core_blup_foc}
+  $\sum_i d^*_i = 1$ (Lemma~\ref{lem:Core_blup_foc}); $w(z) - b = z(e_j - b)$ by definition.
+\end{proof}
+
+\begin{theorem}[Shrinking towards the best predictor]\label{thm:Core_shrink_blup}
+  \lean{Credibility.Core.linMse_add_smul_blupWeight_sub}
+  \leanok
+  \uses{def:Core_blup}
+  If $K \succ 0$ and $\sum_i w_i = 1$ then for every $\theta$,
+  $\mathrm{mse}_j(w + \theta(d^* - w)) = \mathrm{mse}_j(d^*) + (1-\theta)^2(w - d^*)^TK(w - d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_optimal}
+  The weights sum to one and differ from $d^*$ by $(1-\theta)(w - d^*)$;
+  Theorem~\ref{thm:Core_blup_optimal}.
+\end{proof}
+
+\begin{definition}[Data and a general target]\label{def:Blup_Target}
+  \lean{Credibility.Core.Target}
+  \leanok
+  \uses{def:Blup}
+  Square-integrable random cells $x_i$ and a target $Y$ with $E x = X\beta$,
+  $E Y = x_0^T\beta$, $\cov(x_i, x_j) = K_{ij}$, $\cov(x_i, Y) = \ell_i$, $\operatorname{Var} Y = v$. Unlike
+  Definition~\ref{def:Core_Estimates}, $\cov(x, Y)$ is not tied to $\operatorname{Var} Y$: the noise may be
+  correlated with the target.
+\end{definition}
+
+\begin{lemma}[Bilinear expansions for a general target]\label{lem:Blup_moments_lin}
+  \lean{Credibility.Core.Target.memLp_portLin, Credibility.Core.Target.integral_portLin,
+        Credibility.Core.Target.variance_portLin, Credibility.Core.Target.cov_portLin_Y}
+  \leanok
+  \uses{def:Blup_Target}
+  $E(d^Tx) = (X^Td)^T\beta$, $\operatorname{Var}(d^Tx) = d^TKd$, $\cov(d^Tx, Y) = d^T\ell$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of covariance and linearity of expectation.
+\end{proof}
+
+\begin{theorem}[The general best predictor in true MSE]\label{thm:Blup_mse_true}
+  \lean{Credibility.Core.Target.mse_portLin, Credibility.Core.Target.blup_mse_optimal,
+        Credibility.Core.Target.mse_blup}
+  \leanok
+  \uses{def:Blup_Target}
+  If $X^Td = x_0$ then $\mathbb E(d^Tx - Y)^2 = \mathrm{mse}(d)$. So $d^*$ minimises the true
+  mean squared error among unbiased linear predictors, for every distribution with these
+  moments, and its true error is that of Theorem~\ref{thm:Blup_mse}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_moments_lin, thm:Blup_optimal, thm:Blup_mse, lem:Blup_foc}
+  The error has mean $(X^Td - x_0)^T\beta = 0$, so its mean square is its variance
+  $d^TKd - 2d^T\ell + v$.
+\end{proof}
+
+\section*{Under symmetric noise: the plug-in predictor (distribution layer)}
+
+This section assumes symmetric noise; nothing else depends on it.
+
+\begin{theorem}[The plug-in predictor is unbiased under symmetric noise]\label{thm:Blup_plugIn}
+  \lean{Credibility.Core.Target.centred,
+        Credibility.Core.Target.plugIn_unbiased_of_symmetric,
+        Credibility.Core.Target.blup_plugIn_unbiased_of_symmetric}
+  \leanok
+  \uses{def:Blup_Target, lem:Blup_foc}
+  Let the weights $\hat d(u)$ be a measurable function of the data with $X^T\hat d(u) = x_0$,
+  translation invariant ($\hat d(u + Xb) = \hat d(u)$) and even ($\hat d(-u) = \hat d(u)$). If
+  $(x - X\beta, Y - x_0^T\beta)$ has the same law as its negative, then
+  $\mathbb E[\hat d(x)^Tx - Y] = 0$ (Kackar and Harville 1981). In particular the plug-in best
+  predictor $d^*(\hat K(x), \hat\ell(x))$ is unbiased when $\hat K(u) \succ 0$ and
+  $\hat K$, $\hat\ell$ are even and translation invariant, as quadratic fits on residuals are.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Blup_foc}
+  By invariance and $X^T\hat d = x_0$ the error is $g(e, \varepsilon) = \hat d(e)^Te - \varepsilon$
+  of the centred pair, and $g$ is odd by evenness; a symmetric law gives
+  $\mathbb E g = \mathbb E g(-\cdot) = -\mathbb E g$. For the plug-in predictor,
+  $X^Td^* = x_0$ by Lemma~\ref{lem:Blup_foc}.
+\end{proof}
+
+\begin{remark}[Finding 35]
+  Symmetry is needed. In the app's skewed (gamma) world, the plug-in best predictor on a
+  $\hat K$ with region-specific variance estimates is biased low (simulated). With
+  $\hat d^T\mathbf 1 = 1$ the bias is exactly $\sum_i \operatorname{cov}(\hat d_i, \hat\mu_i)$
+  (Theorem~\ref{thm:Core_randomLin_bias}), and under right skew a region's mean and its variance
+  estimate rise together, so it gets less weight (first order, not formalized).
+  Exposure-balanced fits keep the portfolio level unbiased in every world
+  (Theorem~\ref{thm:Core_balanced_unbiased}).
+\end{remark}
+
+\begin{theorem}[The exact MSE of a plug-in predictor]\label{thm:Blup_plugIn_mse}
+  \lean{Credibility.Core.Target.plugIn, Credibility.Core.Target.integral_sq_plugIn}
+  \leanok
+  \uses{def:Blup_Target}
+  For random weights $\hat d$ and fixed unbiased weights $d$, with $A = d^Tx - Y$ and
+  $B = \hat d^Tx - d^Tx$ square integrable,
+  $\mathbb E(\hat d^Tx - Y)^2 = \mathrm{mse}(d) + \mathbb E B^2 + 2\,\mathbb E[AB]$, for every
+  distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_mse_true}
+  Expand $(A + B)^2$; $\mathbb E A^2 = \mathrm{mse}(d)$ by Theorem~\ref{thm:Blup_mse_true}.
+\end{proof}
+
+\begin{definition}[The loss along a path between two predictors]\label{def:mixLoss}
+  \lean{Credibility.mixLoss, Credibility.bestMix}
+  \leanok
+  For mean squared errors $M_0$, $M_1$ of two predictors and their spread $S$ (the mean square of
+  the difference of the predictions), $\mathrm{loss}(\theta) = (1-\theta)M_0 + \theta M_1
+  - \theta(1-\theta)S$ and $\theta^* = \tfrac12 + (M_0 - M_1)/(2S)$.
+\end{definition}
+
+\begin{theorem}[The best fraction]\label{thm:bestMix}
+  \lean{Credibility.mixLoss_zero, Credibility.mixLoss_one, Credibility.mixLoss_eq,
+        Credibility.bestMix_optimal, Credibility.mixLoss_bestMix, Credibility.bestMix_eq_one_iff,
+        Credibility.bestMix_mem_Icc_iff, Credibility.mixLoss_le_zero_iff, Credibility.mixLoss_half,
+        Credibility.mixLoss_clip_le}
+  \leanok
+  \uses{def:mixLoss}
+  $\mathrm{loss}(0) = M_0$, $\mathrm{loss}(1) = M_1$, $\mathrm{loss}(\tfrac12) = (M_0 + M_1)/2 - S/4$.
+  If $S \ne 0$, $\mathrm{loss}(\theta) = \mathrm{loss}(\theta^*) + S(\theta - \theta^*)^2$ with
+  $\mathrm{loss}(\theta^*) = (M_0 + M_1)/2 - S/4 - (M_0 - M_1)^2/(4S)$, and $\theta^* = 1$ iff
+  $M_0 - M_1 = S$. If $S > 0$, $\theta^*$ minimises the loss and $\theta^* \in [0, 1]$ iff
+  $|M_0 - M_1| \le S$. For $\theta > 0$, $\mathrm{loss}(\theta) \le M_0$ iff
+  $M_1 - M_0 \le (1-\theta)S$. If $S > 0$ and $\theta^* \in [0,1]$, clipping any $\theta$ to $[0,1]$
+  does not increase the loss.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Algebra: complete the square in $\theta$.
+\end{proof}
+
+\begin{theorem}[Mixing two predictors]\label{thm:plugIn_mix}
+  \lean{Credibility.integral_sq_mix, Credibility.Core.Target.plugIn_mix,
+        Credibility.Core.Target.integral_sq_plugIn_mix}
+  \leanok
+  \uses{def:mixLoss, def:Blup_Target}
+  For square-integrable random errors $e_0$, $e_1$,
+  $\mathbb E((1-\theta)e_0 + \theta e_1)^2 = \mathrm{loss}(\theta)$ with $M_k = \mathbb E e_k^2$,
+  $S = \mathbb E(e_1 - e_0)^2$. In particular, for random weights $\hat w$ (the fitted blend) and
+  $\hat d$ (the fitted best predictor) with square-integrable errors, the weights
+  $\hat w + \theta(\hat d - \hat w)$ have mean squared error $\mathrm{loss}(\theta)$ with
+  $S = \mathbb E(\hat d^Tx - \hat w^Tx)^2$, for every distribution.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:mixLoss}
+  Pointwise $((1-\theta)a + \theta b)^2 = (1-\theta)a^2 + \theta b^2 - \theta(1-\theta)(b-a)^2$;
+  integrate. Mixing the weights mixes the predictions.
+\end{proof}
+
+\begin{corollary}[With known moments the full step is best]\label{cor:bestMix_blup}
+  \lean{Credibility.Core.bestMix_blupWeight}
+  \leanok
+  \uses{thm:bestMix, thm:Core_blup_optimal}
+  If $K \succ 0$, $\sum_i w_i = 1$ and $w \ne d^*$, then with $M_0 = \mathrm{mse}_j(w)$,
+  $M_1 = \mathrm{mse}_j(d^*)$ and $S = (w - d^*)^TK(w - d^*)$, $\theta^* = 1$
+  (Theorem~\ref{thm:Core_shrink_blup}).
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:bestMix, thm:Core_blup_optimal}
+  The gain $M_0 - M_1$ is $S$ by Theorem~\ref{thm:Core_blup_optimal}.
+\end{proof}
+
+\begin{theorem}[The best fraction as a regression]\label{thm:bestMix_regression}
+  \lean{Credibility.bestMix_eq_neg_div}
+  \leanok
+  \uses{thm:bestMix}
+  For square-integrable $e_0$, $\Delta$ with $\mathbb E\Delta^2 \ne 0$ and $e_1 = e_0 + \Delta$:
+  $\theta^* = -\mathbb E[e_0\Delta]/\mathbb E\Delta^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\mathbb E e_1^2 = \mathbb E e_0^2 + 2\mathbb E[e_0\Delta] + \mathbb E\Delta^2$; substitute into
+  $\theta^*$.
+\end{proof}
+
+\begin{theorem}[Choosing the fraction on a proxy]\label{thm:mix_proxy}
+  \lean{Credibility.integral_sq_mix_proxy, Credibility.proxy_neg_div_eq,
+        Credibility.proxy_gain_eq, Credibility.integral_mul_eq_zero_of_indepFun}
+  \leanok
+  \uses{thm:bestMix_regression}
+  For square-integrable $e_0$, $\Delta$, $\varepsilon$ (the proxy $Y' = Y + \varepsilon$):
+  $\mathbb E(e_0 + \theta\Delta - \varepsilon)^2 = \mathbb E(e_0 + \theta\Delta)^2
+  + (\mathbb E\varepsilon^2 - 2\mathbb E[e_0\varepsilon]) - 2\theta\,\mathbb E[\Delta\varepsilon]$.
+  Hence the proxy's regression fraction is
+  $-\mathbb E[(e_0 - \varepsilon)\Delta]/\mathbb E\Delta^2 = \theta^* + \mathbb E[\Delta\varepsilon]/\mathbb E\Delta^2$
+  and its gain is the true gain plus $2\mathbb E[\Delta\varepsilon]$. If $\Delta$ and $\varepsilon$ are
+  independent and $\mathbb E\varepsilon = 0$, then $\mathbb E[\Delta\varepsilon] = 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bestMix_regression}
+  Expand the square pointwise and integrate; the gain is the curve at $\theta = 0$ minus
+  $\theta = 1$. Independence gives $\mathbb E[\Delta\varepsilon] = \mathbb E\Delta\,\mathbb E\varepsilon$.
+\end{proof}
+
+\begin{corollary}[A held-out proxy finds the best fraction]\label{cor:plugIn_mix_proxy}
+  \lean{Credibility.Core.Target.integral_sq_plugIn_mix_proxy}
+  \leanok
+  \uses{thm:mix_proxy, thm:plugIn_mix}
+  If the proxy's noise $Y' - Y$ is uncorrelated with the disagreement $\hat d^Tx - \hat w^Tx$, the
+  proxy's mean squared error of $\hat w + \theta(\hat d - \hat w)$ is the target's plus a constant
+  for every $\theta$, so both have the same minimiser, for every distribution.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:mix_proxy, thm:plugIn_mix}
+  Theorem~\ref{thm:mix_proxy} at $\theta$ and at $0$, with mixed predictions as in
+  Theorem~\ref{thm:plugIn_mix}.
+\end{proof}
+
+\begin{definition}[The held-out fraction and its price]\label{def:heldOut}
+  \lean{Credibility.wDot, Credibility.wLoss, Credibility.drawTheta, Credibility.heldOutTheta,
+        Credibility.heldOutNum, Credibility.heldOutPrice}
+  \leanok
+  For fixed $e_0, \Delta \in \mathbb R^J$ (given the fit), weights $W = \mathrm{diag}(w)$ and a
+  held-out noise $\varepsilon$: the weighted loss $L(\theta) = (e_0 + \theta\Delta)^TW(e_0 + \theta\Delta)$,
+  the draw's best fraction $\tilde\theta = -\Delta^TWe_0/\Delta^TW\Delta$, the held-out fraction
+  $\hat\theta = -\Delta^TW(e_0 - \varepsilon)/\Delta^TW\Delta$ and, for a table $C$, the price
+  $\Delta^TWCW\Delta/\Delta^TW\Delta$.
+\end{definition}
+
+\begin{lemma}[The loss is a parabola around the draw's best fraction]\label{lem:wLoss_eq}
+  \lean{Credibility.wLoss_expand, Credibility.wLoss_eq, Credibility.heldOutTheta_eq,
+        Credibility.wLoss_sub_drawTheta}
+  \leanok
+  \uses{def:heldOut}
+  If $\Delta^TW\Delta \ne 0$: $L(\theta) = L(\tilde\theta) + \Delta^TW\Delta\,(\theta - \tilde\theta)^2$ and
+  $\hat\theta = \tilde\theta + \Delta^TW\varepsilon/\Delta^TW\Delta$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand $L$ as a quadratic in $\theta$ and complete the square.
+\end{proof}
+
+\begin{theorem}[The price of one held-out year]\label{thm:heldOut_price}
+  \lean{Credibility.memLp_wsum, Credibility.integral_sq_wsum, Credibility.integral_heldOutTheta,
+        Credibility.integral_sq_heldOutTheta_sub, Credibility.integral_wLoss_heldOutTheta,
+        Credibility.integral_wLoss_heldOutTheta_lt_iff}
+  \leanok
+  \uses{lem:wLoss_eq, thm:integral_quad_cov}
+  Let $\Delta^TW\Delta \ne 0$ and $\varepsilon$ square integrable with mean $0$ and
+  $\cov(\varepsilon_i, \varepsilon_j) = C_{ij}$ (any distribution). Then
+  $\mathbb E(a^T\varepsilon)^2 = a^TCa$, $\mathbb E\hat\theta = \tilde\theta$,
+  $\mathbb E(\hat\theta - \tilde\theta)^2 = \Delta^TWCW\Delta/(\Delta^TW\Delta)^2$, and
+  \[
+    \mathbb E\,L(\hat\theta) = L(\tilde\theta) + \frac{\Delta^TWCW\Delta}{\Delta^TW\Delta}.
+  \]
+  Hence $\hat\theta$ beats a fixed $\theta_0$ in mean iff
+  $\Delta^TWCW\Delta/\Delta^TW\Delta < \Delta^TW\Delta\,(\theta_0 - \tilde\theta)^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:wLoss_eq, thm:integral_quad_cov}
+  $(a^T\varepsilon)^2$ is a quadratic form with mean-$0$ cells
+  (Theorem~\ref{thm:integral_quad_cov}); with $a = W\Delta$ substitute
+  $\hat\theta - \tilde\theta = a^T\varepsilon/\Delta^TW\Delta$ into Lemma~\ref{lem:wLoss_eq}.
+\end{proof}
+
+\begin{theorem}[The price is at least the smallest eigenvalue]\label{thm:heldOut_price_ge}
+  \lean{Credibility.le_heldOutPrice}
+  \leanok
+  \uses{def:heldOut}
+  If $w \ge 0$, $\Delta^TW\Delta > 0$ and every eigenvalue of the symmetric
+  $M = W^{1/2}CW^{1/2}$ is at least $m$, then $m \le \Delta^TWCW\Delta/\Delta^TW\Delta$, whatever $\Delta$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  With $y = W^{1/2}\Delta$ the price is the Rayleigh quotient $y^TMy/y^Ty$.
+\end{proof}
+
+\begin{theorem}[The plug-in predictor under normal noise]\label{thm:Blup_plugIn_normal}
+  \lean{Credibility.Core.Target.resid, Credibility.Core.Target.resid_mul,
+        Credibility.Core.Target.eq_resid_add, Credibility.Core.Target.plugIn_mse_of_normal,
+        Credibility.Core.Target.plugIn_mse_ge_of_normal}
+  \leanok
+  \uses{thm:Blup_plugIn_mse, lem:Blup_foc}
+  Distribution layer. Let $\hat d(u)$ be measurable, unbiased for every data set and translation
+  invariant, and $(x, Y)$ jointly normal. Then
+  $\mathbb E(\hat d^Tx - Y)^2 = \mathrm{mse}(d^*) + \mathbb E(\hat d^Tx - d^{*T}x)^2
+  \ge \mathrm{mse}(d^*)$ (Kackar and Harville 1984).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Blup_plugIn_mse, lem:Blup_foc}
+  With $M = I - X(X^TX)^{-1}X^T$, invariance makes $\hat d^Tx - d^{*T}x$ a function of $Mx$, and
+  $\cov(d^{*T}x - Y, Mx) = M(Kd^* - \ell) = 0$ by the first-order condition
+  (Lemma~\ref{lem:Blup_foc}). Jointly normal and uncorrelated means independent, so the cross
+  term of Theorem~\ref{thm:Blup_plugIn_mse} is $\mathbb E[d^{*T}x - Y]\cdot\mathbb E[\cdot] = 0$.
+\end{proof}
+
+\begin{theorem}[Under normal noise the best linear predictor is $\mathbb E(Y\mid x)$]\label{thm:Blup_condExp_normal}
+  % Lean: Credibility/BlupNormal.lean
+  \lean{Credibility.Core.Target.knownMeanPred, Credibility.Core.Target.knownMeanPred_eq,
+        Credibility.Core.Target.memLp_knownMeanPred,
+        Credibility.Core.Target.measurable_knownMeanPred_fun,
+        Credibility.Core.Target.integral_sub_knownMeanPred,
+        Credibility.Core.Target.indepFun_knownMeanPred_of_normal,
+        Credibility.Core.Target.condExp_eq_knownMeanPred_of_normal,
+        Credibility.Core.Target.knownMeanPred_mse_le_of_normal}
+  \leanok
+  \uses{def:Blup_Target}
+  Distribution layer. Let $(x, Y)$ be jointly normal with $K \succ 0$ and the mean known. Then
+  the error of $\hat Y = \mathbb EY + \ell^TK^{-1}(x - \mathbb Ex)$ is independent of $x$, so
+  $\mathbb E(Y\mid x) = \hat Y$ almost surely, and no measurable function $g(x)$ with
+  $\mathbb E g(x)^2 < \infty$ has a smaller mean squared error. With an unknown $\beta$
+  (Definition~\ref{def:Blup_Target} with $X \ne 0$ estimated) the best linear unbiased predictor is
+  not $\mathbb E(Y\mid x)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\cov(Y - \ell^TK^{-1}x, x_j) = \ell_j - (KK^{-1}\ell)_j = 0$; jointly normal and uncorrelated
+  means independent. So $\mathbb E(Y - \hat Y\mid x) = \mathbb E(Y - \hat Y) = 0$, and for any $g$
+  the cross term $\mathbb E[(g(x) - \hat Y)(\hat Y - Y)]$ factors and vanishes.
+\end{proof}
+
+\begin{definition}[Estimates and a level as data and target]\label{def:Core_toTarget}
+  \lean{Credibility.Core.Estimates.toTarget}
+  \leanok
+  \uses{def:Core_Estimates, def:Blup_Target}
+  The estimates $\hmu_i$ and the level $\mu_j$ of Definition~\ref{def:Core_Estimates} are data
+  and target with $X = 1$, $x_0 = 1$, $\beta = \mu$, $\ell = L_{j\cdot}$, $v = L_{jj}$.
+\end{definition}
+
+\begin{theorem}[The best linear unbiased predictor in true MSE]\label{thm:Core_blup_mse}
+  \lean{Credibility.Core.Estimates.blup_mse_optimal, Credibility.Core.Estimates.mse_portLin,
+        Credibility.Core.Estimates.blend_eq_portLin,
+        Credibility.Core.Estimates.mse_blend_eq_blup_add}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} and
+  $\sum_i d_i = 1$:
+  $\mathbb E\bigl[(\sum_i d_i\hmu_i - \mu_j)^2\bigr] = \mathrm{mse}_j(d)$. So
+  for positive definite $K$ the weights $d^*$ minimise the true mean squared
+  error among all unbiased linear predictors, for every distribution with
+  these moments; the blend is $\sum_i w(z)_i\hmu_i$, and its true mean squared
+  error exceeds the minimum by $(w(z)-d^*)^TK(w(z)-d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blup_optimal, thm:Core_blend_price, thm:Core_bestZ_mse,
+    thm:Blup_mse_true, def:Core_toTarget}
+  Theorem~\ref{thm:Blup_mse_true} with Definition~\ref{def:Core_toTarget}: the mean square
+  error is $d^TKd - 2(Ld)_j + L_{jj}$. Then Theorems~\ref{thm:Core_blup_optimal}
+  and~\ref{thm:Core_blend_price}.
+\end{proof}
+
+\begin{remark}[Finding 18: the blend against the best linear predictor]\label{rem:blup}
+  \uses{thm:Core_blup_mse, cor:Core_blend_blup_equalCol}
+  The thesis optimises $z$ within the blend; the classical benchmark is the
+  best linear unbiased predictor over all cohort estimates (Goldberger 1962;
+  the homogeneous credibility estimator under dependence, Wen, Wu and Zhou
+  2009). With uncorrelated levels the blend is that predictor exactly when
+  cohort $j$ has the same covariance with every other cohort estimate: always
+  for two cohorts, for equal covariances and for independent cohorts
+  (correcting Finding 16, which said ``only for independent cohorts'').
+  Otherwise the blend pays $(w-d^*)^TK(w-d^*)$. Example ($\tau^2 = 1$,
+  $v = (0.5, 1, 3)$, $\rho = 0.5$, optimal $z$): the blend's mean squared
+  error is $2.8\%$, $3.1\%$ and $0.1\%$ above the minimum.
+\end{remark}
+
+\subsection*{A wrong covariance model}
+
+A fitted model computes its weights from a working $\tilde K$, $\tilde L$, for
+example ignoring the correlation between cohorts. How much can that cost?
+
+\begin{definition}[Prediction variance]\label{def:Core_predForm}
+  \lean{Credibility.Core.predForm}
+  \leanok
+  \uses{def:Core_blup}
+  $Q_{K,L}(d,t) = d^TKd - 2t\,d^T\ell + t^2L_{jj}$, the variance of
+  $\sum_i d_i\hmu_i - t\mu_j$; $\mathrm{mse}_j(d) = Q_{K,L}(d,1)$.
+\end{definition}
+
+\begin{lemma}[Expanding the prediction variance]\label{lem:Core_predForm}
+  \lean{Credibility.Core.predForm_one, Credibility.Core.predForm_smul_add,
+        Credibility.Core.dotProduct_sub_eq_zero_of_const}
+  \leanok
+  \uses{def:Core_predForm}
+  For symmetric $K$:
+  $Q(sx + uy, s) = s^2\mathrm{mse}_j(x) + 2su\,y^T(Kx - \ell) + u^2y^TKy$. If
+  $Kx - \ell$ is a constant vector and $\sum_i y_i = 0$, then $y^T(Kx - \ell) = 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity and symmetry of $K$.
+\end{proof}
+
+\begin{lemma}[Wielandt's inequality, two directions]\label{lem:wielandt}
+  \lean{Credibility.Core.wielandt_aux}
+  \leanok
+  Let $0 \le a$, $0 \le A$, $p, r \ge 0$, and for all $s, u$:
+  $a(s^2R + u^2P) \le s^2r + 2sup + u^2p \le A(s^2R + u^2P)$. Then
+  $(A+a)^2p \le (A-a)^2r$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  With $X = 2sup$, $S = s^2r + u^2p$ and $\tilde Q = s^2R + u^2P$: the upper bound at
+  $(s,u)$ times $a$ and the lower bound at $(s,-u)$ times $A$ give
+  $(A+a)X \le (A-a)S$. Take $s = A - a$, $u = A + a$ and divide by $A - a$; if
+  $A \le a$ the same inequality at $s = u = 1$ forces $(A+a)p = 0$.
+\end{proof}
+
+\begin{theorem}[The best predictor of a wrong model]\label{thm:Core_working}
+  \lean{Credibility.Core.linMse_blupWeight_working_le}
+  \leanok
+  \uses{def:Core_predForm, def:Core_blup}
+  Let $K$, $\tilde K$ be positive definite, $0 \le a$, $0 \le A$, and for all $d$, $t$:
+  $0 \le Q_{\tilde K,\tilde L}(d,t)$ and
+  $a\,Q_{\tilde K,\tilde L}(d,t) \le Q_{K,L}(d,t) \le A\,Q_{\tilde K,\tilde L}(d,t)$.
+  Then the best linear unbiased predictor $\tilde d^*$ of the working model satisfies
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ (Kantorovich's factor).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:wielandt, lem:Core_predForm, lem:Core_blup_foc, thm:Core_blup_optimal}
+  Let $h = \tilde d^* - d^*$, so $\sum_i h_i = 0$ and
+  $\mathrm{mse}_j(\tilde d^*) = \mathrm{mse}_j(d^*) + h^TKh$. By the first-order
+  conditions the cross term of $Q_{K,L}$ between $(\tilde d^*, 1)$ and $(h, 0)$ is
+  $h^TKh$ and that of $Q_{\tilde K,\tilde L}$ is $0$. Lemma~\ref{lem:wielandt} gives
+  $(A+a)^2h^TKh \le (A-a)^2\mathrm{mse}_j(\tilde d^*)$; rearrange.
+\end{proof}
+
+\begin{lemma}[Ignoring correlation gives the Bühlmann–Straub blend]\label{lem:Core_blup_diag}
+  \lean{Credibility.Core.blupWeight_diag_eq_blendWeight}
+  \leanok
+  \uses{def:Core_blup}
+  For $\tilde K = \mathrm{diag}(\tau^2 + v_i)$ with positive entries and $L = \tau^2I$,
+  the best linear unbiased predictor is the blend with $z = \tau^2/(\tau^2 + v_j)$ and
+  inverse-variance weights.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_blend_blup_equalCol}
+  Corollary~\ref{cor:Core_blend_blup_equalCol} with $c = 0$.
+\end{proof}
+
+\begin{lemma}[Bounded correlation keeps $K$ positive definite]\label{lem:Core_posDef_corr}
+  \lean{Credibility.Core.posDef_smul_one_add_of_corr}
+  \leanok
+  If $\tau^2 > 0$, $V$ is symmetric with $v_i = V_{ii} \ge 0$, $\delta < 1$ and
+  $|y^TVy - \sum_i v_iy_i^2| \le \delta\sum_i v_iy_i^2$ for all $y$, then
+  $\tau^2I + V$ is positive definite.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $y^T(\tau^2I + V)y \ge \tau^2\lVert y\rVert^2 + (1-\delta)\sum_i v_iy_i^2 > 0$ for $y \ne 0$.
+\end{proof}
+
+\begin{lemma}[Prediction variance for $K = \tau^2I + X$]\label{lem:Core_predForm_smul_one}
+  \lean{Credibility.Core.predForm_smul_one_add, Credibility.Core.dotProduct_sub_two_mul_add_sq_nonneg}
+  \leanok
+  \uses{def:Core_predForm}
+  For $K = \tau^2I + X$ and $L = \tau^2I$:
+  $Q_{K,L}(d,t) = \tau^2(\lVert d\rVert^2 - 2td_j + t^2) + d^TXd$, and
+  $\lVert d\rVert^2 - 2td_j + t^2 \ge 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand; $\lVert d\rVert^2 - 2td_j + t^2 \ge d_j^2 - 2td_j + t^2 = (d_j - t)^2$.
+\end{proof}
+
+\begin{theorem}[A working noise covariance within factors]\label{thm:Core_noiseWorking}
+  \lean{Credibility.Core.linMse_noiseWorking_le}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K = \tau^2I + V$, $\tilde K = \tau^2I + \tilde V$, $L = \tau^2I$ with $\tau^2 > 0$,
+  $V$ symmetric, $\tilde V$ positive semidefinite, $0 \le a \le 1 \le A$ and
+  $a\,y^T\tilde Vy \le y^TVy \le A\,y^T\tilde Vy$ for all $y$. Then
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_working, lem:Core_predForm_smul_one}
+  Both forms share the part $\tau^2(\lVert d\rVert^2 - 2td_j + t^2) \ge 0$, which lies
+  between $a$ and $A$ times itself; so $aQ_{\tilde K,L} \le Q_{K,L} \le AQ_{\tilde K,L}$
+  (Lemma~\ref{lem:Core_predForm_smul_one}). Theorem~\ref{thm:Core_working}.
+\end{proof}
+
+\begin{lemma}[The damped quadratic form]\label{lem:Core_shrinkOffDiag_form}
+  \lean{Credibility.Core.dotProduct_shrinkOffDiag_mulVec}
+  \leanok
+  \uses{def:shrinkOffDiag}
+  $y^TV^\theta y = \sum_i v_iy_i^2 + \theta\,(y^TVy - \sum_i v_iy_i^2)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:shrinkOffDiag_eq}
+  $V^\theta = \theta V + (1-\theta)\mathrm{diag}(V)$ (Lemma~\ref{lem:shrinkOffDiag_eq}).
+\end{proof}
+
+\begin{theorem}[The price of damping correlation]\label{thm:Core_damped}
+  \lean{Credibility.Core.linMse_damped_le}
+  \leanok
+  \uses{def:Core_blup, def:shrinkOffDiag}
+  Let $K = \tau^2I + V$, $L = \tau^2I$ with $\tau^2 > 0$, $V$ symmetric, $v_i = V_{ii} \ge 0$,
+  and the noise correlation between $-\delta_-$ and $\delta_+$:
+  $-\delta_-\sum_i v_iy_i^2 \le y^TVy - \sum_i v_iy_i^2 \le \delta_+\sum_i v_iy_i^2$ for all
+  $y$, with $0 \le \delta_- < 1$, $0 \le \delta_+$ ($1-\delta_-$ and $1+\delta_+$ are the
+  extreme eigenvalues of the noise correlation matrix). The working model
+  $\tilde K = \tau^2I + V^\theta$ damps the off-diagonal noise covariances by
+  $\theta \in [0,1]$ (Definition~\ref{def:shrinkOffDiag}). Then its best predictor satisfies
+  $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ with
+  $a = (1-\delta_-)/(1-\theta\delta_-)$, $A = (1+\delta_+)/(1+\theta\delta_+)$
+  (in Lean with denominators cleared).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_noiseWorking, lem:Core_shrinkOffDiag_form, lem:shrinkOffDiag_eq}
+  With $x$ the correlation term over $\sum_i v_iy_i^2$, $y^TVy / y^TV^\theta y = (1+x)/(1+\theta x)$
+  (Lemma~\ref{lem:Core_shrinkOffDiag_form}), increasing in $x \in [-\delta_-, \delta_+]$, so
+  between $a$ and $A$; $a \le 1 \le A$ and $V^\theta \succeq 0$.
+  Theorem~\ref{thm:Core_noiseWorking}.
+\end{proof}
+
+\begin{corollary}[Ignoring correlation, two-sided]\label{cor:Core_ignoreCorr_two_sided}
+  \lean{Credibility.Core.linMse_ignoreCorr_le_two_sided}
+  \leanok
+  \uses{def:Core_blup}
+  Under the hypotheses of Theorem~\ref{thm:Core_damped}, the estimate that ignores
+  correlation ($\tilde K = \mathrm{diag}(\tau^2 + v_i)$) satisfies
+  $4(1-\delta_-)(1+\delta_+)\,\mathrm{mse}_j(\tilde d^*) \le (2 + \delta_+ - \delta_-)^2\,\mathrm{mse}_j(d^*)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped}
+  Theorem~\ref{thm:Core_damped} with $\theta = 0$.
+\end{proof}
+
+\begin{theorem}[The price of ignoring correlation]\label{thm:Core_ignoreCorr}
+  \lean{Credibility.Core.linMse_ignoreCorr_le}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K = \tau^2I + V$, $L = \tau^2I$, with $\tau^2 > 0$, $V$ symmetric, $v_i = V_{ii} \ge 0$,
+  and let the noise correlation be at most $0 \le \delta < 1$:
+  $|y^TVy - \sum_i v_iy_i^2| \le \delta\sum_i v_iy_i^2$ for all $y$ ($\delta$ is the
+  spectral norm of the noise correlation matrix minus $I$). Then the estimate that
+  ignores correlation ($\tilde K = \mathrm{diag}(\tau^2 + v_i)$) satisfies
+  $(1-\delta^2)\,\mathrm{mse}_j(\tilde d^*) \le \mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_ignoreCorr_two_sided}
+  Corollary~\ref{cor:Core_ignoreCorr_two_sided} with $\delta_- = \delta_+ = \delta$:
+  $(2)^2/(4(1-\delta)(1+\delta)) = 1/(1-\delta^2)$.
+\end{proof}
+
+\begin{lemma}[Correlations at most $r$]\label{lem:Core_corrBound_offDiag}
+  \lean{Credibility.Core.corrBound_of_offDiag}
+  \leanok
+  If $V_{ik}^2 \le r^2v_iv_k$ for $i \ne k$, $r \ge 0$, $v \ge 0$, then
+  $|y^TVy - \sum_i v_iy_i^2| \le (J-1)\,r\sum_i v_iy_i^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $2|y_iV_{ik}y_k| \le r(v_iy_i^2 + v_ky_k^2)$ for each pair, by AM--GM; sum over $i \ne k$.
+\end{proof}
+
+\begin{corollary}[Ignoring correlations of at most $r$]\label{cor:Core_ignoreCorr_offDiag}
+  \lean{Credibility.Core.linMse_ignoreCorr_le_of_offDiag}
+  \leanok
+  \uses{def:Core_blup}
+  If every noise correlation is at most $r$ and $(J-1)r < 1$, then
+  $(1 - (J-1)^2r^2)\,\mathrm{mse}_j(\tilde d^*) \le \mathrm{mse}_j(d^*)$. For two cohorts:
+  ignoring a correlation $\rho$ costs at most the factor $1/(1-\rho^2)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_ignoreCorr, lem:Core_corrBound_offDiag}
+  Theorem~\ref{thm:Core_ignoreCorr} with $\delta = (J-1)r$ (Lemma~\ref{lem:Core_corrBound_offDiag}).
+\end{proof}
+
+\begin{lemma}[Equal correlations]\label{lem:Core_equicorr}
+  \lean{Credibility.Core.equicorr_bounds}
+  \leanok
+  If $V_{ii} = v_i \ge 0$ and $V_{ik} = r\sqrt{v_iv_k}$ for $i \ne k$, $r \ge 0$, then
+  $-r\sum_i v_iy_i^2 \le y^TVy - \sum_i v_iy_i^2 \le (J-1)\,r\sum_i v_iy_i^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $y^TVy - \sum_i v_iy_i^2 = r\bigl((\sum_i\sqrt{v_i}\,y_i)^2 - \sum_i v_iy_i^2\bigr)$;
+  the square is between $0$ and $J\sum_i v_iy_i^2$ (Cauchy--Schwarz).
+\end{proof}
+
+\begin{corollary}[Damping equal correlations]\label{cor:Core_damped_equicorr}
+  \lean{Credibility.Core.linMse_damped_equicorr_le}
+  \leanok
+  \uses{def:Core_blup, def:shrinkOffDiag}
+  If all noise correlations equal $r \in [0,1)$ and the working model damps them by
+  $\theta \in [0,1]$, then $4aA\,\mathrm{mse}_j(\tilde d^*) \le (A+a)^2\,\mathrm{mse}_j(d^*)$ with
+  $a = (1-r)/(1-\theta r)$ and $A = (1+(J-1)r)/(1+\theta(J-1)r)$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped, lem:Core_equicorr}
+  Theorem~\ref{thm:Core_damped} with $\delta_- = r$, $\delta_+ = (J-1)r$ (Lemma~\ref{lem:Core_equicorr}).
+\end{proof}
+
+\begin{corollary}[Ignoring equal correlations]\label{cor:Core_ignoreCorr_equicorr}
+  \lean{Credibility.Core.linMse_ignoreCorr_equicorr_le}
+  \leanok
+  \uses{def:Core_blup}
+  If all noise correlations equal $r \in [0,1)$, the estimate that ignores them satisfies
+  $4(1-r)(1+(J-1)r)\,\mathrm{mse}_j(\tilde d^*) \le (2+(J-2)r)^2\,\mathrm{mse}_j(d^*)$.
+  For $J = 2$ this is $1/(1-r^2)$; for $J = 3$, $r = 0.5$ it is $1.5625$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{cor:Core_damped_equicorr}
+  Corollary~\ref{cor:Core_damped_equicorr} with $\theta = 0$.
+\end{proof}
+
+\begin{remark}[Finding 20: equal correlations, sharp]\label{rem:equicorr}
+  \uses{cor:Core_ignoreCorr_equicorr, cor:Core_damped_equicorr}
+  Only directions $(\tilde d^* + uh, 1)$ with $\sum_i h_i = 0$ enter the proof, so one might
+  hope that the large eigenvalue $1 + (J-1)r$ of an equicorrelated matrix (direction $\mathbf 1$)
+  drops out and $\delta = r$ suffices. It does not: the correlation acts on $\sqrt{v_i}\,h_i$,
+  which need not sum to zero, and as $\tau^2 \to 0$ nothing else damps it. For $J = 3$,
+  $r = 0.5$, $\tau^2 = 0.001$, $v = (1, 1000, 30)$ the ratio is $1.561 > 4/3$. The two-sided
+  bound of Corollary~\ref{cor:Core_ignoreCorr_equicorr} is finite for every $r < 1$ and is
+  attained numerically ($J = 2..7$, $r \le 0.9$, worst case equals the bound to four digits).
+  Damping by half ($\theta = 0.5$) at $J = 3$, $r = 0.5$ cuts the worst case from $56\%$ to $12.5\%$.
+\end{remark}
+
+\begin{theorem}[The price of ignoring correlation in true MSE]\label{thm:Core_ignoreCorr_mse}
+  \lean{Credibility.Core.Estimates.ignoreCorr_mse_le}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} with $K = \tau^2I + V$
+  and $L = \tau^2I$, under the hypotheses of Theorem~\ref{thm:Core_ignoreCorr}: the true
+  mean squared error of the estimate that ignores correlation is at most $1/(1-\delta^2)$
+  times that of the best linear unbiased predictor, for every distribution with these
+  moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_ignoreCorr, lem:Core_posDef_corr, thm:Core_blup_mse, lem:Core_blup_foc}
+  Both predictors are unbiased, so their true mean squared errors are $\mathrm{mse}_j$
+  (Theorem~\ref{thm:Core_blup_mse}); then Theorem~\ref{thm:Core_ignoreCorr}.
+\end{proof}
+
+\begin{theorem}[The price of damping correlation in true MSE]\label{thm:Core_damped_mse}
+  \lean{Credibility.Core.Estimates.damped_mse_le}
+  \leanok
+  \uses{def:Core_Estimates, def:Core_blup, def:shrinkOffDiag}
+  For estimates and levels as in Definition~\ref{def:Core_Estimates} with $K = \tau^2I + V$
+  and $L = \tau^2I$, under the hypotheses of Theorem~\ref{thm:Core_damped}: the true mean
+  squared error of the damped working model's predictor is at most $(A+a)^2/(4aA)$ times
+  that of the best linear unbiased predictor, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_damped, thm:shrinkOffDiag_posDef, thm:Core_blup_mse, lem:Core_blup_foc}
+  Both predictors are unbiased ($V \succeq 0$ and $V^\theta \succeq 0$ by
+  Theorem~\ref{thm:shrinkOffDiag_posDef}), so their true mean squared errors are
+  $\mathrm{mse}_j$ (Theorem~\ref{thm:Core_blup_mse}); then Theorem~\ref{thm:Core_damped}.
+\end{proof}
+
+\begin{remark}[Finding 19: what ignoring correlation can cost]\label{rem:ignoreCorr}
+  \uses{thm:Core_ignoreCorr_mse, cor:Core_ignoreCorr_offDiag, lem:Core_blup_diag}
+  Bühlmann--Straub ignores the correlation between cohorts. With the true parameters this
+  can cost much more than restricting to the blend (Finding~18): in the example of
+  Remark~\ref{rem:blup} $14.3\%$, $9.2\%$, $0.4\%$ against $2.8\%$, $3.1\%$, $0.1\%$.
+  It is never more than the factor $1/(1-\delta^2)$, with $\delta$ the spectral norm of
+  the noise correlation matrix minus $I$, whatever $\tau^2$ and the noise variances.
+  For two cohorts $\delta = |\rho|$ and the bound is nearly attained ($\rho = 0.5$: bound
+  $1.333$, worst found $1.316$). For many cohorts with a common correlation $\delta$ is
+  large and the bound says nothing ($J = 3$, $\rho = 0.5$ gives $\delta = 1$); the two-sided
+  bound (Remark~\ref{rem:equicorr}) fixes this. The general
+  inequality is Kantorovich's, used for OLS against GLS by Bloomfield and Watson (1975).
+\end{remark}
+
+\begin{theorem}[The expectation of a quadratic form, means from a design]\label{thm:integral_quad_mean}
+  \lean{Credibility.Model.integral_quad_of_mean, Credibility.Model.UnbiasedMean.integral_eq}
+  \leanok
+  \uses{def:unbiased_mean}
+  Let $Z_p$ be random variables and $Q$ a quadratic form reading only a set $S$ of cells. If
+  on $S$ the $Z_p$ are square integrable with means $m_p$ and $\cov(Z_p,Z_q) = C_{pq}$, then
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}Z_pZ_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + m_pm_q)$. So an
+  estimator unbiased for $\theta$ under $C$ and $D$ (Definition~\ref{def:unbiased_mean}) has
+  true expectation $\theta$ for any square-integrable cells with means $D\beta$ and
+  covariances $C$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Terms with $Q_{pq} = 0$ vanish. Otherwise both cells are in $S$, so
+  $\mathbb E[Z_pZ_q] = C_{pq} + m_pm_q$ and the product is integrable.
+\end{proof}
+
+\begin{theorem}[The expectation of a quadratic form]\label{thm:integral_quad_cov}
+  \lean{Credibility.Model.integral_quad_of_cov}
+  \leanok
+  \uses{def:unbiased}
+  Let $Z_p$, $p \in J \times T$, be random variables, $S$ a set of cells and
+  $Q$ a quadratic form reading only $S$ ($Q_{pq} \ne 0$ only if $p, q \in S$).
+  If on $S$ the $Z_p$ are square integrable with mean $\mu$ and
+  $\cov(Z_p,Z_q) = C_{pq}$, then
+  $\mathbb E\bigl[\sum_{p,q} Q_{pq}Z_pZ_q\bigr] = \sum_{p,q} Q_{pq}(C_{pq} + \mu^2)$,
+  whatever the cells outside $S$ hold. So ``unbiased for the table $C$''
+  (Definition~\ref{def:unbiased}) is about the true expectation.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_quad_mean}
+  Theorem~\ref{thm:integral_quad_mean} with the constant mean $m_p = \mu$.
+\end{proof}
+
+\begin{lemma}[A common component]\label{lem:Core_addCommon}
+  \lean{Credibility.Core.Estimates.addCommon}
+  \leanok
+  \uses{def:Core_Estimates}
+  Add to every $\hmu_j$ and its $\mu_j$ the same centred, square-integrable
+  $C_j$, uncorrelated with all estimates and levels, with
+  $\cov(C_i,C_j) = R_{ij}$. The result is estimates and levels for $K + R$
+  and $L + R$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_moments_lin}
+  Bilinearity: the cross terms vanish.
+\end{proof}
+
+\begin{lemma}[A common component of orthonormal effects]\label{lem:Core_common}
+  \lean{Credibility.Core.common, Credibility.Core.memLp_common, Credibility.Core.integral_common,
+    Credibility.Core.cov_common_of, Credibility.Core.cov_common, Credibility.Core.cohortEst_eq}
+  \leanok
+  \uses{lem:Core_addCommon}
+  Let $Z_k$ be square-integrable effects and $C_j = \sum_{k \in s_j} c_{jk}Z_k$. Then $C_j$ is
+  square-integrable; under a probability measure it is centred if the $Z_k$ are, uncorrelated
+  with any $Y$ the $Z_k$ are uncorrelated with, and if $\cov(Z_k, Z_l) = [k = l]$ then
+  $\cov(C_i, C_j) = \sum_{k \in s_i}\sum_{l \in s_j} c_{ik}c_{jl}[k = l]$. A component common to
+  all observations of a cohort passes through weights summing to one:
+  $\sum_t a_t(X_t + C) = \sum_t a_tX_t + C$. Group effects (one effect $g(j)$) and crossed effects
+  (a row and a column effect) are instances.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Bilinearity of the covariance over finite sums.
+\end{proof}
+
+% ---------------------------------------------------------------------------
