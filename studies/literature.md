@@ -1432,3 +1432,14 @@ credibility, Künsch, Zhao & Poudyal §10l).
   estimated combination weights lose to fixed ones because their estimation variance exceeds the gain.
   New here: the price as a Rayleigh quotient of the held-out noise table, ≥ `σ²(1 − ρ)` for any fits,
   and the fixed point `θ = 1` given by the theory (known moments), not by equal weights.
+
+### 10v. Residual cross products of per-unit regressions (2026-11-27, for `LineResiduals.lean`)
+From memory, not fetched. In SUR (Zellner 1962, §9 above) the cross-equation covariance `σᵢⱼ` is
+estimated from same-period residual products `eᵢᵀeⱼ`; the unbiased divisor is
+`T − kᵢ − kⱼ + tr(PᵢPⱼ)` (Zellner & Huang 1962, *Further properties of efficient estimators for
+seemingly unrelated regression equations*, Int. Econ. Rev.; Srivastava & Giles 1987, *Seemingly
+Unrelated Regression Equations Models*, ch. 2), with `T − k` when the regressors agree. The
+residual variance `eⱼᵀWⱼeⱼ/(T − k)` is the Hachemeister / regression-credibility `σ̂²`
+(Bühlmann & Gisler 2005, ch. 8). Used: both, in the whitened weighted form, with the thesis's
+`δₜₛ` noise. New here: only the link to the thesis's pair estimator (`p = 1`, handbook
+`res:pooled`) and to the corrected `Λ̂` of the vector levels.

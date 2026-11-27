@@ -763,6 +763,89 @@ severity) are such predictors, and so is the matrix blend.
   Theorem~\ref{thm:CV_correctedLambda} is open.
 \end{remark}
 
+\section*{Residuals of the cohort lines: estimating the noise covariance}
+% Lean: Credibility/LineResiduals.lean
+
+\begin{definition}[Per-cohort weighted lines]\label{def:LR_fit}
+  \lean{Credibility.LineResiduals.blockDesign, Credibility.LineResiduals.cohortForm,
+        Credibility.LineResiduals.white, Credibility.LineResiduals.hat,
+        Credibility.LineResiduals.resid, Credibility.LineResiduals.lineCov}
+  \leanok
+  \uses{def:unbiased_mean}
+  Cohort $j$ has cells $X_{jt}$ with mean $(U_j\beta_j)_t$ for its own coefficients
+  $\beta_j \in \mathbb R^p$ (the block design), volumes $w_{jt} > 0$, and
+  $\cov(X_{jt}, X_{is}) = \delta_{ts}\sigma^2 c_{ij}/\sqrt{w_{jt}w_{it}}$ with $c_{jj} = 1$,
+  $c_{ij} = \rho$. With $V_j = W_j^{1/2}U_j$ and the hat matrix
+  $P_j = V_j(V_j^\top V_j)^{-1}V_j^\top$, the whitened residuals of the weighted least-squares
+  line are $\tilde e_j = (I - P_j)W_j^{1/2}X_j$.
+\end{definition}
+
+\begin{lemma}[Hat matrices]\label{lem:LR_hat}
+  \lean{Credibility.LineResiduals.hat_mul_white, Credibility.LineResiduals.hat_transpose,
+        Credibility.LineResiduals.trace_hat, Credibility.LineResiduals.hat_mul_hat,
+        Credibility.LineResiduals.one_sub_hat_mul_white,
+        Credibility.LineResiduals.trace_one_sub_hat_mul,
+        Credibility.LineResiduals.cohortForm_sum,
+        Credibility.LineResiduals.blockDesign_transpose_cohortForm}
+  \leanok
+  \uses{def:LR_fit}
+  If $V_j^\top V_j$ is invertible: $P_jV_j = V_j$, $P_j$ is symmetric and idempotent with
+  $\operatorname{tr}P_j = p$, $(I - P_j)V_j = 0$, and
+  $\operatorname{tr}((I - P_i)(I - P_j)) = T - 2p + \operatorname{tr}(P_iP_j)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\operatorname{tr}P_j = \operatorname{tr}((V_j^\top V_j)^{-1}V_j^\top V_j)$; expand the product.
+\end{proof}
+
+\begin{theorem}[Expected residual products]\label{thm:LR_resid}
+  \lean{Credibility.LineResiduals.unbiasedMean_sum_mul,
+        Credibility.LineResiduals.unbiasedMean_resid_mul,
+        Credibility.LineResiduals.unbiasedMean_s2,
+        Credibility.LineResiduals.unbiasedMean_cross}
+  \leanok
+  \uses{def:LR_fit, def:unbiased_mean}
+  Whatever the coefficients $\beta_j$,
+  $\mathbb E\sum_t \tilde e_{it}\tilde e_{jt} = \sigma^2c_{ij}\operatorname{tr}((I - P_i)(I - P_j))$.
+  So $\sum_t\tilde e_{jt}^2/(T - p)$ is unbiased for $\sigma^2$ ($p < T$), and for $i \ne j$
+  $\sum_t\tilde e_{it}\tilde e_{jt}/\operatorname{tr}((I - P_i)(I - P_j))$ is unbiased for
+  $\sigma^2\rho$, for any volumes and designs (Zellner's SUR estimator). For one level per
+  cohort ($p = 1$) this is the pair estimator of Corollary~\ref{cor:estimation}.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:unbiased_mean, lem:LR_hat}
+  Row $t$ of $(I - P_i)W_i^{1/2}$ annihilates cohort $i$'s design, since $(I - P_i)V_i = 0$;
+  Theorem~\ref{thm:unbiased_mean} gives the expectation of each product and linearity the sum.
+  The covariance cancels the weights, leaving $\sigma^2c_{ij}\sum_{t,s}(I - P_i)_{ts}(I - P_j)_{ts}$,
+  a trace since $P_j$ is symmetric (Lemma~\ref{lem:LR_hat}).
+\end{proof}
+
+\begin{theorem}[Equal exposure shapes: the divisor $T - p$]\label{thm:LR_shape}
+  \lean{Credibility.LineResiduals.hatOf_smul, Credibility.LineResiduals.hat_eq_of_shape,
+        Credibility.LineResiduals.trace_one_sub_hat_mul_of_eq,
+        Credibility.LineResiduals.unbiasedMean_cross_of_shape}
+  \leanok
+  \uses{def:LR_fit}
+  With one design $U_j = U_0$ and volumes $w_{jt} = a_jg_t$ ($a_j, g_t > 0$) all hat matrices
+  agree, $\operatorname{tr}((I - P_i)(I - P_j)) = T - p$, and
+  $\sum_t\tilde e_{it}\tilde e_{jt}/(T - p)$ is unbiased for $\sigma^2\rho$: study S67's
+  $\hat\rho$ divisor. For other shapes the divisor is $T - 2p + \operatorname{tr}(P_iP_j)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:LR_hat, thm:LR_resid}
+  $V_j = \sqrt{a_j}\,V_0$, and scaling $V$ leaves $V(V^\top V)^{-1}V^\top$ unchanged; then
+  $\operatorname{tr}(P^2) = \operatorname{tr}P = p$ and Theorem~\ref{thm:LR_resid}.
+\end{proof}
+
+\begin{remark}[S67's $\hat\rho$ under unequal shapes]
+  S67 divides the pooled cross products by $T - 2$, right only when $\operatorname{tr}(P_iP_j) = 2$.
+  With unequal exposure shapes $\operatorname{tr}(P_iP_j)$ can be smaller (for $p = 1$,
+  $\operatorname{tr}(P_iP_j) = S_{ij}^2/(w_{i*}w_{j*}) < 1$ unless the volumes are proportional),
+  so that $\hat\rho$ is biased towards $0$; Theorem~\ref{thm:LR_resid}'s divisor removes the bias.
+\end{remark}
+
 \section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
 
 \begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}

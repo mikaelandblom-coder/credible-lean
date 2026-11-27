@@ -893,5 +893,9 @@ near the oracle. General target (**lean** chat): the corrected moment identity a
 so the corrected `Λ̂` is unbiased for any noise covariance between cohorts. *Proved 2026-11-27:*
 `CoreVector.integral_spread` (`CoreVectorMoments.lean`, blueprint `thm:CV_spread`, handbook `res:vecSpread`),
 for any weights with `Σω = 1` and estimates with a common mean; the corrected `Λ̂` is unbiased for any
-`N̂` with `E N̂ = N` (`CoreVector.integral_correctedLambda`). Open: that S67's `N̂` (from `ŝ²`, `ρ̂` of the
-line residuals) has `E N̂ = N`.
+`N̂` with `E N̂ = N` (`CoreVector.integral_correctedLambda`). *Proved 2026-11-27 (`LineResiduals.lean`):* `E Σₜ ẽᵢₜẽⱼₜ = σ²cᵢⱼ(T − 2p + tr(PᵢPⱼ))` for
+weighted lines of `p` coefficients, so `ŝ²` (divisor `T − p`) is unbiased for any volumes, and S67's
+`ρ̂ŝ²` (divisor `T − 2`) exactly when the hat matrices agree, as in S67's world (`wⱼₜ = wⱼ·1.05ᵗ`,
+`hat_eq_of_shape`). There `N̂` is linear in `ŝ²` and `ρ̂ŝ²`, so `E N̂ = N` and the corrected `Λ̂` is
+unbiased (composition not formalized). With unequal shapes S67's `ρ̂` is biased towards 0; the
+divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`) fixes it.

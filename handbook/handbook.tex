@@ -1631,6 +1631,29 @@ covary in any way. This gives the joint $K$ and $L$ of the matrix blend.
   Dropping the cross term $\sum_{i \ne k}\omega_i\omega_kN_{ik}$ (shared shocks) biases $\hat\Lambda$ down (study S67).
 \end{caveat}
 
+\begin{result}[Residuals of the cohort lines]\label{res:lineResid}
+  Each cohort fits its own line ($p$ coefficients) by weighted least squares; whitened
+  design $V_j = W_j^{1/2}U_j$, hat matrix $P_j = V_j(V_j^{\mathsf T}V_j)^{-1}V_j^{\mathsf T}$,
+  whitened residuals $\tilde e_j = (I - P_j)W_j^{1/2}X_j$. With
+  $\cov(X_{jt}, X_{is}) = \delta_{ts}\sigma^2c_{ij}/\sqrt{w_{jt}w_{it}}$ ($c_{jj} = 1$, $c_{ij} = \rho$),
+  whatever the lines,
+  \[
+    \mathbb{E}\sum_t\tilde e_{it}\tilde e_{jt} = \sigma^2c_{ij}\bigl(T - 2p + \operatorname{tr}(P_iP_j)\bigr).
+  \]
+  So $\sum_t\tilde e_{jt}^2/(T - p)$ is unbiased for $\sigma^2$, and
+  $\sum_t\tilde e_{it}\tilde e_{jt}/(T - 2p + \operatorname{tr}(P_iP_j))$ for $\sigma^2\rho$.
+  With one design and $w_{jt} = a_jg_t$, $\operatorname{tr}(P_iP_j) = p$.
+  \lean{Credibility.LineResiduals.unbiasedMean_resid_mul}
+  \lean{Credibility.LineResiduals.trace_one_sub_hat_mul}
+  \lean{Credibility.LineResiduals.unbiasedMean_s2}
+  \lean{Credibility.LineResiduals.unbiasedMean_cross}
+  \lean{Credibility.LineResiduals.unbiasedMean_cross_of_shape}
+\end{result}
+\use Plug both into $\hat N$ for the corrected $\hat\Lambda$ (Result~\ref{res:vecSpread}); $p = 1$ is Result~\ref{res:pooled}.
+\begin{caveat}
+  Dividing by $T - p$ under unequal exposure shapes biases $\hat\rho$ towards $0$.
+\end{caveat}
+
 % ===========================================================================
 \appendix
 \section{A worked example}\label{sec:example}

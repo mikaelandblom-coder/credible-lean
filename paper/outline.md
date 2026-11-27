@@ -95,7 +95,8 @@ may need a paragraph.)
 - [ ] Vector levels (2026-11-27, `CoreVector.integral_spread`): one sentence that the moment `Λ̂` of the
   cohort trend lines, corrected for the noise covariance within and between cohorts, is unbiased for any
   distribution (handbook `res:vecSpread`; S67), given any `N̂` with `E N̂ = N` (`integral_correctedLambda`);
-  the thesis's `τ̂²` correction `Σ ωⱼ ĉⱼ` is its scalar case.
+  the thesis's `τ̂²` correction `Σ ωⱼ ĉⱼ` is its scalar case. Its `N̂` from the lines' residuals
+  (`LineResiduals.lean`, handbook `res:lineResid`): SUR divisors, `T − p` only for equal exposure shapes.
 - [ ] "Beyond the blend" (2026-11-26, `Core.blupWeight_dotProduct`): one sentence that `d*` is the GLS mean plus the
   regression of `μⱼ` on the residuals, the blend being its row cut to `z eⱼ` (best `z` = eq. (26)); shrinking a fraction
   `θ` towards `d*` leaves `(1-θ)²` of the excess (handbook `res:blup_residual`). The row to report is the zero-sum one,
