@@ -1182,3 +1182,50 @@ test('Group world: the group fit beats the BLUP without groups when the shared s
   assert.ok(out.grp.mse < out.blup.mse, `grp ${out.grp.mse} vs blup ${out.blup.mse}`);
   assert.ok(out.floorBlup.mse <= out.floor.mse * 1.05, 'the group-aware oracle is no worse than the floor blend');
 });
+
+test('Cumulant-layer check (noiseDiagnostics.tweedieSkew): with gamma cells of variance φμ²/w (V = μ², p = 2) the implied skewness p·σ/(μ√w) matches ĝ', () => {
+  const r = E.rng(41), J = 20, T = 10, w = 50, phi = 1;
+  let g = 0, gt = 0, n = 0;
+  for (let s = 0; s < 40; s++) {
+    const mu = Array.from({ length: J }, (_, j) => 0.4 * Math.exp(1.6 * j / (J - 1)));
+    const data = { w: mu.map(() => Array(T).fill(w)), X: mu.map((m) => Array.from({ length: T }, () => m + m * Math.sqrt(phi / w) * r.unit(w / phi))) };
+    const D = E.noiseDiagnostics(data);
+    if (D.tweedieSkew == null) continue;
+    g += D.skew; gt += D.tweedieSkew; n++;
+  }
+  g /= n; gt /= n;
+  // pooled as ĝ (mean κ over (mean σ²)^(3/2)), with κⱼ = 2σⱼ⁴/(μⱼ√w) = 2μⱼ³φ²/√w and σⱼ² = φμⱼ²
+  const mu = Array.from({ length: J }, (_, j) => 0.4 * Math.exp(1.6 * j / (J - 1)));
+  const want = 2 * phi ** 2 * sum(mu.map((m) => m ** 3)) / J / Math.sqrt(w) / Math.pow(phi * sum(mu.map((m) => m * m)) / J, 1.5);
+  assert.ok(n > 30, `power defined in ${n} draws`);
+  assert.ok(Math.abs(gt / want - 1) < 0.25, `implied ${gt} vs ${want}`);
+  assert.ok(Math.abs(gt / g - 1) < 0.35, `implied ${gt} vs ĝ ${g}`);
+});
+
+test('Group effects (Unequal.groupEffect_eq_blup, NoiseG.mse_groupEffect_blup): the exact MSE formula matches Monte Carlo with the true K, and weights sum to 0', () => {
+  const world = E.makeWorld({ groups: 3, phi: 0.6, T: 6 }), t = world.truth, K = E.trueK(world), grp = world.truth.grp;
+  const W = E.groupEffects(K, grp, t.phi * t.tau2, null), r = E.rng(17), N = 4000, se = W.map(() => 0);
+  W.forEach((e) => close(sum(e.d), 0, 1e-9, 'Σd = 0: unbiased for a mean-zero effect whatever μ'));
+  for (let n = 0; n < N; n++) {
+    const { data, groupEffects: b } = E.draw(world, r), m = data.X.map((x, j) => sum(x.map((v, s) => v * data.w[j][s])) / sum(data.w[j]));
+    W.forEach((e, g) => { se[g] += (sum(e.d.map((x, i) => x * m[i])) - b[g]) ** 2 / N; });
+  }
+  W.forEach((e, g) => assert.ok(Math.abs(se[g] / e.mse - 1) < 0.08, `group ${g}: MC ${se[g]} vs ${e.mse}`));
+  const f = E.fitGroupLevels(E.draw(world, r).data);
+  assert.equal(f.groupEffects.length, 3);
+  assert.ok(f.groupEffects.every((e) => Number.isFinite(e.est) && e.mse >= 0));
+});
+
+test('Cross term of the BS plug-in (Cumulants.crossTerm_bs_of_cumulants): equal volumes give the balanced closed form −2(1 − 1/J)z(1 − z)(γL + γN/T)/J·(1 − z)τ²', () => {
+  for (const [J, T, wv, s2, t2] of [[8, 10, 50, 36, 0.01], [4, 3, 7, 2, 0.3], [20, 5, 500, 36, 0.002]]) {
+    const w = Array.from({ length: J }, () => Array(T).fill(wv)), z = t2 / (t2 + s2 / (wv * T));
+    for (let j = 0; j < J; j += 3) {
+      const c = E.crossTermBS(w, s2, t2, j), base = -2 * (1 - 1 / J) * z * (1 - z) / J * (1 - z) * t2;
+      close(c.level * t2 * t2, base, 1e-9, 'level part, γL = 1');
+      close(c.noise * s2 * s2, base / T, 1e-9, 'noise part, γN = 1');
+    }
+  }
+  // Finding 39: unequal volumes where the noise part is positive (one region's volume in one year)
+  const w = [[1000, 1, 1, 1], [50, 50, 50, 50], [50, 50, 50, 50], [50, 50, 50, 50]];
+  assert.ok(E.crossTermBS(w, 36, 0.01, 0).noise > 0, 'noise part > 0 for the concentrated region');
+});

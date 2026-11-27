@@ -402,3 +402,131 @@ what was built, studied and proved. Order as they stood in the plan.
   page's switch uses it; models already exposure-balanced are left alone; step `BALANCE_CF_STEP`; Node test
   "Balance to the cross-fitted level" (exact level, common shift, fallback; unbiased and cheaper than exposure
   balance at ρ = 0.6, T = 5). Plug-in MSE of the shifted rates is first order (year weights averaged).
+- [x] Small form of `K_G⁻¹` (2026-11-24, `Unequal.KG_inv_eq`, from `Matrix.inv_mul_mul_transpose_add`):
+  with group levels the engine can invert `A = K(M_φ)` (diagonal for uncorrelated errors) plus one
+  `G × G` matrix instead of `K_G`, also with errors correlated across groups. Only a speed-up; use
+  it if the engine inverts `K_G` for many cohorts. Also: the group effects `b̂_g` (BLUP, from
+  Henderson's equations, `Unequal.groupEffect_eq_blup`) could be shown per group, a readout of
+  "how far is this group from the portfolio". Its true error is known (`NoiseG.mse_groupEffect_blup`:
+  `φτ² − ℓᵀK_G⁻¹ℓ + (1ᵀK_G⁻¹ℓ)²/1ᵀK_G⁻¹1`), so the readout can carry an error bar; world vs fit.
+  *Done 2026-11-27:* the readout "How far is each group from the portfolio?" under the draw (fit or reference
+  "BLUP groups"): b̂_g ± √MSE on the fitted K̂ and φτ²^ (`Engine.groupEffects`), the true b_g of the draw and the
+  error with the true parameters; Node test of the MSE formula against Monte Carlo. The small form is not used:
+  the engine solves K_G for at most a few dozen cohorts, where it is cheap.
+- [x] Cross term with kurtosis (2026-11-24, Finding 38, `Cumulants.crossTerm_of_balanced_cumulants`):
+  the first-order `2E[AB]` of the BS plug-in, relative to `(1 − z)τ²`, is `−2(1 − 1/J)z(1 − z)(γL + γN/T)/J`
+  (`D` estimated). The "Noise shape" readout's price with γ̂N (law (a) only) adds
+  `+(1 − 1/J)z(1 − z)γN/(JT)`; with the cross term the kurtosis total is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`,
+  so the correction has the wrong sign. Next app chat: price = law (a) + cross term (show both), and
+  check against the simulated `2E[AB]` (−6% under gamma). *Unequal volumes (2026-11-24,
+  `studies/runs/cross-term.js`):* the first-order term for any `wⱼₜ` from the moment tables (`firstOrder` there:
+  linearize the fit's weights in (P, B), then the `integral_lin_lin_sumSq` identity) matches simulation,
+  noise part within SE, level part ~30% too large at J = 8 (fine at J = 30). Use that general form in the
+  engine rather than the balanced closed form; γL stays a sensitivity.
+  *Proved 2026-11-25 (`Cumulants.crossTerm_bs_of_cumulants`):* the closed form for any volumes (finite
+  sums over regions, Finding 38); the engine can use it directly instead of the numeric `firstOrder`.
+  *Finding 39 (2026-11-25):* the noise part has no sign: with a region's volume concentrated in one
+  year it is positive (+7.5% of that region's MSE, simulated). So the engine must use the general
+  formula per region, and the readout should show its sign, not assume "kurtosis lowers the price".
+  *Done 2026-11-27:* `Engine.crossTermBS` is the closed form of `crossTerm_bs_of_cumulants` per region (Node test:
+  equal volumes give the balanced corollary exactly; a concentrated region gives a positive noise part); `gainPrice`
+  returns `cross` (per unit γN, γL, at BS's limits under K̂, floor-weighted), and the Noise shape readout shows the
+  cross term, law (a) + cross term, and γL per unit with it. The Monte Carlo check of 2E[AB] is not repeated: the
+  form is proved.
+- [x] Fourth-moment layer (2026-11-22, `notes/fourth-moments.md`): one lemma for `Var` of a quadratic
+  form with third and fourth cumulants (G1 `Wⱼ`, `β²`; G2 `V`; G4 pair weights), plus the third-moment
+  pieces (`Cov` with a linear form, `E` of the cubic `κ̂ⱼ`). Approved (owner); assumptions 1 + 6 with the
+  conditional version (b). *General lemma proved 2026-11-22 (`Cumulants.variance_quad_of_cumulants`).*
+  App: nothing yet; the G2 `V` and the G4 weights will use it once the source corollary is in.
+  *Third moments proved 2026-11-22* (`integral_cubic_of_cumulants`, `covariance_quad_lin_of_cumulants`):
+  `κ̂ⱼ` of `noiseDiagnostics` unbiased *proved 2026-11-23* (`Cumulants.kappaHat_unbiased`, any level,
+  third moments diagonal over years; app badge "proved" on the Noise shape page). Finding 35 (c):
+  the exact `cov(σ̂², μ̂) = Σₛ aₛκₛ Σₜ cₜ(δₜₛ − aₛ)²` *proved 2026-11-23*
+  (`Cumulants.covariance_resVar_mean`; noise squares uncorrelated with the level). *Built 2026-11-23:* the
+  Noise shape page shows a per-region "skew link" (% rise of σ̂ⱼ² per +1% of μ̂ⱼ from the noise,
+  `Engine.skewLink`, with the pooled ĝ: κ̂ⱼ alone has SD ≈ 3 per region, and κ̂ⱼ/σ̂ⱼ⁴ reads ~40% low as
+  σ̂ⱼ² rises with κ̂ⱼ), its mean over regions against the world's (5–20% high), and the predicted skew
+  bias of the same-years power (0–25% high without correlation, 0 under normal noise; overstated
+  with a common year shock, ρ = 0.6: 2.4 against 0.7, since the shared part cancels between regions).
+  Node test: cov against Monte Carlo. *Plug-in portfolio bias predicted 2026-11-23* (`Engine.skewBias`,
+  `studies/runs/skew-bias.js`, 1500 draws): first order `Σᵢ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ)`, the derivative by
+  refitting with region i's residuals scaled. Mean prediction against simulated (vs BS on the same
+  draws): default −0.37 / −0.31%, T = 4 shape 1 −1.75 / −2.15%, σⱼ spread −1.06 / −0.78%, J = 20
+  −0.28 / −0.31%, Lomax α = 4 −0.18 / −0.16%, normal and pooled BLUP 0 / 0; misses the ρ̂ channel
+  (ρ = 0.6: −0.15 / −0.27%, pooled BLUP 0 / −0.33%). One data set's value is rough (SD ≈ mean).
+  Noise shape page: a row per unbalanced fit/reference. *ρ̂ channel added 2026-11-23:* for corrBS and
+  its BLUPs each σ̂ₖ² and ρ̂'s numerator Σ Qᵢⱼ perturbed alone (`vcEstimate` perturb hook), covariances
+  from `covariance_quad_lin_of_cumulants` with a pooled cross-region third moment γ̂ (`crossSkew`, a
+  ratio: 0.39 against 0.66 at ρ = 0.6, T = 10; → truth as T grows). ρ = 0.6: BLUP −0.42 / −0.41%,
+  pooled BLUP −0.30 / −0.33%, corrBS −0.33 / −0.27%; T = 5 or J = 20: about half the BLUPs' bias
+  (γ̂ low). *Refined 2026-11-23:* γ̂'s low reading is the denominator (E σ̂ₐσ̂ᵦσ̂꜀ > σₐσᵦσ꜀ under a shared
+  shock; with the true σ it is exact; leave-one-year-out does not help), so the cross moments are now
+  per-triple unbiased k-statistics (`crossThird`); plus a τ̂² channel with the level third cumulant by a
+  moment equation (`levelThird`). Neither moves the prediction much (T = 5, ρ = 0.6: BLUP −0.78 against
+  −1.07%; J = 20: −0.47 against −0.74 ± 0.18%, −0.61 ± 0.15% with another seed). Level skew adds
+  ~0.1 point (`studies/runs/level-skew-bias.js`). The rest at T ≤ 5 is beyond first order. Stop here: the
+  prediction gets sign and size (within ~30%), and the balance switch removes the portfolio part anyway.
+  *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
+  estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
+  normal-theory `V` once the noise cumulants are estimated, `κ₄ = 0` as the default).
+  *Conditional version (b) proved 2026-11-23* (`VarianceFunction.variance_quad_of_conditional_sources`,
+  `variance_quad_of_powerVariance`): the exact `Var` when the noise cumulants follow the random level
+  through `μᵖ`. App: when the G2 `V` is replaced, compute it with the fitted `p` (averaging the
+  cumulants over the fitted levels, not at the mean level) next to `p = 0`.
+  *G2 `V` proved 2026-11-23, balanced case* (`Cumulants.variance_sampleCov`): equal weights and
+  independent years, `Var ŝᵢⱼ = (VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T` exactly; the app's S3 rule uses the
+  first term only (in correlation form). App, pending: a kurtosis term needs a `κ̂₄ᵢⱼᵢⱼ` from the
+  residuals (cross-region, so not the dropped per-region kurtosis); default `κ₄ = 0` keeps today's
+  rule. *Weighted `Shock.crossHat` proved 2026-11-23* (`Cumulants.variance_crossResid`): exact
+  `Var Ĉᵢⱼ` for any cohort weights and volumes, from the year covariances `Nₛ` (shock + process
+  noise) and the within-year fourth cumulants; the levels cancel. App: this is the `V` to plug into
+  `θ* = Σs²/(Σs² + ΣV)` (`Damping.bestTheta`) in covariance form, with `κ₄ = 0` as the default. *Done 2026-11-23:
+  worse than S3 for the rates (S39), see G2.*
+  *Closed 2026-11-27 (app catch-up):* everything the app can use is built (skew link, skew bias with the ρ̂ and τ̂²
+  channels) or was tried and lost (the covariance-form V, S39); the G4 weights continue under G4 (S69).
+- [x] Cumulant layer (2026-11-22, literature §10l): an optional assumption that the independent
+  noise has a variance function `V(μ)` with dispersion `φ/w`, so that every cumulant follows from
+  it (`κₙ₊₁ = (φ/w) V dκₙ/dμ`). The random effects (levels, shocks, factor) are Gaussian-like
+  (Isserlis) or get their own `V`. It would give the exact variance of `ŝ²`, `Ĉ` and `K̂` (the
+  plug-in `g₃` term), a per-region shrunk `σ̂ⱼ²` (Wen & Liu 2026), and the quadratic credibility
+  of Zhao & Poudyal (2026). Like the distribution layer, it goes in its own files, named "under
+  a variance function", and nothing in the core depends on it. The app's `noiseDiagnostics`
+  already estimates `p` and `κ` (§10k): check `κ̂ⱼ` against the Tweedie prediction `p φ² μ^(2p−1)`
+  before relying on it. Heavy tails (§10l): no variance function gives them. Use a compound
+  Poisson cell instead, with `κₙ(S) = λw E[Yⁿ]` and a Lomax (`α, θ`) or lognormal severity, whose
+  raw moments follow a two-parameter recursion. The fourth-moment results then need `α > 4`, and
+  should say what fails for `α ≤ 4`. Fitting individual claims (Hill estimator) is out of scope
+  (owner, 2026-11-22). From cell totals only, severity moments could come from cell cumulants
+  (`κ̂ₙ / (λw)`), but `κ̂₃` and `κ̂₄` are very unstable under heavy tails. So the app world could
+  draw Lomax claims to show where the tools break, without fitting `α`. Lean work needs the
+  **lean** environment.
+  *App switch built 2026-11-22:* world "Lomax claims" (`params.lomax = α`, slider 2.2–8, default 3;
+  excludes "Normal noise"). The region part `ξⱼₜ` of each cell is a standardized compound Poisson sum
+  (`Engine.claimNoise`) with `λⱼ = μ²(E Y²/(E Y)²)/σⱼ²` claims per vehicle-year (0.11 at `σ = 6`,
+  `α = 3`), so mean and variance, and hence `K` and the floor, are unchanged (Node test). Above 200
+  expected claims per cell, claims beyond the level exceeded by 50 expected claims are drawn exactly
+  and the rest summed as a moment-matched gamma, so the tail is exact and the first two moments too.
+  The year shock `ηₜ` stays gamma. The noise page gives the world skewness at the middle volume (∞ for
+  `α ≤ 3`). **Seen** (`studies/runs/lomax-tails.js`, 3000 draws, seeds 1 and 2; Monte Carlo SEs are
+  unreliable for `α ≤ 4`, the two seeds agree): (1) Default world (~55 claims per cell): no damage.
+  MSE above the floor is +8 to +12% for every fit down to `α = 3.5`, as with gamma noise. It falls at
+  heavier tails (+4 to +8% at 2.5) and turns negative at `α = 2.2` (−1 to −4%): the plug-in fits beat
+  the known-`K` floor. That floor is the best *linear* predictor. An estimated `σ̂²` jumps with a large
+  claim and then shrinks that region harder, which acts like a crude robust estimator (S9 effect,
+  amplified). (2) Small cells (`volume = 50`, ~5 claims, under 2 in the smallest regions): the fits with
+  region-specific variances suffer. corrBS and BLUP are +50 to +58% unbalanced (gamma +40%) and the
+  portfolio under-pricing grows (corrBS −250 to −285 bp against −184 under gamma and ≈ 0 under normal:
+  the Finding 35 channel). BS and BLUP pooled stay at +19 to +26%. Even `α = 8` is worse than gamma
+  there: a claims world's skewness grows like `1/√claims` in the small regions, while the gamma noise
+  has the same skewness at every volume. (3) Jackknife MSEP of corrBS: right on average (ratio
+  0.94–1.05 in the default world), but the typical draw reads low as `α` falls. The median ratio is
+  0.77–0.85 at `α = 2.2`, so one draw's "typical error" understates the error by 15–25%. In small cells
+  it overstates (1.1–1.5) in every world. Practical rule for the app's text: with heavy tails and small
+  cells, use pooled variances (BS, BLUP pooled) or the balance switch, as for Finding 35. No new Finding:
+  no theorem's statement is affected.
+  *Rule shown in the app 2026-11-22* (note under the Lomax slider).
+  *Done 2026-11-27:* the check of κ̂ against a variance function: the Noise shape table shows the skewness that
+  V(μ) = μᵖ with the cross-fitted p̂ implies, p̂·σ̂ⱼ/(μ̂ⱼ√w̄ⱼ) pooled as ĝ (`noiseDiagnostics.tweedieSkew`; Node test
+  with gamma cells of variance φμ²/w: implied 0.40 against ĝ 0.37). In the default world it reads ≈ 0 against
+  ĝ ≈ 0.9: the app's gamma noise is not such a family, so the layer would mislead there. The Lean side of the
+  layer is `VarianceFunction.lean`.

@@ -142,3 +142,43 @@ test('Every step marked proved names a proved Lean declaration; the others say w
     else assert.ok(s.note, `${v.id}/${s.name}: no note`);
   }
 });
+
+test('REML fit (S70): K̂ ≻ 0, θ̂ ≥ 0, the likelihood never below its start, and the projected score vanishes (KKT)', () => {
+  let atZero = 0;
+  for (const par of [{ nr: 2, nc: 2, alpha: 0.02, beta: 0.03, gamma: 0.02 }, { nr: 3, nc: 3, rho: 0.5, spread: 1 }, { missing: true, alpha: 0.1, beta: 0, gamma: 0.04 }]) {
+    const w = C.makeWorld(par), r = E.rng(11);
+    for (let s = 0; s < 30; s++) {
+      const { data } = C.draw(w, r), f = C.fit(data, { method: 'reml' }), rm = f.reml;
+      assert.ok(E.cholesky(f.K), 'K̂ ≻ 0');
+      assert.ok(f.theta.every((x) => x >= 0), 'θ̂ ≥ 0');
+      assert.ok(rm.lik >= rm.lik0 - 1e-9, `likelihood ${rm.lik} vs start ${rm.lik0}`);
+      // KKT: ∂ℓ/∂θₖ = 0 where θ̂ₖ > 0, ≤ 0 where θ̂ₖ = 0 (relative to the score's own size)
+      const sc = Math.max(1, ...rm.score.map(Math.abs)) * 1e-4 / Math.min(...f.Sig.map((r, i) => r[i]));
+      f.theta.forEach((x, k) => {
+        if (x > 0) assert.ok(Math.abs(rm.score[k]) * x < 1e-6 * Math.abs(rm.lik) + 1e-6, `score ${rm.score[k]} at θ̂ = ${x}`);
+        else { atZero++; assert.ok(rm.score[k] <= 1e-6 * sc, `score ${rm.score[k]} > 0 at θ̂ = 0`); }
+      });
+      assert.equal(f.rates.length, w.J);
+      f.cells.forEach((c) => close(sum(c.full), 1, 1e-10, 'weights sum to 1'));
+    }
+  }
+  assert.ok(atZero > 5, `the boundary was exercised (${atZero})`);
+});
+
+test('REML: the found θ̂ is a local maximum of the restricted likelihood over θ ≥ 0', () => {
+  const w = C.makeWorld({ nr: 3, nc: 2, rho: 0.3 }), { data } = C.draw(w, E.rng(5)), f = C.fit(data, { method: 'reml' });
+  const { row, col, sub } = C.observed(data), Sig = E.vcEstimate(sub).Sig;
+  const Kof = (th) => { const L = C.levelCov(row, col, ...th); return Sig.map((r, i) => r.map((x, j) => x + L[i][j])); };
+  const best = C.remlLik(Kof(f.theta), f.m);
+  for (const d of [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]) {
+    const th = f.theta.map((x, k) => Math.max(0, x + 0.05 * (x + 1e-4) * d[k]));
+    assert.ok(C.remlLik(Kof(th), f.m) <= best + 1e-9, `direction ${d}`);
+  }
+});
+
+test('Finding 44: a 2×2 table warns that each variance has one degree of freedom; larger tables do not', () => {
+  const warn = (par) => C.fit(C.draw(C.makeWorld(par), E.rng(2)).data).warnings.some((x) => x.includes('one degree of freedom'));
+  assert.ok(warn({ nr: 2, nc: 2 }));
+  assert.ok(warn({ nr: 2, nc: 2, volume: 4400 }), 'at any volume');
+  assert.ok(!warn({ nr: 3, nc: 2 }));
+});

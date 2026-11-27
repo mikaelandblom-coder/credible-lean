@@ -241,6 +241,65 @@
     return { idx, sub, row, col, wt, m, Sig, P, count, raw };
   }
 
+  // ---------------------------------------------------------------- REML on the cell means (studies/runs/crossed-small.js, S70)
+
+  const inv = (A) => A.map((_, k) => E.solve(A, A.map((_, i) => (i === k ? 1 : 0)))); // A symmetric: columns = rows
+  const mul = (A, B) => A.map((r) => B[0].map((_, j) => sum(r.map((x, k) => x * B[k][j]))));
+  const tr = (A) => sum(A.map((r, i) => r[i]));
+
+  /** P = K⁻¹ − K⁻¹11ᵀK⁻¹/1ᵀK⁻¹1, the REML projection (P1 = 0). */
+  function projP(K) {
+    const Ki = inv(K), u = Ki.map((r) => sum(r)), s = sum(u);
+    return Ki.map((r, i) => r.map((x, j) => x - (u[i] * u[j]) / s));
+  }
+
+  /** The restricted log-likelihood −½(log|K| + log 1ᵀK⁻¹1 + mᵀPm), up to a constant; −∞ if K is not positive definite. */
+  function remlLik(K, m) {
+    const Lc = E.cholesky(K);
+    if (!Lc) return -Infinity;
+    const ld = 2 * sum(Lc.map((r, i) => Math.log(r[i]))), u = E.solve(K, K.map(() => 1)), P = projP(K);
+    return -0.5 * (ld + Math.log(sum(u)) + dot(m, mulVec(P, m)));
+  }
+
+  /** The REML score ∂ℓ/∂θₖ = −½tr(PGₖ) + ½mᵀPGₖPm and Fisher information ½tr(PGₖPGₗ), θ = (α², β², γ²). */
+  function remlScore(m, Sig, G, th) {
+    const K = Sig.map((r, i) => r.map((x, j) => x + th[0] * G[0][i][j] + th[1] * G[1][i][j] + th[2] * G[2][i][j]));
+    const P = projP(K), Pm = mulVec(P, m), PG = G.map((g) => mul(P, g));
+    return { K, score: G.map((g, k) => -0.5 * tr(PG[k]) + 0.5 * quad(g, Pm)), info: PG.map((a) => PG.map((b) => 0.5 * tr(mul(a, b)))) };
+  }
+
+  /**
+   * θ̂ = (α̂², β̂², γ̂²) ≥ 0 maximizing the restricted likelihood of the cell means m ~ N(μ1, Σ̂ + L(θ)), Σ̂ fixed:
+   * projected Fisher scoring from theta0 (moved off 0 by 10⁻³ of the mean noise variance), coordinates at 0
+   * with a negative score held there, step halving until the likelihood does not fall. A Gaussian working
+   * likelihood: its estimating equations are quadratic in m and unbiased for any noise family at the true θ.
+   * Returns { theta, iter, score, lik, lik0 } (lik0: at theta0).
+   */
+  function remlTheta(m, Sig, row, col, theta0) {
+    const G = [0, 1, 2].map((k) => levelCov(row, col, k === 0 ? 1 : 0, k === 1 ? 1 : 0, k === 2 ? 1 : 0));
+    const Kof = (th) => Sig.map((r, i) => r.map((x, j) => x + th[0] * G[0][i][j] + th[1] * G[1][i][j] + th[2] * G[2][i][j]));
+    const scale = tr(Sig) / Sig.length;
+    const lik0 = remlLik(Kof(theta0), m);
+    let th = theta0.map((x) => Math.max(x, 1e-3 * scale)), lik = remlLik(Kof(th), m), it = 0;
+    if (lik0 > lik) { th = theta0.slice(); lik = lik0; }
+    for (; it < 50; it++) {
+      const { score, info } = remlScore(m, Sig, G, th);
+      const free = [0, 1, 2].filter((k) => th[k] > 0 || score[k] > 0);
+      if (!free.length) break;
+      let step;
+      try { step = E.solve(free.map((a) => free.map((b) => info[a][b])), free.map((a) => score[a])); } catch (e) { break; }
+      let t = 1, moved = false, done = false;
+      for (let h = 0; h < 30; h++, t /= 2) {
+        const nt = th.slice();
+        free.forEach((k, i) => { nt[k] = Math.max(0, th[k] + t * step[i]); });
+        const nl = remlLik(Kof(nt), m);
+        if (nl >= lik - 1e-12) { done = Math.abs(nl - lik) < 1e-10; th = nt; lik = nl; moved = true; break; }
+      }
+      if (!moved || done) break;
+    }
+    return { theta: th, iter: it, score: remlScore(m, Sig, G, th).score, lik, lik0 };
+  }
+
   /**
    * The crossed fit. opts.weights as for pairPools; opts.trunc: 'clip' (each variance at 0, the Euclidean
    * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
@@ -249,13 +308,16 @@
    * worlds it visits, until the general targets in PLAN-done.md (crossed levels) are proved.
    */
   function fit(data, opts) {
-    const o = Object.assign({ weights: 'iv', trunc: 'clip' }, opts || {});
+    const o = Object.assign({ weights: 'iv', trunc: 'clip', method: 'pools' }, opts || {});
+    const isReml = o.method === 'reml';
     const { idx, sub, row, col, wt, m, Sig, P, count, raw } = pairPools(data, o.weights);
     const ok = raw.every(Number.isFinite);
-    const theta = !ok ? [0, 0, 0] : o.trunc === 'nnls' ? nnls3([P.r / 2, P.c / 2, P.n / 2]) : raw.map((x) => Math.max(x, 0));
-    const [a2, b2, g2] = theta;
+    const pooled = !ok ? [0, 0, 0] : o.trunc === 'nnls' ? nnls3([P.r / 2, P.c / 2, P.n / 2]) : raw.map((x) => Math.max(x, 0));
     // the noise table of K̂: corrBS's (credibility σ̃ⱼ², one ρ̂), positive definite for ρ̂ ∈ [0, 1)
     const vc = E.vcEstimate(sub);
+    const rm = isReml && ok ? remlTheta(m, vc.Sig, row, col, pooled) : null;
+    const theta = rm ? rm.theta : pooled;
+    const [a2, b2, g2] = theta;
     const L = levelCov(row, col, a2, b2, g2);
     const K = vc.Sig.map((r, i) => r.map((x, j) => x + L[i][j]));
     const allRow = data.cells.map((c) => c.row), allCol = data.cells.map((c) => c.col);
@@ -265,17 +327,20 @@
     const warnings = [];
     if (!ok) warnings.push('a pair class is empty (a table needs at least two rows and two columns): the three variances are not identified');
     const neg = ['α̂²', 'β̂²', 'γ̂²'].filter((_, k) => raw[k] < 0);
-    if (ok && neg.length) warnings.push(`${neg.join(', ')} < 0 from the pools: ${o.trunc === 'nnls' ? 'the three are refitted by least squares on the pool equations with all three ≥ 0' : 'set to 0'} (a projection onto valid values: never further from the truth in its metric)`);
+    if (ok && neg.length && !isReml) warnings.push(`${neg.join(', ')} < 0 from the pools: ${o.trunc === 'nnls' ? 'the three are refitted by least squares on the pool equations with all three ≥ 0' : 'set to 0'} (a projection onto valid values: never further from the truth in its metric)`);
+    // Finding 44 (CrossedSmall): in a 2×2 table each pool has two pairs, so each variance rests on one degree of freedom
+    if (data.nr === 2 && data.nc === 2) warnings.push('a 2×2 table: each of α̂², β̂², γ̂² rests on one degree of freedom, so any unbiased estimate of one from the cell means has standard deviation at least √2 times the true value, at any volume (normal theory; Finding 44, CrossedSmall.sq_le_trace_row). The fit cannot tell rows, columns and cells apart reliably: use the thesis fit (one τ²), or add rows or columns.');
     const steps = [
       { name: 'cell means μ̂ⱼ', badge: 'proved', lean: 'Model.a_special' },
       { name: 'noise σ²ᵢⱼρᵢⱼ^ (eq. (39))', badge: 'proved', lean: 'Model.sigRhoHat_unbiasedX', note: 'unbiased with crossed levels too: the levels cancel within a cell' },
       { name: 'pair estimators P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ̂ᵢᵢ + σ̂ⱼⱼ − 2σ̂ᵢⱼ)', badge: o.weights === 'anova' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.pairHat_unbiasedX', note: o.weights === 'anova' ? 'ANOVA: the cross term −2σ̂ᵢⱼ is left out, biased by the noise covariances (Finding 42)' : 'E P̂ᵢⱼ = 2γ² + 2α²[other row] + 2β²[other column]' },
       { name: `three pools (${o.weights === 'equal' ? 'equal weights' : o.weights === 'iv' ? 'inverse-variance weights' : 'weights ∝ wᵢ*wⱼ*'}) → α̂², β̂², γ̂²`, values: raw, badge: o.weights === 'anova' || o.weights === 'iv' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.crossed_unbiasedX', note: `pairs: ${count.r} same row, ${count.c} same column, ${count.n} neither` + (o.weights === 'iv' ? '. Weights 1/(P̂_class + noise of the difference)² from a first equal-weight pass: unbiased for fixed weights (Model.crossed_unbiasedX); with weights from the same data only nearly (γ̂² about +7% of τ² at ρ = 0.5 in the study)' : '') },
-      { name: `truncation at 0 (${o.trunc === 'nnls' ? 'least squares, θ ≥ 0' : 'clip'})`, values: theta, badge: 'proved', lean: 'ConeProjection.hsq_proj_le', note: 'a projection onto a convex set that contains the truth: its error is at most the raw one, in every draw' },
+      { name: `truncation at 0 (${o.trunc === 'nnls' ? 'least squares, θ ≥ 0' : 'clip'})`, values: pooled, badge: 'proved', lean: 'ConeProjection.hsq_proj_le', note: 'a projection onto a convex set that contains the truth: its error is at most the raw one, in every draw' },
+      ...(isReml ? [{ name: 'REML on the cell means: θ̂ ≥ 0 maximizing the restricted likelihood of μ̂ ~ N(μ1, Σ̂ + L(θ)), from the step above', values: theta, badge: 'not proved yet', note: `projected Fisher scoring, ${rm ? rm.iter : 0} steps. A Gaussian working likelihood: its score is unbiased at the true θ for any noise, but the estimate is not; chosen because its rates were never much worse than the pools' and often far better (S70, studies/runs/crossed-small.js and crossed-fit.js)` }] : []),
       { name: 'K̂ = L̂ + Σ̂ (Σ̂ from corrBS: σ̃ⱼ², one ρ̂)', values: [vc.rho], badge: 'proved', lean: 'Crossed.K_posDef', note: 'K̂ ≻ 0: L̂ ⪰ 0 for α̂², β̂², γ̂² ≥ 0 and Σ̂ ≻ 0' },
       { name: 'rates: the best linear unbiased predictor μ̂ + ℓ̂ᵀK̂⁻¹(μ̂ⱼ − μ̂)', badge: 'proved', lean: 'Core.blup_optimal', note: 'optimal for the true K and L; plugged in here. A cell without data uses ℓ = α²[same row] + β²[same column] (Crossed.missing_blup)' },
     ];
-    return { idx, m, wt, Sig, pools: P, count, raw, theta, rho: vc.rho, K, b: Pr.b, mu, cells: Pr.cells, rates, blendRates, warnings, steps };
+    return { idx, m, wt, Sig, pools: P, count, raw, pooled, reml: rm, method: o.method, theta, rho: vc.rho, K, b: Pr.b, mu, cells: Pr.cells, rates, blendRates, warnings, steps };
   }
 
   /** The thesis fit on the same cells, without rows and columns (corrBS, L = τ²I); a cell without data gets μ̂. */
@@ -294,6 +359,7 @@
     { id: 'vol-clip', weights: 'vol', trunc: 'clip' },
     { id: 'vol-nnls', weights: 'vol', trunc: 'nnls' },
     { id: 'anova-clip', weights: 'anova', trunc: 'clip' },
+    { id: 'reml', weights: 'iv', trunc: 'clip', method: 'reml' },
   ];
 
   /**
@@ -331,5 +397,5 @@
     return lines.join('\n') + '\n';
   }
 
-  return { DEFAULTS, VARIANTS, levelCov, pairPools, makeWorld, draw, gls, blupD, predMse, predictors, exact, layers, observed, pairClass, nnls3, fit, thesisFit, simulate, toCSV };
+  return { DEFAULTS, VARIANTS, levelCov, pairPools, projP, remlLik, remlTheta, makeWorld, draw, gls, blupD, predMse, predictors, exact, layers, observed, pairClass, nnls3, fit, thesisFit, simulate, toCSV };
 });

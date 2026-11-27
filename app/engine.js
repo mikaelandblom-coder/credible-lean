@@ -319,18 +319,20 @@
     const rho = params.rho, a = Math.sqrt(Math.max(rho, 0)), b = Math.sqrt(1 - Math.max(rho, 0));
     const tau = Math.sqrt(truth.tau2), sig = truth.sigmaj2.map(Math.sqrt);
     const levels = [], X = [];
+    let groupEff = null;
     const nz = params.normal, ns = params.noiseShape;
     if (truth.grp) {
       // μⱼ = μ + τ(√φ γ_g + √(1 − φ) ηⱼ): group effects γ_g and region effects ηⱼ, unit variance (HierarchicalMoments.lean).
       const G = Math.max(...truth.grp) + 1, gam = Array.from({ length: G }, () => r.unit(params.levelShape, nz));
       for (let j = 0; j < J; j++) levels.push(truth.mu + tau * (Math.sqrt(truth.phi) * gam[truth.grp[j]] + Math.sqrt(1 - truth.phi) * r.unit(params.levelShape, nz)));
+      groupEff = gam.map((x) => tau * Math.sqrt(truth.phi) * x);
     } else for (let j = 0; j < J; j++) levels.push(truth.mu + tau * r.unit(params.levelShape, nz));
     const withGrp = (d) => (truth.grp ? Object.assign(d, { grp: Object.freeze(truth.grp.slice()) }) : d);
     if (params.ordered) {
       const E = [];
       for (let t = 0; t < T; t++) E.push(orderedNoise(J, Math.max(rho, 0), r, ns, nz, (j) => regionDraw(world, r, j, w[j][t])));
       for (let j = 0; j < J; j++) X.push(E.map((e, t) => levels[j] + sig[j] / Math.sqrt(w[j][t]) * e[j]));
-      return { levels, data: Object.freeze(withGrp({ w: w.map((row) => Object.freeze(row.slice())), X })) };
+      return { levels, groupEffects: groupEff, data: Object.freeze(withGrp({ w: w.map((row) => Object.freeze(row.slice())), X })) };
     }
     const eta = [];
     for (let t = 0; t < T; t++) eta.push(r.unit(ns, nz));
@@ -343,7 +345,7 @@
       X.push(row);
     }
     const data = Object.freeze(withGrp({ w: w.map((row) => Object.freeze(row.slice())), X }));
-    return { levels, data };
+    return { levels, groupEffects: groupEff, data };
   }
 
   // ---------------------------------------------------------------- shared building blocks
@@ -754,6 +756,30 @@
   }
 
   /**
+   * The first-order cross term 2E[AB] of the Bühlmann–Straub plug-in for region j, any volumes
+   * (Cumulants.crossTerm_bs_of_cumulants, Finding 38): one noise variance σ², level variance τ², fourth
+   * cumulants κL of a level and κN/wᵢₜ² of a cell's noise (κN = γN σ⁴, κL = γL τ⁴), D = σ² estimated.
+   * With Wᵢ = Σₜwᵢₜ, k = σ²/τ², zᵢ = Wᵢ/(Wᵢ + k), bᵢ = zᵢ/Σz, S = Σz(1 − z), hᵢ = Σₜ(wᵢₜ/Wᵢ)², c = W − ΣWᵢ²/W:
+   *   αᵢ = zⱼδᵢⱼ + (1 − zⱼ)bᵢ,  λᵢ = −(zⱼ(1 − zⱼ)(δᵢⱼ − bᵢ) + (1 − zⱼ)(zᵢ(1 − zᵢ) − Sbᵢ)/Σz),
+   *   T_P = κN/(J(T − 1)) Σᵢ αᵢλᵢ(1 − hᵢ)/Wᵢ,  T_B = Σᵢ λᵢ(1 − Wᵢ/W)(κL Wᵢ(αᵢ − δᵢⱼ) + κN hᵢαᵢ/Wᵢ),
+   *   2E[AB] = 2((1/σ² + (J − 1)/(cτ²)) T_P − T_B/(cτ²)).
+   * Returns { level, noise } per unit κL and κN (the term is linear in both): 2E[AB] = κL·level + κN·noise.
+   */
+  function crossTermBS(w, sigma2, tau2, j) {
+    const J = w.length, T = w[0].length, W = w.map(sum), Wt = sum(W), k = sigma2 / tau2;
+    const z = W.map((x) => x / (x + k)), Z = sum(z), b = z.map((x) => x / Z), S = sum(z.map((x) => x * (1 - x)));
+    const h = w.map((row, i) => sum(row.map((x) => (x / W[i]) ** 2)));
+    const c = Wt - sum(W.map((x) => x * x)) / Wt, d = (i) => (i === j ? 1 : 0);
+    const al = b.map((bi, i) => z[j] * d(i) + (1 - z[j]) * bi);
+    const la = b.map((bi, i) => -(z[j] * (1 - z[j]) * (d(i) - bi) + (1 - z[j]) * (z[i] * (1 - z[i]) - S * bi) / Z));
+    const tP = sum(al.map((a, i) => a * la[i] * (1 - h[i]) / W[i])) / (J * (T - 1)); // per unit κN
+    const tBL = sum(la.map((l, i) => l * (1 - W[i] / Wt) * W[i] * (al[i] - d(i))));     // per unit κL
+    const tBN = sum(la.map((l, i) => l * (1 - W[i] / Wt) * h[i] * al[i] / W[i]));       // per unit κN
+    const f = 1 / sigma2 + (J - 1) / (c * tau2);
+    return { level: -2 * tBL / (c * tau2), noise: 2 * (f * tP - tBN / (c * tau2)) };
+  }
+
+  /**
    * Noise shape from the pooled within-region residuals scaled by √w: rⱼₜ = √wⱼₜ(Xⱼₜ − μ̂ⱼ) = (Mε)ₜ with
    * εₜ = √wⱼₜ·noise (variance σⱼ², third and fourth cumulants κ₃ⱼ, κ₄ⱼ) and M = I − vvᵀ, vₜ = √aₜ,
    * aₜ = wⱼₜ/wⱼ*. For independent years (Cumulants: moments of quadratic forms)
@@ -836,7 +862,17 @@
     // The kurtosis terms are linear in γL and γN: their parts, and the price per unit of γL.
     const perGammaL = pf((zj) => bsPriceLaw(zj, J, T, 1, 0)) - priceNormal;
     const gainVar = (pooled - floor) / floor;
+    // The cross term 2E[AB] of BS (Finding 38: law (a) alone has the noise kurtosis with the wrong sign), at BS's
+    // limits under K̂, floor-weighted; per unit γN (κN = γN σ⁴) and γL (κL = γL τ⁴). Null when τ²_BS ≤ 0.
+    let cross = null;
+    if (t2BS > 0) {
+      const ct = wt.map((_, j) => crossTermBS(data.w, s2BS, t2BS, j));
+      const agg = (key, scale) => sum(ct.map((x, j) => wt[j] * x[key] * scale)) / wall / floor;
+      const perGN = agg('noise', s2BS * s2BS), perGL = agg('level', t2BS * t2BS);
+      cross = { perGammaN: perGN, perGammaL: perGL, noise: gN * perGN, total: gN * perGN + gammaL * perGL };
+    }
     return {
+      cross,
       floor, gain: { corrBSoverBS: (bs - floor) / floor, blupOverBlend: (floor - blup) / floor, regionVariances: gainVar },
       price: { fitBS: priceFit, fitBSNormal: priceNormal, fitBSNoiseKurt: priceFit - priceNormal - gammaL * perGammaL, fitBSPerGammaL: perGammaL, gammaL, regionVariances: priceVar },
       noiseShape: shape,
@@ -945,7 +981,22 @@
       { name: 'BLUP weights (groups)', formula: F.grpBlupD, values: c, badge: 'proved', lean: 'Credibility.Core.blup_optimal', note: 'for each region j a weight vector over all regions, summing to 1; regions of j’s group get more weight' },
       { name: 'rates (groups)', formula: F.blupRates, values: rates, badge: 'proved', lean: 'Credibility.Core.blup_optimal', note: 'the parameters are plugged in: optimal among unbiased linear predictors for the true K and L' },
     ]);
-    return { means: m, z: null, b, c, weights: D, mu, rates, warnings, notes, flags: { tauNeg: lam + th <= 0 }, K, L, tau2: lam + th, lam, phiTau: th, lamRaw, phiTauRaw: thRaw, rho: p.rho, theta: 1, levelMSE, steps };
+    return { means: m, z: null, b, c, weights: D, mu, rates, warnings, notes, flags: { tauNeg: lam + th <= 0 }, K, L, tau2: lam + th, lam, phiTau: th, groupEffects: groupEffects(K, grp, th, m), lamRaw, phiTauRaw: thRaw, rho: p.rho, theta: 1, levelMSE, steps };
+  }
+
+  /**
+   * The best linear unbiased predictor of each group effect b_g (variance φτ², covariance φτ² with the
+   * cohort means of its group): d = K⁻¹ℓ − (1ᵀK⁻¹ℓ)b (Unequal.groupEffect_eq_blup: Henderson's b̂_g), and its
+   * exact MSE φτ² − ℓᵀK⁻¹ℓ + (1ᵀK⁻¹ℓ)²/1ᵀK⁻¹1 (NoiseG.mse_groupEffect_blup), for the K, φτ² given.
+   * m: cohort means, or null for the MSE only.
+   */
+  function groupEffects(K, grp, phiTau, m) {
+    const J = K.length, G = Math.max(...grp) + 1, u = solve(K, new Array(J).fill(1)), s = sum(u);
+    return Array.from({ length: G }, (_, g) => {
+      const ell = grp.map((x) => (x === g ? phiTau : 0)), k = solve(K, ell), c = sum(k);
+      const d = k.map((x, i) => x - c * u[i] / s);
+      return { g, est: m ? sum(d.map((x, i) => x * m[i])) : null, mse: Math.max(phiTau - sum(ell.map((x, i) => x * k[i])) + c * c / s, 0), d };
+    });
   }
 
   /**
@@ -2159,7 +2210,16 @@
     }
     // Pooled skew link: the mean over regions; proportional to ĝ, so its SE is ĝ's scaled.
     const link = sum(regions.map((r) => r.link)) / J, linkSE = Math.abs(link * skewSE / skew);
-    return { q, regions, skew, skewSE, power, powerSame, powerSkewBias, link, linkSE };
+    // The skewness a variance function V(μ) = μᵖ would imply (cumulant layer, PLAN Pending; VarianceFunction.lean):
+    // κ₃ = (φ/w)²VV' = pφ²μ^(2p−1)/w², so a standardized cell √w(X − μ)/σⱼ has skewness p·σⱼ/(μⱼ√w) = p × its CV.
+    // With the cross-fitted p̂, σ̂ⱼ, μ̂ⱼ and the region's mean volume w̄ⱼ per year, pooled as ĝ is (mean κ over
+    // (mean σ̂ⱼ²)^(3/2)). A check before relying on the layer: far from ĝ means the noise is not such a family.
+    let tweedieSkew = null;
+    if (power) {
+      const kT = regions.map((r, j) => power.b * r.s2 * r.s2 / (r.mu * Math.sqrt(sum(data.w[j]) / T)));
+      tweedieSkew = sum(kT) / J / Math.pow(sBar, 1.5);
+    }
+    return { q, regions, skew, skewSE, power, powerSame, powerSkewBias, link, linkSE, tweedieSkew };
   }
 
   /** One draw's data as CSV: one row per region and year, the columns the fit sees. */
@@ -2170,14 +2230,14 @@
   }
 
   return {
-    taperSignal, fitBLUPAuto, fitVCGP, loyoLoss, fitBLUPLoyo, gainPrice, bsPriceLaw, noiseShape,
+    taperSignal, fitBLUPAuto, fitVCGP, loyoLoss, fitBLUPLoyo, gainPrice, bsPriceLaw, crossTermBS, noiseShape,
     DEFAULTS, MODELS, FEATURES, F, NOTATION, RECIPES, recipeNotation, recipeText,
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, crossFitLevel, BALANCE_CF_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
-    fitGroupLevels, fitGroups, bestBlendWeightsL, blendMSEL, blupWeightL, linMseL,
+    fitGroupLevels, fitGroups, groupEffects, bestBlendWeightsL, blendMSEL, blupWeightL, linMseL,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate, SHRINK_W0,
   };
 });

@@ -219,6 +219,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     <div class="legend" id="legend-draw"></div>
     <svg class="chart" id="c-draw" role="img" aria-label="Rates per region for one draw"></svg>
     <div id="w-draw"></div>
+    <div id="grp-eff"></div>
     <details><summary>Table</summary><div class="tablewrap" id="t-draw"></div></details>
     <details><summary>Noise shape (this draw, moments only)</summary><div class="tablewrap" id="t-noise"></div></details>
   </section>
@@ -324,6 +325,9 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
         <option value="equal">Equal within each class</option>
         <option value="vol">∝ wᵢ*wⱼ* (the product of the volumes)</option>
         <option value="anova">ANOVA (Dannenburg): ∝ wᵢ*wⱼ*, noise cross term left out</option></select></div>
+      <div><label for="c-method">Variances from</label><select id="c-method">
+        <option value="pools">Pair pools (default)</option>
+        <option value="reml">REML on the cell means, from the pools (not proved yet)</option></select></div>
       <div><label for="c-trunc">A negative variance</label><select id="c-trunc">
         <option value="clip">Set to 0 (default)</option>
         <option value="nnls">Refit the other two by least squares, all ≥ 0</option></select></div>
@@ -527,6 +531,16 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     }
     const verdict = ind.ignore < 1.02 ? 'no: ignoring it costs at most 2% in mean squared error' : ind.ignore < 1.1 ? 'hardly: ignoring it costs at most 10%' : 'worth checking: in the worst case ignoring it costs this much (compare fit and reference under Many draws for the actual cost)';
     $('price-data').innerHTML = `<p class="sub" style="margin:0"><b>From this draw</b> (data only): corrBS estimates ρ̂ = ${ind.rho.toFixed(2)}, so the noise correlation matrix has eigenvalues in [1 − ${ind.dm.toFixed(2)}, 1 + ${ind.dp.toFixed(2)}]. Plugged into the bound, a model that ignores the correlation has mean squared error at most ${ratio(ind.ignore)} that of the best linear predictor; ${verdict}.${kept.length ? ' ' + kept.map((k) => k.text).join('; ') + '.' : ''} <span class="badge proved">proved</span> for the true parameters: ${lean('Core.linMse_ignoreCorr_le_two_sided')}, ${lean('Core.linMse_damped_le')}; here an estimate.</p>`;
+    // The BLUP in credibility form (Core.blupWeight_dotProduct): μ̂ᴮᴸᵁᴾ = μ̂_GLS + Ẑ(μ̂ − μ̂_GLS 1), Ẑ = L̂K̂⁻¹ = τ̂²K̂⁻¹ here;
+    // the blend keeps only the diagonal, as one ẑⱼ on its own residual.
+    const vc = E.fitVC(data);
+    if (vc.tau2 > 0 && vc.z) {
+      const J = vc.K.length, Zr = Array.from({ length: J }, (_, j) => E.solve(vc.K, vc.K.map((_, i) => (i === j ? vc.tau2 : 0)))); // row j of τ̂²K̂⁻¹ (K̂ symmetric)
+      const wtp = data.w.map(sum), ord = wtp.map((_, j) => j).sort((a, b) => wtp[a] - wtp[b]);
+      $('price-data').insertAdjacentHTML('beforeend', `<p class="sub" style="margin:10px 0 4px"><b>The BLUP as credibility</b> (corrBS's K̂, this draw): rate = μ̂_GLS + Σᵢ Ẑⱼᵢ(μ̂ᵢ − μ̂_GLS), Ẑ = τ̂²K̂⁻¹. Own: Ẑⱼⱼ on the region's own residual, next to the blend's ẑⱼ; borrowed: Σᵢ≠ⱼ Ẑⱼᵢ, the weight on other regions' residuals (negative under positive noise correlation: a shared bad year is subtracted). <span class="badge proved">proved</span> ${lean('Core.blupWeight_dotProduct')}.</p>
+        <div class="tablewrap"><table><thead><tr><th>Region</th><th>Blend ẑⱼ</th><th>BLUP own Ẑⱼⱼ</th><th>Borrowed Σᵢ≠ⱼẐⱼᵢ</th></tr></thead><tbody>` +
+        ord.map((j) => `<tr><td>R${j + 1}</td><td>${vc.z[j].toFixed(3)}</td><td>${Zr[j][j].toFixed(3)}</td><td>${(sum(Zr[j]) - Zr[j][j]).toFixed(3)}</td></tr>`).join('') + '</tbody></table></div>');
+    }
     const p = E.worldPrice(world), w = p.weighted;
     const rows = [
       [lean('Core.Estimates.blup_mse_optimal', 'Best linear predictor (BLUP)'), w.best, '—'],
@@ -571,7 +585,11 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       <tr><td>Normal noise and levels (no kurtosis terms)</td><td>${pct(p.fitBSNormal, 2)}</td></tr>
       <tr><td>With the noise kurtosis γ̂N z²/(JT)</td><td>${pct(p.fitBSNormal + p.fitBSNoiseKurt, 2)}</td></tr>
       <tr><td>Level kurtosis γL (sensitivity, per unit)</td><td>+${pct(p.fitBSPerGammaL, 2)}</td></tr>
+      ${g.cross ? `<tr><td>Cross term 2E[AB] with γ̂N (any volumes, per region)</td><td>${g.cross.noise >= 0 ? '+' : '−'}${pct(Math.abs(g.cross.noise), 2)}</td></tr>
+      <tr><td><b>Law (a) + cross term</b>, with γ̂N</td><td><b>${pct(p.fitBSNormal + p.fitBSNoiseKurt + g.cross.noise, 2)}</b></td></tr>
+      <tr><td>Level kurtosis γL with the cross term (per unit)</td><td>${p.fitBSPerGammaL + g.cross.perGammaL >= 0 ? '+' : '−'}${pct(Math.abs(p.fitBSPerGammaL + g.cross.perGammaL), 2)}</td></tr>` : ''}
       </tbody></table></div>
+      ${g.cross ? `<p class="sub" style="margin:6px 0 0">The cross term: estimating σ² and τ² moves the weights with the data that they weigh, which law (a) leaves out. With equal volumes it is −2(1 − 1/J)z(1 − z)(γL + γN/T)/J of (1 − z)τ², so with D estimated the kurtosis terms together are −(1 − 1/J)z(1 − z)(γL + γN/T)/J: kurtosis <i>lowers</i> the price, the opposite of law (a) alone (Finding 38). With unequal volumes its noise part has no fixed sign: positive for a region whose volume sits in one year (Finding 39), so read the sign above. <span class="badge proved">proved</span> any volumes, one σ²: ${lean('Cumulants.crossTerm_bs_of_cumulants')}; level part never positive: ${lean('Cumulants.crossTerm_bs_level_nonpos')}. γ̂N is rough with few years (see its SE).</p>` : ''}
       <p class="sub" style="margin:6px 0 0">Law (a): (1 − 1/J)(1 − z)/z · [2/(J(T − 1)) + 2/(J − 1) + γL z²/J + γN z²/(JT)], per region at ẑⱼ, floor-weighted. <span class="badge proved">proved</span> in the balanced world (equal volumes, one σ², no correlation; any distribution with zero third cumulants): ${lean('Cumulants.bsPrice_of_balanced_cumulants')}; with unequal volumes it is applied region by region. γL, the levels’ excess kurtosis, cannot be estimated from a handful of regions, so it is a sensitivity: ${lvl}. <b>Use it:</b> the noise term carries 1/T and rarely moves the price; heavy-tailed levels (a few extreme regions) do. <b>Watch out:</b> the standard errors hold for normal noise only: with skewed noise one draw’s γ̂N spreads far wider (default world, gamma noise with kurtosis 3: mean 2.8, median 1.5, SD about 4.5 against √(24/N) = 0.55), so a single readout mostly says “clearly not normal” or not; the skewness reads about 20% low (a skewed draw raises σ̂ⱼ with it), γ̂N runs high for T ≤ 5, and shared year shocks make the SEs smaller still than the truth.</p>`;
   }
 
@@ -585,12 +603,24 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   }
   $('b-csv').addEventListener('click', () => { if (lastData) download(`credibility-regions-seed${state.seed}.csv`, E.toCSV(lastData)); });
 
+  // ---------- group effects (Henderson's b̂_g with its exact error, fit against world)
+  function renderGroupEffects(data, trueGE, cs) {
+    const box = $('grp-eff'), g = data.grp && (state.fit === 'grp' || state.ref === 'grp') ? E.fitGroupLevels(data) : null;
+    if (!g || !trueGE) { box.innerHTML = ''; return; }
+    const t = world.truth, Kw = E.trueK(world), W = E.groupEffects(Kw, data.grp, t.phi * t.tau2, null);
+    const n = (k) => data.grp.filter((x) => x === k).length;
+    box.innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>How far is each group from the portfolio?</b> The group effect b̂<sub>g</sub> (the best linear unbiased predictor, Henderson's equations) ± its typical error, from the fitted <i>K̂</i> and φτ²^; against the true effect of this draw and the error with the true parameters.</p><table><thead><tr><th>Group</th><th>Regions</th><th>b̂<sub>g</sub> ± error (fit)</th><th>True b<sub>g</sub></th><th>Error, true parameters</th></tr></thead><tbody>` +
+      g.groupEffects.map((e, k) => `<tr><td>G${k + 1}</td><td>${n(k)}</td><td>${pct(e.est, 2)} ± ${pct(Math.sqrt(e.mse), 2)}</td><td>${pct(trueGE[k], 2)}</td><td>${pct(Math.sqrt(W[k].mse), 2)}</td></tr>`).join('') +
+      `</tbody></table><p class="sub" style="margin:4px 0 0"><span class="badge proved">proved</span> ${lean('Unequal.groupEffect_eq_blup')} (b̂<sub>g</sub> is Henderson's estimate), ${lean('Unequal.NoiseG.mse_groupEffect_blup')} (its error φτ² − ℓᵀK⁻¹ℓ + (1ᵀK⁻¹ℓ)²/1ᵀK⁻¹1) for the true parameters; the fit column plugs in the estimates, so its error bar is itself an estimate (it leaves out the error in φτ²^, which with few groups is large).${cs && !cs.useGroups ? ' The held-out years chose no groups for the rates in this draw: b̂<sub>g</sub> is shown anyway.' : ''}</p>`;
+  }
+
   // ---------- one draw
   function renderDraw() {
     const r = E.rng(state.seed);
-    const { levels, data } = E.draw(world, r);
+    const { levels, data, groupEffects: trueGE } = E.draw(world, r);
     lastData = data;
     const bo = { balance: balTarget() }, fit = E.fitWith(state.fit, data, bo), ref = E.fitWith(state.ref, data, bo);
+    renderGroupEffects(data, trueGE, (state.fit === 'grp' ? fit : ref).loyoGroups);
     // Typical error (jackknife MSEP) of the first slot whose model has one: an average-case error, not an interval.
     // It is the unbalanced fit's: with the switch on, a balanced slot has none (its premium uses the exact plug-in MSE).
     const hasJk = (id, f) => E.MODELS[id].msep && !f.balanced;
@@ -702,6 +732,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       <tr><td>Skew link¶ (mean over regions ± SE)</td><td>${pm(D.link, D.linkSE, 2)}</td><td>${worldLink == null ? '—' : worldLink.toFixed(2)}</td></tr>
       ${(sb || []).map(({ id, b }) => `<tr><td>Under-pricing of ${E.MODELS[id].short} from skewed noise, portfolio, before balancing (first order)</td><td>${(100 * b.portfolio).toFixed(2)}%${b.cross ? ` (ρ̂ part ${(100 * b.cross).toFixed(2)}%)` : ''}</td><td></td></tr>`).join('')}
       <tr><td>Variance power p in σⱼ² ∝ μⱼᵖ, cross-fitted (even vs odd years)</td><td>${pw}</td><td>0</td></tr>
+      <tr><td>Skewness a variance function V(μ) = μᵖ would imply with this p̂: p̂·σ̂ⱼ/(μ̂ⱼ√w̄ⱼ), pooled as ĝ (check before assuming a Tweedie-type family)</td><td>${D.tweedieSkew != null ? D.tweedieSkew.toFixed(2) + (Number.isFinite(D.skew) ? ` against ĝ ${D.skew.toFixed(2)}` : '') : ''}</td><td>${pr.normal ? '0' : 'not such a family'}</td></tr>
       <tr><td>Same power from the same years (biased up under skew)</td><td>${D.powerSame ? pm(D.powerSame.b, D.powerSame.se, 2) : ''}</td><td>0</td></tr>
       <tr><td>Its skew bias predicted from ĝ <span class="badge proved">proved</span> ${lean('Cumulants.covariance_resVar_mean')} (first order; regions' noise independent)</td><td>${D.powerSkewBias != null ? '+' + D.powerSkewBias.toFixed(2) : ''}</td><td>${pr.normal ? '0' : ''}</td></tr>
       </tbody></table>
@@ -1270,7 +1301,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
 
   // ---------- crossed levels (app/crossed.js: world, then the fit from the data alone)
   const CR = window.Crossed;
-  const cs = { nr: 4, nc: 3, alpha: 0.06, beta: 0.10, gamma: 0.04, rho: 0, spread: 0, volume: 500, missing: false, weights: 'iv', trunc: 'clip', seed: 1 };
+  const cs = { nr: 4, nc: 3, alpha: 0.06, beta: 0.10, gamma: 0.04, rho: 0, spread: 0, volume: 500, missing: false, weights: 'iv', trunc: 'clip', method: 'pools', seed: 1 };
   const C_SLIDERS = [
     { key: 'nr', label: 'Rows <span class="sub">(countries)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
     { key: 'nc', label: 'Columns <span class="sub">(car types)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
@@ -1294,6 +1325,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   $('c-volume').addEventListener('change', (e) => { cs.volume = +e.target.value; cUpdate(); });
   $('c-weights').addEventListener('change', (e) => { cs.weights = e.target.value; cRenderDraw(); cRenderMany(); });
   $('c-trunc').addEventListener('change', (e) => { cs.trunc = e.target.value; cRenderDraw(); cRenderMany(); });
+  $('c-method').addEventListener('change', (e) => { cs.method = e.target.value; cRenderDraw(); cRenderMany(); });
   const cSeed = $('c-seed');
   $('c-draw').addEventListener('click', () => { cs.seed++; cSeed.value = cs.seed; cRenderDraw(); });
   cSeed.addEventListener('change', () => {
@@ -1309,7 +1341,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   function cRenderDraw() {
     const w = cWorld, { levels, data } = CR.draw(w, E.rng(cs.seed));
     cData = data;
-    const f = CR.fit(data, { weights: cs.weights, trunc: cs.trunc }), th = CR.thesisFit(data);
+    const f = CR.fit(data, { weights: cs.weights, trunc: cs.trunc, method: cs.method }), th = CR.thesisFit(data);
     warnBlock($('c-warn'), f.warnings.map(esc), cs.weights === 'anova' && cs.rho > 0 ? [`ANOVA under correlated noise: its noise correction leaves out the cross term 2σ̂ᵢⱼ, so the pools come out too low by the noise covariances, and in a balanced table all of it lands on γ̂² (Finding 42, ${lean('Model.anovaStat_unbiasedX')}). The pair estimators keep the term and are unbiased for any noise correlation.`] : []);
     // the table: per cell the truth, the own mean, the crossed rate, the thesis rate
     let h = `<p class="sub" style="margin:10px 0 4px"><b>The table</b> (per cell: true level μ; own mean μ̂; <span style="color:var(--fit)">crossed fit</span>; <span style="color:var(--ref)">thesis fit</span>)</p><div class="tablewrap"><table class="mtab"><thead><tr><th></th>${Array.from({ length: w.nc }, (_, c) => `<th>Col ${c + 1}</th>`).join('')}</tr></thead><tbody>`;
@@ -1327,7 +1359,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
     // the three variances
     const t = w.truth, names = ['α² (row)', 'β² (column)', 'γ² (cell)'], tv = [t.alpha2, t.beta2, t.gamma2];
     $('c-var').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>Variances</b> (×10⁻⁴) from the pools of pairs: ${f.count.r} in the same row, ${f.count.c} in the same column, ${f.count.n} in neither</p><table><thead><tr><th></th>${names.map((n) => `<th>${n}</th>`).join('')}</tr></thead><tbody>` +
-      `<tr><td>From the pools</td>${f.raw.map((x) => `<td>${v4(x)}</td>`).join('')}</tr><tr><td>Used</td>${f.theta.map((x) => `<td>${v4(x)}</td>`).join('')}</tr><tr><td>True</td>${tv.map((x) => `<td>${v4(x)}</td>`).join('')}</tr></tbody></table>` +
+      `<tr><td>From the pools</td>${f.raw.map((x) => `<td>${v4(x)}</td>`).join('')}</tr>${f.method === 'reml' ? `<tr><td>Pools, truncated (REML's start)</td>${f.pooled.map((x) => `<td>${v4(x)}</td>`).join('')}</tr>` : ''}<tr><td>Used${f.method === 'reml' ? ' (REML)' : ''}</td>${f.theta.map((x) => `<td>${v4(x)}</td>`).join('')}</tr><tr><td>True</td>${tv.map((x) => `<td>${v4(x)}</td>`).join('')}</tr></tbody></table>` +
       `<p class="sub" style="margin:4px 0 0">Thesis fit: one τ̂² = ${v4(th.tau2)} for all cells (true α² + β² + γ² = ${v4(tv[0] + tv[1] + tv[2])}); noise ρ̂ = ${f.rho.toFixed(2)}.</p>`;
     // weights of one cell's prediction: the relativity at work
     const j0 = 0, c0 = f.cells[j0], nm = cellName(j0);
@@ -1378,18 +1410,19 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       if (done < CN) { $('c-many-sub').textContent = `Computing… ${done} of ${CN} draws`; setTimeout(step, 0); return; }
       const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
       const fl = mean(acc.obs.floor), flm = w.miss.length ? mean(acc.miss.floor) : NaN;
-      const sel = `${cs.weights}-${cs.weights === 'anova' ? 'clip' : cs.trunc}`;
-      const label = { 'equal-clip': 'Crossed: equal weights, set to 0', 'equal-nnls': 'Crossed: equal weights, least squares ≥ 0', 'vol-clip': 'Crossed: ∝ wᵢ*wⱼ*, set to 0', 'vol-nnls': 'Crossed: ∝ wᵢ*wⱼ*, least squares ≥ 0', 'iv-clip': 'Crossed: inverse-variance weights, set to 0', 'iv-nnls': 'Crossed: inverse-variance weights, least squares ≥ 0', 'anova-clip': 'Crossed: ANOVA (Dannenburg), set to 0', thesis: 'Thesis fit (corrBS: no rows or columns)', floorBlend: 'Best blend, true parameters', floor: 'Floor: best predictor, true parameters' };
+      const sel = cs.method === 'reml' ? 'reml' : `${cs.weights}-${cs.weights === 'anova' ? 'clip' : cs.trunc}`;
+      const label = { 'equal-clip': 'Crossed: equal weights, set to 0', 'equal-nnls': 'Crossed: equal weights, least squares ≥ 0', 'vol-clip': 'Crossed: ∝ wᵢ*wⱼ*, set to 0', 'vol-nnls': 'Crossed: ∝ wᵢ*wⱼ*, least squares ≥ 0', 'iv-clip': 'Crossed: inverse-variance weights, set to 0', 'iv-nnls': 'Crossed: inverse-variance weights, least squares ≥ 0', 'anova-clip': 'Crossed: ANOVA (Dannenburg), set to 0', reml: 'Crossed: REML from inverse variance, set to 0', thesis: 'Thesis fit (corrBS: no rows or columns)', floorBlend: 'Best blend, true parameters', floor: 'Floor: best predictor, true parameters' };
       const ids = CR.VARIANTS.map((v) => v.id).concat(['thesis', 'floorBlend', 'floor']);
       $('c-many-sub').innerHTML = `${CN} draws from this world. Summed squared error of the rates in % of the floor (100 = the best linear unbiased predictor with the true parameters); the cell without data on its own. Highlighted: the settings chosen above.`;
       $('c-many').innerHTML = `<table><thead><tr><th>Fit</th><th>Observed cells</th>${w.miss.length ? '<th>Cell without data</th>' : ''}</tr></thead><tbody>` +
         ids.map((id) => `<tr${id === sel ? ' style="font-weight:600"' : ''}><td>${label[id]}</td><td>${(100 * mean(acc.obs[id]) / fl).toFixed(0)}</td>${w.miss.length ? `<td>${(100 * mean(acc.miss[id]) / flm).toFixed(0)}</td>` : ''}</tr>`).join('') + '</tbody></table>';
       const t = w.truth, tv = [t.alpha2, t.beta2, t.gamma2], tau2 = tv[0] + tv[1] + tv[2];
       const row = (id, key) => [0, 1, 2].map((k) => `<td>${(100 * mean(acc[key][id].map((e) => e[k])) / tau2).toFixed(1)}</td>`).join('');
+      const negP = (id) => (100 * mean(acc.raw[id].map((e) => (e.some((x, k) => x + tv[k] < 0) ? 1 : 0)))).toFixed(0);
       const rmse = (id) => (100 * Math.sqrt(mean(acc.used[id].map((e) => e.reduce((s, x) => s + x * x, 0)))) / tau2).toFixed(0);
-      $('c-bias').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>The variances</b>: mean error from the pools (bias) in % of α² + β² + γ²; the root mean square error after truncation, same units</p><table><thead><tr><th>Pools</th><th>α̂²</th><th>β̂²</th><th>γ̂²</th><th>RMSE, set to 0</th><th>RMSE, least squares</th></tr></thead><tbody>` +
-        [['iv', 'Inverse variance'], ['equal', 'Equal weights'], ['vol', '∝ wᵢ*wⱼ*'], ['anova', 'ANOVA']].map(([k, n]) => `<tr><td>${n}</td>${row(`${k}-clip`, 'raw')}<td>${rmse(`${k}-clip`)}</td><td>${k === 'anova' ? '–' : rmse(`${k}-nnls`)}</td></tr>`).join('') +
-        `</tbody></table><p class="sub" style="margin:4px 0 0">Fixed weights (equal, volume) are unbiased for any noise correlation (${lean('Model.crossed_unbiasedX')}); inverse-variance weights come from the same data, so only nearly; ANOVA is biased when ρ > 0 (Finding 42). Inverse variance is the default because its rates are the most accurate (studies/runs/crossed-fit.js), not its variances. The bias column is a Monte Carlo mean (± a few % at ${CN} draws). Both truncations are projections onto valid values, so in their own metric never further from the truth (${lean('ConeProjection.hsq_proj_le')}).</p>`;
+      $('c-bias').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>The variances</b>: mean error from the pools (bias) in % of α² + β² + γ²; the root mean square error after truncation, same units</p><table><thead><tr><th>Pools</th><th>α̂²</th><th>β̂²</th><th>γ̂²</th><th>Draws with one < 0</th><th>RMSE, set to 0</th><th>RMSE, least squares</th><th>RMSE, REML</th></tr></thead><tbody>` +
+        [['iv', 'Inverse variance'], ['equal', 'Equal weights'], ['vol', '∝ wᵢ*wⱼ*'], ['anova', 'ANOVA']].map(([k, n]) => `<tr><td>${n}</td>${row(`${k}-clip`, 'raw')}<td>${negP(`${k}-clip`)}%</td><td>${rmse(`${k}-clip`)}</td><td>${k === 'anova' ? '–' : rmse(`${k}-nnls`)}</td><td>${k === 'iv' ? rmse('reml') : '–'}</td></tr>`).join('') +
+        `</tbody></table><p class="sub" style="margin:4px 0 0">Fixed weights (equal, volume) are unbiased for any noise correlation (${lean('Model.crossed_unbiasedX')}); inverse-variance weights come from the same data, so only nearly; ANOVA is biased when ρ > 0 (Finding 42). Inverse variance is the default because its rates are the most accurate (studies/runs/crossed-fit.js), not its variances. The bias column is a Monte Carlo mean (± a few % at ${CN} draws). Both truncations are projections onto valid values, so in their own metric never further from the truth (${lean('ConeProjection.hsq_proj_le')}). "Draws with one < 0": how often at least one raw estimate came out negative and had to be truncated. REML starts from the inverse-variance pools and maximizes a normal working likelihood of the cell means; its rates beat the pools' in most worlds of studies/runs/crossed-small.js (S70) and crossed-fit.js and were never more than a few points worse, but nothing about it is proved yet.${cWorld.nr === 2 && cWorld.nc === 2 ? ` In a 2×2 table each variance rests on one degree of freedom: no unbiased estimate has a standard deviation below √2 times the true value, at any volume (Finding 44, ${lean('CrossedSmall.sq_le_trace_row')}).` : ''}</p>`;
     };
     setTimeout(step, 0);
   }
@@ -1407,6 +1440,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   function update() {
     world = E.makeWorld(worldParams());
     renderDraw();
+    job++; // cancel a running many-draws job now: it would finish with the new state's fits missing
     clearTimeout(pending); pending = setTimeout(renderMany, 120);
   }
   window.addEventListener('resize', () => { clearTimeout(pending); pending = setTimeout(() => { renderDraw(); renderMany(); mUpdate(); }, 150); });
