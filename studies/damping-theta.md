@@ -746,14 +746,16 @@ projected PSD within the structure): diagonal, block per component, full. Grid: 
 level credibility `z_F ∈ {0.5, 0.85}` (severity noise 4×); 2000 draws, MSE of next year's level in % above the
 full oracle, ± 2 SE ≤ 6.
 - S65. *[numerical]* **With known `Λ` every correlation pays; fitted, the diagonal wins almost everywhere.**
-    Oracle: ignoring `rFY = −0.6` costs 2–3 (F) and 4–13 (Y), ignoring `rab = 0.7` 3–19. Fitted: the
-    diagonal `Λ̂` costs 8–62, the block one 8–86, the full one 10–109. Full is never better than block
-    (best −0.9 ± 0.7). Block beats diagonal only for the well-measured component with a level–slope
-    correlation (`rab = 0.7`, F at `z_F = 0.85`: 7.9–27.4 against 22.3–33.8; F at `z_F = 0.5`, `J = 30`, `T = 8`
-    narrowly; Y only at `J = 30`, `T = 8`, `z_F = 0.85`: 16.5 against 20.1); everywhere else the
-    off-diagonals' estimation noise exceeds their gain: block loses up to 32 points to diagonal, full up to 59. The frequency–severity
-    correlation never paid as fitted. Conditions: independent cohorts, normal levels, the unweighted
-    moment estimator; a better `Λ̂` (weighted, REML, GEE) shrinks every price, and may move the edge.
+    Oracle: ignoring `rFY = −0.6` costs 1.5–3.3 (F) and 4–15 (Y), ignoring `rab = 0.7` 3–15 (F) and 1–9 (Y).
+    Fitted: the diagonal `Λ̂` costs 9–69, the block one 9–92, the full one 13–115. Full is never better than
+    block (full − block ≥ 0.3). Block beats diagonal only for the well-measured component with a level–slope
+    correlation (`rab = 0.7`, F at `z_F = 0.85`: 1–15 points in 7 of those 8 worlds; Y only at `J = 30`, `T = 8`,
+    by 3.5–4.6); everywhere else the off-diagonals' estimation noise exceeds their gain: block loses up to
+    31 points to diagonal, full up to 59. The frequency–severity correlation never paid as fitted.
+    Conditions: independent cohorts, normal levels, the unweighted moment estimator; a better `Λ̂` (weighted,
+    REML, GEE) shrinks every price, and may move the edge. *Rerun 2026-11-27 with the app's generator: the
+    first run's LCG had serially correlated draws (Λ̂'s slope variance biased about −100% at `T = 5`); the
+    conclusions held, the numbers above are the rerun's.*
 
 **Consequence (hypothesis).** The app's "cohort trend lines" step fits diagonal `Λ̂` by default (four
 scalar credibilities after centring) and treats off-diagonal entries as an optional extra chosen by gain
@@ -770,18 +772,45 @@ unbiased moment `Λ̂` (`…W`), and damping: the diagonal fit plus `θ̂ ×` th
 `θ̂ = max(0, 1 − ΣV̂/Σr̂²)` (the plug-in `θ*` of `Damping.lean` on the correlation scale; `θ̂ = 0` is the
 diagonal fit). 64 worlds, 1500 draws; differences against the (unweighted) diagonal fit, paired ± 2 SE.
 - S66. *[numerical]* **Weight the moment `Λ̂` by exposure and damp its off-diagonals.** The weighted
-    diagonal fit beats the unweighted one in all 128 world × component cells (1–12 points). The weighted
-    damped fit (`dampW`) is never significantly worse than the diagonal fit (worst +0.7, within 2 SE) and
-    better in 64 of 64 worlds for F and 48 for Y, by up to 26 points (the largest gains with a strong
-    level–slope correlation, high credibility and `J = 30`, where `θ̄` reaches 0.65). Against the weighted
-    diagonal fit it costs 4–7 points (unpaired difference) in the worlds with no correlation, low
-    credibility and `T = 5`, and wins up to 21. Undamped block and full fits stay erratic (−28 to +58).
-    With year shocks the off-diagonals pay more (block's mean −2.4 for F at `ρ = 0.3` against +6.2 at 0),
-    likely because a common shock tilts every cohort's line alike and the fitted `Λ̂` partly absorbs it;
-    not checked. `θ̂` averages 0.07–0.65 and is 0.07–0.10 where `Λ` is diagonal.
+    diagonal fit beats the unweighted one in all 128 world × component cells (1–14 points). The weighted
+    damped fit (`dampW`) is never significantly worse than the diagonal fit (worst +0.3, within 2 SE) and
+    better in 62 of 64 worlds for F and 50 for Y, by up to 26 points (the largest gains with a strong
+    level–slope correlation, high credibility and `J = 30`, where `θ̄` reaches 0.64). Against the weighted
+    diagonal fit it costs up to 5 (F) and 8 (Y) points (unpaired difference) in the worlds with no
+    correlation, and wins up to 21. Undamped block and full fits stay erratic (−28 to +54). With year shocks
+    the off-diagonals pay more (block's mean −2.5 for F at `ρ = 0.3` against +6.5 at 0); S67 checks why.
+    `θ̂` averages 0.07–0.64, and 0.07–0.15 where `Λ` is diagonal. *Rerun with the app's generator (see S65).*
 
 **Consequence (hypothesis).** Default for the app's "cohort trend lines" step: exposure-weighted moment
 `Λ̂`, off-diagonals damped by `θ̂` (from data, no hyperparameter), PSD by projection. It replaces S65's
 "diagonal by default": it keeps the diagonal fit's safety and takes most of the gain where correlations
 exist. Open: the fits that model the year shocks (a `ρ̂`, joint `K̂`), and a general statement for the
 plug-in `θ̂` (when it is within ε of the better of `θ = 0` and `θ = θ*`).
+
+### Vector levels, part 3: modelling the year shocks (2026-11-27, `studies/vector-lambda-shocks.js`)
+S66's world with `ρ ∈ {0, 0.3, 0.6}`, `rFY = −0.6`, the other axes as S65 (48 worlds, 1000 draws). The fit
+estimates the shocks: `ρ̂ᶜ` from same-year residual products of different cohorts (a "same column" pair
+estimator, as `CrossedEstimation.lean`), scaled by `tr(I − H) = T − 2`, exact here since all cohorts' exposures
+have one shape; `N̂` the noise covariance of the stacked line estimates from `ŝ²`, `ρ̂`; and the moment `Λ̂`
+corrected for any noise covariance `N` between cohorts: `E Σⱼ ωⱼ eⱼeⱼᵀ = (1 − Σω²)Λ + Σⱼ ωⱼNⱼⱼ − ΣᵢΣₖ ωᵢωₖNᵢₖ`
+(`eⱼ = β̂ⱼ − Σωᵢβ̂ᵢ`, `Σω = 1`). Fits against S66's `dampW` (shocks ignored): `dampWc` (corrected `Λ̂`, still an
+independent-cohort predictor), `jointDiag` / `jointDamp` (corrected `Λ̂` diagonal / damped, joint BLUP with
+`K̂ = I ⊗ Λ̂ + N̂`); oracle: the joint BLUP with the truth.
+- S67. *[numerical]* **Model the shocks: corrected `Λ̂` and the joint BLUP.** `ρ̂` is 0.25–0.29 at `ρ = 0.3` and
+    0.51–0.56 at 0.6 (10–15% low). Ignoring the shocks biases `Λ̂` down: the level variance by −23 to −31% at
+    `ρ = 0.3` and −46 to −54% at 0.6 when `z_F = 0.5` (−2 to −10% at `z_F = 0.85`), the slope variance by −33% to
+    −1150% (common shocks tilt every line alike, so the cohorts' slopes look alike); corrected, within a few
+    percent (slope within its noise). This is S66's guess, but for the variances: the cross terms vanish
+    for level–slope entries by centring, so the shocks do not enter the off-diagonals here; why
+    off-diagonals paid more under shocks stays open. The correction alone gains little (`dampWc`: −0.1 to +0.4
+    at `ρ = 0`, to −14 at 0.6). The joint damped BLUP is the fit: at `ρ = 0` it costs −0.2 to +1.9 (F) and +3.2
+    (Y), at `ρ = 0.3` it gains up to 27 (F) and 38 (Y) (means −11, −13; worst +1.5 / +6.9, within 2 SE but for
+    one Y world), at `ρ = 0.6` 20–112 (F) and 22–147 (Y), cutting `dampW`'s excess over the oracle there (means 67, 93) by three quarters.
+    The damped and diagonal joint fits are within a few points of each other.
+
+**Consequence (hypothesis).** The "cohort trend lines" step fits the joint damped BLUP: `ρ̂` per component from
+same-year residual pairs, `Λ̂` exposure-weighted and corrected for `N̂`, off-diagonals damped by `θ̂`, PSD by
+projection. Without shocks it costs at most 2–3 points against S66's default; with shocks it is the only fit
+near the oracle. General target (**lean** chat): the corrected moment identity above, for any `N` and weights
+`ω` (a matrix version of §2.8's expectation under correlated noise, `Expectation.lean` / `UnequalEstimation`),
+so the corrected `Λ̂` is unbiased for any noise covariance between cohorts.

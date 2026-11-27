@@ -744,13 +744,16 @@ One chat per step; none needs Lean except step 5.
   with correlated cohorts is proved too (`hachemeister_bestZ`): an app step "cohort trend
   lines" (level + slope per cohort, shared year shocks) would show `Z` as a 2 × 2 matrix.
   *Studied 2026-11-27 (S65, `studies/vector-lambda.js`):* fit `Λ̂` diagonal by default (level, slope,
-  F, Y as four scalar credibilities after centring); a block (full) `Λ̂` loses up to 32 (59) points against it
+  F, Y as four scalar credibilities after centring); a block (full) `Λ̂` loses up to 31 (59) points against it
   to estimation noise and wins only for a well-measured component with a strong
   level–slope correlation. Next: damped off-diagonals (θ from data), year shocks, a better `Λ̂`.
   *Revised 2026-11-27 (S66, `studies/vector-lambda-damp.js`):* default to the exposure-weighted moment
   `Λ̂` with off-diagonals damped by the plug-in `θ̂` (`Damping.lean`'s `θ*`) and projected PSD: never
   significantly worse than the diagonal fit in 64 worlds (with and without year shocks), up to 26
-  points better. Open: fits that model the year shocks.
+  points better. *Revised again (S67, `studies/vector-lambda-shocks.js`):* with year shocks, fit the
+  joint damped BLUP (`ρ̂` from same-year residual pairs, `Λ̂` corrected for the noise covariance between
+  cohorts, `K̂ = I ⊗ Λ̂ + N̂`): at most 2–3 points dearer without shocks, up to 27–147 points better with
+  them. Lean target: the corrected moment identity (S67 Consequence).
   Also proved: with independent cohorts the bivariate blend is the best predictor, and with
   no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
   bivariate one, so the app's fourth fit only matters when cohorts or components correlate.
