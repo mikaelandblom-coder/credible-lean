@@ -116,6 +116,10 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   bias-corrected bootstrap MSE (from secondary sources: abstracts and citing papers). Used 2026-11-27
   (`studies/runs/blup-verdict.js`, S74): bootstrapped weight price of the BLUP over the blend on corrBS's `K̂`
   as a choice rule; it adds nothing, because the cross term (not in `g₃`) is large under skewed noise.
+- Benchmarking costs efficiency (Wang, Fuller & Qu 2008; Pfeffermann & Barnard 1991, §2 above): used 2026-11-27
+  (`Credibility/BalanceCost.lean`, Finding 46) in the exact form for a common shift, any target and distribution:
+  cost `E(T − μ̄)² − E(r̄ − μ̄)²`; for the BLUP of `μ̄` it is a Pythagoras term (the aggregate BLUP of a linear
+  target is the same combination of the BLUPs).
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
   estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
   approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:

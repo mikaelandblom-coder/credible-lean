@@ -451,6 +451,9 @@ Finished items are in `studies/PLAN-done.md`.
   costs corrBS +21.8 points of the floor on average over S72's grid, up to +205.6 (app volume, σⱼ spread 2, T = 5),
   +49.5 even at ρ = 0. The default is "on". General target first: the MSE of the common shift to the cross-fitted
   level against the portfolio bias it removes (`Core.Estimates.integral_crossFit_sub` gives the bias side).
+  *Proved 2026-11-27 (Finding 46, S75, `BalanceCost.lean`):* cost = `E(T − μ̄)² − E(r̄ − μ̄)²` exactly; the cross-fitted
+  level is the worse estimate of `μ̄` with σⱼ spread (1.2–2.2×). Open: a data-side check of that difference,
+  then the owner decides the default; the page's balance note should state the trade (handbook `res:balanceCost`).
 - [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A

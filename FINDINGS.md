@@ -802,4 +802,17 @@ Gaps, extra hypotheses and new results found while formalizing.
    bootstrapped gain-against-price verdict picks no better than always-BLUP (S74). S72's loss of the
    balanced BLUP is mostly the balance switch's own cost (S74).
 
+46. **Balancing trades the fit's portfolio level for the target's, and with unequal noise variances the
+   app's target is the worse one (new; proved: `integral_sum_sq_shift`, `Core.Estimates.balance_blup_cost`).**
+   A common shift `D = T − r̄` to a portfolio level `T` changes the exposure-weighted MSE by exactly
+   `E(T − μ̄)² − E(r̄ − μ̄)²` (`μ̄`, `r̄` the exposure-weighted level and rate), for any rates, target and
+   distribution; the regions' relative rates are untouched. So a constraint is not costly as such: balancing
+   pays exactly when `T` estimates `μ̄` better than the fit does. With known moments the BLUP's `r̄ = cᵀμ̂`,
+   `c = Σ uⱼd*ⱼ`, is the best unbiased linear estimate of `μ̄`, so balancing it to the exposure average costs
+   `(u − c)ᵀK(u − c) ≥ 0`. In the fitted worlds (S75, corrBS, 56 worlds; identity exact to 3e-14 per draw):
+   the cross-fitted level's `E(T − μ̄)²` is 0.82–1.10 times corrBS's own with equal σⱼ, 1.00–1.26 with
+   spread 1, 1.17–2.21 with spread 2; the exposure average 0.86–2.01. Bias (Finding 35) is part of
+   `E(r̄ − μ̄)²` and is small next to its variance there. Consequence for the app: the balance switch should
+   be on only where its target is the better estimate of `μ̄`; a data-side check of that is open.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

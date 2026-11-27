@@ -612,6 +612,73 @@ Definition~\ref{def:Core_Estimates}.
   of Theorem~\ref{thm:Core_crossFit_bias} is not exact (S63).
 \end{remark}
 
+\subsection*{The cost of balancing}
+
+Balancing adds one common shift $D = T - \sum_i u_i r_i$ to every rate, so that the
+exposure-weighted rate hits a chosen portfolio level $T$ (exposure shares $u$, $\sum_j u_j = 1$).
+
+\begin{lemma}[A common shift, pointwise]\label{lem:sum_sq_shift}
+  \lean{Credibility.sum_sq_shift}
+  \leanok
+  For any numbers,
+  $\sum_j u_j(r_j + D - m_j)^2 = \sum_j u_j(r_j - m_j)^2 + (T - \bar m)^2 - (\bar r - \bar m)^2$,
+  with $\bar r = \sum_i u_ir_i$ and $\bar m = \sum_i u_im_i$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand: the cross term is $2D(\bar r - \bar m)$ and $D = (T - \bar m) - (\bar r - \bar m)$.
+\end{proof}
+
+\begin{theorem}[The cost of balancing]\label{thm:balance_cost}
+  \lean{Credibility.integral_sum_sq_shift}
+  \leanok
+  \uses{lem:sum_sq_shift}
+  For square-integrable random rates $r_j$, levels $\mu_j$ and target $T$, balancing changes the
+  exposure-weighted mean squared error by exactly
+  $\mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2$, $\bar\mu = \sum_j u_j\mu_j$, for every
+  distribution. It pays exactly when $T$ estimates the portfolio level better than the fit's own
+  exposure-weighted rate; the regions' relative rates are untouched.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_sq_shift}
+  Integrate Lemma~\ref{lem:sum_sq_shift}.
+\end{proof}
+
+\begin{definition}[The portfolio level as a target]\label{def:Core_portTarget}
+  \lean{Credibility.Core.Estimates.portTarget}
+  \leanok
+  \uses{def:Core_Estimates, def:Blup_Target}
+  $\bar\mu = \sum_j u_j\mu_j$ is a target in the sense of Definition~\ref{def:Blup_Target}, with
+  $\cov(\hmu_i, \bar\mu) = (u^\top L)_i$ and $\Var\bar\mu = u^\top Lu$.
+\end{definition}
+
+\begin{theorem}[Balancing the BLUP to the exposures]\label{thm:Core_balance_blup_cost}
+  \lean{Credibility.Core.Estimates.balance_blup_cost, Credibility.Core.Estimates.sum_mul_portLin}
+  \leanok
+  \uses{def:Core_portTarget, def:Core_blup}
+  With known moments, balancing the BLUP's rates to the historical exposure average
+  $\sum_j u_j\hmu_j$ raises the exposure-weighted mean squared error by exactly
+  $(u - c)^\top K(u - c) \ge 0$, $c = \sum_j u_jd^*_j$, for every distribution with these moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:balance_cost, thm:Blup_mse_true, lem:Blup_pythagoras, lem:Core_blup_foc}
+  Theorem~\ref{thm:balance_cost} with $T = u^\top\hmu$ and $\bar r = c^\top\hmu$. Both have true MSE
+  $\mathrm{mse}(\cdot)$ for the target $\bar\mu$ (Theorem~\ref{thm:Blup_mse_true}); $Kc - L^\top u$ is
+  constant because each $Kd^*_j - L_j$ is (Lemma~\ref{lem:Core_blup_foc}), so Pythagoras
+  (Lemma~\ref{lem:Blup_pythagoras}) gives the difference.
+\end{proof}
+
+\begin{remark}[Finding 46: the balance switch trades a good portfolio level for a worse one]
+  In the worlds of study S74 the identity of Theorem~\ref{thm:balance_cost} holds draw by draw
+  (app volume, $\sigma_j$ spread 2, $\rho = 0$: cost $49.5 = 126.2 - 76.7$ points of the floor). The
+  cross-fitted level and the plain exposure average estimate $\bar\mu$ with 1.6--2.2 times the
+  squared error of corrBS's own $\bar r$ when $\sigma_j$ differ; with equal $\sigma_j$ they are close.
+  Balancing removes the portfolio bias (Finding 35), but bias is only part of
+  $\mathbb E(\bar r - \bar\mu)^2$.
+\end{remark}
+
 \subsection*{The collective mean given the levels}
 
 Extension (literature \S10p). The results above average over the levels. Here the levels

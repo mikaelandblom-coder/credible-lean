@@ -518,7 +518,7 @@ shrinkage.
     Section~\ref{sec:weights}.
 \end{itemize}
 
-\see \hbsec{sec:setting}{1}, \hb{res:gls}{3}, \hb{res:z}{5}, \hb{res:posdef}{7}, \hb{res:damped}{28}, \hb{res:unequal}{38} ·
+\see \hbsec{sec:setting}{1}, \hb{res:gls}{3}, \hb{res:z}{5}, \hb{res:posdef}{7}, \hb{res:damped}{28}, \hb{res:unequal}{39} ·
 \app{Fitting steps} ·
 \finding{1}, \finding{2} ·
 thesis §2.3--2.5.
@@ -912,13 +912,13 @@ With fitted moments the trade is two-sided. For every distribution, the
 error of the mix is the straight line between the errors of the fitted blend
 and the fitted predictor, minus $\theta(1-\theta)S$, with $S$ the mean
 square of their disagreement, and the best fraction is
-$\theta^* = \tfrac12 + \text{gain}/(2S)$ (\hb{res:plugIn_mix}{32}). $S$ can be
+$\theta^* = \tfrac12 + \text{gain}/(2S)$ (\hb{res:plugIn_mix}{33}). $S$ can be
 estimated from the data; the gain cannot. Regressing a held-out year's error
 of the blend on the disagreement estimates $\theta^*$ exactly, unless a shock
 that persists across years links the held-out year to the fitted ones
-(\hb{res:plugIn_proxy}{33}, \hb{res:heldOut_bias}{35}). But one year is too
+(\hb{res:plugIn_proxy}{34}, \hb{res:heldOut_bias}{36}). But one year is too
 noisy: the choice pays a price of at least $\sigma^2(1 - \rho)$ with equal
-noise levels, whatever the fits (\hb{res:heldOut_price}{34}), which in the
+noise levels, whatever the fits (\hb{res:heldOut_price}{35}), which in the
 app's worlds was 7--14 times the gain available (S64). So keep $\theta = 1$,
 the fitted best predictor.
 
@@ -1251,8 +1251,8 @@ for each data situation. ``S'' numbers are study findings
   Skewed claims & a pooled noise variance, or balance & \finding{35} \\
   Several correlated quantities & the matrix best predictor, not the matrix blend & \finding{22} \\
   Monthly data, persistent demand & the predictor on a constrained factor table, $\phi$ from a long index & Section~\ref{sec:factor} \\
-  Crossed groupings (row $\times$ column) & pair estimators pooled by inverse variance from an equal-weight pass, clipped at $0$ & \file{studies/runs/crossed-fit.js}, \hb{res:crossed_pool}{50} \\
-  Any richer fit & only if its gain exceeds its price & \hb{res:bsPrice}{36} \\
+  Crossed groupings (row $\times$ column) & pair estimators pooled by inverse variance from an equal-weight pass, clipped at $0$ & \file{studies/runs/crossed-fit.js}, \hb{res:crossed_pool}{51} \\
+  Any richer fit & only if its gain exceeds its price & \hb{res:bsPrice}{37} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -1297,7 +1297,7 @@ normal noise the cross term vanishes; under heavy tails it is negative,
 because a large shock inflates both a cohort's deviation and the variance
 estimates, so the fitted factor shrinks hardest exactly when the raw mean
 is most off (S21). For the Bühlmann--Straub fit this holds for heavy-tailed levels with
-any volumes (\hb{res:bsPrice}{36}); heavy-tailed noise can flip
+any volumes (\hb{res:bsPrice}{37}); heavy-tailed noise can flip
 the sign when a cohort's volume sits in one year (Finding 39). That is how a fitted model can beat the best blend with
 fixed weights (S9). The split itself is exact for every distribution: with $A$ the error
 of the best predictor $d^{*\top}x$ and $B = \hat d^\top x - d^{*\top}x$ the fitted predictor's
@@ -1307,7 +1307,7 @@ distance from it,
 \]
 Under normal noise and a fit that is
 unbiased and translation invariant the cross term is zero, so estimating can only cost
-(\hb{res:plugIn}{31}). With symmetric noise and a fit on residuals the plug-in predictor
+(\hb{res:plugIn}{32}). With symmetric noise and a fit on residuals the plug-in predictor
 is also unbiased.
 
 \paragraph{Is a richer fit worth its price?}
@@ -1320,9 +1320,9 @@ on the fitted $\hat K$, the gap between any blend and the best predictor is a cl
 fitted factors, to first order. It follows from the moments of three statistics: the pooled
 within-cohort variance, its noise part, and the spread of the cohort means. Their exact
 variances and covariances are proved for any distribution
-(\hb{res:bsPrice}{36}), and the spread is uncorrelated with the other
+(\hb{res:bsPrice}{37}), and the spread is uncorrelated with the other
 two only under conditions that the exposure table shows (\finding{37}). In the balanced case
-this gives two laws (\hb{res:bsPrice}{36}). Fitting Bühlmann--Straub costs about
+this gives two laws (\hb{res:bsPrice}{37}). Fitting Bühlmann--Straub costs about
 $\frac2J\frac{T}{T-1}\frac{1-z}{z}$ of the known-parameter error, and a variance per cohort
 instead of a pooled one costs at most a further $z(1-z)\cdot 2/(T-1)$. The app's ``gain against
 price'' step chooses the fit by comparing the two. It is never more than 3.3 points of error
@@ -1347,7 +1347,7 @@ the fit uses them, so it cannot be read off $\hat K$. It can still be predicted 
 data set, to first order: refit with each cohort's residuals scaled to see how the weights
 respond to its variance estimate, and multiply by the covariance of that estimate with the
 cohort mean, a third moment
-(\hb{res:varQuad}{37}). That gets sign and size, within about
+(\hb{res:varQuad}{38}). That gets sign and size, within about
 30\% of the simulated bias, including the channel through $\hat\rho$; one data set's
 value is rough (\file{studies/runs/skew-bias.js}). Two remedies need no estimate of
 it. A pooled variance removes most of it. Balance removes it at portfolio level in
@@ -1390,7 +1390,7 @@ sets like it (S26).
     world changes.
 \end{itemize}
 
-\see \hb{res:damped}{28}, \hb{res:estimation}{25}, \hb{res:bs_tau}{27}, \hb{res:integral_quad}{19}, \hb{res:plugIn}{31}, \hb{res:randomWeights}{30}, \hb{res:unequal}{38} ·
+\see \hb{res:damped}{28}, \hb{res:estimation}{25}, \hb{res:bs_tau}{27}, \hb{res:integral_quad}{19}, \hb{res:plugIn}{32}, \hb{res:randomWeights}{30}, \hb{res:unequal}{39} ·
 \app{Models}, \app{Fitting steps} ·
 \finding{7}, \finding{35} ·
 \file{studies/LOG.md} (S1--S62),
@@ -1510,7 +1510,7 @@ not (\file{studies/LOG.md}, S59--S62).
     study (Reluga et al.\ 2026, \file{studies/literature.md} §10p).
 \end{itemize}
 
-\see \hb{res:mse}{17}, \hb{res:forecast}{18}, \hb{res:integral_quad}{19}, \hb{res:exists}{20}, \hb{res:unequal}{38}, \hb{res:givenLevel}{21}, \hb{res:blup}{22} ·
+\see \hb{res:mse}{17}, \hb{res:forecast}{18}, \hb{res:integral_quad}{19}, \hb{res:exists}{20}, \hb{res:unequal}{39}, \hb{res:givenLevel}{21}, \hb{res:blup}{22} ·
 \app{Many draws} (fit against the floor) ·
 \finding{1}, \finding{11},
 \finding{12} ·
@@ -1530,11 +1530,11 @@ Every estimator of the parameters is a quadratic form in the data: a sum of
 squared residuals, a sum of cross products. Its mean needs only the means and
 covariances (Section~\ref{sec:moments}). Its variance needs, in addition, the
 third and fourth cumulants of the cells, and the exact formula holds for any
-distribution (\hb{res:varQuad}{37}). In
+distribution (\hb{res:varQuad}{38}). In
 general that is a large table. Two assumptions cut it down to a few numbers.
 If the cells are built from independent sources (a shock per period, a level
 per cohort, noise per cell), only each source's own skewness and kurtosis
-enter (\hb{res:varQuad}{37}). And if the noise
+enter (\hb{res:varQuad}{38}). And if the noise
 follows a variance function, the next paragraph, the cumulants follow from the
 mean.
 
@@ -1548,9 +1548,9 @@ Such a family fixes all higher cumulants as functions of $\mu$ too. Since the
 levels are random, the variance of an estimator is then the law of total
 variance on two layers: the average over the levels of the variance given
 them, plus the variance over the levels of the mean given them
-(\hb{res:varQuad}{37}). For
+(\hb{res:varQuad}{38}). For
 the variance function $\mu^p$ every term is explicit
-(\hb{res:varQuad}{37}). The
+(\hb{res:varQuad}{38}). The
 catch for practice: the cumulants are averaged over the levels, not taken at
 the average level. With a power above one the riskiest cohorts dominate, so
 plugging in the portfolio mean understates the variance. The core never needs
@@ -1565,16 +1565,16 @@ Where a result says ``under normal noise'' or ``normal theory'', it assumes no
 distribution. It assumes that the third and fourth cumulants vanish: no skewness and no
 excess kurtosis. Every theorem holds for any distribution with those moments, and the
 general versions carry the extra terms when they do not vanish
-(\hb{res:varQuad}{37},
-\hb{res:bsPrice}{36}). The condition enters in two places. The
+(\hb{res:varQuad}{38},
+\hb{res:bsPrice}{37}). The condition enters in two places. The
 \emph{noise} within a cohort decides how precise the variance estimate is. The
 \emph{cohort means}, level plus averaged noise, decide how precise their spread, and so
 $\hat\tau^2$, is. For example, a sample variance over $T$ years has its normal-theory
-variance plus $\kappa_4/T$ (\hb{res:varQuad}{37}). Some results
+variance plus $\kappa_4/T$ (\hb{res:varQuad}{38}). Some results
 also need conditions that are not distributional at all. The cohort spread is uncorrelated
 with the pooled noise variance only if, in addition, the cohort means are uncorrelated
 with the residuals: uncorrelated cohorts, or volumes proportional across periods, which
-the exposure table shows (\finding{37}, \hb{res:bsPrice}{36}).
+the exposure table shows (\finding{37}, \hb{res:bsPrice}{37}).
 
 \paragraph{When linear is enough.}
 
@@ -1593,12 +1593,12 @@ anyway. Estimate them instead and use the exact formulas: the skewness and exces
 kurtosis of the within-cohort residuals, scaled by the square root of the volume and
 pooled over all cells, with standard errors of about $\sqrt{6/N}$ and $\sqrt{24/N}$ for
 $N$ cells (an unbiased third cumulant:
-\hb{res:varQuad}{37}). If the corrected price of estimation
+\hb{res:varQuad}{38}). If the corrected price of estimation
 differs materially from the normal-theory one, use the corrected one; no threshold needs
 to be set by hand. For Bühlmann--Straub's factor in the balanced case it is proved: the noise
 kurtosis $\gamma_N$ adds a term in $\gamma_N z^2$, so its share of the price grows with credibility, and the
 levels' excess kurtosis $\gamma_L$ adds a term that does not shrink with more years
-(\hb{res:bsPrice}{36}). That is only half of the effect: the cross term of the error split
+(\hb{res:bsPrice}{37}). That is only half of the effect: the cross term of the error split
 reverses it, so in total heavy tails lower the price at first order, with exceptions
 (below, \finding{38}). The cumulants of the levels cannot be checked with a handful of
 cohorts; treat them as a sensitivity. As a rule of thumb, a cell is an average of many
@@ -1615,10 +1615,10 @@ that heavy tails raise the price (above). The cross term says the opposite and i
 large: with the noise variance estimated from the same cells, it adds
 $-2(1 - \frac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$, so in total heavy tails \emph{lower} the
 first-order error of the Bühlmann--Straub fit (\finding{38},
-\hb{res:bsPrice}{36}). The noise part has the opposite
+\hb{res:bsPrice}{37}). The noise part has the opposite
 sign to the small-area result with known sampling variances (Chen, Lahiri and Rao), because the
 noise variance is estimated from the same cells. With any volumes the term is a closed form over
-the cohorts (\hb{res:bsPrice}{36}). Its level part is never
+the cohorts (\hb{res:bsPrice}{37}). Its level part is never
 positive, but its noise part turns positive when a cohort's volume sits in one year
 (\finding{39}). For the best linear predictor on a correlated $\hat K$, even the level part can be
 slightly positive (\finding{40}). So the app shows the sign it computes and does not assume one.
@@ -1629,9 +1629,9 @@ Two exact statements need a little more than second moments. With symmetric
 noise and a fit that is even and translation invariant (any fit on residuals),
 the plug-in predictor is unbiased, whatever the estimates of the covariances
 (Kackar and Harville 1981;
-\hb{res:plugIn}{31}). Under normal
+\hb{res:plugIn}{32}). Under normal
 noise the cross term of the fitted error vanishes, so estimating the parameters
-can only cost (\hb{res:plugIn}{31}). Claims are skewed, and then neither holds: with estimated
+can only cost (\hb{res:plugIn}{32}). Claims are skewed, and then neither holds: with estimated
 weights the rate is biased by the covariances of the weights with what they
 weight (Section~\ref{sec:estimation}, \finding{35}).
 
@@ -1650,7 +1650,7 @@ weight (Section~\ref{sec:estimation}, \finding{35}).
     Treat them as a sensitivity, not a fitted number.
 \end{itemize}
 
-\see \hb{res:varQuad}{37}, \hb{res:plugIn}{31}, \hb{res:bsPrice}{36}, \hb{res:randomWeights}{30}, \hb{res:blup}{22} ·
+\see \hb{res:varQuad}{38}, \hb{res:plugIn}{32}, \hb{res:bsPrice}{37}, \hb{res:randomWeights}{30}, \hb{res:blup}{22} ·
 \finding{35}, \finding{37}--\finding{40} ·
 \file{notes/fourth-moments.md}, \file{studies/LOG.md} (S38--S42) ·
 \file{studies/literature.md} §10.
@@ -1684,7 +1684,7 @@ still inverse-variance weights, now over $T_j$ only.
 
 The covariance of two cohort estimates is
 still a noise part plus $\tau^2$ on the diagonal, and the noise part is
-summed over the shared periods only (\hb{res:unequal}{38}). Two cohorts that
+summed over the shared periods only (\hb{res:unequal}{39}). Two cohorts that
 never share a period have no noise covariance at all. The GLS weights and
 the credibility factor only see $K$, so Sections~\ref{sec:weights}
 and~\ref{sec:z} apply word for word: this is the recipe of
@@ -1721,7 +1721,7 @@ periods. In the thesis each of the two means removes one period's worth of
 information, hence the $-2$. Here a cohort's mean removes only the part of
 its volume that lies in the overlap. So the count is the number of shared
 periods minus the two cohorts' volume shares in the overlap
-(\hb{res:unequal_est}{39}). With identical periods both shares are one, and
+(\hb{res:unequal_est}{40}). With identical periods both shares are one, and
 the thesis count returns; on the diagonal it is Bühlmann--Straub with the
 cohort's own length.
 
@@ -1767,7 +1767,7 @@ is observed in, because the thesis argument works cohort by cohort
     lengths'', marked ``soon'').
 \end{itemize}
 
-\see \hb{res:unequal}{38}, \hb{res:unequal_est}{39} ·
+\see \hb{res:unequal}{39}, \hb{res:unequal_est}{40} ·
 \app{World} (soon) ·
 \finding{8}, \finding{9}, \finding{10},
 \finding{12} ·
@@ -1804,7 +1804,7 @@ shared part of the level is common to every cohort, to the portfolio
 estimate and to the target alike, and cancels in every blend's error. The
 best factor is the thesis one with $\tau^2$ replaced by the non-shared part
 $(1-\phi)\tau^2$, and the thesis estimators estimate exactly that part
-(\hb{res:phi}{40}). So the thesis procedure is right as it stands. The
+(\hb{res:phi}{41}). So the thesis procedure is right as it stands. The
 other side of the coin: like the overall mean $\mu$, a level shared by all
 is invisible to the data, and $\phi$ cannot be estimated from one
 portfolio. In Lean this is a fact about $K$: adding the same amount to
@@ -1817,7 +1817,7 @@ With several groups the
 shared part no longer cancels. The best factor has one more term: the
 shared part $\phi\tau^2$ is discounted by $1 - B_g$, where $B_g$ is the
 total weight the portfolio estimate puts on cohort $j$'s whole group
-(\hb{res:groups}{41}). The intuition: the portfolio estimate already
+(\hb{res:groups}{42}). The intuition: the portfolio estimate already
 contains the group's shared level to the extent $B_g$, so a cohort in a
 heavy group needs less of its own data to get it, and one in a small group
 more. With one group $B_g = 1$, and the term vanishes. The assumptions are
@@ -1830,7 +1830,7 @@ lengths too.
 
 If the noise is also uncorrelated across groups,
 $K$ is block diagonal by group, and the GLS weights split in two
-(\hb{res:twostage}{42}): GLS within each group, which is the thesis with the
+(\hb{res:twostage}{43}): GLS within each group, which is the thesis with the
 non-shared $(1-\phi)\tau^2$; then inverse-variance weights across the group
 estimates, each group's variance including the shared $\phi\tau^2$. The
 shared level flattens the group weights: no group can dominate the
@@ -1843,7 +1843,7 @@ The thesis $\hat\tau^2$ compares cohort
 means with the portfolio mean. With several groups it measures something
 between the non-shared part and the full $\tau^2$: $\tau^2$ minus
 $\phi\tau^2$ times the volume-weighted share of same-group pairs
-(\hb{res:est_groups}{43}; \finding{13}). So with one group it is exactly
+(\hb{res:est_groups}{44}; \finding{13}). So with one group it is exactly
 what the blend needs (above); with singleton groups it is $\tau^2$, also
 right; in between it fits neither the within-group nor the across-group
 part of $K$. Pairs separate them. The squared difference of two cohort
@@ -1860,13 +1860,13 @@ group effects are random effects with variance $\phi\tau^2$, and the rest of the
 the non-shared part. Henderson's mixed-model equations, which packages such as \texttt{lme4} and
 \texttt{PROC MIXED} solve, give the collective mean as the GLS portfolio mean of $K_G$, and each
 group's effect as its best linear unbiased predictor
-(\hb{res:groupEffect}{45}).
+(\hb{res:groupEffect}{46}).
 That predictor is best in true mean squared error for any distribution with these moments, and
 its error is known, so ``how far is this group from the portfolio'' can be reported with an error
-bar (\hb{res:groupEffect}{45}). The
+bar (\hb{res:groupEffect}{46}). The
 same algebra (Henderson 1963) inverts $K_G$ through a matrix of size the number of groups
-(\hb{res:groupEffect}{45}). The general lemmas are ported from Stat-Lean
-(\hb{res:groupEffect}{45}, \hb{res:blup}{22};
+(\hb{res:groupEffect}{46}). The general lemmas are ported from Stat-Lean
+(\hb{res:groupEffect}{46}, \hb{res:blup}{22};
 \file{studies/literature.md} §10n).
 
 \paragraph{Towards hierarchical credibility.}
@@ -1888,13 +1888,13 @@ sports cars share ``sports car'', Swedish sports and family cars share
 ``Sweden''. Then a cell's level is a row effect plus a column effect plus its
 own, and the level covariance has one term per grouping: $\alpha^2$ for the
 same row, $\beta^2$ for the same column, $\gamma^2$ for the cell itself
-(\hb{res:crossed}{46}). For any set of cells, $K$ is positive definite as soon
+(\hb{res:crossed}{47}). For any set of cells, $K$ is positive definite as soon
 as the noise is, or as soon as cells have an effect of their own. It is the
 covariance of a mixed model with crossed random effects, so Henderson's
 equations give the row and column effects as their best predictors; and with
 no column effect it is the group model above, with the rows as groups. In a
 balanced table with equal, uncorrelated noise the best predictor splits into
-three credibility factors, one per layer (\hb{res:crossed_balanced}{47}):
+three credibility factors, one per layer (\hb{res:crossed_balanced}{48}):
 \[
   \tilde\mu_{at} = \bar X + z_r(\bar X_{a\cdot} - \bar X) + z_c(\bar X_{\cdot t} - \bar X)
     + z_i(X_{at} - \bar X_{a\cdot} - \bar X_{\cdot t} + \bar X),
@@ -1908,7 +1908,7 @@ one common factor, and summed over the table it loses, per layer, the layer's
 dimension times $(\lambda_k + \sigma^2)(z - z_k)^2$: nothing only when the
 three layers agree, that is in the thesis model. Its best single factor uses the
 average of the layer variances, weighted by their dimensions
-(\hb{res:crossed_balanced}{47}). Noise correlated equally across all cells, as in
+(\hb{res:crossed_balanced}{48}). Noise correlated equally across all cells, as in
 the thesis's simulation study, changes nothing but the noise variance: the
 common part cancels in every contrast, and each factor uses $\sigma^2(1 - \rho)$. In the example of
 \file{notes/crossed-2x2.md} the best blend reaches a total error of $5.94$ and
@@ -1916,7 +1916,7 @@ the full predictor $5.13$, while getting the single factor exactly right
 instead of approximately only moves $6.04$ to $5.94$. The full predictor also
 rates a cell with no data of its own, from its row and column: in a two-by-two
 table, same row plus same column minus the opposite cell, each shrunk
-(\hb{res:crossed_missing}{48}); in the example its error is $3.58$, against
+(\hb{res:crossed_missing}{49}); in the example its error is $3.58$, against
 $4.81$ for the collective mean, which is all a blend can offer. The actuarial
 precedent is crossed-classification credibility (Dannenburg, Kaas and
 Goovaerts 1996); here it comes with correlated noise and any set of cells.
@@ -1925,7 +1925,7 @@ difference of two cells' estimates, minus its estimated noise, sees the cell
 effects always, the row effects only across rows and the column effects only
 across columns. So pools of the pairs in the same row, in the same column and
 in neither give unbiased estimates of all three, for any weights summing to one
-in each class and any noise correlations (\hb{res:crossed_est}{49}). The
+in each class and any noise correlations (\hb{res:crossed_est}{50}). The
 analysis-of-variance estimators of crossed-classification credibility are such
 pools, with weights proportional to the product of the volumes: a weighted sum of
 squares about a mean is a weighted average of squared pair differences. Their noise
@@ -1934,11 +1934,11 @@ estimators also remove the noise the two cells share in a period. So with noise
 correlated across cells, the thesis's case, the classical estimators are biased
 down by the shared part (\finding{42}). With uncorrelated noise they are
 Dannenburg's two-way equations exactly, within rows, within columns and about the
-grand mean (\hb{res:crossed_est}{49}). As
+grand mean (\hb{res:crossed_est}{50}). As
 everywhere in this paper, these are statements about any random variables
 with the model's moments; they exist exactly when the noise correlations are
 consistent, as in the thesis, and the predictor is then best in true mean
-squared error (\hb{res:crossed}{46}).
+squared error (\hb{res:crossed}{47}).
 
 \watch
 \begin{itemize}
@@ -1955,13 +1955,13 @@ squared error (\hb{res:crossed}{46}).
     across-group pair identify $\phi\tau^2$ in principle; in practice you
     want many of each. The best combination is generalized least squares on
     the pairs' covariance table, and one pass with that table estimated from a
-    first, volume-weighted pass is as good as knowing it (\hb{res:groups_pool}{44}).
+    first, volume-weighted pass is as good as knowing it (\hb{res:groups_pool}{45}).
     With two to four groups $\phi\tau^2$ stays noisy whatever the weights, so
     whether to use groups at all matters more: the app decides it on held-out
-    years (\hb{res:heldout}{54}).
+    years (\hb{res:heldout}{55}).
 \end{itemize}
 
-\see \hbsec{sec:groups}{9}, \hb{res:phi}{40}, \hb{res:groups}{41}, \hb{res:twostage}{42}, \hb{res:est_groups}{43}, \hb{res:groups_pool}{44} ·
+\see \hbsec{sec:groups}{9}, \hb{res:phi}{41}, \hb{res:groups}{42}, \hb{res:twostage}{43}, \hb{res:est_groups}{44}, \hb{res:groups_pool}{45} ·
 \app{World} ``Group levels'', fit ``BLUP groups'' (S69) ·
 \finding{13} ·
 \file{studies/literature.md} §3 ·
@@ -1997,7 +1997,7 @@ portfolio estimate too.
 
 Compare two rules for a pair: keep
 them separate, with their own credibility rates, or merge them into one
-level. Two numbers decide (\hb{res:merge}{51}): how far apart the true
+level. Two numbers decide (\hb{res:merge}{52}): how far apart the true
 levels typically are, $d$, the expected squared gap; and how precisely the
 data measure that gap, $V$, the variance of the difference of the two
 estimates. For a pair on its own, merge exactly when the reciprocal of $d$
@@ -2046,7 +2046,7 @@ with a true level and an unbiased, uncorrelated estimate, into at most $k$
 cohorts, and charge each unit its cohort's pooled estimate. Measured by the
 exposure-weighted mean squared error, the loss is \emph{exactly} the
 weighted $k$-means cost of the levels plus the number of cohorts
-(\hb{res:pool_intervals}{52}, \finding{14}): the noise part contributes one
+(\hb{res:pool_intervals}{53}, \finding{14}): the noise part contributes one
 unit per cohort whoever its members are. On a line the best $k$-means
 clusters are intervals, so the best cohorts are intervals of the sorted
 levels: a unit whose level lies between two members of a cohort belongs to
@@ -2060,7 +2060,7 @@ Predict each unit by
 its cohort's credibility blend towards a known overall level. If all units
 are equally noisy, a cohort's loss depends on it only through its size and
 the sum of its levels, and a swap argument shows the best cohorts are again
-intervals (\hb{res:blend_intervals}{53}).
+intervals (\hb{res:blend_intervals}{54}).
 
 \paragraph{But not in general.}
 
@@ -2084,7 +2084,7 @@ small-area models. Give the groups their own means but one common $\tau^2$. Then
 $z_j$ is fixed, and the loss given the levels is a constant plus a weighted $k$-means cost with
 weights $u_j(1 - z_j)^2$: the noisy cohorts, which lean most on the group mean, count most. So the
 best groups are intervals of the sorted levels again, for any noise levels
-(\hb{res:blend_intervals}{53}, \finding{41}). With a $\tau^2$ per group they are not. A group can
+(\hb{res:blend_intervals}{54}, \finding{41}). With a $\tau^2$ per group they are not. A group can
 then stop shrinking, which caps its cost at the noise of its members however spread they are,
 and its best use is to collect the outliers of \emph{both} tails: seven cohorts of equal volume at
 $-5$, $-0.2$, $-0.1$, $0$, $0.1$, $0.2$, $5$ split best into $\{-5, 5\}$ and the middle five. That is
@@ -2101,7 +2101,7 @@ of fitting them (Section~\ref{sec:estimation}).
     that look close by chance get merged. Under normal noise its size is exact:
     the rule becomes hard thresholding of the observed gap, and where always and
     never merging tie it is worse than both, whatever the threshold
-    (\finding{43}). Choose on a held-out year instead (\hb{res:heldout}{54}).
+    (\finding{43}). Choose on a held-out year instead (\hb{res:heldout}{55}).
   \item \emph{The levels are unknown.} The interval results sort the true
     levels; in practice you sort their estimates, which is a plug-in. It is not a harmless one:
     sorting puts the noise into the groups, and two groups cut from the sorted estimates, with the cut
@@ -2115,7 +2115,7 @@ of fitting them (Section~\ref{sec:estimation}).
   \item \emph{The app has no step for choosing cohorts yet.}
 \end{itemize}
 
-\see \hb{res:merge}{51}, \hb{res:pool_intervals}{52}, \hb{res:blend_intervals}{53} ·
+\see \hb{res:merge}{52}, \hb{res:pool_intervals}{53}, \hb{res:blend_intervals}{54} ·
 \finding{6}, \finding{14}, \finding{41} ·
 \file{notes/merging-cohorts.md},
 \file{notes/kmeans-bridge.md}, \file{notes/group-variances.md} ·
@@ -2137,7 +2137,7 @@ design is a season. With known covariances, annual totals never beat the
 monthly cells, and a season
 that is not there has an exact price. Whole years do not make an estimated season
 drop out: with seasonal volume a one-mean predictor leans on the busy months and
-is biased by the season it ignores (\hb{res:season}{57}, \finding{24}). A known
+is biased by the season it ignores (\hb{res:season}{58}, \finding{24}). A known
 seasonal index is a change of units, with cells weighted by expected claims
 rather than exposure.
 
@@ -2147,20 +2147,20 @@ as volumes grow, while a storm or a demand swing hits a cohort's rate whatever
 its size (\finding{23}). The fix is a shock $C$ that does not shrink plus
 process noise $s_j^2/w_{jt}$ that does. It is a new $K$, positive definite for
 any cell weights, so the core applies, and the correlation between cohorts now
-rises with volume (\hb{res:shock}{55}). Its parameters have unbiased estimators
-(\hb{res:shock_est}{56}), with one limit that is the point of the model: a
+rises with volume (\hb{res:shock}{56}). Its parameters have unbiased estimators
+(\hb{res:shock_est}{57}), with one limit that is the point of the model: a
 squared residual mixes shock and process noise, and only volume that changes
 over time tells them apart. At a constant volume no estimator of $s_j^2$ is
-unbiased (\hb{res:shock_est}{56}); with three periods
+unbiased (\hb{res:shock_est}{57}); with three periods
 or more any variation in volume is enough
-(\hb{res:shock_est}{56}). The moment layer holds as before
-(\hb{res:shock_est}{56}).
+(\hb{res:shock_est}{57}). The moment layer holds as before
+(\hb{res:shock_est}{57}).
 
 \paragraph{The factor model.} One covariance table covers the alternatives: the
 factor's covariance over all months, past and future, times the loadings, on top
 of the shock and process noise. No factor is the shock model; AR(1), a break at
 known dates and per-cohort dynamics are other choices. Its $K$ is positive definite
-for any observed cells, so the predictor applies (\hb{res:factor}{58}). One surprise
+for any observed cells, so the predictor applies (\hb{res:factor}{59}). One surprise
 (\finding{25}): even with positive autocorrelation the best weights can be negative,
 because another cohort's change between two months tracks the factor, which persists.
 
@@ -2168,7 +2168,7 @@ because another cohort's change between two months tracks the factor, which pers
 see only the factor, whatever the means and seasons, so they separate it from the
 shock; at lag 0 only the sum is seen, which the predictor does not need to split.
 Given the factor's shape, Henderson's method III and MINQUE are unbiased for the rest.
-The traps are systematic (\hb{res:factor_est}{59}): constant volume confounds shock and
+The traps are systematic (\hb{res:factor_est}{60}): constant volume confounds shock and
 process noise, independent months confound factor and shock, cohort-specific means
 hide the level variance (\finding{27}), a cohort season leaves only repeated calendar
 months to learn from (\finding{28}), and with two years each cohort's volume must vary
@@ -2177,7 +2177,7 @@ on data with a persistent factor absorbs only part of it (\finding{26}). Unbiase
 tables are almost never valid; projecting them onto the valid tables in the fit's own
 metric brings them closer to the truth in every draw, and gives a positive definite
 $\hat K$ when every process-noise estimate is positive, not with nonnegative ones alone
-(\hb{res:valid_tables}{60}, \finding{30}, \finding{34}).
+(\hb{res:valid_tables}{61}, \finding{30}, \finding{34}).
 
 \paragraph{Choosing between fits on data.} The theory says what each model implies,
 not which one holds. The app compares fits the way data allow: a rolling origin that
@@ -2192,7 +2192,7 @@ error of any linear predictor, is a weighted sum over cohorts and months. The
 factor adds exactly one term to its variance: weight each month by how much
 of that month's factor the statistic picks up (the loadings times its
 weights in that month, summed over cohorts), and take the factor's variance
-of that month profile (\hb{res:factor_extra}{61}). The term is never
+of that month profile (\hb{res:factor_extra}{62}). The term is never
 negative, so a fit that leaves the factor out understates the error of
 whatever it reports.
 
@@ -2202,7 +2202,7 @@ its loading. With equal loadings and the same month weights for every
 cohort, the two cancel month by month: the factor hits every card alike in a
 month, every card weights that month alike, and the difference subtracts it
 out. The relativity then has the variance it has without the factor,
-whatever the factor's dynamics (\hb{res:relativity_factor}{62}). Exposure
+whatever the factor's dynamics (\hb{res:relativity_factor}{63}). Exposure
 weights have this property when the cards' volumes are proportional over
 the window.
 
@@ -2217,7 +2217,7 @@ the window.
     factor in the fit.
 \end{itemize}
 
-\see \hb{res:shock}{55}, \hb{res:shock_est}{56}, \hb{res:blup}{22}, \hb{res:season}{57}, \hb{res:factor}{58}, \hb{res:factor_est}{59}, \hb{res:valid_tables}{60}, \hb{res:factor_extra}{61}, \hb{res:relativity_factor}{62} ·
+\see \hb{res:shock}{56}, \hb{res:shock_est}{57}, \hb{res:blup}{22}, \hb{res:season}{58}, \hb{res:factor}{59}, \hb{res:factor_est}{60}, \hb{res:valid_tables}{61}, \hb{res:factor_extra}{62}, \hb{res:relativity_factor}{63} ·
 \finding{23}--\finding{31}, \finding{34} ·
 \file{notes/card-data.md} Steps~1--5, 7b,
 \file{notes/time-trends.md}.
@@ -2237,7 +2237,7 @@ a cohort's frequency and severity do. The portfolio estimate is the
 matrix version of GLS, and the blend is $\hmu + Z_j(\hmu_j - \hmu)$ with a
 matrix $Z_j$ that lets the frequency gap inform the severity estimate. The
 best $Z_j$ is the same formula as the scalar one, with matrices for numbers
-(\hb{res:vector}{64}):
+(\hb{res:vector}{65}):
 \[
   Z_j = \bigl(L_{jj} - (LW)_j\bigr)\bigl(K_{jj} - S\bigr)^{-1},
 \]
@@ -2260,15 +2260,15 @@ data that year, so it correlates their fitted lines, and the best
 credibility matrix accounts for that. Any forecast from the line, its level
 next year or three years out, is a fixed combination of level and slope, so
 the joint best predictor gives the best unbiased forecast at every horizon,
-with its error from the same matrix (\hb{res:vecForecast}{65}).
+with its error from the same matrix (\hb{res:vecForecast}{66}).
 
 Fitting it needs the spread $\Lambda$ of the true lines. The spread of the
 fitted lines, corrected for the noise covariance within and between cohorts,
 is unbiased for it under any distribution, given any unbiased estimate of
-that noise covariance (\hb{res:vecSpread}{68}); the thesis's correction of
+that noise covariance (\hb{res:vecSpread}{69}); the thesis's correction of
 $\hat\tau^2$ is its one-dimensional case, and leaving out the part shared
 between cohorts biases $\hat\Lambda$ down (S67). The noise covariance comes
-from the lines' residuals (\hb{res:lineResid}{69}), as in seemingly unrelated
+from the lines' residuals (\hb{res:lineResid}{70}), as in seemingly unrelated
 regressions: dividing by $T - p$ is right only when the cohorts' exposures
 have the same shape over the years; otherwise each pair has its own divisor,
 and the plain one biases $\hat\rho$ towards zero.
@@ -2276,7 +2276,7 @@ and the plain one biases $\hat\rho$ towards zero.
 \paragraph{A known common trend.} When every cohort shares one known trend,
 there is no line to fit: restate every year to the target year and blend.
 Restating multiplies $K$ by a constant, so the weights and $z$ do not move, and
-relativities are free of the trend (\hb{res:trend}{63}). But only for the true
+relativities are free of the trend (\hb{res:trend}{64}). But only for the true
 trend: an estimated one leaves a factor that varies by year, reweights old
 against recent data within each cohort, and so moves relativities
 (\finding{21}).
@@ -2302,7 +2302,7 @@ predictor, not to each other.
 table (Section~\ref{sec:factor}): frequency weighted by cards, severity by
 claim counts, each with its own loadings, factor and noise, and let the two
 covary in any way. Without any covariance between them, the joint best
-predictor is the two separate ones (\hb{res:freqsev_joint}{66}). The
+predictor is the two separate ones (\hb{res:freqsev_joint}{67}). The
 converse fails (\finding{32}): when both components have the same cohort
 structure, a Kronecker product of one cohort table and one component table,
 joint is still separate, however strongly the components correlate. This is
@@ -2317,7 +2317,7 @@ predictions, and a product of unbiased predictions is biased. The bias needs
 no delta method: it is exactly the covariance of the two predictions minus
 the covariance of the two levels, for every distribution, since the mean of
 a product is the product of the means plus the covariance
-(\hb{res:prodBias}{67}, \finding{33}). Separate predictions of uncorrelated
+(\hb{res:prodBias}{68}, \finding{33}). Separate predictions of uncorrelated
 components give no bias. With a level correlation, separate predictions
 miss it, and a positive one makes the product underprice. The bias is
 exact; the error of the product needs third and fourth moments, which
@@ -2338,7 +2338,7 @@ belong to the optional distribution layer.
     severity.
 \end{itemize}
 
-\see \hb{res:trend}{63}, \hb{res:vector}{64}, \hb{res:freqsev_joint}{66}, \hb{res:prodBias}{67} ·
+\see \hb{res:trend}{64}, \hb{res:vector}{65}, \hb{res:freqsev_joint}{67}, \hb{res:prodBias}{68} ·
 \finding{21}, \finding{22}, \finding{32}, \finding{33} ·
 \file{notes/time-trends.md} §1--3,
 \file{notes/card-data.md} Step~6.
@@ -2530,7 +2530,7 @@ not see that they were chosen; cutting the sorted estimates where that estimate
 is smallest was 2--74\% worse than one group in every simulated world (S61).
 Two pieces are now in place. A score on a held-out year is unbiased for the
 true error of the rule as chosen, up to the year's known noise, for every
-distribution (\hb{res:heldout}{54}): in sample the same score carries an optimism
+distribution (\hb{res:heldout}{55}): in sample the same score carries an optimism
 term, Efron's covariance penalty, which the sort inflates. And for one pair under
 normal noise the curse is exact: merging iff the gap looks small is hard
 thresholding of the gap, worse than both fixed rules near their tie for every
@@ -2542,7 +2542,7 @@ and the optimism of the winning score itself, which needs a further fold.
 
 \begin{itemize}
   \item \emph{Small crossed tables.} The crossed fit is settled in principle
-    (GLS on the pair table, \hb{res:crossed_pool}{50}) and in the default
+    (GLS on the pair table, \hb{res:crossed_pool}{51}) and in the default
     (Section~\ref{sec:estimation}). Open are tables with few pairs per class
     (two each in a two-by-two table), where the estimates are noisy and can be
     negative, and the default does worse when the effects are weak. In
@@ -2564,7 +2564,7 @@ and the optimism of the winning score itself, which needs a further fold.
   \item \emph{The mix's gain.} The best share of the way from the fitted
     blend to the fitted predictor needs the gain of the predictor, which the
     data do not give directly; a held-out year estimates it at a known price
-    (\hb{res:plugIn_mix}{32}). A cheaper or sharper estimate of the gain is
+    (\hb{res:plugIn_mix}{33}). A cheaper or sharper estimate of the gain is
     open.
   \item \emph{Lean:} the unbiasedness of the credibility-weighted variances,
     and these variances with unequal lengths.
@@ -2573,7 +2573,7 @@ and the optimism of the winning score itself, which needs a further fold.
 \paragraph{Time.}
 
 Period shocks, a persistent factor with any dynamics, a season, a known
-trend and trend lines per cohort (forecast and fit, \hb{res:vecForecast}{65}) are in (Sections~\ref{sec:factor} and~\ref{sec:vector}). Open:
+trend and trend lines per cohort (forecast and fit, \hb{res:vecForecast}{66}) are in (Sections~\ref{sec:factor} and~\ref{sec:vector}). Open:
 \begin{itemize}
   \item \emph{Evolutionary credibility.} Levels that drift as a random walk or
     an AR(1) (Gerber and Jones 1975; Bühlmann and Gisler 2005, ch.~10). With

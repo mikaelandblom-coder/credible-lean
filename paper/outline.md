@@ -108,6 +108,9 @@ may need a paragraph.)
   same `K̂` there (+32 to +38 points against a gain of 3–12); one sentence in §BLUP, citing the handbook line.
   *Correction, S74:* that weight price is not the actual loss (cross term about −25); unbalanced the BLUP wins
   (worse in 6 of 56, ≤ +6), and the balanced loss is mostly the balance step's own cost. The sentence should say that.
+- [ ] Balance (2026-11-27, Finding 46, handbook `res:balanceCost`): the paper's balance section should say that a common
+  shift trades the fit's portfolio level for the target's (cost `E(T − μ̄)² − E(r̄ − μ̄)²`), so balancing is a choice of
+  portfolio-level estimator, not a free unbiasedness fix; with unequal σⱼ the app's cross-fitted target is the worse one.
 - [ ] §Open directions, "Small crossed tables" (2026-11-27, S70, S71): REML on the cell means is now the app's crossed
   default (better than the pair pools in 48 of 96 larger-table worlds, worse in 9 by at most 3 points); the paragraph
   may say so, and that Finding 44's 2×2 warning is shown.

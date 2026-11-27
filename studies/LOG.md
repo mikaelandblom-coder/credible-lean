@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S75 | `runs/balance-cost.js` | Cost of balancing = E(T − μ̄)² − E(r̄ − μ̄)², exact per draw; cross-fitted level 1.2–2.2× corrBS's own error with σⱼ spread 2 |
 | S74 | `runs/blup-verdict.js` | The bootstrapped gain-against-price verdict for the BLUP adds nothing; S72's BLUP loss is the balance switch (corrBS itself +22 mean, up to +206 points balanced) |
 | S73 | `runs/blup-price.js` | The BLUP's weight price over the blend on corrBS's `K̂`: +32 to +38 points with a σⱼ spread at app volume, ≤ +4 with equal σⱼ; no sign in general |
 
@@ -1018,3 +1019,11 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     better fit across the grid; balanced the comparison is dominated by the balance step's own cost, largest with
     unequal noise variances at low volume. Next general target: the MSE cost of balancing to the cross-fitted
     level (a common shift: its variance plus its bias, against the portfolio bias it removes).
+- S75. *[numerical + exact]* **The cost of the balance switch is the target's portfolio error minus the fit's
+    (Finding 46).** corrBS on S74's grid (56 worlds, 400 draws), balanced to the cross-fitted level. The identity
+    `integral_sum_sq_shift` holds in every draw (gap ≤ 3.1e-14). `E(T − μ̄)²/E(r̄ − μ̄)²`: σⱼ×0 0.82–1.10,
+    σⱼ×1 1.00–1.26, σⱼ×2 1.17–2.21; the plain exposure average `Σ uⱼμ̂ⱼ`: 0.86–1.60, 0.97–1.45, 1.14–2.01.
+    Largest cost: app ρ = 0.9 σⱼ×2 T = 5, `E(T − μ̄)²` 375 against 169 points of the floor. **Consequence.** The
+    switch replaces a good estimate of the portfolio level by a worse one when noise variances differ; it pays
+    (slightly) only with equal σⱼ and high ρ. Next: a data-side estimate of `E(T − μ̄)² − E(r̄ − μ̄)²`, e.g. on
+    held-out years, to decide the switch per portfolio.

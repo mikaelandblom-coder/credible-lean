@@ -51,6 +51,7 @@ import Credibility.Cumulants
 import Credibility.FitStatistics
 import Credibility.FitCrossTerm
 import Credibility.BlupPrice
+import Credibility.BalanceCost
 import Credibility.LineResiduals
 import Credibility.LineResidualsMoments
 import Credibility.VarianceFunction

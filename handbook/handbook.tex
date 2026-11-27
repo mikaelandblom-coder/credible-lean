@@ -733,6 +733,23 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   Skewed claims with region-specific variances price the portfolio 0.4--2.4\% too low; a pooled $\hat\sigma^2$ or the shift removes it.
 \end{caveat}
 
+\begin{result}[The cost of a common shift]\label{res:balanceCost}
+  Shift all rates $r_j$ by $D = T - \bar r$ to a portfolio level $T$ ($\bar r = \sum_j u_jr_j$,
+  $\bar\mu = \sum_j u_j\mu_j$, $\sum_j u_j = 1$). The volume-weighted error changes by exactly
+  \[
+    \sum_j u_j\,\mathbb E(r_j + D - \mu_j)^2 - \sum_j u_j\,\mathbb E(r_j - \mu_j)^2
+      = \mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2,
+  \]
+  for any rates, target and distribution. For the BLUP with known moments and $T = \sum_j u_j\hmu_j$
+  it is $(u - c)^\top K(u - c) \ge 0$, $c = \sum_j u_jd^*_j$.
+  \lean{Credibility.integral_sum_sq_shift}
+  \lean{Credibility.Core.Estimates.balance_blup_cost}
+\end{result}
+\use Balance only to a level you trust more than the fit's own portfolio rate: compare $\mathbb E(T - \bar\mu)^2$, bias included, with the fit's.
+\begin{caveat}
+  With unequal noise variances the cross-fitted level and the exposure average have up to $2.2$ times the fit's error for $\bar\mu$ (study S75): the shift then costs up to twice the floor.
+\end{caveat}
+
 \begin{result}[The price of plugging in]\label{res:plugIn}
   Let $\hat d$ be weights computed from the data (a fit with $\hat K$, $\hat\ell$) and $d^*$ the best
   weights with the true moments (Result~\ref{res:blup}). With $A = d^{*\top}x - Y$ the error of the
@@ -1873,6 +1890,8 @@ which has the details. The paper explains each where it belongs.
   \item[{45. The BLUP's price over the blend on the same $\hat K$ has no sign.}] First order, direction $(\Delta K, \Delta L)$: the BLUP pays $r^\top Qr$, $r = \Delta L_j - \Delta K d^*$, $Qr = K^{-1}r - (1^\top K^{-1}r)b$; the blend $\Delta z^2\,\mathrm{gap} - 2\Delta z(1 - z)(e_j - b)^\top\Delta K b + (1 - z)^2(\Delta K b)^\top Q(\Delta K b)$. Either can be larger. This is the weight part only: under skewed noise the cross term can offset it (study S74).
   \lean{Credibility.Core.tendsto_blupPrice}
   \lean{Credibility.Core.tendsto_blendPrice}
+  \item[{46. Balancing trades the fit's portfolio level for the target's.}] The cost of a common shift is $\mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2$ exactly; with unequal $\sigma_j$ the cross-fitted level's error is 1.2--2.2 times corrBS's own (S75), so the app's switch costs up to $+206$ points of the floor.
+  \lean{Credibility.integral_sum_sq_shift}
 \end{description}
 
 \end{document}
