@@ -299,7 +299,6 @@ theorem integral_mul_pred_sub {A : Matrix (J × P) P ℝ} (hA : (stack J P)ᵀ *
 
 end VecEstimates
 
-omit [Fintype P] [DecidableEq P] in
 /-- **The expected weighted spread of vector estimates** (S67's corrected moment identity for
 `Λ̂`). Random vectors `β̂ⱼ` (`est (j, p)`), square integrable with a common mean `b`, and
 `cov(β̂ⱼₚ, β̂ᵢᵣ) = δⱼᵢΛₚᵣ + (Nⱼᵢ)ₚᵣ`: the cohorts' own variation `Λ` plus any noise covariance
@@ -321,23 +320,46 @@ theorem integral_spread {Pr : Measure Ω} [IsProbabilityMeasure Pr] (est : J × 
   have hD : ∀ j q ω, est (j, q) ω - ∑ k, w k * est (k, q) ω = ∑ k, a j k * est (k, q) ω := by
     intro j q ω
     simp [ha, sub_mul, sum_sub_distrib, ite_mul]
-  have hm : ∀ j q, MemLp (fun ω => ∑ k, a j k * est (k, q) ω) 2 Pr := fun j q =>
-    memLp_finsetSum _ fun k _ => (hL2 (k, q)).const_mul (a j k)
-  have hint : ∀ j q, Pr[fun ω => ∑ k, a j k * est (k, q) ω] = 0 := by
-    intro j q
-    rw [integral_finsetSum _ fun k _ => ((hL2 (k, q)).const_mul (a j k)).integrable (by norm_num)]
-    simp only [integral_const_mul, hmean, ← sum_mul, ha, sum_sub_distrib, hw]
+  have hsa : ∀ j, ∑ k, a j k = 0 := fun j => by simp [ha, sum_sub_distrib, hw]
+  -- the centred variables as `Core.Estimates` over `J × P` (level = estimate)
+  let C : Matrix (J × P) (J × P) ℝ := Matrix.of fun x y => cov[est x, est y; Pr]
+  have hcen : ∀ x, MemLp (fun ω => est x ω - b x.2) 2 Pr := fun x =>
+    (hL2 x).sub (memLp_const _)
+  have hcc : ∀ x y, cov[fun ω => est x ω - b x.2, fun ω => est y ω - b y.2; Pr] = C x y :=
+    fun x y => by
+      rw [covariance_sub_const_left ((hL2 x).integrable (by norm_num)),
+        covariance_sub_const_right ((hL2 y).integrable (by norm_num))]
+      rfl
+  have hcm : ∀ x, Pr[fun ω => est x ω - b x.2] = 0 := fun x => by
+    rw [integral_sub ((hL2 x).integrable (by norm_num)) (integrable_const _), hmean]
     simp
+  let E : Core.Estimates C C 0 Pr :=
+    { est := fun x ω => est x ω - b x.2, level := fun x ω => est x ω - b x.2,
+      est_memLp := hcen, level_memLp := hcen, est_mean := hcm, level_mean := hcm,
+      cov_est := hcc, cov_level_est := hcc, cov_level := hcc }
+  set d : J → P → J × P → ℝ := fun j q x => if x.2 = q then a j x.1 else 0 with hd
+  have hE : ∀ j q ω, ∑ k, a j k * est (k, q) ω = E.portLin (d j q) ω := by
+    intro j q ω
+    simp only [Core.Estimates.portLin, Core.portLin, E, hd, Fintype.sum_prod_type, ite_mul,
+      zero_mul, sum_ite_eq', mem_univ, ite_true, mul_sub, sum_sub_distrib, ← sum_mul, hsa]
+    ring
+  have hm : ∀ j q, MemLp (fun ω => ∑ k, a j k * est (k, q) ω) 2 Pr := fun j q => by
+    simp_rw [hE]; exact E.memLp_portLin _
   have hc : ∀ j, Pr[fun ω => (∑ k, a j k * est (k, p) ω) * ∑ k, a j k * est (k, r) ω]
       = ∑ k, ∑ l, a j k * a j l * ((if k = l then Λ p r else 0) + N k l p r) := by
     intro j
-    have e := covariance_eq_sub (hm j p) (hm j r)
-    rw [hint, hint, mul_zero, sub_zero] at e
+    have e := covariance_eq_sub (E.memLp_portLin (d j p)) (E.memLp_portLin (d j r))
+    rw [E.integral_portLin, E.integral_portLin, mul_zero, mul_zero, mul_zero, sub_zero,
+      E.cov_portLin] at e
     simp only [Pi.mul_apply] at e
-    rw [← e, covariance_fun_sum_fun_sum (fun k => (hL2 (k, p)).const_mul (a j k))
-      (fun k => (hL2 (k, r)).const_mul (a j k))]
-    simp only [covariance_const_mul_left, covariance_const_mul_right, hcov]
-    exact sum_congr rfl fun _ _ => sum_congr rfl fun _ _ => by ring
+    simp_rw [hE]
+    rw [← e]
+    simp only [dotProduct, mulVec, hd, C, Matrix.of_apply, Fintype.sum_prod_type, ite_mul,
+      zero_mul, sum_ite_eq', mem_univ, ite_true, mul_ite, mul_zero, hcov, mul_sum]
+    refine sum_congr rfl fun k _ => ?_
+    rw [sum_comm]
+    simp only [sum_ite_eq', mem_univ, ite_true]
+    exact sum_congr rfl fun _ _ => by ring
   simp_rw [hD]
   have hs := integral_finsetSum (μ := Pr) univ
     (f := fun j ω => w j * ((∑ k, a j k * est (k, p) ω) * ∑ k, a j k * est (k, r) ω))

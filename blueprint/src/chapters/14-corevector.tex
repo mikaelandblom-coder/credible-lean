@@ -714,8 +714,11 @@ severity) are such predictors, and so is the matrix blend.
 \end{theorem}
 \begin{proof}
   \leanok
+  \uses{def:Core_Estimates, lem:Core_moments_lin}
   $\hat\beta_j - \bar\beta = \sum_k (\delta_{jk} - \omega_k)\hat\beta_k$ has mean $0$, so each
-  entry of the expectation is a covariance of two linear combinations:
+  entry of the expectation is a covariance of two linear combinations of the centred
+  $\hat\beta_{kp}$ (Definition~\ref{def:Core_Estimates} over $J \times P$,
+  Lemma~\ref{lem:Core_moments_lin}):
   $\sum_{k,l} (\delta_{jk} - \omega_k)(\delta_{jl} - \omega_l)(\delta_{kl}\Lambda + N_{kl})$.
   Weighting by $\omega_j$ and summing, $\sum_j \omega_j(1 - 2\omega_j + \sum_k\omega_k^2)
   = 1 - \sum_j\omega_j^2$, and the three cross sums of $N$ leave
