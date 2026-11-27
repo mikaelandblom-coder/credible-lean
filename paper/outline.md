@@ -68,7 +68,7 @@ the shock model moved from §9 into §8.4; appendix A "Beyond the thesis" covers
 | 1 | Introduction (How to read this paper) | what credibility is, the best factor, what is new, what else is here; the four documents, machine-checked means what | §1, §0 | draft |
 | 2 | The model (Cohorts, periods and error terms; From data to `K`) | error terms, correlation within a period, distribution-free, Bühlmann–Straub notation; the recipe, PD not PSD, two cohorts | §2, §3 | draft |
 | 3 | The best blend (The weights; The credibility factor; Special cases; Beyond the blend) | inverse-variance and GLS weights; the proposed `z`, `z > 1`, the sign flip; Bühlmann–Straub, two cohorts, equal covariances, ignoring or damping correlation; the BLUP of any target with a design, the price of the blend and of restricted rules, recency weighting (S43–S45) | §4, §5, §6 | draft |
-| 4 | Balance | when it holds for free, the cost of forcing it, how to balance | §7 | draft |
+| 4 | Balance | when it holds for free, the cost of forcing it, balancing as a choice of portfolio level (Finding 46, S75–S76), how to balance | §7 | draft |
 | 5 | Estimating the parameters | unbiased estimators, plug-in `K̂`, damping (S38–S42), tapering (S46–S48), a fit with no tuning, error of a fitted model, gain against price, estimated weights and skew (Finding 35, its first-order prediction) | §8 | draft |
 | 6 | Why the moments are real | true covariances and MSE; consistent iff `ρ ⪰ 0`; what "best" means, given the levels (SURE, OBP mean) | §9 | draft |
 | 7 | Beyond second moments | cumulants, independent sources, variance function (Tweedie), what "normal" means, when linear is enough, heavy tails and the cross term (Findings 38–40), symmetric and normal noise | new (from §5, §6) | draft |
@@ -100,17 +100,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] S72 (2026-11-27, `runs/recommended-fit.js`) qualifies two claims: §BLUP "beats the fitted blend in every correlated
-  world tried" and the choice table's row "ρ̂ ≳ 0.6 → the BLUP (S52)". With the balance switch on, the BLUP loses up to
-  22 points of the floor with a wide σⱼ spread at low volume (ρ = 0.3–0.6) and wins clearly only at ρ = 0.9 or equal σⱼ;
-  the row needs "and similar noise variances", the paragraph the balanced/unbalanced distinction.
-  *Why, 2026-11-27 (Finding 45, S73):* the BLUP's weights pay a larger estimation price than the blend's on the
-  same `K̂` there (+32 to +38 points against a gain of 3–12); one sentence in §BLUP, citing the handbook line.
-  *Correction, S74:* that weight price is not the actual loss (cross term about −25); unbalanced the BLUP wins
-  (worse in 6 of 56, ≤ +6), and the balanced loss is mostly the balance step's own cost. The sentence should say that.
-- [ ] Balance (2026-11-27, Finding 46, handbook `res:balanceCost`): the paper's balance section should say that a common
-  shift trades the fit's portfolio level for the target's (cost `E(T − μ̄)² − E(r̄ − μ̄)²`), so balancing is a choice of
-  portfolio-level estimator, not a free unbiasedness fix; with unequal σⱼ the app's cross-fitted target is the worse one.
 - [ ] §Open directions, "Small crossed tables" (2026-11-27, S70, S71): REML on the cell means is now the app's crossed
   default (better than the pair pools in 48 of 96 larger-table worlds, worse in 9 by at most 3 points); the paragraph
   may say so, and that Finding 44's 2×2 warning is shown.

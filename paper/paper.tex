@@ -888,11 +888,19 @@ estimates where the blend puts $(0.960, 0.032, 0.008)$. That needs every
 entry of $K$ to be right, where the blend needs only the weights and the
 factor. In simulation the gain survives estimation when $\hat K$ has few
 parameters: plugged into the one-correlation fit of
-Section~\ref{sec:estimation}, the BLUP beats the fitted blend in every
-correlated world tried, often below the blend's own floor, and ties at
-$\rho = 0$; on a fully estimated $\hat K$ it is noisy (\app{Models},
-``BLUP''; \file{studies/PLAN.md} 3c, \file{studies/LOG.md}
-S30--S32).
+Section~\ref{sec:estimation}, the BLUP beats the fitted blend broadly, and
+ties at $\rho = 0$. In 56 worlds with skewed claims, unequal volumes and
+unequal noise variances it was worse in 6, by at most 6 points of the floor,
+and up to 72 points better (S72, S74). Its weights do pay more than the
+blend's for the same estimated $\hat K$, since they read every off-diagonal
+entry: with unequal noise variances at low volume up to 38 points of the
+floor against a gain of 3--12 (\finding{45}). But that is only the weight
+part of the plug-in error; the cross term (\hb{res:plugIn}{32}) offsets most
+of it, about $-25$ points there. Where the BLUP did lose clearly, by up to
+22 points, the rates had been shifted to balance afterwards, and that loss
+is mostly the balance step's own cost (Section~\ref{sec:balance}). On a
+fully estimated $\hat K$ the BLUP is noisy (\app{Models}, ``BLUP'';
+\file{studies/PLAN.md} 3c, \file{studies/LOG.md} S30--S32).
 
 \paragraph{What the blend leaves out.}
 
@@ -982,8 +990,8 @@ stays ahead of the fitted $\lambda$ (S45).
 
 \see \hb{res:blup}{22} ·
 \app{Models} (``BLUP''), \app{Comparing fits on data} (``EWMA of own years'') ·
-\finding{18} ·
-\file{studies/LOG.md} (S30--S32, S43--S45),
+\finding{18}, \finding{45} ·
+\file{studies/LOG.md} (S30--S32, S43--S45, S72--S74),
 \file{notes/card-data.md} Step~1 ·
 thesis §2.5.
 
@@ -993,8 +1001,9 @@ thesis §2.5.
 \oneline A blend is balanced when the blended rates, charged on the past
 volumes, would have brought in exactly the claims that came in; every blend
 is balanced for \emph{some} volume measure, Bühlmann--Straub happens to be
-balanced for the exposures, and under correlation forcing exposure balance
-costs accuracy, so if you must, shift all rates by the same amount.
+balanced for the exposures, and forcing balance is a choice of portfolio
+level: a common shift of all rates replaces the fit's own portfolio rate by
+the target's, and pays exactly when the target is the better estimate.
 
 Practitioners like balance because it is easy to explain: the tariff
 neither gives away nor overcharges the portfolio's own history. In
@@ -1062,13 +1071,44 @@ these corrections is a linear rule, so its mean squared error is a formula
 in the second moments (\file{studies/runs/exact-balance.js}). They do depend on
 the worlds chosen.
 
-\paragraph{Why balance costs anything.}
+\paragraph{Why the exposure total is a poor level.}
 
 The exposure-weighted mean of the cohort
 estimates carries this period's common shock in full. The GLS weights hedge
 that shock away (Section~\ref{sec:weights}); balance puts it back into every
 rate. Without correlation there is no common shock to hedge, and the cost
 vanishes.
+
+\paragraph{Balancing is choosing a portfolio level.}
+
+A common shift moves every rate by $D = T - \bar r$, with $\bar r$ the
+volume-weighted mean of the fitted rates and $T$ the level to reproduce (the
+exposure average of the cohort estimates, or another estimate). It leaves the
+cohorts' relative rates alone, and the volume-weighted error changes by
+exactly
+\[
+  \mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2,
+\]
+$\bar\mu$ the volume-weighted true level, for any rates, target and
+distribution (\hb{res:balanceCost}{31}, \finding{46}). So balance is not a free
+unbiasedness fix, and a constraint is not costly as such: the shift pays
+exactly when $T$ estimates the portfolio level better than the fit already
+does. With known moments the best predictor's own portfolio rate is the best
+unbiased linear estimate of $\bar\mu$, so shifting it to the exposure average
+can only cost. With fitted moments either side can win. In the app's study
+worlds the cross-fitted level of Section~\ref{sec:estimation} was about as
+good as the fit's own with equal noise variances ($0.82$--$1.10$ times its
+error) and clearly worse with unequal ones (up to $2.2$ times), so always
+balancing cost up to twice the floor (S75). For fixed weights the formula can
+be evaluated on the fitted $\hat K$: balance iff the target's error minus the
+fit's is negative there. That rule lost at most 7 points of the floor against
+the better of always and never balancing in each world, where a held-out
+score lost up to 99 (S76); the app's switch now balances only when it pays.
+What the squared error does not show is the sign: the unbalanced fit keeps its
+portfolio bias under skewed claims (Section~\ref{sec:estimation},
+\finding{35}), down to $-1.9\%$ of the tariff at app volume with unequal
+noise variances. An actuary who must not under-price should read the
+estimated bias next to the rule.
 
 \paragraph{Is the shift the best balanced correction?}
 
@@ -1092,20 +1132,23 @@ $D$. So the shift is the one to use.
   \item \emph{Decide what balance is for before forcing it.} If the goal is
     accurate rates, do not force it: the best blend is balanced for its own
     measure $b_j/(1 - z_j)$. If total premium must match total claims,
-    shift.
+    shift, and know that the shift's cost is the target's error for the
+    portfolio level minus the fit's (\hb{res:balanceCost}{31}).
   \item \emph{Don't restore balance by bending $z$.} It is the costliest
     way and produces factors outside $[0, 1]$ for the small cohorts.
   \item \emph{Balance is not a test of the model.} It is an identity in
     Bühlmann--Straub and an expected miss under correlation; neither says
     whether the parameters are right.
-  \item \emph{The app has no balance switch} for this reason; it reports
-    the off-balance as a note, not a warning (\app{Many draws}).
+  \item \emph{The app's balance switch balances only when it pays}: it
+    shifts to the cross-fitted level when the estimated cost on $\hat K$ is
+    negative, and shows the estimated under-pricing either way
+    (\app{Models}, \app{Many draws}).
 \end{itemize}
 
-\see \hb{res:bs}{8}, \hb{res:balance}{9}, \hb{res:bestBalanced}{10}, \hb{res:commonShift}{11} ·
-\app{Many draws} ·
-\finding{10}, \finding{15}, \finding{16} ·
-\file{studies/LOG.md} (S27--S29), \file{studies/runs/vc-balance.js},
+\see \hb{res:bs}{8}, \hb{res:balance}{9}, \hb{res:bestBalanced}{10}, \hb{res:commonShift}{11}, \hb{res:balanceCost}{31} ·
+\app{Models}, \app{Many draws} ·
+\finding{10}, \finding{15}, \finding{16}, \finding{46} ·
+\file{studies/LOG.md} (S27--S29, S75, S76), \file{studies/runs/vc-balance.js},
 \file{studies/runs/exact-balance.js} ·
 \file{studies/literature.md} §4 ·
 thesis §2.9.
@@ -1245,9 +1288,9 @@ for each data situation. ``S'' numbers are study findings
   \midrule
   No sign of correlation & Bühlmann--Straub & S6, S50 \\
   Correlation plausible & one correlation, variances by credibility (above) & S15--S17, 45 worlds \\
-  Strong correlation, $\hat\rho \gtrsim 0.6$ & the best linear predictor on the same $\hat K$ & S52 \\
+  Correlation plausible, rates not shifted afterwards & the best linear predictor on the same $\hat K$ & S52, S72, S74 \\
   Many ordered cohorts (about 20) & the predictor with a distance taper, if the data signal it & S36, S46--S47 \\
-  Exposure balance required & the fit, then a common shift of all rates & \finding{16} \\
+  Exposure balance required & the fit, then a common shift of all rates; its cost is exact (\hb{res:balanceCost}{31}) & \finding{16}, \finding{46} \\
   Skewed claims & a pooled noise variance, or balance & \finding{35} \\
   Several correlated quantities & the matrix best predictor, not the matrix blend & \finding{22} \\
   Monthly data, persistent demand & the predictor on a constrained factor table, $\phi$ from a long index & Section~\ref{sec:factor} \\
@@ -1359,7 +1402,9 @@ level, each year priced with weights fitted without it, so a year's noise cannot
 weight. With year shares common to the cohorts its bias runs only through the levels, and is
 zero when the weights come from residuals alone (\hb{res:randomWeights}{30}). In the app's
 worlds it was unbiased, cost at most one point more than exposure balance without correlation
-and 2--46 points less under $\rho = 0.6$ (S63); the app's balance switch uses it.
+and 2--46 points less under $\rho = 0.6$ (S63). It is still a worse portfolio level than the
+fit's own when noise variances differ, so the app's balance switch shifts to it only when the
+shift pays (Section~\ref{sec:balance}).
 
 Two data-only estimates of the fitted error were tried. A jackknife that
 re-fits the parameters with one year deleted (Jiang, Lahiri and Wan 2002) is
@@ -2660,9 +2705,10 @@ linear predictor.
 
 Check for correlation with the bound of Section~\ref{sec:special}, using
 $\hat\rho$. If it matters, fit one correlation with credibility-weighted
-variances, and use the best linear predictor when the correlation is strong.
-Report the own-data weight $c_j$ next to $z_j$ and don't clip. If balance is
-required, shift all rates. Fit a richer model only when its gain exceeds its
+variances, and use the best linear predictor on that table unless the rates
+are shifted afterwards. Report the own-data weight $c_j$ next to $z_j$ and
+don't clip. If balance is required, shift all rates, knowing that the shift
+trades the fit's portfolio level for the target's. Fit a richer model only when its gain exceeds its
 price, which can be computed from the data.
 
 \paragraph{What is not settled.}
@@ -2867,7 +2913,11 @@ definitions or steps of a derivation.
   \item[§2.9] Balance (no equation number). \hb{res:bs}{8},
     \hb{res:balance}{9} ·
     \lean{Credibility.bs_balance},
-    \lean{Credibility.Core.balanced_iff}.
+    \lean{Credibility.Core.balanced_iff}. Beyond the thesis, the cost of
+    a common shift (\finding{46}): \hb{res:balanceCost}{31} ·
+    \lean{Credibility.integral_sum_sq_shift},
+    \lean{Credibility.Core.Estimates.balance_cost_portLin},
+    \lean{Credibility.Core.Estimates.balance_blup_cost}.
 \end{description}
 
 \section{Concept index}\label{app:index}

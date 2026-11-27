@@ -12,6 +12,13 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-27
+- §3.4 Beyond the blend: the fitted BLUP beats the fitted blend broadly when rates are
+  not shifted afterwards (S72, S74); its larger weight price (Finding 45) is mostly
+  offset by the cross term; its balanced losses are the balance step's. Choice table:
+  "ρ̂ ≳ 0.6 → BLUP" replaced by "rates not shifted afterwards → BLUP".
+- §4 Balance: balancing as a choice of portfolio level, with its exact cost
+  (Finding 46); the app's switch now balances only when that cost is negative (S76).
+  Conclusion updated to match.
 - Title page: version line (date and commit) and a link to this changelog.
 - §1 "Four documents": the paper described as the main document that grew out of
   the 2023 thesis (not "the up-to-date thesis").
