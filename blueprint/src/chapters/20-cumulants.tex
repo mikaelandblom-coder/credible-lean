@@ -963,6 +963,133 @@ price needs their covariances.
   $ze_j + (1 - z)b = b + zc$; expand and use $b^\top Kc = c^\top Kb$.
 \end{proof}
 
+\section{The price of the BLUP over the blend on the same $\hat K$}
+
+The plug-in BLUP and the plug-in blend read the same fitted $\hat K$, but their weights move
+differently when $\hat K$ errs. Prasad and Rao's $g_3$ in the general form of Das, Jiang and Rao
+(2004, eq.~(3.4)), $\operatorname{tr}\{(\partial d)^\top K(\partial d)\,\Var\hat\theta\}$, is the
+expectation of the squared weight error below over the fit's error $\hat\theta - \theta$. These
+results give that error exactly for both families, and its first-order limit. Distribution-free:
+they are statements about weights.
+
+\begin{definition}[The zero-sum solve]\label{def:Core_zeroSumSolve}
+  \lean{Credibility.Core.zeroSumSolve}
+  \leanok
+  \uses{def:glsWeight}
+  $Qr = K^{-1}r - (1^\top K^{-1}r)\,b$, with the GLS weights $b$.
+\end{definition}
+
+\begin{lemma}[$Qr$ is the zero-sum solution]\label{lem:Core_zeroSumSolve}
+  \lean{Credibility.Core.sum_zeroSumSolve, Credibility.Core.mulVec_zeroSumSolve,
+        Credibility.Core.dotProduct_of_mulVec_sub_const, Credibility.Core.quad_of_mulVec_sub_const,
+        Credibility.Core.zeroSumSolve_quad, Credibility.Core.eq_zeroSumSolve,
+        Credibility.Core.zeroSumSolve_smul}
+  \leanok
+  \uses{def:Core_zeroSumSolve}
+  For positive definite $K$: $\sum_i (Qr)_i = 0$ and $KQr - r$ is constant; $Qr$ is the only
+  zero-sum vector with that property; $(Qr)^\top K(Qr) = r^\top Qr$; $Q(tr) = tQr$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_glsWeight, lem:mulVec_glsWeight}
+  $Kb = s^2 1$ and $\sum_i b_i = 1$. For zero-sum $u$ and $K\delta - r$ constant,
+  $u^\top K\delta = u^\top r$; a difference of two solutions $e$ then has $e^\top Ke = 0$.
+\end{proof}
+
+\begin{theorem}[The BLUP's weight error on a fitted $K'$]\label{thm:Core_blupWeight_sub}
+  \lean{Credibility.Core.blupWeight_sub_eq, Credibility.Core.glsWeight_sub_eq,
+        Credibility.Core.blupWeight_sub_quad}
+  \leanok
+  \uses{def:Core_blup, lem:Core_zeroSumSolve}
+  For positive definite $K$, $K'$ and any $L$, $L'$, with $Q' = Q$ on $K'$:
+  \[ d^*(K', L') - d^*(K, L) = Q'\bigl(L'_j - L_j - (K' - K)d^*\bigr), \qquad
+     b(K') - b(K) = -Q'\bigl((K' - K)b\bigr), \]
+  and the first has $K'$-norm $r^\top Q'r$, $r = L'_j - L_j - (K' - K)d^*$. Exact.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_zeroSumSolve, lem:Core_blup_foc}
+  The difference has zero sum and $K'(d^{*\prime} - d^*) - r = (K'd^{*\prime} - L'_j) - (Kd^* - L_j)$,
+  a difference of constants (Lemma~\ref{lem:Core_blup_foc}); uniqueness of $Q'r$.
+\end{proof}
+
+\begin{theorem}[The blend's weight error on a fitted $K'$]\label{thm:Core_blendWeight_sub}
+  \lean{Credibility.Core.blendWeight_sub_eq, Credibility.Core.blendDir_quad,
+        Credibility.Core.blendWeight_sub_quad}
+  \leanok
+  \uses{def:Core_blup, lem:Core_zeroSumSolve}
+  With $K'$ and a factor $z'$ in place of $K$, $z$:
+  $w' - w = (z' - z)(e_j - b') - (1 - z)\,Q'\bigl((K' - K)b\bigr)$, whose $K'$-norm is
+  \[ (z' - z)^2\,\mathrm{gap}' - 2(z' - z)(1 - z)\,(e_j - b')^\top(K' - K)b
+     + (1 - z)^2\,y^\top Q'y, \qquad y = (K' - K)b, \]
+  with $\mathrm{gap}' = K'_{jj} - s'^2$. Exact.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blupWeight_sub, lem:Core_quadForm_gap, lem:Core_zeroSumSolve}
+  The GLS part of Theorem~\ref{thm:Core_blupWeight_sub}. In the norm, $e_j - b'$ has zero sum and
+  $K'Q'y - y$ is constant, so the cross term is $(e_j - b')^\top y$;
+  Lemma~\ref{lem:Core_quadForm_gap} gives the gap.
+\end{proof}
+
+\begin{definition}[First-order prices]\label{def:Core_blupPrice}
+  \lean{Credibility.Core.blupPrice, Credibility.Core.blendPrice}
+  \leanok
+  \uses{def:Core_blup, def:Core_zeroSumSolve}
+  In the direction $(\Delta K, \Delta L)$, with the factor moving at rate $\Delta z$:
+  \[ \mathrm{price}_{\mathrm{BLUP}} = r^\top Qr,\ r = \Delta L_j - \Delta K\,d^*; \qquad
+     \mathrm{price}_{\mathrm{blend}} = \Delta z^2\,\mathrm{gap}
+       - 2\Delta z(1 - z)(e_j - b)^\top\Delta K\,b + (1 - z)^2\,(\Delta K b)^\top Q(\Delta K b). \]
+\end{definition}
+
+\begin{lemma}[Continuity along a line]\label{lem:Core_price_continuity}
+  \lean{Credibility.Core.continuous_mulVec_left, Credibility.Core.continuousAt_inv_line,
+        Credibility.Core.continuousAt_gls_zeroSumSolve_line, Credibility.Core.tendsto_quad,
+        Credibility.Core.quad_smul_div}
+  \leanok
+  \uses{def:Core_zeroSumSolve}
+  For positive definite $K$, $t \mapsto (K + t\Delta K)^{-1}$, the GLS weights and $Qy$ on
+  $K + t\Delta K$ are continuous at $0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Continuity of the matrix inverse at an invertible matrix, and of $x \mapsto 1/x$ at
+  $1^\top K^{-1}1 > 0$.
+\end{proof}
+
+\begin{theorem}[The prices at first order]\label{thm:Core_tendsto_price}
+  \lean{Credibility.Core.tendsto_blupPrice, Credibility.Core.tendsto_blendPrice}
+  \leanok
+  \uses{def:Core_blupPrice}
+  Along $K + t\Delta K$ (positive definite near $t = 0$) and $L + t\Delta L$, with a factor $z(t)$,
+  $z'(0) = \Delta z$, the squared weight errors in the true $K$-norm, divided by $t^2$, tend to
+  $\mathrm{price}_{\mathrm{BLUP}}$ and $\mathrm{price}_{\mathrm{blend}}$ as $t \to 0$. By
+  Lemma~\ref{lem:Core_linMse_pythagoras} each squared weight error is the extra MSE of those
+  weights over the best ones, so $\mathrm{price}_{\mathrm{BLUP}} - \mathrm{price}_{\mathrm{blend}}$
+  is the first-order extra price of the BLUP's weights over the blend's.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:Core_blupWeight_sub, thm:Core_blendWeight_sub, lem:Core_price_continuity,
+        lem:Core_zeroSumSolve}
+  Along the line $r$ is exactly $t$ times its direction, so the BLUP's error is $t\,Q_t r$
+  (Theorem~\ref{thm:Core_blupWeight_sub}) and the blend's $t$ times
+  $\frac{z(t) - z}{t}(e_j - b_t) - (1 - z)Q_t(\Delta K b)$
+  (Theorem~\ref{thm:Core_blendWeight_sub}); let $t \to 0$
+  (Lemma~\ref{lem:Core_price_continuity}) and use $(Qr)^\top KQr = r^\top Qr$ and the norm of
+  Theorem~\ref{thm:Core_blendWeight_sub} at $K' = K$.
+\end{proof}
+
+\begin{remark}[Finding 45: neither price dominates]
+  The BLUP reacts to $\Delta K$ through the whole vector $\Delta K\,d^*$; the blend only through
+  $\Delta z$ and $\Delta K\,b$. Neither is always cheaper: for random positive definite $K$ and
+  symmetric $\Delta K$ the BLUP's price is the lower one in 11.7\% of directions (study S73), so the
+  sign of the extra price depends on $\Var\hat\theta$. Its size on corrBS's $\hat K$ (S73, $J = 8$,
+  $T = 5$): $+32$ to $+38$ points of the floor at app volume with $\sigma_j$ spread 2 and
+  $\rho = 0.3$--$0.6$, against a gain of 3--12; at most $+4$ with equal $\sigma_j$. So
+  \texttt{Engine.gainPrice}'s ``none extra'' is wrong where study S72 saw the BLUP lose.
+\end{remark}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:

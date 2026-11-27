@@ -26,6 +26,8 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- [ ] The BLUP's price over the blend (2026-11-27, Finding 45, `Core.tendsto_blupPrice`, `tendsto_blendPrice`): a result
+  next to the plug-in MSE with both first-order prices, "watch out": the BLUP's is larger with a wide σⱼ spread at low volume.
 - [ ] Small crossed tables (2026-11-27, Finding 44, `CrossedSmall.sq_le_trace_cell`): in `res:crossed_est` a "watch out":
   a 2×2 table gives each variance one degree of freedom, SD ≥ √2·value at any volume; REML on the cell means (S70).
 - [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:

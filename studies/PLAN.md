@@ -440,7 +440,10 @@ Finished items are in `studies/PLAN-done.md`.
   `runs/recommended-fit.js`):* balanced, no candidate wins everywhere (BLUP −15.5 to +21.6 points against corrBS,
   losing with a wide σⱼ spread; g/p ±4; held-out choice at most +10, regret +1.7). Next: the price of the BLUP
   over the blend on the same `K̂` ("none extra" in `gainPrice` is wrong under a σⱼ spread), then a
-  gain-against-price verdict for the BLUP as for the variances.
+  gain-against-price verdict for the BLUP as for the variances. *Price stated 2026-11-27 (Finding 45, S73,
+  `BlupPrice.lean`):* first order `rᵀQr` against the blend's law, no sign in general, +32 to +38 points at app
+  volume with σⱼ spread 2. Still open: `Var θ̂` of corrBS's (ρ̂, σ̃ⱼ², τ̂²) (delta method), then the BLUP column
+  in `gainPrice` and its formula line (`F.gainPrice` "none extra" is wrong).
 - [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A

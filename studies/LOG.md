@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S73 | `runs/blup-price.js` | The BLUP's weight price over the blend on corrBS's `K̂`: +32 to +38 points with a σⱼ spread at app volume, ≤ +4 with equal σⱼ; no sign in general |
 
 ## Observations
 
@@ -990,3 +991,13 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     price of the BLUP over the blend on the same `K̂`. `gainPrice` treats it as "none extra", but S72 shows
     it grows with the σⱼ spread at low volume (plug-in error of the off-diagonal `K̂` entries, which the
     BLUP uses and the blend does not).
+- S73. *[numerical]* **The price of the BLUP over the blend on the same `K̂` (Finding 45).** Squared weight
+    errors `(d̂ − d)ᵀK(d̂ − d)` of each family on corrBS's `K̂` against its own true-`K` weights (each fit's
+    extra MSE over its oracle with the weights held fixed, `Core.linMse_eq_blupWeight_add`; no cross term),
+    J = 8, T = 5, 300 draws, regimes app / thesis, σⱼ spread 0 / 2, ρ ∈ {0, 0.3, 0.6}. In points of the
+    floor, BLUP − blend: app σⱼ×2 +32.1 ± 8.6 (ρ = 0.3) and +37.5 ± 7.7 (ρ = 0.6) against gains 2.9 and 11.8;
+    app σⱼ×0 +0.6 to +3.9 against gains up to 9.2; thesis +0.0 to +5.4. At ρ = 0 (gain 0) +0.2 to +3.8: ρ̂ ≥ 0
+    by clipping, so the BLUP's `K̂` is not diagonal. Part 2: random positive definite `K` and symmetric `ΔK`
+    (J = 2–5, 20000 directions): the BLUP's first-order price is the lower one in 11.7%. **Consequence.** The
+    first-order law (`Core.tendsto_blupPrice`, `tendsto_blendPrice`) is the general target S72 asked for;
+    with a `Var θ̂` for corrBS it gives `gainPrice` a BLUP column (gain against price, as for the variances).

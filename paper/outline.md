@@ -104,6 +104,8 @@ may need a paragraph.)
   world tried" and the choice table's row "ρ̂ ≳ 0.6 → the BLUP (S52)". With the balance switch on, the BLUP loses up to
   22 points of the floor with a wide σⱼ spread at low volume (ρ = 0.3–0.6) and wins clearly only at ρ = 0.9 or equal σⱼ;
   the row needs "and similar noise variances", the paragraph the balanced/unbalanced distinction.
+  *Why, 2026-11-27 (Finding 45, S73):* the BLUP's weights pay a larger estimation price than the blend's on the
+  same `K̂` there (+32 to +38 points against a gain of 3–12); one sentence in §BLUP, citing the handbook line.
 - [ ] §Open directions, "Small crossed tables" (2026-11-27, S70, S71): REML on the cell means is now the app's crossed
   default (better than the pair pools in 48 of 96 larger-table worlds, worse in 9 by at most 3 points); the paragraph
   may say so, and that Finding 44's 2×2 warning is shown.

@@ -109,6 +109,9 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
   Used 2026-11-24 (`studies/runs/price-formula.js`, S53–S55): g₃ as the first-order price of a fitted
   model against its oracle; reliable from about T = 10, overshooting with short histories.
+  Used 2026-11-27 (`Credibility/BlupPrice.lean`, Finding 45): Das, Jiang & Rao's general form (their
+  eq. (3.4), arXiv math/0406455) `g₃ = tr{(∂d)ᵀΣ(∂d)·Var θ̂}` for two families on the same `K̂`: the BLUP's
+  weight derivative `Q(Δℓ − ΔK d*)` and the blend's. No comparison of `g₃` across predictor families found.
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
   estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
   approximation for the estimation-error term. Gisler & Wüthrich (2008), credibility chain ladder:

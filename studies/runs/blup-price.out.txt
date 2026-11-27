@@ -1,0 +1,16 @@
+Part 1: 300 draws, J = 8, T = 5. In % of the blend floor (mean over regions): gain = floor − BLUP (true K);
+price = mean squared weight error on corrBS's K̂, blend and BLUP; extra = BLUP − blend.
+app σⱼ×0 ρ=0           gain    0.0  price blend   30.4  BLUP   31.0  extra 0.6 ± 0.2
+app σⱼ×0 ρ=0.3         gain    1.9  price blend   23.2  BLUP   27.1  extra 3.9 ± 1.3
+app σⱼ×0 ρ=0.6         gain    9.2  price blend   23.5  BLUP   25.1  extra 1.6 ± 1.3
+app σⱼ×2 ρ=0           gain    0.0  price blend  120.6  BLUP  124.4  extra 3.8 ± 1.7
+app σⱼ×2 ρ=0.3         gain    2.9  price blend  103.9  BLUP  136.0  extra 32.1 ± 8.6
+app σⱼ×2 ρ=0.6         gain   11.8  price blend  104.7  BLUP  142.3  extra 37.5 ± 7.7
+thesis σⱼ×0 ρ=0        gain   -0.0  price blend   17.9  BLUP   18.2  extra 0.2 ± 0.1
+thesis σⱼ×0 ρ=0.3      gain    1.3  price blend   18.6  BLUP   20.1  extra 1.5 ± 1.1
+thesis σⱼ×0 ρ=0.6      gain    5.6  price blend   20.1  BLUP   20.1  extra -0.0 ± 2.1
+thesis σⱼ×2 ρ=0        gain    0.0  price blend   32.7  BLUP   33.7  extra 1.0 ± 0.4
+thesis σⱼ×2 ρ=0.3      gain    2.8  price blend   31.7  BLUP   36.5  extra 4.8 ± 2.1
+thesis σⱼ×2 ρ=0.6      gain   11.4  price blend   31.5  BLUP   36.9  extra 5.4 ± 2.2
+
+Part 2: random K, ΔK (J = 2–5, 20000 directions): BLUP's first-order price below the blend's in 11.7%.

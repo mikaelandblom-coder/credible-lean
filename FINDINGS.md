@@ -785,4 +785,19 @@ Gaps, extra hypotheses and new results found while formalizing.
    Not covered: estimated noise (adds its own variance under normal noise, independent of the means for
    noise independent over time; not proved) and kurtosis below the Gaussian.
 
+45. **The price of the BLUP over the blend on the same `K̂` is not "none extra", and has no sign (new; proved:
+   `Core.blupWeight_sub_eq`, `blendWeight_sub_eq`, `tendsto_blupPrice`, `tendsto_blendPrice`).** On a fitted
+   `K'`, `L'` the BLUP's weights err by exactly `Q'(L'ⱼ − Lⱼ − (K' − K)d*)` and the blend's by
+   `(z' − z)(eⱼ − b') − (1 − z)Q'((K' − K)b)`, with `Q r = K⁻¹r − (1ᵀK⁻¹r)b` the zero-sum solve. At first order
+   the extra MSE (by `linMse_eq_blupWeight_add`, the squared weight error in the `K`-norm) is `rᵀQr`,
+   `r = ΔLⱼ − ΔK d*`, against `Δz²·gap − 2Δz(1 − z)(eⱼ − b)ᵀΔK b + (1 − z)²(ΔK b)ᵀQ(ΔK b)`: Das, Jiang & Rao's `g₃`
+   (2004, eq. (3.4)) for each family. The BLUP reads `ΔK` through the whole vector `ΔK d*`, the blend through
+   `Δz` and `ΔK b` only. Neither dominates: for random positive definite `K` and symmetric `ΔK` the BLUP's
+   price is the lower one in 11.7% of directions (S73), so the sign of the difference depends on `Var θ̂`.
+   Size (S73, J = 8, T = 5, weights on corrBS's `K̂`): at app volume with σⱼ spread 2 and ρ = 0.3–0.6 the
+   BLUP's extra price is +32 to +38 points of the floor against a gain of 3–12; with equal σⱼ it is at most
+   +4. So `Engine.gainPrice`'s "none extra" understates the BLUP's price exactly where S72 saw it lose.
+   Not covered: the cross term `2E[AB]` of `PlugIn.lean`, and the second-order terms; `Var θ̂` for the
+   corrBS fit (ρ̂, σ̃ⱼ², τ̂²) is not derived, so the formula is not yet a data-side verdict.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.
