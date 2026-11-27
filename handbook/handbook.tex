@@ -1851,8 +1851,9 @@ which has the details. The paper explains each where it belongs.
   \lean{Credibility.group_optimal_contiguous}
   \item[{42. Crossed ANOVA estimators miss the noise cross term.}] Goulet's (Dannenburg's) statistic is a pool of pair differences whose noise correction lacks $+2\sigma^2_{kl}\rho_{kl}$: within a row, $E = (\beta^2 + \gamma^2)(1 - \sum (u_k/U)^2) - \sum_{k \ne l}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$, and the grand-mean equation loses the same cross term; exact (eqs.~(67)--(69), two-way) when the noise is uncorrelated.
   \lean{Credibility.Model.anovaStat_row_unbiasedX}
-  \item[{43. Merging when the gap looks small loses to both rules (normal noise).}] Under normal noise the rule's MSE is $E u^2 + a^2R$, $R$ the risk of hard thresholding the observed gap; where always and never merging tie ($\delta^2(2 - m) = mV$), the pre-test rule is worse than both for every threshold $c > 0$ (inequality: proof in Lean pending).
+  \item[{43. Merging when the gap looks small loses to both rules (normal noise).}] Under normal noise the rule's MSE is $E u^2 + a^2R$, $R$ the risk of hard thresholding the observed gap; where always and never merging tie ($\delta^2(2 - m) = mV$), the pre-test rule is worse than both for every threshold $c > 0$.
   \lean{Credibility.PreTest.integral_sq_pretest}
+  \lean{Credibility.PreTest.lt_gapRisk_of_tie}
 \end{description}
 
 \end{document}

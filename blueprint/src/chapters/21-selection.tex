@@ -155,6 +155,50 @@ the curse for merging two cohorts (Chapter~\ref{ch:merging}).
   $\mathbb E(D - \delta) = 0$, $\mathbb E(D - \delta)^2 = V$.
 \end{proof}
 
+\begin{lemma}[Folding at $x \mapsto -x$]\label{lem:fold}
+  \lean{Credibility.PreTest.integral_eq_integral_Ioi_add_neg, Credibility.PreTest.gaussianPDFReal_neg,
+        Credibility.PreTest.integrable_pdf_mul}
+  \leanok
+  For integrable $g$, $\int g = \int_0^\infty (g(x) + g(-x))\,dx$. The $N(\delta, V)$
+  density $\varphi$ satisfies $\varphi(-x) = \varphi(x)e^{-2\delta x/V}$, and $\varphi F$ is
+  integrable when $F$ is integrable under $N(\delta, V)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Split at $0$ and substitute $x \mapsto -x$; expand the exponent; the density of
+  $N(\delta, V)$.
+\end{proof}
+
+\begin{lemma}[A positive fold]\label{lem:integral_pos_of_fold}
+  \lean{Credibility.PreTest.integral_pos_of_fold}
+  \leanok
+  \uses{lem:fold}
+  If $\varphi(x)F(x) + \varphi(-x)F(-x) \ge 0$ for $x > 0$, and $> 0$ on a set
+  $S \subseteq (0, \infty)$ of positive length, then $\mathbb E F(D) > 0$, $D \sim N(\delta, V)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:fold}
+  Write the mean as a fold over $(0, \infty)$; a nonnegative integrand with a support of
+  positive measure.
+\end{proof}
+
+\begin{lemma}[Sign of the fold]\label{lem:fold_eq}
+  \lean{Credibility.PreTest.fold_eq, Credibility.PreTest.sinh_div_strictAntiOn}
+  \leanok
+  \uses{lem:fold}
+  For $x \ne 0$, $y = \delta x/V$ and $p(x) = \delta^2 - (mx - \delta)^2$,
+  $\varphi(x)p(x) + \varphi(-x)p(-x) = A\,(\sinh y/(y\cosh y) - mV/(2\delta^2))$ with
+  $A = \varphi(x)e^{-y}\,4mx\delta y\cosh y$; and $\sinh y/(y\cosh y)$ is strictly
+  decreasing on $y > 0$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:fold}
+  Write $\sinh$, $\cosh$ by $e^{\pm y}$ and clear denominators. The derivative has the
+  sign of $y - \sinh y\cosh y < 0$.
+\end{proof}
+
 \begin{theorem}[Finding 43: the pre-test loses to both at the tie]\label{thm:pretest_tie}
   \lean{Credibility.PreTest.lt_gapRisk_of_tie}
   \leanok
@@ -163,12 +207,14 @@ the curse for merging two cohorts (Chapter~\ref{ch:merging}).
   $\delta^2 < R(m, \delta, c, V)$.
 \end{theorem}
 \begin{proof}
-  \uses{lem:gapRisk_fixed}
+  \leanok
+  \uses{lem:gapRisk_fixed, lem:fold_eq, lem:integral_pos_of_fold}
   With $p(x) = \delta^2 - (mx - \delta)^2$, $R - \delta^2 = -\mathbb E[p(D); D^2 \ge c]$
   and $\mathbb E p(D) = 0$ at the tie. Fold $x \mapsto -x$: on $x > 0$ the
-  integrand has the sign of $2\delta\tanh(\delta x/V) - mx$, positive then
-  negative. So the tail beyond $\sqrt c$ is negative, or the part below it
-  positive and equal to minus the tail.
+  integrand has the sign of $\sinh y/(y\cosh y) - mV/(2\delta^2)$, $y = \delta x/V$
+  (Lemma~\ref{lem:fold_eq}), which changes sign at most once, from $+$ to $-$. So the
+  part below $\sqrt c$ is positive, or the tail beyond it negative
+  (Lemma~\ref{lem:integral_pos_of_fold}).
 \end{proof}
 
 \begin{corollary}[For the predictor]\label{cor:pretest_mse_gt}
@@ -180,6 +226,7 @@ the curse for merging two cohorts (Chapter~\ref{ch:merging}).
   merging and that of never merging, for every threshold $c > 0$.
 \end{corollary}
 \begin{proof}
+  \leanok
   \uses{thm:pretest_reduction, lem:gapRisk_fixed, thm:pretest_tie}
   Theorem~\ref{thm:pretest_reduction} three times, Lemma~\ref{lem:gapRisk_fixed},
   Theorem~\ref{thm:pretest_tie}.

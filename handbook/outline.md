@@ -26,8 +26,6 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- [ ] Finding 43 line: link `Credibility.PreTest.lt_gapRisk_of_tie` (and drop "proof in Lean pending") once
-  its proof is closed (2026-11-27); `res:heldout` added the same day.
 - [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.

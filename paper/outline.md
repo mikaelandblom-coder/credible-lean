@@ -115,8 +115,6 @@ may need a paragraph.)
 - §12: when the app gets a step for choosing cohorts (`studies/PLAN.md`, G5),
   add it to the See line. (The BLUP fit is in: §5 and §13 cite it, 2026-11-17.)
 - B: regenerate when sections change; the list is written by hand.
-- [ ] Appendix A (2026-11-27): add `CrossFit.integral_heldOutScore` (held-out score) and, once proved,
-  `PreTest.lt_gapRisk_of_tie` (Finding 43) to the concordance.
 - Appendix A: the concordance lists the Lean names at drafting time
   (2026-11-16); add new thesis-facing theorems there as they come.
 

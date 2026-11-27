@@ -911,5 +911,5 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     It loses to both on 0–14% of the gaps `θ ∈ [0, 6]`, and its regret to the better rule reaches
     `0.65` (`k = 0`, `c = 2V`) and grows like `t²` for large thresholds. The plug-in threshold of
     `notes/merging-cohorts.md` §4 with the thesis blend: `+0.0004` (`τ²/V = 0.1`) to `+0.14` (`τ²/V = 5`) at
-    the tie. **Consequence.** No threshold is safe (Finding 43, the inequality stated as
+    the tie. **Consequence.** No threshold is safe (Finding 43, proved:
     `PreTest.lt_gapRisk_of_tie`); decide merges and cuts on held-out years (`CrossFit.integral_heldOutScore`).

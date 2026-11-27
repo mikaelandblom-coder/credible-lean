@@ -748,8 +748,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    cross-covariance estimate (`crossed_unbiasedX`) instead; they are unbiased for any correlations.
 
 43. **Merging when the gap looks small loses to both fixed rules, for every threshold (new; under
-   normal noise; reduction proved: `PreTest.integral_sq_pretest`; the inequality
-   `PreTest.lt_gapRisk_of_tie` is stated, its proof open).** Item 6 and `Merging.merge_iff` rank
+   normal noise; proved: `PreTest.integral_sq_pretest`, `PreTest.lt_gapRisk_of_tie`,
+   `PreTest.pretest_mse_gt`).** Item 6 and `Merging.merge_iff` rank
    merging against keeping two cohorts separate for a choice made in advance. The plug-in version,
    merge iff `(X₁ − X₂)² < c` (`notes/merging-cohorts.md` §4), decides with the same data. For fixed
    levels with gap `δ`, `D = X₁ − X₂ ~ N(δ, V)` and `a = (v₁ − c₁₂)/V`, every such rule's error is
@@ -764,7 +764,8 @@ Gaps, extra hypotheses and new results found while formalizing.
    the plug-in threshold of §4 with `τ²/V = 1`: `+0.04·a²V`; it loses to both on up to 14% of the gaps,
    and, at `c = 2V`, to the better of the two by up to `0.65·a²V`. Proof idea: with `p(x) = δ² − (mx − δ)²`,
    `R − δ² = −E[p(D); D² ≥ c]`, `E p(D) = 0` at the tie; folding `x ↦ −x`, the integrand on `x > 0`
-   has the sign of `2δ tanh(δx/V) − mx`, positive then negative. Remedy: choose on a held-out year,
+   has the sign of `sinh y/(y cosh y) − mV/(2δ²)`, `y = δx/V` (`fold_eq`), strictly decreasing in `y`
+   (`sinh_div_strictAntiOn`), so positive then negative. Remedy: choose on a held-out year,
    whose score is unbiased for the chosen rule's error for every distribution
    (`CrossFit.integral_heldOutScore`).
 
