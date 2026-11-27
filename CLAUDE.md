@@ -148,9 +148,10 @@ Commit each closed `sorry` separately, with a short message, after:
 3. A finding: entry in `FINDINGS.md`, a `remark` in the blueprint next to the
    result it concerns, and a line in the handbook's appendix "Findings"
    (statement or counterexample, Lean links), all in the same commit.
-4. Ask for each of app, handbook and paper: does it need this? Update it in the
-   same commit, or add a line under "Pending" in `studies/PLAN.md`,
-   `handbook/outline.md` or `paper/outline.md`.
+4. Ask for each of app, handbook, paper and thesis proposal: does it need
+   this? Update it in the same commit, or add a line under "Pending" in
+   `studies/PLAN.md`, `handbook/outline.md`, `paper/outline.md` or
+   `studies/thesis-topics/outline.md`.
 5. After pushing a `.tex` change, check the Blueprint run on `main` (GitHub MCP
    `actions_list`; TeX isn't installed in sessions) and fix it if it fails. Its
    jobs `lean` and `docs` take about 2 minutes; don't wait for `deploy`.
@@ -185,6 +186,18 @@ and the blueprint; the others point to it. Don't restate across them.
   `\input` line. Reached by link, not read front to back. `\lean{}` links go to
   the source line via `find/` (no doc-gen4). Deployed to GitHub Pages from
   `main`.
+
+## Keeping the documents current
+- "Pending" is a queue, not a parking place. The SessionStart hook runs
+  `scripts/pending_status.py`: per document, its open Pending items, the oldest
+  one's age, and the Lean commits since it last changed.
+- When a document has more than 10 open items or one older than a week, it
+  prints "catch-up due": the next-chat prompt then proposes a catch-up chat for
+  that document instead of new work (the owner may still decline). For a
+  document with few items but many Lean commits since it changed, look for
+  stale claims (e.g. a direction called open that is now done).
+- A catch-up chat takes one section or theme, ticks items off as it goes, and
+  deletes the "*Done*" notes it leaves (the commit log keeps them).
 
 ## Studies
 Simulation scripts `studies/runs/*.js`, outputs `studies/runs/*.out.txt`. Numbered observations

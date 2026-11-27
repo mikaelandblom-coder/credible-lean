@@ -1,6 +1,8 @@
 {
   "permissions": {
-    "allow": ["Bash(bash scripts/fetch_paper.sh:*)"]
+    "allow": [
+      "Bash(bash scripts/fetch_paper.sh:*)"
+    ]
   },
   "hooks": {
     "SessionStart": [
@@ -9,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && { bash \"$CLAUDE_PROJECT_DIR\"/scripts/session_branch.sh; bash \"$CLAUDE_PROJECT_DIR\"/scripts/fetch_mathlib.sh --background; } || true",
+            "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] && { bash \"$CLAUDE_PROJECT_DIR\"/scripts/session_branch.sh; bash \"$CLAUDE_PROJECT_DIR\"/scripts/fetch_mathlib.sh --background; python3 \"$CLAUDE_PROJECT_DIR\"/scripts/pending_status.py; } || true",
             "timeout": 900
           }
         ]
