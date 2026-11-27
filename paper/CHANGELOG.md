@@ -12,6 +12,11 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-27
+- §5 choice table: crossed groupings now start with REML on the cell means (S70, S71);
+  a new row for groups sharing a level (one GLS pass; groups or none on held-out years).
+- §10 Open directions: the group fit marked done, its open part now "groups or not, by
+  held-out score"; small crossed tables rewritten around REML as the app's default and
+  Finding 44's 2×2 warning.
 - §3.4 Beyond the blend: the fitted BLUP beats the fitted blend broadly when rates are
   not shifted afterwards (S72, S74); its larger weight price (Finding 45) is mostly
   offset by the cross term; its balanced losses are the balance step's. Choice table:

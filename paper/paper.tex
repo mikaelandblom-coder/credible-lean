@@ -1294,16 +1294,23 @@ for each data situation. ``S'' numbers are study findings
   Skewed claims & a pooled noise variance, or balance & \finding{35} \\
   Several correlated quantities & the matrix best predictor, not the matrix blend & \finding{22} \\
   Monthly data, persistent demand & the predictor on a constrained factor table, $\phi$ from a long index & Section~\ref{sec:factor} \\
-  Crossed groupings (row $\times$ column) & pair estimators pooled by inverse variance from an equal-weight pass, clipped at $0$ & \file{studies/runs/crossed-fit.js}, \hb{res:crossed_pool}{51} \\
+  Crossed groupings (row $\times$ column) & REML on the cell means, started from the inverse-variance pools of pair estimators clipped at $0$ & S70, S71, \hb{res:crossed_pool}{51} \\
+  Groups sharing a level & $\phi\tau^2$ by one GLS pass on the pairs; groups or none on held-out years & S69, \hb{res:groups_pool}{45} \\
   Any richer fit & only if its gain exceeds its price & \hb{res:bsPrice}{37} \\
   \bottomrule
 \end{tabular}
 \end{center}
-For crossed groupings the default reaches 130\% of the floor on average
-against 157\% for the thesis fit, but does worse when the effects are weak,
-and small tables stay open (Section~\ref{sec:open}). For groups that share a
-level the model and its estimators are proved, but no fit has been tested yet
-(Section~\ref{sec:groups}).
+For crossed groupings the pools alone reach 130\% of the floor on average
+against 157\% for the thesis fit, but do worse when the effects are weak: the
+clip at zero keeps a variance that is truly about zero positive in half the
+draws. Restricted maximum likelihood (REML) on the cell means, with the noise
+table plugged in and the pools as its start, reaches 126\%; in 96 larger-table
+worlds it was better in 48 and worse in 9, by at most 3 points of the floor
+(S71), and in 128 small-table worlds worse by at most 5 (S70). It is the
+app's crossed default, not yet proved (Section~\ref{sec:open}). For groups
+that share a level the fit is one GLS pass on the pair table
+(\hb{res:groups_pool}{45}); its weights move the blend little, and whether to
+fit groups at all is decided on held-out years (Section~\ref{sec:groups}).
 
 \paragraph{How the studies were run.}
 
@@ -2559,9 +2566,10 @@ about the layer that assumes a noise family.
 \paragraph{Where to look first.}
 
 In order of expected payoff, with the reasons given below: the winner's curse
-of choosing cohorts from the same data; a fit for the group model; small
-crossed tables; and a few classical extensions that are short corollaries of
-what is already proved. Crossed levels, the default fit and trend lines,
+of choosing cohorts from the same data; whether to use groups, and rows and
+columns, by held-out score; REML for crossed tables in theory; and a few
+classical extensions that are short corollaries of what is already proved.
+Crossed levels, the default fit, trend lines and the fit of the group model,
 open in earlier versions, are now in (Sections~\ref{sec:groups},
 \ref{sec:estimation} and~\ref{sec:vector}).
 
@@ -2586,21 +2594,24 @@ and the optimism of the winning score itself, which needs a further fold.
 \paragraph{Fits.}
 
 \begin{itemize}
-  \item \emph{Small crossed tables.} The crossed fit is settled in principle
-    (GLS on the pair table, \hb{res:crossed_pool}{51}) and in the default
-    (Section~\ref{sec:estimation}). Open are tables with few pairs per class
-    (two each in a two-by-two table), where the estimates are noisy and can be
-    negative, and the default does worse when the effects are weak. In
-    simulation (S70) restricted maximum likelihood on the cell means, with the
-    noise table plugged in, is never more than a few points worse than the
-    default and gains most where the effects are weak or absent. The reason is
-    proved: a two-by-two table leaves each variance one degree of freedom, so
-    every unbiased estimate has standard deviation at least $\sqrt2$ times its
-    value at any volume (\finding{44}). Open are the switch in the app and when
-    to fit rows and columns at all.
-  \item \emph{A fit for the group model} that pools the within- and
-    across-group pair estimates into one $\widehat{\phi\tau^2}$ with no
-    hand-set choices, and its behaviour in simulation (Section~\ref{sec:groups}).
+  \item \emph{Crossed tables: REML in theory, and rows and columns or not.}
+    REML on the cell means is now the app's crossed default
+    (Section~\ref{sec:estimation}; S70, S71), on simulation evidence only: a
+    statement for its plug-in rates, or a bound on its loss against the pools,
+    is open. Small tables are where it matters most. A two-by-two table leaves
+    each variance one degree of freedom, so every unbiased estimate has
+    standard deviation at least $\sqrt2$ times its value at any volume
+    (\finding{44}); the app warns about such tables. Open too is when to fit
+    rows and columns at all, which, as for groups, belongs to a held-out score
+    (\hb{res:heldout}{55}).
+  \item \emph{Groups or not, by held-out score.} The fit of the group model is
+    settled: one GLS pass on the pair table is the best pool in principle
+    (\hb{res:groups_pool}{45}) and as good as knowing its covariances in
+    simulation (S69), and it is the app's fit ``BLUP groups''
+    (Section~\ref{sec:groups}). What matters more is whether to use groups at
+    all: ignoring them cost 4--15 points at a large shared share and gained
+    1--6 at a small one with short histories (S69). The app chooses on
+    held-out years; that choice's regret in simulation is open.
   \item \emph{A covariance table that knows the group structure.} The
     one-correlation $\hat K$ is wrong when correlation differs between pairs
     (regions in countries), and there the blend form costs most.
