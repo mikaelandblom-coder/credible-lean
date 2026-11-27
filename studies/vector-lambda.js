@@ -160,12 +160,16 @@ function run(o) {
   return { floor, row, rowVs };
 }
 
-const axes = { rab: [0, 0.7], rFY: [0, -0.6], J: [10, 30], T: [5, 8], zF: [0.5, 0.85] };
-console.log(`vector-lambda: ${N} draws per world; volume 500; τ_a = 1, τ_b = 0.15/yr; severity noise 4× frequency.`);
-console.log('MSE of next year\'s level in % above the full oracle (± 2 SE); F | Y. Last column: full − block.');
-console.log('rab  rFY    J  T  zF   | oDiag          oBlock         | diag           block          full           | full−block');
-for (const o of grid(axes)) {
-  const r = run(Object.assign({ volume: 500 }, o)), cell = (f) => `${r.row(f, 0)} | ${r.row(f, 1)}`;
-  console.log(`${o.rab.toFixed(1)}  ${o.rFY.toFixed(1).padStart(4)} ${String(o.J).padStart(3)} ${String(o.T).padStart(2)} ${o.zF.toFixed(2)} | ` +
-    ['oDiag', 'oBlock', 'diag', 'block', 'full'].map(cell).join('  ;  ') + `  ;  ${r.rowVs('full', 'block', 0)} | ${r.rowVs('full', 'block', 1)}`);
+module.exports = { zeros, add, mul, mv, inv, psd, chol, normal, restrict, mask, predict, world, Smat, loss };
+
+if (require.main === module) {
+  const axes = { rab: [0, 0.7], rFY: [0, -0.6], J: [10, 30], T: [5, 8], zF: [0.5, 0.85] };
+  console.log(`vector-lambda: ${N} draws per world; volume 500; τ_a = 1, τ_b = 0.15/yr; severity noise 4× frequency.`);
+  console.log('MSE of next year\'s level in % above the full oracle (± 2 SE); F | Y. Last column: full − block.');
+  console.log('rab  rFY    J  T  zF   | oDiag          oBlock         | diag           block          full           | full−block');
+  for (const o of grid(axes)) {
+    const r = run(Object.assign({ volume: 500 }, o)), cell = (f) => `${r.row(f, 0)} | ${r.row(f, 1)}`;
+    console.log(`${o.rab.toFixed(1)}  ${o.rFY.toFixed(1).padStart(4)} ${String(o.J).padStart(3)} ${String(o.T).padStart(2)} ${o.zF.toFixed(2)} | ` +
+      ['oDiag', 'oBlock', 'diag', 'block', 'full'].map(cell).join('  ;  ') + `  ;  ${r.rowVs('full', 'block', 0)} | ${r.rowVs('full', 'block', 1)}`);
+  }
 }

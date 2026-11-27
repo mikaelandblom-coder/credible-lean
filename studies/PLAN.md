@@ -747,6 +747,10 @@ One chat per step; none needs Lean except step 5.
   F, Y as four scalar credibilities after centring); a block (full) `Λ̂` loses up to 32 (59) points against it
   to estimation noise and wins only for a well-measured component with a strong
   level–slope correlation. Next: damped off-diagonals (θ from data), year shocks, a better `Λ̂`.
+  *Revised 2026-11-27 (S66, `studies/vector-lambda-damp.js`):* default to the exposure-weighted moment
+  `Λ̂` with off-diagonals damped by the plug-in `θ̂` (`Damping.lean`'s `θ*`) and projected PSD: never
+  significantly worse than the diagonal fit in 64 worlds (with and without year shocks), up to 26
+  points better. Open: fits that model the year shocks.
   Also proved: with independent cohorts the bivariate blend is the best predictor, and with
   no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
   bivariate one, so the app's fourth fit only matters when cohorts or components correlate.

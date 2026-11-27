@@ -761,3 +761,26 @@ data-chosen θ (`OffDiagonal.lean` keeps PSD, `Damping.lean`'s `θ*`), a better 
 (correlated cohorts, where `K` is not block diagonal). General target: with known moments the order
 full ≤ block ≤ diagonal is a restricted-predictor statement (`blupW_optimal`); fitted, the plug-in
 MSE `mse(d*) + E B² + 2E[AB]` (`PlugIn.lean`) is the place to state when an extra entry pays.
+
+### Vector levels, part 2: damped, weighted, year shocks (2026-11-27, `studies/vector-lambda-damp.js`)
+S65's world and fits plus year shocks `ρ ∈ {0, 0.3}` (cell noises of one year correlate across cohorts; the
+fits still assume independent cohorts, the oracle is the joint BLUP with the true `K`), the exposure-weighted
+unbiased moment `Λ̂` (`…W`), and damping: the diagonal fit plus `θ̂ ×` the off-diagonals, projected PSD, with
+`θ̂ = max(0, 1 − ΣV̂/Σr̂²)` (the plug-in `θ*` of `Damping.lean` on the correlation scale; `θ̂ = 0` is the
+diagonal fit). 64 worlds, 1500 draws; differences against the (unweighted) diagonal fit, paired ± 2 SE.
+- S66. *[numerical]* **Weight the moment `Λ̂` by exposure and damp its off-diagonals.** The weighted
+    diagonal fit beats the unweighted one in all 128 world × component cells (1–12 points). The weighted
+    damped fit (`dampW`) is never significantly worse than the diagonal fit (worst +0.7, within 2 SE) and
+    better in 64 of 64 worlds for F and 48 for Y, by up to 26 points (the largest gains with a strong
+    level–slope correlation, high credibility and `J = 30`, where `θ̄` reaches 0.65). Against the weighted
+    diagonal fit it costs 4–7 points (unpaired difference) in the worlds with no correlation, low
+    credibility and `T = 5`, and wins up to 21. Undamped block and full fits stay erratic (−28 to +58).
+    With year shocks the off-diagonals pay more (block's mean −2.4 for F at `ρ = 0.3` against +6.2 at 0),
+    likely because a common shock tilts every cohort's line alike and the fitted `Λ̂` partly absorbs it;
+    not checked. `θ̂` averages 0.07–0.65 and is 0.07–0.10 where `Λ` is diagonal.
+
+**Consequence (hypothesis).** Default for the app's "cohort trend lines" step: exposure-weighted moment
+`Λ̂`, off-diagonals damped by `θ̂` (from data, no hyperparameter), PSD by projection. It replaces S65's
+"diagonal by default": it keeps the diagonal fit's safety and takes most of the gain where correlations
+exist. Open: the fits that model the year shocks (a `ρ̂`, joint `K̂`), and a general statement for the
+plug-in `θ̂` (when it is within ε of the better of `θ = 0` and `θ = θ*`).
