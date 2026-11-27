@@ -51,8 +51,10 @@ Lean targets (`Core.lean`, one chat; 1–3 done 2026-11-26: `Core.blupWeight_dot
    ½ + gain/(2·spread). Fitted `θ̂` (2026-11-26, same file): `θ* = −E[e₀Δ]/EΔ²`, the regression of
    the blend's error on the disagreement `Δ`; on a held-out proxy `Y' = Y + ε` it is off by exactly
    `E[Δε]/EΔ²`, so it is exact when the held-out noise is independent of the data (mean zero), and
-   clipping to `[0, 1]` never hurts when `|M₀ − M₁| ≤ S`. Open: how noisy one held-out year is (a
-   study, then a variance statement), and the common-shock bias in the factor model.
+   clipping to `[0, 1]` never hurts when `|M₀ − M₁| ≤ S`. *Studied 2026-11-27* (S64): one held-out year
+   costs exactly `ΔᵀWΣWΔ/ΔᵀWΔ ≥ σ²(1 − ρ)` over the draw's best `θ`, 7–14× the gain; keep `θ = 1`. An iid year
+   shock gives no bias; a persistent one does. Open: S64's Lean targets 1 (the price) and 2 (bias in the
+   factor model).
 
 ## 3. Hypothesis for the ρ̂ channel (Finding 35, PLAN "Finding 35 remedies", open item)
 

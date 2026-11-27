@@ -698,3 +698,40 @@ region-specific year weights `aᵢₛ` the cross-fit is not exactly translation 
 *Proved 2026-11-26:* `Core.Estimates.integral_crossFit_sub` (`Credibility/RandomWeights.lean`), with independence of
 `d̂ᵢ⁽ˢ⁾` and year `s`'s noise `Xᵢₛ - μᵢ` (uncorrelated would do); handbook `res:randomWeights` line, blueprint
 `thm:Core_crossFit_bias`. The region-specific case stays a remark (no exact identity).
+
+### The held-out θ̂ of the blend–BLUP path (2026-11-27, `studies/held-out-theta.js`, output `held-out-theta.out.txt`)
+- S64. *[numerical + exact]* **Choosing θ on a held-out year costs more than it can gain; take θ = 1.**
+    2000 draws, eleven worlds; rates from corrBS (blend, θ = 0) towards the BLUP on its `K̂` (θ = 1), MSE in %
+    of the oracle (± 2 SE ≈ 3–14, paired differences far tighter). `hoT`: fit on years `1..T−1`, regress year
+    `T`'s blend error on `Δ` across regions (weights `wⱼₜ`), clip to `[0, 1]`, apply to the fits on all
+    `T` years; `loyo`: the same regression pooled over every held-out year. Without correlation `ρ̂` is often
+    0 (`Δ = 0` in 60% of draws) and every θ ties (112–115). With a common year shock (`ρ = 0.3, 0.6`; `T = 5`;
+    `J = 20`; thesis volumes; normal noise) the plug-in BLUP is at or within 0.7 points of the best fixed θ
+    (`θ*` = 0.71–1.03), and `hoT` / `loyo` cost 1–15 points against it (`ρ = 0.6`: 114.8 / 114.4 against
+    109.4; `J = 20`: 125.2 / 123.5 against 110.5); `θ = ½` is no worse than `θ̂` (112.1, 117.8). `θ̂` before
+    clipping has quartiles about −4 / 1.2 / 6 and lands on 0 or 1 in ~90% of draws. Pooling the years
+    narrows it (0.2 / 1.5 / 3.8) but does not help the loss. Bias: an iid year shock gives
+    `E[Δε] = 0` (year `T` is independent of the fit on `1..T−1`), measured `|E[Δε]/EΔ²| ≤ 0.18`, within noise;
+    a persistent shock (AR(1), `φ = 0.5, 0.8`) gives −0.80 and −2.25, pulling `θ̂` down while the best θ is
+    2.0–4.2 (the plug-in BLUP on corrBS's `K̂`, which treats years as independent, is too timid there).
+    **Why (exact, checked):** given the fit, `θ̂ = θ̃ + ΔᵀWε/ΔᵀWΔ` with `θ̃` the draw's own best θ, so its loss
+    exceeds the draw's best by `price = ΔᵀWΣWΔ/ΔᵀWΔ` in mean (`Σ` year `T`'s noise table): a Rayleigh quotient
+    of `W^½ΣW^½ = (σᵢσⱼρᵢⱼ)`, so at least `σ²(1 − ρ)` for equal `σⱼ`, *whatever the fits*. The study confirms
+    the identity (realized 33 / 116 / 222 against predicted 36 / 104 / 241 at default / `ρ = 0.6` / `J = 20`,
+    within 2 SE) and the bound (price/λmin ≥ 1 in every draw). The draw's possible gain over `θ = 1`,
+    `S(1 − θ̃)²`, is 4–20 against a price of 36–241: 7–14 times smaller. The common shock also inflates the
+    price beyond `λmin` (104 against 14.4): `Δ` lies largely along the shock's direction (the two fits differ
+    mostly in their level). Same mechanism as the forecast combination puzzle (literature §10u).
+
+**Consequence.** No θ̂ step in the app: the fitted BLUP stands (θ = 1), the path stays a display of `S`.
+General targets (Lean, **lean** chat, `PlugInMix.lean`, moment layer):
+1. *The price of one held-out year.* For fixed `e₀, Δ ∈ ℝᴶ`, `W = diag(w) ≻ 0`, `ΔᵀWΔ > 0` and a random
+   `ε` with mean 0 and covariance table `Σ` (any distribution), `θ̂ = −ΔᵀW(e₀ − ε)/ΔᵀWΔ` has
+   `E θ̂ = θ̃ = −ΔᵀWe₀/ΔᵀWΔ`, `Var θ̂ = ΔᵀWΣWΔ/(ΔᵀWΔ)²`, and
+   `E[(e₀ + θ̂Δ)ᵀW(e₀ + θ̂Δ)] = (e₀ + θ̃Δ)ᵀW(e₀ + θ̃Δ) + ΔᵀWΣWΔ/ΔᵀWΔ`; hence `θ̂` beats a fixed `θ₀` in mean
+   iff `ΔᵀWΔ(θ₀ − θ̃)² > ΔᵀWΣWΔ/ΔᵀWΔ`, and the price is ≥ `λmin(W^½ΣW^½)`. (Conditioning on the fit is
+   the fixed `e₀, Δ`; `integral_quad_of_cov` gives the quadratic.) Clipping: `mixLoss_clip_le` per draw.
+2. *The persistent-shock bias.* In `FactorMoments` with fixed weights: `E[Δε] = Σⱼ wⱼ Σᵢ (d − ŵ)ⱼᵢ
+   cov(μ̂ᵢ, εⱼₜ)`, `cov(μ̂ᵢ, εⱼₜ) = λᵢλⱼ Σₛ aᵢₛ Γₛₜ` (0 iff the held-out month/year is uncorrelated with the
+   fitted ones under `Γ`; AR(1): `Σₛ aᵢₛ φ^(T−s)`). A one-line corollary once the cross-covariance of
+   `Cells` with a held-out cell is stated.

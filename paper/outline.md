@@ -96,7 +96,7 @@ may need a paragraph.)
   regression of `μⱼ` on the residuals, the blend being its row cut to `z eⱼ` (best `z` = eq. (26)); shrinking a fraction
   `θ` towards `d*` leaves `(1-θ)²` of the excess (handbook `res:blup_residual`). With fitted moments
   (`res:plugIn_mix`): the mix's error is the straight line minus `θ(1−θ)S`, best `θ = ½ + gain/(2S)`;
-  chosen on a held-out year by regression (`res:plugIn_proxy`), exact unless a common shock links the years.
+  chosen on a held-out year by regression (`res:plugIn_proxy`), exact unless a common shock links the years, but one year is too noisy to beat `θ = 1` (S64: price `ΔᵀWΣWΔ/ΔᵀWΔ`).
 - [ ] "Fitting crossed levels" in Open directions (2026-11-26): the pair weights have a provisional default from simulation
   (`studies/crossed-fit.js`: inverse variance from an equal-weight pass, clip at 0; 130% of the floor against
   157% for the thesis fit on average, but worse with weak effects); move it to §5 "Which fit to use" and keep the small-table

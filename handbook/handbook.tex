@@ -766,9 +766,9 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   \lean{Credibility.Core.Target.integral_sq_plugIn_mix_proxy}
   \lean{Credibility.mixLoss_clip_le}
 \end{result}
-\use Fit on years $1..T-1$, regress year $T$'s error of the blend on $\Delta$ across cohorts; clipping to $[0,1]$ never hurts when $|M_0 - M_1| \le S$.
+\use Fit on years $1..T-1$, regress year $T$'s error of the blend on $\Delta$ across cohorts; clipping to $[0,1]$ never hurts when $|M_0 - M_1| \le S$. In practice the fitted BLUP ($\theta = 1$) is as good as the best fixed $\theta$ and better than $\hat\theta$.
 \begin{caveat}
-  A shock common to all cohorts in the held-out year correlates $\varepsilon$ with $\Delta$ and biases $\hat\theta$ by $E[\Delta\varepsilon]/E\Delta^2$; one year is a noisy sample (S14).
+  A shock that persists across years (a factor with autocorrelation) correlates $\varepsilon$ with $\Delta$ and biases $\hat\theta$ by $E[\Delta\varepsilon]/E\Delta^2$; a shock independent across years does not, but it does not average out over cohorts. Given the fit, $\hat\theta$ pays $\Delta^\top W\Sigma W\Delta/\Delta^\top W\Delta \ge \sigma^2(1-\rho)$ (weights $W$, held-out noise table $\Sigma$) over the draw's best $\theta$; in simulation that is 7--14 times the gain, so keep $\theta = 1$ (S64).
 \end{caveat}
 
 \begin{result}[What fitting Bühlmann--Straub costs, to first order]\label{res:bsPrice}

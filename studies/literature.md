@@ -1410,5 +1410,12 @@ credibility, Künsch, Zhao & Poudyal §10l).
   outcome on the forecasts is Granger & Ramanathan (1984) and stacking (Wolpert 1992; Breiman 1996,
   *Stacked regressions*), both from memory. New here (`PlugInMix.lean`, proxy section): the exact,
   distribution-free bias of the proxy's `θ`, `E[Δε]/EΔ²`, zero iff the proxy noise is uncorrelated
-  with the disagreement `Δ` (independent, mean zero suffices); with a common year shock it is not
-  (Bergmeir et al. 2018 above, the same mechanism), and one held-out year is noisy (S14).
+  with the disagreement `Δ` (independent, mean zero suffices). Correction 2026-11-27 (S64): a year shock
+  independent across years keeps `E[Δε] = 0` when the fit leaves the held-out year out; only a shock that
+  persists (AR, the factor model's `Γ`) biases it (Bergmeir et al. 2018 above, the same mechanism).
+  One held-out year is noisy (S14): S64 makes it exact, the price `ΔᵀWΣWΔ/ΔᵀWΔ`. This is the *forecast
+  combination puzzle* (Stock & Watson 2004; Smith & Wallis 2009, *A simple explanation of the forecast
+  combination puzzle*; Claeskens, Magnus, Vasnev & Wang 2016, IJF; all from memory, not fetched):
+  estimated combination weights lose to fixed ones because their estimation variance exceeds the gain.
+  New here: the price as a Rayleigh quotient of the held-out noise table, ≥ `σ²(1 − ρ)` for any fits,
+  and the fixed point `θ = 1` given by the theory (known moments), not by equal weights.

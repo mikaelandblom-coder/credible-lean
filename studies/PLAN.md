@@ -923,9 +923,12 @@ One chat per step; none needs Lean except step 5.
   `θ* = ½ + (M₀ − M₁)/(2S)`, `S` the spread of the fitted blend and BLUP; the app can show `S` and
   the safe range `M₁ − M₀ ≤ (1 − θ)S`). Fitted `θ̂` (2026-11-26, `Target.integral_sq_plugIn_mix_proxy`,
   `proxy_neg_div_eq`): fit on years `1..T−1`, regress year `T`'s blend error on `Δ` across cohorts,
-  clip to `[0, 1]` (`mixLoss_clip_le`); exact in mean when year-`T` noise is independent of the fit,
-  biased by `E[Δε]/EΔ²` under a common year shock. Study first: its noise against S14's CV for `θ`
-  of damping, and against `θ = 1` (the plug-in BLUP) and `θ = ½`. Gauge of `Z`'s rows to settle.
+  clip to `[0, 1]` (`mixLoss_clip_le`); exact in mean when year-`T` noise is independent of the fit
+  (an iid year shock included), biased by `E[Δε]/EΔ²` when the shock persists across years.
+  *Studied 2026-11-27* (S64, `studies/held-out-theta.js`): no. `θ̂` costs 1–15 points against `θ = 1` under a
+  common shock (the plug-in BLUP is within 0.7 of the best fixed `θ`), pooled over years too; the price of
+  one held-out year is exactly `ΔᵀWΣWΔ/ΔᵀWΔ ≥ σ²(1 − ρ)`, 7–14× the gain available. So no `θ̂` step: keep
+  `θ = 1`, show `S` only. Lean targets 1–2 of S64 (**lean** chat). Gauge of `Z`'s rows to settle.
 - [ ] Finding 35: the ρ̂ channel (2026-11-26, `notes/blup-credibility-form.md` §3). Hypothesis: with the
   pooled `σ̂²` the remaining bias runs through `ρ̂` and the GLS weights `b̂`, a third cross-cumulant that
   needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:
