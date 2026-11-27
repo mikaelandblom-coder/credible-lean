@@ -454,6 +454,8 @@ Finished items are in `studies/PLAN-done.md`.
   *Proved 2026-11-27 (Finding 46, S75, `BalanceCost.lean`):* cost = `E(T − μ̄)² − E(r̄ − μ̄)²` exactly; the cross-fitted
   level is the worse estimate of `μ̄` with σⱼ spread (1.2–2.2×). Open: a data-side check of that difference,
   then the owner decides the default; the page's balance note should state the trade (handbook `res:balanceCost`).
+  *S76:* the plug-in rule (balance iff `mse(c̄) − mse(c)` < 0 on `K̂`) has regret ≤ 6.9 against 205.6 for "on";
+  candidate `Engine.balanceAuto` with the cost and the portfolio bias it leaves shown. Waiting for the owner.
 - [ ] Grouping cohorts in two dimensions (2026-11-24, literature §10n): spatially clustered Fay–Herriot
   (Maranzano, Mattera & Sugasawa) finds contiguous regions, each with its own collective mean and `τ²`.
   This is the 2-D form of `KMeansBridge.lean` (in 1-D the optimal groups are intervals, Finding 14). A

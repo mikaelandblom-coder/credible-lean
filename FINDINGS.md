@@ -813,6 +813,9 @@ Gaps, extra hypotheses and new results found while formalizing.
    the cross-fitted level's `E(T − μ̄)²` is 0.82–1.10 times corrBS's own with equal σⱼ, 1.00–1.26 with
    spread 1, 1.17–2.21 with spread 2; the exposure average 0.86–2.01. Bias (Finding 35) is part of
    `E(r̄ − μ̄)²` and is small next to its variance there. Consequence for the app: the balance switch should
-   be on only where its target is the better estimate of `μ̄`; a data-side check of that is open.
+   be on only where its target is the better estimate of `μ̄`. Data-side (S76): the closed form for fixed
+   weights (`balance_cost_portLin`) on corrBS's `K̂`, τ̂², "balance iff the plug-in cost is negative", has regret
+   0.5 mean, 6.9 max (never: 0.4, 12.2; always: 22.2, 205.6; held-out scores: 10.3, 99.2). It ignores the
+   portfolio bias, which the unbalanced fit keeps (down to −190 bp at app volume, σⱼ spread 2).
 
 Equation numbers refer to `thesis/original/main.tex` as compiled.

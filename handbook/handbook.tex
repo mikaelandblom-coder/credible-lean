@@ -741,11 +741,14 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
       = \mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2,
   \]
   for any rates, target and distribution. For the BLUP with known moments and $T = \sum_j u_j\hmu_j$
-  it is $(u - c)^\top K(u - c) \ge 0$, $c = \sum_j u_jd^*_j$.
+  it is $(u - c)^\top K(u - c) \ge 0$, $c = \sum_j u_jd^*_j$. For fixed rate weights $d_j$ and a
+  target $a^\top\hmu$ it is $\mathrm{mse}(a) - \mathrm{mse}(c)$, $c = \sum_j u_jd_j$,
+  $\mathrm{mse}(e) = e^\top Ke - 2e^\top L^\top u + u^\top Lu$.
   \lean{Credibility.integral_sum_sq_shift}
+  \lean{Credibility.Core.Estimates.balance_cost_portLin}
   \lean{Credibility.Core.Estimates.balance_blup_cost}
 \end{result}
-\use Balance only to a level you trust more than the fit's own portfolio rate: compare $\mathbb E(T - \bar\mu)^2$, bias included, with the fit's.
+\use Balance only to a level you trust more than the fit's own portfolio rate: evaluate $\mathrm{mse}(a) - \mathrm{mse}(c)$ on the fitted $\hat K$, $\hat\tau^2$ and balance iff it is negative (study S76: regret at most 7 points of the floor).
 \begin{caveat}
   With unequal noise variances the cross-fitted level and the exposure average have up to $2.2$ times the fit's error for $\bar\mu$ (study S75): the shift then costs up to twice the floor.
 \end{caveat}

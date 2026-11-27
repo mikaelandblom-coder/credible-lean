@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S76 | `runs/balance-rule.js` | Balance iff the plug-in cost on K̂ is negative: regret 0.5 / max 6.9 (never 0.4 / 12.2, always 22.2 / 205.6, held-out 10.3 / 99.2) |
 | S75 | `runs/balance-cost.js` | Cost of balancing = E(T − μ̄)² − E(r̄ − μ̄)², exact per draw; cross-fitted level 1.2–2.2× corrBS's own error with σⱼ spread 2 |
 | S74 | `runs/blup-verdict.js` | The bootstrapped gain-against-price verdict for the BLUP adds nothing; S72's BLUP loss is the balance switch (corrBS itself +22 mean, up to +206 points balanced) |
 | S73 | `runs/blup-price.js` | The BLUP's weight price over the blend on corrBS's `K̂`: +32 to +38 points with a σⱼ spread at app volume, ≤ +4 with equal σⱼ; no sign in general |
@@ -1027,3 +1028,14 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     switch replaces a good estimate of the portfolio level by a worse one when noise variances differ; it pays
     (slightly) only with equal σⱼ and high ρ. Next: a data-side estimate of `E(T − μ̄)² − E(r̄ − μ̄)²`, e.g. on
     held-out years, to decide the switch per portfolio.
+- S76. *[numerical]* **A per-portfolio rule for the balance switch.** corrBS on S75's grid (56 worlds, 400 draws),
+    against the better of always-on (cross-fitted level) and always-off in each world, points of the floor:
+    always on regret 22.2 mean / 205.6 max (worse in 35); always off 0.4 / 12.2 (2); held-out (balance iff the
+    leave-one-year-out score of the balanced fit is lower) 10.3 / 99.2 (29); plug-in (balance iff
+    `mse(c̄) − mse(c)` on `K̂`, τ̂² is negative, `balance_cost_portLin`, `c̄` the cross-fit's mean weights)
+    0.5 / 6.9 (4). The plug-in rule never balances with σⱼ spread 2 (0% of draws) and mostly balances with
+    equal σⱼ and ρ ≥ 0.3 (79–98%), where it gains up to 13 points over never (app ρ = 0.9, T = 10: 91 against
+    104). The held-out score is too noisy: one portfolio-level number per fold. Portfolio bias, bp of the tariff:
+    on −15 to +80, off down to −190 (app σⱼ×2). **Consequence.** In MSE the plug-in rule is never-balance with
+    the upside kept; a pricing actuary who must not under-price cannot get that from MSE alone (the bias is
+    small in MSE but not in premium). Owner decision: app default, and whether to show the bias next to it.

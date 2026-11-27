@@ -14,6 +14,9 @@ portfolio level `T` (the historical exposure average `Σ uⱼμ̂ⱼ`, or a cros
   pays exactly when `T` estimates `μ̄` better than `r̄` does.
 * `Estimates.portTarget`: the portfolio level `μ̄` as a prediction target, with moments
   `cov(μ̂ᵢ, μ̄) = (uᵀL)ᵢ` and `Var μ̄ = uᵀLu`.
+* `Estimates.balance_cost_portLin`: for fixed rate weights `dⱼ` and target weights `a`, the cost is
+  `mse(a) - mse(c)` in closed form at the level of `K`, `c = Σⱼ uⱼdⱼ` (on fitted moments: the
+  plug-in rule of study S76).
 * `Estimates.balance_blup_cost`: for the BLUP (known moments) balanced to the historical exposure
   average, the cost is exactly `(u - c)ᵀK(u - c) ≥ 0`, with `c = Σⱼ uⱼ d*ⱼ`: `r̄ = cᵀμ̂` is the
   best unbiased estimate of `μ̄`, so no target built linearly from the `μ̂ᵢ` beats it.
@@ -111,6 +114,41 @@ lemma sum_mul_portLin (u : J → ℝ) (d : J → J → ℝ) (ω : Ω) :
 
 variable [IsProbabilityMeasure P]
 
+omit [DecidableEq J] in
+/-- **The cost of balancing fixed weights, at the level of `K`.** Rates `dⱼᵀμ̂` (`Σᵢ dⱼᵢ = 1`) shifted
+to a target `aᵀμ̂` (`Σ aᵢ = 1`, e.g. the exposure average `a = u`, or a cross-fitted level with its
+mean weights): the exposure-weighted mean squared error changes by exactly
+`mse(a) - mse(c)`, `c = Σⱼ uⱼdⱼ`, `mse(e) = eᵀKe - 2eᵀ(uᵀL) + uᵀLu` the true error of `eᵀμ̂` for
+`μ̄`, for every distribution with these moments. On fitted moments this is the plug-in rule of
+study S76. -/
+theorem balance_cost_portLin (u : J → ℝ) (hu : ∑ j, u j = 1) (d : J → J → ℝ)
+    (hd : ∀ j, ∑ i, d j i = 1) (a : J → ℝ) (ha : ∑ i, a i = 1) :
+    P[fun ω => ∑ j, u j * (E.portLin (d j) ω
+        + (E.portLin a ω - ∑ i, u i * E.portLin (d i) ω) - E.level j ω) ^ 2]
+      = P[fun ω => ∑ j, u j * (E.portLin (d j) ω - E.level j ω) ^ 2]
+        + predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) a
+        - predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) (∑ j, u j • d j) := by
+  set c := ∑ j, u j • d j
+  set Tg := E.portTarget u hu
+  have hc : ∑ i, c i = 1 := by
+    simp only [c, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+    rw [sum_comm]
+    simp [← mul_sum, hd, hu]
+  have hX : ∀ e : J → ℝ, ∑ i, e i = 1 →
+      (replicateCol Unit (1 : J → ℝ))ᵀ *ᵥ e = 1 := fun e he => by
+    rw [replicateCol_one_transpose_mulVec, he]; rfl
+  rw [integral_sum_sq_shift u hu _ E.level _ (fun j => E.memLp_portLin _) E.level_memLp
+    (E.memLp_portLin a)]
+  simp_rw [E.sum_mul_portLin u d]
+  have h1 := Tg.mse_portLin (hX a ha)
+  have h2 := Tg.mse_portLin (hX c hc)
+  simp only [Tg, portTarget] at h1 h2
+  have ha' : P[fun ω => (E.portLin a ω - ∑ i, u i * E.level i ω) ^ 2]
+      = predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) a := h1
+  have hc' : P[fun ω => (E.portLin c ω - ∑ i, u i * E.level i ω) ^ 2]
+      = predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) c := h2
+  rw [ha', hc']
+
 /-- **Balancing the BLUP to the historical exposure average costs `(u - c)ᵀK(u - c)`.** With known
 moments, shifting the BLUP's rates `d*ⱼᵀμ̂` so that their exposure average is `Σ uⱼμ̂ⱼ` raises the
 exposure-weighted mean squared error by exactly `(u - c)ᵀK(u - c)`, `c = Σⱼ uⱼd*ⱼ`, for every
@@ -125,26 +163,15 @@ theorem balance_blup_cost (hK : K.PosDef) (u : J → ℝ) (hu : ∑ j, u j = 1) 
     by_contra h
     rw [not_nonempty_iff] at h
     simp at hu
+  rw [E.balance_cost_portLin u hu (fun j => blupWeight K L j) (fun j => sum_blupWeight hK L j) u hu]
   set c := ∑ j, u j • blupWeight K L j
-  set Tg := E.portTarget u hu
+  have hX : ∀ e : J → ℝ, ∑ i, e i = 1 →
+      (replicateCol Unit (1 : J → ℝ))ᵀ *ᵥ e = 1 := fun e he => by
+    rw [replicateCol_one_transpose_mulVec, he]; rfl
   have hc : ∑ i, c i = 1 := by
     simp only [c, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
     rw [sum_comm]
     simp [← mul_sum, sum_blupWeight hK, hu]
-  have hX : ∀ d : J → ℝ, ∑ i, d i = 1 →
-      (replicateCol Unit (1 : J → ℝ))ᵀ *ᵥ d = 1 := fun d hd => by
-    rw [replicateCol_one_transpose_mulVec, hd]; rfl
-  rw [integral_sum_sq_shift u hu _ E.level _ (fun j => E.memLp_portLin _) E.level_memLp
-    (E.memLp_portLin u)]
-  simp_rw [E.sum_mul_portLin u (fun j => blupWeight K L j)]
-  have h1 := Tg.mse_portLin (hX u hu)
-  have h2 := Tg.mse_portLin (hX c hc)
-  simp only [Tg, portTarget] at h1 h2
-  have hu' : P[fun ω => (E.portLin u ω - ∑ i, u i * E.level i ω) ^ 2]
-      = predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) u := h1
-  have hc' : P[fun ω => (E.portLin c ω - ∑ i, u i * E.level i ω) ^ 2]
-      = predMse K (vecMul u L) (u ⬝ᵥ (L *ᵥ u)) c := h2
-  rw [hu', hc']
   -- `Kc - uᵀL` is constant: `Kd*ⱼ - Lⱼ` is, for every `j`.
   have he : K *ᵥ c - vecMul u L
       = replicateCol Unit (1 : J → ℝ) *ᵥ fun _ =>
