@@ -2205,6 +2205,39 @@ lemma bsLambda_const [Nonempty J] (W0 k : ℝ) (hW : 0 < W0) (hk : 0 < k) (j i :
   field_simp
   ring
 
+omit [Fintype T] [DecidableEq T] in
+/-- The plain blend row `zδᵢⱼ + (1 - z)/J` applied to `x`: `z xⱼ + (1 - z) x̄`. -/
+lemma sum_blendRow_mul (z : ℝ) (j : J) (x : J → ℝ) :
+    ∑ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
+      = z * x j + (1 - z) * (∑ i, x i) / Fintype.card J := by
+  have e : ∀ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
+      = (if i = j then z * x i else 0) + (1 - z) / Fintype.card J * x i := fun i => by
+    split_ifs <;> ring
+  rw [sum_congr rfl fun i _ => e i, sum_add_distrib, sum_ite_eq', ← mul_sum]
+  simp only [mem_univ, ↓reduceIte]
+  ring
+
+omit [Fintype T] [DecidableEq T] in
+/-- The spread row `δᵢⱼ - 1/J` applied to `x`: `xⱼ - x̄`. -/
+lemma sum_spreadRow_mul (j : J) (x : J → ℝ) :
+    ∑ i, ((if i = j then 1 else 0) - 1 / Fintype.card J) * x i
+      = x j - (∑ i, x i) / Fintype.card J := by
+  have e : ∀ i, ((if i = j then 1 else 0) - 1 / Fintype.card J) * x i
+      = (if i = j then x i else 0) - x i / Fintype.card J := fun i => by
+    split_ifs <;> ring
+  rw [sum_congr rfl fun i _ => e i, sum_sub_distrib, sum_ite_eq', ← sum_div]
+  simp only [mem_univ, ↓reduceIte]
+
+omit [Fintype T] [DecidableEq T] in
+/-- A sum whose terms off `j` all equal `c`: `gⱼ + (J - 1)c`. -/
+lemma sum_eq_add_card_sub_one_mul (g : J → ℝ) (j : J) (c : ℝ) (hg : ∀ x, x ≠ j → g x = c) :
+    ∑ x, g x = g j + (Fintype.card J - 1) * c := by
+  have hcard : ((univ.erase j).card : ℝ) = Fintype.card J - 1 := by
+    have : Nonempty J := ⟨j⟩
+    rw [card_erase_of_mem (mem_univ j), card_univ, Nat.cast_sub Fintype.card_pos]; simp
+  rw [← add_sum_erase _ _ (mem_univ j),
+    sum_congr rfl fun x hx => hg x (ne_of_mem_erase hx), sum_const, nsmul_eq_mul, hcard]
+
 set_option linter.unusedSectionVars false in
 /-- **The first-order cross term of the Bühlmann–Straub plug-in** (`PlugIn.lean`'s `2E[AB]`), in the
 balanced world with fourth cumulants and `D = σ²/(wT)` estimated. Cells `xⱼₜ = μ + Lⱼ + eⱼₜ` from
@@ -2264,21 +2297,11 @@ theorem crossTerm_of_balanced_cumulants [Nonempty J] (X : J ⊕ (J × T) → Ω 
     (by rw [hV, hK]; exact h4) j
   rw [hWfun] at G
   simp only [bsAlpha_const _ _ hW0 hk, bsLambda_const _ _ hW0 hk, hzW] at G
-  have hA : ∀ x : J → ℝ, ∑ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
-      = z * x j + (1 - z) * (∑ i, x i) / Fintype.card J := fun x => by
-    have e : ∀ i, ((z * if i = j then 1 else 0) + (1 - z) / Fintype.card J) * x i
-        = (if i = j then z * x i else 0) + (1 - z) / Fintype.card J * x i := fun i => by
-      split_ifs <;> ring
-    rw [sum_congr rfl fun i _ => e i, sum_add_distrib, sum_ite_eq', ← mul_sum]
-    simp only [mem_univ, ↓reduceIte]
-    ring
+  have hA := sum_blendRow_mul z j
   have hL : ∀ x : J → ℝ, ∑ i, -(z * (1 - z) * ((if i = j then 1 else 0) - 1 / Fintype.card J)) * x i
       = -(z * (1 - z)) * (x j - (∑ i, x i) / Fintype.card J) := fun x => by
-    have e : ∀ i, -(z * (1 - z) * ((if i = j then 1 else 0) - 1 / Fintype.card J)) * x i
-        = -(z * (1 - z)) * ((if i = j then x i else 0) - x i / Fintype.card J) := fun i => by
-      split_ifs <;> ring
-    rw [sum_congr rfl fun i _ => e i, ← mul_sum, sum_sub_distrib, sum_ite_eq', ← sum_div]
-    simp only [mem_univ, ↓reduceIte]
+    rw [← sum_spreadRow_mul j x, mul_sum]
+    exact sum_congr rfl fun i _ => by ring
   have hε : ∀ P' B' : ℝ, zHatLin (σsq / (w * Fintype.card T)) (τ2 + σsq / (w * Fintype.card T))
         (P' / (Fintype.card T * w)) (B' / (((Fintype.card J : ℝ) - 1) * (Fintype.card T * w)))
       = -(z * (1 - z)) * bsEps (J := J) (T := T) (fun _ _ => w) τ2 σsq P' B' := fun P' B' => by
@@ -2304,15 +2327,8 @@ theorem crossTerm_of_balanced_cumulants [Nonempty J] (X : J ⊕ (J × T) → Ω 
   simp_rw [hpt]
   simp only [G]
   simp only [shares_const w hw0, sum_const, card_univ, nsmul_eq_mul, div_pow, one_pow]
-  have split : ∀ g : J → ℝ, ∑ x, g x = g j + ∑ x ∈ univ.erase j, g x := fun g =>
-    (add_sum_erase _ _ (mem_univ j)).symm
-  have hcard : ((univ.erase j).card : ℝ) = Fintype.card J - 1 := by
-    rw [card_erase_of_mem (mem_univ j), card_univ, Nat.cast_sub Fintype.card_pos]; simp
-  have off : ∀ g : J → ℝ, ∀ c : ℝ, (∀ x, x ≠ j → g x = c) →
-      ∑ x ∈ univ.erase j, g x = (Fintype.card J - 1) * c := fun g c hg => by
-    rw [sum_congr rfl fun x hx => hg x (ne_of_mem_erase hx), sum_const, nsmul_eq_mul, hcard]
-  rw [split, split, off _ _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl),
-    off _ _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl)]
+  rw [sum_eq_add_card_sub_one_mul _ j _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl),
+    sum_eq_add_card_sub_one_mul _ j _ (fun x hx => by simp only [hx, ↓reduceIte]; rfl)]
   simp only [ite_true]
   have hT1 : (Fintype.card T : ℝ) - 1 ≠ 0 := by linarith
   rw [hzdef]
@@ -2393,18 +2409,9 @@ theorem crossTerm_of_balanced_cumulants_known [Nonempty J] (X : J ⊕ (J × T) �
   have h4' := h4
   rw [← hV, ← hK] at h4'
   have hA : ∀ x : J → ℝ, z * x j + (1 - z) * (∑ i, x i) / Fintype.card J = ∑ i, α i * x i :=
-    fun x => by
-    have e : ∀ i, α i * x i
-        = (if i = j then z * x i else 0) + (1 - z) / Fintype.card J * x i := fun i => by
-      simp only [hαdef]; split_ifs <;> ring
-    rw [sum_congr rfl fun i _ => e i, sum_add_distrib, sum_ite_eq', ← mul_sum]
-    simp only [mem_univ, ↓reduceIte]
-    ring
-  have hD : ∀ x : J → ℝ, x j - (∑ i, x i) / Fintype.card J = ∑ i, β i * x i := fun x => by
-    have e : ∀ i, β i * x i = (if i = j then x i else 0) - x i / Fintype.card J := fun i => by
-      simp only [hβdef]; split_ifs <;> ring
-    rw [sum_congr rfl fun i _ => e i, sum_sub_distrib, sum_ite_eq', ← sum_div]
-    simp only [mem_univ, ↓reduceIte]
+    fun x => (sum_blendRow_mul z j x).symm
+  have hD : ∀ x : J → ℝ, x j - (∑ i, x i) / Fintype.card J = ∑ i, β i * x i :=
+    fun x => (sum_spreadRow_mul j x).symm
   set F : Ω → ℝ := fun ω => (errW (fun _ _ => w) α j ⬝ᵥ fun p => X p ω)
     * (linW (fun (_ : J) (_ : T) => w) β ⬝ᵥ fun p => X p ω)
   have hpt : ∀ ω, (z * regionMean (fun _ _ => w) (cellsOf μ fun p => X p ω) j
@@ -2435,14 +2442,8 @@ theorem crossTerm_of_balanced_cumulants_known [Nonempty J] (X : J ⊕ (J × T) �
   rw [integral_errW_linW_statB X hX τ2 σsq κL κN μ _ (fun _ _ => hw) h4' α β j h0 hB0,
     integral_lin_mul_lin X hX _ h2', h0]
   simp only [shares_const w hw0, sum_const, card_univ, nsmul_eq_mul, div_pow, one_pow]
-  have split : ∀ g : J → ℝ, ∑ x, g x = g j + ∑ x ∈ univ.erase j, g x := fun g =>
-    (add_sum_erase _ _ (mem_univ j)).symm
-  have hcard : ((univ.erase j).card : ℝ) = Fintype.card J - 1 := by
-    rw [card_erase_of_mem (mem_univ j), card_univ, Nat.cast_sub Fintype.card_pos]; simp
-  have off : ∀ g : J → ℝ, ∀ c : ℝ, (∀ x, x ≠ j → g x = c) →
-      ∑ x ∈ univ.erase j, g x = (Fintype.card J - 1) * c := fun g c hg => by
-    rw [sum_congr rfl fun x hx => hg x (ne_of_mem_erase hx), sum_const, nsmul_eq_mul, hcard]
-  rw [split, off _ _ (fun x hx => by simp only [hαdef, hβdef, hx, ↓reduceIte]; rfl)]
+  rw [sum_eq_add_card_sub_one_mul _ j _
+    (fun x hx => by simp only [hαdef, hβdef, hx, ↓reduceIte]; rfl)]
   simp only [hαdef, hβdef, ↓reduceIte]
   rw [hzdef]
   field_simp

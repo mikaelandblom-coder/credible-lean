@@ -844,13 +844,16 @@ price needs their covariances.
 \begin{lemma}[Bühlmann--Straub's weights and their derivative]\label{lem:bsAlpha}
   \lean{Credibility.Cumulants.bsZk_pos, Credibility.Cumulants.sum_bsAlpha, Credibility.Cumulants.sum_bsLambda,
         Credibility.Cumulants.bsAlpha_mul_var, Credibility.Cumulants.bsAlpha_errW_cov, Credibility.Cumulants.bsZk_hasDerivAt, Credibility.Cumulants.bsAlpha_hasDerivAt,
-        Credibility.Cumulants.bsAlpha_const, Credibility.Cumulants.bsLambda_const}
+        Credibility.Cumulants.bsAlpha_const, Credibility.Cumulants.bsLambda_const,
+        Credibility.Cumulants.sum_blendRow_mul, Credibility.Cumulants.sum_spreadRow_mul,
+        Credibility.Cumulants.sum_eq_add_card_sub_one_mul}
   \leanok
   \uses{def:primCellsW}
   $\sum\alpha = 1$, $\sum\lambda = 0$, $d\alpha_i/dk = \lambda_i/k$, and at the true $k$,
   $\alpha_i(\tau^2 + \sigma^2/W_i) - \tau^2\delta_{ij} = (1 - z_j)\tau^2/Z$ for every $i$: the error has the same
   covariance with every region mean, so none with any contrast. Equal volumes: $\alpha_i = z\delta_{ij} + (1 - z)/J$,
-  $\lambda_i = -z(1 - z)(\delta_{ij} - 1/J)$.
+  $\lambda_i = -z(1 - z)(\delta_{ij} - 1/J)$, so $\sum_i\alpha_ix_i = zx_j + (1 - z)\bar x$ and
+  $\sum_i(\delta_{ij} - 1/J)x_i = x_j - \bar x$.
 \end{lemma}
 \begin{proof}
   \leanok
