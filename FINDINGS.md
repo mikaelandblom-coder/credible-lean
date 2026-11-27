@@ -747,4 +747,25 @@ Gaps, extra hypotheses and new results found while formalizing.
    system (67)–(69) is reproduced, and each equation loses the same cross term. Use the pair estimators with the
    cross-covariance estimate (`crossed_unbiasedX`) instead; they are unbiased for any correlations.
 
+43. **Merging when the gap looks small loses to both fixed rules, for every threshold (new; under
+   normal noise; reduction proved: `PreTest.integral_sq_pretest`; the inequality
+   `PreTest.lt_gapRisk_of_tie` is stated, its proof open).** Item 6 and `Merging.merge_iff` rank
+   merging against keeping two cohorts separate for a choice made in advance. The plug-in version,
+   merge iff `(X₁ − X₂)² < c` (`notes/merging-cohorts.md` §4), decides with the same data. For fixed
+   levels with gap `δ`, `D = X₁ − X₂ ~ N(δ, V)` and `a = (v₁ − c₁₂)/V`, every such rule's error is
+   `u + a·G(D)` with `u` independent of `D`, so its MSE is `E u² + a²R`, where `R = E G(D)²` is the
+   risk of estimating the gap by `0` (merged) or `(1 − k)D` (separate, `k = V/(V + 2τ²)` for the
+   thesis blend, `0` for own estimates): the pre-test merge is hard thresholding of the gap (with
+   shrinkage). Always merging has `R = δ²`, never merging `m²V + (1 − m)²δ²`, `m = 1 − k`; they tie at
+   `δ²(2 − m) = mV`. **There the pre-test rule is strictly worse than both, for every `c > 0`**, in
+   every cohort (the factor `a²` is common). So no threshold is safe; this is the classical pre-test
+   result (Bancroft 1944, Judge & Bock 1978) in credibility form. Size (`studies/runs/pretest-merge.js`,
+   S68): own estimates, `c = 2V`: `+0.20·a²V` at the tie (the separate rule's whole excess is `a²V`);
+   the plug-in threshold of §4 with `τ²/V = 1`: `+0.04·a²V`; it loses to both on up to 14% of the gaps,
+   and, at `c = 2V`, to the better of the two by up to `0.65·a²V`. Proof idea: with `p(x) = δ² − (mx − δ)²`,
+   `R − δ² = −E[p(D); D² ≥ c]`, `E p(D) = 0` at the tie; folding `x ↦ −x`, the integrand on `x > 0`
+   has the sign of `2δ tanh(δx/V) − mx`, positive then negative. Remedy: choose on a held-out year,
+   whose score is unbiased for the chosen rule's error for every distribution
+   (`CrossFit.integral_heldOutScore`).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

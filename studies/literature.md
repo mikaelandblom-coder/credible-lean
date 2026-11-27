@@ -1453,3 +1453,47 @@ the BLUP is the standard "BLUP of `cᵀβ` is `cᵀ·BLUP(β)`" of mixed models 
 correlated cohorts and in true MSE, and only through the existing general target (`Core.Target`).
 New here: nothing beyond the correlated-`K` setting; next year's *claim* (level plus new noise) is
 the general target with its own `ℓ` and `v`.
+
+### 10x. Selection-aware risk for choosing cohorts: the winner's curse (2026-11-27; from memory, not fetched)
+For `CrossFit.lean`, `PreTestNormal.lean` (Finding 43), paper §Open directions first item.
+- **Efron (1986; 2004, "The estimation of prediction error: covariance penalties and
+  cross-validation", JASA 99)**: in-sample error is optimistic by `2Σ cov(μ̂ᵢ, yᵢ)`. **Ye (1998,
+  JASA 93)**, generalized degrees of freedom: the same covariance, estimated by perturbing the data,
+  counts a model-*selection* step automatically. **Tibshirani (2015, "Degrees of freedom and model
+  search", Statistica Sinica 25)**: search degrees of freedom, the extra df a best-subset or
+  sorting step adds; it can far exceed the parameter count. Used: the identity
+  `E score = MSE + price − 2 Σ wⱼ E[errⱼ εⱼ]` (`CrossFit.integral_score`), distribution-free, and
+  the reading of S61: SURE for fixed groups omits the covariance the sort creates.
+- **Cross-validation and cross-fitting for model choice.** Stone (1974); Bates, Hastie &
+  Tibshirani (2023, "Cross-validation: what does it estimate and how well does it do it?", JASA):
+  the CV score estimates the error of the rule fitted on the training folds, not the final fit;
+  Tibshirani & Tibshirani (2009, Ann. Appl. Stat.) and Varma & Simon (2006, BMC Bioinf.): the
+  minimum of CV scores is optimistic, nested CV fixes it. Chernozhukov et al. (2018, double/debiased
+  ML): cross-fitting for nuisance parts. Used: held-out years as the folds (noise independent
+  across years, eq. 16's `δₜₛ` strengthened to independence, no distribution), the exact statement
+  `integral_heldOutScore` (selection cannot inflate the held-out score), both caveats as stated
+  (`integral_min_score_le` for the second curse).
+- **Data thinning / fission** (Leiner, Duan, Wasserman & Ramdas 2023, JASA, "data fission";
+  Neufeld, Dharamshi, Gao & Witten 2024, JMLR, "data thinning"): split one observation into
+  independent parts when its family is convolution-closed (normal with known variance, Poisson,
+  gamma). An alternative to splitting by year when the history is short, but it needs the noise
+  family: distribution layer only. Not used yet. **Gao, Bien & Witten (2024, JASA, "Selective
+  inference for hierarchical clustering")**: tests of a gap between clusters chosen from the same
+  data, conditional on the choice (normal model). The exact analogue of "merge iff the gap looks
+  small"; a candidate for a selection-aware merge test. Not used yet.
+- **Pre-test estimators.** Bancroft (1944); Judge & Bock (1978, *The Statistical Implications of
+  Pre-Test and Stein-Rule Estimators in Econometrics*); Giles & Giles (1993, J. Econ. Surveys,
+  review): estimating after a significance test of a restriction is never uniformly better than
+  both the restricted and the unrestricted estimator, and is worse than both near the boundary.
+  **Donoho & Johnstone (1994, Biometrika)**: hard thresholding's risk and its peak near the
+  threshold. Used: the reduction of the merge to hard thresholding of the gap
+  (`PreTest.integral_sq_pretest`) and the exact claim at the tie (Finding 43, every threshold).
+  New here: the tie point `δ²(2 − m) = mV` with shrinkage `m = 1 − k` above the threshold, and the
+  statement for the credibility predictor of each cohort (the factor `a²` is common, so all
+  cohorts agree on the ranking).
+- **Grouping papers of `notes/roadmap.md` §5.** Diao & Weng (2019, NAAJ 23(2), regression-tree
+  credibility): grow by a credibility-adjusted loss, prune by cross-validation, i.e. they already
+  use held-out error for the selection step. Campo & Antonio (2024, AAS 18(3), arXiv:2304.09046):
+  cluster the levels of a hierarchical factor from embeddings / credibility estimates and choose
+  the number of clusters by information criteria fitted on the same data; no selection correction.
+  Used: Diao & Weng's pruning is the precedent for the app's criterion (cross-fitted score).

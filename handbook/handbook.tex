@@ -1225,7 +1225,7 @@ of Result~\ref{res:two}; merging treats them as one level.
 \end{result}
 \use Correlated noise measures the gap better, so merging pays \emph{less}.
 \begin{caveat}
-  Under the model of Section~\ref{sec:setting} $d = 2\tau^2$ and merging never pays; choosing from the same data adds a winner's curse.
+  Under the model of Section~\ref{sec:setting} $d = 2\tau^2$ and merging never pays. Never decide by the observed gap: ``merge iff $(\hmu_1 - \hmu_2)^2 < c$'' loses to both fixed rules near their tie, for every $c$ (Finding 43). Compare them on a held-out year (Result~\ref{res:heldout}).
 \end{caveat}
 
 \subsection*{Optimal cohorts are intervals}
@@ -1267,6 +1267,26 @@ $W_a = \sum_{i \in a} w_i$. Which grouping has the smallest total MSE?
   Not exact with unequal variances ($x = (-\tfrac12, 0, \tfrac12)$, $v = (16, 4, 16)$: best is $\{1,3\}$, $\{2\}$). Groups with their own mean stay intervals with a common $\tau^2$, not with one per group (Finding 41); never cut sorted estimates by SURE.
 \end{caveat}
 \lean{Credibility.group_optimal_contiguous}
+
+\subsection*{Choosing the groups from the data}
+
+\begin{result}[Held-out score]\label{res:heldout}
+  Fit and choose a rule (its grouping included) without year $s$; score it on year $s$,
+  $\sum_j w_j(\hat p_j - X_{js})^2$. If year $s$'s noise $\varepsilon_{js}$ is independent of the
+  rule's errors,
+  \[
+    E\sum_j w_j(\hat p_j - X_{js})^2 = E\sum_j w_j(\hat p_j - \mu_j)^2 + \sum_j w_j\Var\varepsilon_{js},
+  \]
+  for every distribution. In sample a third term $-2\sum_j w_j E[(\hat p_j - \mu_j)\varepsilon_j]$
+  appears: the optimism that sorting inflates.
+  \lean{Credibility.CrossFit.integral_heldOutScore}
+  \lean{Credibility.CrossFit.integral_score}
+\end{result}
+\use Compare two groupings by the difference of their held-out scores: the price cancels. Average over the years left out.
+\begin{caveat}
+  It scores the rule fitted on the other years. The winner's score is optimistic again: $E\min \le \min E$; report it from a further fold.
+\end{caveat}
+\lean{Credibility.CrossFit.integral_heldOutScore_sub}
 
 % ===========================================================================
 \section{Monthly data}\label{sec:monthly}
@@ -1831,6 +1851,8 @@ which has the details. The paper explains each where it belongs.
   \lean{Credibility.group_optimal_contiguous}
   \item[{42. Crossed ANOVA estimators miss the noise cross term.}] Goulet's (Dannenburg's) statistic is a pool of pair differences whose noise correction lacks $+2\sigma^2_{kl}\rho_{kl}$: within a row, $E = (\beta^2 + \gamma^2)(1 - \sum (u_k/U)^2) - \sum_{k \ne l}(u_ku_l/U^2)\sigma^2_{kl}\rho_{kl}$, and the grand-mean equation loses the same cross term; exact (eqs.~(67)--(69), two-way) when the noise is uncorrelated.
   \lean{Credibility.Model.anovaStat_row_unbiasedX}
+  \item[{43. Merging when the gap looks small loses to both rules (normal noise).}] Under normal noise the rule's MSE is $E u^2 + a^2R$, $R$ the risk of hard thresholding the observed gap; where always and never merging tie ($\delta^2(2 - m) = mV$), the pre-test rule is worse than both for every threshold $c > 0$ (inequality: proof in Lean pending).
+  \lean{Credibility.PreTest.integral_sq_pretest}
 \end{description}
 
 \end{document}

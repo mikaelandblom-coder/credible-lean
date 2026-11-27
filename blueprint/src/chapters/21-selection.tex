@@ -1,0 +1,199 @@
+\chapter{Extension: choosing cohorts from the data}\label{ch:selection}
+% Not in the thesis: paper, Open directions, first item (the winner's curse).
+% Lean: Credibility/CrossFit.lean, Credibility/PreTestNormal.lean
+
+Not in the thesis. A tariff groups its cohorts, or merges a pair, from the
+same estimates it then blends. A risk estimate for fixed groups does not see
+the choice (S61). This chapter gives a distribution-free score that does
+(cross-fitting on held-out years) and, under normal noise, the exact size of
+the curse for merging two cohorts (Chapter~\ref{ch:merging}).
+
+\section{Held-out scores}
+
+\begin{definition}[Score and loss]\label{def:cv_score}
+  \lean{Credibility.CrossFit.score, Credibility.CrossFit.loss}
+  \leanok
+  For predictions $\hat p_j$, observations $x_j$, levels $\mu_j$ and weights
+  $w_j$: the score $\sum_j w_j(\hat p_j - x_j)^2$ and the loss
+  $\sum_j w_j(\hat p_j - \mu_j)^2$.
+\end{definition}
+
+\begin{theorem}[Mean of a score: the covariance penalty]\label{thm:integral_score}
+  \lean{Credibility.CrossFit.integral_score}
+  \leanok
+  \uses{def:cv_score}
+  With $x_j = \mu_j + \varepsilon_j$, $\mathbb E\varepsilon_j = 0$, all square integrable,
+  \[
+    \mathbb E\sum_j w_j(\hat p_j - x_j)^2 = \mathbb E\sum_j w_j(\hat p_j - \mu_j)^2
+    + \sum_j w_j \operatorname{Var}\varepsilon_j
+    - 2\sum_j w_j\,\mathbb E[(\hat p_j - \mu_j)\varepsilon_j],
+  \]
+  for every distribution.
+\end{theorem}
+\begin{proof}
+  \leanok
+  Expand the square cohort by cohort and integrate.
+\end{proof}
+
+\begin{theorem}[The held-out score sees the selection]\label{thm:heldOutScore}
+  \lean{Credibility.CrossFit.integral_heldOutScore}
+  \leanok
+  \uses{thm:integral_score, thm:mix_proxy}
+  If each $\varepsilon_j$ is independent of the error $\hat p_j - \mu_j$ (the rule,
+  its partition included, fitted and chosen on other years), the last term
+  vanishes: the held-out score minus the known price
+  $\sum_j w_j\operatorname{Var}\varepsilon_j$ is unbiased for the true loss of the
+  rule as chosen, for every distribution.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_score, thm:mix_proxy}
+  Independence and $\mathbb E\varepsilon_j = 0$ give
+  $\mathbb E[(\hat p_j - \mu_j)\varepsilon_j] = 0$.
+\end{proof}
+
+\begin{corollary}[Comparing two rules]\label{cor:heldOutScore_sub}
+  \lean{Credibility.CrossFit.integral_heldOutScore_sub}
+  \leanok
+  \uses{thm:heldOutScore}
+  Scored on the same held-out year, two rules differ in mean score exactly by
+  their difference in true loss; the price cancels.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:heldOutScore}
+  Subtract the two instances of Theorem~\ref{thm:heldOutScore}.
+\end{proof}
+
+\begin{corollary}[Cross-fitting]\label{cor:crossFitScore}
+  \lean{Credibility.CrossFit.integral_crossFitScore}
+  \leanok
+  \uses{thm:heldOutScore}
+  With folds $s$, fold weights $\pi_s$ and fold rules $\hat p^{(s)}$ fitted
+  without fold $s$, the mean of $\sum_s \pi_s\,\mathrm{score}_s$ is
+  $\sum_s\pi_s\,\mathbb E\,\mathrm{loss}_s + \sum_s\pi_s\sum_j w_j\operatorname{Var}\varepsilon^{(s)}_j$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{thm:heldOutScore}
+  Linearity, fold by fold.
+\end{proof}
+
+\begin{lemma}[The second winner's curse]\label{lem:integral_min_score_le}
+  \lean{Credibility.CrossFit.integral_min_score_le}
+  \leanok
+  \uses{def:cv_score}
+  $\mathbb E\min(\mathrm{score}, \mathrm{score}') \le \min(\mathbb E\,\mathrm{score}, \mathbb E\,\mathrm{score}')$:
+  the winning held-out score is optimistic for the rule it picks; an honest
+  score for the winner needs a further fold (nested cross-fitting).
+\end{lemma}
+\begin{proof}
+  \leanok
+  The minimum lies below each score pointwise.
+\end{proof}
+
+\section{Merging when the gap looks small, under normal noise}
+
+\begin{definition}[Pre-test rule]\label{def:pretest}
+  \lean{Credibility.PreTest.weight, Credibility.PreTest.gapErr, Credibility.PreTest.gapRisk}
+  \leanok
+  The pre-test weight is $a$ (merge) if $x^2 < c$ and $ak$ (separate)
+  otherwise, $x = X_1 - X_2$. The gap error is $G(x) = -\delta$ if $x^2 < c$ and
+  $mx - \delta$ otherwise, and $R(m, \delta, c, V) = \mathbb E\,G(D)^2$ for
+  $D \sim N(\delta, V)$.
+\end{definition}
+
+\begin{lemma}[The two rules of Chapter~\ref{ch:merging}]\label{lem:pretest_weight_merging}
+  \lean{Credibility.PreTest.weight_eq_merging}
+  \leanok
+  \uses{def:pretest, lem:merging_apply}
+  With $a = (v - c_{12})/V$ and $k = V/(V + x)$ the pre-test weight is
+  $\beta(0)$ when the gap looks small and $\beta(x)$ otherwise.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:merging_apply}
+  $\beta(x) = (v - c_{12})/(V + x)$.
+\end{proof}
+
+\begin{lemma}[Technical facts]\label{lem:pretest_tech}
+  \lean{Credibility.PreTest.measurable_gapErr, Credibility.PreTest.memLp_gapErr,
+        Credibility.PreTest.err_eq}
+  \leanok
+  \uses{def:pretest}
+  $G$ is measurable and square integrable under $N(\delta, V)$, and
+  $u + a(D - \delta) - \hat\beta(D)D = u + a\,G(D)$ with $m = 1 - k$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $|G(x)| \le |mx - \delta| + |\delta|$; the identity case by case.
+\end{proof}
+
+\begin{theorem}[Reduction to thresholding the gap]\label{thm:pretest_reduction}
+  \lean{Credibility.PreTest.integral_sq_pretest}
+  \leanok
+  \uses{def:pretest}
+  If $D = X_1 - X_2 \sim N(\delta, V)$ and $u = e_1 - a(D - \delta)$ has mean $0$
+  and is independent of $D$ (as under normal noise), then the pre-test rule's
+  MSE is $\mathbb E u^2 + a^2 R(1 - k, \delta, c, V)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:pretest_tech}
+  Expand $(u + aG(D))^2$; the cross term is $\mathbb E u\,\mathbb E G(D) = 0$.
+\end{proof}
+
+\begin{lemma}[The fixed rules]\label{lem:gapRisk_fixed}
+  \lean{Credibility.PreTest.gapRisk_merge, Credibility.PreTest.gapRisk_never}
+  \leanok
+  \uses{def:pretest}
+  Always merging ($m = 0$): $R = \delta^2$. Never merging ($c \le 0$):
+  $R = m^2V + (1 - m)^2\delta^2$. They tie at $\delta^2(2 - m) = mV$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\mathbb E(D - \delta) = 0$, $\mathbb E(D - \delta)^2 = V$.
+\end{proof}
+
+\begin{theorem}[Finding 43: the pre-test loses to both at the tie]\label{thm:pretest_tie}
+  \lean{Credibility.PreTest.lt_gapRisk_of_tie}
+  \leanok
+  \uses{def:pretest}
+  If $0 < m < 2$, $\delta > 0$, $\delta^2(2 - m) = mV$ and $c > 0$, then
+  $\delta^2 < R(m, \delta, c, V)$.
+\end{theorem}
+\begin{proof}
+  \uses{lem:gapRisk_fixed}
+  With $p(x) = \delta^2 - (mx - \delta)^2$, $R - \delta^2 = -\mathbb E[p(D); D^2 \ge c]$
+  and $\mathbb E p(D) = 0$ at the tie. Fold $x \mapsto -x$: on $x > 0$ the
+  integrand has the sign of $2\delta\tanh(\delta x/V) - mx$, positive then
+  negative. So the tail beyond $\sqrt c$ is negative, or the part below it
+  positive and equal to minus the tail.
+\end{proof}
+
+\begin{corollary}[For the predictor]\label{cor:pretest_mse_gt}
+  \lean{Credibility.PreTest.pretest_mse_gt}
+  \leanok
+  \uses{thm:pretest_reduction, lem:gapRisk_fixed, thm:pretest_tie}
+  Under the hypotheses of Theorem~\ref{thm:pretest_reduction}, with $a \ne 0$
+  and the gap at the tie, the pre-test rule's MSE exceeds both that of always
+  merging and that of never merging, for every threshold $c > 0$.
+\end{corollary}
+\begin{proof}
+  \uses{thm:pretest_reduction, lem:gapRisk_fixed, thm:pretest_tie}
+  Theorem~\ref{thm:pretest_reduction} three times, Lemma~\ref{lem:gapRisk_fixed},
+  Theorem~\ref{thm:pretest_tie}.
+\end{proof}
+
+\begin{remark}[Finding 43]\label{rem:pretest_curse}
+  \uses{thm:pretest_tie, thm:merge_iff}
+  No threshold makes ``merge iff the gap looks small'' safe: at the gap where
+  the two fixed rules tie, it is worse than both, for every $c$, in every
+  cohort (the factor $a^2$ is common). Theorem~\ref{thm:merge_iff} ranks the
+  fixed rules for a choice made in advance; the plug-in threshold of
+  \texttt{notes/merging-cohorts.md} \S4 is such a pre-test. Numerically
+  (\texttt{studies/runs/pretest-merge.js}): with own estimates and $c = 2V$
+  the excess at the tie is $0.20\,a^2V$, and the rule loses to both on
+  5--14\% of the gaps. Choose by a held-out score (Theorem~\ref{thm:heldOutScore})
+  instead.
+\end{remark}

@@ -6,6 +6,7 @@ import Credibility.BlupMoments
 import Credibility.PlugInSymmetric
 import Credibility.PlugIn
 import Credibility.PlugInMix
+import Credibility.CrossFit
 import Credibility.PlugInNormal
 import Credibility.BlupNormal
 import Credibility.Season
@@ -23,6 +24,7 @@ import Credibility.BuhlmannStraub
 import Credibility.Balance
 import Credibility.TwoCohorts
 import Credibility.Merging
+import Credibility.PreTestNormal
 import Credibility.Expectation
 import Credibility.Estimation
 import Credibility.Unequal

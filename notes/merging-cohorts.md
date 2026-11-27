@@ -273,12 +273,20 @@ What the numbers show:
   only within a period ($\delta_{ts}$ in eq. 16), while level covariance is
   constant over time. The §2.8 estimator of $\sigma_i\sigma_j\rho_{ij}$ uses
   same-period residuals, and $\mathbb E(X_1-X_2)^2 = d + V$ then gives $d$.
-- **Winner's curse (open).** The plug-in rule is a pre-test estimator: it
+- **Winner's curse (quantified 2026-11-27, Finding 43).** The plug-in rule is a pre-test estimator: it
   decides with the same data it then uses. Results A and B are for a choice
   fixed in advance, so they do not give its MSE. With one observation of the
   gap, $(X_1-X_2)^2$ is very noisy (one degree of freedom under normality),
   and pairs that look close by chance get merged. Quantifying this is the
   next step for this roadmap goal.
+  *Answer (fixed levels, normal noise; `Credibility/PreTestNormal.lean`):* the
+  error of each cohort's predictor is $u + a\,G(D)$, $D = X_1 - X_2$, so every
+  rule is an estimate of the gap $\delta$: $0$ when merged, $(1-k)D$ when
+  separate. The plug-in rule is hard thresholding of $D$. At the gap where the
+  two fixed rules tie, $\delta^2(2-m) = mV$, it is worse than both for every
+  threshold. With $\tau^2/V = 1$ and the threshold above, the excess there is
+  $0.04\,a^2V$ (`studies/runs/pretest-merge.js`). Decide on a held-out year
+  instead (`Credibility/CrossFit.lean`).
 
 ## 5. Possible Lean targets later
 

@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S67, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S68, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -100,6 +100,7 @@ continue the numbering here; the full text and its trust label are below.
 | S65 | `runs/vector-lambda.js` | With known `Λ` every correlation pays; fitted, the diagonal wins almost everywhere |
 | S66 | `runs/vector-lambda-damp.js` | Weight the moment `Λ̂` by exposure and damp its off-diagonals |
 | S67 | `runs/vector-lambda-shocks.js` | Model the shocks: corrected `Λ̂` and the joint BLUP |
+| S68 | `runs/pretest-merge.js` | Merging when the gap looks small loses to both rules (exact, normal) |
 
 ## Observations
 
@@ -900,3 +901,15 @@ weighted lines of `p` coefficients, so `ŝ²` (divisor `T − p`) is unbiased fo
 unbiased: composed with random lines in `LineResidualsMoments.lean`
 (`integral_correctedLambda_lines`; pooled SUR version `integral_correctedLambda_pooled`). With unequal shapes S67's `ρ̂` is biased towards 0; the
 divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`) fixes it.
+
+### The winner's curse of merging a pair (2026-11-27, `studies/runs/pretest-merge.js`, Finding 43)
+- S68. *[exact, numerical integration]* **Merging when the gap looks small loses to both rules.** Two cohorts,
+    fixed gap `δ`, normal noise; each rule's excess is `a²R` with `R` the risk of estimating `δ` by `0`
+    (merge) or `(1 − k)D` (separate), `D ~ N(δ, V)` (`PreTest.integral_sq_pretest`). Pre-test "merge iff
+    `D² < c`", in units of `a²V`, at the tie of the fixed rules (`θ₀² = (1 − k)/(1 + k)`): positive for every
+    `k ∈ {0, ¼, ½, ¾}` and every `t = √(c/V)` tried (largest `+0.26`, `k = 0`, `t = 2`; `+0.20` at `c = 2V`).
+    It loses to both on 0–14% of the gaps `θ ∈ [0, 6]`, and its regret to the better rule reaches
+    `0.65` (`k = 0`, `c = 2V`) and grows like `t²` for large thresholds. The plug-in threshold of
+    `notes/merging-cohorts.md` §4 with the thesis blend: `+0.0004` (`τ²/V = 0.1`) to `+0.14` (`τ²/V = 5`) at
+    the tie. **Consequence.** No threshold is safe (Finding 43, the inequality stated as
+    `PreTest.lt_gapRisk_of_tie`); decide merges and cuts on held-out years (`CrossFit.integral_heldOutScore`).

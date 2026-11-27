@@ -543,6 +543,12 @@ Finished items are in `studies/PLAN-done.md`.
   `group_optimal_contiguous` (corollary of `kmeans_contiguous`). *Warning 2026-11-25 (S61):* do not choose the
   cut of the sorted estimates by SURE: 2–74% worse than one group; the step needs a selection-aware
   criterion (cross-fitting, or a price that includes the choice of the cut) before it is built.
+  *Criterion settled 2026-11-27 (`CrossFit.integral_heldOutScore`, handbook `res:heldout`):* leave one year
+  out, choose the cut and fit on the other years, score on the left-out year; compare cuts (and one group)
+  by the difference of the averaged scores (the noise price cancels, `integral_heldOutScore_sub`). Next: a
+  study (S69) of the cross-fitted cut against one group in S61's worlds, short histories (`T = 3–5`)
+  included, before the app step; the winning score is optimistic (`integral_min_score_le`), so report the
+  chosen cut's error from an outer fold. Never merge a pair by its observed gap (Finding 43).
 - [ ] *Parked (owner, 2026-11-25: a size trend is niche; tariffs usually carry size already).* Volume trend as a
   design column (S62): the offset `E μⱼ = α + γ log wⱼ`, a fit "BLUP with log volume" (`res:blup`,
   X = `[1, log w]`). Build only if real data show a slope: regress `μ̂ⱼ` on `log wⱼ` with weights `1/(τ̂² + D̂ⱼ)`
