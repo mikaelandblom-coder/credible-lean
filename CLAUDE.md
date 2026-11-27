@@ -166,6 +166,11 @@ and nothing in the core depends on them.
   `python3 scripts/progress.py` first so `PROGRESS.md` stays current.
 - Replies are read on a phone: keep them short and give the math idea in
   words before any Lean.
+- Questions are about this project. A general question ("how do we model
+  frequency and severity?") means: how the repo does it. Answer from the
+  repo (Lean files, `FINDINGS.md`, notes, handbook, paper), point to where
+  it lives, and flag gaps; bring in outside literature only as a
+  comparison or when the repo has nothing on it.
 
 ## Workflow
 - Check the cloud environment first (`get_environment`). Do Lean work only
@@ -205,7 +210,9 @@ and nothing in the core depends on them.
 - At a natural break (a file done, a finding logged, context getting long),
   say so and end the reply with a short, ready-to-paste prompt for the next
   chat: the file or `sorry`s to tackle and any state the next chat can't
-  get from the repo (open questions, dead ends tried).
+  get from the repo (open questions, dead ends tried). After the prompt, ask
+  "Do you want to continue here?" so the owner can reply "Yes" to go on in
+  the same chat.
 - Literature: fetch open-access copies (preprints, theses, repositories; never
   library or publisher PDFs) with `bash scripts/fetch_paper.sh <url> [name]`
   (saves to `.papers/`, gitignored, with a `.txt`). If its host is blocked,
