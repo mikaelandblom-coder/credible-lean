@@ -212,7 +212,7 @@
 
   /**
    * The three pair pools and the raw α̂², β̂², γ̂² (Model.crossed_unbiasedX). weights: 'iv' (inverse variance,
-   * the default: studies/crossed-fit.js), 'equal' (each pair of a class alike), 'vol' (∝ wᵢ*wⱼ*), or 'anova'
+   * the default: studies/runs/crossed-fit.js), 'equal' (each pair of a class alike), 'vol' (∝ wᵢ*wⱼ*), or 'anova'
    * (∝ wᵢ*wⱼ* and the noise cross term omitted: Dannenburg's and Goulet's ANOVA statistics as pair pools,
    * biased under correlated noise, Finding 42).
    */
@@ -244,7 +244,7 @@
   /**
    * The crossed fit. opts.weights as for pairPools; opts.trunc: 'clip' (each variance at 0, the Euclidean
    * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
-   * provisional, from studies/crossed-fit.js (1000 draws × 96 worlds: inverse variance + clip is never clearly
+   * provisional, from studies/runs/crossed-fit.js (1000 draws × 96 worlds: inverse variance + clip is never clearly
    * worse than equal weights and better in 59 worlds; least squares loses to clip in 67): a hypothesis for the
    * worlds it visits, until the general targets in PLAN-done.md (crossed levels) are proved.
    */

@@ -5,7 +5,7 @@ import Credibility.OffDiagonal
 
 Damping multiplies the off-diagonal estimates `ŝᵢⱼ` by `θ`, i.e. shrinks them linearly towards
 the target `0`. Take each estimate's mean `sᵢⱼ` and variance `Vᵢⱼ` as given numbers (they need
-fourth moments, `studies/damping-theta.md` S7). Then the stand-in loss
+fourth moments, `studies/LOG.md` S7). Then the stand-in loss
 `E Σ (θŝᵢⱼ - sᵢⱼ)² = Σ (θ²(sᵢⱼ² + Vᵢⱼ) - 2θsᵢⱼ² + sᵢⱼ²)` is a parabola in `θ` with vertex
 `θ* = Σs²/(Σs² + ΣV)`, the zero-target shrinkage intensity of Ledoit–Wolf (2004) and
 Schäfer–Strimmer (2005). A `θ` beats both no damping (`θ = 1`) and dropping the correlations

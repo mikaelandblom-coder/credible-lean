@@ -274,8 +274,8 @@ test('Correlated BS (vc) equals BS when ρ̂ = 0 and all σ̃ⱼ equal (β² = 0
   assert.ok(checked > 100, `only ${checked} draws with ρ̂ = 0 and β² = 0`);
 });
 
-test('Correlated BS (vc) and its jackknife MSEP match the studies (variance-credibility.js cred, msep.js)', () => {
-  const { fitVC } = require('../studies/variance-credibility.js'), M = require('../studies/msep.js');
+test('Correlated BS (vc) and its jackknife MSEP match the studies (studies/runs/variance-credibility.js cred, studies/runs/msep.js)', () => {
+  const { fitVC } = require('../studies/runs/variance-credibility.js'), M = require('../studies/runs/msep.js');
   const r = E.rng(18);
   for (const params of [{}, { rho: 0.6, J: 5, T: 4 }]) {
     const world = E.makeWorld(params);
@@ -302,7 +302,7 @@ test('Jackknife MSEP is right on average within 25% (one fixed-seed world, findi
 // ---------------------------------------------------------------- region-specific σⱼ (spread worlds of the studies)
 
 test('Noise spread: σⱼ factors are the studies’ ×0.5–2 at s = 1; s = 0 is the old world, draw for draw', () => {
-  const study = Array.from({ length: 8 }, (_, j) => Math.pow(4, (j % 4) / 3 - 0.5)); // variance-credibility.js, msep.js
+  const study = Array.from({ length: 8 }, (_, j) => Math.pow(4, (j % 4) / 3 - 0.5)); // studies/runs/variance-credibility.js, studies/runs/msep.js
   const world = E.makeWorld({ noiseSpread: 1 }), s = Math.sqrt(world.truth.sigma2);
   world.truth.sigmaj2.forEach((x, j) => close(Math.sqrt(x), s * study[j], 1e-12, `σ_${j}`));
   assert.deepEqual([0, 3].map((j) => E.noiseFactor(j, 1)), [0.5, 2]);
@@ -347,7 +347,7 @@ test('Spread world: jackknife MSEP understates, by roughly 10–15% (finding S19
   assert.ok(ratio > 0.75 && ratio < 0.95, `predicted / actual MSE ${ratio}`);
 });
 
-test('corrBS: flags the true-K optimum shows too are notes, not warnings (studies/vc-balance.js, findings S27–S29)', () => {
+test('corrBS: flags the true-K optimum shows too are notes, not warnings (studies/runs/vc-balance.js, findings S27–S29)', () => {
   const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), fl = E.floorBlend(world);
   // The floor itself: negative b, z below but close to 1, balanced for vⱼ ∝ bⱼ/(1 − zⱼ) and not for the exposures.
   assert.ok(fl.b.some((b) => b < 0), 'floor has a negative b');
@@ -371,7 +371,7 @@ test('corrBS: flags the true-K optimum shows too are notes, not warnings (studie
   assert.ok(res.expected.bNeg > 0.5 && res.expected.bNeg <= res.flags.bNeg, `expected negative b ${res.expected.bNeg}`);
 });
 
-test('corrBS: forcing exposure balance is not cheap (studies/vc-balance.js)', () => {
+test('corrBS: forcing exposure balance is not cheap (studies/runs/vc-balance.js)', () => {
   const world = E.makeWorld({ rho: 0.6, noiseSpread: 1 }), r = E.rng(34), n = 600;
   const wt = world.w.map(sum);
   let e = 0, eb = 0, es = 0;
@@ -430,11 +430,11 @@ test('Premium step: premium = rates, forecast = plug-in level MSE + σ̂ⱼ²/w�
 });
 
 // ---------------------------------------------------------------- exact checks of study numbers
-// studies/exact-balance.js: the floor and its balanced corrections are linear rules, so their error
+// studies/runs/exact-balance.js: the floor and its balanced corrections are linear rules, so their error
 // is a formula in K and τ² (no simulation). These tests tie the documented numbers to it.
-const X = require('../studies/exact-balance.js');
+const X = require('../studies/runs/exact-balance.js');
 
-test('Exact floor error equals the engine\'s blendMSE, weighted (studies/exact-balance.js)', () => {
+test('Exact floor error equals the engine\'s blendMSE, weighted (studies/runs/exact-balance.js)', () => {
   for (const { params } of X.worlds()) {
     const r = X.exactRow(params), { fl, wt, t2 } = r;
     const viaEngine = wt.reduce((s, w, j) => s + w * E.blendMSE(fl.K, t2, fl.b, fl.s2, j, fl.z[j]), 0) / wt.reduce((s, w) => s + w, 0);
@@ -973,7 +973,7 @@ test('Finding 35, ρ̂ channel: the pooled cross-region third moment γ̂ (cross
   close(c.rhoRaw, a.rhoRaw + 0.01, 1e-9, 'ρ̂ shifted'); close(c.own[0], a.own[0], 1e-12, 'variances kept');
 });
 
-test('taper signal (studies/taper-signal.js): almost never tapers a common ρ; tapers a clear distance decay; auto = the chosen fit', () => {
+test('taper signal (studies/runs/taper-signal.js): almost never tapers a common ρ; tapers a clear distance decay; auto = the chosen fit', () => {
   const r = E.rng(61);
   let common = 0, ordered = 0;
   const wc = E.makeWorld({ J: 20, T: 10, rho: 0.6 }), wo = E.makeWorld({ J: 20, T: 20, rho: 0.9, ordered: true });

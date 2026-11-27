@@ -794,7 +794,7 @@
    *   profile  — the same with φ̂ by profiling (slow: about 70 MINQUE solves per origin);
    *   index    — φ̂ from the external index (needs one);
    *   ewma     — EWMA of each cohort's own annual means, λ̂ per cohort by the plug-in criterion on the
-   *              moment fit's tables (`ewmaYears`; studies/ewma-decay.js: never better than the BLUP);
+   *              moment fit's tables (`ewmaYears`; studies/runs/ewma-decay.js: never better than the BLUP);
    *   oracle   — the BLUP with the true tables (a reference, not a fit: it uses the truth).
    */
   const ROLL_FITS = {

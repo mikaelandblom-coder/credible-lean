@@ -182,11 +182,11 @@ Gaps, extra hypotheses and new results found while formalizing.
    correlation, and holds in true MSE for any distribution. But the line
    fixes the *shape* `1 − zⱼ ∝ bⱼ/uⱼ`: big cohorts are forced to `z ≈ 1`, small
    ones far from `zⱼ*` (even `z < 0`). In the 19 worlds of the app's study
-   (`studies/vc-balance.js`) it costs up to 96% more error than the floor,
+   (`studies/runs/vc-balance.js`) it costs up to 96% more error than the floor,
    where shifting all rates by the same amount (Wang–Fuller–Qu 2008) costs at
    most 41%; both cost nothing at `ρ = 0` with equal `σⱼ`. These numbers are
    exact, not simulated: both corrections are linear rules with the true `K`,
-   so their MSE is a formula in the second moments (`studies/exact-balance.js`,
+   so their MSE is a formula in the second moments (`studies/runs/exact-balance.js`,
    tested in `app/engine.test.js`; the simulation gave 103% and 46%). They
    still depend on the worlds chosen. Balance should be
    restored by a common shift, not by bending `z`: the shift is outside the
@@ -303,7 +303,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    `v = (0.5, 1, 3)`, `ρ = 0.5`): 14.3%, 9.2%, 0.4% above the minimum, against
    2.8%, 3.1%, 0.1% for the blend restriction (Finding 18). So with true
    parameters the correlation matters more than the blend form; whether
-   estimating it pays is the fitted-model question of the studies (S6 in `studies/damping-theta.md`).
+   estimating it pays is the fitted-model question of the studies (S6 in `studies/LOG.md`).
 
 20. **Equal correlations: the sharp price of ignoring or damping them (new;
    `Core.linMse_damped_le`, `Core.linMse_ignoreCorr_le_two_sided`,
@@ -612,7 +612,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    the same data the error in a draw is a different parabola, and nothing is claimed.
 
 37. **The spread of the means `B` is uncorrelated with `P` and `Qn` only under three conditions (new;
-   `studies/damping-theta.md` S53; Lean: `Cumulants.covariance_statB_eq`, `covariance_statB_eq_zero`,
+   `studies/LOG.md` S53; Lean: `Cumulants.covariance_statB_eq`, `covariance_statB_eq_zero`,
    `meanCoef_dotProduct_resCoef_eq_zero`, all in `FitStatistics.lean`).** Expected (S53, Lean candidate):
    `cov(B, P) = cov(B, Qn) = 0` when the third cumulants vanish. Found: exactly,
    `cov(B, R) = Σ A_B A_R κ₄` for `R = P` or `Qn` whenever (i) the cell means are constant within
@@ -622,7 +622,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    (checked by simulation with Exp(1) cells, `κ₄ = 6`: 1.505 against 1.5). (iii) holds for a level
    covariance plus year noise `Dₜ` with `aᵢₜDₜᵢⱼ` constant in `t`: uncorrelated regions with
    `Dₜᵢᵢ = σᵢ²/wᵢₜ`, or `Dₜᵢⱼ = Vᵢⱼ/√(wᵢₜwⱼₜ)` with proportional volumes `wᵢₜ = Wᵢvₜ`, as in every
-   world of `price-formula.js` (so S53's numbers stand). With correlated regions and
+   world of `studies/runs/price-formula.js` (so S53's numbers stand). With correlated regions and
    non-proportional volumes it fails: `ρ = 0.6`, app world with volumes × (1 + ½((j + t) mod 3)),
    normal cells: corr(P, B) = 0.007, corr(Qn, B) = 0.006 (0 at `ρ = 0`). Why: `P` and `Qn` are
    functions of the residuals, `B` of the region means; normal theory makes them independent only
@@ -651,7 +651,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    agrees in sign with the app's simulations (`2E[AB]` −6% under gamma noise). Caveat: proved only for
    equal volumes `wⱼₜ = w` (the one case where `ẑ = 1 − v̂/S²` is the same for every region and the
    result has a closed form), first order in the delta method; no third cumulants enter at this order.
-   *Unequal volumes, checked numerically (2026-11-24, `studies/cross-term.js`, not proved):* the same
+   *Unequal volumes, checked numerically (2026-11-24, `studies/runs/cross-term.js`, not proved):* the same
    first-order term for any `wⱼₜ`, exact from the moment tables (`integral_lin_lin_sumSq` holds for any
    weights), reproduces the closed form to all digits when balanced. With region sizes 16× apart and
    years 1–2×, it is negative in every world and every region, for levels and for noise, and the
@@ -669,7 +669,7 @@ Gaps, extra hypotheses and new results found while formalizing.
 
 39. **Heavy-tailed noise can raise the Bühlmann–Straub plug-in's MSE: Finding 38's sign fails when a
    region's volume sits in one year (new; Lean: `Cumulants.crossTerm_bs_pos_example`, with
-   `crossTerm_bs_noise_pos_value`, in `FitStatistics.lean`; `studies/cross-term.js` for the general
+   `crossTerm_bs_noise_pos_value`, in `FitStatistics.lean`; `studies/runs/cross-term.js` for the general
    term).** Expected (Finding 38, numerics with even years): the first-order cross term `2E[AB]` is
    ≤ 0 whenever `κL, κN ≥ 0`. Found: the *level* part is ≤ 0 in every world tried (random volumes,
    J = 2–11, T = 2–11, 300 000 worlds × regions; *proved 2026-11-25 for any volumes*,
@@ -690,7 +690,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    on the volumes; use the general formula (`crossTerm_bs_of_cumulants`), not the balanced one.
 
 40. **The level part of the cross term has no sign for the BLUP on corrBS's K̂ (new; exact check
-   `studies/blup-level-sign.py`, search `studies/blup-level-sign.js`; not in Lean).** Expected: like BS
+   `studies/runs/blup-level-sign.py`, search `studies/runs/blup-level-sign.js`; not in Lean).** Expected: like BS
    (`Cumulants.crossTerm_bs_level_nonpos`), the level part of the first-order cross term `2E[AⱼBⱼ]` is ≤ 0
    when `κL ≥ 0`. Formula, for any pooled fit (data only through `P`, `Qn`, `B`): a level `Lₚ` enters only
    `B`, with weight `mₚ = Wₚ(1 − Wₚ/W)`, so the level part is `2κL Σₚ mₚ(dⱼₚ − δₚⱼ)∂dⱼₚ/∂B
@@ -723,7 +723,7 @@ Gaps, extra hypotheses and new results found while formalizing.
    heavy-tailed levels, 0–4 otherwise. With own means and **one common `τ²`** the groups are intervals for any volumes (0 of 300).
    For fixed `τ²` the loss is a weighted k-means cost with weights `uⱼ(1 − zⱼ)²`, so `kmeans_contiguous`
    applies (proved: `group_optimal_contiguous`, via `groupLoss_eq`). Consequence: a grouping should use a common `τ²`. But choosing the cut of
-   the sorted *estimates* by SURE on the same data is 2–74% worse than one group (S61, `studies/damping-theta.md`):
+   the sorted *estimates* by SURE on the same data is 2–74% worse than one group (S61, `studies/LOG.md`):
    the fit needs a selection-aware criterion first. Details: `notes/group-variances.md`.
 
 42. **The analysis-of-variance estimators of crossed-classification credibility are biased when the

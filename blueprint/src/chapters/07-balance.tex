@@ -66,7 +66,7 @@ which is Bühlmann--Straub.
   $w_{j*}/\sigma_j^2$, so with region-specific $\sigma_j$ the blend is not
   exposure-balanced. Under correlation some $b_j$ are negative, so no
   positive volume measure is balanced. A simulation
-  (\texttt{studies/damping-theta.md}) finds negative $b_j$ in every world with
+  (\texttt{studies/LOG.md}) finds negative $b_j$ in every world with
   $\rho > 0$ even with the true parameters, and an exposure imbalance above
   1\% in most draws when the $\sigma_j$ differ. Forcing exposure balance
   afterwards (shifting or scaling the rates, or a Bühlmann--Straub-style
@@ -141,7 +141,7 @@ which is Bühlmann--Straub.
   rates (the benchmarking of Wang, Fuller and Qu, 2008, which leaves the
   blend class) costs at most $41\%$. Both are linear rules with the true
   $K$, so these numbers are computed exactly from the second moments, not
-  simulated (\texttt{studies/exact-balance.js}).
+  simulated (\texttt{studies/runs/exact-balance.js}).
 \end{remark}
 
 \begin{definition}[Imbalance and corrections]\label{def:Core_imbalance}

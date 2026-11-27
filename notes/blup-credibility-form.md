@@ -60,7 +60,7 @@ Lean targets (`Core.lean`, one chat; 1–3 done 2026-11-26: `Core.blupWeight_dot
 
 ## 3. Hypothesis for the ρ̂ channel (Finding 35, PLAN "Finding 35 remedies", open item)
 
-*Outcome 2026-11-26 (S63 in `studies/damping-theta.md`, `studies/rho-channel.js`).* H2 and P3 were in fact
+*Outcome 2026-11-26 (S63 in `studies/LOG.md`, `studies/runs/rho-channel.js`).* H2 and P3 were in fact
 already in the app: `Engine.skewBias` (2026-11-23) predicts the `ρ̂` part to first order. H1 holds only by
 half: with `ρ` fixed at the truth about half the bias stays (the pooled `σ̂²`/`τ̂²` ratio). P1 holds (bias 0
 exactly). R1 removes the bias but costs 4–17 MSE points; its variant R1b, the BLUP shifted to the
@@ -105,7 +105,7 @@ to 1 and independent of the noise of the cells they weight give an unbiased pred
 **R2 (fallback): first-order bias correction** from k-statistic estimates of the cross-cumulants
 (`noiseDiagnostics`). Likely too noisy (third moments, few years); try only if R1's price is high.
 
-Study plan: a script `studies/rho-channel.js` on the app's worlds (default, `ρ = 0.6`, spread 1, `T = 4`
+Study plan: a script `studies/runs/rho-channel.js` on the app's worlds (default, `ρ = 0.6`, spread 1, `T = 4`
 skew, `J = 20`): H1 attribution, P1–P3, and R1 against pooled and balanced (MSE / portfolio bias, 3000
 draws). If R1 holds: a fit option "cross-fit ρ̂, σ̂²" and the Lean target above; the outcome is a
 hypothesis until then (CLAUDE.md, general results first).

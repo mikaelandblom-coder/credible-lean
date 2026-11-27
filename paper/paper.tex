@@ -886,7 +886,7 @@ parameters: plugged into the one-correlation fit of
 Section~\ref{sec:estimation}, the BLUP beats the fitted blend in every
 correlated world tried, often below the blend's own floor, and ties at
 $\rho = 0$; on a fully estimated $\hat K$ it is noisy (\app{Models},
-``BLUP''; \file{studies/PLAN.md} 3c, \file{studies/damping-theta.md}
+``BLUP''; \file{studies/PLAN.md} 3c, \file{studies/LOG.md}
 S30--S32).
 
 \paragraph{Any target, any design.}
@@ -928,7 +928,7 @@ years by recency, $\lambda^{\text{age}}$ (exponential smoothing; Morris
 predictor from the cohort's annual means, so its loss is the exact excess
 above. With a persistent monthly factor it costs 6--31\% over the full
 predictor when the factor remembers more than a year, and almost nothing
-when it forgets within one (\file{studies/damping-theta.md}, S43). The full
+when it forgets within one (\file{studies/LOG.md}, S43). The full
 predictor does not get its recency from the cohort's own last year, on
 which it puts a nearly flat weight; it reads the common factor from how the
 \emph{other} cohorts moved month by month. And the size-dependent $\lambda$
@@ -950,7 +950,7 @@ stays ahead of the fitted $\lambda$ (S45).
 \see \hb{res:blup}{22} ·
 \app{Models} (``BLUP''), \app{Comparing fits on data} (``EWMA of own years'') ·
 \finding{18} ·
-\file{studies/damping-theta.md} (S30--S32, S43--S45),
+\file{studies/LOG.md} (S30--S32, S43--S45),
 \file{notes/card-data.md} Step~1 ·
 thesis §2.5.
 
@@ -997,7 +997,7 @@ With the
 true parameters the best blend already has a negative weight in every
 correlated world of the app's study, and it misses exposure balance by more
 than 1\% in half or more of the draws when cohorts differ in noise level
-(study finding S27 in \file{studies/damping-theta.md}). So an off-balance of
+(study finding S27 in \file{studies/LOG.md}). So an off-balance of
 a few percent is expected under correlation, not a sign that something went
 wrong.
 
@@ -1026,7 +1026,7 @@ Three ways come to mind, and all of them cost accuracy.
 \end{itemize}
 These costs are exact, not simulated: with the true parameters every one of
 these corrections is a linear rule, so its mean squared error is a formula
-in the second moments (\file{studies/exact-balance.js}). They do depend on
+in the second moments (\file{studies/runs/exact-balance.js}). They do depend on
 the worlds chosen.
 
 \paragraph{Why balance costs anything.}
@@ -1072,8 +1072,8 @@ $D$. So the shift is the one to use.
 \see \hb{res:bs}{8}, \hb{res:balance}{9}, \hb{res:bestBalanced}{10}, \hb{res:commonShift}{11} ·
 \app{Many draws} ·
 \finding{10}, \finding{15}, \finding{16} ·
-\file{studies/damping-theta.md} (S27--S29), \file{studies/vc-balance.js},
-\file{studies/exact-balance.js} ·
+\file{studies/LOG.md} (S27--S29), \file{studies/runs/vc-balance.js},
+\file{studies/runs/exact-balance.js} ·
 \file{studies/literature.md} §4 ·
 thesis §2.9.
 
@@ -1173,7 +1173,7 @@ Damping is a hand-set number, and the project's
 rule is that a fitted model needs none (the recipe in \hbsec{sec:estimation}{6}). The fit the app uses instead,
 \emph{correlated Bühlmann--Straub with credibility-weighted variances},
 gets there by giving the covariances fewer parameters
-(\file{studies/damping-theta.md}, ``Ansatz''):
+(\file{studies/LOG.md}, ``Ansatz''):
 \begin{itemize}
   \item \emph{One correlation} $\rho$ for all pairs, not one covariance:
     with unequal volumes one common covariance exceeds the noise variance of
@@ -1195,7 +1195,7 @@ gets there by giving the covariances fewer parameters
 \end{itemize}
 Over 45 simulated worlds it is the most robust of the fits tried: best or
 near best almost everywhere, and equal to Bühlmann--Straub when there is no
-correlation (\file{studies/variance-credibility.js}). The model, $K \succ 0$
+correlation (\file{studies/runs/variance-credibility.js}). The model, $K \succ 0$
 and the blend are proved; the estimators' unbiasedness under this structure
 is not yet in Lean, and the quality of the whole is numerical, as it is for
 the EBLUP in small-area estimation (\file{studies/literature.md} §2).
@@ -1204,7 +1204,7 @@ the EBLUP in small-area estimation (\file{studies/literature.md} §2).
 
 The studies and theorems of this section and the next give a starting point
 for each data situation. ``S'' numbers are study findings
-(\file{studies/damping-theta.md}).
+(\file{studies/LOG.md}).
 \begin{center}
 \begin{tabular}{p{0.34\textwidth}p{0.36\textwidth}p{0.2\textwidth}}
   \toprule
@@ -1290,7 +1290,7 @@ $\frac2J\frac{T}{T-1}\frac{1-z}{z}$ of the known-parameter error, and a variance
 instead of a pooled one costs at most a further $z(1-z)\cdot 2/(T-1)$. The app's ``gain against
 price'' step chooses the fit by comparing the two. It is never more than 3.3 points of error
 from the best fit in hindsight, and on average 1.2 points better than always using correlated
-Bühlmann--Straub (\file{studies/gain-price.js}, S57).
+Bühlmann--Straub (\file{studies/runs/gain-price.js}, S57).
 
 Heavy tails change both sides of this comparison, and not in the direction one
 would guess; Section~\ref{sec:beyond} explains how.
@@ -1312,7 +1312,7 @@ respond to its variance estimate, and multiply by the covariance of that estimat
 cohort mean, a third moment
 (\hb{res:varQuad}{37}). That gets sign and size, within about
 30\% of the simulated bias, including the channel through $\hat\rho$; one data set's
-value is rough (\file{studies/skew-bias.js}). Two remedies need no estimate of
+value is rough (\file{studies/runs/skew-bias.js}). Two remedies need no estimate of
 it. A pooled variance removes most of it. Balance removes it at portfolio level in
 every world: fitted rates that reproduce the exposure-weighted total of the cohort
 estimates are unbiased for the portfolio however they were built (Section~\ref{sec:balance}).
@@ -1343,14 +1343,14 @@ sets like it (S26).
     interval around this data set's rates (\app{One draw}, ``Typ.\ err.'').
   \item \emph{Study numbers are numerical.} Findings S1--S62 come from
     simulated worlds; each is labelled in
-    \file{studies/damping-theta.md} by how far it can be trusted if the
+    \file{studies/LOG.md} by how far it can be trusted if the
     world changes.
 \end{itemize}
 
 \see \hb{res:damped}{28}, \hb{res:estimation}{25}, \hb{res:bs_tau}{27}, \hb{res:integral_quad}{19}, \hb{res:plugIn}{31}, \hb{res:randomWeights}{30}, \hb{res:unequal}{38} ·
 \app{Models}, \app{Fitting steps} ·
 \finding{7}, \finding{35} ·
-\file{studies/damping-theta.md} (S1--S62),
+\file{studies/LOG.md} (S1--S62),
 \file{studies/literature.md} §2, §4 ·
 thesis §2.8, eqs.~(37)--(41).
 
@@ -1445,7 +1445,7 @@ is much worse: the theorem holds the collective mean fixed, while as an estimate
 exactly where those weights put it. If the data do show levels trending with volume (rare once
 the tariff carries a size factor), model the trend directly, as an offset in the design
 (\hb{res:blup}{22}): it gains far more when the trend is there and has a visible price when it is
-not (\file{studies/damping-theta.md}, S59--S62).
+not (\file{studies/LOG.md}, S59--S62).
 
 \watch
 \begin{itemize}
@@ -1458,7 +1458,7 @@ not (\file{studies/damping-theta.md}, S59--S62).
     precise the \emph{estimated} parameters are depends on fourth moments,
     which the model leaves free; that is why the best damping and the
     fitted error depend on the noise distribution
-    (\file{studies/damping-theta.md}, S7, S21; Section~\ref{sec:beyond}).
+    (\file{studies/LOG.md}, S7, S21; Section~\ref{sec:beyond}).
   \item \emph{An average over the collective, not a statement about one cohort.} The true mean
     squared error averages over the cohorts' levels. For a given cohort, whose level stands far
     from the collective, the blend is biased towards the collective mean, and an interval built
@@ -1471,7 +1471,7 @@ not (\file{studies/damping-theta.md}, S59--S62).
 \app{Many draws} (fit against the floor) ·
 \finding{1}, \finding{11},
 \finding{12} ·
-\file{studies/damping-theta.md} (S9).
+\file{studies/LOG.md} (S9).
 
 % ===========================================================================
 \section{Beyond second moments}\label{sec:beyond}
@@ -1601,7 +1601,7 @@ weight (Section~\ref{sec:estimation}, \finding{35}).
     With heavy enough tails a variance formula built from cumulants is
     infinite while the estimate it describes is bounded (a correlation lies
     in $[-1, 1]$); a damping rule fed with it then damps everything
-    (\file{studies/damping-theta.md}, S42). Use normal theory for rules,
+    (\file{studies/LOG.md}, S42). Use normal theory for rules,
     and the cumulants for sensitivity.
   \item \emph{Cumulants of the levels are not estimable from a few cohorts.}
     Treat them as a sensitivity, not a fitted number.
@@ -1609,7 +1609,7 @@ weight (Section~\ref{sec:estimation}, \finding{35}).
 
 \see \hb{res:varQuad}{37}, \hb{res:plugIn}{31}, \hb{res:bsPrice}{36}, \hb{res:randomWeights}{30}, \hb{res:blup}{22} ·
 \finding{35}, \finding{37}--\finding{40} ·
-\file{notes/fourth-moments.md}, \file{studies/damping-theta.md} (S38--S42) ·
+\file{notes/fourth-moments.md}, \file{studies/LOG.md} (S38--S42) ·
 \file{studies/literature.md} §10.
 
 % ===========================================================================
@@ -2058,7 +2058,7 @@ of fitting them (Section~\ref{sec:estimation}).
     levels; in practice you sort their estimates, which is a plug-in. It is not a harmless one:
     sorting puts the noise into the groups, and two groups cut from the sorted estimates, with the cut
     chosen by SURE on the same data, were 2--74\% worse than one group in every world of a study
-    where the same cut of the true levels was about even (\file{studies/damping-theta.md}, S61).
+    where the same cut of the true levels was about even (\file{studies/LOG.md}, S61).
   \item \emph{Correlated units are not covered} by the interval results:
     then a cohort's pooled noise depends on which units share it.
   \item \emph{Use the exposure-weighted loss} if you want the interval

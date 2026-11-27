@@ -94,7 +94,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Kackar & Harville (1981, 1984): MSE(EBLUP) = MSE(BLUP) + E[(EBLUP − BLUP)²] for even,
   translation-invariant variance estimators, **under normality**. Without normality the cross term
   `2E[(BLUP − target)(EBLUP − BLUP)]` need not vanish; it can be negative, which explains why our
-  fit beats the fixed-weight floor under heavy tails (damping-theta.md, finding S9).
+  fit beats the fixed-weight floor under heavy tails (LOG.md, finding S9).
 - Kackar & Harville (1981), *Unbiasedness of two-stage estimation and prediction procedures for
   mixed linear models*, Comm. Stat. A 10: the plug-in predictor is unbiased when the variance
   estimator is even and translation invariant and the noise symmetric (from memory). Used
@@ -107,7 +107,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   Evenness is not needed for the MSE identity, only for unbiasedness.
 - Prasad & Rao (1990), Das, Jiang & Rao (2004): MSEP ≈ g₁ + g₂ + g₃ with g₃ from the covariance of
   the variance-parameter estimates; second-order unbiased MSEP estimator g₁(θ̂) + g₂(θ̂) + 2g₃(θ̂).
-  Used 2026-11-24 (`studies/price-formula.js`, S53–S55): g₃ as the first-order price of a fitted
+  Used 2026-11-24 (`studies/runs/price-formula.js`, S53–S55): g₃ as the first-order price of a fitted
   model against its oracle; reliable from about T = 10, overshooting with short histories.
 - Mack (1993), *Distribution-free calculation of the standard error of chain ladder reserve
   estimates*, ASTIN 23(2): MSEP = process variance + estimation error, distribution-free, with an
@@ -117,7 +117,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
 - Benchmarking in small-area estimation (forcing the estimates to add up to a direct total, our
   exposure balance): Pfeffermann & Barnard (1991), Wang, Fuller & Qu (2008, Survey Methodology 34):
   the best linear benchmarked predictor adds a share of the discrepancy to each estimate (a common
-  shift for our loss weights); benchmarking costs efficiency. Used in `studies/vc-balance.js`.
+  shift for our loss weights); benchmarking costs efficiency. Used in `studies/runs/vc-balance.js`.
   Their optimum ranges over *all* linear predictors; within the credibility class (`b` fixed,
   only `z` free) the best balanced blend is `Core.bestBalanced_optimal` (G7), much worse in our
   worlds (Finding 15), so the WFQ shift is the one to use. Bell, Datta & Ghosh (2013) extend
@@ -127,7 +127,7 @@ Credibility is a BLUP; with estimated variances it is an EBLUP.
   for independent cohorts, and under correlation only within about 2% (Finding 16).
 - Jiang, Lahiri & Wan (2002), *A unified jackknife theory for empirical best prediction with
   M-estimation*, Ann. Stat. 30: jackknife MSEP of an EBLUP, no normality needed, deletes
-  independent units (we delete years). Used in `studies/msep.js`.
+  independent units (we delete years). Used in `studies/runs/msep.js`.
 
 ## 5. If a distribution is allowed (owner's question, 2026-11-15; not yet decided)
 - Stein (1981), *Estimation of the mean of a multivariate normal distribution*, Ann. Stat.: Stein's
@@ -865,7 +865,7 @@ Web search (abstracts and listings); nothing read in full.
   training months).
 - Gneiting (2011), *Making and evaluating point forecasts*, JASA 106 (from memory): squared
   error is consistent for the mean. Used: the score.
-- In this repo: leave-one-year-out CV for tuning (`studies/damping-theta.md` S14, too noisy);
+- In this repo: leave-one-year-out CV for tuning (`studies/LOG.md` S14, too noisy);
   jackknife MSEP of one fit (Jiang, Lahiri & Wan 2002; S19–S23).
 
 ### 10j. Bias of weights estimated from the same data (Finding 35, 2026-11-22)
@@ -905,7 +905,7 @@ Checked to exist; read from abstracts and listings only, not the full texts.
   CAS Schedule P data). The credibility weight is a logistic function of account characteristics
   in place of one `K`, and older years are discounted by an EWMA weight λ. All of it is fitted
   jointly by likelihood, and it nests Bühlmann–Straub. Reports a λ that depends on account size.
-  Used 2026-11-24 (`studies/ewma-decay.js`, S43–S45): EWMA of own years is a restricted predictor
+  Used 2026-11-24 (`studies/runs/ewma-decay.js`, S43–S45): EWMA of own years is a restricted predictor
   (aggregated data, exact excess `Blup.predMse_aggregate_eq_blup_add`), and the best λ falls with
   `s²/wⱼ` against the AR(1) factor (`Factor.lean`), so a size-dependent λ comes out of the
   second-moment model; the BLUP beats EWMA by pooling the common factor across cohorts.
@@ -1224,7 +1224,7 @@ Read from arXiv (HTML or PDF text). Where only a tool summary of a passage was s
     working model. There the OBPs beat the EBLUP. No correctly specified world is reported.
   - **For us.** (a) The formula is settled. In the thesis model (exchangeable levels) `b ∝ z` is best
     (`Core.blupWeight_optimal`) and exposure-balanced (§2.9), and OBP's `(1 − z)²` gives up both. Our
-    `studies/sure.js` (B), which chooses only `τ²` by SURE, already costs 3–30 points against the moment fit
+    `studies/runs/sure.js` (B), which chooses only `τ²` by SURE, already costs 3–30 points against the moment fit
     in every world there, consistent with OBP paying when the model is right. (b) OBP's case is a
     misspecified collective mean, e.g. levels that trend with volume (Finding 14's world). Then the GLS
     mean follows the large cohorts, while the small cohorts lean on it most (`1 − z` large). OBP aims the

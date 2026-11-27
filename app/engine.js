@@ -642,7 +642,7 @@
   const hadamard = (R, A) => A.map((row, i) => row.map((x, j) => R[i][j] * x));
 
   /**
-   * The taper's ρ by the plug-in criterion of the damping study (studies/damping-theta.md S3 and
+   * The taper's ρ by the plug-in criterion of the damping study (studies/LOG.md S3 and
    * "What a distribution-free theorem can say"): on the correlation scale, a taper Rᵢⱼ = ρ^dᵢⱼ
    * turns the estimate r̂ᵢⱼ into Rᵢⱼr̂ᵢⱼ, with expected loss Σᵢ<ⱼ E(Rᵢⱼr̂ᵢⱼ − rᵢⱼ)²
    *   = Σᵢ<ⱼ [Rᵢⱼ²(rᵢⱼ² + Vᵢⱼ) − 2Rᵢⱼ rᵢⱼ²] + const.
@@ -668,7 +668,7 @@
   }
 
   /**
-   * Data-side signal for the BLUP taper (studies/taper-signal.js): does the estimated correlation
+   * Data-side signal for the BLUP taper (studies/runs/taper-signal.js): does the estimated correlation
    * fall with distance? Both candidate tables are judged by S3's plug-in loss per pair of the
    * correlation table, with the same two parameters per lag (r̄_d, V_d = (1 − r̄_d²)²/(T − 1)):
    *   taper  (each r̂ᵢⱼ times ρ̂^d, ρ̂ = taperRho):  Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²], R = ρ̂^d;
@@ -734,7 +734,7 @@
   }
 
   /**
-   * Gain against price (studies/PLAN.md Pending; damping-theta.md S53–S56), from the data only. On
+   * Gain against price (studies/PLAN.md Pending; studies/LOG.md S53–S56), from the data only. On
    * corrBS's fitted table K̂, τ̂² (taken as the truth), the exact oracle gains in MSE, as fractions of the
    * best blend's MSE (`floor`):
    *   corrBS over BS (BS's weights at its limiting σ², τ² under K̂), BLUP over the blend, and region
@@ -809,7 +809,7 @@
   }
 
   /**
-   * Leave-one-year-out loss of a fit (studies/taper-signal.js, S49): for each year s, refit on the
+   * Leave-one-year-out loss of a fit (studies/runs/taper-signal.js, S49): for each year s, refit on the
    * other T − 1 years and score the rates against the held-out cell rates, volume-weighted:
    *   L = Σₛ Σⱼ wⱼₛ (rateⱼ⁽⁻ˢ⁾ − Xⱼₛ)² / Σₛⱼ wⱼₛ.
    * Years are independent, so E L = (MSE of the rates from T − 1 years) + (noise of the held-out
@@ -836,7 +836,7 @@
     return Object.assign(f, { loyo: { taper: lt, corrBS: lb, preferTaper: taper } });
   }
 
-  /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/taper-signal.js). */
+  /** The BLUP on the table the signal prefers: fitBLUPTaper or fitBLUP (studies/runs/taper-signal.js). */
   function fitBLUPAuto(data) {
     const sig = taperSignal(data), branch = sig.preferTaper ? 'taper' : 'corrBS', f = sig.preferTaper ? fitBLUPTaper(data) : fitBLUP(data);
     const choice = { name: 'taper signal', formula: F.taperSignal, values: [sig.lossTaper, sig.lossCommon], badge: 'not proved yet', gap: 'G2',
@@ -1010,7 +1010,7 @@
    *   covariance; then zⱼ = τ²/(τ² + vⱼ − c), Core.bestZ_of_equalCov).
    * opts.theta: force a damping factor (tests). Otherwise θ̂ by the damping study's rule S3,
    *   θ̂ = r̄²/(r̄² + (1 − r̄²)²/(T − 1)) with r̄ the average estimated correlation over the pairs
-   *   (taperRho with every pair at distance 1; studies/taper.js: up to 12 points better than the
+   *   (taperRho with every pair at distance 1; studies/runs/taper.js: up to 12 points better than the
    *   old fixed θ = 0.95), lowered in steps of 0.05 only if K̂ is not positive definite.
    *   opts.thetaRule = 'grid': the old rule, the largest of THETAS with K̂ ≻ 0.
    *   opts.thetaRule = 'cov': θ̂ in covariance form with the exact variance (covTheta), opts.kappa the
@@ -1120,13 +1120,13 @@
       name: 'tapered K̂', formula: `${F.taper};  ρ̂ = ${rho}`, values: [rho], badge: proved ? 'proved' : 'not proved yet',
       lean: proved ? 'Credibility.posDef_distTaper_hadamard' : null, gap: 'G2',
       note: (proved ? 'Σ̂ ⪰ 0 and τ̂² > 0, so K̂ ≻ 0 for every ρ ∈ [0, 1]' : `Σ̂ + τ̂²I is not positive definite: K̂ ≻ 0 checked numerically at ρ = ${rho}, not by a theorem`) +
-        `; ρ̂ by the plug-in criterion (${F.taperRule}), the damping study’s rule S3 (studies/damping-theta.md)${lagText}`,
+        `; ρ̂ by the plug-in criterion (${F.taperRule}), the damping study’s rule S3 (studies/LOG.md)${lagText}`,
     };
   }
 
   /**
    * Correlated Bühlmann–Straub with credibility-weighted variances
-   * (studies/damping-theta.md, findings S15–S17 and the Ansatz; studies/variance-credibility.js,
+   * (studies/LOG.md, findings S15–S17 and the Ansatz; studies/runs/variance-credibility.js,
    * mode 'cred'). Every parameter by a moment equation, nothing to tune, no damping:
    *   σ̂ⱼ² = Qⱼⱼ/(T−1), σ̂² = mean of the σ̂ⱼ²,
    *   Wⱼ = estimated Var(σ̂ⱼ²) from the yearly terms, β² = between-region variance of the σⱼ²,
@@ -1188,7 +1188,7 @@
     const { K, b, z, mu, rates } = vcBlend(p, wt, S, m);
     const offBal = sum(wt.map((x, j) => x * (m[j] - rates[j]))) / sum(wt.map((x, j) => x * m[j]));
     const flags = { tauNeg: p.tauRaw <= 0, zOver1: z.some((x) => x > 1), zNeg: z.some((x) => x < 0), bNeg: b.some((x) => x < 0), offBalance: Math.abs(offBal) > 0.01 };
-    // Flags the optimum itself shows (studies/vc-balance.js, damping-theta.md findings S27–S29): with ρ̂ > 0
+    // Flags the optimum itself shows (studies/runs/vc-balance.js, studies/LOG.md findings S27–S29): with ρ̂ > 0
     // the true-K blend has negative b and z near 1 (so ẑ > 1 by noise); with ρ̂ > 0 or unequal σ̃ⱼ it is
     // balanced for the weights bⱼ/(1 − zⱼ), not for the exposures. These go to `notes`, not `warnings`.
     const expected = { zOver1: p.rho > 0, zNeg: false, bNeg: p.rho > 0, offBalance: p.rho > 0 || (!pooled && p.between > 0) };
@@ -1238,7 +1238,7 @@
 
   /**
    * The plug-in BLUP on the thesis's full K̂ tapered by ρ̂^|i−j| (fitCorr with taper 'distance'):
-   * for ordered regions with many pairs (studies/taper-blup.js, damping-theta.md S36–S37).
+   * for ordered regions with many pairs (studies/runs/taper-blup.js, studies/LOG.md S36–S37).
    */
   function fitBLUPTaper(data) {
     const base = fitCorr(data, { taper: 'distance' });
@@ -1300,10 +1300,10 @@
 
   /**
    * Jackknife MSEP of the variance-credibility fit (Jiang, Lahiri & Wan 2002, Ann. Stat. 30;
-   * studies/msep.js), deleting one year at a time (independent years), region means kept:
+   * studies/runs/msep.js), deleting one year at a time (independent years), region means kept:
    *   MSEPⱼ = g₁₂ⱼ(θ̂) − (T−1)/T Σₜ (g₁₂ⱼ(θ̂₋ₜ) − g₁₂ⱼ(θ̂)) + (T−1)/T Σₜ (rateⱼ(θ̂₋ₜ) − rateⱼ(θ̂))².
    * An average-case error over data sets like this one, not an interval for this data set
-   * (damping-theta.md, findings S19 and S26). Data only, no tuning.
+   * (studies/LOG.md, findings S19 and S26). Data only, no tuning.
    */
   function jackknifeMSEP(data) {
     const T = data.X[0].length, p = vcEstimate(data), { m, wt, S } = p, J = m.length;

@@ -7,7 +7,7 @@ import Credibility.BuhlmannStraub
 
 The pooled fits (Bühlmann–Straub, corrBS and the BLUP on corrBS's `K̂`, all with one pooled
 variance) depend on the data only through three quadratic statistics
-(`studies/damping-theta.md` S53, `studies/price-formula.js`): the pooled within-region variance
+(`studies/LOG.md` S53, `studies/runs/price-formula.js`): the pooled within-region variance
 `P`, the cross-region residual products `Qn` and the volume-weighted spread of the region means
 `B`. Their first-order price (Prasad–Rao `g₃`) needs their variances and covariances. Here:
 
@@ -367,7 +367,7 @@ end Stats
 
 Equal region volumes `Wⱼ = W₀`. Then the fitted factor is exactly `ẑ = 1 - v̂/S²` with
 `v̂ = P/W₀` and the sample variance `S² = B/((J - 1)W₀)` of the region means, and the first-order
-(delta-method) price of fitting it has a closed form (law (a) of `studies/damping-theta.md`). -/
+(delta-method) price of fitting it has a closed form (law (a) of `studies/LOG.md`). -/
 
 section Balanced
 
@@ -376,7 +376,7 @@ universe uB
 variable {J T : Type uB} [Fintype J] [Fintype T]
 
 /-- Bühlmann–Straub's between-region estimator from the statistics:
-`τ̂² = (B - (J - 1)P) / (W - Σⱼ Wⱼ²/W)`, `W = Σⱼ Wⱼ` (`studies/price-formula.js`). -/
+`τ̂² = (B - (J - 1)P) / (W - Σⱼ Wⱼ²/W)`, `W = Σⱼ Wⱼ` (`studies/runs/price-formula.js`). -/
 noncomputable def bsTau2Hat (w : J → T → ℝ) (P B : ℝ) : ℝ :=
   (B - (Fintype.card J - 1) * P)
     / (∑ j, ∑ t, w j t - (∑ j, (∑ t, w j t) ^ 2) / ∑ j, ∑ t, w j t)

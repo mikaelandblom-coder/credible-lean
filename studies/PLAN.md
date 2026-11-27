@@ -27,7 +27,7 @@ complex the *fitted model* is, and see what happens when they differ.
 6. **Every new extension of the framework gets a switch.** The app is
    built so that adding one is a small, local change (section 6).
 
-### Study conventions (2026-11-24, after `studies/taper-signal.js`)
+### Study conventions (2026-11-24, after `studies/runs/taper-signal.js`)
 
 **General results first (owner, 2026-11-26).** A result that holds for every world (a theorem, or a
 statement with its conditions) is worth far more than a ranking in the worlds a study visits. Simulations
@@ -35,7 +35,7 @@ illustrate and build hypotheses; a study's winner is a provisional default, and 
 general statement that explains it (a Lean target, or a Finding when it fails). Report a study's
 outcome as a hypothesis with its conditions, never as settled.
 
-The simulation studies (`studies/*.js`, numbered observations S1, S2, … in `damping-theta.md`, indexed at its top) are cheap
+The simulation studies (`studies/runs/*.js`, numbered observations S1, S2, … in `LOG.md`, indexed at its top) are cheap
 (seconds to minutes) but answer only for the worlds they visit. Each study states its purpose in its
 header, since the rules differ (of S1–S48: 43 numerical, 12 exact, 6 hypotheses):
 - **Decide** (most of them): which fit or rule the app recommends (S3's θ̂, corrBS, the taper signal).
@@ -47,7 +47,7 @@ header, since the rules differ (of S1–S48: 43 numerical, 12 exact, 6 hypothese
   counterexample.
 - **Illustrate**: the app's pages simulate live, so they need no study script. A script is needed only
   to check that the page's message holds beyond its default world.
-Rules (helpers in `studies/lib.js`):
+Rules (helpers in `studies/runs/lib.js`):
 1. **Three regimes** (`lib.regimes`). The app default (volume 500, z ≈ 0.2–0.9); "thesis" (volume 4400,
    z ≈ 0.7–1.0: the credibility level of the thesis simulation, §4 Table 4.1: τ = 0.6, σⱼ²
    lognormal(16, √2), wⱼ ≈ 3·10⁷); and "thesisShape" (the same, plus that table's nearly equal volumes
@@ -59,7 +59,7 @@ Rules (helpers in `studies/lib.js`):
 3. **A factorial design**, not hand-picked cells (`lib.grid`): every combination of the axes, so a
    conclusion is a statement over the grid and its edge is visible. Name the ranges in the output.
 4. **Exact where possible.** Oracle MSEs, restricted predictors and floors come from the formulas
-   (as `ewma-decay.js` Part A), and simulation only for what depends on fitted parameters.
+   (as `runs/ewma-decay.js` Part A), and simulation only for what depends on fitted parameters.
 5. **Say where the ranges come from.** Engine worlds: anchored by the thesis regime above. The
    monthly card world (`app/monthly.js`: γ, s², w0) has no anchor yet; its ratios s²/(wγ) and φ should
    be set from the owner's card data (summary moments only) before its studies are cited as practice.
@@ -179,7 +179,7 @@ the floor line and in the tests.
 - **G1. One common covariance.** The average of the pairwise estimators
   (39) is unbiased for a common `c`. One extra parameter on top of BS;
   probably the most practical form of the thesis model. *Numerical study
-  2026-11-14 (`studies/damping-theta.md`): with unequal volumes a common
+  2026-11-14 (`studies/LOG.md`): with unequal volumes a common
   covariance is misspecified and its z explode; a common **correlation**
   `Σᵢⱼ = ρ̄√(ΣᵢᵢΣⱼⱼ)` is the better one-parameter model (H1 there).*
   *Proved 2026-11-22 (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`;
@@ -199,18 +199,18 @@ the floor line and in the tests.
   parabola). App: the `z > 1` warning now says this; no clip switch added (the app does not clip).*
 - **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
   rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed
-  `θ` in 23 of 24 worlds (H2 in `studies/damping-theta.md`).*
+  `θ` in 23 of 24 worlds (H2 in `studies/LOG.md`).*
   *Proved 2026-11-22 for the table loss (`Credibility/Damping.lean`): with means `s` and variances
   `V` of the off-diagonal estimates, `E Σ(θŝ − s)²` is minimised at `θ* = Σs²/(Σs² + ΣV)` (Ledoit–Wolf
   / Schäfer–Strimmer intensity), and `θ` beats both `θ = 0` and `θ = 1` iff
   `|θ − θ*| ≤ min(θ*, 1 − θ*)` (`safe_iff`). The app's rule is the one-entry `θ*` with normal-theory
   `V` plugged in. Open: the rates' MSE (S12: they want less damping), and `θ̂` with estimated
   inputs. App: the damping note now names `bestTheta_optimal`; the badge stays (it is about `K̂ ≻ 0`).*
-  *Exact `V` tried 2026-11-23 (`studies/damping-cumulant.js`, S38–S40): `θ*` in covariance form with
+  *Exact `V` tried 2026-11-23 (`studies/runs/damping-cumulant.js`, S38–S40): `θ*` in covariance form with
   the proved `Var Σ̂ᵢⱼ` (`variance_sum_mul_lin`, √w weights; `variance_crossResid` for unit weights),
   κ = 0 or the true shock κ, matches the oracle `θ*` but damps more than S3 and costs up to 11 points
   at ρ = 0.9 (gamma and Lomax worlds alike; ±2 at ρ ≤ 0.6). App: S3 stays; `thetaRule: 'cov'` is a
-  studies option. No `κ̂₄` for G2. *Correlation scale done 2026-11-23 (`studies/damping-corr-exact.js`,
+  studies option. No `κ̂₄` for G2. *Correlation scale done 2026-11-23 (`studies/runs/damping-corr-exact.js`,
   S41–S42): the exact delta-method `Var r̂ᵢⱼ` with κ = 0 is S3; with the true cumulants θ̂ moves by
   ≤ 0.05 and the MSE by ≤ 1 point; with infinite kurtosis (Lomax α = 3) it gives θ̂ = 0 and costs up to
   40 points. S3 stays; the κ̂₄ question is closed for G2.*
@@ -234,7 +234,7 @@ the floor line and in the tests.
   `Estimates.bestBalanced_mse_optimal`, Finding 15): keeping `b`, the
   balanced blends are `zⱼ = 1 − c·bⱼ/uⱼ` and the best `c` is a weighted least
   squares fit. But it is a poor way to balance (up to 2× the floor's error in
-  `studies/vc-balance.js`, column `opt`), so the app gets no switch for it:
+  `studies/runs/vc-balance.js`, column `opt`), so the app gets no switch for it:
   its balance step stays the common shift. Next candidate (G7b): the
   shift `μ̂ⱼᵇ + Σuᵢ(μ̂ᵢ − μ̂ᵢᵇ)/u*` is the best balanced correction of the
   form "blend plus a common linear term" (Wang–Fuller–Qu with loss weights
@@ -294,25 +294,25 @@ One chat per step; none needs Lean except step 5.
   is BS with one `σ̂ⱼ²` per region (tested). A seed field (default 12345)
   fixes the one draw and the many draws. A Node test checks that every step
   marked proved names a declaration in `progress.py --proved`.
-- [x] 3b. No-tuning fit and its error (2026-11-15; `studies/damping-theta.md`, findings
+- [x] 3b. No-tuning fit and its error (2026-11-15; `studies/LOG.md`, findings
   S15–S26). `fitVC` in `engine.js`: correlated BS with credibility-weighted variances
-  (`variance-credibility.js`, mode `cred`), every parameter by a moment equation, no `θ`;
+  (`runs/variance-credibility.js`, mode `cred`), every parameter by a moment equation, no `θ`;
   the default reference. The common-covariance fit stays in the list, marked not recommended
-  (finding S4). `jackknifeMSEP` (`msep.js`) gives each region a "typical error" of the `vc`
+  (finding S4). `jackknifeMSEP` (`runs/msep.js`) gives each region a "typical error" of the `vc`
   rate, shown in the one-draw chart and table as an average-case error, not an interval
   (finding S26). Tests: `K̂ ≻ 0` on every draw; equal to BS when `ρ̂ = 0` and `β² = 0`;
   identical to the study scripts; jackknife MSEP within 25% of the actual MSE on average in
   one fixed-seed world (ratio 1.00).
   World switch "spread of noise across regions" (`noiseSpread`, 2026-11-15): σⱼ = σ·4^(s((j mod 4)/3 − ½)),
-  s = 1 is the ×0.5–2 spread world of `variance-credibility.js` and `msep.js` (σⱼ column in the
+  s = 1 is the ×0.5–2 spread world of `runs/variance-credibility.js` and `runs/msep.js` (σⱼ column in the
   one-draw table). Checked in the app's own world (gamma noise, 1000 draws, % of floor): at ρ = 0.6
   BS / corrBS / corr = 151 / 113 / 118 (J=8 T=10), 167 / 135 / 144 (T=5), 183 / 114 / 118 (J=20);
   jackknife predicted/actual 0.81, 0.89, 0.86 (finding S19: 0.85–0.90). At ρ = 0 and T = 5 the three
   tie (≈150). Tests: σⱼ and true `K` equal the studies'; draws have Var σⱼ²/w and corr ρ; corrBS
   beats BS and corr, and the jackknife ratio is in (0.75, 0.95), in one fixed-seed spread world.
-  Expected flags (2026-11-15, `studies/vc-balance.js`, findings S27–S29): the floor (true K) has
+  Expected flags (2026-11-15, `studies/runs/vc-balance.js`, findings S27–S29): the floor (true K) has
   negative b and is off exposure balance too; forcing balance costs up to ≈30% more error, so no
-  balance switch (the floor's costs are exact: `studies/exact-balance.js`, pinned by a test).
+  balance switch (the floor's costs are exact: `studies/runs/exact-balance.js`, pinned by a test).
   corrBS returns `notes` (shown as ℹ, not ⚠) for negative b, z > 1 and off-balance
   when ρ̂ > 0 (off-balance also when β² > 0); `simulate` reports their share as `expected`. Tests:
   the floor's b < 0, z < 1 and balance in bⱼ/(1 − zⱼ); notes ↔ expected flags; balancing costs > 5%.
@@ -334,7 +334,7 @@ One chat per step; none needs Lean except step 5.
   plug-in BLUP survives estimation on corrBS's few-parameter `K̂` and beats the blend
   under correlation, often below the blend's own floor; it costs nothing at `ρ = 0`.
   Owner: make BLUP the default reference? (Not done: the blend is the thesis's object.)
-  *Pair-specific correlation (2026-11-17, `blup-pairs.js`, S30–S32 in `damping-theta.md`):* with
+  *Pair-specific correlation (2026-11-17, `runs/blup-pairs.js`, S30–S32 in `LOG.md`):* with
   countries or heterogeneous loadings (corrBS's one-ρ̂ `K̂` misspecified) the BLUP on it is never
   more than 1 point worse than corrBS and up to 23 better; the blend form costs 22–73% over the
   BLUP with true parameters in country worlds; the BLUP on the full damped `K̂` wins only with
@@ -364,7 +364,7 @@ Finished items are in `studies/PLAN-done.md`.
   `+(1 − 1/J)z(1 − z)γN/(JT)`; with the cross term the kurtosis total is `−(1 − 1/J)z(1 − z)(γL + γN/T)/J`,
   so the correction has the wrong sign. Next app chat: price = law (a) + cross term (show both), and
   check against the simulated `2E[AB]` (−6% under gamma). *Unequal volumes (2026-11-24,
-  `studies/cross-term.js`):* the first-order term for any `wⱼₜ` from the moment tables (`firstOrder` there:
+  `studies/runs/cross-term.js`):* the first-order term for any `wⱼₜ` from the moment tables (`firstOrder` there:
   linearize the fit's weights in (P, B), then the `integral_lin_lin_sumSq` identity) matches simulation,
   noise part within SE, level part ~30% too large at J = 8 (fine at J = 30). Use that general form in the
   engine rather than the balanced closed form; γL stays a sensitivity.
@@ -373,7 +373,7 @@ Finished items are in `studies/PLAN-done.md`.
   *Finding 39 (2026-11-25):* the noise part has no sign: with a region's volume concentrated in one
   year it is positive (+7.5% of that region's MSE, simulated). So the engine must use the general
   formula per region, and the readout should show its sign, not assume "kurtosis lowers the price".
-- [ ] Gain against price (2026-11-24, S53–S55, `studies/price-formula.js`): a data-side choice between
+- [ ] Gain against price (2026-11-24, S53–S55, `studies/runs/price-formula.js`): a data-side choice between
   fits from formulas, not simulation. Oracle gap from the fitted `K̂` (exact for given parameters,
   `CoreMoments.mse_blend_eq_blup_add`) against the first-order price from the plug-in moments of the
   statistics (Prasad–Rao g₃). It decides the sign in all clear cases of S53. *2026-11-24:* closed-form
@@ -450,7 +450,7 @@ Finished items are in `studies/PLAN-done.md`.
   bias of the same-years power (0–25% high without correlation, 0 under normal noise; overstated
   with a common year shock, ρ = 0.6: 2.4 against 0.7, since the shared part cancels between regions).
   Node test: cov against Monte Carlo. *Plug-in portfolio bias predicted 2026-11-23* (`Engine.skewBias`,
-  `studies/skew-bias.js`, 1500 draws): first order `Σᵢ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ)`, the derivative by
+  `studies/runs/skew-bias.js`, 1500 draws): first order `Σᵢ ∂d̂ⱼᵢ/∂σ̂ᵢ² · cov(σ̂ᵢ², μ̂ᵢ)`, the derivative by
   refitting with region i's residuals scaled. Mean prediction against simulated (vs BS on the same
   draws): default −0.37 / −0.31%, T = 4 shape 1 −1.75 / −2.15%, σⱼ spread −1.06 / −0.78%, J = 20
   −0.28 / −0.31%, Lomax α = 4 −0.18 / −0.16%, normal and pooled BLUP 0 / 0; misses the ρ̂ channel
@@ -465,7 +465,7 @@ Finished items are in `studies/PLAN-done.md`.
   per-triple unbiased k-statistics (`crossThird`); plus a τ̂² channel with the level third cumulant by a
   moment equation (`levelThird`). Neither moves the prediction much (T = 5, ρ = 0.6: BLUP −0.78 against
   −1.07%; J = 20: −0.47 against −0.74 ± 0.18%, −0.61 ± 0.15% with another seed). Level skew adds
-  ~0.1 point (`studies/level-skew-bias.js`). The rest at T ≤ 5 is beyond first order. Stop here: the
+  ~0.1 point (`studies/runs/level-skew-bias.js`). The rest at T ≤ 5 is beyond first order. Stop here: the
   prediction gets sign and size (within ~30%), and the balance switch removes the portfolio part anyway.
   *Independent sources proved 2026-11-22* (`variance_quad_of_sources`): exact `Var` of any quadratic
   estimator from one `κ₃`, `κ₄` per source; first use: the G2 `V` of `ĉᵢⱼ` (app: replace the
@@ -506,7 +506,7 @@ Finished items are in `studies/PLAN-done.md`.
   expected claims per cell, claims beyond the level exceeded by 50 expected claims are drawn exactly
   and the rest summed as a moment-matched gamma, so the tail is exact and the first two moments too.
   The year shock `ηₜ` stays gamma. The noise page gives the world skewness at the middle volume (∞ for
-  `α ≤ 3`). **Seen** (`studies/lomax-tails.js`, 3000 draws, seeds 1 and 2; Monte Carlo SEs are
+  `α ≤ 3`). **Seen** (`studies/runs/lomax-tails.js`, 3000 draws, seeds 1 and 2; Monte Carlo SEs are
   unreliable for `α ≤ 4`, the two seeds agree): (1) Default world (~55 claims per cell): no damage.
   MSE above the floor is +8 to +12% for every fit down to `α = 3.5`, as with gamma noise. It falls at
   heavier tails (+4 to +8% at 2.5) and turns negative at `α = 2.2` (−1 to −4%): the plug-in fits beat
@@ -543,7 +543,7 @@ Finished items are in `studies/PLAN-done.md`.
   X = `[1, log w]`). Build only if real data show a slope: regress `μ̂ⱼ` on `log wⱼ` with weights `1/(τ̂² + D̂ⱼ)`
   and compare `γ̂` with `τ̂`. Then switch it on by gain against price (S57), which needs the price of an extra
   column in `Engine.gainPrice`. A known `γ` (from a tariff factor) is a plain offset: subtract it, BS, no price.
-  `obp-mean.js` has `fitTrendX` and the trend world.
+  `runs/obp-mean.js` has `fitTrendX` and the trend world.
 - [ ] Any learner as the collective mean (2026-11-25, literature §10p, "Small area learning"): the
   correction weight `a*` there is `bestZ` on the learner's residuals, estimable from their spread
   (Bühlmann–Straub on residuals). A possible later fit "learner + credibility". It needs cross-fitting or a
@@ -560,7 +560,7 @@ Finished items are in `studies/PLAN-done.md`.
   `proxy_neg_div_eq`): fit on years `1..T−1`, regress year `T`'s blend error on `Δ` across cohorts,
   clip to `[0, 1]` (`mixLoss_clip_le`); exact in mean when year-`T` noise is independent of the fit
   (an iid year shock included), biased by `E[Δε]/EΔ²` when the shock persists across years.
-  *Studied 2026-11-27* (S64, `studies/held-out-theta.js`): no. `θ̂` costs 1–15 points against `θ = 1` under a
+  *Studied 2026-11-27* (S64, `studies/runs/held-out-theta.js`): no. `θ̂` costs 1–15 points against `θ = 1` under a
   common shock (the plug-in BLUP is within 0.7 of the best fixed `θ`), pooled over years too; the price of
   one held-out year is exactly `ΔᵀWΣWΔ/ΔᵀWΔ ≥ σ²(1 − ρ)`, 7–14× the gain available. So no `θ̂` step: keep
   `θ = 1`, show `S` only. Lean target 1 of S64 done 2026-11-27 (`integral_wLoss_heldOutTheta`,
@@ -571,7 +571,7 @@ Finished items are in `studies/PLAN-done.md`.
   needs skew and correlation together; vanishes for exchangeable regions (P1). Candidate remedy R1:
   leave-one-year-out cross-fitting of `ρ̂`, `σ̂²` (weights from the other years), exactly unbiased in
   that channel for any distribution, without forcing exposure balance. *Studied 2026-11-26* (S63,
-  `studies/rho-channel.js`, 4000 draws): the cross-fit is unbiased in all ten worlds but costs 4–17 points as
+  `studies/runs/rho-channel.js`, 4000 draws): the cross-fit is unbiased in all ten worlds but costs 4–17 points as
   a predictor; the BLUP shifted to the cross-fitted portfolio level is unbiased and costs ≤ 1 point against
   exposure balance without correlation and 2–46 points less with it (ρ = 0.6). `ρ̂` is about half the channel.
   **Owner to decide:** let the balance switch balance to the cross-fitted level (`balanceFit` with a target

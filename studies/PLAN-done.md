@@ -20,8 +20,8 @@ what was built, studied and proved. Order as they stood in the plan.
   many draws in % of the floor, the variances' bias (ANOVA's under ρ > 0, Finding 42). Tests: layer
   excess and three factors exact, `missing_blup`/`missing_predMse` (3.575), pools unbiased by an exact
   expectation (any weights, any ρ), ANOVA's γ̂² bias `−σ²ρ/w*` in a balanced table, projections.
-  *Provisional, from `studies/crossed-fit.js` (a hypothesis, not a general result)* (1000 draws × 96 worlds: table 3×2/4×3/6×4 × four effect mixes ×
-  ρ 0/0.5 × volume spread 0/1 × app/thesis regime; output `crossed-fit.out.txt`): **truncation: clip** (least
+  *Provisional, from `studies/runs/crossed-fit.js` (a hypothesis, not a general result)* (1000 draws × 96 worlds: table 3×2/4×3/6×4 × four effect mixes ×
+  ρ 0/0.5 × volume spread 0/1 × app/thesis regime; output `runs/crossed-fit.out.txt`): **truncation: clip** (least
   squares on the pool equations, equal weights, is worse in 67 worlds, better in 10); **weights: inverse
   variance** `1/(P̂_class + noise of the difference)²` from a first equal-weight pass (worse than equal
   in 1, better in 59, max +2.3 points; better than volume products in 44, worse in 17). Equal and volume
@@ -44,7 +44,7 @@ what was built, studied and proved. Order as they stood in the plan.
   row and column permutations). So the regime split of the study is the two limits of (2), and equal
   weights are exactly right in a balanced table. *App next:* a fit variant with full GLS pool weights
   (V from fitted moments: normal-noise `covQuad` with κ₃ = κ₄ = 0 is the natural first plug-in);
-  compare with inverse variance (GLS's diagonal) in `studies/crossed-fit.js` before changing the default.
+  compare with inverse variance (GLS's diagonal) in `studies/runs/crossed-fit.js` before changing the default.
 - [x] Plug-in MSE (2026-11-22, `Core.Target.integral_sq_plugIn`). *Done 2026-11-22:* `simulate`
   returns `split` per fit (E B², 2E[AB], SEs; A = oracle BLUP error, B = fit − oracle rate,
   exposure-weighted; sums to the excess draw for draw), shown under Many draws; world switch
@@ -313,14 +313,14 @@ what was built, studied and proved. Order as they stood in the plan.
   the bivariate best predictor `blupW` never does. Show both, or the predictor. Hachemeister
   with correlated cohorts is proved too (`hachemeister_bestZ`): an app step "cohort trend
   lines" (level + slope per cohort, shared year shocks) would show `Z` as a 2 × 2 matrix.
-  *Studied 2026-11-27 (S65, `studies/vector-lambda.js`):* fit `Λ̂` diagonal by default (level, slope,
+  *Studied 2026-11-27 (S65, `studies/runs/vector-lambda.js`):* fit `Λ̂` diagonal by default (level, slope,
   F, Y as four scalar credibilities after centring); a block (full) `Λ̂` loses up to 31 (59) points against it
   to estimation noise and wins only for a well-measured component with a strong
   level–slope correlation. Next: damped off-diagonals (θ from data), year shocks, a better `Λ̂`.
-  *Revised 2026-11-27 (S66, `studies/vector-lambda-damp.js`):* default to the exposure-weighted moment
+  *Revised 2026-11-27 (S66, `studies/runs/vector-lambda-damp.js`):* default to the exposure-weighted moment
   `Λ̂` with off-diagonals damped by the plug-in `θ̂` (`Damping.lean`'s `θ*`) and projected PSD: never
   significantly worse than the diagonal fit in 64 worlds (with and without year shocks), up to 26
-  points better. *Revised again (S67, `studies/vector-lambda-shocks.js`):* with year shocks, fit the
+  points better. *Revised again (S67, `studies/runs/vector-lambda-shocks.js`):* with year shocks, fit the
   joint damped BLUP (`ρ̂` from same-year residual pairs, `Λ̂` corrected for the noise covariance between
   cohorts, `K̂ = I ⊗ Λ̂ + N̂`): at most 2–3 points dearer without shocks, up to 27–147 points better with
   them. Lean target: the corrected moment identity (S67 Consequence).
@@ -341,16 +341,16 @@ what was built, studied and proved. Order as they stood in the plan.
   `R = θ11ᵀ + (1-θ)I`) and "distance ρ^|tᵢ-tⱼ|" for cohorts with an order (years, age
   bands; `distTaper_posSemidef`, ties allowed). Badge "proved" for both when `Σ̂ ⪰ 0`.
   Its `ρ` must be fitted, not hand-set (§1): e.g. choose it like `θ`, by the plug-in
-  criterion of `studies/damping-theta.md`. *Done 2026-11-22:* fit "corr taper"
+  criterion of `studies/LOG.md`. *Done 2026-11-22:* fit "corr taper"
   (`fitCorr(data, { taper: 'distance' })`, `taperRho`: S3's loss per distance, ρ̂ on a 0.001 grid,
   equal to S3's θ̂ when all pairs are at distance 1), badge "proved" (`posDef_distTaper_hadamard`)
   when `Σ̂ ⪰ 0` and `τ̂² > 0`; world switch "decays with distance" (`params.ordered`, noise
-  correlation `ρ^|i−j|`). Node test. **Seen** (`studies/taper.js`, S33–S35): no gain over damping
+  correlation `ρ^|i−j|`). Node test. **Seen** (`studies/runs/taper.js`, S33–S35): no gain over damping
   for the blend, even at the best fixed ρ; corrBS stays best. *Then (2026-11-22):* "corr" damps by S3's
   θ̂ (old grid rule kept as `thetaRule: 'grid'`); fit "BLUP taper" (`fitBLUPTaper`, `blupOn`),
-  Node tests. **Seen** (`studies/taper-blup.js`, S36–S37): with J = 20 ordered regions the BLUP on
+  Node tests. **Seen** (`studies/runs/taper-blup.js`, S36–S37): with J = 20 ordered regions the BLUP on
   the tapered `K̂` is 9–28 points (of the blend floor) better than BLUP on corrBS's `K̂`; about even at
-  J = 8, T = 10; worse with T = 5 or a common ρ. *Data-side signal 2026-11-24* (`studies/taper-signal.js`,
+  J = 8, T = 10; worse with T = 5 or a common ρ. *Data-side signal 2026-11-24* (`studies/runs/taper-signal.js`,
   S46–S48): `Engine.taperSignal` compares S3's plug-in loss of the tapered correlation table with that
   of one common r̄, no tuning; `fitBLUPAuto` takes the BLUP on the preferred table. Safe (tapers a
   common-ρ world in 0–2% of draws, never costs more than 4 points against BLUP) but timid (tapers 13–61%
@@ -359,7 +359,7 @@ what was built, studied and proved. Order as they stood in the plan.
   tapers a common ρ in 26–45% of draws (up to 13 points); mean regret 2.0 against 1.4. Keep the plug-in signal.
 - [x] Temporal decay (2026-11-22, literature §10l, Morris 2026): compare an EWMA weighting of
   years, with λ fitted, against the BLUP under an AR(1) `Γ` in the card world. *Done 2026-11-24*
-  (`studies/ewma-decay.js`, S43–S45 in `damping-theta.md`): EWMA of own annual means is a predictor
+  (`studies/runs/ewma-decay.js`, S43–S45 in `LOG.md`): EWMA of own annual means is a predictor
   from aggregated data, exact excess `Blup.predMse_aggregate_eq_blup_add` (Node test). Oracle λ* costs
   0–31% over the BLUP: it sees only its own cohort, while the BLUP reads the common factor from all
   cohorts. λ* falls with s²ⱼ/wⱼ (bigger cohorts, shorter memory; φ = 0.97: 0.5–0.7 at w0 = 100,
@@ -370,11 +370,11 @@ what was built, studied and proved. Order as they stood in the plan.
 - [x] OBP collective mean (2026-11-25, literature §10p, Zhang & Jiang): the observed best predictor's
   collective mean is the `(1 − zⱼ)²`-weighted mean (SURE of the MSE given the levels). Possible study: a
   world switch "levels trend with volume" (the collective mean is misspecified), comparing BS, BS with the OBP mean,
-  and grouping (KMeansBridge). Expect OBP to lose in the exchangeable worlds (`studies/sure.js` (B)). Not a
+  and grouping (KMeansBridge). Expect OBP to lose in the exchangeable worlds (`studies/runs/sure.js` (B)). Not a
   fit to recommend before that study. *Proved 2026-11-25* (`Credibility/ObservedBest.lean`): the error
   given the level, its SURE, and that `Core.obpMean` minimises both the total error given the levels and
   its observed estimate. App: the study's "OBP mean" fit would use `obpMean` on the `x̄ⱼ`.
-  *Studied 2026-11-25 (`studies/obp-mean.js`, S59–S62 in `damping-theta.md`):* no. Fitted, it is ±1–5% of BS
+  *Studied 2026-11-25 (`studies/runs/obp-mean.js`, S59–S62 in `LOG.md`):* no. Fitted, it is ±1–5% of BS
   (worse without a trend, better only with a trend of τ or more), it breaks balance, and with known per-cohort
   variances it is up to 58% worse (its own noise). No app fit; a handbook "watch out" at `res:bs`.
   Two side results: grouping by cuts of the sorted estimates chosen by SURE is 2–74% worse than BS (S61,

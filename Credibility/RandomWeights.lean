@@ -116,7 +116,7 @@ theorem integral_randomLin_resVar_sub {ι : Type*} [Fintype ι] [DecidableEq ι]
   exact congrArg (b i * ·) (Cumulants.covariance_resVar_mean (e i) (Lv i) (hL i) (hLv i) (h0 i)
     (k i) (h3 i) (hlev i) (w i) (c i) (hw i))
 
-/-- **The cross-fitted rate's bias** (S63, `studies/damping-theta.md`). Each year `s` gives
+/-- **The cross-fitted rate's bias** (S63, `studies/LOG.md`). Each year `s` gives
 estimates `Xᵢₛ` (`E s`, any covariances `K s`) of the same levels `μᵢ`; the weights `d̂⁽ˢ⁾` for
 year `s` sum to one and are independent of year `s`'s noise `Xᵢₛ - μᵢ` (fitted without year `s`).
 With year weights `πₛ` common to all regions and summing to one, the cross-fitted rate

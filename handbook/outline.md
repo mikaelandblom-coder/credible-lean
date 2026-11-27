@@ -26,7 +26,7 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- [ ] Crossed fit recipe (2026-11-26, `studies/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
+- [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
 - *Done 2026-11-26:* `res:blup_residual` after `res:blup` (GLS mean plus predicted residuals, the

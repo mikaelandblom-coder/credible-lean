@@ -171,8 +171,8 @@ and the blueprint; the others point to it. Don't restate across them.
   `main`.
 
 ## Studies
-Simulation scripts `studies/*.js`, outputs `*.out.txt`. Numbered observations
-S1, S2, … are logged in `studies/damping-theta.md` (index at its top; add a row
+Simulation scripts `studies/runs/*.js`, outputs `studies/runs/*.out.txt`. Numbered observations
+S1, S2, … are logged in `studies/LOG.md` (index at its top; add a row
 for each new one). `studies/PLAN.md` is the app plan and its open Pending list;
 finished items move to `studies/PLAN-done.md`.
 

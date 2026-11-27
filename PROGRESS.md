@@ -1444,7 +1444,7 @@ main results: mostly thesis-facing statements proved from a general result
 | ✅ | `Credibility.Core.Estimates.integral_portfolio_sub_of_balanced` |  | **Finding 35 (b): an exposure-balanced fit is unbiased at the portfolio level.** If the fitted levels `θ̂` satisfy `Σⱼ uⱼ θ̂ⱼ = Σⱼ uⱼ μ̂ⱼ` in every draw, then `E Σⱼ uⱼ(θ̂ⱼ - μⱼ) = 0`, however `θ̂` is built from the data and for every distribution with the moments of `Core.Estimates` |
 | ✅ | `Credibility.Core.Estimates.integral_randomLin_affine_sub` |  | **Weights driven by fitted variances.** If the weights are affine in random statistics, `d̂ᵢ = aᵢ + bᵢσ̂ᵢ²` (a fitted variance, say), with `Σᵢ d̂ᵢ = 1` in every draw, the bias of Finding 35 (a) is `E(d̂ᵀμ̂ - μⱼ) = Σᵢ bᵢ cov(σ̂ᵢ², μ̂ᵢ)` |
 | ✅ | `Credibility.Core.Estimates.integral_randomLin_resVar_sub` |  | **Finding 35 (c), the bias of variance-driven weights, exactly.** Let each cohort's estimate be a weighted mean `μ̂ᵢ = Σₛ wᵢₛXᵢₛ` (`Σₛ wᵢₛ = 1`) of cells `Xᵢₜ = Lᵢ + eᵢₜ` as in `Cumulants.covariance_resVar_mean` (centred noise in `L³`, third moments `kᵢₜ` on the diagonal only, squares uncorrelated with the level), and `σ̂ᵢ² = Σₜ cᵢₜ rᵢₜ²` from the residuals `rᵢₜ = Xᵢₜ - μ̂ᵢ` |
-| ✅ | `Credibility.Core.Estimates.integral_crossFit_sub` |  | **The cross-fitted rate's bias** (S63, `studies/damping-theta.md`) |
+| ✅ | `Credibility.Core.Estimates.integral_crossFit_sub` |  | **The cross-fitted rate's bias** (S63, `studies/LOG.md`) |
 | ✅ | `Credibility.Core.Estimates.correct_balanced` |  | The balanced corrections `θ̂ⱼ = μ̂ⱼᵇ + cⱼD` with `Σⱼ uⱼcⱼ = 1` (G7) are exposure balanced |
 
 ## `Season` — The season and the 12-month target (extension, `notes/card-data.md` Step 2)
