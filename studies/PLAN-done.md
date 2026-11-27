@@ -323,7 +323,8 @@ what was built, studied and proved. Order as they stood in the plan.
   points better. *Revised again (S67, `studies/runs/vector-lambda-shocks.js`):* with year shocks, fit the
   joint damped BLUP (`ρ̂` from same-year residual pairs, `Λ̂` corrected for the noise covariance between
   cohorts, `K̂ = I ⊗ Λ̂ + N̂`): at most 2–3 points dearer without shocks, up to 27–147 points better with
-  them. Lean target: the corrected moment identity (S67 Consequence).
+  them. The corrected moment identity is proved (2026-11-27, `CoreVector.integral_spread`, handbook
+  `res:vecSpread`).
   Also proved: with independent cohorts the bivariate blend is the best predictor, and with
   no frequency–severity covariance (in `K` and `L`) the separate best predictors are the
   bivariate one, so the app's fourth fit only matters when cohorts or components correlate.

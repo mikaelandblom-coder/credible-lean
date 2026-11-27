@@ -890,4 +890,6 @@ same-year residual pairs, `Λ̂` exposure-weighted and corrected for `N̂`, off-
 projection. Without shocks it costs at most 2–3 points against S66's default; with shocks it is the only fit
 near the oracle. General target (**lean** chat): the corrected moment identity above, for any `N` and weights
 `ω` (a matrix version of §2.8's expectation under correlated noise, `Expectation.lean` / `UnequalEstimation`),
-so the corrected `Λ̂` is unbiased for any noise covariance between cohorts.
+so the corrected `Λ̂` is unbiased for any noise covariance between cohorts. *Proved 2026-11-27:*
+`CoreVector.integral_spread` (`CoreVectorMoments.lean`, blueprint `thm:CV_spread`, handbook `res:vecSpread`),
+for any weights with `Σω = 1` and estimates with a common mean.

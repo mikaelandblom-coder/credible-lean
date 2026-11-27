@@ -697,6 +697,31 @@ severity) are such predictors, and so is the matrix blend.
   (Lemma~\ref{lem:Core_moments_lin}).
 \end{proof}
 
+\begin{theorem}[The expected weighted spread of vector estimates]\label{thm:CV_spread}
+  \lean{Credibility.CoreVector.integral_spread}
+  \leanok
+  Let $\hat\beta_j \in \mathbb R^P$ be square-integrable random vectors with a common mean and
+  $\cov(\hat\beta_{jp}, \hat\beta_{ir}) = \delta_{ji}\Lambda_{pr} + (N_{ji})_{pr}$, for any
+  matrices $N_{ji}$ (noise within and between cohorts). For weights with $\sum_j \omega_j = 1$
+  and $\bar\beta = \sum_j \omega_j\hat\beta_j$,
+  \[
+    \mathbb E\sum_j \omega_j(\hat\beta_j - \bar\beta)(\hat\beta_j - \bar\beta)^\top
+      = \Bigl(1 - \sum_j \omega_j^2\Bigr)\Lambda + \sum_j \omega_j N_{jj}
+        - \sum_i\sum_k \omega_i\omega_k N_{ik},
+  \]
+  for every distribution with these moments. So the moment $\hat\Lambda$ corrected by both
+  noise terms is unbiased for any noise covariance between cohorts (study S67).
+\end{theorem}
+\begin{proof}
+  \leanok
+  $\hat\beta_j - \bar\beta = \sum_k (\delta_{jk} - \omega_k)\hat\beta_k$ has mean $0$, so each
+  entry of the expectation is a covariance of two linear combinations:
+  $\sum_{k,l} (\delta_{jk} - \omega_k)(\delta_{jl} - \omega_l)(\delta_{kl}\Lambda + N_{kl})$.
+  Weighting by $\omega_j$ and summing, $\sum_j \omega_j(1 - 2\omega_j + \sum_k\omega_k^2)
+  = 1 - \sum_j\omega_j^2$, and the three cross sums of $N$ leave
+  $\sum_j\omega_jN_{jj} - \sum_{i,k}\omega_i\omega_kN_{ik}$.
+\end{proof}
+
 \section*{Frequency $\times$ severity with a factor table per component (card data, Step 6)}
 
 \begin{lemma}[Block diagonal over components]\label{lem:CV_posDef_blockDiag}

@@ -13,7 +13,8 @@ same for all cohorts), with `cov(μ̂ᵢ, μ̂ₖ) = K`, `cov(μᵢ, μ̂ₖ) = 
 the error `Aᵀx - μⱼ` has mean `0` and true error covariance `E[(Aᵀx - μⱼ)(Aᵀx - μⱼ)ᵀ]`
 equal to `linMse K L j A`; for the matrix blend `μ̂ + Z(μ̂ⱼ - μ̂)` it is
 `(moments K L j).errVar Z`. So the BLUP and `bestZ` results of `CoreVector` are statements
-about real random vectors.
+about real random vectors. `integral_spread` gives the expected weighted spread of vector
+estimates under any noise covariance between cohorts (the corrected moment `Λ̂`, S67).
 
 Nothing is re-proved: centring each component by its mean gives a `Core.Estimates K L 0`
 over the index set `J × P` (`VecEstimates.centred`), and each entry of the error covariance
@@ -297,6 +298,89 @@ theorem integral_mul_pred_sub {A : Matrix (J × P) P ℝ} (hA : (stack J P)ᵀ *
   linarith [hq]
 
 end VecEstimates
+
+omit [Fintype P] [DecidableEq P] in
+/-- **The expected weighted spread of vector estimates** (S67's corrected moment identity for
+`Λ̂`). Random vectors `β̂ⱼ` (`est (j, p)`), square integrable with a common mean `b`, and
+`cov(β̂ⱼₚ, β̂ᵢᵣ) = δⱼᵢΛₚᵣ + (Nⱼᵢ)ₚᵣ`: the cohorts' own variation `Λ` plus any noise covariance
+`N`, within and between cohorts. For weights `ω` with `Σⱼ ωⱼ = 1` and `β̄ = Σⱼ ωⱼβ̂ⱼ`,
+`E Σⱼ ωⱼ(β̂ⱼ - β̄)(β̂ⱼ - β̄)ᵀ = (1 - Σⱼ ωⱼ²)Λ + Σⱼ ωⱼNⱼⱼ - Σᵢ Σₖ ωᵢωₖNᵢₖ`. So the corrected
+`Λ̂ = (S - Σⱼ ωⱼN̂ⱼⱼ + Σᵢ Σₖ ωᵢωₖN̂ᵢₖ) / (1 - Σⱼ ωⱼ²)` is unbiased for every noise covariance
+`N` it is given unbiased estimates of. Only moments, no distribution. -/
+theorem integral_spread {Pr : Measure Ω} [IsProbabilityMeasure Pr] (est : J × P → Ω → ℝ)
+    (b : P → ℝ) (Λ : Matrix P P ℝ) (N : J → J → Matrix P P ℝ)
+    (hL2 : ∀ x, MemLp (est x) 2 Pr) (hmean : ∀ x, Pr[est x] = b x.2)
+    (hcov : ∀ j i p r, cov[est (j, p), est (i, r); Pr] = (if j = i then Λ p r else 0) + N j i p r)
+    (w : J → ℝ) (hw : ∑ j, w j = 1) :
+    Matrix.of (fun p r => Pr[fun ω => ∑ j, w j * ((est (j, p) ω - ∑ k, w k * est (k, p) ω)
+        * (est (j, r) ω - ∑ k, w k * est (k, r) ω))])
+      = (1 - ∑ j, w j ^ 2) • Λ + ∑ j, w j • N j j - ∑ i, ∑ k, (w i * w k) • N i k := by
+  ext p r
+  rw [Matrix.of_apply]
+  set a : J → J → ℝ := fun j k => (if k = j then 1 else 0) - w k with ha
+  have hD : ∀ j q ω, est (j, q) ω - ∑ k, w k * est (k, q) ω = ∑ k, a j k * est (k, q) ω := by
+    intro j q ω
+    simp [ha, sub_mul, sum_sub_distrib, ite_mul]
+  have hm : ∀ j q, MemLp (fun ω => ∑ k, a j k * est (k, q) ω) 2 Pr := fun j q =>
+    memLp_finsetSum _ fun k _ => (hL2 (k, q)).const_mul (a j k)
+  have hint : ∀ j q, Pr[fun ω => ∑ k, a j k * est (k, q) ω] = 0 := by
+    intro j q
+    rw [integral_finsetSum _ fun k _ => ((hL2 (k, q)).const_mul (a j k)).integrable (by norm_num)]
+    simp only [integral_const_mul, hmean, ← sum_mul, ha, sum_sub_distrib, hw]
+    simp
+  have hc : ∀ j, Pr[fun ω => (∑ k, a j k * est (k, p) ω) * ∑ k, a j k * est (k, r) ω]
+      = ∑ k, ∑ l, a j k * a j l * ((if k = l then Λ p r else 0) + N k l p r) := by
+    intro j
+    have e := covariance_eq_sub (hm j p) (hm j r)
+    rw [hint, hint, mul_zero, sub_zero] at e
+    simp only [Pi.mul_apply] at e
+    rw [← e, covariance_fun_sum_fun_sum (fun k => (hL2 (k, p)).const_mul (a j k))
+      (fun k => (hL2 (k, r)).const_mul (a j k))]
+    simp only [covariance_const_mul_left, covariance_const_mul_right, hcov]
+    exact sum_congr rfl fun _ _ => sum_congr rfl fun _ _ => by ring
+  simp_rw [hD]
+  have hs := integral_finsetSum (μ := Pr) univ
+    (f := fun j ω => w j * ((∑ k, a j k * est (k, p) ω) * ∑ k, a j k * est (k, r) ω))
+    fun j _ => ((hm j p).integrable_mul (hm j r)).const_mul (w j)
+  rw [hs]
+  simp only [integral_const_mul]
+  simp only [hc]
+  have hin : ∀ j, ∑ k, ∑ l, a j k * a j l * ((if k = l then Λ p r else 0) + N k l p r)
+      = (1 - 2 * w j + ∑ k, w k ^ 2) * Λ p r + (N j j p r - ∑ l, w l * N j l p r
+        - ∑ k, w k * N k j p r + ∑ k, ∑ l, w k * w l * N k l p r) := by
+    intro j
+    simp only [mul_add, sum_add_distrib, mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true]
+    congr 1
+    · simp only [ha, ← sum_mul]
+      congr 1
+      simp only [sub_mul, mul_sub, sum_sub_distrib, ite_mul, mul_ite, one_mul, mul_one,
+        zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
+      simp only [sq]; ring
+    · simp only [ha, sub_mul, mul_sub, sum_sub_distrib, ite_mul, mul_ite, one_mul, mul_one,
+        zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
+      rw [Finset.sum_eq_single (f := fun x => ∑ y, if x = j then w y * N x y p r else 0) j
+        (fun b _ hb => by simp [hb]) (by simp)]
+      simp only [ite_true]
+      ring
+  simp only [hin, Matrix.sub_apply, Matrix.add_apply, Matrix.smul_apply, Matrix.sum_apply,
+    smul_eq_mul]
+  set S := ∑ k, w k ^ 2
+  set T := ∑ k, ∑ l, w k * w l * N k l p r
+  have e1 : ∑ x, w x * ∑ l, w l * N x l p r = T := by simp [T, mul_sum, mul_assoc]
+  have e2 : ∑ x, w x * ∑ k, w k * N k x p r = T := by
+    rw [show T = ∑ l, ∑ k, w k * w l * N k l p r from sum_comm]
+    refine sum_congr rfl fun x _ => ?_
+    rw [mul_sum]; exact sum_congr rfl fun _ _ => by ring
+  have e3 : ∑ x, w x * (1 - 2 * w x + S) = 1 - S := by
+    simp only [mul_add, mul_sub, mul_one, sum_add_distrib, sum_sub_distrib, ← sum_mul, hw, S]
+    have : ∑ x, w x * (2 * w x) = 2 * ∑ k, w k ^ 2 := by
+      rw [mul_sum]; exact sum_congr rfl fun _ _ => by ring
+    rw [this]; ring
+  have hx : ∀ x, w x * ((1 - 2 * w x + S) * Λ p r + (N x x p r - ∑ l, w l * N x l p r
+      - ∑ k, w k * N k x p r + T)) = w x * (1 - 2 * w x + S) * Λ p r + w x * N x x p r
+      - w x * ∑ l, w l * N x l p r - w x * ∑ k, w k * N k x p r + w x * T := fun x => by ring
+  simp only [hx, sum_add_distrib, sum_sub_distrib, ← sum_mul, e1, e2, e3, hw]
+  ring
 
 end CoreVector
 

@@ -1603,6 +1603,23 @@ covary in any way. This gives the joint $K$ and $L$ of the matrix blend.
   Ignoring a positive level correlation underprices (Finding 33).
 \end{caveat}
 
+\begin{result}[The spread of vector estimates]\label{res:vecSpread}
+  Cohort estimates $\hat\beta_j \in \mathbb{R}^P$ (e.g.\ level and slope of a trend line) with
+  a common mean and $\cov(\hat\beta_j, \hat\beta_i) = \delta_{ij}\Lambda + N_{ji}$, any noise
+  covariance $N$ within and between cohorts. For weights $\sum_j\omega_j = 1$ and
+  $\bar\beta = \sum_j\omega_j\hat\beta_j$, for every distribution,
+  \[
+    \mathbb{E}\sum_j \omega_j(\hat\beta_j - \bar\beta)(\hat\beta_j - \bar\beta)^{\mathsf T}
+      = \Bigl(1 - \sum_j\omega_j^2\Bigr)\Lambda + \sum_j\omega_jN_{jj}
+        - \sum_i\sum_k\omega_i\omega_kN_{ik}.
+  \]
+  \lean{Credibility.CoreVector.integral_spread}
+\end{result}
+\use Moment $\hat\Lambda$: subtract both noise terms (with unbiased $\hat N$), divide by $1 - \sum_j\omega_j^2$.
+\begin{caveat}
+  Dropping the cross term $\sum_{i \ne k}\omega_i\omega_kN_{ik}$ (shared shocks) biases $\hat\Lambda$ down (study S67).
+\end{caveat}
+
 % ===========================================================================
 \appendix
 \section{A worked example}\label{sec:example}
