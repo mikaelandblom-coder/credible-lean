@@ -31,6 +31,8 @@ page target is dropped: it is a reference, not a read.
 - [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
   pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
   the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
+  *Update 2026-11-27 (S71):* the app's crossed default is now REML on the cell means started from those pools
+  (not proved); the "use it" line should name it, the pools as its start.
 - *Done 2026-11-26:* `res:blup_residual` after `res:blup` (GLS mean plus predicted residuals, the
   blend as the row `z eⱼ`, `(1−θ)²`), `res:blup_gauge` (2026-11-27: zero-sum row, least `K`-norm), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`), `res:plugIn_proxy` (`θ` on a held-out
   year, its exact bias, clipping), `res:heldOut_price` (2026-11-27: the price `ΔᵀWΣWΔ/ΔᵀWΔ`, S64 target 1),

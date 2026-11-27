@@ -530,3 +530,14 @@ what was built, studied and proved. Order as they stood in the plan.
   with gamma cells of variance φμ²/w: implied 0.40 against ĝ 0.37). In the default world it reads ≈ 0 against
   ĝ ≈ 0.9: the app's gamma noise is not such a family, so the layer would mislead there. The Lean side of the
   layer is `VarianceFunction.lean`.
+- [x] Crossed fit by REML (2026-11-27, S70, `studies/runs/crossed-small.js`): add `reml` as a fit option of
+  `app/crossed.js` (projected Fisher scoring on the cell means, the default's `Σ̂`, start from the default's `θ̂`),
+  with a Node test, and make it the default if S70's grid plus `crossed-fit.js`'s larger tables agree (S70: worse
+  than the default by at most 5 points in 17 of 128 worlds, better in 69). Badge "not proved yet". Show how
+  often the raw moment estimates were negative.
+  *Finding 44 (2026-11-27, `CrossedSmall`):* with a 2×2 table warn that each variance has one degree of freedom
+  (SD ≥ √2·value at any volume) and suggest the thesis fit or more rows/columns.
+  *Done 2026-11-27:* `method: 'reml'` in `app/crossed.js` (`remlTheta`; Node tests: KKT at the optimum, likelihood
+  never below its start, local maximum), the page's "Variances from" choice, a REML row in Many draws, "Draws
+  with one < 0" per pool in the variances table; S71 (`crossed-fit.js` with REML: worse in 9 of 96, by at most
+  3 points; better in 48), so REML is the default. The 2×2 warning is in `fit` (Node test) and the page's note.

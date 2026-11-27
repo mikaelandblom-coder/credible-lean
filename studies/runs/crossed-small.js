@@ -118,7 +118,7 @@ for (const p of worlds) {
     const { levels, data } = C.draw(world, r);
     const { idx } = C.observed(data);
     const score = (id, rates) => err[id].push(sum(idx.map((j) => (rates[j] - levels[j]) ** 2)));
-    const f = C.fit(data);
+    const f = C.fit(data, { method: 'pools' }); // the pools default of S70's time (C.fit now defaults to REML)
     f.raw.forEach((x, k) => { if (x < 0) neg[k]++; });
     score('floor', ex.cells.map((c) => dot(c.full, f.m)));
     score('floorBlend', ex.cells.map((c) => dot(c.blend, f.m)));

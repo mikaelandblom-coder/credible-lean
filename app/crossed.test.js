@@ -115,7 +115,7 @@ test('Fit: K̂ ≻ 0 in every draw; both truncations are projections, never furt
   let neg = 0;
   for (let s = 0; s < 200; s++) {
     const { data } = C.draw(w, r);
-    const fc = C.fit(data, { trunc: 'clip' }), fn = C.fit(data, { trunc: 'nnls' });
+    const fc = C.fit(data, { trunc: 'clip', method: 'pools' }), fn = C.fit(data, { trunc: 'nnls', method: 'pools' });
     assert.ok(E.cholesky(fc.K) && E.cholesky(fn.K), 'K̂ ≻ 0');
     assert.ok(fc.theta.every((x) => x >= 0) && fn.theta.every((x) => x >= 0));
     assert.ok(eu(fc.theta) <= eu(fc.raw) + 1e-18, 'clip: Euclidean');

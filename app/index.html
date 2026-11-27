@@ -326,8 +326,8 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
         <option value="vol">∝ wᵢ*wⱼ* (the product of the volumes)</option>
         <option value="anova">ANOVA (Dannenburg): ∝ wᵢ*wⱼ*, noise cross term left out</option></select></div>
       <div><label for="c-method">Variances from</label><select id="c-method">
-        <option value="pools">Pair pools (default)</option>
-        <option value="reml">REML on the cell means, from the pools (not proved yet)</option></select></div>
+        <option value="reml">REML on the cell means, from the pools (default; not proved yet)</option>
+        <option value="pools">Pair pools alone</option></select></div>
       <div><label for="c-trunc">A negative variance</label><select id="c-trunc">
         <option value="clip">Set to 0 (default)</option>
         <option value="nnls">Refit the other two by least squares, all ≥ 0</option></select></div>
@@ -1301,7 +1301,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
 
   // ---------- crossed levels (app/crossed.js: world, then the fit from the data alone)
   const CR = window.Crossed;
-  const cs = { nr: 4, nc: 3, alpha: 0.06, beta: 0.10, gamma: 0.04, rho: 0, spread: 0, volume: 500, missing: false, weights: 'iv', trunc: 'clip', method: 'pools', seed: 1 };
+  const cs = { nr: 4, nc: 3, alpha: 0.06, beta: 0.10, gamma: 0.04, rho: 0, spread: 0, volume: 500, missing: false, weights: 'iv', trunc: 'clip', method: 'reml', seed: 1 };
   const C_SLIDERS = [
     { key: 'nr', label: 'Rows <span class="sub">(countries)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
     { key: 'nc', label: 'Columns <span class="sub">(car types)</span>', min: 2, max: 6, step: 1, fmt: (v) => v },
@@ -1422,7 +1422,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       const rmse = (id) => (100 * Math.sqrt(mean(acc.used[id].map((e) => e.reduce((s, x) => s + x * x, 0)))) / tau2).toFixed(0);
       $('c-bias').innerHTML = `<p class="sub" style="margin:10px 0 4px"><b>The variances</b>: mean error from the pools (bias) in % of α² + β² + γ²; the root mean square error after truncation, same units</p><table><thead><tr><th>Pools</th><th>α̂²</th><th>β̂²</th><th>γ̂²</th><th>Draws with one < 0</th><th>RMSE, set to 0</th><th>RMSE, least squares</th><th>RMSE, REML</th></tr></thead><tbody>` +
         [['iv', 'Inverse variance'], ['equal', 'Equal weights'], ['vol', '∝ wᵢ*wⱼ*'], ['anova', 'ANOVA']].map(([k, n]) => `<tr><td>${n}</td>${row(`${k}-clip`, 'raw')}<td>${negP(`${k}-clip`)}%</td><td>${rmse(`${k}-clip`)}</td><td>${k === 'anova' ? '–' : rmse(`${k}-nnls`)}</td><td>${k === 'iv' ? rmse('reml') : '–'}</td></tr>`).join('') +
-        `</tbody></table><p class="sub" style="margin:4px 0 0">Fixed weights (equal, volume) are unbiased for any noise correlation (${lean('Model.crossed_unbiasedX')}); inverse-variance weights come from the same data, so only nearly; ANOVA is biased when ρ > 0 (Finding 42). Inverse variance is the default because its rates are the most accurate (studies/runs/crossed-fit.js), not its variances. The bias column is a Monte Carlo mean (± a few % at ${CN} draws). Both truncations are projections onto valid values, so in their own metric never further from the truth (${lean('ConeProjection.hsq_proj_le')}). "Draws with one < 0": how often at least one raw estimate came out negative and had to be truncated. REML starts from the inverse-variance pools and maximizes a normal working likelihood of the cell means; its rates beat the pools' in most worlds of studies/runs/crossed-small.js (S70) and crossed-fit.js and were never more than a few points worse, but nothing about it is proved yet.${cWorld.nr === 2 && cWorld.nc === 2 ? ` In a 2×2 table each variance rests on one degree of freedom: no unbiased estimate has a standard deviation below √2 times the true value, at any volume (Finding 44, ${lean('CrossedSmall.sq_le_trace_row')}).` : ''}</p>`;
+        `</tbody></table><p class="sub" style="margin:4px 0 0">Fixed weights (equal, volume) are unbiased for any noise correlation (${lean('Model.crossed_unbiasedX')}); inverse-variance weights come from the same data, so only nearly; ANOVA is biased when ρ > 0 (Finding 42). Inverse variance is the default because its rates are the most accurate (studies/runs/crossed-fit.js), not its variances. The bias column is a Monte Carlo mean (± a few % at ${CN} draws). Both truncations are projections onto valid values, so in their own metric never further from the truth (${lean('ConeProjection.hsq_proj_le')}). "Draws with one < 0": how often at least one raw estimate came out negative and had to be truncated. REML starts from the inverse-variance pools and maximizes a normal working likelihood of the cell means; it is the default because its rates beat the pools' in 69 of 128 small-table worlds (S70) and 48 of 96 larger ones (S71) and were never more than 5 points of the floor worse, but nothing about it is proved yet.${cWorld.nr === 2 && cWorld.nc === 2 ? ` In a 2×2 table each variance rests on one degree of freedom: no unbiased estimate has a standard deviation below √2 times the true value, at any volume (Finding 44, ${lean('CrossedSmall.sq_le_trace_row')}).` : ''}</p>`;
     };
     setTimeout(step, 0);
   }

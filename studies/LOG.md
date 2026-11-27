@@ -103,6 +103,7 @@ continue the numbering here; the full text and its trust label are below.
 | S68 | `runs/pretest-merge.js` | Merging when the gap looks small loses to both rules (exact, normal) |
 | S69 | `runs/group-fit.js` | Fit `φτ²` by one GLS pass on the pairs; groups or not matters more |
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
+| S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 
 ## Observations
 
@@ -954,3 +955,16 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     only where the effects are near zero and costs where they are real, so it is not a default. Whether to fit
     rows and columns at all when effects may be absent belongs to a held-out score
     (`CrossFit.integral_heldOutScore_sub`), as for groups (S69).
+- S71. *[numerical]* **REML holds on larger crossed tables: the app's crossed default.** `crossed-fit.js`'s
+    grid (tables 3×2, 4×3, 6×4; mixes both / row only / no cell effect / weak; ρ ∈ {0, 0.5}; spread 0 or 1;
+    regimes app and thesis; 96 worlds, 1000 draws, common random numbers), with REML as in S70 (now
+    `app/crossed.js`, `method: 'reml'`, from the inverse-variance pools clipped at 0). Paired against those
+    pools: REML worse in 9 of 96 worlds (at most +3.0 points of the floor, 6×4 with no cell effect, ρ = 0,
+    equal volumes, where γ² = 0 and the pools' clip already sits on the truth), better in 48, even in 39;
+    mean −3.9, down to −38.8. Mean over the grid: REML 125.9% of the floor, pools 129.7, thesis fit 157.0.
+    The gain grows with unequal volumes (132.0 against 139.1) and with weak effects (136.7 against 144.8);
+    at 6×4 the two are close (124.8 against 127.1). Variance RMSE after truncation 121% of τ² against 137.
+    The rows of the earlier variants are unchanged (same seed). **Consequence.** With S70 (128 small-table
+    worlds, worse by at most 5.3 points), REML is the app's crossed default from 2026-11-27, badge "not
+    proved yet". A general target: a statement for REML's plug-in rates, or a bound on its loss against the
+    pools, neither in hand.

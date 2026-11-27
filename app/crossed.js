@@ -301,14 +301,16 @@
   }
 
   /**
-   * The crossed fit. opts.weights as for pairPools; opts.trunc: 'clip' (each variance at 0, the Euclidean
-   * projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
+   * The crossed fit. opts.method: 'reml' (the default: REML on the cell means from the pools below, remlTheta;
+   * S70 and crossed-fit.js: better than the pools in 48 of 96 worlds, worse in 9, by at most 3 points of the floor)
+   * or 'pools' (the variances from the pools alone). opts.weights as for pairPools; opts.trunc: 'clip' (each
+   * variance at 0, the Euclidean projection; the default) or 'nnls' (the projection in the pool equations' metric). The defaults are
    * provisional, from studies/runs/crossed-fit.js (1000 draws × 96 worlds: inverse variance + clip is never clearly
    * worse than equal weights and better in 59 worlds; least squares loses to clip in 67): a hypothesis for the
    * worlds it visits, until the general targets in PLAN-done.md (crossed levels) are proved.
    */
   function fit(data, opts) {
-    const o = Object.assign({ weights: 'iv', trunc: 'clip', method: 'pools' }, opts || {});
+    const o = Object.assign({ weights: 'iv', trunc: 'clip', method: 'reml' }, opts || {});
     const isReml = o.method === 'reml';
     const { idx, sub, row, col, wt, m, Sig, P, count, raw } = pairPools(data, o.weights);
     const ok = raw.every(Number.isFinite);
@@ -336,7 +338,7 @@
       { name: 'pair estimators P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ̂ᵢᵢ + σ̂ⱼⱼ − 2σ̂ᵢⱼ)', badge: o.weights === 'anova' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.pairHat_unbiasedX', note: o.weights === 'anova' ? 'ANOVA: the cross term −2σ̂ᵢⱼ is left out, biased by the noise covariances (Finding 42)' : 'E P̂ᵢⱼ = 2γ² + 2α²[other row] + 2β²[other column]' },
       { name: `three pools (${o.weights === 'equal' ? 'equal weights' : o.weights === 'iv' ? 'inverse-variance weights' : 'weights ∝ wᵢ*wⱼ*'}) → α̂², β̂², γ̂²`, values: raw, badge: o.weights === 'anova' || o.weights === 'iv' ? 'not proved yet' : 'proved', lean: o.weights === 'anova' ? 'Model.anovaStat_unbiasedX' : 'Model.crossed_unbiasedX', note: `pairs: ${count.r} same row, ${count.c} same column, ${count.n} neither` + (o.weights === 'iv' ? '. Weights 1/(P̂_class + noise of the difference)² from a first equal-weight pass: unbiased for fixed weights (Model.crossed_unbiasedX); with weights from the same data only nearly (γ̂² about +7% of τ² at ρ = 0.5 in the study)' : '') },
       { name: `truncation at 0 (${o.trunc === 'nnls' ? 'least squares, θ ≥ 0' : 'clip'})`, values: pooled, badge: 'proved', lean: 'ConeProjection.hsq_proj_le', note: 'a projection onto a convex set that contains the truth: its error is at most the raw one, in every draw' },
-      ...(isReml ? [{ name: 'REML on the cell means: θ̂ ≥ 0 maximizing the restricted likelihood of μ̂ ~ N(μ1, Σ̂ + L(θ)), from the step above', values: theta, badge: 'not proved yet', note: `projected Fisher scoring, ${rm ? rm.iter : 0} steps. A Gaussian working likelihood: its score is unbiased at the true θ for any noise, but the estimate is not; chosen because its rates were never much worse than the pools' and often far better (S70, studies/runs/crossed-small.js and crossed-fit.js)` }] : []),
+      ...(isReml ? [{ name: 'REML on the cell means: θ̂ ≥ 0 maximizing the restricted likelihood of μ̂ ~ N(μ1, Σ̂ + L(θ)), from the step above', values: theta, badge: 'not proved yet', note: `projected Fisher scoring, ${rm ? rm.iter : 0} steps. A Gaussian working likelihood: its score is unbiased at the true θ for any noise, but the estimate is not; the default because its rates beat the pools' in 69 of 128 small-table worlds (S70) and 48 of 96 larger ones (S71), and were never worse by more than 5 points of the floor` }] : []),
       { name: 'K̂ = L̂ + Σ̂ (Σ̂ from corrBS: σ̃ⱼ², one ρ̂)', values: [vc.rho], badge: 'proved', lean: 'Crossed.K_posDef', note: 'K̂ ≻ 0: L̂ ⪰ 0 for α̂², β̂², γ̂² ≥ 0 and Σ̂ ≻ 0' },
       { name: 'rates: the best linear unbiased predictor μ̂ + ℓ̂ᵀK̂⁻¹(μ̂ⱼ − μ̂)', badge: 'proved', lean: 'Core.blup_optimal', note: 'optimal for the true K and L; plugged in here. A cell without data uses ℓ = α²[same row] + β²[same column] (Crossed.missing_blup)' },
     ];
@@ -352,13 +354,13 @@
   // ---------------------------------------------------------------- many draws
 
   const VARIANTS = [
-    { id: 'iv-clip', weights: 'iv', trunc: 'clip' },
-    { id: 'iv-nnls', weights: 'iv', trunc: 'nnls' },
-    { id: 'equal-clip', weights: 'equal', trunc: 'clip' },
-    { id: 'equal-nnls', weights: 'equal', trunc: 'nnls' },
-    { id: 'vol-clip', weights: 'vol', trunc: 'clip' },
-    { id: 'vol-nnls', weights: 'vol', trunc: 'nnls' },
-    { id: 'anova-clip', weights: 'anova', trunc: 'clip' },
+    { id: 'iv-clip', weights: 'iv', trunc: 'clip', method: 'pools' },
+    { id: 'iv-nnls', weights: 'iv', trunc: 'nnls', method: 'pools' },
+    { id: 'equal-clip', weights: 'equal', trunc: 'clip', method: 'pools' },
+    { id: 'equal-nnls', weights: 'equal', trunc: 'nnls', method: 'pools' },
+    { id: 'vol-clip', weights: 'vol', trunc: 'clip', method: 'pools' },
+    { id: 'vol-nnls', weights: 'vol', trunc: 'nnls', method: 'pools' },
+    { id: 'anova-clip', weights: 'anova', trunc: 'clip', method: 'pools' },
     { id: 'reml', weights: 'iv', trunc: 'clip', method: 'reml' },
   ];
 
