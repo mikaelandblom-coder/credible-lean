@@ -193,8 +193,10 @@ means $Ex = X\beta$, $EY = x_0^{\mathsf T}\beta$.}
  \item Any other unbiased $d$ loses exactly $(d - d^*)^{\mathsf T}K(d - d^*)$. When is the 2023
    blend the best predictor?
  \item Next year's outcome instead of the level: why $z$ stays the same.}
-{On the data, how much does the best predictor gain over the blend?}
-{Results \hb{res:blup}, \hb{res:forecast}}{small to medium}
+{On the data, how much does the best predictor gain over the blend? On a fitted $\hat K$ its
+weights pay a price that can exceed the gain where noise variances differ (Finding 45): does the
+gain survive estimation?}
+{Results \hb{res:blup}, \hb{res:forecast}, \hb{res:blupPrice}}{small to medium}
 
 \ext{E4. Monthly data and the season}
 {Monthly data have a season. The usual shortcut is to add up whole years and hope the season drops
@@ -249,6 +251,8 @@ time.}
 {$\mu_{jt} = \alpha_j + \beta_j D_t + \text{noise}$, with $(\alpha_j, \beta_j)$ random around a
 common mean and cohorts correlated as in E2.}
 {\item Hachemeister's credibility matrix as an instance of E6's $Z_j$, with correlated cohorts.
+   Poon (2013, ch.~5) gives the best predictor when the collective line is known; here it is
+   estimated.
  \item Equal sensitivities: when does the index act as a plain exposure adjustment?}
 {Given the index, how much correlation between cards remains?}
 {Result \hb{res:vector}}{medium}
@@ -266,10 +270,14 @@ true moments.}
  \item An estimated table need not be positive definite. Projecting it onto valid tables never
    increases the error.
  \item Standard errors of the moment estimators: their variance needs third and fourth moments
-   (the general formula is Handbook Result \hb{res:varQuad}).}
-{How skewed and how heavy-tailed are the residuals, and what does balancing the total premium cost
-in accuracy?}
-{Results \hb{res:randomWeights}, \hb{res:plugIn}, \hb{res:valid_tables}}{medium}
+   (the general formula is Handbook Result \hb{res:varQuad}). Estimated from a cohort's own
+   years it is low by a relative $O(1/T)$, and the exact correction is known (Finding 47).
+ \item Balancing the total premium costs exactly $E(T - \bar\mu)^2 - E(\bar r - \bar\mu)^2$: it pays
+   iff the total you balance to estimates the portfolio level better than the fit does (Finding 46).}
+{How skewed and how heavy-tailed are the residuals? Is the booked total a better estimate of the
+portfolio level than the fit, i.e.\ should the cards be balanced?}
+{Results \hb{res:randomWeights}, \hb{res:plugIn}, \hb{res:valid_tables}, \hb{res:balanceCost},
+\hb{res:vcW}}{medium}
 
 \ext{E9. Cards grouped by country}
 {Cards come from several countries. Cards of one country share its market, distribution and claims
@@ -288,7 +296,8 @@ $\cov(\mu_i, \mu_j) = \sigma_a^2[c(i) = c(j)] + \tau^2\delta_{ij}$; noise as in 
    level? If some tiers turn out comparable across countries, model tier as a crossed level
    (country $\times$ tier): $K$, its estimators and the best pool weights are in Results
    \hb{res:crossed}, \hb{res:crossed_est}, \hb{res:crossed_pool}. The open question is whether
-   the cards support a tier effect, not its theory.}
+   the cards support a tier effect, not its theory: two countries by two tiers cannot estimate
+   the crossed variances at any volume (Finding 44).}
 {Do cards of one country resemble each other beyond their own experience?}
 {Results \hb{res:phi}--\hb{res:est_groups}}{medium}
 
@@ -329,12 +338,15 @@ distribution is fine if it says so.}
 (weighted $k$-means on a line), found by dynamic programming. In practice the levels are estimated
 from the data you then fit, so groups look more different than they are: a winner's curse. Cutting
 the sorted estimates where an estimated risk is smallest was 2--74\% worse than one group in our
-simulations, and with a separate $\tau^2$ per group the optimal groups are not intervals.}
-{How large is the curse in general, and is there a correction, as the price of estimation corrects
-a fitted model's error? Is the number of groups better chosen by gain against price than by a
-likelihood criterion? It is open.}
+simulations, and with a separate $\tau^2$ per group the optimal groups are not intervals.
+What is known: scoring the chosen rule on held-out years is unbiased for any distribution, and
+choosing groups or none that way had small regret in simulation; merging two cohorts when their gap
+looks small loses to both fixed rules for every threshold (Finding 43, under normal noise).}
+{How large is the curse for many cohorts and data-chosen cuts, and is there a correction, as the
+price of estimation corrects a fitted model's error? Is the number of groups better chosen by gain
+against price, by held-out years or by a likelihood criterion? It is open.}
 {Handbook Results \hb{res:merge}, \hb{res:pool_intervals}, \hb{res:blend_intervals},
-\hb{res:bsPrice}; Findings 14, 41.}
+\hb{res:bsPrice}, \hb{res:heldout}; Findings 14, 41, 43.}
 
 \other{A4. Baselines for the persistent factor}
 {A practitioner weights a card's own years by $\lambda^{\text{age}}$ (exponential smoothing; Morris
@@ -368,7 +380,7 @@ under-cover the outlying cards, and does the given-level one repair it?}
 
 The continuation found results that seem to be new, often gaps in the 2023 thesis itself. For any
 of them, check: is it correct, is it already known (a reference is as good an outcome as a
-confirmation), and does it matter in practice? Each is in the \Handbook{}, whose appendix \emph{Findings} lists all 41 findings with their
+confirmation), and does it matter in practice? Each is in the \Handbook{}, whose appendix \emph{Findings} lists all 47 findings with their
 counterexamples and Lean proofs, and in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with the
 details.
 \begin{enumerate}\setlength{\itemsep}{1pt}
@@ -391,9 +403,12 @@ details.
   \item \textbf{The own-data weight stays bounded} where $z_j$ explodes (Finding 17, Result
     \hb{res:z}): near the two-cohort singularity $z_j$ is large or negative, but
     $c_j = b_j + z_j(1 - b_j)$ is not.
-  \item \textbf{Which of these are new?} The prior art of Section~2 contains the model and its
-    estimators. Check each claim of novelty above against Poon and Lu (2015) and Schnapp et al.\
-    (2000) before building on it, and write down what each paper has and lacks.
+  \item \textbf{Which of these are new?} The prior art of Section~2 contains the model, its best
+    predictor, its pair estimators and the regression version (Poon 2013, read in full; Poon and
+    Lu 2015). Checked against it and the common-effect papers (repository,
+    \texttt{studies/literature.md} §10q), the blend's factor and its range, the price of the blend
+    form, balance, unequal histories and items 1--6 have no precedent found. A reader with the
+    NAAJ article or Stein (1999) should confirm.
 \end{enumerate}
 
 \section{Comparing models on data}\label{sec:method}
@@ -469,7 +484,7 @@ reproduced without the company data.
 \begin{tabular}{>{\raggedright}p{3.6cm} >{\raggedright\arraybackslash}p{11.2cm}}
   \toprule
   \href{\site handbook.pdf}{Handbook} & Every formula, with how to use it and what to watch out for, linked to its Lean proof;
-    the appendix \emph{Findings} lists all 41 findings with counterexamples. Result numbers in this
+    the appendix \emph{Findings} lists all 47 findings with counterexamples. Result numbers in this
     proposal refer to it. \\ \rowsep
   \href{\site paper/}{Paper} & The main document, grown out of the 2023 thesis: concepts, key formulas, intuition and the reasons behind the
     formulas, organized for lookup, with a literature map. \\ \rowsep
