@@ -344,6 +344,17 @@ One chat per step; none needs Lean except step 5.
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
 Finished items are in `studies/PLAN-done.md`.
+- [ ] Realistic volumes (2026-11-28, S79; owner: "in reality the weights are noisy and not always trending"). The world
+  switch "Volumes vary by year" (`volNoise` 0.2, `volTrend` 0.05, fixed per world by `volSeed`) is built, **off by
+  default**. Under it the fits' errors and their ranking stand (S79), but `crossFitLevel` is null (it needs one volume
+  shape: `RandomWeights.integral_crossFit_sub`, region-specific year weights break translation equivariance), so
+  `balanceAuto` now prices the exposure-weighted level instead (it used to balance on exposures in every draw, up to
+  +110 points). Lost: the cross-fit's removal of the skew under-pricing (Finding 35) on such data. Open, in order:
+  (1) Lean: `balance_cost_portLin` for a target linear in the cells (`Σₛ πₛ c⁽ˢ⁾ᵀXₛ`, not a function of `μ̂`), with
+  its MSE from the cell covariance (levels part plus `Σₛ πₛ² c⁽ˢ⁾ᵀDₛc⁽ˢ⁾`); then (2) `crossFitLevel` for any volumes,
+  common year shares `πₛ` (unbiased by `integral_crossFit_sub`, which needs no volume shape); (3) make the switch the
+  default after rerunning the page's quoted simulation checks (skew link, skew bias, gamma tests, S76's regret), as for
+  "Noise shape shrinks with volume".
 - [ ] Cohort trend lines step (2026-11-27, `LineResidualsMoments.integral_correctedLambda_pooled`): level + slope
   per cohort, `ŝ²` and `ρ̂ŝ²` with SUR divisors `T − 2p + tr(PᵢPⱼ)` (handbook `res:lineResid`), corrected `Λ̂`,
   joint damped BLUP (S67); show the 2 × 2 `Z`. Engine helpers exist in `studies/runs/vector-lambda-shocks.js`.

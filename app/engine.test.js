@@ -1287,3 +1287,25 @@ test('Nearest PSD table (G2a; ConeProjection.existsUnique_proj_posSemidef): PSD,
   }
   assert.ok(notPsd > 0, 'the worlds include draws where Σ̂ is not PSD');
 });
+
+test('Volumes vary by year (S79): off is one shape wⱼₜ = aⱼgₜ; on gives each region its own shape, fixed per world', () => {
+  const ratio = (w) => w.map((row) => row.map((x, t) => x / w[0][t]));
+  const off = E.makeWorld({ J: 6, T: 5 });
+  for (const row of ratio(off.w)) for (const x of row) assert.ok(Math.abs(x - row[0]) < 1e-9, 'off: proportional');
+  const on = E.makeWorld({ J: 6, T: 5, volNoise: 0.2, volTrend: 0.05 });
+  assert.deepEqual(on.w, E.makeWorld({ J: 6, T: 5, volNoise: 0.2, volTrend: 0.05 }).w, 'fixed per world');
+  assert.notDeepEqual(on.w, E.makeWorld({ J: 6, T: 5, volNoise: 0.2, volTrend: 0.05, volSeed: 2 }).w, 'volSeed changes it');
+  assert.ok(ratio(on.w).some((row) => row.some((x) => Math.abs(x / row[0] - 1) > 0.05)), 'on: not proportional');
+  // the floor and the draws use the world's volumes
+  const { data } = E.draw(on, E.rng(1));
+  assert.deepEqual(data.w, on.w);
+  // with T = 3 < J and different shapes, Σ̂ is not PSD (S78), and the corr fit still gets K̂ ≻ 0 by theorem
+  const w3 = E.makeWorld({ J: 8, T: 3, volNoise: 0.2, volTrend: 0.05 }), r = E.rng(3);
+  let notPsd = 0;
+  for (let k = 0; k < 20; k++) {
+    const d = E.draw(w3, r).data;
+    if (!E.isPSD(E.sigmaHat(d).Sig)) notPsd++;
+    assert.equal(E.fitCorr(d).steps.find((s) => s.name === 'damped K̂').badge, 'proved');
+  }
+  assert.ok(notPsd > 0);
+});

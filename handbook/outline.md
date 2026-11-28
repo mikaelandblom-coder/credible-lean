@@ -26,6 +26,9 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- [ ] Balance to the cross-fitted level (2026-11-28, S79): in `res:balanceCost` a "watch out": the cross-fitted level
+  is a linear function of the region means only when every region's volumes share one shape over the years
+  (`wⱼₜ = aⱼgₜ`); otherwise price the exposure-weighted level (`a = u`), or wait for the cell-level form (PLAN Pending).
 - Still open from the old list: exact Var/Cov of `P`, `Qn`, `B` and the Finding 37 watch-out, if the
   gain-against-price entry ever needs them; the noise-shape watch-out (slope of `log σ̂ⱼ²` on
   `log μ̂ⱼ` biased up under skew; cross-fit) once the app's skew step is settled.

@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S78, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S79, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S79 | `runs/volume-noise.js` | Volumes that vary by year: the fits and their ranking stand; the balance rule had silently always balanced (no cross-fitted level), up to +110 points; now prices the exposure-weighted level |
 | S78 | `runs/psd-projection.js` | K̂ on the nearest PSD Σ̂⁺: the error moves ≤ 0.5 points; Σ̂ is PSD whenever volumes share one shape over the years, and fails at T = 3 with J > T otherwise; the gain is that K̂ ≻ 0 is a theorem in every draw |
 | S77 | `runs/group-choice.js` | Groups or none on held-out years: regret 0.9 / max 4.0 though its picks barely follow φ; the stakes are small (−10 to +7 points) |
 | S76 | `runs/balance-rule.js` | Balance iff the plug-in cost on K̂ is negative: regret 0.5 / max 6.9 (never 0.4 / 12.2, always 22.2 / 205.6, held-out 10.3 / 99.2) |
@@ -1077,3 +1078,24 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     structure); the damped `K̂` badge is "proved" in every draw, the tapered one whenever `τ̂² > 0`. Seen on the
     side: at `T = 3` the corr fits score 145–177 (floor 100), worse than BS (117–122) at ρ ≤ 0.3; only at ρ = 0.6 does
     the damped fit beat BS (145–155 against 149–167): two degrees of freedom per covariance.
+
+- S79. *[numerical]* **Volumes that vary by year: the fits stand, the balance rule did not** (2026-11-28; owner: "in
+    reality the weights are noisy and not always trending"). Until now every world had one volume shape,
+    `wⱼₜ = aⱼ(1.03)^t`. The world switch "Volumes vary by year" gives each region its own growth (SD 5% a year around
+    3%) and year-to-year log-normal noise (log-SD 0.2), fixed per world (`volSeed`). Grid: `T ∈ {5, 10}`,
+    `ρ ∈ {0, 0.3, 0.6}`, σⱼ spread 0 or 2, J = 8, gamma noise, 600 draws; switch off, and on with two volume patterns;
+    each world against its own floor. **Fits.** Unbalanced, the mean errors move by ≤ 3.4 points of the floor
+    (corrBS 161 → 165, BLUP 160 → 163, corr 156 → 155, BS and pooled BLUP unchanged); the best fit is the same in
+    all 12 settings; gain against price (corrBS g/p) keeps its regret (0.8 → 0.9, max 5.8); the damping rule S3 stays
+    1.7 points from the best fixed θ (max 6.0). One volume pattern can matter: `T = 5`, `ρ = 0.6`, σ spread 2,
+    corrBS and BLUP 220 → 281 with pattern 1, 233 with pattern 2 (the corr fit unchanged): a draw of volumes, not
+    a trend. **Balance.** The rule of S76 was silently off: `crossFitLevel` needs one volume shape (with
+    region-specific year weights the cross-fitted level is not a function of the region means, so its error cannot
+    be priced on `K̂`; `RandomWeights.integral_crossFit_sub`), and `balanceAuto` then balanced on exposures in every
+    draw, S74's "always on", costing corrBS up to +110 points (T = 5, ρ = 0.6, σ spread 2: 233 → 341). Fixed: without
+    a cross-fitted level the rule prices the exposure-weighted level `a = u` (`balance_cost_portLin` takes any
+    `Σ aᵢ = 1`), which it then picks in 0% of draws: balanced = unbalanced. **Consequence.** The app's conclusions
+    hold for uneven volumes except what rests on the cross-fitted level: on such data the skew under-pricing
+    (Finding 35) is no longer removed. General target (PLAN Pending "Realistic volumes"): the balance cost for a
+    target linear in the cells, then a cross-fitted level for any volumes. The switch stays off by default until the
+    page's quoted checks are rerun under it.

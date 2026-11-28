@@ -178,6 +178,9 @@
     volume: 500,     // vehicle-years per region and year, middle region
     spread: 1.0,     // how unequal the volumes are (log scale)
     growth: 0.03,    // yearly growth of every region's volume
+    volNoise: 0,     // 0: off; > 0: log-SD of each region-year's volume around its region's trend (volumes of different shapes, S79)
+    volTrend: 0,     // 0: off; > 0: SD of each region's own yearly growth around `growth` (S79)
+    volSeed: 1,      // seed of the volume pattern: fixed per world, so every draw of a world sees the same volumes
     levelShape: 4,   // gamma shape of the level draws (skewness 2/√k)
     noiseShape: 2,   // gamma shape of the noise draws
     normal: false,   // normal levels and noise instead of gamma (the plug-in cross term vanishes: plugIn_mse_of_normal)
@@ -277,10 +280,15 @@
     const p = Object.assign({}, DEFAULTS, params || {});
     const { J, T } = p;
     const w = [];
+    // Volumes: the size of region j by its quantile, times a yearly trend. With volNoise or volTrend each
+    // region gets its own trend and year-to-year noise (fixed by volSeed), so the regions' volumes no longer
+    // share one shape over the years (wⱼₜ ≠ aⱼgₜ): the case of real portfolios (S79).
+    const vr = p.volNoise > 0 || p.volTrend > 0 ? rng(p.volSeed) : null;
     for (let j = 0; j < J; j++) {
       const size = p.volume * Math.exp(p.spread * qnorm((j + 0.5) / J));
+      const g = p.growth + (vr ? p.volTrend * vr.normal() : 0);
       const row = [];
-      for (let t = 0; t < T; t++) row.push(size * Math.pow(1 + p.growth, t - (T - 1) / 2));
+      for (let t = 0; t < T; t++) row.push(size * Math.pow(Math.max(1 + g, 0.5), t - (T - 1) / 2) * (vr ? Math.exp(p.volNoise * vr.normal() - p.volNoise * p.volNoise / 2) : 1));
       w.push(row);
     }
     // ρᵢⱼ: one common coefficient, or ρ^|i−j| for ordered regions (a country structure comes with group levels).
@@ -597,7 +605,7 @@
     taperSignal: 'taper when Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²] < Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]⁺, R = ρ̂^d, V_d = (1 − r̄_d²)²/(T − 1)',
     gainPrice: 'region variances when (MSE on K̂ with one pooled σ̂² − MSE on K̂) / MSE on K̂ > Σⱼ wⱼ* ẑⱼ(1 − ẑⱼ)·2/(T − 1)·MSEⱼ / Σⱼ wⱼ* MSEⱼ',
     balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
-    balanceAuto: 'balance iff cost̂ = mse(c̄) − mse(c) < 0 on K̂, L̂:  mse(e) = eᵀK̂e − 2eᵀL̂ᵀu + uᵀL̂u,  c = Σⱼ uⱼ d̂⁽ʲ⁾,  c̄ the cross-fit\'s mean weights,  uⱼ = wⱼ*/w**;  bias readout D = L̂cf − Σⱼ uⱼ rateⱼ ± 2√((c̄ − c)ᵀK̂(c̄ − c))',
+    balanceAuto: 'balance iff cost̂ = mse(c̄) − mse(c) < 0 on K̂, L̂:  mse(e) = eᵀK̂e − 2eᵀL̂ᵀu + uᵀL̂u,  c = Σⱼ uⱼ d̂⁽ʲ⁾,  c̄ the cross-fit\'s mean weights (c̄ = u, target the exposure-weighted level, when the volumes do not share one shape),  uⱼ = wⱼ*/w**;  bias readout D = L̂cf − Σⱼ uⱼ rateⱼ ± 2√((c̄ − c)ᵀK̂(c̄ − c))',
     balanceCf: 'rateⱼ + D,  D = L̂cf − Σᵢ wᵢ* rateᵢ/w**,  L̂cf = Σₛ πₛ Σᵢ c̄ᵢ⁽ˢ⁾ Xᵢₛ,  c̄⁽ˢ⁾ = Σⱼ (wⱼ*/w**) d̂⁽ʲ⁾ from the pooled BLUP fitted without year s',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
     grpPairs: 'P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ²ᵢᵢρᵢᵢ^ + σ²ⱼⱼρⱼⱼ^ − 2σ²ᵢⱼρᵢⱼ^) for i < j (eq. (39) estimates), E P̂ᵢⱼ = 2λ + 2φτ²·[different groups], λ = (1 − φ)τ²',
@@ -1584,28 +1592,33 @@
    */
   function balanceAuto(f, data) {
     const cf = crossFitLevel(data), W = weightsOf(f);
-    if (!cf || !W || !f.K || !(f.tau2 >= 0)) {
+    if (!W || !f.K || !(f.tau2 >= 0)) {
       const b = balanceFit(f, data, { target: 'crossFit' });
       return Object.assign(b, { balanceAuto: { on: true, available: false } });
     }
-    const { wt } = cohortMeans(data), wall = sum(wt), u = wt.map((x) => x / wall), J = u.length, K = f.K;
+    const { wt, m } = cohortMeans(data), wall = sum(wt), u = wt.map((x) => x / wall), J = u.length, K = f.K;
+    // The target: the cross-fitted level when the regions' volumes share one shape (crossFitLevel), else the
+    // exposure-weighted level uᵀμ̂ (any volumes, S79); both are aᵀμ̂ with Σ aᵢ = 1, as balance_cost_portLin needs.
+    const tgt = cf ? { a: cf.cbar, level: cf.level, name: 'cross-fitted level', opts: { target: 'crossFit' } }
+      : { a: u, level: sum(m.map((x, j) => u[j] * x)), name: 'exposure-weighted level', opts: { target: 'exposure' } };
     const L = f.L || K.map((row, i) => row.map((_, k) => (i === k ? f.tau2 : 0)));
     const Ltu = u.map((_, i) => sum(u.map((x, j) => x * L[j][i]))), uLu = sum(u.map((x, i) => x * Ltu[i]));
     const quad = (d) => { let q = 0; for (let i = 0; i < J; i++) for (let k = 0; k < J; k++) q += d[i] * K[i][k] * d[k]; return q; };
     const mse = (d) => quad(d) - 2 * sum(d.map((x, i) => x * Ltu[i])) + uLu;
     const c = new Array(J).fill(0);
     W.forEach((d, j) => d.forEach((x, i) => { c[i] += u[j] * x; }));
-    const a = cf.cbar, mc = mse(c), cost = mse(a) - mc;
-    const D = cf.level - sum(f.rates.map((x, j) => u[j] * x)), seD = Math.sqrt(Math.max(quad(a.map((x, i) => x - c[i])), 0));
+    const a = tgt.a, mc = mse(c), cost = mse(a) - mc;
+    const D = tgt.level - sum(f.rates.map((x, j) => u[j] * x)), seD = Math.sqrt(Math.max(quad(a.map((x, i) => x - c[i])), 0));
     const fitMse = sum(W.map((d, j) => u[j] * linMseL(K, L, j, d)));
-    const on = cost < 0, rel = fitMse > 0 ? cost / fitMse : 0;
-    const info = { on, available: true, cost, rel, D, seD, portMse: mc };
+    const on = cost < -1e-9 * Math.max(mc, 1e-300), rel = fitMse > 0 ? cost / fitMse : 0;   // a tie (c = a, e.g. a blend balanced on exposures by construction) is left as fitted
+    const info = { on, available: true, target: cf ? 'crossFit' : 'exposure', cost, rel, D, seD, portMse: mc };
     const pc = (x) => `${x >= 0 ? '+' : '−'}${(100 * Math.abs(x)).toFixed(2)}%`, rt = (x) => `${(100 * Math.sqrt(Math.max(x, 0))).toFixed(2)}%`;
     info.errTarget = Math.sqrt(Math.max(mc + cost, 0)); info.errFit = Math.sqrt(Math.max(mc, 0));
-    const note = `typical error for the portfolio level on K̂: cross-fitted level ${rt(mc + cost)}, the fit's own ${rt(mc)} of the tariff, so ${on ? 'balanced (the cross-fitted level is the better estimate)' : 'left unbalanced (its own level is the better estimate)'}; `
-      + `bias readout: the unbalanced rates sit ${(100 * Math.abs(D)).toFixed(2)}% ${D > 0 ? 'below' : 'above'} the cross-fitted level, ± ${(200 * seD).toFixed(2)}% (2 SE), `
+    const note = `typical error for the portfolio level on K̂: ${tgt.name} ${rt(mc + cost)}, the fit's own ${rt(mc)} of the tariff, so ${on ? `balanced (the ${tgt.name} is the better estimate)` : 'left unbalanced (its own level is the better estimate)'}; `
+      + (cf ? '' : 'no cross-fitted level: the regions’ volumes do not share one shape over the years, so it is not a linear function of the region means (S79); ')
+      + `bias readout: the unbalanced rates sit ${(100 * Math.abs(D)).toFixed(2)}% ${D > 0 ? 'below' : 'above'} the ${tgt.name}, ± ${(200 * seD).toFixed(2)}% (2 SE), `
       + `an estimate of the raw portfolio's ${D > 0 ? 'under' : 'over'}-pricing${on ? ' (removed by the shift)' : ' (kept: removing it would add more error than it saves)'}. Studies S76: regret at most 6.9 points of the floor against 205.6 for always balancing`;
-    const base = on ? balanceFit(f, data, { target: 'crossFit' }) : Object.assign({}, f);
+    const base = on ? balanceFit(f, data, tgt.opts) : Object.assign({}, f);
     const step = Object.assign({}, BALANCE_AUTO_STEP, { values: [rel, D], note: note + '. ' + BALANCE_AUTO_STEP.note });
     const steps = (on ? base.steps.slice(0, -1) : (f.steps || [])).concat([step]);
     return Object.assign(base, { steps, balanceAuto: info });

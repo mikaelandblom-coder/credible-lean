@@ -173,6 +173,9 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       <input type="checkbox" id="f-ordered"><label for="f-ordered">Decays with distance <span class="sub">(regions in an order, e.g. age bands: correlation ρ^|i−j|; try the fit “corr taper”)</span></label>
     </div>
     <div class="feature">
+      <input type="checkbox" id="f-vol"><label for="f-vol">Volumes vary by year <span class="sub">(each region its own growth, SD 5% a year, and ±20% noise from year to year, as in real portfolios; off: every region grows by the same 3%, so the volumes share one shape and Σ̂ is positive semidefinite by construction, S78)</span></label>
+    </div>
+    <div class="feature">
       <input type="checkbox" id="f-normal"><label for="f-normal">Normal noise <span class="sub">(instead of skewed gamma levels and noise; the model only fixes two moments)</span></label>
     </div>
     <div class="feature">
@@ -418,6 +421,11 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
   };
   showLomax();
   $('s-sigma').addEventListener('input', showLomax);
+  $('f-vol').addEventListener('change', (e) => {
+    state.volNoise = e.target.checked ? 0.2 : 0;
+    state.volTrend = e.target.checked ? 0.05 : 0;
+    update();
+  });
   $('f-normal').addEventListener('change', (e) => {
     state.normal = e.target.checked;
     if (state.normal && lomaxBox.checked) { lomaxBox.checked = false; state.lomaxOn = false; showLomax(); }
@@ -624,9 +632,9 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       const b = f.balanceAuto, nm = esc(E.MODELS[id].short || E.MODELS[id].name);
       if (E.MODELS[id].balanced) return `${nm}: balanced on exposures by construction.`;
       if (!b) return '';
-      if (!b.available) return `${nm}: rule not available (no linear weights or no cross-fitted level), balanced.`;
-      const p = (x) => (100 * x).toFixed(2) + '%';
-      return `${nm}: ${b.on ? '<b>balanced</b>' : '<b>left unbalanced</b>'}: typical error for the portfolio level, cross-fitted ${p(b.errTarget)} against its own ${p(b.errFit)}. `
+      if (!b.available) return `${nm}: rule not available (no linear weights), balanced.`;
+      const p = (x) => (100 * x).toFixed(2) + '%', tn = b.target === 'exposure' ? 'exposure-weighted (no cross-fitted level: the volumes do not share one shape over the years)' : 'cross-fitted';
+      return `${nm}: ${b.on ? '<b>balanced</b>' : '<b>left unbalanced</b>'}: typical error for the portfolio level, ${tn} ${p(b.errTarget)} against its own ${p(b.errFit)}. `
         + `Estimated ${b.D > 0 ? 'under' : 'over'}-pricing of the unbalanced portfolio ${p(Math.abs(b.D))} ± ${p(2 * b.seD)} (2 SE)${b.on ? ', removed' : ', kept'}.`;
     };
     const ids = [...new Set([state.fit, state.ref])], fs = { [state.fit]: fit, [state.ref]: ref };
