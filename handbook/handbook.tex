@@ -621,6 +621,7 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
 \use Unbiased for the actual expectation, for any distribution with these moments (Result~\ref{res:integral_quad}).
 \begin{caveat}
   $T \ge 2$, $J \ge 2$. $\widehat{\tau^2}$ can be negative and the table indefinite: truncate and repair (Result~\ref{res:damped}).
+  With volumes of different shapes over the years and $T = 3 < J$ even the noise table $\hat\Sigma$ is not positive semidefinite: build $\hat K$ on its nearest PSD table $\hat\Sigma^+$ (negative eigenvalues set to 0, never further from the true $\Sigma$; Result~\ref{res:valid_tables}) and keep $\hat\Sigma$ for $\widehat{\tau^2}$ (study S78).
 \end{caveat}
 
 \begin{result}[One common covariance or correlation]\label{res:pooled}
@@ -770,6 +771,25 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
 \use Judge a fit by $E B^2$. Quote a fitted error as typical for data sets like yours, not as an interval for this one.
 \begin{caveat}
   Normal or symmetric noise only; with skewed claims the cross term has either sign.
+\end{caveat}
+
+\begin{result}[The best predictor's price over the blend on the same fit]\label{res:blupPrice}
+  Fit $K' = K + \varepsilon\Delta K$, $L' = L + \varepsilon\Delta L$, and let
+  $Qr = K^{-1}r - (\mathbf 1^\top K^{-1}r)\,b$ (the zero-sum solve). As $\varepsilon \to 0$ the weight part
+  $E B^2/\varepsilon^2$ of Result~\ref{res:plugIn} tends to
+  \[
+    \text{best predictor: } r^\top Q r,\ r = \Delta L_j - \Delta K d^*; \qquad
+    \text{blend: } \Delta z^2\,\mathrm{gap} - 2\Delta z(1 - z)(e_j - b)^\top\Delta K b + (1 - z)^2(\Delta K b)^\top Q(\Delta K b),
+  \]
+  with $\mathrm{gap} = K_{jj} - s^2 = (e_j - b)^\top K (e_j - b)$ and $\Delta z$ the derivative of the fitted $z$ along the fit.
+  \lean{Credibility.Core.blupWeight_sub_eq}
+  \lean{Credibility.Core.blendWeight_sub_eq}
+  \lean{Credibility.Core.tendsto_blupPrice}
+  \lean{Credibility.Core.tendsto_blendPrice}
+\end{result}
+\use The best predictor reads the fit through the whole vector $\Delta K d^*$, the blend only through $\Delta z$ and $\Delta K b$: with unequal noise variances its price can be several times its gain (study S73).
+\begin{caveat}
+  Neither price is always lower, and this is the weight part only: under skewed noise the cross term $2E[AB]$ can offset it (study S74).
 \end{caveat}
 
 \begin{result}[Part way from the fitted blend to the fitted best predictor]\label{res:plugIn_mix}
@@ -1206,11 +1226,15 @@ centred, of unit variance. So $\cov(\mu_i, \mu_j) = \alpha^2[\text{same row}] +
   minus the same cross term.
   \lean{Credibility.Model.anovaStat_grand_unbiasedX}
   \lean{Credibility.Model.anovaStat_grand_unbiasedX_of_uncorr}
+  In a $2\times 2$ table each variance $\theta \in \{\alpha^2, \beta^2, \gamma^2\}$ has one degree of
+  freedom: every quadratic estimate free of the common mean and unbiased for $\theta$ has Gaussian
+  variance at least $2\theta^2$, at any volume and noise covariance.
+  \lean{Credibility.CrossedSmall.sq_le_trace_cell}
+  \lean{Credibility.CrossedSmall.two_mul_sq_le_variance_cell}
 \end{result}
-\use Any weights work; weights $\propto w_kw_l$ give the analysis-of-variance estimators of crossed-classification credibility.
+\use Fit REML on the cell means, started from these pools with inverse-variance pair weights from a first equal-weight pass, clipped at 0 (the app's default, studies S70--S71); weights $\propto w_kw_l$ give the ANOVA estimators of crossed-classification credibility.
 \begin{caveat}
-  Dannenburg's ANOVA estimators assume noise uncorrelated across cells; with correlation $\rho$ they understate $\beta^2 + \gamma^2$ by $\rho$ times a cell's noise variance (Finding 42).
-  Each class needs a pair; in a $2\times 2$ table there are two per class, so the estimates are very noisy and can be negative.
+  Dannenburg's ANOVA estimators miss the noise cross term (Finding 42). In a $2\times 2$ table the standard deviation is at least $\sqrt 2$ times the value at any volume (Finding 44); with weak effects the thesis fit wins, and data-driven pair weights are only nearly unbiased.
 \end{caveat}
 
 \begin{result}[The best pool within a class]\label{res:crossed_pool}

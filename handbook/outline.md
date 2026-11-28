@@ -26,46 +26,6 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
-- [ ] Nearest PSD `Σ̂⁺` (2026-11-28, S78, `ConeProjection.existsUnique_proj_posSemidef`): in the full-`K̂` result a
-  "watch out": with volumes of different shapes and `T = 3 < J`, eq. (37)'s `Σ̂` is not PSD; build `K̂` on `Σ̂⁺`
-  (clip negative eigenvalues), keep `Σ̂` for `τ̂²`. With one volume shape `Σ̂` is PSD (S78, not yet in Lean).
-- [ ] The BLUP's price over the blend (2026-11-27, Finding 45, `Core.tendsto_blupPrice`, `tendsto_blendPrice`): a result
-  next to the plug-in MSE with both first-order prices, "watch out": weight part only, the cross term can offset it (S74).
-- [ ] Small crossed tables (2026-11-27, Finding 44, `CrossedSmall.sq_le_trace_cell`): in `res:crossed_est` a "watch out":
-  a 2×2 table gives each variance one degree of freedom, SD ≥ √2·value at any volume; REML on the cell means (S70).
-- [ ] Crossed fit recipe (2026-11-26, `studies/runs/crossed-fit.js`): in `res:crossed_est`, a "use it" line:
-  pair weights by inverse variance from a first equal-weight pass, clip at 0; "watch out": with weak effects
-  the thesis fit wins (three noisy variances), and data-driven weights are only nearly unbiased.
-  *Update 2026-11-27 (S71):* the app's crossed default is now REML on the cell means started from those pools
-  (not proved); the "use it" line should name it, the pools as its start.
-- *Done 2026-11-26:* `res:blup_residual` after `res:blup` (GLS mean plus predicted residuals, the
-  blend as the row `z eⱼ`, `(1−θ)²`), `res:blup_gauge` (2026-11-27: zero-sum row, least `K`-norm), `res:plugIn_mix` after `res:plugIn` (fitted path, `θ*`), `res:plugIn_proxy` (`θ` on a held-out
-  year, its exact bias, clipping), `res:heldOut_price` (2026-11-27: the price `ΔᵀWΣWΔ/ΔᵀWΔ`, S64 target 1),
-  `res:heldOut_bias` (2026-11-27: the factor model's held-out bias, S64 target 2).
-- *Done 2026-11-26:* `res:crossed_pool` after `res:crossed_est`: Var of a pair pool = aᵀVa, GLS on V is the
-  best unbiased pool, equal weights exactly optimal in a balanced table, the normal-noise diagonal
-  2(θ + nₚ)² and the two limits of inverse variance.
-- *Done 2026-11-26:* cross-fitted rate's bias (`integral_crossFit_sub`) as a line in `res:randomWeights`.
-- *Done 2026-11-26:* subsection "Crossed levels" in §9 (groups): `res:crossed` (K ≻ 0, mixed form,
-  Henderson, β² = 0 is `res:groups`), `res:crossed_balanced` (three factors, the blend's excess per
-  layer), `res:crossed_missing` (a cell without data, 2×2), `res:crossed_balanced` also has the best common `z̄`, the predictor's total error and
-  equicorrelated noise (σ²(1−ρ)); `res:crossed_est` (pair estimators of
-  `α², β², γ²`, the ANOVA identity); moment layer links (`NoiseX`, true MSE, existence iff ρ ⪰ 0).
-- *Done 2026-11-26:* Finding 42 (crossed ANOVA estimators miss the noise cross term) in the
-  appendix and in `res:crossed_est` (rows, grand mean: Goulet's (67)–(69), two-way).
-- *Done 2026-11-25:* Appendix "Findings" (all 41, one line each, counterexamples included, with Lean
-  links); every Lean name the paper used is now linked from a handbook entry. New finding → add its
-  line there in the same commit.
-- *Done 2026-11-25:* Finding 41 "watch out" in `res:blend_intervals` (common `τ²` keeps intervals,
-  a `τ²` per group makes an outlier bin, number of groups by gain against price); the normal-noise
-  "why" sentence in `res:blup` (`knownMeanPred_mse_le_of_normal`).
-- *Done 2026-11-25 (later):* OBP collective mean "watch out" at `res:bs` (study S59–S62: don't use it; a volume
-  trend as a design column instead), and a line in the Finding 41 caveat: never cut sorted estimates by SURE (S61).
-- *Done 2026-11-25 (review):* `res:varQuad` (variance of a quadratic estimator: cumulants,
-  independent sources, sample covariance, variance function), `res:givenLevel` (error given the
-  level, SURE, the OBP collective mean, moved out of `res:bs`), the recipe (§ Estimating), the
-  damping rule on the correlation scale (`res:bestTheta`), aggregation and recency (`res:blup`),
-  first-order skew bias (`res:randomWeights`), typical error (`res:plugIn`), the worked example.
 - Still open from the old list: exact Var/Cov of `P`, `Qn`, `B` and the Finding 37 watch-out, if the
   gain-against-price entry ever needs them; the noise-shape watch-out (slope of `log σ̂ⱼ²` on
   `log μ̂ⱼ` biased up under skew; cross-fit) once the app's skew step is settled.
