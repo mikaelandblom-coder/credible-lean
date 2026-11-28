@@ -167,100 +167,74 @@ a recipe from data.
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs, one GLS pass; groups or none on held-out years (fit "BLUP groups", 2026-11-27) | `phiTauPooled_unbiasedG`, best weights `phiTauPool_blue_optimal`, choice `CrossFit.integral_heldOutScore_sub` | the GLS pass with plug-in `V̂` (λ̂ 20–40% high) |
 | `z > 1`, negative `b` | clip (thesis eq. (34)) | diagnosis only; clipping harmless iff true `z ∈ [0, 1]` (`errVar_clipZ_le_iff`) | estimated `ẑ` (G3) |
-| Choosing cohorts | not yet: the rules need the true levels or the true `d` | `merge_iff`, `pool_optimal_contiguous` | G5; not in the first version |
+| Choosing cohorts | not yet: needs a held-out study first | `merge_iff`, `pool_optimal_contiguous`, `CrossFit.integral_heldOutScore` | G5 (steps 7–8 below) |
 
 Known-parameter results (optimal `z`, GLS weights, true MSE) appear only as
 the floor line and in the tests.
 
-**Gaps: candidate theorems**, in the order the app needs them:
+**Gaps: candidate theorems.** Closed gaps are one line each (details in the
+commit log, `FINDINGS.md` and the blueprint); open ones carry the plan to
+close them (agreed with the owner 2026-11-28), in the order of work below.
 
-- **G0. The classical BS `τ̂²`** of eq. (13) is unbiased when `ρ = 0`.
-  The Lean `tauHat_unbiased` is the thesis estimator (39)–(41), which uses
-  all pairs `ĉⱼ`; the app's BS fit uses eq. (13) and shows it as "not
-  proved yet". The Node test checks it by simulation only. Probably easy.
-  *Proved 2026-11-15 (`Model.tauHatBS_unbiased`, with the `1/J` of Finding 7):
-  for uncorrelated cohorts with a common `σ`, it differs from (39) by a term
-  with expectation 0. The app's BS `τ̂²` step now shows "proved".*
+*Closed:*
+- **G0. Classical BS `τ̂²`** (eq. 13) unbiased when `ρ = 0`: `Model.tauHatBS_unbiased` (2026-11-15).
+- **G4. Pooled pair estimator of `φτ²`**: unbiased for any weights (`Model.phiTauPooled_unbiasedG`),
+  best weights by Gauss–Markov (`Model.phiTauPool_blue_optimal`, `GroupPoolWeights.lean`); plug-in GLS
+  pass in the app's step 4 (S69).
+- **G6. Forecasting**: same `z`, MSE + next year's noise (`Core.Estimates.mse_forecast`,
+  `bestZ_forecast_optimal`); the app's premium step.
+- **G7. Balance under correlation**: best balanced blend and best correction (`Core.bestBalanced_optimal`,
+  `bestCorrection_optimal`, `commonShift_optimal`; Findings 15–16); the app keeps the common shift
+  (`balance: 'auto'`, `BalanceCost.lean`, Finding 46).
 
-- **G1. One common covariance.** The average of the pairwise estimators
-  (39) is unbiased for a common `c`. One extra parameter on top of BS;
-  probably the most practical form of the thesis model. *Numerical study
-  2026-11-14 (`studies/LOG.md`): with unequal volumes a common
-  covariance is misspecified and its z explode; a common **correlation**
-  `Σᵢⱼ = ρ̄√(ΣᵢᵢΣⱼⱼ)` is the better one-parameter model (H1 there).*
-  *Proved 2026-11-22 (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`;
-  `Model` twins): `E Qᵢⱼ = σᵢσⱼρᵢⱼ(nᵢⱼ + Sᵢⱼ²/(wᵢ*wⱼ*))` (`nᵢⱼ = T − 2`), so the average `ĉ`
-  is unbiased for a common covariance and the pooled `ρ̂` with the **true** `σⱼ` in its
-  denominator for a common correlation. App badges for `ĉ` and `ρ̂` now "proved". Still open:
-  `ρ̂` with `σ̃ⱼ` plugged in (a ratio), `Wⱼ`, `β²` (fourth moments). `ĉⱼ`, `τ̂²` on the common
-  `ĉ`: proved the same day (`cHatCommon_unbiased`, `tauHatCommon_unbiased`), badges "proved".*
-- **G4. Pooled pair estimator of `φτ²`**, unbiased for any weights.
-  *Proved 2026-11-22 (`Model.phiTauPooled_unbiasedG`): weights summing to one on the pairs
-  across groups and on the pairs within groups, any choice (e.g. `wᵢ*wⱼ*`). Which weights
-  minimise the variance needs fourth moments (open). The app has no group fit yet, so no badge.*
-  *Best weights proved 2026-11-27 (`Model.phiTauPool_blue_optimal`, `GroupPoolWeights.lean`): the unbiased
-  pools are exactly those with `Σ b = 0`, `Σ_across b = ½`; the least-variance one is Gauss–Markov on the
-  pair covariance table `V` with design `(2, 2[across])` (`pairPool_blue_optimal`, any design). Next: the
-  plug-in fit (`V` from a first pass; under normal noise `V` from second moments, `CrossedPoolNormal`) in a
-  study against volume weights and the Bühlmann–Gisler estimators.* *S69 (2026-11-27): one GLS pass from
-  the volume-weighted pools; it matches the true-`V` pool and cuts the SD of `φ̂τ²` by ~18% against volume
-  weights (equal to BG), of `λ̂` by 10–15%. The app's step 4 uses it. Its choice between groups and no groups
-  is the larger decision (S69: ±4–15 points): by held-out score (`CrossFit`), not by in-sample fit.*
-- **G3. Clipping** `z` to `[0, 1]`: when is it harmless?
-  *Proved 2026-11-22 (`BlendMoments.errVar_clipZ_le_iff`, Finding 36): for a fixed `z`, clipping
-  never increases the error iff the best `z*` is in `[0, 1]`; otherwise clipping `z*` costs
-  `Var(μ̂ⱼ − μ̂)·dist(z*, [0, 1])²`. Open: an estimated `ẑ` (the error in a draw is a different
-  parabola). App: the `z > 1` warning now says this; no clip switch added (the app does not clip).*
-- **G2. Damping as shrinkage.** Is there a safe `θ`? *Numerically, the
-  rule `θ̂ = ρ̄²/(ρ̄² + (1−ρ̄²)²/(T−1))` is within 2 points of the best fixed
-  `θ` in 23 of 24 worlds (H2 in `studies/LOG.md`).*
-  *Proved 2026-11-22 for the table loss (`Credibility/Damping.lean`): with means `s` and variances
-  `V` of the off-diagonal estimates, `E Σ(θŝ − s)²` is minimised at `θ* = Σs²/(Σs² + ΣV)` (Ledoit–Wolf
-  / Schäfer–Strimmer intensity), and `θ` beats both `θ = 0` and `θ = 1` iff
-  `|θ − θ*| ≤ min(θ*, 1 − θ*)` (`safe_iff`). The app's rule is the one-entry `θ*` with normal-theory
-  `V` plugged in. Open: the rates' MSE (S12: they want less damping), and `θ̂` with estimated
-  inputs. App: the damping note now names `bestTheta_optimal`; the badge stays (it is about `K̂ ≻ 0`).*
-  *Exact `V` tried 2026-11-23 (`studies/runs/damping-cumulant.js`, S38–S40): `θ*` in covariance form with
-  the proved `Var Σ̂ᵢⱼ` (`variance_sum_mul_lin`, √w weights; `variance_crossResid` for unit weights),
-  κ = 0 or the true shock κ, matches the oracle `θ*` but damps more than S3 and costs up to 11 points
-  at ρ = 0.9 (gamma and Lomax worlds alike; ±2 at ρ ≤ 0.6). App: S3 stays; `thetaRule: 'cov'` is a
-  studies option. No `κ̂₄` for G2. *Correlation scale done 2026-11-23 (`studies/runs/damping-corr-exact.js`,
-  S41–S42): the exact delta-method `Var r̂ᵢⱼ` with κ = 0 is S3; with the true cumulants θ̂ moves by
-  ≤ 0.05 and the MSE by ≤ 1 point; with infinite kurtosis (Lomax α = 3) it gives θ̂ = 0 and costs up to
-  40 points. S3 stays; the κ̂₄ question is closed for G2.*
-- **G6. Forecasting.** The same `z` is optimal for next year's outcome
-  (MSE grows by next year's noise). Then the app can show a premium, not
-  only a level.
-  *Proved 2026-11-15 (`Core.Estimates.mse_forecast`, `bestZ_forecast_optimal`):
-  for `Yⱼ = μⱼ + εⱼ` with fresh noise uncorrelated with the estimates and the
-  level, MSE = level MSE + `Var(εⱼ)`, and `zⱼ` stays optimal. App: add a
-  **premium step** after the blend: premium `= μ̂ⱼᵇ` (no change to `z`), its
-  forecast error `= MSE + σ̂ⱼ²/wⱼ,next` with next year's volume `wⱼ,next` (a
-  new input, default this year's mean `wⱼ*/T`), badge "proved"; the floor line
-  compares with the world's actual next-year draw.* *App step added 2026-11-15: `Engine.premium`
-  (plug-in level MSE, or the jackknife MSEP for corrBS, plus `σ̂ⱼ²/wⱼ,next`), a slider
-  for next year's volume (× `wⱼ*/T`), next-year columns in the draw table, and a
-  line under Many draws comparing fit, reference and floor with the world's
-  next-year outcome and the floor's theory; Node test: the simulated next-year
-  error matches `floorForecast` per region.*
-- **G7. Balance** under correlation: the best balanced blend. *Proved
-  2026-11-15 (`Core.bestBalanced_optimal`, true MSE
-  `Estimates.bestBalanced_mse_optimal`, Finding 15): keeping `b`, the
-  balanced blends are `zⱼ = 1 − c·bⱼ/uⱼ` and the best `c` is a weighted least
-  squares fit. But it is a poor way to balance (up to 2× the floor's error in
-  `studies/runs/vc-balance.js`, column `opt`), so the app gets no switch for it:
-  its balance step stays the common shift. Next candidate (G7b): the
-  shift `μ̂ⱼᵇ + Σuᵢ(μ̂ᵢ − μ̂ᵢᵇ)/u*` is the best balanced correction of the
-  form "blend plus a common linear term" (Wang–Fuller–Qu with loss weights
-  `φ = u`), likely by the same parabola argument.* *G7b proved 2026-11-15
-  (`Core.bestCorrection_optimal`, `commonShift_optimal`, true MSE
-  `Estimates.bestCorrection_mse_optimal`, `commonShift_mse_optimal(_of_diag)`,
-  Finding 16): the best correction `μ̂ⱼᵇ + cⱼD` has a closed form (WFQ). It is
-  the common shift exactly when `cov(μ̂ⱼᵇ − μⱼ, D)` is the same for all `j`.
-  That always holds for independent cohorts, but not under correlation,
-  where the shift loses at most about 2% in random worlds. The app keeps the
-  shift; no switch.*
-- **G5. Decisions from data** (merging, choosing cohorts). Hardest, last.
+*Partly closed* (what is proved):
+- **G1.** `ĉ`, `ĉⱼ`, `τ̂²` on the common `ĉ`, and `ρ̂` with the **true** `σⱼ` are unbiased
+  (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`, `cHatCommon_unbiased`,
+  `tauHatCommon_unbiased`). Open: `Wⱼ`, `β²`, `σ̃ⱼ²`, `ρ̂` with `σ̃ⱼ` plugged in, `τ̂²` on the common-ρ `Σ̂`.
+- **G2.** `θ* = Σs²/(Σs² + ΣV)` optimal for the table loss, safe range `safe_iff` (`Damping.lean`);
+  exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays). Open: `K̂ ≻ 0` by theorem when `Σ̂` is not PSD,
+  the rates' MSE.
+- **G3.** For a fixed `z`, clipping is harmless iff `z* ∈ [0, 1]` (`BlendMoments.errVar_clipZ_le_iff`,
+  Finding 36). Open: an estimated `ẑ`.
+- **G5.** The math of the choice is in place: `Merging.merge_iff`, intervals are optimal
+  (`KMeansBridge.lean`: `pool_optimal_contiguous`, `group_optimal_contiguous`, Finding 41), held-out scoring
+  (`CrossFit.integral_heldOutScore(_sub)`, winner's curse `integral_min_score_le`), never merge by the
+  observed gap (`PreTestNormal`, Finding 43). Open: a study and the app step.
+
+*Plan, in order of work* (each step about one chat; env = cloud environment):
+
+1. **G2a. `K̂ ≻ 0` always by theorem** (Default env: app). Project `Σ̂` onto the PSD cone first
+   (`ConeProjection`), so `posDef_shrinkOffDiag` / `posDef_distTaper_hadamard` always apply and the
+   damped and tapered `K̂` badges turn "proved". Engine change, Node test; a small study if the
+   projection moves the MSE. *Who:* anyone fitting a full `K̂`. *Common:* yes, `Σ̂` is often not PSD
+   with small `J`. *General:* yes.
+2. **G1a. `E Wⱼ` exactly** (lean env). `Wⱼ` (`F.vcW`) is quadratic in the squared residuals, so its
+   mean is fourth order: `Cumulants.variance_quad_of_cumulants`, independent years. Expected: biased
+   at order `1/T²` because `uⱼₜ` uses `μ̂ⱼ`; then a Finding with the exact term, and a corrected `Wⱼ`
+   if cheap. *Who:* every corrBS fit (the app's default reference). *Common:* every portfolio.
+   *General:* yes.
+3. **G1b. `β²` and `σ̃ⱼ²`** (lean env). The `σ̂ⱼ²` are observations of random `σⱼ²` with noise
+   variance `Wⱼ`: `β²` is BS's `τ̂²` one level up, a corollary of the existing unbiasedness proof given
+   step 2, not a new proof. `σ̃ⱼ²` is then `bestZ` on those moments: badge "proved, given `W`, `β²`".
+4. **G1c. `ρ̂` with `σ̃ⱼ` plugged in** (lean env, then a study). A ratio is never exactly unbiased:
+   the target is its first-order bias (the pattern of `BlupPrice`, `FitCrossTerm`), a Finding with the
+   leading term, and a bias-corrected `ρ̂` if the term is large in the app's worlds. `τ̂²` on the
+   common-ρ `Σ̂` inherits it (first order).
+5. **G3b. Clipping an estimated `ẑ`** (lean env). If `ẑ` is independent of the cohort's data
+   (cross-fitted, held out): condition on `ẑ` and apply `errVar_clipZ_le_iff`, a clean theorem. If `ẑ`
+   is fitted in sample: a study looking for a counterexample, logged as a Finding if one turns up.
+   *Who:* anyone clipping `z > 1`. *Common:* short histories. *General:* yes for the cross-fitted case.
+6. **G2b. Damping for the rates' MSE** (*exploration*; study first). S12: the rates want less damping
+   than S3. Does any first-order `θ*` for the rates' loss beat S3 by more than 2 points? If not, park
+   it with that result.
+7. **G5a. Study: cross-fitted cut against one group** (Default env; next free S number): S61's worlds,
+   `T = 3–5` included, the chosen cut's error from an outer fold (the Pending item "Grouping cohorts").
+8. **G5b. App step "group the cohorts"** if step 7 wins: cuts of the sorted estimates by DP, the cut
+   by held-out score, one group as reference. No new Lean.
+
+Not planned: the jackknife MSEP of corrBS stays numerical (labelled so in the app).
+After each step: update its gap above, the app badge (`gap:` in `engine.js`) and the documents as in
+`CLAUDE.md` ("When you close a `sorry` or log a finding").
 
 The app itself decides the priority: a gap that makes no visible
 difference on the screen is dropped.
