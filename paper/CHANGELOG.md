@@ -12,6 +12,7 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-28
+- New: a reference list (before the appendices), so the PDF stands alone; unchecked titles are marked as such.
 - §1.1, §5, §6: what is proved is stated exactly: "every result the paper calls proved"; for the app's fit,
   `K̂ ≻ 0`, the blend and the pooled `ρ̂` (true `σⱼ`) are proved, the credibility-weighted variances are not; the
   moment layer's unbiasedness covers the thesis's estimators, not ratios of them (second external review).
