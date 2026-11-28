@@ -195,7 +195,7 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
   exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays); `K̂ ≻ 0` by theorem in every draw (step 1, done).
   Open: the rates' MSE.
 - **G3.** For a fixed `z`, clipping is harmless iff `z* ∈ [0, 1]` (`BlendMoments.errVar_clipZ_le_iff`,
-  Finding 36); the same for a held-out `ẑ` (`integral_sq_blend_clip_le_iff`); in sample no counterexample (S83).
+  Finding 36); the same for a held-out `ẑ` (`integral_sq_blend_clip_le_iff`); `z*` is unknown, so the app keeps `ẑ` (S83).
 - **G5.** The math of the choice is in place: `Merging.merge_iff`, intervals are optimal
   (`KMeansBridge.lean`: `pool_optimal_contiguous`, `group_optimal_contiguous`, Finding 41), held-out scoring
   (`CrossFit.integral_heldOutScore(_sub)`, winner's curse `integral_min_score_le`), never merge by the
@@ -219,8 +219,9 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
    S81): `ρ̂` is biased up (+0.06 to +0.13) through σ̃'s low level, which is exact and pointwise; neither `ρ̂` from
    the own σ̂ⱼ nor a rescaled σ̃ helps the rates, so no app change. `τ̂²` on the common-ρ `Σ̂` not pursued (same reason).
 5. **G3b. Clipping an estimated `ẑ`** — *Done 2026-11-28* (`ClipHeldOut.lean`, S83): a held-out `ẑ` can be clipped
-   safely iff `z* ∈ [0, 1]` (`integral_sq_blend_clip_le_iff`); in sample no counterexample, and the stakes are ≤ 0.2
-   points of the floor in the app's worlds, so the app's "z > 1" warning stays as it is (no clipping step needed).
+   safely iff `z* ∈ [0, 1]` (`integral_sq_blend_clip_le_iff`), but `z*` is unknown and a true `z* > 1` makes clipping
+   costly (+30% in Finding 36's two-cohort example); in sample clipping can hurt slightly even with `z* ∈ [0, 1]` (S83).
+   The app keeps `ẑ` and warns; a held-out "clip or keep" choice is in Pending.
 6. **G2b. Damping for the rates' MSE** (*exploration*; study first). S12: the rates want less damping
    than S3. Does any first-order `θ*` for the rates' loss beat S3 by more than 2 points? If not, park
    it with that result.
@@ -340,6 +341,11 @@ One chat per step; none needs Lean except step 5.
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
 Finished items are in `studies/PLAN-done.md`.
+- [ ] Clip or keep `ẑ`, chosen on held-out years (2026-11-28, owner: "in real life you don't know if the true z is in
+  [0, 1]"; Finding 36, S83). Score corrBS with `ẑⱼ` kept against `ẑⱼ` clipped by the leave-one-year-out score
+  (`CrossFit.integral_heldOutScore`, unbiased for any rule) and show it beside the "z > 1" warning. First a study
+  in worlds that can put z* well above 1 (a quiet region beside noisier correlated ones; the app's worlds reach only
+  1.01): does the held-out choice keep clipping's small gain where z* ∈ [0, 1] and avoid its large loss where z* > 1?
 - [ ] Finding 49 (2026-11-28): the app's Bühlmann–Straub fit on correlated worlds has `E τ̂² = τ² − c̄`; a line in
   its message ("BS also lowers τ²") once a study checks the size of `c̄` against `τ²` in the app's worlds.
 - [ ] Realistic volumes (2026-11-28, S79; owner: "in reality the weights are noisy and not always trending"). The world

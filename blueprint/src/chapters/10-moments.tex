@@ -449,10 +449,12 @@ these two covariances.
   A constant $\hat z$ is independent of everything; Theorem~\ref{thm:clipZ}.
 \end{proof}
 
-\begin{remark}[An in-sample $\hat z$ (study S83)]
-  An in-sample $\hat z$ depends on the same data, so the theorems above do not apply. In the app's worlds
-  (corrBS, 54 worlds, 1000 draws) $\hat z$ leaves $[0, 1]$ in up to 93\% of draws, but only slightly: clipping it
-  never raises the error beyond 2 SE and moves it by at most $0.2$ points of the floor. No counterexample.
+\begin{remark}[The condition cannot be checked, and an in-sample $\hat z$ (Finding 36, study S83)]
+  $z^*$ is unknown. When it is outside $[0, 1]$ clipping can cost a lot: two cohorts with $\tau^2 = 4$,
+  $\sigma_1 = 1$, $\sigma_2 = 3$, $\rho = 0.9$ give $z_1^* = 1.74$ and clipping raises the error by $30\%$. An in-sample
+  $\hat z$ depends on the same data, so the theorems above do not apply: in extreme worlds of study S83 clipping it
+  hurts slightly (at most $0.1$ points of the floor) although every $z^*$ is in $[0, 1]$. The app keeps $\hat z$; a
+  held-out score of ``clip'' against ``keep'' decides from data.
 \end{remark}
 
 \begin{theorem}[GLS weights in true variance]\label{thm:Core_weights_true}

@@ -612,9 +612,15 @@ Gaps, extra hypotheses and new results found while formalizing.
    singularity iff `σ₁ < σ₂ρ` (Finding 3), and `z₁* < 0` past it (Finding 17): there clipping costs.
    Caveat: this is for a fixed `z` against the true error curve. *Extended 2026-11-28 (G3b):* for an estimated
    `ẑ` independent of the cohort's data (held out, cross-fitted) the same iff holds on average
-   (`ClipHeldOut.integral_sq_blend_clip_le_iff`, since `E err(ẑ) = E errVar(ẑ)`). For an in-sample `ẑ` nothing is
-   claimed; S83 found no counterexample (corrBS, 54 worlds: clipping never hurts beyond 2 SE, |effect| ≤ 0.2
-   points of the floor).
+   (`ClipHeldOut.integral_sq_blend_clip_le_iff`, since `E err(ẑ) = E errVar(ẑ)`). But `z*` is unknown, so the
+   condition cannot be checked, and when it fails clipping can cost a lot: two cohorts, unit volumes, `τ² = 4`,
+   `σ₁ = 1`, `σ₂ = 3`, `ρ = 0.9` give `z₁* = τ²/(τ² + σ₁² − σ₁σ₂ρ) = 1.74` and an error of 0.771 against 1.000 at
+   `z = 1`: clipping costs +30%. For an in-sample `ẑ` the held-out result does not carry over: in S83's extreme
+   worlds (ρ 0.8–0.95, σⱼ spread 2–3) clipping hurts beyond 2 SE in 7 worlds where every `z*` is in [0, 1], by
+   at most 0.1 points of the floor. The app's worlds never put `z*` above 1.01, so they cannot show the large
+   cost either. Practice: the costs are lopsided (not clipping a noisy `ẑ > 1` costs ≤ 0.2 points in S83; clipping
+   a true `z* > 1` costs `g(z* − 1)²`), so the app does not clip and only warns; to decide from data, score
+   "clip" and "keep" on held-out years (`CrossFit.integral_heldOutScore`, unbiased for any rule).
 
 37. **The spread of the means `B` is uncorrelated with `P` and `Qn` only under three conditions (new;
    `studies/LOG.md` S53; Lean: `Cumulants.covariance_statB_eq`, `covariance_statB_eq_zero`,

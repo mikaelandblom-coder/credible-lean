@@ -105,7 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
-| S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ to [0, 1]: never hurts beyond 2 SE in 54 worlds, |effect| ≤ 0.2 points; no counterexample to the held-out theorem |
+| S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ: hurts slightly (≤ 0.1 points) in 7 worlds with every z* in [0, 1]; the app's worlds never reach z* > 1.01, so the large cost (+30%, Finding 36) is unseen there |
 | S82 | `runs/balance-volumes.js` | Volumes that vary by year: the cross-fitted level (any volumes now) removes the under-pricing (−166 → +25 bp); `auto` keeps it where that costs error (σⱼ spread) |
 | S81 | `runs/rho-level.js` | ρ̂ is biased up (+0.06 to +0.13) by σ̃'s low level (0.63–0.97 of σ̂'s, every draw); ρ̂ from own σ̂ or rescaled σ̃: +0.4, +0.3 points, no default change |
 | S80 | `runs/vcw-corr.js` | The corrected Wⱼ (unbiased, Finding 47) fixes Var σ̂ⱼ² and β̂² but worsens corrBS's rates: +4 mean, up to +44 points (T = 3, σⱼ spread 2) |
@@ -1139,8 +1139,11 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
 - S83. *[numerical]* **Clipping an in-sample ẑ** (G3b, conjecture). `ClipHeldOut.integral_sq_blend_clip_le_iff`: a
     held-out `ẑ` can always be clipped when every `z* ∈ [0, 1]`. `runs/clip-insample.js`: corrBS's own `ẑⱼ` against
     the same fit with `ẑⱼ` clipped (b, μ̂ unchanged), regimes app / thesis × σⱼ spread {0, 1, 2} × ρ {0, 0.3, 0.6} ×
-    T {3, 5, 10}, 1000 paired draws. `ẑ` leaves [0, 1] in 0–93% of draws (most with ρ = 0.6 at thesis volume), but by
-    little. In the 41 worlds with every z* in [0, 1], clipping never hurts beyond 2 SE (helps in 13), mean −0.02,
-    max +0.01 points of the floor; in the 13 worlds with some z* slightly above 1 (≤ 1.01) also never. **Consequence.**
-    No counterexample; clipping is irrelevant for the app's rates, so the "z > 1" warning stays and no step is added.
+    T {3, 5, 10}, plus 16 extreme worlds (σⱼ spread {2, 3} × ρ {0.8, 0.95} × T {5, 10}), 1000 paired draws. `ẑ` leaves
+    [0, 1] in 0–96% of draws, but by little. In the 48 worlds with every z* in [0, 1], clipping hurts beyond 2 SE in
+    7 (all extreme: the in-sample counterexample, at most +0.1 points of the floor) and helps in 13. The largest z*
+    in any world is 1.012: the app's worlds (one common shock over 8 regions) never put z* well above 1, even at
+    ρ = 0.95, so they cannot show what clipping costs when z* > 1 (Finding 36's two-cohort example: +30%).
+    **Consequence.** Not "clipping is irrelevant" but: the costs are lopsided, so the app keeps `ẑ` and warns; a
+    held-out "clip or keep" choice is queued (PLAN Pending).
 

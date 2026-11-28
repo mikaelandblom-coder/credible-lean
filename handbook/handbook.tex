@@ -355,7 +355,7 @@ $\rho = \rho_{12}$.
   \lean{Credibility.BlendMoments.errVar_clipZ_bestZ}
   \lean{Credibility.BlendMoments.integral_sq_blend_clip_le_iff}
 \end{result}
-\use Clip only when you believe the true $z$ is in $[0, 1]$; with two cohorts it leaves it exactly as in Result~\ref{res:z1_range}.
+\use $z^*$ is unknown and the costs are lopsided: keeping a noisy $\hat z > 1$ costs little, clipping a true $z^* = 1.74$ costs $30\%$ (two cohorts, Result~\ref{res:z1_range}); don't clip by default, or score clip against keep on held-out years.
 
 \subsection*{Equal covariances, any number of cohorts}
 
@@ -1941,7 +1941,7 @@ which has the details. The paper explains each where it belongs.
   \item[{35. Skewed claims and per-cohort variances under-price (simulated).}] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio, cheapest by a shift to the cross-fitted level (S63).
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
-  \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$. Also for a held-out $\hat z$; in sample no counterexample (S83).
+  \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$. Also for a held-out $\hat z$; not for an in-sample one (S83). $z^*$ is unknown: two cohorts with $z_1^* = 1.74$, clipping costs $+30\%$.
   \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}
   \lean{Credibility.BlendMoments.integral_sq_blend_clip_le}
   \item[{37. The spread of the means is uncorrelated with the pooled variances only under conditions.}] Needs constant means within regions, no skewness, means uncorrelated with residuals, and no kurtosis; $J = T = 2$, unit volumes: $\cov(B, P) = \kappa_4/4$.
