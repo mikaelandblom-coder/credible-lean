@@ -100,8 +100,6 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] From the external review (2026-11-25), still open: the novelty check of the "new here" claims against full
-  texts (literature chat; OpenAlex/Semantic Scholar allowed in Default).
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

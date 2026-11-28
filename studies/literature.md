@@ -1381,6 +1381,73 @@ afterwards (owner's uploads), move nothing more. Still *New here*: the blend's f
 the price of the blend form (18), balance, unequal histories and their pair counts (9), the group
 model with correlated noise (13), the exact price of ignoring correlation (19, 20).
 
+### 10q2. Novelty check, third pass: the remaining "New here" (2026-11-28)
+Paper Pending item from the external review. Method: OpenAlex `title.search`/`cites:` lists and
+abstracts, zbMATH summaries, full texts via `scripts/fetch_paper.sh` (arXiv, SFU). Semantic
+Scholar: metadata works, snippet search still HTTP 429 without a key. Not reachable: iapress.org,
+web.archive.org (connection dropped), publisher sites.
+
+- *Hachemeister with correlated cohorts (paper §8, "Trend lines", said "it is new").* **Prior art
+  found: Poon (2013), ch. 5, read.** Assumption 5.1: `X_iu = Y_iu β_i(Θ_i) + ε_iu`, noise
+  `Cov(ε_iu, ε_jv) = v_ij v_(uv)/√(w_iu w_jv)` (separable: cross-sectional `V_S` times temporal
+  `V_T`), coefficients with any covariance `M_ij`. Thm 5.1: the *inhomogeneous* credibility
+  premium (means `b` known) with credibility matrix `Q = M(M + Y′V⁻¹Y)⁻¹`, forecast for `n + 1`
+  through the design row `Y_(n+1)` and its MSE matrix (5.5). No homogeneous version, no
+  estimators in that chapter, no blend form. **Moved in the paper:** §8 now credits Poon for the
+  predictor with the collective line known; ours (`CoreVector`) estimates it (matrix GLS) and
+  keeps the matrix blend; §9 lists it under *Used*. `res:vecForecast` (any horizon is a `c`) is
+  the standard mixed-model fact (§10w), unchanged.
+- *Schnapp et al. (2000), CAS Forum.* Not fetched; Poon (2013, §1.1.1) summarises it in full:
+  MPCI ratemaking, `X_iu = m + R_i + Q_iu` with `R` and `Q` isotropic stationary spatial fields,
+  the full linear predictor from normal equations, no estimation. Nothing beyond what §10q says.
+- *The "equal correlation over risks" line.* Wen & Deng (2011), JSSC 24(3), 532–539 (zbMATH Zbl
+  1233.91157, summary only: "an equal correlation structure over risks", projection, parameter
+  estimation), with followers: *Credibility estimators with dependence structure over risks and
+  time under balanced loss* (Stat. Neerl. 2018), *balanced credibility estimators with correlation
+  risk and inflation factor* (Stat. Papers 2015), quantile versions (SOIC 2024, iapress, blocked),
+  Yang & Wang (2022, §10q). Not read. Huang & Wu (2015, read, §8) survey this line under
+  "dependence over risks" (correlated levels, permanent), and the 2022 CSTM abstract treats it as a
+  longitudinal (permanent) correlation. So it is the permanent equicorrelated-level case, our `L`
+  with equal off-diagonals, which leaves the homogeneous estimator unchanged (§8, `wen2`). If a
+  full text shows a per-period equicorrelation instead, it is the equal-`ρ` case of Poon's model
+  and moves nothing in the blend's "New here". *Bühlmann credibility model with correlated risk
+  parameters* (J. Phys. Conf. Ser. 1725, 2021): levels only, by its abstract.
+- *Balance by a common shift (Finding 16).* Read: Pfeffermann (2013), *New important developments
+  in small area estimation*, Stat. Sci. 28, §6.3 (arXiv 1302.4907), and Ghosh & Steorts (2013),
+  *Two-stage benchmarking as applied to small area estimation*, Test 22(4) (arXiv 1305.6657). WFQ (2008): the benchmarked BLUP is the BLUP
+  plus `δ_i Σ b_j(θ̂_design − θ̂_model)`, `δ_i ∝ φ_i⁻¹ b_i`, under the area-level model. Datta et
+  al. (2011, Bayesian benchmarking): the posterior mean plus a share of the discrepancy, "general
+  and not restricted to any particular model", because the cross product with the posterior error
+  is zero. Both are the `κ = 0` case of `Core.bestCorrection_optimal`. **Moved in the paper:** §9
+  now says the shift is best for a BLUP (WFQ) and for any posterior mean (Datta et al.), and the
+  "New here" is only that the blend meets this when it is the BLUP (Finding 18's condition) and is
+  within about 2% otherwise. The old wording "best only for independent cohorts" predated the
+  Finding 18 correction.
+- *Per-pair count with unequal histories (Finding 9).* Poon: all risks share the same periods.
+  Seemingly unrelated regressions with unequal numbers of observations (Schmidt 1977, J. Econom.
+  5(3), 365–377; Swamy & Mehta 1975, Bayesian SUR with missing observations, J. Econom. 3(2), 157–169;
+  bibliographic data from OpenAlex) treat a
+  nested pattern (some equations have extra periods) and compare using only the common periods
+  with using all of them; from memory, abstracts not in OpenAlex. Neither has volumes nor an exact
+  unbiased denominator for an arbitrary overlap. "New here" stands, with Schmidt as the nearest.
+- *Exposure-weighted pooling = weighted k-means (Finding 14).* Nothing beyond van Rijn, Weber &
+  Merz (2026) and Fisher (1958) found. Stands.
+- *Price of the blend form (Finding 18).* Huang & Wu (2015) and Poon note the gap qualitatively;
+  no citing abstract quantifies it. Stands.
+- *Credibility form of the misspecification price (Findings 19, 20).* Not rechecked in full text:
+  the kriging bounds (Stein 1999, ch. 4) are cited from memory; the paper claims only the
+  credibility form and the sharp two-sided versions for equal correlations and damping. A full
+  read of Stein ch. 4 (a book, no open copy) would settle whether his bound is already two-sided.
+- *Paper §1 item 2 (fit without hand-set parameters, price of fitting BS, bias from skewed data,
+  sign of the cross term).* Covered by §§4, 10j, 10l, 10u (Kackar–Harville, Prasad–Rao, Das–Jiang–
+  Rao); no new search.
+
+Still *New here* after this pass: the blend's factor for any PD `K` and its range (3, 17), the
+price of the blend form (18), balance and when the shift is best for the blend (16), unequal
+histories and pair counts (9), groups with correlated noise (13), the exact price of ignoring
+correlation in credibility form (19, 20), weighted k-means (14), and the homogeneous matrix blend
+for correlated trend lines.
+
 ### 10r. References added to the thesis proposal (2026-11-26)
 Existence and venue checked from OpenAlex metadata only (not read): Ohlsson (2008), *Combining
 generalized linear models and credibility models in practice*, Scand. Actuar. J. 2008(4),

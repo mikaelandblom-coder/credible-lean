@@ -2357,9 +2357,11 @@ are the true ones for every distribution with these moments.
 instance: fit a line per cohort, and the fitted intercepts and slopes are
 the estimate vectors, with a $K$ built from the design and the noise. With
 independent cohorts this gives the classical Hachemeister factor. With
-correlated cohorts it is new: a shock in one year moves every cohort's
+correlated cohorts a shock in one year moves every cohort's
 data that year, so it correlates their fitted lines, and the best
-credibility matrix accounts for that. Any forecast from the line, its level
+credibility matrix accounts for that. Poon (2013, ch.~5) gives that
+predictor when the collective line is known; here it is estimated (the
+matrix GLS line), and the matrix blend is kept as the simpler form. Any forecast from the line, its level
 next year or three years out, is a fixed combination of level and slope, so
 the joint best predictor gives the best unbiased forecast at every horizon,
 with its error from the same matrix (\hb{res:vecForecast}{66}).
@@ -2515,7 +2517,8 @@ and Luo 1999). The actuarial work on correlated errors (Cossette and Luong
 over time and keeps risks independent. \emph{Used:} the blend, Bühlmann--Straub as the special
 case, hierarchical credibility as the target, and from Poon and Lu (2015)
 correlated noise within a period in the Bühlmann--Straub form and the pair
-estimators of the noise covariances. \emph{New here} (Poon, Yeo and Valdez,
+estimators of the noise covariances, and from Poon (2013, ch.~5) the same
+noise in regression credibility. \emph{New here} (Poon, Yeo and Valdez,
 and Ebrahimzadeh et al.\ 2012 and 2013 read in full; the rest from abstracts): the blend's
 factor for any positive definite $K$, when it leaves $[0,1]$ and what to
 report instead (\finding{3}, \finding{17}), and the group model with
@@ -2551,11 +2554,15 @@ Benchmarking, forcing small-area estimates to add up to a direct total, is
 the balance of Section~\ref{sec:balance}: Pfeffermann and Barnard (1991),
 Wang, Fuller and Qu (2008), and Bell, Datta and Ghosh (2013) for several
 constraints. Two-fold nested error models (Stukel and Rao 1999) are the
-analogue of the group levels. \emph{Used:} the decomposition of the fitted
-error, the jackknife, and the common shift as the way to balance.
-\emph{New here:} that the shift is best only for independent cohorts and
-close to best under correlation (\finding{16}); the per-pair count for
-cohorts with different histories (\finding{9}).
+analogue of the group levels. The shift is the best correction when the
+base predictor is the BLUP (Wang, Fuller and Qu 2008), and in Bayesian form
+for the posterior mean of any model (Datta et al.\ 2011), because then the
+base error is uncorrelated with the discrepancy. \emph{Used:} the
+decomposition of the fitted error, the jackknife, and the common shift as
+the way to balance. \emph{New here:} that for the blend the shift is best
+when the blend is the BLUP (independent cohorts, two cohorts, equal
+covariances; \finding{18}) and close to best otherwise (\finding{16}); the
+per-pair count for cohorts with different histories (\finding{9}).
 
 \paragraph{Minimum-variance portfolios.}
 
@@ -2594,9 +2601,10 @@ for the blend with a common noise level (\finding{14}).
 
 \watch
 \begin{itemize}
-  \item \emph{Read from abstracts.} Most of these works were collected from
-    abstracts and summaries; the full texts have not all been read, and
-    some references are from memory (\file{studies/literature.md}). A
+  \item \emph{Read from abstracts.} The credibility works behind a
+    ``new here'' were read in full (Poon 2013, Yeo and Valdez, Ebrahimzadeh
+    et al., Huang and Wu); most others were collected from abstracts,
+    summaries and reviews, and some references are from memory (\file{studies/literature.md}). A
     precedent found later moves a ``new here'' to ``used''.
   \item \emph{The full list,} with what was taken from each and for which
     study, is \file{studies/literature.md}.

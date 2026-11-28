@@ -11,6 +11,14 @@ One line per change a reader would notice (a new or rewritten paragraph, a
 corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
+## 2026-11-28
+- §8 Trend lines: correlated cohorts in regression credibility are credited to Poon (2013,
+  ch. 5), who gives the predictor with the collective line known; new here is only the
+  estimated collective line and the matrix blend.
+- §9 Small-area estimation: the common shift is best for any BLUP (Wang, Fuller and Qu) and
+  any posterior mean (Datta et al. 2011); the claim for the blend is now "best when it is the
+  BLUP" (Finding 18's condition), not "only for independent cohorts".
+
 ## 2026-11-27
 - Figures for the main study results (from the external review): Figure 1 in §3.4,
   the fitted BLUP against the fitted blend with and without the balance shift (S72,
