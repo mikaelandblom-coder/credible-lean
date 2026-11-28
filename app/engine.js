@@ -1624,7 +1624,7 @@
    * for fixed weights it is m(g_T) − m(g_r̄) on the yearly cells (BalanceCost.balance_cost_cellLin, any volumes; on one
    * shape the fit's own term is mse(c) on K̂), on K̂ and L̂ (τ̂²I, or the fit's L for group levels), the cross-fit's
    * per-year weights c̄⁽ˢ⁾ held fixed (S82). S76: regret at most 6.9 points of the floor
-   * (always on: 205.6). `errTarget`, `errFit`: the plug-in typical errors √mse of the two estimates of the
+   * (always on: 205.6); with volumes varying by year 7.9 (always on: 112.9; S84, balance-rule-vol.out.txt). `errTarget`, `errFit`: the plug-in typical errors √mse of the two estimates of the
    * portfolio level (on K̂ both read low, about ×0.7 in S76's app worlds, their difference much less). The readout: D = L̂cf − Σⱼ uⱼ rateⱼ, the raw fit's gap to the cross-fitted level
    * (which is unbiased when the weights are blind to the levels, Core.Estimates.integral_crossFit_sub_eq_zero),
    * so −D estimates the raw fit's portfolio bias; its SE from K̂, √((c̄ − c)ᵀK̂(c̄ − c)) (first order, fixed
@@ -1680,7 +1680,7 @@
     const note = `typical error for the portfolio level on K̂: ${tgt.name} ${rt(mc + cost)}, the fit's own ${rt(mc)} of the tariff, so ${on ? `balanced (the ${tgt.name} is the better estimate)` : 'left unbalanced (its own level is the better estimate)'}; `
       + (cf ? '' : 'no cross-fitted level (fewer than 3 years); ')
       + `bias readout: the unbalanced rates sit ${(100 * Math.abs(D)).toFixed(2)}% ${D > 0 ? 'below' : 'above'} the ${tgt.name}, ± ${(200 * seD).toFixed(2)}% (2 SE), `
-      + `an estimate of the raw portfolio's ${D > 0 ? 'under' : 'over'}-pricing${on ? ' (removed by the shift)' : ' (kept: removing it would add more error than it saves)'}. Studies S76: regret at most 6.9 points of the floor against 205.6 for always balancing`;
+      + `an estimate of the raw portfolio's ${D > 0 ? 'under' : 'over'}-pricing${on ? ' (removed by the shift)' : ' (kept: removing it would add more error than it saves)'}. Studies S76, S84: regret at most 6.9 points of the floor against 205.6 for always balancing (7.9 against 112.9 with volumes varying by year)`;
     const base = on ? balanceFit(f, data, tgt.opts) : Object.assign({}, f);
     const step = Object.assign({}, BALANCE_AUTO_STEP, { values: [rel, D], note: note + '. ' + BALANCE_AUTO_STEP.note });
     const steps = (on ? base.steps.slice(0, -1) : (f.steps || [])).concat([step]);

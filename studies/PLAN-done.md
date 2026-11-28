@@ -541,3 +541,13 @@ what was built, studied and proved. Order as they stood in the plan.
   never below its start, local maximum), the page's "Variances from" choice, a REML row in Many draws, "Draws
   with one < 0" per pool in the variances table; S71 (`crossed-fit.js` with REML: worse in 9 of 96, by at most
   3 points; better in 48), so REML is the default. The 2×2 warning is in `fit` (Node test) and the page's note.
+- [x] Realistic volumes (2026-11-28, S79; owner: "in reality the weights are noisy and not always trending"). The world
+  switch "Volumes vary by year" (`volNoise` 0.2, `volTrend` 0.05, fixed per world by `volSeed`) is built. Under it the fits' errors and their ranking stand (S79), but `crossFitLevel` is null (it needs one volume
+  shape: `RandomWeights.integral_crossFit_sub`, region-specific year weights break translation equivariance), so
+  `balanceAuto` now prices the exposure-weighted level instead (it used to balance on exposures in every draw, up to
+  +110 points). *(1)–(2) done 2026-11-28 (S82):* `BalanceCost.balance_cost_cellLin` prices any target linear in the
+  yearly cells (`integral_sq_cellLin_sub`: `(G − u)ᵀL(G − u) + Σₛ gₛᵀDₛgₛ`), so `crossFitLevel` now works for any volumes
+  (common πₛ) and `balanceAuto` prices it on the cells. Always cross-fitted removes the under-pricing on such data
+  (−166 → +25 ± 53 bp); `auto` keeps it where the cross-fitted level is the noisier estimate (σⱼ spread: +16–39% MSE),
+  the Finding 46 trade-off. *(3) done 2026-11-28 (S84):* the switch is **on by default**; the page's quoted checks (skew link, skew bias,
+  γ̂N) stay within simulation noise and are quoted under it; S76's rule keeps its regret (auto 0.6, max 7.9).

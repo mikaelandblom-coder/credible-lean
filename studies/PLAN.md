@@ -348,17 +348,6 @@ Finished items are in `studies/PLAN-done.md`.
   1.01): does the held-out choice keep clipping's small gain where z* ∈ [0, 1] and avoid its large loss where z* > 1?
 - [ ] Finding 49 (2026-11-28): the app's Bühlmann–Straub fit on correlated worlds has `E τ̂² = τ² − c̄`; a line in
   its message ("BS also lowers τ²") once a study checks the size of `c̄` against `τ²` in the app's worlds.
-- [ ] Realistic volumes (2026-11-28, S79; owner: "in reality the weights are noisy and not always trending"). The world
-  switch "Volumes vary by year" (`volNoise` 0.2, `volTrend` 0.05, fixed per world by `volSeed`) is built, **off by
-  default**. Under it the fits' errors and their ranking stand (S79), but `crossFitLevel` is null (it needs one volume
-  shape: `RandomWeights.integral_crossFit_sub`, region-specific year weights break translation equivariance), so
-  `balanceAuto` now prices the exposure-weighted level instead (it used to balance on exposures in every draw, up to
-  +110 points). *(1)–(2) done 2026-11-28 (S82):* `BalanceCost.balance_cost_cellLin` prices any target linear in the
-  yearly cells (`integral_sq_cellLin_sub`: `(G − u)ᵀL(G − u) + Σₛ gₛᵀDₛgₛ`), so `crossFitLevel` now works for any volumes
-  (common πₛ) and `balanceAuto` prices it on the cells. Always cross-fitted removes the under-pricing on such data
-  (−166 → +25 ± 53 bp); `auto` keeps it where the cross-fitted level is the noisier estimate (σⱼ spread: +16–39% MSE),
-  the Finding 46 trade-off. Open: (3) make the switch the default after rerunning the page's quoted simulation checks
-  (skew link, skew bias, gamma tests, S76's regret), as for "Noise shape shrinks with volume".
 - [ ] Cohort trend lines step (2026-11-27, `LineResidualsMoments.integral_correctedLambda_pooled`): level + slope
   per cohort, `ŝ²` and `ρ̂ŝ²` with SUR divisors `T − 2p + tr(PᵢPⱼ)` (handbook `res:lineResid`), corrected `Λ̂`,
   joint damped BLUP (S67); show the 2 × 2 `Z`. Engine helpers exist in `studies/runs/vector-lambda-shocks.js`.

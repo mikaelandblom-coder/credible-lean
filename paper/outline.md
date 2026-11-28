@@ -105,7 +105,8 @@ may need a paragraph.)
 - [ ] Finding 48 (2026-11-28): the σ̃ⱼ² average below the σ̂ⱼ², which biases ρ̂ up but not `K̂`'s off-diagonal;
   fixing it does not help the rates (S81). Same place as Finding 47.
 - [ ] Balance with volumes that vary by year (2026-11-28, S82, `BalanceCost.balance_cost_cellLin`): the cross-fitted
-  level works for any volumes and is priced on the yearly cells; a sentence where the paper explains the balance switch.
+  level works for any volumes and is priced on the yearly cells; a sentence where the paper explains the balance switch. The app's
+  world now has volumes varying by year by default (S84): say so where the paper describes the app's world.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S83, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S84, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S84 | `runs/volume-default.js`, `runs/balance-rule.js --vol` | Volumes that vary by year become the app default: the page's quoted noise checks stay within simulation noise (skew bias ≤ 0.06 points, power ≤ 0.08), S76's rule keeps its regret (auto 0.6 / max 7.9) |
 | S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ: hurts slightly (≤ 0.1 points) in 7 worlds with every z* in [0, 1]; the app's worlds never reach z* > 1.01, so the large cost (+30%, Finding 36) is unseen there |
 | S82 | `runs/balance-volumes.js` | Volumes that vary by year: the cross-fitted level (any volumes now) removes the under-pricing (−166 → +25 bp); `auto` keeps it where that costs error (σⱼ spread) |
 | S81 | `runs/rho-level.js` | ρ̂ is biased up (+0.06 to +0.13) by σ̃'s low level (0.63–0.97 of σ̂'s, every draw); ρ̂ from own σ̂ or rescaled σ̃: +0.4, +0.3 points, no default change |
@@ -1146,4 +1147,17 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     ρ = 0.95, so they cannot show what clipping costs when z* > 1 (Finding 36's two-cohort example: +30%).
     **Consequence.** Not "clipping is irrelevant" but: the costs are lopsided, so the app keeps `ẑ` and warns; a
     held-out "clip or keep" choice is queued (PLAN Pending).
-
+- S84. *[numerical]* **Volumes that vary by year as the app's default** (PLAN Pending "Realistic volumes", step 3).
+    `runs/volume-default.js`: one shape against varying volumes (volNoise 0.2, volTrend 0.05, patterns volSeed 1, 2;
+    largest year share moved 0.09–0.16). **Noise readouts** (4000 draws; default, T = 5 shape 1, normal, ρ = 0.6):
+    same-years power 2.08 → 2.04 (predicted 2.58 → 2.56), 3.97 → 3.89 (3.97 → 3.93), 0.71 → 0.69 at ρ = 0.6 (2.29 →
+    2.25); fitted skew link against the world's 6.06 / 5.86 → 6.09 / 5.90; pooled ĝ 1.27 against 1.41 either way;
+    γ̂N mean 2.73 / median 1.54 / SD 4.40 → 2.73 / 1.52 / 4.41 (pattern 2: SD 10.9 from one draw of 4000 at 638;
+    a ratio of moment equations, its denominator rarely near 0; the one-shape tail is of the same kind, max 105).
+    **Skew bias** (1500 draws, six worlds × vc, blup, blupPool): every simulated and predicted mean within 0.06
+    points of one shape (default vc −0.31 / −0.35 → −0.29 / −0.32; T = 4 shape 1 −2.15 / −1.51 → −2.10 / −1.54).
+    **S76's rule** (`balance-rule.js --vol`, 56 worlds, 400 draws, with `auto` = `Engine.balanceAuto` on the cells):
+    auto regret mean 0.6, max 7.9, worse in 2 of 56 (one shape, the script's plug-in: 0.5 / 6.9 / 4); the old
+    portLin plug-in 0.9 / 7.0 / 7; always on 20.8 / 112.9. **Consequence.** The switch is on by default in the app;
+    the page quotes the varying-volume numbers. Under the new default `auto` keeps the skew under-pricing where
+    removing it costs error (σⱼ spread: −60 to −202 bp kept), as S82; the balance readout shows it, D ± 2 SE.
