@@ -5,14 +5,17 @@
 // Engine.crossFitLevel) and the fit's c = Σⱼ uⱼwⱼ, cost̂ = mse(a) − mse(c), mse(d) = dᵀK̂d − 2τ̂²dᵀu + τ̂²uᵀu;
 // BalanceCost.balance_cost_portLin, fixed weights, no bias term).
 // Worlds as S75 (56), corrBS, 400 draws. Also the portfolio bias of each rule (bp of the tariff).
-// Run: node studies/runs/balance-rule.js [draws] [--jobs=k]
+// --vol (S84): volumes vary by year (volNoise 0.2, volTrend 0.05, volSeed 1) and a fifth rule "auto", the app's
+// Engine.balanceAuto (priced on the yearly cells, BalanceCost.balance_cost_cellLin); output balance-rule-vol.out.txt.
+// Run: node studies/runs/balance-rule.js [draws] [--jobs=k] [--vol]
 'use strict';
 const E = require('../../app/engine.js');
 const L = require('./lib.js');
 const { N, jobs } = L.args({ N: 400 });
 const worlds = L.grid({ regime: ['app', 'thesis', 'thesisShape'], rho: [0, 0.3, 0.6, 0.9], noiseSpread: [0, 1, 2], T: [5, 10] })
   .filter((p) => p.regime !== 'thesisShape' || p.noiseSpread === 2);
-const IDS = ['on', 'off', 'ho', 'plug'];
+const VOL = process.argv.includes('--vol');
+const IDS = VOL ? ['on', 'off', 'ho', 'plug', 'auto'] : ['on', 'off', 'ho', 'plug'];
 
 function plugCost(f, data) {
   const cf = E.crossFitLevel(data);
@@ -26,9 +29,9 @@ function plugCost(f, data) {
 }
 
 function runWorld(p) {
-  const world = E.makeWorld(Object.assign({ rho: p.rho, T: p.T, noiseSpread: p.noiseSpread }, L.regimes[p.regime]));
+  const world = E.makeWorld(Object.assign({ rho: p.rho, T: p.T, noiseSpread: p.noiseSpread }, L.regimes[p.regime], VOL ? { volNoise: 0.2, volTrend: 0.05, volSeed: 1 } : {}));
   const fl = E.floorBlend(world), r = E.rng(2026), F = [], S = Object.fromEntries(IDS.map((k) => [k, []])), B = Object.fromEntries(IDS.map((k) => [k, []]));
-  let pickH = 0, pickP = 0;
+  let pickH = 0, pickP = 0, pickA = 0;
   const bal = (d) => E.balanceFit(E.fitVC(d), d, { target: 'crossFit' });
   for (let k = 0; k < N; k++) {
     const { levels, data } = E.draw(world, r), se = (x) => E.weightedSE(data, x, levels);
@@ -38,21 +41,24 @@ function runWorld(p) {
     const useH = E.loyoLoss(data, bal) < E.loyoLoss(data, E.fitVC);
     const pc = plugCost(off, data), useP = pc !== null && pc < 0;
     if (useH) pickH++; if (useP) pickP++;
-    const raw = { on, off, ho: useH ? on : off, plug: useP ? on : off };
+    const useA = VOL && E.balanceAuto(off, data).balanceAuto.on;
+    if (useA) pickA++;
+    const raw = { on, off, ho: useH ? on : off, plug: useP ? on : off, auto: useA ? on : off };
     for (const id of IDS) { S[id].push(se(raw[id].rates)); B[id].push(bias(raw[id].rates)); }
   }
   const f = L.meanSE(F).m, best = L.meanSE(S.on).m <= L.meanSE(S.off).m ? S.on : S.off;
-  return { p, f, pickH: pickH / N, pickP: pickP / N, rel: Object.fromEntries(IDS.map((id) => [id, L.meanSE(S[id]).m / f])),
-    regret: Object.fromEntries(['on', 'off', 'ho', 'plug'].map((id) => [id, L.paired(S[id], best)])),
+  return { p, f, pickH: pickH / N, pickP: pickP / N, pickA: pickA / N, rel: Object.fromEntries(IDS.map((id) => [id, L.meanSE(S[id]).m / f])),
+    regret: Object.fromEntries(IDS.map((id) => [id, L.paired(S[id], best)])),
     bias: Object.fromEntries(IDS.map((id) => [id, L.meanSE(B[id]).m])) };
 }
 
 L.mapWorlds(__filename, worlds, runWorld, jobs).then((rows) => {
+  if (VOL) console.log('Volumes vary by year (volNoise 0.2, volTrend 0.05, volSeed 1); auto = Engine.balanceAuto.');
   console.log(`corrBS, ${N} draws. MSE in % of the blend floor; picks = share of draws balanced; bias in bp of the tariff (on / off).`);
-  console.log('world                          |  on  | off  | held-out | plug-in | picks ho | picks plug | bias on / off');
+  console.log('world                          |  on  | off  | held-out | plug-in | picks ho | picks plug | bias on / off' + (VOL ? ' | auto | picks auto | bias auto' : ''));
   for (const r of rows) {
     const p = r.p, x = (id) => (100 * r.rel[id]).toFixed(0).padStart(4);
-    console.log(`${`${p.regime} ρ=${p.rho} σⱼ×${p.noiseSpread} T=${p.T}`.padEnd(30)} | ${x('on')} | ${x('off')} |   ${x('ho')}   |  ${x('plug')}   |   ${(100 * r.pickH).toFixed(0).padStart(3)}%   |    ${(100 * r.pickP).toFixed(0).padStart(3)}%    | ${r.bias.on.toFixed(0)} / ${r.bias.off.toFixed(0)}`);
+    console.log(`${`${p.regime} ρ=${p.rho} σⱼ×${p.noiseSpread} T=${p.T}`.padEnd(30)} | ${x('on')} | ${x('off')} |   ${x('ho')}   |  ${x('plug')}   |   ${(100 * r.pickH).toFixed(0).padStart(3)}%   |    ${(100 * r.pickP).toFixed(0).padStart(3)}%    | ${r.bias.on.toFixed(0)} / ${r.bias.off.toFixed(0)}` + (VOL ? ` | ${x('auto')} |    ${(100 * r.pickA).toFixed(0).padStart(3)}%    | ${r.bias.auto.toFixed(0)}` : ''));
   }
   console.log('\nRegret against the better of on and off in each world (points of the floor, paired):');
   for (const id of IDS) {
