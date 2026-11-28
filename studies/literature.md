@@ -1622,3 +1622,14 @@ From search results and earlier reads; the 1969 and 1992 texts not read in full.
   texts; Bühlmann–Gisler §4 estimate `σ²` but not the variance of its estimate. Credibility for variances
   (`ζⱼ`) is the hierarchical variance-component idea one level up (literature §10y).
 
+
+### 10ab. The Hachemeister data as a benchmark (2026-11-28, for S85; from memory, not fetched)
+- *Used.* Hachemeister (1975) introduced the data (5 US states, 12 quarters of bodily-injury average
+  claims) for regression credibility with state trends. The R package `actuar` ships them (Dutang,
+  Goulet and Pigeon 2008, JSS 25(7), and its credibility vignette), and its `cm()` Bühlmann–Straub fit
+  is the reference our `fitBS` reproduces (S85). Bühlmann and Gisler (2005, ch. 8) and Dannenburg, Kaas
+  and Goovaerts (1996) use them for regression credibility; Frees, Young and Luo (1999, IME 24) refit
+  them as longitudinal data, with serially correlated errors within a state.
+- *Not found (to check from full texts).* A fit with errors correlated *across* states in the same
+  quarter. Frees et al. correlate within a state over time, the opposite direction. S85 suggests why it
+  may not have been pursued: after a common trend, the cross-state correlation is ≈ 0 on these data.

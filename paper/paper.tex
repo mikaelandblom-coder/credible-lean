@@ -246,7 +246,7 @@ and its translation to Bühlmann--Straub.
 
 \paragraph{What ``machine-checked'' means.}
 
-Every result the paper states is a
+Every result the paper calls proved is a
 theorem in Lean, a proof assistant: a program that accepts a proof only if
 each step follows from the previous ones and from the axioms of mathematics.
 Each result cites its handbook entry, such as \hb{res:z}{5}, whose Lean links
@@ -1336,10 +1336,29 @@ gets there by giving the covariances fewer parameters
 \end{itemize}
 Over 45 simulated worlds it is the most robust of the fits tried: best or
 near best almost everywhere, and equal to Bühlmann--Straub when there is no
-correlation (\file{studies/runs/variance-credibility.js}). The model, $K \succ 0$
-and the blend are proved; the estimators' unbiasedness under this structure
-is not yet in Lean, and the quality of the whole is numerical, as it is for
-the EBLUP in small-area estimation (\file{studies/literature.md} §2).
+correlation (\file{studies/runs/variance-credibility.js}). What is proved for
+this fit: the model, $\hat K \succ 0$ for any $\hat\rho \in [0,1)$, the blend's
+weights given $\hat K$, and that the pooled $\hat\rho$ is unbiased when the true
+$\sigma_j$ are used (\hb{res:pooled}{27}). What is not: the credibility-weighted
+$\tilde\sigma_j^2$ have no unbiasedness theorem, and $\hat\rho$ with $\tilde\sigma_j$ plugged in
+is biased (above). The quality of the whole is numerical, as it is for
+the EBLUP in small-area estimation (\file{studies/literature.md} §2). (The
+thesis's own estimators, one $\hat\sigma^2_{ij}\hat\rho_{ij}$ per pair and $\hat\tau^2$,
+are proved unbiased; Appendix~\ref{app:changes} names them.)
+
+\paragraph{On real data: Hachemeister's states.}
+
+Hachemeister's (1975) data, average bodily-injury claims of five US states
+over twelve quarters weighted by claim counts, are the classical public test
+set. Bühlmann--Straub on them gives the textbook rates. The fit above finds
+$\hat\rho = 0.50$, but that is inflation: after removing one common trend
+($+2.3\%$ a quarter) $\hat\rho = 0.03$. A common trend reads as
+correlated noise, so remove it, or model it, before estimating $\rho$.
+What does change the rates is the per-state variances: the pooled
+$\hat\sigma^2$ is dominated by the largest, noisiest state, and over-shrinks
+the smallest, quietest one ($1443$ against $1367$, own mean $1353$). On these
+data credibility moves little, since the states differ by far more than their
+noise. Five states are an illustration, not evidence (S85).
 
 \paragraph{Which fit to use.}
 
@@ -1568,8 +1587,9 @@ square-integrable random variables with the stated means and covariances
     year's noise variance (\hb{res:forecast}{19}).
   \item \emph{``Unbiased'' means the actual expectation.} The expectation of
     any quadratic form in the data is computed from the moments alone, so
-    the estimators of Section~\ref{sec:estimation} are unbiased whatever the
-    distribution (\hb{res:integral_quad}{20}).
+    the thesis's estimators of Section~\ref{sec:estimation} (pair covariances, $\hat\tau^2$)
+    are unbiased whatever the distribution (\hb{res:integral_quad}{20}). Ratios of
+    such forms, as in the app's fit, are not covered.
 \end{itemize}
 The layer is proved once, at the level of $K$: any unbiased estimates whose
 covariances with each other and with the true levels are known. The
@@ -2812,7 +2832,8 @@ price, which can be computed from the data.
 The claims of novelty rest on a literature search partly from abstracts
 (Section~\ref{sec:related}). The recommendations for fitted models rest on
 simulation in the worlds described in Section~\ref{sec:estimation}, not on
-theorems, and the monthly world is not anchored to real data. A tested fit for
+theorems, and the monthly world is not anchored to real data; one small public
+data set has been fitted (S85). A tested fit for
 crossed levels and for the group model, and the cost of choosing cohorts from the same
 data are open (Section~\ref{sec:open}). So is whether choosing to clip $\hat z_j$ on held-out
 years keeps clipping's small gain without its large loss (S83).

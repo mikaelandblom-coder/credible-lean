@@ -8,3 +8,7 @@ when a result changes what a student should derive or check.
 ## Pending
 (Results since the last proposal update that may change a topic, its references or its size.)
 - (Cleared 2026-11-28: Findings 47–50 in §2 and E8.)
+- S85 (Hachemeister, first real data): a common trend reads as cross-cohort correlation (ρ̂ 0.50 → 0.03
+  after detrending). The proposal calls a known claim trend "not needed for the card data"; card data
+  have demand trends, so detrending before ρ̂ may belong in E-topics or §"Comparing models on data".
+  Hachemeister as a public warm-up data set before the card data (`studies/runs/hachemeister.js`).

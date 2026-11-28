@@ -1,0 +1,52 @@
+Hachemeister (1975) data, 5 states × 12 quarters; amounts in dollars per claim
+
+== all 12 quarters ==
+state means          2061   1511   1806   1353   1600   claims 100155  19895  13735   4152  36110
+BS   σ̂² 1.3912e+8 τ̂² 89639  μ̂ 1683.7
+BS   z               0.985   0.928   0.898   0.728   0.959
+BS   rates           2055   1524   1793   1443   1603
+cBS  ρ̂ 0.499 (used 0.499)  τ̂² 93356  μ̂ 1666.2  β² 4.092e+16
+cBS  σ̃ⱼ²/1e6         334.9    34.5    76.6    26.1    25.0
+cBS  b               0.200   0.206   0.192   0.190   0.212
+cBS  z               0.981   0.994   0.962   0.956   1.001
+cBS  own weight c    0.985   0.996   0.969   0.964   1.001
+cBS  rates           2054   1512   1801   1367   1600
+BLUP rates           2054   1513   1802   1363   1600
+
+pairwise residual correlations (weighted):
+    1.00  0.40  0.70  0.38  0.47
+    0.40  1.00  0.56  0.07  0.12
+    0.70  0.56  1.00  0.22  0.04
+    0.38  0.07  0.22  1.00 -0.03
+    0.47  0.12  0.04 -0.03  1.00
+
+held out: fit on the first k quarters, target = each state's claim-weighted mean of the rest
+claim-weighted RMSE in $ (raw | relativities only)
+  k   |    own   pool     BS    cBS   BLUP
+  4   |    308    392    315    317    319   |      137    290    151    142    142    (ρ̂ 0.47, BS z    0.94    0.73    0.68    0.39    0.84, cBS z    0.96    0.97    0.93    0.96    0.94)
+  6   |    229    352    236    243    243   |       78    288     93     87     86    (ρ̂ 0.52, BS z    0.96    0.82    0.77    0.50    0.89, cBS z    0.94    0.98    0.93    0.95    1.00)
+  8   |    291    413    296    298    296   |      118    331    129    124    123    (ρ̂ 0.37, BS z    0.98    0.89    0.86    0.64    0.94, cBS z    0.97    0.99    0.95    0.87    0.99)
+
+decomposition (all quarters): σ̃ⱼ² per state, ρ = 0
+  z   0.965   0.982   0.943   0.936   0.993   rates   2047   1514   1798   1373   1600   τ̂² 92179
+
+common trend: 2.30% per quarter (9.5% a year); rates below at mid-period
+
+== detrended by the common trend ==
+state means          2053   1508   1808   1354   1599   claims 100155  19895  13735   4152  36110
+BS   σ̂² 5.7532e+7 τ̂² 90097  μ̂ 1672.5
+BS   z               0.994   0.969   0.956   0.867   0.983
+BS   rates           2050   1513   1802   1397   1601
+cBS  ρ̂ 0.031 (used 0.031)  τ̂² 90695  μ̂ 1667.1  β² 1.809e+15
+cBS  σ̃ⱼ²/1e6          93.8    33.3    47.5    23.3    45.4
+cBS  b               0.204   0.202   0.198   0.193   0.203
+cBS  z               0.990   0.983   0.964   0.943   0.987
+cBS  own weight c    0.992   0.986   0.971   0.954   0.990
+cBS  rates           2049   1511   1803   1372   1600
+BLUP rates           2049   1511   1803   1372   1600
+ρ = 0 z   0.990   0.982   0.963   0.942   0.986   rates   2049   1511   1803   1372   1600
+held out, detrended with the trend of the first k quarters (claim-weighted RMSE in $):
+  k   |    own   pool     BS    cBS   BLUP  cBS ρ=0
+  4   |    232    296    232    227    227    226    (ρ̂ 0.13)
+  6   |    228    301    228    225    225    225    (ρ̂ 0.02)
+  8   |     95    262    100     98     98     99    (ρ̂ 0.14)

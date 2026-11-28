@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S84, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S85, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S85 | `runs/hachemeister.js` | First real data (Hachemeister 1975, 5 states × 12 quarters): BS reproduces actuar exactly; raw ρ̂ = 0.50 is the common inflation trend (0.03 after removing it); what moves the rates is per-state σ̃ⱼ² (state 4: 1443 → 1372); held out, cBS ≈ own, BS a few $ worse |
 | S84 | `runs/volume-default.js`, `runs/balance-rule.js --vol` | Volumes that vary by year become the app default: the page's quoted noise checks stay within simulation noise (skew bias ≤ 0.06 points, power ≤ 0.08), S76's rule keeps its regret (auto 0.6 / max 7.9) |
 | S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ: hurts slightly (≤ 0.1 points) in 7 worlds with every z* in [0, 1]; the app's worlds never reach z* > 1.01, so the large cost (+30%, Finding 36) is unseen there |
 | S82 | `runs/balance-volumes.js` | Volumes that vary by year: the cross-fitted level (any volumes now) removes the under-pricing (−166 → +25 bp); `auto` keeps it where that costs error (σⱼ spread) |
@@ -1161,3 +1162,24 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     portLin plug-in 0.9 / 7.0 / 7; always on 20.8 / 112.9. **Consequence.** The switch is on by default in the app;
     the page quotes the varying-volume numbers. Under the new default `auto` keeps the skew under-pricing where
     removing it costs error (σⱼ spread: −60 to −202 bp kept), as S82; the balance readout shows it, D ± 2 SE.
+- S85. *[numerical]* **First real data: Hachemeister (1975)** (external review 2026-11-28, "one real-data
+    illustration"). `runs/hachemeister.js`: bodily-injury average claim per state, 5 US states × 12 quarters
+    (1970 Q3–1973 Q2), weights = numbers of claims, from R's `actuar` (`data(hachemeister)`). **Check.** `fitBS`
+    reproduces the textbook numbers (actuar's `cm(~state, …)`): σ̂² = 1.391e8, τ̂² = 89 639, μ̂ = 1683.7, rates
+    2055 1524 1793 1443 1603. **Raw corrBS.** ρ̂ = 0.50 (pairwise weighted residual correlations −0.03 to 0.70),
+    σ̃ⱼ² from 25e6 to 335e6 (state 1 is the noisy one), z 0.96–1.00, b ≈ 0.2 each, rates 2054 1512 1801 1367 1600;
+    the plug-in BLUP within $4. **What moves the rates.** Not ρ: with the same σ̃ⱼ² and ρ = 0 the rates move by
+    ≤ $7 (z ≈ 1 everywhere, τ is large against the noise). It is the per-state variances: BS's pooled σ̂² is
+    dominated by state 1, so it over-shrinks the small, quiet state 4 (BS 1443, corrBS 1367, own mean 1353).
+    **ρ̂ is the trend.** A common log-linear trend (one slope, state intercepts, claim-weighted) is +2.30% a
+    quarter; after removing it ρ̂ = 0.03, pooled σ̂² falls to 5.8e7, and corrBS = its ρ = 0 version to the dollar.
+    **Held out** (fit on the first k = 4, 6, 8 quarters, target the claim-weighted mean of the rest; RMSE in $):
+    raw, own 308/229/291, BS 315/236/296, corrBS 317/243/298; relativities only (common level matched) own
+    137/78/118, BS 151/93/129, corrBS 142/87/124; detrended with the first k quarters' trend: own 232/228/95,
+    BS 232/228/100, corrBS 227/225/98. Five states and overlapping cuts: an illustration, not evidence.
+    **Consequence.** (i) On real data a common trend is read as cross-cohort correlation: detrend (or model the
+    trend, `Trend`) before estimating ρ, or ρ̂ measures inflation, not shocks. (ii) The practical gain of corrBS
+    here is the per-state variances, not ρ; with skewed claims Finding 35's under-pricing applies to that step.
+    (iii) Credibility does little on this data set (τ̂ ≈ $300 against within-state noise per state-mean of
+    $26–79): any fit is close to the states' own means. Hachemeister's own point, state-specific trends
+    (regression credibility, `CoreVector`), is not tested here.
