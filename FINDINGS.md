@@ -610,8 +610,11 @@ Gaps, extra hypotheses and new results found while formalizing.
    of `[0, 1]`. So if `z* ∈ [0, 1]`, clipping never increases the error, whatever `z` was; if not, it
    already hurts at `z = z*`, by exactly `g·dist(z*, [0, 1])²`. With two cohorts `z₁* > 1` below the
    singularity iff `σ₁ < σ₂ρ` (Finding 3), and `z₁* < 0` past it (Finding 17): there clipping costs.
-   Caveat: this is for a fixed `z` against the true error curve; for an estimated `ẑ` that depends on
-   the same data the error in a draw is a different parabola, and nothing is claimed.
+   Caveat: this is for a fixed `z` against the true error curve. *Extended 2026-11-28 (G3b):* for an estimated
+   `ẑ` independent of the cohort's data (held out, cross-fitted) the same iff holds on average
+   (`ClipHeldOut.integral_sq_blend_clip_le_iff`, since `E err(ẑ) = E errVar(ẑ)`). For an in-sample `ẑ` nothing is
+   claimed; S83 found no counterexample (corrBS, 54 worlds: clipping never hurts beyond 2 SE, |effect| ≤ 0.2
+   points of the floor).
 
 37. **The spread of the means `B` is uncorrelated with `P` and `Qn` only under three conditions (new;
    `studies/LOG.md` S53; Lean: `Cumulants.covariance_statB_eq`, `covariance_statB_eq_zero`,

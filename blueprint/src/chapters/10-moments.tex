@@ -401,6 +401,60 @@ these two covariances.
   its mean square is its variance; expand it bilinearly.
 \end{proof}
 
+\begin{lemma}[The blend's error as a quadratic in $z$]\label{lem:errVar_eq_quad}
+  \lean{Credibility.BlendMoments.errVar_eq_quad}
+  \leanok
+  With $A = X - Y$, $B = Y - Z$: $\operatorname{errVar}(z) = z^2\mathbb EA^2 + 2z\,\mathbb E[AB] + \mathbb EB^2$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{thm:blend_mse}
+  Theorem~\ref{thm:blend_mse} and $zX + (1-z)Y - Z = zA + B$.
+\end{proof}
+
+\begin{theorem}[The blend with a held-out $\hat z$ (G3b)]\label{thm:integral_sq_blend_indep}
+  \lean{Credibility.BlendMoments.integral_sq_blend_indep}
+  \leanok
+  If $\hat z \in L^2$ is independent of $(X, Y, Z)$, then
+  $\mathbb E[(\hat zX + (1-\hat z)Y - Z)^2] = \mathbb E[\operatorname{errVar}(\hat z)]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:errVar_eq_quad}
+  Square $\hat zA + B$; independence splits $\mathbb E[\hat z^2A^2]$ and $\mathbb E[\hat zAB]$; compare with
+  Lemma~\ref{lem:errVar_eq_quad} at $z = \hat z$.
+\end{proof}
+
+\begin{theorem}[Clipping a held-out $\hat z$]\label{thm:integral_sq_blend_clip_le}
+  \lean{Credibility.BlendMoments.integral_sq_blend_clip_le}
+  \leanok
+  With $\hat z$ as in Theorem~\ref{thm:integral_sq_blend_indep} and $z^* \in [0, 1]$, clipping $\hat z$ never
+  raises the mean squared error, for every distribution of $\hat z$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sq_blend_indep, thm:clipZ, lem:errVar_eq_quad}
+  Theorem~\ref{thm:integral_sq_blend_indep} for $\hat z$ and for $\operatorname{clip}\hat z$ (bounded, still
+  independent), then Theorem~\ref{thm:clipZ} pointwise.
+\end{proof}
+
+\begin{theorem}[The condition is sharp]\label{thm:integral_sq_blend_clip_le_iff}
+  \lean{Credibility.BlendMoments.integral_sq_blend_clip_le_iff}
+  \leanok
+  Clipping helps or is neutral for every independent $\hat z$ iff $z^* \in [0, 1]$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sq_blend_clip_le, thm:clipZ, thm:blend_mse}
+  A constant $\hat z$ is independent of everything; Theorem~\ref{thm:clipZ}.
+\end{proof}
+
+\begin{remark}[An in-sample $\hat z$ (study S83)]
+  An in-sample $\hat z$ depends on the same data, so the theorems above do not apply. In the app's worlds
+  (corrBS, 54 worlds, 1000 draws) $\hat z$ leaves $[0, 1]$ in up to 93\% of draws, but only slightly: clipping it
+  never raises the error beyond 2 SE and moves it by at most $0.2$ points of the floor. No counterexample.
+\end{remark}
+
 \begin{theorem}[GLS weights in true variance]\label{thm:Core_weights_true}
   \lean{Credibility.Core.Estimates.portEst_optimal}
   \leanok

@@ -195,7 +195,7 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
   exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays); `K̂ ≻ 0` by theorem in every draw (step 1, done).
   Open: the rates' MSE.
 - **G3.** For a fixed `z`, clipping is harmless iff `z* ∈ [0, 1]` (`BlendMoments.errVar_clipZ_le_iff`,
-  Finding 36). Open: an estimated `ẑ`.
+  Finding 36); the same for a held-out `ẑ` (`integral_sq_blend_clip_le_iff`); in sample no counterexample (S83).
 - **G5.** The math of the choice is in place: `Merging.merge_iff`, intervals are optimal
   (`KMeansBridge.lean`: `pool_optimal_contiguous`, `group_optimal_contiguous`, Finding 41), held-out scoring
   (`CrossFit.integral_heldOutScore(_sub)`, winner's curse `integral_min_score_le`), never merge by the
@@ -218,10 +218,9 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
 4. **G1c. `ρ̂` with `σ̃ⱼ` plugged in** — *Done 2026-11-28* (`VcW.sum_shrink_le_iff`, `rhoPooled_ge_levelMatched`, Finding 48,
    S81): `ρ̂` is biased up (+0.06 to +0.13) through σ̃'s low level, which is exact and pointwise; neither `ρ̂` from
    the own σ̂ⱼ nor a rescaled σ̃ helps the rates, so no app change. `τ̂²` on the common-ρ `Σ̂` not pursued (same reason).
-5. **G3b. Clipping an estimated `ẑ`** (lean env). If `ẑ` is independent of the cohort's data
-   (cross-fitted, held out): condition on `ẑ` and apply `errVar_clipZ_le_iff`, a clean theorem. If `ẑ`
-   is fitted in sample: a study looking for a counterexample, logged as a Finding if one turns up.
-   *Who:* anyone clipping `z > 1`. *Common:* short histories. *General:* yes for the cross-fitted case.
+5. **G3b. Clipping an estimated `ẑ`** — *Done 2026-11-28* (`ClipHeldOut.lean`, S83): a held-out `ẑ` can be clipped
+   safely iff `z* ∈ [0, 1]` (`integral_sq_blend_clip_le_iff`); in sample no counterexample, and the stakes are ≤ 0.2
+   points of the floor in the app's worlds, so the app's "z > 1" warning stays as it is (no clipping step needed).
 6. **G2b. Damping for the rates' MSE** (*exploration*; study first). S12: the rates want less damping
    than S3. Does any first-order `θ*` for the rates' loss beat S3 by more than 2 points? If not, park
    it with that result.

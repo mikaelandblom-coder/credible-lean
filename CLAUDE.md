@@ -125,7 +125,7 @@ A map by topic; each file's module docstring has the details and Lean names.
   (frequency × severity), `Trend` (known common trend).
 - Vector levels: `CoreVector`, `CoreVectorMoments`.
 - Fitting: `FitStatistics`, `FitCrossTerm` (first-order cross term of the plug-in), `LineResiduals`, `LineResidualsMoments` (per-cohort line fits, corrected `Λ̂`), `VarianceFunction`, `ConeProjection` (valid PSD
-  estimates), `OffDiagonal`, `Damping`.
+  estimates), `OffDiagonal`, `Damping`, `ClipHeldOut` (clipping a held-out `ẑ`).
 - Cohorts and grouping: `Merging`, `KMeans`, `KMeansBridge`, `CrossFit` (held-out score of a
   chosen rule), `PreTestNormal` (merge iff the gap looks small, under normal noise).
 

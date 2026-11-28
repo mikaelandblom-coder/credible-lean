@@ -349,9 +349,11 @@ $\rho = \rho_{12}$.
 \begin{result}[When clipping is harmless]\label{res:clipZ}
   Let $g = \operatorname{Var}(\hmu_j - \hmu) > 0$ and $z^*$ the best factor. Clipping any $z$ to
   $[0, 1]$ never increases the error variance if and only if $z^* \in [0, 1]$. Clipping $z^*$
-  itself costs $g\,(\operatorname{clip} z^* - z^*)^2$.
+  itself costs $g\,(\operatorname{clip} z^* - z^*)^2$. The same holds on average for an estimated $\hat z$
+  independent of the cohort's data (held out, cross-fitted): $\mathbb E\,\mathrm{err}(\hat z) = \mathbb E\operatorname{errVar}(\hat z)$.
   \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}
   \lean{Credibility.BlendMoments.errVar_clipZ_bestZ}
+  \lean{Credibility.BlendMoments.integral_sq_blend_clip_le_iff}
 \end{result}
 \use Clip only when you believe the true $z$ is in $[0, 1]$; with two cohorts it leaves it exactly as in Result~\ref{res:z1_range}.
 
@@ -1935,8 +1937,9 @@ which has the details. The paper explains each where it belongs.
   \item[{35. Skewed claims and per-cohort variances under-price (simulated).}] $-0.4\%$ to $-2.4\%$ of the tariff; the bias is $\sum_i\cov(\hat d_i, \hmu_i)$ exactly, and balance removes it from the portfolio, cheapest by a shift to the cross-fitted level (S63).
   \lean{Credibility.Core.Estimates.integral_randomLin_sub}
   \lean{Credibility.Core.Estimates.integral_portfolio_sub_of_balanced}
-  \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$.
+  \item[{36. Clipping $z$ is harmless iff the best $z$ is in $[0, 1]$.}] Otherwise clipping the best $z$ costs $g\cdot\operatorname{dist}(z^*, [0,1])^2$. Also for a held-out $\hat z$; in sample no counterexample (S83).
   \lean{Credibility.BlendMoments.errVar_clipZ_le_iff}
+  \lean{Credibility.BlendMoments.integral_sq_blend_clip_le}
   \item[{37. The spread of the means is uncorrelated with the pooled variances only under conditions.}] Needs constant means within regions, no skewness, means uncorrelated with residuals, and no kurtosis; $J = T = 2$, unit volumes: $\cov(B, P) = \kappa_4/4$.
   \lean{Credibility.Cumulants.covariance_statB_eq_zero}
   \item[{38. Estimating the noise variance flips the sign of its kurtosis in the cross term.}] $2E[AB] = -2(1 - \tfrac1J)z(1-z)(\gamma_L + \gamma_N/T)/J$; with known noise variance the $\gamma_N$ term is positive.

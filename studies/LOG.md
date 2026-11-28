@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S82, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S83, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ to [0, 1]: never hurts beyond 2 SE in 54 worlds, |effect| ≤ 0.2 points; no counterexample to the held-out theorem |
 | S82 | `runs/balance-volumes.js` | Volumes that vary by year: the cross-fitted level (any volumes now) removes the under-pricing (−166 → +25 bp); `auto` keeps it where that costs error (σⱼ spread) |
 | S81 | `runs/rho-level.js` | ρ̂ is biased up (+0.06 to +0.13) by σ̃'s low level (0.63–0.97 of σ̂'s, every draw); ρ̂ from own σ̂ or rescaled σ̃: +0.4, +0.3 points, no default change |
 | S80 | `runs/vcw-corr.js` | The corrected Wⱼ (unbiased, Finding 47) fixes Var σ̂ⱼ² and β̂² but worsens corrBS's rates: +4 mean, up to +44 points (T = 3, σⱼ spread 2) |
@@ -1135,4 +1136,11 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     slightly (corrBS balanced 161.5 → 161.1, corr 155.9 → 155.5 % of the floor); varying volumes, balance on in
     18% of draws (was 0), MSE +0.1 to +0.4. S76's regret is unchanged (its rule is the script's own). **Consequence.**
     Varying volumes now behave as one shape: unbiased balance is available, at the Finding 46 price.
+- S83. *[numerical]* **Clipping an in-sample ẑ** (G3b, conjecture). `ClipHeldOut.integral_sq_blend_clip_le_iff`: a
+    held-out `ẑ` can always be clipped when every `z* ∈ [0, 1]`. `runs/clip-insample.js`: corrBS's own `ẑⱼ` against
+    the same fit with `ẑⱼ` clipped (b, μ̂ unchanged), regimes app / thesis × σⱼ spread {0, 1, 2} × ρ {0, 0.3, 0.6} ×
+    T {3, 5, 10}, 1000 paired draws. `ẑ` leaves [0, 1] in 0–93% of draws (most with ρ = 0.6 at thesis volume), but by
+    little. In the 41 worlds with every z* in [0, 1], clipping never hurts beyond 2 SE (helps in 13), mean −0.02,
+    max +0.01 points of the floor; in the 13 worlds with some z* slightly above 1 (≤ 1.01) also never. **Consequence.**
+    No counterexample; clipping is irrelevant for the app's rates, so the "z > 1" warning stays and no step is added.
 
