@@ -328,7 +328,7 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
 \end{proof}
 
 \begin{lemma}[With the noise correction]\label{lem:sum_sq_noise_pairs}
-  \lean{Credibility.sum_offDiag_eq, Credibility.sum_mul_sq_sub_noise_eq_pairs}
+  \lean{Credibility.sum_mul_sq_sub_noise_eq_pairs}
   \leanok
   \uses{lem:sum_sq_pairs}
   With weights $u_k$ on a set $S$, $U = \sum_S u_k \ne 0$, $\bar x = \sum_S u_kx_k/U$ and any $v_k$:
@@ -340,8 +340,9 @@ are the cells, with crossed levels: $\cov(\mu_{it}, \mu_{js}) = \sigma_{it}\sigm
 \end{lemma}
 \begin{proof}
   \leanok
+  \uses{lem:sum_offDiag}
   Both sides equal $\sum u_kx_k^2/U - (\sum u_kx_k)^2/U^2 - \sum u_kv_k/U + \sum u_k^2v_k/U^2$;
-  the sum over $k \ne l$ is the sum over all pairs minus the diagonal.
+  the sum over $k \ne l$ is the sum over all pairs minus the diagonal (Lemma~\ref{lem:sum_offDiag}).
 \end{proof}
 
 \begin{theorem}[The exact expectation of the ANOVA statistics]\label{thm:anovaStat}

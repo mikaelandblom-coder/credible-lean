@@ -305,58 +305,103 @@ theorem sigRhoHat_self (X : J × T → ℝ) (j : J) :
   simp [toUnequal]
   rfl
 
-/-- PLAN G0, eq. (13): with uncorrelated cohorts (`ρᵢⱼ = 0` for `i ≠ j`) and a common
-base variance `σⱼ = s` (the Bühlmann–Straub model), the classical `τ̂²` is unbiased.
-Proof: it differs from the thesis estimator (39) by `(Σⱼ wⱼ*ĉⱼ - (J - 1)σ̂²)/D`, and
-both `Σⱼ wⱼ*ĉⱼ` and `(J - 1)σ̂²` estimate `(J - 1)s²` without bias. -/
-theorem tauHatBS_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
-    (hρ : ∀ i j, i ≠ j → M.ρ i j = 0) (s : ℝ) (hs : ∀ j, sig j = s) :
-    M.Unbiased (tauHatBS w) M.τ2 := by
+/-- **The classical `τ̂²` on any model** (eq. (13)): `τ̂²` is unbiased for
+`τ² + (Σⱼ wⱼ*cⱼ - ((J - 1)/J) Σⱼ wⱼ*σ²ⱼⱼρⱼⱼ)/D`, with `cⱼ = Σᵢ (δᵢⱼ - wᵢ*/w**)σ²ᵢⱼρᵢⱼ` and
+`D = w** - Σᵢ wᵢ*²/w**`, for any correlations and base variances. Proof: it differs from the
+thesis estimator (39) by `(Σⱼ wⱼ*ĉⱼ - (J - 1)σ̂²)/D`. -/
+theorem tauHatBS_unbiased_general (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) :
+    M.Unbiased (tauHatBS w) (M.τ2 + 1 / (wall w - ∑ i, wtot w i ^ 2 / wall w)
+      * ((∑ j, wtot w j * ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w)
+          * (M.σ2 i j * M.ρ i j))
+        + -(((Fintype.card J : ℝ) - 1) / Fintype.card J)
+          * ∑ j, wtot w j * (M.σ2 j j * M.ρ j j))) := by
   have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
-  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
   have hW : ∀ k, 0 < wtot w k := wtot_pos hw
-  have hWall : 0 < wall w := sum_pos (fun k _ => hW k) univ_nonempty
-  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by positivity
-  set D := wall w - ∑ i, wtot w i ^ 2 / wall w
   -- `wⱼ* σ²ⱼⱼ^` is the cohort's `σ̂ⱼ²`, eq. (41).
   have hself : ∀ X j, wtot w j * sigRhoHat w X j j
       = ∑ t, w j t * (X (j, t) - muHat w X j) ^ 2 / ((Fintype.card T : ℝ) - 1) := fun X j => by
     rw [sigRhoHat_self hw X j]; field_simp [(hW j).ne']
-  have key : ∀ X, tauHat w X + 1 / D * ((∑ j, wtot w j * cHat w X j)
+  have key : ∀ X, tauHat w X + 1 / (wall w - ∑ i, wtot w i ^ 2 / wall w)
+      * ((∑ j, wtot w j * cHat w X j)
       + -(((Fintype.card J : ℝ) - 1) / Fintype.card J) * ∑ j, wtot w j * sigRhoHat w X j j)
         = tauHatBS w X := fun X => by
     simp only [tauHatBS, tauHat, sigHatBS, hself, mul_sub, sum_sub_distrib]
     field_simp
     ring
-  -- Under the Bühlmann–Straub model `σ²ᵢⱼρᵢⱼ = δᵢⱼ s²/wⱼ*`.
-  have hS : ∀ j, sqrtSum w j j = wtot w j := fun j =>
-    sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
-  have hσρ : ∀ i j, M.σ2 i j * M.ρ i j = if i = j then s ^ 2 / wtot w j else 0 := fun i j => by
-    split_ifs with h
-    · subst h
-      rw [M.σ2ρ_special sig hw hσ, hS, hs, M.ρ_self]
-      field_simp [(hW i).ne']
-    · rw [hρ i j h, mul_zero]
-  have hx : ∑ j, wtot w j / wall w = 1 := by rw [← sum_div]; exact div_self hWall.ne'
-  have hc : ∑ j, wtot w j * ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w)
-      * (M.σ2 i j * M.ρ i j) = ((Fintype.card J : ℝ) - 1) * s ^ 2 := by
-    simp only [hσρ, mul_ite, mul_zero, sum_ite_eq', mem_univ, ite_true]
-    rw [← sub_eq_zero]
-    have : ∀ j, wtot w j * ((1 - wtot w j / wall w) * (s ^ 2 / wtot w j))
-        = s ^ 2 - s ^ 2 * (wtot w j / wall w) := fun j => by field_simp [(hW j).ne']
-    simp only [this, sum_sub_distrib, ← mul_sum, hx, sum_const, card_univ, nsmul_eq_mul]
-    ring
-  have hd : ∑ j, wtot w j * (M.σ2 j j * M.ρ j j) = (Fintype.card J : ℝ) * s ^ 2 := by
-    simp only [hσρ, ite_true]
-    rw [sum_congr rfl fun j _ => by rw [mul_div_cancel₀ _ (hW j).ne']]
-    simp
-  refine ((M.tauHat_unbiased sig hw hσ hT hJ).add
+  exact ((M.tauHat_unbiased sig hw hσ hT hJ).add
     (((UnbiasedCov.sum univ fun j _ => (M.cHat_unbiased sig hw hσ hT j).const_mul (wtot w j)).add
       ((UnbiasedCov.sum univ fun j _ =>
         (M.sigRhoHat_unbiased sig hw hσ hT j j).const_mul (wtot w j)).const_mul
-          (-(((Fintype.card J : ℝ) - 1) / Fintype.card J)))).const_mul (1 / D))).congr key ?_
-  rw [hc, hd]
+          (-(((Fintype.card J : ℝ) - 1) / Fintype.card J)))).const_mul _)).congr key rfl
+
+omit [Fintype J] [DecidableEq J] [DecidableEq T] in
+/-- Under a common base variance `σⱼ = s`, `σ²ⱼⱼρⱼⱼ = s²/wⱼ*` (eqs. (37), (41)). -/
+lemma σ2ρ_self_common {s : ℝ} (hs : ∀ j, sig j = s) (j : J) :
+    M.σ2 j j * M.ρ j j = s ^ 2 / wtot w j := by
+  rcases isEmpty_or_nonempty T with hT | hT
+  · simp [σ2, wtot]
+  have hS : sqrtSum w j j = wtot w j :=
+    sum_congr rfl fun t _ => Real.sqrt_mul_self (hw j t).le
+  rw [M.σ2ρ_special sig hw hσ, hS, hs, M.ρ_self]
+  field_simp [(wtot_pos hw j).ne']
+
+/-- **Finding 49: Bühlmann–Straub's `τ̂²` on correlated cohorts.** With a common base
+variance `σⱼ = s` (the Bühlmann–Straub assumption) and any correlations, the classical `τ̂²`
+of eq. (13) is unbiased not for `τ²` but for `τ² - c̄`, where
+`c̄ = Σᵢ≠ₖ wᵢ*wₖ* σ²ᵢₖρᵢₖ / Σᵢ≠ₖ wᵢ*wₖ*` is the volume-weighted average noise covariance
+between cohort means. So positively correlated cohorts make it low. -/
+theorem tauHatBS_unbiased_corr (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J) {s : ℝ}
+    (hs : ∀ j, sig j = s) :
+    M.Unbiased (tauHatBS w) (M.τ2
+      - (∑ p ∈ (univ : Finset J).offDiag, wtot w p.1 * wtot w p.2 * (M.σ2 p.1 p.2 * M.ρ p.1 p.2))
+        / ∑ p ∈ (univ : Finset J).offDiag, wtot w p.1 * wtot w p.2) := by
+  have : Nonempty T := Fintype.card_pos_iff.mp (by omega)
+  have : Nonempty J := Fintype.card_pos_iff.mp (by omega)
+  have hW : ∀ k, 0 < wtot w k := wtot_pos hw
+  have hWall : 0 < wall w := sum_pos (fun k _ => hW k) univ_nonempty
+  have hJ0 : (Fintype.card J : ℝ) ≠ 0 := by positivity
+  refine (M.tauHatBS_unbiased_general sig hw hσ hT hJ).congr (fun _ => rfl) ?_
+  have hdiag := M.σ2ρ_self_common sig hw hσ hs
+  set N := ∑ p ∈ (univ : Finset J).offDiag,
+    wtot w p.1 * wtot w p.2 * (M.σ2 p.1 p.2 * M.ρ p.1 p.2) with hN
+  -- `Σᵢ≠ₖ wᵢwₖ = w**² - Σ wᵢ² = w** D`.
+  have hden : ∑ p ∈ (univ : Finset J).offDiag, wtot w p.1 * wtot w p.2
+      = wall w * (wall w - ∑ i, wtot w i ^ 2 / wall w) := by
+    rw [sum_offDiag_eq univ fun a b => wtot w a * wtot w b, ← sum_mul_sum, ← sum_div, mul_sub,
+      mul_div_cancel₀ _ hWall.ne']
+    simp [wall, sq]
+  -- `Σⱼ wⱼ cⱼ = Σⱼ wⱼCⱼⱼ - (N + Σⱼ wⱼ²Cⱼⱼ)/w**`.
+  have h1 : ∑ j, wtot w j * ∑ i, ((if i = j then 1 else 0) - wtot w i / wall w)
+        * (M.σ2 i j * M.ρ i j)
+      = ∑ j, wtot w j * (M.σ2 j j * M.ρ j j)
+        - (∑ j, ∑ i, wtot w i * wtot w j * (M.σ2 i j * M.ρ i j)) / wall w := by
+    simp only [sub_mul, sum_sub_distrib, mul_sub, ite_mul, one_mul, zero_mul, sum_ite_eq',
+      mem_univ, ite_true, mul_sum, sum_div]
+    congr 1
+    exact sum_congr rfl fun j _ => sum_congr rfl fun i _ => by ring
+  have h2 : ∑ j, ∑ i, wtot w i * wtot w j * (M.σ2 i j * M.ρ i j)
+      = N + ∑ j, wtot w j * wtot w j * (M.σ2 j j * M.ρ j j) := by
+    rw [sum_comm, hN, sum_offDiag_eq univ fun a b => wtot w a * wtot w b * (M.σ2 a b * M.ρ a b)]
+    ring
+  have h3 : ∑ j, wtot w j * (M.σ2 j j * M.ρ j j) = (Fintype.card J : ℝ) * s ^ 2 := by
+    simp only [hdiag]
+    rw [sum_congr rfl fun j _ => by rw [mul_div_cancel₀ _ (hW j).ne']]
+    simp
+  have h4 : ∑ j, wtot w j * wtot w j * (M.σ2 j j * M.ρ j j) = s ^ 2 * wall w := by
+    simp only [hdiag, wall, mul_sum]
+    exact sum_congr rfl fun j _ => by field_simp [(hW j).ne']
+  rw [h1, h2, h3, h4, hden]
   field_simp
   ring
+
+/-- PLAN G0, eq. (13): with uncorrelated cohorts (`ρᵢⱼ = 0` for `i ≠ j`) and a common
+base variance `σⱼ = s` (the Bühlmann–Straub model), the classical `τ̂²` is unbiased: the
+case `c̄ = 0` of `tauHatBS_unbiased_corr`. -/
+theorem tauHatBS_unbiased (hT : 2 ≤ Fintype.card T) (hJ : 2 ≤ Fintype.card J)
+    (hρ : ∀ i j, i ≠ j → M.ρ i j = 0) (s : ℝ) (hs : ∀ j, sig j = s) :
+    M.Unbiased (tauHatBS w) M.τ2 := by
+  refine (M.tauHatBS_unbiased_corr sig hw hσ hT hJ hs).congr (fun _ => rfl) ?_
+  rw [sum_eq_zero fun p hp => by rw [hρ p.1 p.2 (mem_offDiag.mp hp).2.2]; ring]
+  simp
 
 end Credibility.Model

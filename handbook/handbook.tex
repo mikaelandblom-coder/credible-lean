@@ -416,6 +416,7 @@ $\rho = \rho_{12}$.
   $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2) \le 1/(1-\rho^2)$ times the best (cohort 1).
   With equal noise covariances $c \ge 0$ and any $J$: at most $v_j/(v_j - c)$ times the best, and the
   fit's own-data weight is below the best predictor's.
+  \lean{Credibility.Model.tauHatBS_unbiased_corr}
   \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
   \lean{Credibility.Core.quad_blupWeight_shift}
   \lean{Credibility.Core.linMse_shift_diagonal_le}
@@ -1975,6 +1976,7 @@ which has the details. The paper explains each where it belongs.
   \lean{Credibility.VcW.sum_shrink_le_iff}
   \lean{Credibility.VcW.rhoPooled_ge_levelMatched}
   \item[{49. Bühlmann--Straub fitted on correlated cohorts misses twice.}] $\hat\tau^2$ estimates $\tau^2$ minus the volume-weighted average noise covariance. Two cohorts: still at most $1/(1-\rho^2)$, exactly $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$; three, $r = 0.5$: $1.635 > 1.5625$ (numerical).
+  \lean{Credibility.Model.tauHatBS_unbiased_corr}
   \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
   \lean{Credibility.Core.quad_blupWeight_shift}
   \item[{50. With equal noise covariances the fit under-weights own data.}] At most $v_j/(v_j - c)$ times the best MSE, any $J$. Not with equal correlations: $v = (1, 1, 36)$, $r = \tfrac12$, $\tau^2 = 1$, cohort 3: fit $5/176$, best predictor $-1/43$.

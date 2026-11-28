@@ -44,6 +44,18 @@ theorem Matrix.PosDef.exists_posSemidef_sub_smul_one {n : Type*} [Fintype n] [De
 
 namespace Credibility
 
+/-- A sum over the ordered pairs of distinct elements: all pairs minus the diagonal. -/
+lemma sum_offDiag_eq {ι : Type*} [DecidableEq ι] (s : Finset ι) (f : ι → ι → ℝ) :
+    ∑ p ∈ s.offDiag, f p.1 p.2 = ∑ a ∈ s, ∑ b ∈ s, f a b - ∑ a ∈ s, f a a := by
+  have h : ∀ a b, (if a ≠ b then f a b else 0) = f a b - if a = b then f a b else 0 := by
+    intro a b; split_ifs <;> simp_all
+  have hs : s.offDiag = (s ×ˢ s).filter fun p => p.1 ≠ p.2 := by
+    ext p; simp [Finset.mem_offDiag, and_assoc]
+  rw [hs, Finset.sum_filter, Finset.sum_product]
+  simp only [h, Finset.sum_sub_distrib, Finset.sum_ite_eq]
+  congr 1
+  exact Finset.sum_congr rfl fun a ha => by simp [ha]
+
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
 /-! ### The general result: a correlation matrix as taper -/

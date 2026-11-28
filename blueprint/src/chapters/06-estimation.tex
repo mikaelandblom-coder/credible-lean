@@ -181,11 +181,10 @@ proved once for any symmetric $C$.
   with $1/T$; it should be $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$.
 \end{remark}
 
-\begin{corollary}[The classical Bühlmann--Straub $\widehat{\tau^2}$, \eqth{13}]\label{cor:bs_tauHat}
-  \lean{Credibility.Model.sigHatBS, Credibility.Model.tauHatBS,
-        Credibility.Model.tauHatBS_unbiased}
+\begin{definition}[The classical Bühlmann--Straub $\widehat{\tau^2}$, \eqth{13}]\label{def:bs_tauHat}
+  \lean{Credibility.Model.sigHatBS, Credibility.Model.tauHatBS}
   \leanok
-  \uses{def:estimators, def:unbiased}
+  \uses{def:estimators}
   Let $\hat\sigma^2 = \frac1J\sum_j\hat\sigma_j^2$ (with the corrected $1/J$,
   Remark~\ref{rem:estimation_sizes}) and
   \[
@@ -193,20 +192,72 @@ proved once for any symmetric $C$.
     \frac{\sum_j w_{j*}(\hmu_j - \bar\mu)^2 - (J-1)\hat\sigma^2}{w_{**} - \sum_j w_{j*}^2/w_{**}},
     \qquad \bar\mu = \sum_j \frac{w_{j*}}{w_{**}}\hmu_j .
   \]
+\end{definition}
+
+\begin{theorem}[The classical $\widehat{\tau^2}$ on any model]\label{thm:bs_tauHat_general}
+  \lean{Credibility.Model.tauHatBS_unbiased_general}
+  \leanok
+  \uses{def:bs_tauHat, def:unbiased}
+  If $T \ge 2$ and $J \ge 2$, $\widehat{\tau^2}_{\mathrm{BS}}$ is unbiased for
+  $\tau^2 + \bigl(\sum_j w_{j*}c_j - \tfrac{J-1}{J}\sum_j w_{j*}\sigma^2_{jj}\rho_{jj}\bigr)/D$, with
+  $c_j = \sum_i(\delta_{ij} - w_{i*}/w_{**})\sigma^2_{ij}\rho_{ij}$ and
+  $D = w_{**} - \sum_j w_{j*}^2/w_{**}$, for any correlations and base variances.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{cor:estimation}
+  It differs from the estimator $\widehat{\tau^2}$ of \eqth{39} by
+  $\bigl(\sum_j w_{j*}\hat c_j - (J-1)\hat\sigma^2\bigr)/D$, and
+  $\hat\sigma_j^2 = w_{j*}\widehat{\sigma^2_{jj}\rho_{jj}}$ \eqth{41}; each piece is unbiased.
+\end{proof}
+
+\begin{lemma}[Pairs of distinct cohorts]\label{lem:sum_offDiag}
+  \lean{Credibility.sum_offDiag_eq}
+  \leanok
+  $\sum_{a \ne b \in S} f(a, b) = \sum_{a, b \in S} f(a, b) - \sum_{a \in S} f(a, a)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  The ordered pairs of $S \times S$ are the diagonal and the pairs of distinct elements.
+\end{proof}
+
+\begin{theorem}[Bühlmann--Straub's $\widehat{\tau^2}$ on correlated cohorts]\label{thm:bs_tauHat_corr}
+  \lean{Credibility.Model.tauHatBS_unbiased_corr, Credibility.Model.σ2ρ_self_common}
+  \leanok
+  \uses{def:bs_tauHat, def:unbiased}
+  If $T \ge 2$, $J \ge 2$ and $\sigma_j = \sigma$ for all $j$, then $\widehat{\tau^2}_{\mathrm{BS}}$
+  is unbiased for $\tau^2 - \bar c$, with
+  $\bar c = \sum_{i\ne k} w_{i*}w_{k*}\sigma^2_{ik}\rho_{ik} / \sum_{i\ne k} w_{i*}w_{k*}$,
+  the volume-weighted average noise covariance between cohort means.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:bs_tauHat_general, cor:estimation, lem:sum_offDiag}
+  By \eqth{37}, $\sigma^2_{jj}\rho_{jj} = \sigma^2/w_{j*}$, so
+  $\sum_j w_{j*}c_j = (J-1)\sigma^2 - N/w_{**}$ with $N = \sum_{i\ne k} w_{i*}w_{k*}\sigma^2_{ik}\rho_{ik}$,
+  and the $\hat\sigma^2$ term is $(J-1)\sigma^2$. And $w_{**}D = \sum_{i\ne k}w_{i*}w_{k*}$.
+\end{proof}
+
+\begin{remark}[Finding 49: what the fit estimates]\label{rem:bs_tauHat_corr}
+  \uses{thm:bs_tauHat_corr}
+  Positively correlated cohorts make Bühlmann--Straub's $\widehat{\tau^2}$ low by $\bar c$:
+  their means move together, so they look more alike than their levels are. Its blend is then
+  the best predictor of $\tilde K = \mathrm{diag}(\tau^2 - \bar c + v_i)$; the price of that is in
+  Remark~\ref{rem:pseudoTrue}.
+\end{remark}
+
+\begin{corollary}[The classical $\widehat{\tau^2}$ is unbiased under Bühlmann--Straub]\label{cor:bs_tauHat}
+  \lean{Credibility.Model.tauHatBS_unbiased}
+  \leanok
+  \uses{def:bs_tauHat, def:unbiased}
   If $T \ge 2$, $J \ge 2$, the cohorts are uncorrelated ($\rho_{ij} = 0$ for $i \ne j$)
   and $\sigma_j = \sigma$ for all $j$ (the Bühlmann--Straub model), then
   $\widehat{\tau^2}_{\mathrm{BS}}$ is unbiased for $\tau^2$.
 \end{corollary}
 \begin{proof}
   \leanok
-  \uses{cor:estimation}
-  It differs from the estimator $\widehat{\tau^2}$ of \eqth{39} by
-  $\bigl(\sum_j w_{j*}\hat c_j - (J-1)\hat\sigma^2\bigr)/(w_{**} - \sum_j w_{j*}^2/w_{**})$.
-  Under the assumptions $\sigma^2_{ij}\rho_{ij} = \delta_{ij}\sigma^2/w_{j*}$ by \eqth{37},
-  so $\mathbb{E}\sum_j w_{j*}\hat c_j = \sum_j (1 - w_{j*}/w_{**})\sigma^2 = (J-1)\sigma^2$,
-  and $\hat\sigma_j^2 = w_{j*}\widehat{\sigma^2_{jj}\rho_{jj}}$ \eqth{41} gives
-  $\mathbb{E}\hat\sigma^2 = \sigma^2$. The difference has expectation $0$, and
-  $\widehat{\tau^2}$ is unbiased.
+  \uses{thm:bs_tauHat_corr}
+  Theorem~\ref{thm:bs_tauHat_corr} with $\bar c = 0$.
 \end{proof}
 
 % ---------------------------------------------------------------------------

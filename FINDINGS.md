@@ -869,11 +869,13 @@ Gaps, extra hypotheses and new results found while formalizing.
    rates do not follow them.
 
 49. **Bühlmann–Straub fitted on correlated cohorts misses twice, and for two cohorts still costs at most
-   `1/(1 − ρ²)` (new; proved: `Core.quad_blupWeight_shift`, `TwoCohorts.linMse_pseudoTrue_le`).**
+   `1/(1 − ρ²)` (new; proved: `Model.tauHatBS_unbiased_corr`, `Core.quad_blupWeight_shift`,
+   `TwoCohorts.linMse_pseudoTrue_le`).**
    Findings 19–20 price ignoring correlation with the *true* `τ²`. A fitted Bühlmann–Straub also gets `τ²`
    wrong: with a common base variance and noise covariances `Cᵢₖ` between cohort means, `E Σⱼ wⱼ(μ̂ⱼ − μ̂)²`
    loses `Σᵢ≠ₖ wᵢwₖCᵢₖ/w`, so `τ̂²` (eq. 13) is unbiased for `τ̃² = τ² − c̄`,
-   `c̄ = Σᵢ≠ₖ wᵢwₖCᵢₖ / Σᵢ≠ₖ wᵢwₖ` (volume-weighted average noise covariance; derivation, not yet in Lean;
+   `c̄ = Σᵢ≠ₖ wᵢwₖCᵢₖ / Σᵢ≠ₖ wᵢwₖ` (volume-weighted average noise covariance; proved for any distribution
+   with these moments, `Model.tauHatBS_unbiased_corr`; for any `σⱼ`, `Model.tauHatBS_unbiased_general`, where
    unequal `σⱼ` add `Σⱼ σⱼ²(1/J − wⱼ/w)/D`). The fit is then the best predictor of the working model
    `K̃ = diag(τ̃² + vᵢ)`, `L̃ = τ̃²I`. **Two cohorts** (one covariance `c = σ₁σ₂ρ`, `c̄ = c` for any
    volumes): `K̃ = K − c·11ᵀ`, `L̃ = L − cI`, and for any such shift the excess is `hᵀKh = −c·hⱼ`,

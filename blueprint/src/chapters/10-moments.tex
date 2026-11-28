@@ -2008,11 +2008,11 @@ example ignoring the correlation between cohorts. How much can that cost?
 \end{proof}
 
 \begin{remark}[Findings 49, 50: fitting Bühlmann--Straub on correlated cohorts]\label{rem:pseudoTrue}
-  \uses{thm:TwoCohorts_pseudoTrue, cor:Core_ignoreCorr_equicorr, thm:Core_shift_diagonal, cor:Core_shift_self_le}
+  \uses{thm:bs_tauHat_corr, thm:TwoCohorts_pseudoTrue, cor:Core_ignoreCorr_equicorr, thm:Core_shift_diagonal, cor:Core_shift_self_le}
   Fitted on correlated cohorts (common $\sigma$, volumes $w_i$), Bühlmann--Straub's $\hat\tau^2$
   is unbiased not for $\tau^2$ but for $\tilde\tau^2 = \tau^2 - \bar c$,
   $\bar c = \sum_{i\ne k} w_iw_kC_{ik}/\sum_{i\ne k}w_iw_k$, the volume-weighted average noise
-  covariance. So the fit misses twice: no correlation in $K$, and a lower $\tau^2$. For two
+  covariance (Theorem~\ref{thm:bs_tauHat_corr}). So the fit misses twice: no correlation in $K$, and a lower $\tau^2$. For two
   cohorts (one covariance) the two misses combine into $K - c\,\mathbf 1\mathbf 1^T$ and the
   cost stays within $1/(1-\rho^2)$ (Theorem~\ref{thm:TwoCohorts_pseudoTrue}). For three or
   more they do not: with equal correlations $r = 0.5$ the worst case over $\tau^2$, $v$ is
