@@ -1111,8 +1111,10 @@ test('Balance to the cross-fitted level (Finding 35, S63; Core.Estimates.integra
   }
   assert.ok(E.recipeSteps('blup', { balance: 'crossFit' }).some((s) => s === E.BALANCE_CF_STEP), 'recipe step');
   const odd = { w: data.w.map((row, i) => (i === 0 ? row.map((x, t) => x * (1 + 0.1 * t)) : row)), X: data.X };
-  assert.equal(E.crossFitLevel(odd), null, 'year shares differ: no cross-fitted level');
-  const fb = E.fitWith('blup', odd, { balance: 'crossFit' }), m = E.cohortMeans(odd).m, wo = odd.w.map(sum);
+  assert.ok(E.crossFitLevel(odd) !== null, 'year shares differ: still a cross-fitted level (common πₛ, BalanceCost.balance_cost_cellLin)');
+  const short = { w: data.w.map((row) => row.slice(0, 2)), X: data.X.map((row) => row.slice(0, 2)) };
+  assert.equal(E.crossFitLevel(short), null, 'T < 3: no cross-fitted level');
+  const fb = E.fitWith('blup', short, { balance: 'crossFit' }), m = E.cohortMeans(short).m, wo = short.w.map(sum);
   assert.equal(fb.balanceTarget, 'exposure');
   close(sum(wo.map((x, j) => x * fb.rates[j])), sum(wo.map((x, j) => x * m[j])), 1e-10, 'fallback: exposure balance');
   const n = 1200, raw = E.simulate(world, ['blup'], n, 31), ex = E.simulate(world, ['blup'], n, 31, 1, { balance: true }), c = E.simulate(world, ['blup'], n, 31, 1, { balance: 'crossFit' });
@@ -1327,4 +1329,19 @@ test('Finding 47 (VcW.integral_vcWCorr_equal, integral_vcWCorr): the corrected W
   }
   const v = s2 / N - (s1 / N) ** 2;
   assert.ok(Math.abs(sW / N / v - 1) < 0.06, `E W̃ / Var σ̂² = ${sW / N / v}`);
+});
+
+test('Balance priced on the yearly cells (BalanceCost.integral_sq_cellLin_sub, balance_cost_cellLin): on one volume shape the fit’s own price equals its price on K̂; with volumes that vary by year the cross-fitted balance is unbiased (integral_crossFit_sub needs no shape)', () => {
+  const world = E.makeWorld({ rho: 0.5 }), { data } = E.draw(world, E.rng(4)), f = E.fitVC(data), info = E.balanceAuto(f, data).balanceAuto;
+  const wt = data.w.map(sum), wall = sum(wt), u = wt.map((x) => x / wall), J = u.length, K = f.K, t2 = f.tau2;
+  const c = new Array(J).fill(0);
+  E.weightsOf(f).forEach((d, j) => d.forEach((x, i) => { c[i] += u[j] * x; }));
+  let q = 0;
+  for (let i = 0; i < J; i++) for (let k = 0; k < J; k++) q += c[i] * K[i][k] * c[k];
+  const mseK = q - 2 * t2 * sum(c.map((x, i) => x * u[i])) + t2 * sum(u.map((x) => x * x));
+  assert.ok(Math.abs(info.portMse - mseK) < 1e-12 * mseK, `cell price ${info.portMse} = K̂ price ${mseK}`);
+  const vw = E.makeWorld({ rho: 0.5, volNoise: 0.2, volTrend: 0.05 }), n = 1500;
+  const raw = E.simulate(vw, ['blup'], n, 21), cf = E.simulate(vw, ['blup'], n, 21, 1, { balance: 'crossFit' });
+  assert.ok(raw.blup.bias.mean < -3 * raw.blup.bias.se, `unbalanced prices low with varying volumes: ${raw.blup.bias.mean} ± ${raw.blup.bias.se}`);
+  assert.ok(Math.abs(cf.blup.bias.mean) < 4 * cf.blup.bias.se, `cross-fitted unbiased with varying volumes: ${cf.blup.bias.mean} ± ${cf.blup.bias.se}`);
 });

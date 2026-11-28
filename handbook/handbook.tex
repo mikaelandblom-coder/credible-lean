@@ -744,8 +744,13 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
   for any rates, target and distribution. For the BLUP with known moments and $T = \sum_j u_j\hmu_j$
   it is $(u - c)^\top K(u - c) \ge 0$, $c = \sum_j u_jd^*_j$. For fixed rate weights $d_j$ and a
   target $a^\top\hmu$ it is $\mathrm{mse}(a) - \mathrm{mse}(c)$, $c = \sum_j u_jd_j$,
-  $\mathrm{mse}(e) = e^\top Ke - 2e^\top L^\top u + u^\top Lu$.
+  $\mathrm{mse}(e) = e^\top Ke - 2e^\top L^\top u + u^\top Lu$. Any volumes: for estimates linear in the
+  yearly cells, $\sum_{s,i}g_{si}X_{is}$ ($\sum g = 1$; levels' covariance $L$, year $s$'s noise $D_s$),
+  $\mathrm{m}(g) = (G - u)^\top L(G - u) + \sum_s g_s^\top D_sg_s$, $G_i = \sum_s g_{si}$; the cost is
+  $\mathrm{m}(g_T) - \mathrm{m}(g_{\bar r})$.
   \lean{Credibility.integral_sum_sq_shift}
+  \lean{Credibility.integral_sq_cellLin_sub}
+  \lean{Credibility.balance_cost_cellLin}
   \lean{Credibility.Core.Estimates.balance_cost_portLin}
   \lean{Credibility.Core.Estimates.balance_blup_cost}
 \end{result}

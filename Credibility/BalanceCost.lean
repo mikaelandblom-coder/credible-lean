@@ -21,6 +21,11 @@ portfolio level `T` (the historical exposure average `Σ uⱼμ̂ⱼ`, or a cros
   average, the cost is exactly `(u - c)ᵀK(u - c) ≥ 0`, with `c = Σⱼ uⱼ d*ⱼ`: `r̄ = cᵀμ̂` is the
   best unbiased estimate of `μ̄`, so no target built linearly from the `μ̂ᵢ` beats it.
 
+* `integral_sq_cellLin_sub`, `balance_cost_cellLin` (any volumes): estimates linear in the yearly
+  cells `Xᵢₛ = μᵢ + eᵢₛ` (the cross-fitted level `Σₛ πₛc⁽ˢ⁾ᵀXₛ` is one; it is not a function of the `μ̂ᵢ`
+  unless the regions' volumes share one shape) have error `(G − u)ᵀL(G − u) + Σₛ gₛᵀDₛgₛ` for `μ̄`, so
+  the cost of balancing to them is closed form for any volumes (S82).
+
 Nothing about the distribution is assumed.
 -/
 
@@ -193,4 +198,128 @@ theorem balance_blup_cost (hK : K.PosDef) (u : J → ℝ) (hu : ∑ j, u j = 1) 
 
 end Estimates
 end Core
+section YearlyCells
+
+/-! ### Targets built from the yearly cells (any volumes) -/
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
+variable {S : Type*} [Fintype S] [DecidableEq S]
+
+/-- The cell-linear estimate `Σₛ Σᵢ gₛᵢ Xᵢₛ` of yearly cells `Xᵢₛ = μᵢ + eᵢₛ`. -/
+noncomputable def cellLin (lev : J → Ω → ℝ) (e : J → S → Ω → ℝ) (g : S → J → ℝ) (ω : Ω) : ℝ :=
+  ∑ s, ∑ i, g s i * (lev i ω + e i s ω)
+
+/-- **The error of a cell-linear estimate of the portfolio level** (any volumes). Yearly cells
+`Xᵢₛ = μᵢ + eᵢₛ`: levels with mean `μ` and covariance `L`, noise centred, uncorrelated with the
+levels, with covariance `Dₛ` within year `s` and none across years. For weights `gₛᵢ` summing to
+one and shares `u` (`Σ uᵢ = 1`), with `Gᵢ = Σₛ gₛᵢ` (each region's total weight),
+`E(Σₛᵢ gₛᵢXᵢₛ − Σᵢ uᵢμᵢ)² = (G − u)ᵀL(G − u) + Σₛ gₛᵀDₛgₛ`, for every distribution with these
+moments. The cross-fitted level (`gₛ = πₛc⁽ˢ⁾`) and the fit's own `r̄` (`gₛᵢ = (Σⱼ uⱼdⱼᵢ)aᵢₛ`) are both
+of this form. -/
+theorem integral_sq_cellLin_sub (lev : J → Ω → ℝ) (e : J → S → Ω → ℝ) (μ : ℝ)
+    (L : Matrix J J ℝ) (D : S → Matrix J J ℝ)
+    (hl : ∀ i, MemLp (lev i) 2 P) (he : ∀ i s, MemLp (e i s) 2 P)
+    (hlm : ∀ i, P[lev i] = μ) (hem : ∀ i s, P[e i s] = 0)
+    (hL : ∀ i j, cov[lev i, lev j; P] = L i j) (hLe : ∀ i j s, cov[lev i, e j s; P] = 0)
+    (hD : ∀ i j s s', cov[e i s, e j s'; P] = if s = s' then D s i j else 0)
+    (g : S → J → ℝ) (u : J → ℝ) (hg : ∑ s, ∑ i, g s i = 1) (hu : ∑ i, u i = 1) :
+    P[fun ω => (cellLin lev e g ω - ∑ i, u i * lev i ω) ^ 2]
+      = (fun i => ∑ s, g s i - u i) ⬝ᵥ (L *ᵥ fun i => ∑ s, g s i - u i)
+        + ∑ s, g s ⬝ᵥ (D s *ᵥ g s) := by
+  set a : J → ℝ := fun i => ∑ s, g s i - u i with ha
+  -- the error as one linear combination of levels and noise
+  let Z : J ⊕ (S × J) → Ω → ℝ := Sum.elim lev fun p => e p.2 p.1
+  let k : J ⊕ (S × J) → ℝ := Sum.elim a fun p => g p.1 p.2
+  have hZ : ∀ q, MemLp (Z q) 2 P := fun q => by cases q with
+    | inl i => exact hl i
+    | inr p => exact he p.2 p.1
+  have hY : (fun ω => cellLin lev e g ω - ∑ i, u i * lev i ω) = fun ω => ∑ q, k q * Z q ω := by
+    funext ω
+    simp only [cellLin, Fintype.sum_sum_type, Fintype.sum_prod_type, k, Z, Sum.elim_inl,
+      Sum.elim_inr, ha, mul_add, sum_add_distrib, sub_mul]
+    rw [sum_comm (f := fun s i => g s i * lev i ω), sum_sub_distrib]
+    simp only [← sum_mul]
+    ring
+  have hkZ : ∀ q, MemLp (fun ω => k q * Z q ω) 2 P := fun q => (hZ q).const_mul _
+  have hYm : MemLp (fun ω => ∑ q, k q * Z q ω) 2 P := memLp_finsetSum _ fun q _ => hkZ q
+  have hmean : P[fun ω => ∑ q, k q * Z q ω] = 0 := by
+    rw [integral_finsetSum _ fun q _ => (hkZ q).integrable (by norm_num)]
+    simp only [integral_const_mul, Fintype.sum_sum_type, Fintype.sum_prod_type, k, Z,
+      Sum.elim_inl, Sum.elim_inr]
+    simp only [hlm, hem, mul_zero, sum_const_zero, add_zero, ← sum_mul, ha, sum_sub_distrib, hu]
+    rw [sum_comm, hg]; ring
+  have hY' : ∀ ω, cellLin lev e g ω - ∑ i, u i * lev i ω = ∑ q, k q * Z q ω := fun ω =>
+    congrFun hY ω
+  simp only [hY']
+  have hv := variance_eq_sub hYm
+  rw [hmean] at hv
+  change P[fun ω => (∑ q, k q * Z q ω) ^ 2] = _
+  have hsq : P[fun ω => (∑ q, k q * Z q ω) ^ 2] = Var[fun ω => ∑ q, k q * Z q ω; P] := by
+    rw [hv]; simp
+  rw [hsq, ← covariance_self hYm.aemeasurable, covariance_fun_sum_fun_sum hkZ hkZ]
+  simp only [covariance_const_mul_left, covariance_const_mul_right]
+  simp only [Fintype.sum_sum_type, Fintype.sum_prod_type, k, Z, Sum.elim_inl, Sum.elim_inr, hL,
+    hLe, hD, covariance_comm (e _ _) (lev _), mul_zero, sum_const_zero, add_zero, zero_add,
+    mul_ite]
+  simp only [dotProduct, mulVec, mul_sum]
+  congr 1
+  · exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
+  · refine sum_congr rfl fun s _ => ?_
+    refine sum_congr rfl fun i _ => ?_
+    rw [Finset.sum_eq_single s (fun y _ hy => sum_eq_zero fun j _ => by simp [Ne.symm hy])
+      (fun h => absurd (mem_univ s) h)]
+    exact sum_congr rfl fun j _ => by simp only [↓reduceIte]; ring
+
+omit [IsProbabilityMeasure P] [DecidableEq S] in
+lemma memLp_cellLin (lev : J → Ω → ℝ) (e : J → S → Ω → ℝ) (hl : ∀ i, MemLp (lev i) 2 P)
+    (he : ∀ i s, MemLp (e i s) 2 P) (g : S → J → ℝ) : MemLp (cellLin lev e g) 2 P :=
+  memLp_finsetSum _ fun s _ => memLp_finsetSum _ fun i _ => ((hl i).add (he i s)).const_mul _
+
+omit [MeasurableSpace Ω] [IsProbabilityMeasure P] [DecidableEq S] in
+/-- `Σⱼ uⱼ (cell-linear rate j) = the cell-linear estimate with weights Σⱼ uⱼdⱼ`. -/
+lemma sum_mul_cellLin (lev : J → Ω → ℝ) (e : J → S → Ω → ℝ) (u : J → ℝ)
+    (d : J → S → J → ℝ) (ω : Ω) :
+    ∑ j, u j * cellLin lev e (d j) ω = cellLin lev e (fun s i => ∑ j, u j * d j s i) ω := by
+  simp only [cellLin, mul_sum, sum_mul]
+  rw [sum_comm]
+  refine sum_congr rfl fun s _ => ?_
+  rw [sum_comm]
+  exact sum_congr rfl fun i _ => sum_congr rfl fun j _ => by ring
+
+/-- **The cost of balancing to a target built from the yearly cells** (any volumes). Rates
+`rⱼ = Σₛᵢ dⱼₛᵢXᵢₛ` and target `T = Σₛᵢ gₛᵢXᵢₛ`, all with weights summing to one (e.g. `dⱼᵀμ̂` with
+`μ̂ᵢ = Σₛ aᵢₛXᵢₛ`, and the cross-fitted level `gₛ = πₛc⁽ˢ⁾` with its weights held fixed). Shifting to
+`T` changes the exposure-weighted mean squared error by exactly `m(g) − m(Σⱼ uⱼdⱼ)`, with
+`m(g) = (G − u)ᵀL(G − u) + Σₛ gₛᵀDₛgₛ` (`integral_sq_cellLin_sub`), for every distribution with
+these moments. No volume shape is needed: the target need not be a function of the `μ̂ᵢ`. -/
+theorem balance_cost_cellLin (lev : J → Ω → ℝ) (e : J → S → Ω → ℝ) (μ : ℝ)
+    (L : Matrix J J ℝ) (D : S → Matrix J J ℝ)
+    (hl : ∀ i, MemLp (lev i) 2 P) (he : ∀ i s, MemLp (e i s) 2 P)
+    (hlm : ∀ i, P[lev i] = μ) (hem : ∀ i s, P[e i s] = 0)
+    (hL : ∀ i j, cov[lev i, lev j; P] = L i j) (hLe : ∀ i j s, cov[lev i, e j s; P] = 0)
+    (hD : ∀ i j s s', cov[e i s, e j s'; P] = if s = s' then D s i j else 0)
+    (u : J → ℝ) (hu : ∑ i, u i = 1) (d : J → S → J → ℝ) (hd : ∀ j, ∑ s, ∑ i, d j s i = 1)
+    (g : S → J → ℝ) (hg : ∑ s, ∑ i, g s i = 1) :
+    P[fun ω => ∑ j, u j * (cellLin lev e (d j) ω
+        + (cellLin lev e g ω - ∑ i, u i * cellLin lev e (d i) ω) - lev j ω) ^ 2]
+      = P[fun ω => ∑ j, u j * (cellLin lev e (d j) ω - lev j ω) ^ 2]
+        + ((fun i => ∑ s, g s i - u i) ⬝ᵥ (L *ᵥ fun i => ∑ s, g s i - u i)
+          + ∑ s, g s ⬝ᵥ (D s *ᵥ g s))
+        - ((fun i => ∑ s, (∑ j, u j * d j s i) - u i)
+            ⬝ᵥ (L *ᵥ fun i => ∑ s, (∑ j, u j * d j s i) - u i)
+          + ∑ s, (fun i => ∑ j, u j * d j s i) ⬝ᵥ (D s *ᵥ fun i => ∑ j, u j * d j s i)) := by
+  have hc : ∑ s, ∑ i, ∑ j, u j * d j s i = 1 := by
+    have h1 : ∀ s, ∑ i, ∑ j, u j * d j s i = ∑ j, u j * ∑ i, d j s i := fun s => by
+      rw [sum_comm]; exact sum_congr rfl fun j _ => (mul_sum _ _ _).symm
+    rw [sum_congr rfl fun s _ => h1 s, sum_comm]
+    rw [sum_congr rfl fun j _ => (mul_sum _ _ _).symm]
+    simp [hd, hu]
+  rw [integral_sum_sq_shift u hu _ lev _ (fun j => memLp_cellLin lev e hl he (d j)) hl
+    (memLp_cellLin lev e hl he g)]
+  simp_rw [sum_mul_cellLin lev e u d]
+  rw [integral_sq_cellLin_sub lev e μ L D hl he hlm hem hL hLe hD g u hg hu,
+    integral_sq_cellLin_sub lev e μ L D hl he hlm hem hL hLe hD _ u hc hu]
+
+end YearlyCells
+
 end Credibility

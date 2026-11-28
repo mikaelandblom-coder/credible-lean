@@ -633,7 +633,7 @@ h3 { font-size: 14px; margin: 14px 0 6px; }
       if (E.MODELS[id].balanced) return `${nm}: balanced on exposures by construction.`;
       if (!b) return '';
       if (!b.available) return `${nm}: rule not available (no linear weights), balanced.`;
-      const p = (x) => (100 * x).toFixed(2) + '%', tn = b.target === 'exposure' ? 'exposure-weighted (no cross-fitted level: the volumes do not share one shape over the years)' : 'cross-fitted';
+      const p = (x) => (100 * x).toFixed(2) + '%', tn = b.target === 'exposure' ? 'exposure-weighted (no cross-fitted level: fewer than 3 years)' : 'cross-fitted';
       return `${nm}: ${b.on ? '<b>balanced</b>' : '<b>left unbalanced</b>'}: typical error for the portfolio level, ${tn} ${p(b.errTarget)} against its own ${p(b.errFit)}. `
         + `Estimated ${b.D > 0 ? 'under' : 'over'}-pricing of the unbalanced portfolio ${p(Math.abs(b.D))} ± ${p(2 * b.seD)} (2 SE)${b.on ? ', removed' : ', kept'}.`;
     };

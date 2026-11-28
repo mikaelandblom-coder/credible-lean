@@ -669,6 +669,33 @@ exposure-weighted rate hits a chosen portfolio level $T$ (exposure shares $u$, $
   $\bar\mu$ are $\mathrm{mse}(\cdot)$ by Theorem~\ref{thm:Blup_mse_true}.
 \end{proof}
 
+\begin{theorem}[The error of a cell-linear estimate of the portfolio level]\label{thm:integral_sq_cellLin_sub}
+  \lean{Credibility.integral_sq_cellLin_sub, Credibility.cellLin}
+  \leanok
+  Yearly cells $X_{is} = \mu_i + e_{is}$: levels with mean $\mu$ and covariance $L$; noise centred,
+  uncorrelated with the levels, with covariance $D_s$ within year $s$ and none across years. For weights
+  $g_{si}$ summing to one, $G_i = \sum_s g_{si}$ and shares $u$,
+  $\mathbb E(\sum_{s,i}g_{si}X_{is} - \bar\mu)^2 = (G - u)^\top L(G - u) + \sum_s g_s^\top D_sg_s$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The error is $\sum_i(G_i - u_i)\mu_i + \sum_{s,i}g_{si}e_{is}$, of mean $0$; expand its variance.
+\end{proof}
+
+\begin{theorem}[The cost of balancing to a target built from the cells]\label{thm:balance_cost_cellLin}
+  \lean{Credibility.balance_cost_cellLin, Credibility.memLp_cellLin, Credibility.sum_mul_cellLin}
+  \leanok
+  Rates and target linear in the yearly cells (e.g.\ $d_j^\top\hmu$ with $\hmu_i = \sum_s a_{is}X_{is}$, and
+  the cross-fitted level $\sum_s\pi_sc^{(s)\top}X_s$ with its weights held fixed): balancing changes the
+  exposure-weighted mean squared error by $\mathrm m(g_T) - \mathrm m(\sum_j u_jd_j)$, $\mathrm m$ the error
+  of Theorem~\ref{thm:integral_sq_cellLin_sub}, for any volumes.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:balance_cost, thm:integral_sq_cellLin_sub}
+  Theorem~\ref{thm:balance_cost}, and Theorem~\ref{thm:integral_sq_cellLin_sub} for both estimates of $\bar\mu$.
+\end{proof}
+
 \begin{theorem}[Balancing the BLUP to the exposures]\label{thm:Core_balance_blup_cost}
   \lean{Credibility.Core.Estimates.balance_blup_cost}
   \leanok

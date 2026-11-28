@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S81, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S82, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S82 | `runs/balance-volumes.js` | Volumes that vary by year: the cross-fitted level (any volumes now) removes the under-pricing (−166 → +25 bp); `auto` keeps it where that costs error (σⱼ spread) |
 | S81 | `runs/rho-level.js` | ρ̂ is biased up (+0.06 to +0.13) by σ̃'s low level (0.63–0.97 of σ̂'s, every draw); ρ̂ from own σ̂ or rescaled σ̃: +0.4, +0.3 points, no default change |
 | S80 | `runs/vcw-corr.js` | The corrected Wⱼ (unbiased, Finding 47) fixes Var σ̂ⱼ² and β̂² but worsens corrBS's rates: +4 mean, up to +44 points (T = 3, σⱼ spread 2) |
 | S79 | `runs/volume-noise.js` | Volumes that vary by year: the fits and their ranking stand; the balance rule had silently always balanced (no cross-fitted level), up to +110 points; now prices the exposure-weighted level |
@@ -1121,4 +1122,17 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     own σ̂ⱼ +0.4 mean (−1.1 to +5.1), σ̃ rescaled to σ̂'s level +0.3 (−39.4 to +13.7: large gain at app volume, σⱼ
     spread 2, ρ = 0, losses with equal σⱼ). **Consequence.** No change to the app. Like S80: the plug-in variances'
     biases are exact and large, but correcting them does not help the rates.
+- S82. *[numerical; the pricing is exact for fixed weights]* **Balancing with volumes that vary by year** (owner,
+    2026-11-28: on uneven volumes nothing removed the skew under-pricing of Finding 35). `BalanceCost.balance_cost_cellLin`
+    prices any target linear in the yearly cells, so `crossFitLevel` (common year shares πₛ, unbiased by
+    `integral_crossFit_sub` for any volumes) no longer needs one volume shape, and `balanceAuto` prices it on the
+    cells (`D̂ₛ` from `K̂ − L̂`; on one shape the fit's own term equals mse(c) on `K̂`, Node test).
+    `runs/balance-volumes.js`: corrBS, volNoise 0.2, volTrend 0.05, σⱼ spread {0, 2} × ρ {0, 0.6} × T {5, 10},
+    1500 draws. Portfolio bias raw −11 to −166 bp; always cross-fitted −3 to +39 (all within 2 SE of 0),
+    exposures 0 to +45; MSE: cross-fitted ≈ raw with equal σⱼ (55.5 vs 55.9 at T = 5), +15 to
+    +66% with σⱼ spread 2; `auto` follows the cheaper one (off with spread, partly on at ρ = 0.6: −70 → −48 bp,
+    MSE 71.3 → 68.4). S79 rerun (`volume-noise.out.txt`): one shape, the exact cell pricing improves `auto`
+    slightly (corrBS balanced 161.5 → 161.1, corr 155.9 → 155.5 % of the floor); varying volumes, balance on in
+    18% of draws (was 0), MSE +0.1 to +0.4. S76's regret is unchanged (its rule is the script's own). **Consequence.**
+    Varying volumes now behave as one shape: unbiased balance is available, at the Finding 46 price.
 

@@ -605,7 +605,7 @@
     taperSignal: 'taper when Σ_d n_d [R²(r̄_d² + V_d) − 2R r̄_d² + r̄_d²] < Σ_d n_d [(r̄ − r̄_d)² − V_d/n_d]⁺, R = ρ̂^d, V_d = (1 − r̄_d²)²/(T − 1)',
     gainPrice: 'region variances when (MSE on K̂ with one pooled σ̂² − MSE on K̂) / MSE on K̂ > Σⱼ wⱼ* ẑⱼ(1 − ẑⱼ)·2/(T − 1)·MSEⱼ / Σⱼ wⱼ* MSEⱼ',
     balance: 'rateⱼ + D,  D = Σᵢ wᵢ*(μ̂ᵢ − rateᵢ)/w**, the same D for every region',
-    balanceAuto: 'balance iff cost̂ = mse(c̄) − mse(c) < 0 on K̂, L̂:  mse(e) = eᵀK̂e − 2eᵀL̂ᵀu + uᵀL̂u,  c = Σⱼ uⱼ d̂⁽ʲ⁾,  c̄ the cross-fit\'s mean weights (c̄ = u, target the exposure-weighted level, when the volumes do not share one shape),  uⱼ = wⱼ*/w**;  bias readout D = L̂cf − Σⱼ uⱼ rateⱼ ± 2√((c̄ − c)ᵀK̂(c̄ − c))',
+    balanceAuto: 'balance iff cost̂ = m(g_cf) − m(g_r̄) < 0 on the yearly cells:  m(g) = (G − u)ᵀL̂(G − u) + Σₛ gₛᵀD̂ₛgₛ,  Gᵢ = Σₛ gₛᵢ,  g_cf,ₛ = πₛc̄⁽ˢ⁾ (the cross-fit\'s weights),  g_r̄,ₛᵢ = cᵢwᵢₛ/wᵢ*,  c = Σⱼ uⱼ d̂⁽ʲ⁾,  D̂ₛᵢₖ = (K̂ − L̂)ᵢₖwᵢ*wₖ*/(Sᵢₖ√(wᵢₛwₖₛ)),  uⱼ = wⱼ*/w** (on one volume shape: mse(c̄) − mse(c) on K̂);  bias readout D = L̂cf − Σⱼ uⱼ rateⱼ ± 2·SD on the cells',
     balanceCf: 'rateⱼ + D,  D = L̂cf − Σᵢ wᵢ* rateᵢ/w**,  L̂cf = Σₛ πₛ Σᵢ c̄ᵢ⁽ˢ⁾ Xᵢₛ,  c̄⁽ˢ⁾ = Σⱼ (wⱼ*/w**) d̂⁽ʲ⁾ from the pooled BLUP fitted without year s',
     premium: 'premium = μ̂ⱼᵇ;  forecast error² = MSEⱼ + σ̂ⱼ²/wⱼ,next',
     grpPairs: 'P̂ᵢⱼ = (μ̂ᵢ − μ̂ⱼ)² − (σ²ᵢᵢρᵢᵢ^ + σ²ⱼⱼρⱼⱼ^ − 2σ²ᵢⱼρᵢⱼ^) for i < j (eq. (39) estimates), E P̂ᵢⱼ = 2λ + 2φτ²·[different groups], λ = (1 − φ)τ²',
@@ -1560,19 +1560,19 @@
    * on the full design; their exposure-weighted row c̄⁽ˢ⁾ applied to year s's cells, summed with the year
    * shares πₛ. With year shares common to the regions its bias is the level channel Σₛ πₛ Σᵢ cov(c̄ᵢ⁽ˢ⁾, μᵢ)
    * only, any distribution (Core.Estimates.integral_crossFit_sub), 0 when the weights are uncorrelated
-   * with the levels (integral_crossFit_sub_eq_zero). Null when the year shares differ by region (the
-   * identity is then not exact) or T < 3. `cbar` is Σₛ πₛ c̄⁽ˢ⁾ (sums to 1), for the first-order weights.
+   * with the levels (integral_crossFit_sub_eq_zero). The year shares πₛ are the portfolio's, common to the
+   * regions, so this holds for any volumes (one shape is not needed); null when T < 3. `cbar` is Σₛ πₛ c̄⁽ˢ⁾
+   * (sums to 1), for the first-order weights; `cs` the c̄⁽ˢ⁾, for the exact cell pricing (balanceAuto).
    */
   const cfCache = new WeakMap();
   function crossFitLevel(data) {
     if (cfCache.has(data)) return cfCache.get(data);
     const J = data.X.length, T = data.X[0].length, wt = data.w.map(sum), wall = sum(wt);
     const pi = Array.from({ length: T }, (_, t) => sum(data.w.map((row) => row[t])) / wall);
-    const common = data.w.every((row, i) => row.every((x, t) => Math.abs(x / wt[i] - pi[t]) <= 1e-9 * Math.max(pi[t], 1e-300)));
     let res = null;
-    if (common && T >= 3) {
+    if (T >= 3) {
       const S = data.w.map((ri) => data.w.map((rj) => sum(ri.map((x, t) => Math.sqrt(x * rj[t])))));
-      let level = 0; const cbar = new Array(J).fill(0);
+      let level = 0; const cbar = new Array(J).fill(0), cs = [];
       for (let s = 0; s < T; s++) {
         const sub = { w: data.w.map((row) => row.filter((_, t) => t !== s)), X: data.X.map((row) => row.filter((_, t) => t !== s)) };
         const p = vcEstimate(sub, { pooled: true }), sd = p.s2.map(Math.sqrt);
@@ -1581,8 +1581,9 @@
         for (let j = 0; j < J; j++) blupWeight(K, p.t2, j).forEach((x, i) => { c[i] += wt[j] / wall * x; });
         level += pi[s] * sum(c.map((x, i) => x * data.X[i][s]));
         c.forEach((x, i) => { cbar[i] += pi[s] * x; });
+        cs.push(c);
       }
-      res = { level, cbar, pi };
+      res = { level, cbar, pi, cs };
     }
     cfCache.set(data, res);
     return res;
@@ -1611,7 +1612,7 @@
     out.warnings = (f.warnings || []).filter(off);
     out.notes = (f.notes || []).filter(off);
     if (cf) out.weightsApprox = true;
-    const st = cf ? BALANCE_CF_STEP : BALANCE_STEP, fb = opts && opts.target === 'crossFit' && !cf ? 'cross-fitted level not available (year shares differ by region, or T < 3): exposure balance instead; ' : '';
+    const st = cf ? BALANCE_CF_STEP : BALANCE_STEP, fb = opts && opts.target === 'crossFit' && !cf ? 'cross-fitted level not available (T < 3): exposure balance instead; ' : '';
     out.steps = (f.steps || []).concat([Object.assign({}, st, { values: [D], note: `D = ${D >= 0 ? '+' : '−'}${(100 * Math.abs(D)).toFixed(2)}% of the tariff; ` + fb + st.note })]);
     return out;
   }
@@ -1620,8 +1621,9 @@
    * The balance switch by its plug-in cost (owner, 2026-11-27; Finding 46, studies S76): shift to the
    * cross-fitted level only when that level is the better estimate of the portfolio level on the fitted
    * moments. The cost of a common shift is exactly E(T − μ̄)² − E(r̄ − μ̄)² (BalanceCost.integral_sum_sq_shift);
-   * for fixed weights it is mse(c̄) − mse(c) (BalanceCost.balance_cost_portLin), here on K̂ and L̂ (τ̂²I, or the
-   * fit's L for group levels), c̄ the cross-fit's mean weights. S76: regret at most 6.9 points of the floor
+   * for fixed weights it is m(g_T) − m(g_r̄) on the yearly cells (BalanceCost.balance_cost_cellLin, any volumes; on one
+   * shape the fit's own term is mse(c) on K̂), on K̂ and L̂ (τ̂²I, or the fit's L for group levels), the cross-fit's
+   * per-year weights c̄⁽ˢ⁾ held fixed (S82). S76: regret at most 6.9 points of the floor
    * (always on: 205.6). `errTarget`, `errFit`: the plug-in typical errors √mse of the two estimates of the
    * portfolio level (on K̂ both read low, about ×0.7 in S76's app worlds, their difference much less). The readout: D = L̂cf − Σⱼ uⱼ rateⱼ, the raw fit's gap to the cross-fitted level
    * (which is unbiased when the weights are blind to the levels, Core.Estimates.integral_crossFit_sub_eq_zero),
@@ -1636,8 +1638,8 @@
       return Object.assign(b, { balanceAuto: { on: true, available: false } });
     }
     const { wt, m } = cohortMeans(data), wall = sum(wt), u = wt.map((x) => x / wall), J = u.length, K = f.K;
-    // The target: the cross-fitted level when the regions' volumes share one shape (crossFitLevel), else the
-    // exposure-weighted level uᵀμ̂ (any volumes, S79); both are aᵀμ̂ with Σ aᵢ = 1, as balance_cost_portLin needs.
+    // The target: the cross-fitted level (crossFitLevel, any volumes, T ≥ 3), priced on the yearly cells; else
+    // the exposure-weighted level uᵀμ̂, priced on K̂ (balance_cost_portLin).
     const tgt = cf ? { a: cf.cbar, level: cf.level, name: 'cross-fitted level', opts: { target: 'crossFit' } }
       : { a: u, level: sum(m.map((x, j) => u[j] * x)), name: 'exposure-weighted level', opts: { target: 'exposure' } };
     const L = f.L || K.map((row, i) => row.map((_, k) => (i === k ? f.tau2 : 0)));
@@ -1646,15 +1648,37 @@
     const mse = (d) => quad(d) - 2 * sum(d.map((x, i) => x * Ltu[i])) + uLu;
     const c = new Array(J).fill(0);
     W.forEach((d, j) => d.forEach((x, i) => { c[i] += u[j] * x; }));
-    const a = tgt.a, mc = mse(c), cost = mse(a) - mc;
-    const D = tgt.level - sum(f.rates.map((x, j) => u[j] * x)), seD = Math.sqrt(Math.max(quad(a.map((x, i) => x - c[i])), 0));
+    // With the cross-fitted level: price both estimates of μ̄ on the yearly cells (BalanceCost.balance_cost_cellLin,
+    // any volumes): target gₛ = πₛc̄⁽ˢ⁾, the fit's r̄ gₛᵢ = cᵢaᵢₛ (aᵢₛ = wᵢₛ/wᵢ*); m(g) = (G − u)ᵀL̂(G − u) + Σₛ gₛᵀD̂ₛgₛ with the
+    // cells' noise D̂ₛᵢₖ = Cᵢₖ/√(wᵢₛwₖₛ), Cᵢₖ = (K̂ − L̂)ᵢₖ wᵢ*wₖ*/Sᵢₖ (so Σₛ aᵢₛaₖₛD̂ₛᵢₖ = (K̂ − L̂)ᵢₖ: on one shape this is mse on K̂).
+    let mc, cost, seD;
+    if (cf) {
+      const T = data.w[0].length, Sx = data.w.map((ri) => data.w.map((rj) => sum(ri.map((x, t) => Math.sqrt(x * rj[t])))));
+      const C = K.map((row, i) => row.map((x, k) => (x - L[i][k]) * wt[i] * wt[k] / Sx[i][k]));
+      const cellQuad = (G, g) => {   // GᵀL̂G + Σₛ gₛᵀD̂ₛgₛ
+        let q = 0;
+        for (let i = 0; i < J; i++) for (let k = 0; k < J; k++) q += G[i] * L[i][k] * G[k];
+        for (let t = 0; t < T; t++) for (let i = 0; i < J; i++) for (let k = 0; k < J; k++) q += g[t][i] * g[t][k] * C[i][k] / Math.sqrt(data.w[i][t] * data.w[k][t]);
+        return q;
+      };
+      const tot = (g) => u.map((_, i) => sum(g.map((gs) => gs[i])));
+      const gT = cf.cs.map((cs, t) => cs.map((x) => cf.pi[t] * x));
+      const gR = Array.from({ length: T }, (_, t) => c.map((x, i) => x * data.w[i][t] / wt[i]));
+      const mCell = (g) => cellQuad(tot(g).map((x, i) => x - u[i]), g);
+      mc = mCell(gR); cost = mCell(gT) - mc;
+      const gd = gT.map((gs, t) => gs.map((x, i) => x - gR[t][i]));
+      seD = Math.sqrt(Math.max(cellQuad(tot(gd), gd), 0));
+    } else {
+      mc = mse(c); cost = mse(u) - mc; seD = Math.sqrt(Math.max(quad(u.map((x, i) => x - c[i])), 0));
+    }
+    const D = tgt.level - sum(f.rates.map((x, j) => u[j] * x));
     const fitMse = sum(W.map((d, j) => u[j] * linMseL(K, L, j, d)));
     const on = cost < -1e-9 * Math.max(mc, 1e-300), rel = fitMse > 0 ? cost / fitMse : 0;   // a tie (c = a, e.g. a blend balanced on exposures by construction) is left as fitted
     const info = { on, available: true, target: cf ? 'crossFit' : 'exposure', cost, rel, D, seD, portMse: mc };
     const pc = (x) => `${x >= 0 ? '+' : '−'}${(100 * Math.abs(x)).toFixed(2)}%`, rt = (x) => `${(100 * Math.sqrt(Math.max(x, 0))).toFixed(2)}%`;
     info.errTarget = Math.sqrt(Math.max(mc + cost, 0)); info.errFit = Math.sqrt(Math.max(mc, 0));
     const note = `typical error for the portfolio level on K̂: ${tgt.name} ${rt(mc + cost)}, the fit's own ${rt(mc)} of the tariff, so ${on ? `balanced (the ${tgt.name} is the better estimate)` : 'left unbalanced (its own level is the better estimate)'}; `
-      + (cf ? '' : 'no cross-fitted level: the regions’ volumes do not share one shape over the years, so it is not a linear function of the region means (S79); ')
+      + (cf ? '' : 'no cross-fitted level (fewer than 3 years); ')
       + `bias readout: the unbalanced rates sit ${(100 * Math.abs(D)).toFixed(2)}% ${D > 0 ? 'below' : 'above'} the ${tgt.name}, ± ${(200 * seD).toFixed(2)}% (2 SE), `
       + `an estimate of the raw portfolio's ${D > 0 ? 'under' : 'over'}-pricing${on ? ' (removed by the shift)' : ' (kept: removing it would add more error than it saves)'}. Studies S76: regret at most 6.9 points of the floor against 205.6 for always balancing`;
     const base = on ? balanceFit(f, data, tgt.opts) : Object.assign({}, f);
@@ -1825,7 +1849,7 @@
   /** The balance step the switch appends (any model not already balanced). */
   const BALANCE_STEP = { name: 'balance', formula: F.balance, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_portfolio_sub_of_balanced', note: 'balanced: Σⱼ wⱼ* rateⱼ = Σⱼ wⱼ* μ̂ⱼ in every draw, so the portfolio level is unbiased in every world (Finding 35); with skewed claims the unbalanced rates are too low on average. The best balanced correction by a common term when cov(rateⱼ − μⱼ, D) is equal for all regions (Core.commonShift_optimal); under strong correlation it costs accuracy' };
 
-  const BALANCE_AUTO_STEP = { name: 'balance (auto)', formula: F.balanceAuto, badge: 'proved', lean: 'Credibility.Core.Estimates.balance_cost_portLin', note: 'a common shift trades the fit\'s portfolio level for the target\'s: it changes the exposure-weighted MSE by exactly E(T − μ̄)² − E(r̄ − μ̄)², any distribution (BalanceCost.integral_sum_sq_shift); for fixed weights in closed form (balance_cost_portLin), applied on the fitted K̂ (plug-in, first order, the bias of the raw fit not counted). With unequal noise variances the cross-fitted level is usually the worse estimate (Finding 46)' };
+  const BALANCE_AUTO_STEP = { name: 'balance (auto)', formula: F.balanceAuto, badge: 'proved', lean: 'Credibility.balance_cost_cellLin', note: 'a common shift trades the fit\'s portfolio level for the target\'s: it changes the exposure-weighted MSE by exactly E(T − μ̄)² − E(r̄ − μ̄)², any distribution (BalanceCost.integral_sum_sq_shift); for fixed weights in closed form on the yearly cells, any volumes (balance_cost_cellLin), applied on the fitted K̂ (plug-in, first order, the bias of the raw fit not counted). With unequal noise variances the cross-fitted level is usually the worse estimate (Finding 46)' };
 
   /** The cross-fitted balance step (the switch's target since 2026-11-27). */
   const BALANCE_CF_STEP = { name: 'balance', formula: F.balanceCf, badge: 'proved', lean: 'Credibility.Core.Estimates.integral_crossFit_sub_eq_zero', note: 'one common shift to the cross-fitted portfolio level: each year priced with weights fitted without it, so its noise cannot steer its own weight (Finding 35). With year shares common to the regions the level\'s bias is only the levels\' channel, any distribution (Core.Estimates.integral_crossFit_sub), 0 when the weights are uncorrelated with the levels (ρ̂, σ̂² from residuals); τ̂² from the means keeps a small part. Studies S63: unbiased in ten worlds, at most 1 MSE point dearer than exposure balance without correlation and 2–46 points cheaper under ρ = 0.6. Not balanced on exposures; plug-in MSE first order (year weights averaged)' };
