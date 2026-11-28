@@ -26,6 +26,9 @@ page target is dropped: it is a reference, not a read.
 
 ## Pending
 (Results proved since the last handbook update that may belong here.)
+- [ ] Nearest PSD `Σ̂⁺` (2026-11-28, S78, `ConeProjection.existsUnique_proj_posSemidef`): in the full-`K̂` result a
+  "watch out": with volumes of different shapes and `T = 3 < J`, eq. (37)'s `Σ̂` is not PSD; build `K̂` on `Σ̂⁺`
+  (clip negative eigenvalues), keep `Σ̂` for `τ̂²`. With one volume shape `Σ̂` is PSD (S78, not yet in Lean).
 - [ ] The BLUP's price over the blend (2026-11-27, Finding 45, `Core.tendsto_blupPrice`, `tendsto_blendPrice`): a result
   next to the plug-in MSE with both first-order prices, "watch out": weight part only, the cross term can offset it (S74).
 - [ ] Small crossed tables (2026-11-27, Finding 44, `CrossedSmall.sq_le_trace_cell`): in `res:crossed_est` a "watch out":

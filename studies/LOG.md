@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S77, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S78, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S78 | `runs/psd-projection.js` | K̂ on the nearest PSD Σ̂⁺: the error moves ≤ 0.5 points; Σ̂ is PSD whenever volumes share one shape over the years, and fails at T = 3 with J > T otherwise; the gain is that K̂ ≻ 0 is a theorem in every draw |
 | S77 | `runs/group-choice.js` | Groups or none on held-out years: regret 0.9 / max 4.0 though its picks barely follow φ; the stakes are small (−10 to +7 points) |
 | S76 | `runs/balance-rule.js` | Balance iff the plug-in cost on K̂ is negative: regret 0.5 / max 6.9 (never 0.4 / 12.2, always 22.2 / 205.6, held-out 10.3 / 99.2) |
 | S75 | `runs/balance-cost.js` | Cost of balancing = E(T − μ̄)² − E(r̄ − μ̄)², exact per draw; cross-fitted level 1.2–2.2× corrBS's own error with σⱼ spread 2 |
@@ -1058,3 +1059,21 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     tuning. The stakes of the choice are small at J = 8 (at most 10 points of the floor either way), so a
     sharper rule is not worth chasing; parked. The general statement is the held-out score's unbiasedness
     (`CrossFit.integral_heldOutScore_sub`); its regret here holds only in these worlds.
+
+- S78. *[numerical]* **The nearest PSD `Σ̂⁺` costs nothing and makes `K̂ ≻ 0` a theorem** (G2a, `studies/PLAN.md` §5
+    step 1; 2026-11-28). The corr fits build `K̂` on `Σ̂⁺ = Σₖ max(λₖ, 0)uₖuₖᵀ`, the Frobenius projection of `Σ̂`
+    onto the PSD tables (Higham 1988), never further from the true `Σ` (`ConeProjection.existsUnique_proj_posSemidef`);
+    `τ̂²`, `ĉⱼ` and the rules for `θ̂`, `ρ̂` keep the unbiased `Σ̂`. Then `posDef_shrinkOffDiag` (θ < 1, positive
+    diagonal) and `posDef_distTaper_hadamard` (τ̂² > 0) apply in every draw. **When Σ̂ is not PSD.** If every
+    region's volumes have the same shape over the years (`wᵢₜ = aᵢgₜ`, as in all of the app's worlds), the divisor
+    of eq. (37) is `dᵢⱼ = (T − 1)G√(aᵢaⱼ)`, rank one, so `Σ̂ = diag(c)·Q·diag(c)` with `Q` a Gram matrix: PSD by
+    construction (a candidate lemma, not yet in Lean). With volumes of different shapes (each cell jittered,
+    log-SD 0.1–0.3) and `T = 3`, `J ∈ {8, 12}`, `Σ̂` was not PSD in every draw (`Q` has rank `T − 1 = 2`); at `T = 5`
+    in ≤ 2%; random panels: `J = 4, T = 3` about 27%, `T = 2` never. **Error.** Worlds `J ∈ {8, 12}`, `T ∈ {3, 5}`,
+    `ρ ∈ {0, 0.3, 0.6}`, jitter 0.1, 0.3; 400 draws: damped and tapered fits on `Σ̂⁺` against the old fit on `Σ̂`
+    differ by ≤ 0.5 points of the floor (`runs/psd-projection.out.txt`), and the old fit never had to lower `θ`:
+    damping plus `τ̂²I` already gave `K̂ ≻ 0` numerically. **Consequence.** The app projects by default
+    (`opts.project = false` is the old fit; not for one common covariance, whose closed-form `z` needs the common
+    structure); the damped `K̂` badge is "proved" in every draw, the tapered one whenever `τ̂² > 0`. Seen on the
+    side: at `T = 3` the corr fits score 145–177 (floor 100), worse than BS (117–122) at ρ ≤ 0.3; only at ρ = 0.6 does
+    the damped fit beat BS (145–155 against 149–167): two degrees of freedom per covariance.

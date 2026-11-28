@@ -192,8 +192,8 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
   (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`, `cHatCommon_unbiased`,
   `tauHatCommon_unbiased`). Open: `Wⱼ`, `β²`, `σ̃ⱼ²`, `ρ̂` with `σ̃ⱼ` plugged in, `τ̂²` on the common-ρ `Σ̂`.
 - **G2.** `θ* = Σs²/(Σs² + ΣV)` optimal for the table loss, safe range `safe_iff` (`Damping.lean`);
-  exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays). Open: `K̂ ≻ 0` by theorem when `Σ̂` is not PSD,
-  the rates' MSE.
+  exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays); `K̂ ≻ 0` by theorem in every draw (step 1, done).
+  Open: the rates' MSE.
 - **G3.** For a fixed `z`, clipping is harmless iff `z* ∈ [0, 1]` (`BlendMoments.errVar_clipZ_le_iff`,
   Finding 36). Open: an estimated `ẑ`.
 - **G5.** The math of the choice is in place: `Merging.merge_iff`, intervals are optimal
@@ -203,11 +203,12 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
 
 *Plan, in order of work* (each step about one chat; env = cloud environment):
 
-1. **G2a. `K̂ ≻ 0` always by theorem** (Default env: app). Project `Σ̂` onto the PSD cone first
-   (`ConeProjection`), so `posDef_shrinkOffDiag` / `posDef_distTaper_hadamard` always apply and the
-   damped and tapered `K̂` badges turn "proved". Engine change, Node test; a small study if the
-   projection moves the MSE. *Who:* anyone fitting a full `K̂`. *Common:* yes, `Σ̂` is often not PSD
-   with small `J`. *General:* yes.
+1. **G2a. `K̂ ≻ 0` always by theorem.** *Done 2026-11-28 (S78):* the corr fits build `K̂` on `Σ̂⁺`, the
+   nearest PSD table (`Engine.projectPSD`, `ConeProjection.existsUnique_proj_posSemidef`); the damped `K̂` is
+   "proved" in every draw, the tapered one when `τ̂² > 0`. The error moves ≤ 0.5 points. `Σ̂` fails to be PSD
+   only with volumes of different shapes and short histories (`T = 3`, `J > T`: every draw); with one shape
+   (`wᵢₜ = aᵢgₜ`, all of the app's worlds) it is PSD by construction, a candidate lemma (S78). Not done: one
+   common covariance (`corrC`, not recommended) keeps the numerical check.
 2. **G1a. `E Wⱼ` exactly** (lean env). `Wⱼ` (`F.vcW`) is quadratic in the squared residuals, so its
    mean is fourth order: `Cumulants.variance_quad_of_cumulants`, independent years. Expected: biased
    at order `1/T²` because `uⱼₜ` uses `μ̂ⱼ`; then a Finding with the exact term, and a corrected `Wⱼ`

@@ -1251,3 +1251,39 @@ test('Balance when it pays (Finding 46, S76; BalanceCost.balance_cost_portLin): 
   assert.ok(auto.vc.balancedShare < 0.2, `rarely balanced with σⱼ spread 2: ${auto.vc.balancedShare}`);
   assert.ok(auto.vc.raw && auto.vc.raw.bias, 'unbalanced bias reported');
 });
+
+test('Nearest PSD table (G2a; ConeProjection.existsUnique_proj_posSemidef): PSD, identity on PSD tables, never further from a PSD truth; corr fits always get K̂ ≻ 0 by theorem', () => {
+  const r = E.rng(78), frob = (A, B) => Math.sqrt(A.reduce((s, row, i) => s + row.reduce((t, x, j) => t + (x - B[i][j]) ** 2, 0), 0));
+  for (let k = 0; k < 200; k++) {
+    const n = 2 + (k % 6);
+    const G = Array.from({ length: n }, () => Array.from({ length: n }, () => r.normal()));
+    const B = G.map((ri) => G.map((rj) => ri.reduce((s, x, t) => s + x * rj[t], 0) / n));   // PSD truth
+    const N = Array.from({ length: n }, () => new Array(n).fill(0));
+    for (let i = 0; i < n; i++) for (let j = 0; j <= i; j++) { const x = 1.5 * r.normal(); N[i][j] = x; N[j][i] = x; }
+    const A = B.map((row, i) => row.map((x, j) => x + N[i][j]));
+    const { P, clipped, moved } = E.projectPSD(A);
+    assert.ok(E.isPSD(P), 'projection is PSD');
+    assert.ok(frob(P, B) <= frob(A, B) + 1e-9, 'never further from the truth');
+    assert.ok(Math.abs(moved - frob(P, A)) < 1e-9);
+    if (!clipped) assert.ok(frob(P, A) === 0);
+    const again = E.projectPSD(P);
+    assert.ok(frob(again.P, P) < 1e-9, 'idempotent');
+    assert.ok(frob(E.projectPSD(B).P, B) < 1e-9, 'identity on a PSD table');
+  }
+  let notPsd = 0;
+  // Volumes of different shapes over the years (S78): with T = 3 < J, Σ̂ is not PSD.
+  for (const params of [{ J: 8, T: 5, rho: 0.6 }, { J: 12, T: 3, rho: 0.3 }]) {
+    const world = E.makeWorld(params), rr = E.rng(7);
+    world.w = world.w.map((row) => row.map((x) => x * Math.exp(0.3 * rr.normal())));
+    for (let k = 0; k < 40; k++) {
+      const { data } = E.draw(world, rr);
+      if (!E.isPSD(E.sigmaHat(data).Sig)) notPsd++;
+      const f = E.fitCorr(data), st = f.steps.find((s) => s.name === 'damped K̂');
+      assert.equal(st.badge, 'proved', 'damped K̂ by theorem');
+      assert.ok(!f.flags.thetaLow, 'θ̂ never lowered');
+      const t = E.fitCorr(data, { taper: 'distance' }), ts = t.steps.find((s) => s.name === 'tapered K̂');
+      if (t.tau2 > 0) assert.equal(ts.badge, 'proved', 'tapered K̂ by theorem when τ̂² > 0');
+    }
+  }
+  assert.ok(notPsd > 0, 'the worlds include draws where Σ̂ is not PSD');
+});

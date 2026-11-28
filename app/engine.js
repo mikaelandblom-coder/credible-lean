@@ -113,9 +113,11 @@
 
   const sum = (a) => a.reduce((s, x) => s + x, 0);
 
-  /** Eigenvalues of a symmetric matrix, ascending (cyclic Jacobi; the matrices here are at most 20 × 20). */
-  function eigSym(A) {
+  /** Eigen-decomposition of a symmetric matrix (cyclic Jacobi; the matrices here are at most 20 × 20):
+   * values ascending, vectors[k] the unit eigenvector of values[k]. */
+  function eigenSym(A) {
     const n = A.length, M = A.map((row) => row.slice());
+    const V = A.map((_, i) => A.map((__, j) => (i === j ? 1 : 0)));
     for (let sweep = 0; sweep < 100; sweep++) {
       let off = 0;
       for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += M[p][q] * M[p][q];
@@ -126,9 +128,38 @@
         const t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th * th + 1)), c = 1 / Math.sqrt(t * t + 1), sn = t * c;
         for (let k = 0; k < n; k++) { const a = M[k][p], b = M[k][q]; M[k][p] = c * a - sn * b; M[k][q] = sn * a + c * b; }
         for (let k = 0; k < n; k++) { const a = M[p][k], b = M[q][k]; M[p][k] = c * a - sn * b; M[q][k] = sn * a + c * b; }
+        for (let k = 0; k < n; k++) { const a = V[k][p], b = V[k][q]; V[k][p] = c * a - sn * b; V[k][q] = sn * a + c * b; }
       }
     }
-    return M.map((row, i) => row[i]).sort((a, b) => a - b);
+    const order = M.map((_, i) => i).sort((a, b) => M[a][a] - M[b][b]);
+    return { values: order.map((i) => M[i][i]), vectors: order.map((i) => V.map((row) => row[i])) };
+  }
+  /** Eigenvalues of a symmetric matrix, ascending. */
+  const eigSym = (A) => eigenSym(A).values;
+
+  /**
+   * The nearest positive semidefinite table in the Frobenius norm: negative eigenvalues set to 0
+   * (Higham 1988). The Frobenius norm is the H-norm of ConeProjection on the table's distinct
+   * entries (weight 1 on the diagonal, 2 off it), and the PSD tables are a closed convex set that
+   * contains the true covariance table, so the projection is never further from it, for every draw
+   * (ConeProjection.existsUnique_proj_posSemidef). Returns the table, the number of eigenvalues
+   * clipped and the Frobenius distance moved.
+   */
+  function projectPSD(A) {
+    const { values, vectors } = eigenSym(A), n = A.length;
+    const tol = 1e-12 * Math.max(1e-300, ...values.map(Math.abs));
+    const clipped = values.filter((x) => x < -tol).length;
+    if (!clipped) return { P: A.map((row) => row.slice()), clipped: 0, moved: 0 };
+    const P = A.map(() => new Array(n).fill(0));
+    values.forEach((lam, k) => {
+      if (lam <= 0) return;
+      const u = vectors[k];
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) P[i][j] += lam * u[i] * u[j];
+    });
+    for (let i = 0; i < n; i++) for (let j = 0; j < i; j++) { const x = (P[i][j] + P[j][i]) / 2; P[i][j] = x; P[j][i] = x; }
+    let d = 0;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) d += (P[i][j] - A[i][j]) ** 2;
+    return { P, clipped, moved: Math.sqrt(d) };
   }
 
   // ---------------------------------------------------------------- the world
@@ -545,8 +576,11 @@
     cj: 'ĉⱼ = Σᵢ (δᵢⱼ − wᵢ*/w**) Σ̂ᵢⱼ',
     tau: 'τ̂² = Σⱼ wⱼ*((μ̂ⱼ − μ̄)² − ĉⱼ) / (w** − Σᵢ wᵢ*²/w**)  (eq. (39))',
     damped: 'K̂ = Σ̂ with off-diagonal × θ, + τ̂²⁺ I',
+    dampedP: 'K̂ = Σ̂⁺ with off-diagonal × θ, + τ̂²⁺ I',
+    psdProj: 'Σ̂⁺ = Σₖ max(λₖ, 0) uₖuₖᵀ  (λₖ, uₖ the eigenvalues and eigenvectors of Σ̂)',
     dampRule: 'θ̂ = r̄²/(r̄² + (1 − r̄²)²/(T−1)), r̄ the average estimated correlation Σ̂ᵢⱼ/√(Σ̂ᵢᵢΣ̂ⱼⱼ) over the pairs',
     taper: 'K̂ᵢⱼ = ρ^|i−j| (Σ̂ + τ̂²⁺ I)ᵢⱼ  (regions in their order)',
+    taperP: 'K̂ᵢⱼ = ρ^|i−j| (Σ̂⁺ + τ̂²⁺ I)ᵢⱼ  (regions in their order)',
     taperRule: 'ρ̂ minimises Σ_d n_d [ρ^2d (r̄_d² + (1 − r̄_d²)²/(T−1)) − 2ρ^d r̄_d²], r̄_d the average estimated correlation of the n_d pairs at distance d',
     zEq: 'zⱼ = τ̂² / (τ̂² + v̂ⱼ − θĉ)',
     gls: 'b = K̂⁻¹1 / 1ᵀK̂⁻¹1  (GLS, eq. (25))',
@@ -1218,13 +1252,18 @@
     }
     const { c, tau2: tauRaw } = thesisTau(m, wt, Sig);
     const tau2 = Math.max(tauRaw, 0);
-    const psd = isPSD(Sig);
+    // G2a: K̂ is built on the nearest PSD Σ̂ (ConeProjection), so the K̂ ≻ 0 theorems apply to every
+    // draw. τ̂², ĉⱼ and the plug-in rules for θ̂, ρ̂ keep the raw (unbiased) Σ̂. Not for one common
+    // covariance, whose closed form z needs the common structure; opts.project = false is the old fit.
+    const project = !o.common && o.project !== false;
+    const proj = project ? projectPSD(Sig) : null, SigK = proj ? proj.P : Sig;
+    const psd = isPSD(SigK), diagPos = SigK.every((row, j) => row[j] > 0);
     const T = data.X[0].length, dist = o.taper === 'distance';
     let theta = null, thetaFit = null, K = null, rhoT = null, rhoFit = null, lags = null;
     if (dist) {
       const tr = o.rho != null ? { rho: o.rho, lags: null } : taperRho(Sig, T, (i, j) => Math.abs(i - j));
       rhoFit = tr.rho; lags = tr.lags;
-      const Kraw = addDiag(Sig, tau2);
+      const Kraw = addDiag(SigK, tau2);
       for (let x = rhoFit; ; x = Math.max(0, Math.round((x - 0.05) * 1000) / 1000)) {
         const Kt = hadamard(distTaper(x, J), Kraw);
         if (cholesky(Kt)) { rhoT = x; K = Kt; break; }
@@ -1232,14 +1271,14 @@
       }
     } else if (o.theta != null || o.thetaRule === 'grid') {
       for (const th of (o.theta != null ? [o.theta] : THETAS)) {
-        const Kt = addDiag(shrinkOffDiag(th, Sig), tau2);
+        const Kt = addDiag(shrinkOffDiag(th, SigK), tau2);
         if (cholesky(Kt)) { theta = th; K = Kt; break; }
       }
       thetaFit = o.theta != null ? o.theta : THETAS[0];
     } else {
       thetaFit = Math.min(o.thetaRule === 'cov' ? Math.round(covTheta(data, o.kappa || 0).theta * 1000) / 1000 : o.thetaRule === 'corr' ? Math.round(corrTheta(data, o).theta * 1000) / 1000 : taperRho(Sig, T, () => 1).rho, 0.999);   // below 1 so posDef_shrinkOffDiag applies (θ̂ = 1 iff r̄ = ±1, e.g. T = 2)
       for (let x = thetaFit; ; x = Math.max(0, Math.round((x - 0.05) * 1000) / 1000)) {
-        const Kt = addDiag(shrinkOffDiag(x, Sig), tau2);
+        const Kt = addDiag(shrinkOffDiag(x, SigK), tau2);
         if (cholesky(Kt)) { theta = x; K = Kt; break; }
         if (x === 0) break;
       }
@@ -1279,8 +1318,12 @@
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, values: c, badge: 'proved', lean: o.common ? 'Credibility.Model.cHatCommon_unbiased' : 'Credibility.Model.cHat_unbiased', note: o.common ? 'with the common ĉ: unbiased under a common covariance' : null },
       { name: 'τ̂²', formula: F.tau, values: [tauRaw], badge: 'proved', lean: o.common ? 'Credibility.Model.tauHatCommon_unbiased' : 'Credibility.Model.tauHat_unbiased', note: tauRaw <= 0 ? 'negative: truncated to 0 (eq. (40))' : null },
-      dist ? taperStep(rhoT, lags, psd && tau2 > 0)
-        : { name: 'damped K̂', formula: `${F.damped};  θ = ${theta}`, values: [theta], badge: psd && theta < 1 ? 'proved' : 'not proved yet', lean: psd && theta < 1 ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: (psd ? `Σ̂ ⪰ 0, so K̂ ≻ 0 for any θ < 1` : `Σ̂ is not positive semidefinite: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem`) + `; θ̂ = ${thetaFit} by the plug-in rule S3 (${F.dampRule}): the plug-in of the table-optimal θ* = s²/(s² + V) (Damping.bestTheta_optimal); optimal for the rates not proved (G2)` },
+    );
+    if (proj) steps.push(projStep(proj));
+    const dampProved = psd && diagPos && theta < 1, sigK = proj ? 'Σ̂⁺' : 'Σ̂';
+    steps.push(
+      dist ? taperStep(rhoT, lags, psd && tau2 > 0, !!proj)
+        : { name: 'damped K̂', formula: `${proj ? F.dampedP : F.damped};  θ = ${theta}`, values: [theta], badge: dampProved ? 'proved' : 'not proved yet', lean: dampProved ? 'Credibility.posDef_shrinkOffDiag' : null, gap: 'G2', note: (dampProved ? `${sigK} ⪰ 0 with a positive diagonal, so K̂ ≻ 0 for any θ < 1` : `${sigK} is not positive semidefinite with a positive diagonal: K̂ ≻ 0 checked numerically at θ = ${theta}, not by a theorem`) + `; θ̂ = ${thetaFit} by the plug-in rule S3 (${F.dampRule}): the plug-in of the table-optimal θ* = s²/(s² + V) (Damping.bestTheta_optimal); optimal for the rates not proved (G2)` },
     );
     if (o.common && tau2 > 0) {
       steps.push(
@@ -1297,13 +1340,23 @@
     return { means: m, z, b, mu: res.mu, rates: res.rates, warnings, flags, K, theta, thetaFit, tauRaw, tau2, cbar, steps, rhoTaper: rhoT, rhoFit, lags };
   }
 
-  /** The taper step of fitCorr (this draw). `proved`: Σ̂ ⪰ 0 and τ̂² > 0, so Σ̂ + τ̂²I ≻ 0. */
-  function taperStep(rho, lags, proved) {
+  /** The projection step of fitCorr (this draw): Σ̂⁺, the nearest PSD table (G2a). */
+  function projStep(proj) {
+    return {
+      name: 'Σ̂⁺ (nearest PSD)', formula: F.psdProj, values: [proj.clipped, proj.moved], badge: 'proved',
+      lean: 'Credibility.ConeProjection.existsUnique_proj_posSemidef',
+      note: (proj.clipped ? `Σ̂ was not positive semidefinite: ${proj.clipped} eigenvalue(s) set to 0, Frobenius distance moved ${proj.moved.toPrecision(3)}` : 'Σ̂ is positive semidefinite: Σ̂⁺ = Σ̂') +
+        '; never further from the true Σ than Σ̂ (Frobenius norm, every draw); biased, unlike Σ̂, so τ̂² and ĉⱼ use Σ̂',
+    };
+  }
+
+  /** The taper step of fitCorr (this draw). `proved`: Σ̂(⁺) ⪰ 0 and τ̂² > 0, so Σ̂(⁺) + τ̂²I ≻ 0. */
+  function taperStep(rho, lags, proved, projected) {
     const lagText = lags ? '; r̄_d by distance: ' + lags.slice(0, 4).map((g) => `d=${g.d}: ${g.r.toFixed(2)}`).join(', ') + (lags.length > 4 ? ', …' : '') : '';
     return {
-      name: 'tapered K̂', formula: `${F.taper};  ρ̂ = ${rho}`, values: [rho], badge: proved ? 'proved' : 'not proved yet',
+      name: 'tapered K̂', formula: `${projected ? F.taperP : F.taper};  ρ̂ = ${rho}`, values: [rho], badge: proved ? 'proved' : 'not proved yet',
       lean: proved ? 'Credibility.posDef_distTaper_hadamard' : null, gap: 'G2',
-      note: (proved ? 'Σ̂ ⪰ 0 and τ̂² > 0, so K̂ ≻ 0 for every ρ ∈ [0, 1]' : `Σ̂ + τ̂²I is not positive definite: K̂ ≻ 0 checked numerically at ρ = ${rho}, not by a theorem`) +
+      note: (proved ? `${projected ? 'Σ̂⁺' : 'Σ̂'} ⪰ 0 and τ̂² > 0, so K̂ ≻ 0 for every ρ ∈ [0, 1]` : `${projected ? 'Σ̂⁺' : 'Σ̂'} + τ̂²I is not positive definite: K̂ ≻ 0 checked numerically at ρ = ${rho}, not by a theorem`) +
         `; ρ̂ by the plug-in criterion (${F.taperRule}), the damping study’s rule S3 (studies/LOG.md)${lagText}`,
     };
   }
@@ -1765,13 +1818,20 @@
     steps.push(
       { name: 'ĉⱼ', formula: F.cj, badge: 'proved', lean: common ? 'Credibility.Model.cHatCommon_unbiased' : 'Credibility.Model.cHat_unbiased' },
       { name: 'τ̂²', formula: F.tau, badge: 'proved', lean: common ? 'Credibility.Model.tauHatCommon_unbiased' : 'Credibility.Model.tauHat_unbiased', rule: TAU_ZERO },
+    );
+    if (!common) steps.push({ name: 'Σ̂⁺ (nearest PSD)', formula: F.psdProj, badge: 'proved', lean: 'Credibility.ConeProjection.existsUnique_proj_posSemidef',
+      rule: 'Σ̂⁺ = Σ̂ when Σ̂ is positive semidefinite; τ̂², ĉⱼ and the damping or taper rule keep Σ̂',
+      note: 'the nearest positive semidefinite table in the Frobenius norm (Higham 1988): never further from the true Σ than Σ̂, for every draw; biased, unlike Σ̂' });
+    steps.push(
       taper
-        ? { name: 'tapered K̂', formula: F.taper, badge: 'not proved yet', gap: 'G2', varies: true,
-          rule: `${F.taperRule}; lowered in steps of 0.05 only if K̂ is not positive definite`,
-          note: 'K̂ ≻ 0 for every ρ ∈ [0, 1] is proved when Σ̂ + τ̂²I ≻ 0 (posDef_distTaper_hadamard, ties allowed); the criterion for ρ̂ is a plug-in (G2), with every pair at distance 1 it is the damping study’s rule S3 for the damping factor' }
-        : { name: 'damped K̂', formula: F.damped, badge: 'not proved yet', gap: 'G2', varies: true,
+        ? { name: 'tapered K̂', formula: F.taperP, badge: 'proved', lean: 'Credibility.posDef_distTaper_hadamard', gap: 'G2', varies: true,
+          rule: `${F.taperRule}; lowered in steps of 0.05 only if K̂ is not positive definite (possible only when τ̂² = 0)`,
+          note: 'K̂ ≻ 0 for every ρ ∈ [0, 1] when τ̂² > 0, since Σ̂⁺ ⪰ 0 (posDef_distTaper_hadamard, ties allowed); with τ̂² = 0 a numerical check; the criterion for ρ̂ is a plug-in (G2), with every pair at distance 1 it is the damping study’s rule S3 for the damping factor' }
+        : { name: 'damped K̂', formula: common ? F.damped : F.dampedP, badge: common ? 'not proved yet' : 'proved', lean: common ? null : 'Credibility.posDef_shrinkOffDiag', gap: 'G2', varies: true,
           rule: `${F.dampRule}; at most 0.999; lowered in steps of 0.05 only if K̂ is not positive definite (a Cholesky factorisation fails)`,
-          note: 'K̂ ≻ 0 for every θ < 1 is proved when Σ̂ is positive semidefinite (posDef_shrinkOffDiag); θ̂ is a plug-in of the best shrinkage of the correlations, signal r̄² against their sampling variance (damping study S3), a heuristic for the rates (G2)' },
+          note: common
+            ? 'K̂ ≻ 0 for every θ < 1 is proved when Σ̂ is positive semidefinite (posDef_shrinkOffDiag); θ̂ is a plug-in of the best shrinkage of the correlations, signal r̄² against their sampling variance (damping study S3), a heuristic for the rates (G2)'
+            : 'K̂ ≻ 0 for every θ < 1, since Σ̂⁺ ⪰ 0 with a positive diagonal (posDef_shrinkOffDiag), so θ̂ is never lowered; θ̂ is a plug-in of the best shrinkage of the correlations, signal r̄² against their sampling variance (damping study S3), a heuristic for the rates (G2)' },
     );
     if (common) {
       steps.push(
@@ -2287,6 +2347,7 @@
     rng, solve, cholesky, makeWorld, noiseFactor, trueK, draw,
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
+    projectPSD, eigenSym,
     fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, balanceAuto, crossFitLevel, BALANCE_CF_STEP, BALANCE_AUTO_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     fitGroupLevels, fitGroups, groupEffects, bestBlendWeightsL, blendMSEL, blupWeightL, linMseL,
