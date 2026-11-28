@@ -107,7 +107,11 @@ over all periods. A literature check (\href{\repo/blob/main/studies/literature.m
 notes}, \S10q) found these \emph{not} in the earlier work: the credibility factor for any positive
 definite $K$ and when it leaves $[0, 1]$, the exact price of the blend form and of ignoring the
 correlation, exposure balance, cohorts observed over different periods, and the group model with
-correlated noise. A first task is to check that claim against the papers.
+correlated noise. A first task is to check that claim against the papers. The price of ignoring
+the correlation has a fitted version too: Bühlmann--Straub fitted on correlated cohorts estimates
+$\tau^2$ minus the volume-weighted average noise covariance, yet for two cohorts still costs at most
+$1/(1 - \rho^2)$ (Finding 49), and with equal noise covariances $c$ at most $v_j/(v_j - c)$, $v_j$ the noise variance of $\hmu_j$, for any number
+of cohorts (Finding 50). A sharp bound for three or more cohorts with unequal covariances is open.
 
 \textbf{The recipe.} Every result follows from one matrix.
 \begin{enumerate}\setlength{\itemsep}{1pt}
@@ -271,7 +275,9 @@ true moments.}
    increases the error.
  \item Standard errors of the moment estimators: their variance needs third and fourth moments
    (the general formula is Handbook Result \hb{res:varQuad}). Estimated from a cohort's own
-   years it is low by a relative $O(1/T)$, and the exact correction is known (Finding 47).
+   years it is low by a relative $O(1/T)$, and the exact correction is known, but it makes the rates
+   worse (Finding 47); the plugged-in variances also bias $\hat\rho$ up, without touching $\hat K$'s
+   covariances (Finding 48). Unbiased inputs are not the best inputs here: why?
  \item Balancing the total premium costs exactly $E(T - \bar\mu)^2 - E(\bar r - \bar\mu)^2$: it pays
    iff the total you balance to estimates the portfolio level better than the fit does (Finding 46).}
 {How skewed and how heavy-tailed are the residuals? Is the booked total a better estimate of the
@@ -380,7 +386,7 @@ under-cover the outlying cards, and does the given-level one repair it?}
 
 The continuation found results that seem to be new, often gaps in the 2023 thesis itself. For any
 of them, check: is it correct, is it already known (a reference is as good an outcome as a
-confirmation), and does it matter in practice? Each is in the \Handbook{}, whose appendix \emph{Findings} lists all 47 findings with their
+confirmation), and does it matter in practice? Each is in the \Handbook{}, whose appendix \emph{Findings} lists all 50 findings with their
 counterexamples and Lean proofs, and in \href{\repo/blob/main/FINDINGS.md}{FINDINGS.md} with the
 details.
 \begin{enumerate}\setlength{\itemsep}{1pt}
@@ -484,7 +490,7 @@ reproduced without the company data.
 \begin{tabular}{>{\raggedright}p{3.6cm} >{\raggedright\arraybackslash}p{11.2cm}}
   \toprule
   \href{\site handbook.pdf}{Handbook} & Every formula, with how to use it and what to watch out for, linked to its Lean proof;
-    the appendix \emph{Findings} lists all 47 findings with counterexamples. Result numbers in this
+    the appendix \emph{Findings} lists all 50 findings with counterexamples. Result numbers in this
     proposal refer to it. \\ \rowsep
   \href{\site paper/}{Paper} & The main document, grown out of the 2023 thesis: concepts, key formulas, intuition and the reasons behind the
     formulas, organized for lookup, with a literature map. \\ \rowsep
