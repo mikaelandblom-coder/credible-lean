@@ -192,4 +192,106 @@ theorem z1_gt_one_iff (h1 : 0 < σ1) (h2 : 0 < σ2) (_hτ : 0 < τ2)
   · intro h; nlinarith
   · intro h; nlinarith
 
+/-! ### Bühlmann–Straub fitted on two correlated cohorts (Finding 49) -/
+
+/-- The algebra behind `linMse_pseudoTrue_le`, for target cohort 1 (`u = d*₂`,
+`x = e₁ - d*₁`, `D = σ₁² + σ₂² + 2τ² - 2c`): `Du = σ₁² - c` (first-order condition),
+`x²D = -cx` (`Core.quad_blupWeight_shift`), so `x = 0` or `xD = -c`, and then
+`(m + q)D = σ₁²(σ₂² + 2τ²) ≥ σ₁²σ₂² = c²/ρ² = qD/ρ²`. -/
+lemma pseudoTrue_alg {s1 s2 τ c ρ u x m q D : ℝ} (hτ : 0 ≤ τ) (hρ : ρ ^ 2 < 1)
+    (hc : c ^ 2 = ρ ^ 2 * s1 ^ 2 * s2 ^ 2) (hDdef : D = s1 ^ 2 + s2 ^ 2 + 2 * τ - 2 * c)
+    (hD : 0 < D) (hu : D * u = s1 ^ 2 - c) (hm : m = D * u ^ 2 - 2 * (s1 ^ 2 - c) * u + s1 ^ 2)
+    (hq : q = x ^ 2 * D) (hqx : q = -c * x) :
+    (1 - ρ ^ 2) * (m + q) ≤ m := by
+  -- `mD = σ₁²σ₂²(1 - ρ²) + 2σ₁²τ ≥ 0`.
+  have hmD : m * D = s1 ^ 2 * s2 ^ 2 + 2 * s1 ^ 2 * τ - c ^ 2 := by
+    rw [hm]; linear_combination (D * u - (s1 ^ 2 - c)) * hu + s1 ^ 2 * hDdef
+  have hm0 : 0 ≤ m := by
+    have : 0 ≤ m * D := by
+      rw [hmD, hc]
+      nlinarith [mul_nonneg (mul_nonneg (sq_nonneg s1) (sq_nonneg s2)) (sub_nonneg.2 hρ.le),
+        mul_nonneg (sq_nonneg s1) hτ]
+    exact nonneg_of_mul_nonneg_left this hD
+  have hx : x * D * (x * D + c) = 0 := by linear_combination (-D) * (hqx.symm.trans hq)
+  rcases mul_eq_zero.1 hx with h0 | h0
+  · have : x = 0 := by
+      rcases mul_eq_zero.1 h0 with h | h
+      · exact h
+      · exact absurd h hD.ne'
+    subst this
+    rw [hq]
+    nlinarith
+  · -- `qD = c²` and `(m + q)D = σ₁²(σ₂² + 2τ)`.
+    have hqD : q * D = c ^ 2 := by
+      rw [hq]; linear_combination (x * D - c) * h0
+    refine le_of_mul_le_mul_right ?_ hD
+    nlinarith [mul_nonneg (mul_nonneg (sq_nonneg ρ) (sq_nonneg s1)) hτ]
+
+/-- **Finding 49: Bühlmann–Straub on two correlated cohorts costs at most `1/(1 - ρ²)`.**
+Fitted on correlated data, Bühlmann–Straub's `τ̂²` estimates `τ̃² = τ² - σ₁σ₂ρ`, whatever
+the volumes (two cohorts have one covariance). Its blend is the best predictor of the
+working model `K̃ = diag(τ̃² + σᵢ²)`, `L̃ = τ̃²I` (`Core.blupWeight_diag_eq_blendWeight`), and
+its mean squared error is at most `1/(1 - ρ²)` times the smallest, whatever `τ²` and the
+`σᵢ`: the same bound as ignoring the correlation with the true `τ²`
+(`Core.linMse_ignoreCorr_le`, Finding 19). Exactly, for cohort 1 the ratio is
+`1 + ρ²σ₂²/(2τ² + (1 - ρ²)σ₂²)`. Proof: `K̃ = K - c·11ᵀ` and `L̃ = L - cI` with
+`c = σ₁σ₂ρ` (`Core.quad_blupWeight_shift`); the Kantorovich route
+(`Core.linMse_blupWeight_working_le`) gives no bound here. Hypotheses: the working `K̃` is
+positive definite (`τ̃² + σᵢ² > 0`); a negative `τ̃²` is allowed. -/
+theorem linMse_pseudoTrue_le (hτ : 0 < τ2) (hρ : |ρ| < 1)
+    (hk1 : 0 < τ2 - σ1 * σ2 * ρ + σ1 ^ 2) (hk2 : 0 < τ2 - σ1 * σ2 * ρ + σ2 ^ 2) (j : Fin 2) :
+    (1 - ρ ^ 2) * Core.linMse (K σ1 σ2 τ2 ρ) (τ2 • 1) j
+        (Core.blupWeight (diagonal fun i => (τ2 - σ1 * σ2 * ρ) + ![σ1 ^ 2, σ2 ^ 2] i)
+          ((τ2 - σ1 * σ2 * ρ) • 1) j)
+      ≤ Core.linMse (K σ1 σ2 τ2 ρ) (τ2 • 1) j
+          (Core.blupWeight (K σ1 σ2 τ2 ρ) (τ2 • 1) j) := by
+  set c := σ1 * σ2 * ρ
+  set K' : Matrix (Fin 2) (Fin 2) ℝ := diagonal fun i => (τ2 - c) + ![σ1 ^ 2, σ2 ^ 2] i
+  have hK := K_posDef (σ1 := σ1) (σ2 := σ2) hτ hρ
+  have hK' : K'.PosDef := by
+    rw [posDef_diagonal_iff]; intro i; fin_cases i
+    · simpa [add_comm] using hk1
+    · simpa [add_comm] using hk2
+  have hc : ∀ i k, K' i k = K σ1 σ2 τ2 ρ i k - c := by
+    intro i k; fin_cases i <;> fin_cases k <;> simp [K', K, c] <;> ring
+  have hL : (τ2 • (1 : Matrix (Fin 2) (Fin 2) ℝ) - c • 1) = (τ2 - c) • 1 := (sub_smul _ _ _).symm
+  have hquad := Core.quad_blupWeight_shift hK hK' (τ2 • 1) j c hc
+  rw [hL] at hquad
+  have hpy := Core.linMse_eq_blupWeight_add hK (τ2 • 1) j
+    (Core.blupWeight K' ((τ2 - c) • 1) j) (Core.sum_blupWeight hK' _ j)
+  have hd1 := Core.sum_blupWeight hK (τ2 • 1) j
+  have he1 := Core.sum_blupWeight hK' ((τ2 - c) • 1) j
+  have hfoc := (Core.mulVec_blupWeight hK (τ2 • 1) j 0).trans
+    (Core.mulVec_blupWeight hK (τ2 • 1) j 1).symm
+  have hcs : c ^ 2 = ρ ^ 2 * σ1 ^ 2 * σ2 ^ 2 := by simp only [c]; ring
+  have hρ2 : ρ ^ 2 < 1 := by
+    have := sq_lt_sq' (abs_lt.1 hρ).1 (abs_lt.1 hρ).2; simpa using this
+  rw [hpy]
+  generalize Core.blupWeight K' ((τ2 - c) • 1) j = e at *
+  generalize Core.blupWeight (K σ1 σ2 τ2 ρ) (τ2 • 1) j = d at *
+  simp only [Fin.sum_univ_two] at hd1 he1
+  simp only [K, mulVec, dotProduct, Fin.sum_univ_two, Matrix.smul_apply, Matrix.one_apply,
+    smul_eq_mul] at hfoc hquad ⊢
+  simp only [Core.linMse, mulVec, dotProduct, Fin.sum_univ_two, Matrix.smul_apply,
+    Matrix.one_apply, smul_eq_mul, Pi.sub_apply]
+  fin_cases j
+  · simp at hfoc hquad ⊢
+    have hd0 : d 0 = 1 - d 1 := by linarith
+    have he0 : e 1 - d 1 = -(e 0 - d 0) := by linarith
+    refine pseudoTrue_alg (s1 := σ1) (s2 := σ2) (u := d 1) (x := e 0 - d 0) hτ.le hρ2 hcs rfl
+      (by linarith) ?_ ?_ ?_ ?_
+    · rw [hd0] at hfoc; simp only [c] at hfoc ⊢; linarith
+    · rw [hd0]; simp only [c]; ring
+    · rw [he0]; simp only [c]; ring
+    · linarith [hquad]
+  · simp at hfoc hquad ⊢
+    have hd0 : d 1 = 1 - d 0 := by linarith
+    have he0 : e 0 - d 0 = -(e 1 - d 1) := by linarith
+    refine pseudoTrue_alg (s1 := σ2) (s2 := σ1) (u := d 0) (x := e 1 - d 1) hτ.le hρ2
+      (by rw [hcs]; ring) rfl (by linarith) ?_ ?_ ?_ ?_
+    · rw [hd0] at hfoc; simp only [c] at hfoc ⊢; linarith
+    · rw [hd0]; simp only [c]; ring
+    · rw [he0]; simp only [c]; ring
+    · linarith [hquad]
+
 end Credibility.TwoCohorts

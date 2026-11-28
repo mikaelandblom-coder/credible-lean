@@ -859,4 +859,27 @@ Gaps, extra hypotheses and new results found while formalizing.
    Finding 47 this closes the G1 thread on the plug-in variances: their biases are exact and large, but the
    rates do not follow them.
 
+49. **Bühlmann–Straub fitted on correlated cohorts misses twice, and for two cohorts still costs at most
+   `1/(1 − ρ²)` (new; proved: `Core.quad_blupWeight_shift`, `TwoCohorts.linMse_pseudoTrue_le`).**
+   Findings 19–20 price ignoring correlation with the *true* `τ²`. A fitted Bühlmann–Straub also gets `τ²`
+   wrong: with a common base variance and noise covariances `Cᵢₖ` between cohort means, `E Σⱼ wⱼ(μ̂ⱼ − μ̂)²`
+   loses `Σᵢ≠ₖ wᵢwₖCᵢₖ/w`, so `τ̂²` (eq. 13) is unbiased for `τ̃² = τ² − c̄`,
+   `c̄ = Σᵢ≠ₖ wᵢwₖCᵢₖ / Σᵢ≠ₖ wᵢwₖ` (volume-weighted average noise covariance; derivation, not yet in Lean;
+   unequal `σⱼ` add `Σⱼ σⱼ²(1/J − wⱼ/w)/D`). The fit is then the best predictor of the working model
+   `K̃ = diag(τ̃² + vᵢ)`, `L̃ = τ̃²I`. **Two cohorts** (one covariance `c = σ₁σ₂ρ`, `c̄ = c` for any
+   volumes): `K̃ = K − c·11ᵀ`, `L̃ = L − cI`, and for any such shift the excess is `hᵀKh = −c·hⱼ`,
+   `h = d̃* − d*` (`quad_blupWeight_shift`, any `J`). Hence exactly
+   `MSE(fit)/MSE(best) = 1 + ρ²σ₂²/(2τ² + (1 − ρ²)σ₂²) ≤ 1/(1 − ρ²)` for cohort 1, the bound of Finding 19,
+   approached as `τ² → 0`; proved for every `τ² > 0`, `|ρ| < 1` with `τ̃² + σᵢ² > 0` (a negative `τ̃²` is
+   allowed). Truncating `τ̂²` at 0 stays within the bound (numerical). **Three or more cohorts**: the two
+   misses no longer combine, and the fit can do worse than Finding 20's bound for the true `τ²`. Equal
+   correlations, `v` and `τ²` free (high-precision search, 60 digits): worst case 1.635 against 1.5625 at
+   `r = 0.5` (a random-search value was 1.628), 1.097 against 1.080 at `r = 0.2`; attained as `τ̃² → 0`
+   with one cohort's noise very large, the same with `τ̂²` truncated at 0. (Double precision gives spurious
+   ratios up to 3 at volume ratios beyond 1e15.) Kantorovich (`Core.linMse_blupWeight_working_le`) is no
+   route here: the true and working forms are not within constant factors (ratio of the two-cohort
+   eigenvalue bound up to 40 at `r = 0.5`), so the proof uses the rank-one structure instead. Open: a
+   sharp general-`J` bound for the fitted model; for equal covariances `c` (Finding 5) the shift lemma
+   applies at any `J` and gives `hᵀKh = c²/(kⱼ + (Σᵢ≠ⱼ 1/kᵢ)⁻¹)`, `kᵢ = τ² + vᵢ − c` (derivation).
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

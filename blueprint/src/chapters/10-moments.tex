@@ -1879,6 +1879,62 @@ example ignoring the correlation between cohorts. How much can that cost?
   Damping by half ($\theta = 0.5$) at $J = 3$, $r = 0.5$ cuts the worst case from $56\%$ to $12.5\%$.
 \end{remark}
 
+\begin{lemma}[A working model off by a common covariance]\label{lem:Core_quad_blupWeight_shift}
+  \lean{Credibility.Core.quad_blupWeight_shift}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K$ and $\tilde K = K - c\,\mathbf 1\mathbf 1^T$ be positive definite and
+  $\tilde L = L - cI$. Then the best predictor $\tilde d^*$ of the working model and
+  $h = \tilde d^* - d^*$ satisfy $h^TKh = -c\,h_j$; so
+  $\mathrm{mse}_j(\tilde d^*) = \mathrm{mse}_j(d^*) - c\,h_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_blup_foc, lem:Core_predForm}
+  As in Theorem~\ref{thm:Core_working}, $h^T(K\tilde d^* - \ell) = h^TKh$ since $\sum_i h_i = 0$.
+  And $K\tilde d^* - \ell = (\tilde K\tilde d^* - \tilde\ell) + c\,\mathbf 1 - c\,e_j$, whose
+  first term is constant (Lemma~\ref{lem:Core_blup_foc}); so $h^T(K\tilde d^* - \ell) = -c\,h_j$.
+\end{proof}
+
+\begin{theorem}[Bühlmann--Straub fitted on two correlated cohorts]\label{thm:TwoCohorts_pseudoTrue}
+  \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le, Credibility.TwoCohorts.pseudoTrue_alg}
+  \leanok
+  \uses{def:Core_blup}
+  For the two-cohort $K$ with $\tau^2 > 0$, $|\rho| < 1$, let $\tilde\tau^2 = \tau^2 - \sigma_1\sigma_2\rho$
+  (what Bühlmann--Straub's $\hat\tau^2$ estimates on correlated cohorts) and assume
+  $\tilde\tau^2 + \sigma_i^2 > 0$. The best predictor $\tilde d^*$ of the working model
+  $\tilde K = \mathrm{diag}(\tilde\tau^2 + \sigma_i^2)$, $\tilde L = \tilde\tau^2I$ (the fitted
+  Bühlmann--Straub blend, Lemma~\ref{lem:Core_blup_diag}) satisfies
+  $(1-\rho^2)\,\mathrm{mse}_j(\tilde d^*) \le \mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_quad_blupWeight_shift, thm:Core_blup_optimal, lem:Core_blup_foc, thm:two_bestZ_eq}
+  $\tilde K = K - c\,\mathbf 1\mathbf 1^T$ and $\tilde L = \tau^2 I - cI$ with $c = \sigma_1\sigma_2\rho$.
+  For $j = 1$ write $D = \sigma_1^2 + \sigma_2^2 + 2\tau^2 - 2c$, $u = d^*_2$, $x = h_1$. The
+  first-order condition gives $Du = \sigma_1^2 - c$, and $h^TKh = x^2D$, so by
+  Lemma~\ref{lem:Core_quad_blupWeight_shift} $x = 0$ or $xD = -c$. Then
+  $h^TKh = c^2/D$ and $\mathrm{mse}_j(\tilde d^*)\,D = \sigma_1^2(\sigma_2^2 + 2\tau^2) \ge
+  \sigma_1^2\sigma_2^2 = c^2/\rho^2$. Exactly: the ratio is
+  $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$.
+\end{proof}
+
+\begin{remark}[Finding 49: fitting Bühlmann--Straub on correlated cohorts]\label{rem:pseudoTrue}
+  \uses{thm:TwoCohorts_pseudoTrue, cor:Core_ignoreCorr_equicorr}
+  Fitted on correlated cohorts (common $\sigma$, volumes $w_i$), Bühlmann--Straub's $\hat\tau^2$
+  is unbiased not for $\tau^2$ but for $\tilde\tau^2 = \tau^2 - \bar c$,
+  $\bar c = \sum_{i\ne k} w_iw_kC_{ik}/\sum_{i\ne k}w_iw_k$, the volume-weighted average noise
+  covariance. So the fit misses twice: no correlation in $K$, and a lower $\tau^2$. For two
+  cohorts (one covariance) the two misses combine into $K - c\,\mathbf 1\mathbf 1^T$ and the
+  cost stays within $1/(1-\rho^2)$ (Theorem~\ref{thm:TwoCohorts_pseudoTrue}). For three or
+  more they do not: with equal correlations $r = 0.5$ the worst case over $\tau^2$, $v$ is
+  $1.635$ against $1.5625$ for the true $\tau^2$ (Corollary~\ref{cor:Core_ignoreCorr_equicorr});
+  $1.097$ against $1.080$ at $r = 0.2$ (numerical, high precision; attained as
+  $\tilde\tau^2 \to 0$ with one cohort's noise very large; the same with $\hat\tau^2$
+  truncated at $0$). Kantorovich's route (Theorem~\ref{thm:Core_working}) gives no useful
+  bound here: the working forms are not within constant factors of the true ones.
+\end{remark}
+
 \begin{theorem}[The price of ignoring correlation in true MSE]\label{thm:Core_ignoreCorr_mse}
   \lean{Credibility.Core.Estimates.ignoreCorr_mse_le}
   \leanok

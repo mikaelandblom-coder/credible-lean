@@ -341,6 +341,8 @@ One chat per step; none needs Lean except step 5.
 ## Pending
 (Results or findings that may need a switch, step or message in the app.)
 Finished items are in `studies/PLAN-done.md`.
+- [ ] Finding 49 (2026-11-28): the app's Bühlmann–Straub fit on correlated worlds has `E τ̂² = τ² − c̄`; a line in
+  its message ("BS also lowers τ²") once a study checks the size of `c̄` against `τ²` in the app's worlds.
 - [ ] Realistic volumes (2026-11-28, S79; owner: "in reality the weights are noisy and not always trending"). The world
   switch "Volumes vary by year" (`volNoise` 0.2, `volTrend` 0.05, fixed per world by `volSeed`) is built, **off by
   default**. Under it the fits' errors and their ranking stand (S79), but `crossFitLevel` is null (it needs one volume

@@ -403,6 +403,23 @@ $\rho = \rho_{12}$.
   Worst cases over $\tau^2$ and $v_j$, for true parameters; typical losses are smaller.
 \end{caveat}
 
+\begin{result}[Bühlmann--Straub fitted on correlated cohorts]\label{res:pseudoTrue}
+  With a common $\sigma$ and noise covariances $C_{ik}$ between cohort means, the classical
+  $\hat\tau^2$ estimates
+  \[
+    \tilde\tau^2 = \tau^2 - \bar c, \qquad
+    \bar c = \frac{\sum_{i\ne k} w_iw_kC_{ik}}{\sum_{i\ne k} w_iw_k}.
+  \]
+  For two cohorts $\bar c = \sigma_1\sigma_2\rho$, and the fitted blend's mean squared error is
+  $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2) \le 1/(1-\rho^2)$ times the best (cohort 1).
+  \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
+  \lean{Credibility.Core.quad_blupWeight_shift}
+\end{result}
+\use The fit lowers $\tau^2$ as well as dropping the correlation; for two cohorts this costs nothing beyond Result~\ref{res:ignoreCorr}.
+\begin{caveat}
+  From three cohorts it can cost more: $1.635$ against $1.5625$ at $r = 0.5$ (numerical worst case).
+\end{caveat}
+
 % ===========================================================================
 \section{The moments are real}\label{sec:moments}
 
@@ -1950,6 +1967,9 @@ which has the details. The paper explains each where it belongs.
   \item[{48. corrBS's $\hat\rho$ is biased up by the low level of the $\tilde\sigma_j^2$.}] $\sum_j\tilde\sigma_j^2 \le \sum_j\hat\sigma_j^2$ iff $\sum_j(1-\zeta_j)(\hat\sigma_j^2 - \bar\sigma^2) \ge 0$ (every draw in the app's worlds); the level divides into $\hat\rho$ but not into $\hat K$'s off-diagonal. $+0.06$ to $+0.13$ at $\rho = 0.6$; fixing it does not help the rates (S81).
   \lean{Credibility.VcW.sum_shrink_le_iff}
   \lean{Credibility.VcW.rhoPooled_ge_levelMatched}
+  \item[{49. Bühlmann--Straub fitted on correlated cohorts misses twice.}] $\hat\tau^2$ estimates $\tau^2$ minus the volume-weighted average noise covariance. Two cohorts: still at most $1/(1-\rho^2)$, exactly $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$; three, $r = 0.5$: $1.635 > 1.5625$ (numerical).
+  \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
+  \lean{Credibility.Core.quad_blupWeight_shift}
 \end{description}
 
 \end{document}

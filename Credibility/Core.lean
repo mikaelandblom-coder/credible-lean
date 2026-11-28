@@ -1703,6 +1703,50 @@ theorem linMse_ignoreCorr_equicorr_le {τ2 r : ℝ} {v : J → ℝ} (hτ : 0 < �
   rw [h0] at h
   convert h using 2 <;> ring
 
+/-- **A working model off by a common covariance**: if the working covariances are
+`K̃ = K - c·11ᵀ` (every entry lowered by `c`) and `L̃ = L - cI`, the best predictor `e` of
+the working model loses `(e - d*)ᵀK(e - d*) = -c(eⱼ - d*ⱼ)` against the true one
+(`linMse_eq_blupWeight_add`). This is Bühlmann–Straub fitted on correlated cohorts with
+equal noise covariances `c` (two cohorts always): its `τ̂²` estimates `τ² - c`, and the
+diagonal working `K̃ = diag(τ² - c + vᵢ)` is `K - c·11ᵀ` (Finding 49). -/
+theorem quad_blupWeight_shift (hK : K.PosDef) {K' : Matrix J J ℝ} (hK' : K'.PosDef)
+    (L : Matrix J J ℝ) (j : J) (c : ℝ) (hc : ∀ i k, K' i k = K i k - c) :
+    (blupWeight K' (L - c • 1) j - blupWeight K L j) ⬝ᵥ
+        (K *ᵥ (blupWeight K' (L - c • 1) j - blupWeight K L j))
+      = -c * (blupWeight K' (L - c • 1) j j - blupWeight K L j j) := by
+  have : Nonempty J := ⟨j⟩
+  set e := blupWeight K' (L - c • 1) j
+  set h := e - blupWeight K L j
+  have he1 : ∑ i, e i = 1 := sum_blupWeight hK' _ j
+  have hsum : ∑ i, h i = 0 := by
+    simp [h, sum_sub_distrib, he1, sum_blupWeight hK]
+  -- As in `linMse_blupWeight_working_le`: the cross term of the true form is `hᵀKh`.
+  have hB : h ⬝ᵥ (K *ᵥ e) - h ⬝ᵥ L j = h ⬝ᵥ (K *ᵥ h) := by
+    have h0 := dotProduct_sub_eq_zero_of_const L j (mulVec_blupWeight hK L j) hsum
+    have he : e = blupWeight K L j + h := by simp [h]
+    rw [he, mulVec_add, dotProduct_add] at *
+    linarith
+  -- `K e - Lⱼ = (K̃ e - L̃ⱼ) + c·1 - c·eⱼ-basis`, and `K̃ e - L̃ⱼ` is constant.
+  have hKe : ∀ i, (K *ᵥ e) i - L j i
+      = (1 - 1 ⬝ᵥ (K'⁻¹ *ᵥ (L - c • 1) j)) * (invTotal K')⁻¹ + c
+        - c * (1 : Matrix J J ℝ) j i := by
+    intro i
+    have h1 := mulVec_blupWeight hK' (L - c • 1) j i
+    have h2 : (K *ᵥ e) i = (K' *ᵥ e) i + c := by
+      simp only [mulVec, dotProduct, hc, sub_mul, sum_sub_distrib, ← mul_sum, he1]
+      ring
+    rw [h2]
+    simp only [Matrix.sub_apply, Matrix.smul_apply, smul_eq_mul] at h1
+    linarith
+  rw [← hB]
+  have : h ⬝ᵥ (K *ᵥ e) - h ⬝ᵥ L j = ∑ i, h i * ((K *ᵥ e) i - L j i) := by
+    simp only [dotProduct, ← sum_sub_distrib]
+    exact sum_congr rfl fun i _ => by ring
+  rw [this]
+  simp only [hKe, mul_sub, sum_sub_distrib, ← sum_mul, hsum, zero_mul, zero_sub]
+  simp [h, Matrix.one_apply, mul_comm]
+  ring
+
 end Misspec
 
 end Core
