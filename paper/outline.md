@@ -100,13 +100,7 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
-- [ ] Finding 47 (2026-11-28): corrBS's `Wⱼ` is low by a relative O(1/T), and the unbiased `W̃` worsens the
-  rates (S80): a sentence where the paper explains credibility for the variances (`ζⱼ`).
-- [ ] Finding 48 (2026-11-28): the σ̃ⱼ² average below the σ̂ⱼ², which biases ρ̂ up but not `K̂`'s off-diagonal;
-  fixing it does not help the rates (S81). Same place as Finding 47.
-- [ ] Balance with volumes that vary by year (2026-11-28, S82, `BalanceCost.balance_cost_cellLin`): the cross-fitted
-  level works for any volumes and is priced on the yearly cells; a sentence where the paper explains the balance switch. The app's
-  world now has volumes varying by year by default (S84): say so where the paper describes the app's world.
+- (Cleared 2026-11-28: Findings 47, 48, balance with volumes varying by year, the app's default world, clipping a held-out ẑ.)
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

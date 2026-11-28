@@ -722,7 +722,13 @@ stated in it, and it means something else. In the same example at
 $\rho = 0$, $z_1 = 0.5$ but $c_1 = 0.947$, because cohort~1 dominates
 $\hmu$. Report $c_j$ next to $z_j$. And if you want to restrict anything,
 restrict the blend, not $z_j$: clipping $z_j$ to $[0, 1]$ is what loses
-accuracy here. With three or more cohorts $z_j$ is singular only when every
+accuracy here. The same holds for an estimated $\hat z_j$ taken from other data (held out
+or cross-fitted): clipping it is safe on average exactly when the best $z_j$ lies in
+$[0, 1]$ (\hb{res:clipZ}{14}). But the best $z_j$ is unknown, and the costs are lopsided:
+in the app's worlds, where the best $z_j$ never exceeds $1.02$, clipping the in-sample
+$\hat z_j$ changes the error by at most a tenth of a point either way, while clipping a
+true $z_1 = 1.74$ costs $30\%$ (\finding{36}, S83). So
+don't clip by default. With three or more cohorts $z_j$ is singular only when every
 other weight is zero, so the sign flip is mostly a two-cohort affair, but
 $z_j$ can still be large near it.
 
@@ -1309,11 +1315,21 @@ gets there by giving the covariances fewer parameters
     expected factors) is unbiased when the true $\sigma_j$ are used, and the
     average pair covariance is unbiased for a common covariance
     (\hb{res:pooled}{27}); with estimated
-    $\tilde\sigma_j$ plugged in, $\hat\rho$ is a ratio and its bias is not proved.
+    $\tilde\sigma_j$ plugged in, $\hat\rho$ is biased up, because the credibility-weighted
+    variances sit below the raw ones in level (in every simulated draw), and a lower level
+    divides into $\hat\rho$. The level cancels in $\hat K$'s off-diagonal $\hat\rho\tilde\sigma_i\tilde\sigma_j$, so the
+    covariances are not affected; at $\rho = 0.6$ the bias is $+0.06$ to $+0.13$, and removing it
+    does not improve the rates (\finding{48}, S81).
   \item \emph{Variances by credibility.} Each cohort's $\hat\sigma_j^2$ is
     blended with the pooled one by a credibility factor whose own parameters
     (the noise of $\hat\sigma_j^2$, the spread of the true $\sigma_j^2$)
-    come from moment equations: Bühlmann--Straub one level up (S17). A
+    come from moment equations: Bühlmann--Straub one level up (S17). The
+    noise estimate $W_j$ from a region's own years is low by a relative
+    $O(1/T)$ (25\% at five years under normal noise) and has an exact unbiased
+    correction (\hb{res:vcW}{41}), but the corrected $W_j$ makes the rates worse,
+    by 4 points of the floor on average: unbiased inputs to the
+    variances' credibility factor do not give the best factor for the rates
+    (\finding{47}, S80). The app keeps the raw $W_j$. A
     common $\sigma^2$ fails when regions really differ (S16), and a separate
     $\hat\sigma_j^2$ per region is fragile with short histories (S10).
   \item \emph{Every parameter by a moment equation}, nothing chosen by hand.
@@ -1381,7 +1397,7 @@ under common conventions (\file{studies/PLAN.md}, ``Study conventions'').
 \begin{center}
 \begin{tabular}{p{0.2\textwidth}p{0.7\textwidth}}
   \toprule
-  Worlds & the app's world (cohorts as regions, yearly or monthly data), in factorial grids of up to 48 worlds \\
+  Worlds & the app's world (cohorts as regions, yearly or monthly data, volumes that vary by year since S84), in factorial grids of up to 48 worlds \\
   Varied & correlation $0$--$0.9$ (common, pair-specific or decaying with distance), $J = 4$--$20$ cohorts, $T = 2$--$20$ periods, spread of volumes and of noise levels \\
   Regimes & three credibility levels: the app's ($z \approx 0.2$--$0.9$), the thesis's ($z \approx 0.7$--$1.0$), and the thesis's with its spread of noise levels \\
   Noise & gamma (skewed, the default), normal, exponential, Lomax (heavy tails) \\
@@ -1468,8 +1484,11 @@ estimates are unbiased for the portfolio however they were built (Section~\ref{s
 A single cohort can still be priced too low. Under correlation that balance is expensive, and a
 cheaper target serves the same purpose: shift all rates to the \emph{cross-fitted} portfolio
 level, each year priced with weights fitted without it, so a year's noise cannot steer its own
-weight. With year shares common to the cohorts its bias runs only through the levels, and is
-zero when the weights come from residuals alone (\hb{res:randomWeights}{31}). In the app's
+weight. Its bias runs only through the levels, and is
+zero when the weights come from residuals alone (\hb{res:randomWeights}{31}); this holds for any
+volumes, also when they vary by year, and its cost is then priced on the yearly cells
+(\hb{res:balanceCost}{32}). With volumes varying by year it removed the under-pricing
+(from up to $-166$ basis points to within simulation noise, S82). In the app's
 worlds it was unbiased, cost at most one point more than exposure balance without correlation
 and 2--46 points less under $\rho = 0.6$ (S63). It is still a worse portfolio level than the
 fit's own when noise variances differ, so the app's balance switch shifts to it only when the
@@ -2795,7 +2814,8 @@ The claims of novelty rest on a literature search partly from abstracts
 simulation in the worlds described in Section~\ref{sec:estimation}, not on
 theorems, and the monthly world is not anchored to real data. A tested fit for
 crossed levels and for the group model, and the cost of choosing cohorts from the same
-data are open (Section~\ref{sec:open}).
+data are open (Section~\ref{sec:open}). So is whether choosing to clip $\hat z_j$ on held-out
+years keeps clipping's small gain without its large loss (S83).
 
 \appendix
 

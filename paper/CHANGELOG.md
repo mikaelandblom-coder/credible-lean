@@ -12,6 +12,12 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-28
+- §5 Estimating the parameters: corrBS's `ρ̂` is biased up by the low level of the credibility-weighted variances, which
+  leaves `K̂`'s covariances alone (Finding 48); the unbiased `Wⱼ` exists but worsens the rates (Finding 47).
+- §5 Estimating the parameters: the cross-fitted balance level works for any volumes, also volumes varying by year (S82);
+  the study worlds now vary volumes by year (S84).
+- §3.2 The credibility factor: an estimated `ẑ` from other data is safe to clip iff the best `z` is in `[0, 1]`, but that is
+  unknown and the costs are lopsided, so don't clip by default; a held-out clip-or-keep choice is open (§11, S83).
 - §3 What ignoring correlation costs: with equal noise covariances the fitted Bühlmann–Straub costs at most
   `vⱼ/(vⱼ − c)` and under-weights own experience, for any number of cohorts (Finding 50).
 - §3 What ignoring correlation costs: a fitted Bühlmann–Straub also lowers `τ²` (Finding 49); for two
