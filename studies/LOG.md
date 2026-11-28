@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S85, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S86, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S86 | `runs/workerscomp.js` | Real data with z across [0, 1] (Klugman's workers' comp, 121 classes × 7 years): held out, corrBS beats BS by 9% on the small classes, all of it from per-class variances (ρ = 0 the same); ρ̂ = 0.17 is year effects (−0.01 detrended); all-zero classes get σ̃ⱼ² = 0, z = 1, rate 0 |
 | S85 | `runs/hachemeister.js` | First real data (Hachemeister 1975, 5 states × 12 quarters): BS reproduces actuar exactly; raw ρ̂ = 0.50 is the common inflation trend (0.03 after removing it); what moves the rates is per-state σ̃ⱼ² (state 4: 1443 → 1372); held out, cBS ≈ own, BS a few $ worse |
 | S84 | `runs/volume-default.js`, `runs/balance-rule.js --vol` | Volumes that vary by year become the app default: the page's quoted noise checks stay within simulation noise (skew bias ≤ 0.06 points, power ≤ 0.08), S76's rule keeps its regret (auto 0.6 / max 7.9) |
 | S83 | `runs/clip-insample.js` | Clipping corrBS's in-sample ẑ: hurts slightly (≤ 0.1 points) in 7 worlds with every z* in [0, 1]; the app's worlds never reach z* > 1.01, so the large cost (+30%, Finding 36) is unseen there |
@@ -1183,3 +1184,21 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     (iii) Credibility does little on this data set (τ̂ ≈ $300 against within-state noise per state-mean of
     $26–79): any fit is close to the states' own means. Hachemeister's own point, state-specific trends
     (regression credibility, `CoreVector`), is not tested here.
+- S86. *[numerical]* **Real data where credibility matters: workers' compensation** (Klugman 1992, from NCCI;
+    `data/workerscomp.csv` from R's `insuranceData`; studied by Frees, Young and Luo 2001). `runs/workerscomp.js`:
+    121 occupation classes × 7 years, ratio = losses per 100 of payroll, volume = payroll (0.4 to 34 000 $M per
+    class over 7 years). **Full data.** BS: σ̂² = 75.4, τ̂² = 0.78, z from 0.00 to 1.00 (median 0.69). corrBS:
+    ρ̂ = 0.17, σ̃ⱼ² from 0 to 205 (median 13.8), z median 0.95. Year index (payroll-weighted ratio over its mean)
+    0.99 0.90 0.99 1.03 1.29 1.07 0.72; after dividing it out ρ̂ = −0.01: as in S85, ρ̂ is a common year effect.
+    **Held out** (fit years 1..k, predict year k + 1, k = 3..6, payroll-weighted MSE, pool = 100, summed over k):
+    own 46.2, BS 45.4, corrBS 44.9, BLUP 45.0, corrBS with ρ = 0 45.0, corrBS with one pooled σ 45.4. The large
+    classes dominate this score and every fit trusts them. **Small classes** (below the median payroll): own 53.3,
+    BS 50.9, corrBS 46.3, ρ = 0 45.9, pooled σ 51.1, BLUP 50.2 (k = 5: 61.1). So corrBS's gain, about 9% of BS's
+    error, comes from per-class noise variances, not from ρ; the BLUP's extra weights cost more than they gain.
+    **Edge case.** Three small classes (19, 23, 68) have no losses in any year: σ̂ⱼ² = 0 and its own noise
+    estimate Wⱼ = 0, so ζⱼ = 1, σ̃ⱼ² = 0, z = 1 and the rate is 0 (BS: 1.5–1.7). Held out they stay at 0, so it
+    scores well here, but a rate of 0 from three loss-free years of $0.3M payroll is not one an actuary would
+    file: the variance credibility needs a floor on Wⱼ (or pooling of σ² for zero cells). **Consequence.**
+    Two real data sets (S85, S86) agree: (i) the cross-cohort ρ̂ is a common time effect, ≈ 0 once it is
+    removed; (ii) the gain over BS comes from cohort-specific noise variances, concentrated on small cohorts.
+    Year 7's low index (0.72) may be undeveloped losses; Frees et al.'s treatment not checked.

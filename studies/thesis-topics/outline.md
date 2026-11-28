@@ -11,4 +11,5 @@ when a result changes what a student should derive or check.
 - S85 (Hachemeister, first real data): a common trend reads as cross-cohort correlation (ρ̂ 0.50 → 0.03
   after detrending). The proposal calls a known claim trend "not needed for the card data"; card data
   have demand trends, so detrending before ρ̂ may belong in E-topics or §"Comparing models on data".
-  Hachemeister as a public warm-up data set before the card data (`studies/runs/hachemeister.js`).
+  Hachemeister (S85) and workers' comp (S86, z across [0, 1]) as public warm-up data sets before the card data;
+  S86: the gain is per-cohort variances on small cohorts, and loss-free cohorts need a guard.

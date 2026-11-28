@@ -339,6 +339,10 @@ One chat per step; none needs Lean except step 5.
   - [ ] Handbook link and screenshots.
 
 ## Pending
+- **Variance credibility for loss-free cohorts** (S86): a cohort with no losses gets σ̂ⱼ² = Wⱼ = 0, so ζⱼ = 1,
+  z = 1 and a rate of 0. Floor Wⱼ (e.g. at its value under the pooled σ̂²) or pool σ² for such cohorts; check on
+  `runs/workerscomp.js` and in simulation with zero-inflated claims. Also: real data sets as app examples
+  (Hachemeister, workers' comp).
 (Results or findings that may need a switch, step or message in the app.)
 Finished items are in `studies/PLAN-done.md`.
 - [ ] Clip or keep `ẑ`, chosen on held-out years (2026-11-28, owner: "in real life you don't know if the true z is in

@@ -1346,19 +1346,27 @@ the EBLUP in small-area estimation (\file{studies/literature.md} §2). (The
 thesis's own estimators, one $\hat\sigma^2_{ij}\hat\rho_{ij}$ per pair and $\hat\tau^2$,
 are proved unbiased; Appendix~\ref{app:changes} names them.)
 
-\paragraph{On real data: Hachemeister's states.}
+\paragraph{On real data.}
 
-Hachemeister's (1975) data, average bodily-injury claims of five US states
-over twelve quarters weighted by claim counts, are the classical public test
-set. Bühlmann--Straub on them gives the textbook rates. The fit above finds
-$\hat\rho = 0.50$, but that is inflation: after removing one common trend
-($+2.3\%$ a quarter) $\hat\rho = 0.03$. A common trend reads as
-correlated noise, so remove it, or model it, before estimating $\rho$.
-What does change the rates is the per-state variances: the pooled
-$\hat\sigma^2$ is dominated by the largest, noisiest state, and over-shrinks
-the smallest, quietest one ($1443$ against $1367$, own mean $1353$). On these
-data credibility moves little, since the states differ by far more than their
-noise. Five states are an illustration, not evidence (S85).
+Two classical public data sets have been fitted. Hachemeister's (1975) five
+US states over twelve quarters (bodily-injury claims) reproduce the textbook
+Bühlmann--Straub rates, but every $z_j$ is close to 1: the states differ far
+more than their noise (S85). Klugman's (1992) workers' compensation data,
+121 occupation classes over seven years with payrolls from \$0.4M to
+\$34\,000M, put $z_j$ anywhere in $[0,1]$ (S86). The two agree on three points.
+\begin{itemize}
+  \item \emph{The fitted correlation is a common time effect.} $\hat\rho$ is
+    $0.50$ and $0.17$, but $0.03$ and $-0.01$ once a common trend or year
+    index is divided out. A common trend reads as correlated noise: remove
+    it, or model it, before estimating $\rho$.
+  \item \emph{The gain comes from per-cohort noise variances.} One pooled
+    $\hat\sigma^2$ is dominated by large, noisy cohorts and over-shrinks small,
+    quiet ones. On the small occupation classes, predicting the next year,
+    the fit above has about 9\% less error than Bühlmann--Straub, and the same with $\rho = 0$.
+  \item \emph{A loss-free cohort needs a guard.} A class with no losses gets
+    $\tilde\sigma_j^2 = 0$ and $z_j = 1$, so a rate of 0.
+\end{itemize}
+Two data sets are an illustration, not evidence.
 
 \paragraph{Which fit to use.}
 

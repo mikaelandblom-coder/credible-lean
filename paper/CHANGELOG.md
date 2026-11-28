@@ -15,8 +15,9 @@ are not listed.
 - §1.1, §5, §6: what is proved is stated exactly: "every result the paper calls proved"; for the app's fit,
   `K̂ ≻ 0`, the blend and the pooled `ρ̂` (true `σⱼ`) are proved, the credibility-weighted variances are not; the
   moment layer's unbiasedness covers the thesis's estimators, not ratios of them (second external review).
-- §5 new paragraph "On real data: Hachemeister's states" (S85): `ρ̂ = 0.50` is the common inflation trend (0.03
-  after removing it); per-state variances are what moves the rates.
+- §5 new paragraph "On real data" (S85, S86): Hachemeister's states and Klugman's workers' compensation classes;
+  `ρ̂` is a common time effect (≈ 0 once removed), the gain over BS comes from per-cohort variances, and a
+  loss-free cohort is priced at 0 without a guard.
 - §5 Estimating the parameters: corrBS's `ρ̂` is biased up by the low level of the credibility-weighted variances, which
   leaves `K̂`'s covariances alone (Finding 48); the unbiased `Wⱼ` exists but worsens the rates (Finding 47).
 - §5 Estimating the parameters: the cross-fitted balance level works for any volumes, also volumes varying by year (S82);

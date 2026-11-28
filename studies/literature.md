@@ -1633,3 +1633,8 @@ From search results and earlier reads; the 1969 and 1992 texts not read in full.
 - *Not found (to check from full texts).* A fit with errors correlated *across* states in the same
   quarter. Frees et al. correlate within a state over time, the opposite direction. S85 suggests why it
   may not have been pursued: after a common trend, the cross-state correlation is ≈ 0 on these data.
+- *Workers' compensation (S86).* Klugman (1992) gives 121 occupation classes × 7 years of payroll and
+  permanent partial disability losses (NCCI); R's `insuranceData` ships them as `WorkersComp`, with Frees,
+  Young and Luo (2001, NAAJ 5(4), "Case studies using panel data models") as the panel-data reference, and
+  CASdatasets has them as `usworkcomp`. Klugman and Frees et al. fit years 1–6 and predict year 7. Not read
+  in full: how they treat year 7, the zero-loss classes, and which variance structure they used.
