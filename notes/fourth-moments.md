@@ -13,7 +13,7 @@ third-moment question: it is the first half of this layer. Independent sources: 
 `kappaHat_unbiased` (2026-11-23). G2 `V`, balanced case: `variance_sampleCov` (2026-11-23,
 `(VᵢᵢVⱼⱼ + Vᵢⱼ²)/(T−1) + κ₄ᵢⱼᵢⱼ/T`, a corollary of the weighted one); weighted `Shock.crossHat`: `variance_crossResid`
 (2026-11-23), via `variance_sum_mul_lin` (`Var Σₜ (uₜ·e)(vₜ·e)`). Finding 35 (c) ingredient:
-`covariance_resVar_mean` (`cov(σ̂², μ̂)` under skew). Next: G4 weights.
+`covariance_resVar_mean` (`cov(σ̂², μ̂)` under skew). Next: G4 weights. G1a (2026-11-28, `Credibility/VcW.lean`): `E Wⱼ` exactly, its corrected form and `β̂²` (Finding 47).
 
 ## Why
 

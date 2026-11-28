@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S79, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S80, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S80 | `runs/vcw-corr.js` | The corrected Wⱼ (unbiased, Finding 47) fixes Var σ̂ⱼ² and β̂² but worsens corrBS's rates: +4 mean, up to +44 points (T = 3, σⱼ spread 2) |
 | S79 | `runs/volume-noise.js` | Volumes that vary by year: the fits and their ranking stand; the balance rule had silently always balanced (no cross-fitted level), up to +110 points; now prices the exposure-weighted level |
 | S78 | `runs/psd-projection.js` | K̂ on the nearest PSD Σ̂⁺: the error moves ≤ 0.5 points; Σ̂ is PSD whenever volumes share one shape over the years, and fails at T = 3 with J > T otherwise; the gain is that K̂ ≻ 0 is a theorem in every draw |
 | S77 | `runs/group-choice.js` | Groups or none on held-out years: regret 0.9 / max 4.0 though its picks barely follow φ; the stakes are small (−10 to +7 points) |
@@ -1099,3 +1100,14 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     (Finding 35) is no longer removed. General target (PLAN Pending "Realistic volumes"): the balance cost for a
     target linear in the cells, then a cross-fitted level for any volumes. The switch stays off by default until the
     page's quoted checks are rerun under it.
+- S80. *[numerical; the bias is exact]* **The unbiased `Wⱼ` worsens the rates.** Finding 47: the app's `Wⱼ` is
+    low by a relative O(1/T) (`VcW.integral_vcW_equal`). `runs/vcw-corr.js`: J = 8, gamma noise, regimes app /
+    thesis × σⱼ spread {0, 1, 2} × ρ {0, 0.6} × T {3, 5, 10}, 36 worlds, 600 paired draws. Mean W over the
+    draws' Var σ̂ⱼ²: raw 0.40 / 0.66 / 0.84 (T = 3 / 5 / 10), corrected 0.79 (T = 3: only the normal part can
+    be corrected) / 1.03 / 1.00. β̂²'s bias at ρ = 0 drops to about 0 from T = 5 (raw: +0.08 to +2.4 in units
+    of β²); at ρ = 0.6 it stays low (−0.2 to −0.5 σ⁴ with equal σⱼ: the σ̂ⱼ² are correlated, so the cross
+    terms are missing, `integral_betaHat`). corrBS's MSE, corrected − raw, points of the floor: mean +4.1,
+    −9.0 to +43.7; 4 wins (equal σⱼ, app volume, T ≤ 5), 19 losses (every σⱼ spread with T ≤ 5, largest at
+    T = 3). **Consequence.** The app keeps the raw `Wⱼ` (`opts.corrW` gives the corrected one). The bias in
+    `Wⱼ` shrinks the σ̂ⱼ² less towards the pool, which pays when the σⱼ² differ. Hypothesis, not chased: the
+    rates' loss in `ζ` is asymmetric, so the best plug-in `ζ` is not `β²/(β² + Var σ̂²)`.

@@ -48,6 +48,7 @@ import Credibility.FreqSev
 import Credibility.Shock
 import Credibility.ShockMoments
 import Credibility.Cumulants
+import Credibility.VcW
 import Credibility.FitStatistics
 import Credibility.FitCrossTerm
 import Credibility.BlupPrice

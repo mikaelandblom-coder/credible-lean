@@ -100,6 +100,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 ## Pending
 (Results, findings or changed statements since the last paper update that
 may need a paragraph.)
+- [ ] Finding 47 (2026-11-28): corrBS's `Wⱼ` is low by a relative O(1/T), and the unbiased `W̃` worsens the
+  rates (S80): a sentence where the paper explains credibility for the variances (`ζⱼ`).
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are

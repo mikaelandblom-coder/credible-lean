@@ -1609,3 +1609,16 @@ From search results and earlier reads; the 1969 and 1992 texts not read in full.
   sources (Dannenburg 1995, Goulet 1998 §8.3) report only a large coefficient of variation.
 - Used in S70: REML on the cell means with the noise table plugged in, and the plug-in shrink, both
   against the default (inverse variance, clip).
+
+### 10aa. Estimating the variance of a sample variance (2026-11-28, for `VcW.lean`, G1a; from memory, not fetched)
+
+- **Classical result.** The unbiased estimator of `Var s²` for iid samples is a combination of the fourth
+  sample moment and `s⁴` (Fisher's k-statistics and polykays; Cho, Cho & Eltinge 2005, "The variance of
+  sample variance from a finite population"). With `m₄ = Σ(xₜ − x̄)⁴/n`, it is equivalent to `W̃` of Finding 47
+  (`(T−1)³/(T(T−2)(T−3))·W − 2σ̂⁴/(T(T−3))`), and it needs `T ≥ 4`.
+- **Used here.** The idea (match the `σ⁴` and `κ` parts of the expectation exactly), generalized to unequal
+  volumes when the variance and cumulant profiles are known up to scale (`VcW.integral_vcWCorr`).
+- **Not found:** the bias of the "variance of the yearly terms" estimate (the app's `Wⱼ`) in credibility
+  texts; Bühlmann–Gisler §4 estimate `σ²` but not the variance of its estimate. Credibility for variances
+  (`ζⱼ`) is the hierarchical variance-component idea one level up (literature §10y).
+

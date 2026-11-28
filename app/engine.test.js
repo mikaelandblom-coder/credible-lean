@@ -1309,3 +1309,22 @@ test('Volumes vary by year (S79): off is one shape wⱼₜ = aⱼgₜ; on gives 
   }
   assert.ok(notPsd > 0);
 });
+
+test('Finding 47 (VcW.integral_vcWCorr_equal, integral_vcWCorr): the corrected Wⱼ coefficients; equal volumes give (T−1)³/(T(T−2)(T−3)) and −2/(T(T−3)); Monte Carlo E[λW + μσ̂⁴] ≈ Var σ̂² with unequal volumes and gamma noise', () => {
+  for (const T of [4, 5, 10]) {
+    const c = E.vcWCoef(Array(T).fill(300));
+    assert.ok(Math.abs(c.lam - (T - 1) ** 3 / (T * (T - 2) * (T - 3))) < 1e-9 && Math.abs(c.mu + 2 / (T * (T - 3))) < 1e-9, `T = ${T}: ${c.lam}, ${c.mu}`);
+  }
+  const c3 = E.vcWCoef([300, 300, 300]);
+  assert.ok(Math.abs(c3.lam - 2) < 1e-9 && c3.mu === 0, 'T = 3: normal part only, λ = (T−1)/(T−2)');
+  const w = [200, 800, 400, 1500, 300, 600], T = w.length, ws = w.reduce((a, b) => a + b), { lam, mu } = E.vcWCoef(w), r = E.rng(5);
+  let sW = 0, s1 = 0, s2 = 0;
+  const N = 40000;
+  for (let n = 0; n < N; n++) {
+    const X = w.map((x) => Math.sqrt(36 / x) * r.skewed(2)), m = X.reduce((z, x, t) => z + w[t] * x, 0) / ws;
+    const u = X.map((x, t) => w[t] * (x - m) ** 2 * T / (T - 1)), s = u.reduce((a, b) => a + b) / T;
+    sW += lam * u.reduce((z, x) => z + (x - s) ** 2, 0) / (T * (T - 1)) + mu * s * s; s1 += s; s2 += s * s;
+  }
+  const v = s2 / N - (s1 / N) ** 2;
+  assert.ok(Math.abs(sW / N / v - 1) < 0.06, `E W̃ / Var σ̂² = ${sW / N / v}`);
+});

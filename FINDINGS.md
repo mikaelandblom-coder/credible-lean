@@ -818,4 +818,29 @@ Gaps, extra hypotheses and new results found while formalizing.
    0.5 mean, 6.9 max (never: 0.4, 12.2; always: 22.2, 205.6; held-out scores: 10.3, 99.2). It ignores the
    portfolio bias, which the unbalanced fit keeps (down to −190 bp at app volume, σⱼ spread 2).
 
+47. **The app's `Wⱼ` underestimates `Var σ̂ⱼ²` by a relative `O(1/T)`, and correcting it worsens the
+   rates (new; proved: `VcW.integral_vcW`, `integral_vcW_equal`, `integral_vcWCorr_equal`,
+   `integral_vcWCorr`, `integral_betaHat`).** `Wⱼ = Σₜ(uⱼₜ − σ̂ⱼ²)²/(T(T−1))` estimates the variance of
+   `σ̂ⱼ²` from the yearly terms, but `uⱼₜ` uses the fitted `μ̂ⱼ`, so the `uⱼₜ` are dependent. Exactly, for
+   independent years with equal volumes, variance `σ²` and fourth cumulant `κ` per unit of volume, any
+   level and any distribution with four moments:
+   `E Wⱼ = 2σ⁴(T−2)/(T−1)² + κ(T−2)²/(T(T−1)²)` against `Var σ̂ⱼ² = 2σ⁴/(T−1) + κ/T`. So `Wⱼ` is low by
+   the factors `(T−2)/(T−1)` (normal part) and `(T−2)²/(T−1)²` (kurtosis part): 50% at `T = 3`, 25% at
+   `T = 5`, 11% at `T = 10` under normal noise; 62%, 35%, 17% under the app's gamma(2) noise (`κ = 3σ⁴`).
+   The absolute bias is `O(1/T²)`, as expected, but `Var σ̂²` is itself `O(1/T)`. For any volumes the
+   exact `E Wⱼ` is a sum over the forms of `uₜ − σ̂²` (`integral_vcW`). Correction:
+   `W̃ = (T−1)³/(T(T−2)(T−3)) W − 2σ̂⁴/(T(T−3))` is unbiased for `T ≥ 4` (equal volumes); for any volumes,
+   if variances and fourth cumulants are known up to two scales (fixed-shape noise: `∝ 1/wₜ`, `∝ 1/wₜ²`),
+   two coefficients solved from the exact moments make `λW + μσ̂⁴` unbiased (`Engine.vcWCoef`). No
+   unbiased quadratic correction exists at `T = 3` (the two equations are singular). Then `β̂²` (G1b) is
+   unbiased as Bühlmann–Straub's `τ̂²` one level up (`integral_betaHat`), but only for uncorrelated regions:
+   correlated noise (`ρ ≠ 0`) correlates the `σ̂ⱼ²` and needs the cross terms `Ŵᵢⱼ` (S80: with `ρ = 0.6` and
+   equal σⱼ the corrected `β̂²` is still low by 0.2–0.5 σ⁴). In the fitted worlds (S80, 36 worlds) the
+   correction fixes its own targets (`W̃/Var σ̂² ≈ 1.0` from `T = 5`; `β̂²` bias ≈ 0 at `ρ = 0`) but raises
+   corrBS's rate error by 4 points of the floor on average (up to 44 at `T = 3`, σⱼ spread 2); it gains
+   only with equal σⱼ and short histories (−5 to −9 at app volume). Unbiased inputs to `ζⱼ = β²/(β² + Wⱼ)`
+   do not give the better `ζⱼ` for the rates: the downward bias of `Wⱼ` shrinks the σⱼ² less, which pays
+   when they differ. The app keeps the raw `Wⱼ` (corrected one: `opts.corrW`). Open (hypothesis): the
+   rates' loss is asymmetric in `ζ`, so the target for `ζ` is not `β²/(β² + Var σ̂²)`.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

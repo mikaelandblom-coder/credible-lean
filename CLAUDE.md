@@ -110,7 +110,7 @@ A map by topic; each file's module docstring has the details and Lean names.
   estimators), `Estimation` (§2.8, eqs. 37–41), `Balance` (§2.9).
 - Unequal lengths `Tⱼ`: `Unequal`, `UnequalEstimation`, `UnequalMoments`.
 - Moment layer: `CoreMoments`, `Moments`, `RandomWeights`, `Cumulants`
-  (variance of quadratic estimators, order four).
+  (variance of quadratic estimators, order four), `VcW` (the app's `Wⱼ`, `β̂²`).
 - BLUP of a general target: `Blup`, `BlupMoments`, `BlupNormal`, `Henderson`
   (mixed-model equations), `ObservedBest` (collective mean given the levels).
 - Plug-in BLUP (estimated moments): `PlugInSymmetric`, `PlugIn` (exact MSE),

@@ -939,6 +939,26 @@ the noise correction, and $\hat K_{ij} = \widehat{\sigma^2_{ij}\rho_{ij}} + \wid
 \end{caveat}
 \lean{Credibility.Cumulants.kappaHat_unbiased}
 
+\begin{result}[The variance of a region's noise variance, from its own years]\label{res:vcW}
+  One region, $T$ independent years, residuals $r_t = X_t - \hat\mu$, $u_t = w_tr_t^2\,T/(T-1)$ (average
+  $\hat\sigma^2$), $W = \sum_t(u_t - \hat\sigma^2)^2/(T(T-1))$. With equal volumes, variance $\sigma^2$ and
+  fourth cumulant $\kappa$ per unit of volume:
+  \[
+    \mathbb E W = \frac{2\sigma^4(T-2)}{(T-1)^2} + \frac{\kappa(T-2)^2}{T(T-1)^2},\qquad
+    \Var\hat\sigma^2 = \frac{2\sigma^4}{T-1} + \frac{\kappa}{T},
+  \]
+  and $\tilde W = \frac{(T-1)^3}{T(T-2)(T-3)}W - \frac{2\hat\sigma^4}{T(T-3)}$ is unbiased for $\Var\hat\sigma^2$
+  ($T \ge 4$). Any volumes: the same two-coefficient correction, solved from the volumes.
+  \lean{Credibility.VcW.integral_vcW_equal}
+  \lean{Credibility.VcW.variance_sigHat_equal}
+  \lean{Credibility.VcW.integral_vcWCorr_equal}
+  \lean{Credibility.VcW.integral_vcWCorr}
+\end{result}
+\use $W$ is low by 25\% at $T = 5$ (normal noise), more under skew; it feeds $\zeta_j = \beta^2/(\beta^2 + W_j)$.
+\begin{caveat}
+  Unbiased is not better here: with spread-out $\sigma_j$ the corrected $W$ worsens the rates (Finding 47).
+\end{caveat}
+
 % ===========================================================================
 \section{Cohorts observed over different periods}\label{sec:unequal}
 
@@ -1919,6 +1939,9 @@ which has the details. The paper explains each where it belongs.
   \lean{Credibility.Core.tendsto_blendPrice}
   \item[{46. Balancing trades the fit's portfolio level for the target's.}] The cost of a common shift is $\mathbb E(T - \bar\mu)^2 - \mathbb E(\bar r - \bar\mu)^2$ exactly; with unequal $\sigma_j$ the cross-fitted level's error is 1.2--2.2 times corrBS's own (S75), so the app's switch costs up to $+206$ points of the floor.
   \lean{Credibility.integral_sum_sq_shift}
+  \item[{47. The app's $W_j$ is low by a relative $O(1/T)$; correcting it worsens the rates.}] Equal volumes: $\mathbb E W = 2\sigma^4(T-2)/(T-1)^2 + \kappa(T-2)^2/(T(T-1)^2)$ against $\Var\hat\sigma^2 = 2\sigma^4/(T-1) + \kappa/T$. The unbiased $\tilde W$ raises corrBS's error by 4 points of the floor on average, up to 44 (S80).
+  \lean{Credibility.VcW.integral_vcW_equal}
+  \lean{Credibility.VcW.integral_betaHat_equal}
 \end{description}
 
 \end{document}

@@ -162,7 +162,7 @@ a recipe from data.
 |---|---|---|---|
 | Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`), `τ̂²` of eq. (13) (`tauHatBS_unbiased`) | |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
-| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in, `Wⱼ`, `β²` (G1); jackknife MSEP is numerical only |
+| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in (G1); `Wⱼ` biased low, kept (Finding 47, S80); jackknife MSEP is numerical only |
 | Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | — (`ĉⱼ`, `τ̂²` on `ĉ`: `tauHatCommon_unbiased`) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs, one GLS pass; groups or none on held-out years (fit "BLUP groups", 2026-11-27) | `phiTauPooled_unbiasedG`, best weights `phiTauPool_blue_optimal`, choice `CrossFit.integral_heldOutScore_sub` | the GLS pass with plug-in `V̂` (λ̂ 20–40% high) |
@@ -190,7 +190,7 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
 *Partly closed* (what is proved):
 - **G1.** `ĉ`, `ĉⱼ`, `τ̂²` on the common `ĉ`, and `ρ̂` with the **true** `σⱼ` are unbiased
   (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`, `cHatCommon_unbiased`,
-  `tauHatCommon_unbiased`). Open: `Wⱼ`, `β²`, `σ̃ⱼ²`, `ρ̂` with `σ̃ⱼ` plugged in, `τ̂²` on the common-ρ `Σ̂`.
+  `tauHatCommon_unbiased`). `E Wⱼ` exactly and `β̂²` unbiased given the corrected `W̃` (`VcW.lean`, Finding 47; the app keeps the raw `Wⱼ`, S80). Open: `σ̃ⱼ²`, `ρ̂` with `σ̃ⱼ` plugged in, `τ̂²` on the common-ρ `Σ̂`.
 - **G2.** `θ* = Σs²/(Σs² + ΣV)` optimal for the table loss, safe range `safe_iff` (`Damping.lean`);
   exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays); `K̂ ≻ 0` by theorem in every draw (step 1, done).
   Open: the rates' MSE.
@@ -209,14 +209,12 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
    only with volumes of different shapes and short histories (`T = 3`, `J > T`: every draw); with one shape
    (`wᵢₜ = aᵢgₜ`, all of the app's worlds) it is PSD by construction, a candidate lemma (S78). Not done: one
    common covariance (`corrC`, not recommended) keeps the numerical check.
-2. **G1a. `E Wⱼ` exactly** (lean env). `Wⱼ` (`F.vcW`) is quadratic in the squared residuals, so its
-   mean is fourth order: `Cumulants.variance_quad_of_cumulants`, independent years. Expected: biased
-   at order `1/T²` because `uⱼₜ` uses `μ̂ⱼ`; then a Finding with the exact term, and a corrected `Wⱼ`
-   if cheap. *Who:* every corrBS fit (the app's default reference). *Common:* every portfolio.
-   *General:* yes.
-3. **G1b. `β²` and `σ̃ⱼ²`** (lean env). The `σ̂ⱼ²` are observations of random `σⱼ²` with noise
-   variance `Wⱼ`: `β²` is BS's `τ̂²` one level up, a corollary of the existing unbiasedness proof given
-   step 2, not a new proof. `σ̃ⱼ²` is then `bestZ` on those moments: badge "proved, given `W`, `β²`".
+2. **G1a. `E Wⱼ` exactly** — *Done 2026-11-28* (`VcW.lean`, Finding 47, S80): low by a relative O(1/T);
+   the unbiased `W̃` (`opts.corrW`) worsens the rates, so the app keeps the raw `Wⱼ`.
+3. **G1b. `β²` and `σ̃ⱼ²`** — *`β²` done 2026-11-28* (`VcW.integral_betaHat`, `integral_betaHat_equal`):
+   unbiased with the corrected `W̃` for uncorrelated regions; with `ρ ≠ 0` it needs cross terms `Ŵᵢⱼ`
+   (logged in Finding 47, not chased: S80 says unbiased inputs do not help the rates). `σ̃ⱼ²` as `bestZ` stays
+   open but is low value for the same reason.
 4. **G1c. `ρ̂` with `σ̃ⱼ` plugged in** (lean env, then a study). A ratio is never exactly unbiased:
    the target is its first-order bias (the pattern of `BlupPrice`, `FitCrossTerm`), a Finding with the
    leading term, and a bias-corrected `ρ̂` if the term is large in the app's worlds. `τ̂²` on the

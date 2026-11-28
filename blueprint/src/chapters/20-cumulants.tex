@@ -1092,6 +1092,238 @@ they are statements about weights.
   bootstrapped verdict on this price picks no better than always taking the BLUP (study S74).
 \end{remark}
 
+\section{The app's $W_j$: the estimated variance of $\hat\sigma_j^2$ (G1a, G1b)}
+
+In one region with volumes $w_t$, $a_t = w_t/\sum w$, residuals $r_t = X_t - \sum_s a_sX_s$ and $n$
+years, the corrBS fit uses $u_t = w_tr_t^2\,n/(n-1)$, whose average is
+$\hat\sigma^2 = \sum_t w_tr_t^2/(n-1)$, and $W = \sum_t(u_t - \hat\sigma^2)^2/(n(n-1))$ as the
+estimate of $\operatorname{Var}\hat\sigma^2$. Cells are $X_t = L + \xi_t$ with any level $L$ and
+independent centred yearly noise with variances $v_t$ and fourth cumulants $\kappa_t$. Each $u_t$ and
+$\hat\sigma^2$ is a quadratic form $\xi^\top G\xi$; write
+$m_2(G, v, \kappa) = (\sum_s G_{ss}v_s)^2 + 2\sum_{s,r}G_{sr}^2v_sv_r + \sum_s\kappa_sG_{ss}^2$.
+
+\begin{theorem}[Mean of a quadratic form in independent sources]\label{thm:integral_quadForm_of_sources}
+  \lean{Credibility.VcW.integral_quadForm_of_sources}
+  \leanok
+  $\operatorname{E}[\xi^\top G\xi] = \sum_s G_{ss}v_s$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_quad_of_sources}
+  Theorem~\ref{thm:integral_quad_of_sources} with $B = I$, $m = 0$.
+\end{proof}
+
+\begin{theorem}[Second moment of a quadratic form]\label{thm:integral_sq_quad_of_sources}
+  \lean{Credibility.VcW.integral_sq_quad_of_sources}
+  \leanok
+  For symmetric $G$, $\operatorname{E}[(\xi^\top G\xi)^2] = m_2(G, v, \kappa)$. No third moment enters.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quad_of_sources, thm:integral_quadForm_of_sources}
+  Variance (Theorem~\ref{thm:variance_quad_of_sources} with $B = I$, $m = 0$) plus the squared mean.
+\end{proof}
+
+\begin{theorem}[Variance of a quadratic form]\label{thm:variance_quadForm_of_sources}
+  \lean{Credibility.VcW.variance_quadForm_of_sources}
+  \leanok
+  $\operatorname{Var}(\xi^\top G\xi) = 2\sum_{s,r}G_{sr}^2v_sv_r + \sum_s\kappa_sG_{ss}^2$ ($G$ symmetric).
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sq_quad_of_sources, thm:integral_quadForm_of_sources}
+  Second moment minus squared mean.
+\end{proof}
+
+\begin{lemma}[The forms of $u_t$ and $\hat\sigma^2$]\label{lem:vcW_forms}
+  \lean{Credibility.VcW.resid_level, Credibility.VcW.sq_lin, Credibility.VcW.uTerm_eq,
+        Credibility.VcW.sigHat_eq, Credibility.VcW.dev_eq, Credibility.VcW.devForm_symm,
+        Credibility.VcW.sigForm_symm, Credibility.VcW.integrable_vcW,
+        Credibility.VcW.integrable_sigHat_sq, Credibility.VcW.secondMoment_scale}
+  \leanok
+  The residuals do not see the level and are linear in the noise; $u_t$, $\hat\sigma^2$ and
+  $u_t - \hat\sigma^2$ are symmetric quadratic forms in $\xi$ (so $W$ and $\hat\sigma^4$ are integrable), and
+  $m_2(G, \sigma^2v_1, k\kappa_1) = \sigma^4m_2(G, v_1, 0) + k\,m_2(G, 0, \kappa_1)$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Algebra.
+\end{proof}
+
+\begin{lemma}[Equal volumes: centering sums]\label{lem:vcW_centering}
+  \lean{Credibility.VcW.card_ne, Credibility.VcW.card_sub_one_ne, Credibility.VcW.resCoef_const,
+        Credibility.VcW.resCoef_symm_const, Credibility.VcW.cent_mul, Credibility.VcW.cent_sq_diag,
+        Credibility.VcW.cent_quartic, Credibility.VcW.cent_gauss, Credibility.VcW.sigForm_const,
+        Credibility.VcW.devForm_const, Credibility.VcW.secondMoment_dev_const}
+  \leanok
+  With equal volumes $D = H = I - \mathbf 1\mathbf 1^\top/n$, $H^2 = H$, and one year's form has
+  $m_2 = 2\sigma^4(n-2)/(n-1) + \kappa(n-2)^2/(n(n-1))$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Direct computation, splitting each sum at $s = t$.
+\end{proof}
+
+\begin{theorem}[$\operatorname{E}W$ exactly]\label{thm:integral_vcW}
+  \lean{Credibility.VcW.integral_vcW}
+  \leanok
+  For any volumes with $\sum w \ne 0$,
+  $\operatorname{E}W = \sum_t m_2(A_t - \bar A, v, \kappa)/(n(n-1))$, where
+  $(A_t)_{ij} = w_tD_{ti}D_{tj}\,n/(n-1)$, $D_{ts} = \delta_{ts} - a_s$, is the form of $u_t$ and
+  $\bar A$ the form of $\hat\sigma^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sq_quad_of_sources, lem:vcW_forms}
+  The level cancels from the residuals, $r_t = \sum_s D_{ts}\xi_s$, so $u_t - \hat\sigma^2 = \xi^\top(A_t - \bar A)\xi$;
+  then Theorem~\ref{thm:integral_sq_quad_of_sources} year by year.
+\end{proof}
+
+\begin{theorem}[Moments of $\hat\sigma^2$]\label{thm:integral_sigHat_sq}
+  \lean{Credibility.VcW.integral_sigHat_sq}
+  \leanok
+  $\operatorname{E}\hat\sigma^4 = m_2(\bar A, v, \kappa)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sq_quad_of_sources}
+  Theorem~\ref{thm:integral_sq_quad_of_sources} with $G = \bar A$.
+\end{proof}
+
+\begin{theorem}[Mean of $\hat\sigma^2$]\label{thm:integral_sigHat}
+  \lean{Credibility.VcW.integral_sigHat}
+  \leanok
+  $\operatorname{E}\hat\sigma^2 = \sum_s\bar A_{ss}v_s$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_quadForm_of_sources}
+  Theorem~\ref{thm:integral_quadForm_of_sources} with $G = \bar A$.
+\end{proof}
+
+\begin{theorem}[Variance of $\hat\sigma^2$, the target of $W$]\label{thm:variance_sigHat}
+  \lean{Credibility.VcW.variance_sigHat}
+  \leanok
+  $\operatorname{Var}\hat\sigma^2 = 2\sum_{s,r}\bar A_{sr}^2v_sv_r + \sum_s\kappa_s\bar A_{ss}^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_quadForm_of_sources}
+  Theorem~\ref{thm:variance_quadForm_of_sources} with $G = \bar A$.
+\end{proof}
+
+\begin{theorem}[$\operatorname{E}W$, equal volumes]\label{thm:integral_vcW_equal}
+  \lean{Credibility.VcW.integral_vcW_equal}
+  \leanok
+  Equal volumes $c$, $n \ge 2$ years with $\operatorname{Var}\xi_t = \sigma^2/c$ and fourth cumulant
+  $\kappa/c^2$: $\operatorname{E}W = 2\sigma^4(n-2)/(n-1)^2 + \kappa(n-2)^2/(n(n-1)^2)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_vcW, lem:vcW_centering}
+  With equal volumes $D$ is the centering matrix $H$ ($H^2 = H$), $\bar A = cH/(n-1)$ and
+  $A_t - \bar A = \tfrac{c}{n-1}(nH_{t\cdot}H_{t\cdot}^\top - H)$: its trace part vanishes,
+  $\sum_{s,r}(nH_{ts}H_{tr} - H_{sr})^2 = (n-1)(n-2)$ and $\sum_s(nH_{ts}^2 - H_{ss})^2 = (n-1)(n-2)^2/n$.
+\end{proof}
+
+\begin{theorem}[$\operatorname{Var}\hat\sigma^2$, equal volumes]\label{thm:variance_sigHat_equal}
+  \lean{Credibility.VcW.variance_sigHat_equal}
+  \leanok
+  In the setting of Theorem~\ref{thm:integral_vcW_equal}, $\operatorname{Var}\hat\sigma^2 = 2\sigma^4/(n-1) + \kappa/n$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:variance_sigHat}
+  Theorem~\ref{thm:variance_sigHat} with $\bar A = cH/(n-1)$.
+\end{proof}
+
+\begin{theorem}[$\operatorname{E}\hat\sigma^2$, equal volumes]\label{thm:integral_sigHat_equal}
+  \lean{Credibility.VcW.integral_sigHat_equal}
+  \leanok
+  $\operatorname{E}\hat\sigma^2 = \sigma^2$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_sigHat}
+  Theorem~\ref{thm:integral_sigHat}; $\sum_s H_{ss} = n - 1$.
+\end{proof}
+
+\begin{theorem}[The corrected $W$, equal volumes]\label{thm:integral_vcWCorr_equal}
+  \lean{Credibility.VcW.integral_vcWCorr_equal}
+  \leanok
+  For $n \ge 4$, $\tilde W = \frac{(n-1)^3}{n(n-2)(n-3)}W - \frac{2\hat\sigma^4}{n(n-3)}$ has
+  $\operatorname{E}\tilde W = \operatorname{Var}\hat\sigma^2$, for every noise distribution with four moments.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_vcW_equal, thm:variance_sigHat_equal, thm:integral_sigHat_equal}
+  $\operatorname{E}W$ and $\operatorname{E}\hat\sigma^4 = \operatorname{Var}\hat\sigma^2 + \sigma^4$ are both
+  linear in $\sigma^4$ and $\kappa$; the coefficients solve the two equations.
+\end{proof}
+
+\begin{theorem}[The corrected $W$, any volumes]\label{thm:integral_vcWCorr}
+  \lean{Credibility.VcW.integral_vcWCorr}
+  \leanok
+  If $v_t = \sigma^2v_{1t}$ and $\kappa_t = k\kappa_{1t}$ with known profiles (fixed-shape noise:
+  $v_{1t} = 1/w_t$, $\kappa_{1t} = 1/w_t^2$) and $\lambda$, $\mu$ match the $\sigma^4$ parts and the $k$ parts
+  of $\operatorname{E}[\lambda W + \mu\hat\sigma^4]$ and $\operatorname{Var}\hat\sigma^2$, then
+  $\operatorname{E}[\lambda W + \mu\hat\sigma^4] = \operatorname{Var}\hat\sigma^2$ for every $\sigma^2$, $k$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_vcW, thm:integral_sigHat_sq, thm:variance_sigHat}
+  $m_2(G, \sigma^2v_1, k\kappa_1) = \sigma^4m_2(G, v_1, 0) + k\,m_2(G, 0, \kappa_1)$, then the two equations.
+\end{proof}
+
+\begin{lemma}[Spread as a quadratic form]\label{lem:sum_sq_dev}
+  \lean{Credibility.VcW.sum_sq_dev}
+  \leanok
+  $\sum_j(y_j - \bar y)^2 = \sum_{ij}H_{ij}y_iy_j$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  Expand.
+\end{proof}
+
+\begin{theorem}[$\hat\beta^2$ is Bühlmann--Straub's $\hat\tau^2$ one level up (G1b)]\label{thm:integral_betaHat}
+  \lean{Credibility.VcW.integral_betaHat}
+  \leanok
+  Region statistics $Y_j$ (the $\hat\sigma_j^2$) in $L^2$ with means $s_j$ and covariances $C_{ij}$, and
+  estimates $\hat W_{ij}$ with $\operatorname{E}\hat W_{ij} = C_{ij}$. Then
+  $\hat\beta^2 = \bigl(\sum_j(Y_j - \bar Y)^2 - \sum_{ij}H_{ij}\hat W_{ij}\bigr)/(J-1)$ has
+  $\operatorname{E}\hat\beta^2 = \sum_j(s_j - \bar s)^2/(J-1)$. With uncorrelated regions the correction is
+  $\frac1J\sum_j\hat W_{jj}$, the app's formula.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:sum_sq_dev}
+  $\sum_j(Y_j - \bar Y)^2 = Y^\top HY$ and $\operatorname{E}[Y_iY_j] = C_{ij} + s_is_j$.
+\end{proof}
+
+\begin{theorem}[$\hat\beta^2$ with the corrected $W$ (G1b given G1a)]\label{thm:integral_betaHat_equal}
+  \lean{Credibility.VcW.integral_betaHat_equal}
+  \leanok
+  Regions with equal volumes $c_j$, $n \ge 4$ independent years each, and $\hat\sigma_j^2$ uncorrelated
+  across regions (not for correlated noise): with $\hat W_{jj} = \tilde W_j$ and $\hat W_{ij} = 0$ otherwise,
+  $\hat\beta^2 = \sum_j(\hat\sigma_j^2 - \bar\sigma^2)^2/(J-1) - \frac1J\sum_j\tilde W_j$ is unbiased for
+  $\sum_j(\sigma_j^2 - \bar\sigma^2)^2/(J-1)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:integral_betaHat, thm:integral_vcWCorr_equal, thm:integral_sigHat_equal, lem:vcW_forms}
+  Theorem~\ref{thm:integral_betaHat} with Theorems~\ref{thm:integral_vcWCorr_equal} and~\ref{thm:integral_sigHat_equal}.
+\end{proof}
+
+\begin{remark}[Finding 47: $W_j$ is low by a relative $O(1/T)$, and correcting it worsens the rates]\label{rem:vcW}
+  By Theorems~\ref{thm:integral_vcW_equal} and~\ref{thm:variance_sigHat_equal}, $W$ is low by the factors
+  $(n-2)/(n-1)$ (normal part) and $(n-2)^2/(n-1)^2$ (kurtosis part): 25\% at $n = 5$ under normal noise, 35\%
+  under the app's gamma noise; the uncorrected $\hat\beta^2$ is then high. The corrected $W$ fixes both
+  ($\hat\beta^2$ only for uncorrelated regions: with $\rho \ne 0$ the cross terms $\hat W_{ij}$ are needed), but in
+  the fitted worlds (study S80) it raises corrBS's rate error by 4 points of the floor on average, up to 44
+  at $T = 3$ with spread-out $\sigma_j$: unbiased inputs to $\zeta_j = \beta^2/(\beta^2 + W_j)$ do not give the
+  better $\zeta_j$ for the rates. The app keeps the raw $W_j$.
+\end{remark}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:

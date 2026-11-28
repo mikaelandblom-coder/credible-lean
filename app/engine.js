@@ -1370,6 +1370,36 @@
   }
 
   /**
+   * Coefficients (λ, μ) of the corrected Wⱼ = λ·W + μ·σ̂ⱼ⁴ for one region's volumes w (Finding 47,
+   * VcW.integral_vcWCorr): E W, E σ̂⁴ and Var σ̂² are exact sums over the forms of uₜ − σ̂² and σ̂²,
+   * linear in σ⁴ and in the fourth cumulant k when Var ξₜ = σ²/wₜ and κ₄(ξₜ) = k/wₜ² (noise of a
+   * fixed shape); (λ, μ) match both parts, so λW + μσ̂⁴ is unbiased for Var σ̂² for every σ², k.
+   * Equal volumes: λ = (T−1)³/(T(T−2)(T−3)), μ = −2/(T(T−3)) (VcW.integral_vcWCorr_equal). T ≤ 3
+   * (no solution): λ matches the σ⁴ part only, μ = 0 (unbiased under normal noise, low under skew).
+   */
+  function vcWCoef(w) {
+    const T = w.length, ws = sum(w), a = w.map((x) => x / ws), c = T / (T - 1);
+    const D = (t, s) => (t === s ? 1 : 0) - a[s];
+    const v1 = w.map((x) => 1 / x), k1 = w.map((x) => 1 / (x * x));
+    const Ab = [];
+    for (let s = 0; s < T; s++) { Ab.push([]); for (let r = 0; r < T; r++) { let z = 0; for (let t = 0; t < T; t++) z += w[t] * D(t, s) * D(t, r); Ab[s].push(z / (T - 1)); } }
+    const parts = (G) => { // [σ⁴ part with the mean, its mean² part, k part]
+      let m1 = 0, q = 0, kk = 0;
+      for (let s = 0; s < T; s++) { m1 += G(s, s) * v1[s]; kk += k1[s] * G(s, s) ** 2; for (let r = 0; r < T; r++) q += G(s, r) ** 2 * v1[s] * v1[r]; }
+      return { m2: m1 * m1, g: m1 * m1 + 2 * q, k: kk };
+    };
+    let EWs = 0, EWk = 0;
+    for (let t = 0; t < T; t++) {
+      const p = parts((s, r) => c * w[t] * D(t, s) * D(t, r) - Ab[s][r]);
+      EWs += p.g / (T * (T - 1)); EWk += p.k / (T * (T - 1));
+    }
+    const sp = parts((s, r) => Ab[s][r]), Vs = sp.g - sp.m2, Vk = sp.k;
+    const det = EWs * sp.k - EWk * sp.g;
+    if (T >= 4 && Math.abs(det) > 1e-12 * Math.abs(EWs * sp.k)) return { lam: (Vs * sp.k - Vk * sp.g) / det, mu: (EWs * Vk - EWk * Vs) / det };
+    return { lam: Vs / EWs, mu: 0 };
+  }
+
+  /**
    * Correlated Bühlmann–Straub with credibility-weighted variances
    * (studies/LOG.md, findings S15–S17 and the Ansatz; studies/runs/variance-credibility.js,
    * mode 'cred'). Every parameter by a moment equation, nothing to tune, no damping:
@@ -1394,7 +1424,11 @@
     const own = Q.map((row, j) => row[j] / (T - 1));
     const W = own.map((sj, j) => {
       const u = data.X[j].map((x, t) => data.w[j][t] * (x - m[j]) ** 2 * T / (T - 1));
-      return sum(u.map((x) => (x - sj) ** 2)) / (T * (T - 1));
+      const raw = sum(u.map((x) => (x - sj) ** 2)) / (T * (T - 1));
+      // opts.corrW: the corrected Wⱼ, unbiased (Finding 47); off by default: it worsens the rates (S80).
+      if (!(opts && opts.corrW)) return raw;
+      const { lam, mu } = vcWCoef(data.w[j]);
+      return Math.max(lam * raw + mu * sj * sj, 0);
     });
     // opts.perturb (skewBias, derivatives only): { own: [k, f] } scales σ̂ₖ² by f (and Wₖ by f², as scaling
     // region k's residuals would) without touching the cross-products; { q: x } shifts ρ̂'s numerator by x·(its denominator);
@@ -1458,7 +1492,7 @@
       ...(pooled ? [
         { name: 'σ̃ⱼ²', formula: F.vcPooled, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'one noise variance for all regions: a region with high draws does not get less weight for its high σ̂ⱼ² (Finding 35)' },
       ] : [
-      { name: 'Wⱼ, β²', formula: F.vcW, values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; unbiased for independent years, not proved yet` },
+      { name: 'Wⱼ, β²', formula: F.vcW, values: [p.betweenRaw], badge: 'not proved yet', gap: 'G1', note: `β² (between-region variance of the σⱼ²)${p.betweenRaw <= 0 ? ': ≤ 0, set to 0, so every σ̃ⱼ² is the pooled σ̂²' : ''}; Wⱼ is low by a relative O(1/T) (Finding 47: 25% at T = 5, normal noise); kept, as the unbiased Wⱼ worsens the rates (S80)` },
       { name: 'σ̃ⱼ²', formula: F.vcTilde, values: p.s2, badge: 'not proved yet', gap: 'G1', note: 'credibility for the variances (the form of bs_z, with estimated fourth moments)' },
       ]),
       { name: 'ρ̂', formula: F.vcRho, values: [p.rhoRaw], badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', note: `one common correlation by a moment equation, E Qᵢⱼ = σᵢσⱼρ((T−2) + Sᵢⱼ²/(wᵢ*wⱼ*)); unbiased with the true σⱼ in the denominator, not with σ̃ⱼ plugged in (a ratio)${p.rhoRaw < 0 ? '; negative, set to 0' : p.rhoRaw >= 1 ? '; ≥ 1, set just below 1' : ''}` },
@@ -1732,7 +1766,7 @@
       steps: [
         { name: 'cohort means', formula: F.means, badge: 'proved', lean: 'Credibility.Model.a_special' },
         { name: 'σ̂ⱼ²', formula: F.vcSigma, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
-        { name: 'Wⱼ, β²', formula: F.vcW, badge: 'not proved yet', gap: 'G1', rule: 'if β² ≤ 0, set β² = 0 (then every σ̃ⱼ² below is the pooled σ̂²)', note: 'Wⱼ estimates Var(σ̂ⱼ²) from the yearly terms; β² is the between-region variance of the σⱼ²' },
+        { name: 'Wⱼ, β²', formula: F.vcW, badge: 'not proved yet', gap: 'G1', rule: 'if β² ≤ 0, set β² = 0 (then every σ̃ⱼ² below is the pooled σ̂²)', note: 'Wⱼ estimates Var(σ̂ⱼ²) from the yearly terms, low by a relative O(1/T) (Finding 47; the unbiased one worsens the rates, S80); β² is the between-region variance of the σⱼ²' },
         { name: 'σ̃ⱼ²', formula: F.vcTilde, badge: 'not proved yet', gap: 'G1', rule: 'ζⱼ = 0 when β² = 0' },
         { name: 'ρ̂', formula: F.vcRho, badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)', note: 'unbiased for a common ρ with the true σⱼ in the denominator; with σ̃ⱼ plugged in (a ratio), not proved' },
         { name: 'τ̂²', formula: F.vcTau, badge: 'not proved yet', gap: 'G1', rule: `Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j; ${TAU_ZERO}` },
@@ -2361,7 +2395,7 @@
     cohortMeans, blend, bestBlendWeights, blendMSE,
     eigSym, blendWeight, blupWeight, linMse, noiseDeltas, dampedBound, correlationPrice, worldPrice, correlationIndicator,
     projectPSD, eigenSym,
-    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, balanceAuto, crossFitLevel, BALANCE_CF_STEP, BALANCE_AUTO_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
+    fitBS, fitOwn, fitPool, fitCorr, fitVC, fitBLUP, fitBLUPTaper, fitBLUPBal, balanceFit, balanceAuto, crossFitLevel, BALANCE_CF_STEP, BALANCE_AUTO_STEP, fitWith, recipeSteps, BALANCE_STEP, vcEstimate, vcWCoef, jackknifeMSEP, sigmaHat, sigmaHatVar, covTheta, sigmaHatMoments, corrVar, corrTheta, thesisTau, shrinkOffDiag, isPSD, THETAS, distTaper, taperRho, orderedNoise,
     floorBlend, weightedSE, simulate, weightsOf,
     fitGroupLevels, fitGroups, groupEffects, bestBlendWeightsL, blendMSEL, blupWeightL, linMseL,
     nextVolumes, drawNext, premium, floorForecast, toCSV, noiseDiagnostics, skewLink, skewBias, crossSkew, crossThird, levelThird, lomaxMoments, claimNoise, claimRate, SHRINK_W0,
