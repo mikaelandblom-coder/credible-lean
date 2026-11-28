@@ -1440,10 +1440,15 @@
     const between = Math.max(0, betweenRaw);
     // opts.pooled: one noise variance for all regions (ζⱼ = 0), the Finding 35 remedy.
     const zeta = W.map((Wj) => (between > 0 && !(opts && opts.pooled) ? between / (between + Wj) : 0));
-    const s2 = own.map((x, j) => zeta[j] * x + (1 - zeta[j]) * pooled);
+    const s2raw = own.map((x, j) => zeta[j] * x + (1 - zeta[j]) * pooled);
+    // opts.sigLevel (G1c, Finding 48, S81: not a default): rescale the σ̃ⱼ² to the σ̂ⱼ²'s average (VcW.sum_shrink_le_iff: it is low).
+    const lev = opts && opts.sigLevel ? pooled / (sum(s2raw) / J) : 1;
+    const s2 = s2raw.map((x) => x * lev);
     const sd = s2.map(Math.sqrt);
+    // opts.rhoOwn (G1c, Finding 48, S81: not a default): ρ̂'s denominator from the own σ̂ⱼ instead of the σ̃ⱼ.
+    const sdr = opts && opts.rhoOwn ? own.map(Math.sqrt) : sd;
     let qn = 0, qa = 0;
-    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { qn += Q[i][j]; qa += sd[i] * sd[j] * ((T - 2) + S[i][j] ** 2 / (wt[i] * wt[j])); }
+    for (let i = 0; i < J; i++) for (let j = i + 1; j < J; j++) { qn += Q[i][j]; qa += sdr[i] * sdr[j] * ((T - 2) + S[i][j] ** 2 / (wt[i] * wt[j])); }
     if (P && P.q) qn += P.q * qa;
     const rhoRaw = qn / qa, rho = Math.min(Math.max(rhoRaw, 0), 1 - 1e-9);
     const Sig = S.map((row, i) => row.map((x, j) => (i === j ? s2[i] / wt[i] : rho * sd[i] * sd[j] * x / (wt[i] * wt[j]))));
@@ -1768,7 +1773,7 @@
         { name: 'σ̂ⱼ²', formula: F.vcSigma, badge: 'proved', lean: 'Credibility.Model.sigRhoHat_self' },
         { name: 'Wⱼ, β²', formula: F.vcW, badge: 'not proved yet', gap: 'G1', rule: 'if β² ≤ 0, set β² = 0 (then every σ̃ⱼ² below is the pooled σ̂²)', note: 'Wⱼ estimates Var(σ̂ⱼ²) from the yearly terms, low by a relative O(1/T) (Finding 47; the unbiased one worsens the rates, S80); β² is the between-region variance of the σⱼ²' },
         { name: 'σ̃ⱼ²', formula: F.vcTilde, badge: 'not proved yet', gap: 'G1', rule: 'ζⱼ = 0 when β² = 0' },
-        { name: 'ρ̂', formula: F.vcRho, badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)', note: 'unbiased for a common ρ with the true σⱼ in the denominator; with σ̃ⱼ plugged in (a ratio), not proved' },
+        { name: 'ρ̂', formula: F.vcRho, badge: 'proved', lean: 'Credibility.Model.rhoPooled_unbiased', rule: 'clip ρ̂ to [0, 1) (a value ≥ 1 is set just below 1)', note: 'unbiased for a common ρ with the true σⱼ in the denominator; with σ̃ⱼ plugged in it is biased up when the σⱼ differ, since the σ̃ⱼ² average below the σ̂ⱼ² (Finding 48); K̂’s off-diagonal does not see that level' },
         { name: 'τ̂²', formula: F.vcTau, badge: 'not proved yet', gap: 'G1', rule: `Σ̂ᵢⱼ = ρ̂σ̃ᵢσ̃ⱼSᵢⱼ/(wᵢ*wⱼ*) for i ≠ j and σ̃ⱼ²/wⱼ* for i = j; ${TAU_ZERO}` },
         { name: 'K̂', formula: F.vcK, badge: 'proved', lean: 'Credibility.Model.K_posDef', note: 'positive definite for any ρ̂ in [0, 1): no damping needed' },
         { name: 'b', formula: F.gls, badge: 'proved', lean: 'Credibility.glsWeight_optimal' },

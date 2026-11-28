@@ -843,4 +843,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    when they differ. The app keeps the raw `Wⱼ` (corrected one: `opts.corrW`). Open (hypothesis): the
    rates' loss is asymmetric in `ζ`, so the target for `ζ` is not `β²/(β² + Var σ̂²)`.
 
+48. **corrBS's `ρ̂` is biased up by the low level of the `σ̃ⱼ²`, and fixing either changes nothing for the rates
+   (new; proved: `VcW.sum_shrink_le_iff`, `sum_shrink_le`, `sum_sigTilde_le`, `rhoPooled_smul`, `rhoPooled_ge_levelMatched`).** With the true
+   σⱼ the pooled `ρ̂` is unbiased (`rhoPooled_unbiased`); the app plugs in `σ̃ⱼ² = ζⱼσ̂ⱼ² + (1 − ζⱼ)σ̄²`. Two exact
+   facts, in every draw: (a) `Σⱼ σ̃ⱼ² ≤ Σⱼ σ̂ⱼ²` iff `Σⱼ (1 − ζⱼ)(σ̂ⱼ² − σ̄²) ≥ 0` (the regions shrunk more are, on
+   balance, the higher ones); it holds whenever `Wⱼ` is ordered like `σ̂ⱼ²` (Chebyshev's sum inequality), as the
+   normal-theory `Wⱼ ∝ σ̂ⱼ⁴` is; (b) scaling every `σ̃ⱼ` by `λ` divides `ρ̂` by `λ²` and leaves every off-diagonal
+   `ρ̂σ̃ᵢσ̃ⱼ` of `K̂` unchanged. So the level bias of `σ̃` goes into `ρ̂` and `K̂`'s diagonal, never into its
+   off-diagonal. In the app's worlds (S81) the exact condition holds in 100% of draws (the ordering only in
+   2–42%), the σ̃ level is 0.63–0.97 of the σ̂ level (lowest with a σⱼ spread), and `E ρ̂ − ρ` at `ρ = 0.6` is
+   +0.06 to +0.13 with a σⱼ spread (sd of `ρ̂` 0.2–0.4); the own σ̂ⱼ give −0.03 to −0.06 (the O(1/T) part), the
+   pooled σ̄ −0.05 to −0.35 (shrinkage, by concavity of `√`). Fixes, corrBS's MSE in points of the floor
+   (24 worlds): `ρ̂` from the own σ̂ⱼ +0.4 mean (−1.1 to +5.1), σ̃ⱼ² rescaled to the σ̂ level +0.3 mean (−39 to
+   +14). Neither is a default; the app keeps `ρ̂` on `σ̃` (`opts.rhoOwn`, `opts.sigLevel` for the others). With
+   Finding 47 this closes the G1 thread on the plug-in variances: their biases are exact and large, but the
+   rates do not follow them.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

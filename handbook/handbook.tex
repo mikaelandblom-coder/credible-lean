@@ -1942,6 +1942,9 @@ which has the details. The paper explains each where it belongs.
   \item[{47. The app's $W_j$ is low by a relative $O(1/T)$; correcting it worsens the rates.}] Equal volumes: $\mathbb E W = 2\sigma^4(T-2)/(T-1)^2 + \kappa(T-2)^2/(T(T-1)^2)$ against $\Var\hat\sigma^2 = 2\sigma^4/(T-1) + \kappa/T$. The unbiased $\tilde W$ raises corrBS's error by 4 points of the floor on average, up to 44 (S80).
   \lean{Credibility.VcW.integral_vcW_equal}
   \lean{Credibility.VcW.integral_betaHat_equal}
+  \item[{48. corrBS's $\hat\rho$ is biased up by the low level of the $\tilde\sigma_j^2$.}] $\sum_j\tilde\sigma_j^2 \le \sum_j\hat\sigma_j^2$ iff $\sum_j(1-\zeta_j)(\hat\sigma_j^2 - \bar\sigma^2) \ge 0$ (every draw in the app's worlds); the level divides into $\hat\rho$ but not into $\hat K$'s off-diagonal. $+0.06$ to $+0.13$ at $\rho = 0.6$; fixing it does not help the rates (S81).
+  \lean{Credibility.VcW.sum_shrink_le_iff}
+  \lean{Credibility.VcW.rhoPooled_ge_levelMatched}
 \end{description}
 
 \end{document}

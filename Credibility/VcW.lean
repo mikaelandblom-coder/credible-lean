@@ -1,4 +1,5 @@
 import Credibility.Cumulants
+import Credibility.UnequalEstimation
 
 /-!
 # The app's `Wⱼ`: the estimated variance of `σ̂ⱼ²` (G1a, distribution-free)
@@ -690,5 +691,104 @@ theorem integral_betaHat_equal [DecidableEq J] (ξ : J → ι → Ω → ℝ) (h
     exact (hunc i j h).symm
 
 end Between
+
+section Level
+
+/-! ### The level of the `σ̃ⱼ²`, and how it reaches `ρ̂` (G1c, Finding 48) -/
+
+variable {J : Type*} [Fintype J]
+
+/-- **The exact condition** (Finding 48): the shrunk values `ζⱼxⱼ + (1 − ζⱼ)x̄` sum to at most
+`Σⱼ xⱼ` iff `Σⱼ (1 − ζⱼ)(xⱼ − x̄) ≥ 0`, i.e. the regions shrunk more are, on balance, the higher
+ones. Weaker than the ordering of `sum_shrink_le`. -/
+theorem sum_shrink_le_iff (x ζ : J → ℝ) :
+    ∑ j, (ζ j * x j + (1 - ζ j) * ((∑ i, x i) / (Fintype.card J : ℝ))) ≤ ∑ j, x j
+      ↔ 0 ≤ ∑ j, (1 - ζ j) * (x j - (∑ i, x i) / (Fintype.card J : ℝ)) := by
+  have e : ∑ j, (ζ j * x j + (1 - ζ j) * ((∑ i, x i) / (Fintype.card J : ℝ)))
+      = ∑ j, x j - ∑ j, (1 - ζ j) * (x j - (∑ i, x i) / (Fintype.card J : ℝ)) := by
+    rw [← sum_sub_distrib]; exact sum_congr rfl fun j _ => by ring
+  rw [e]; constructor <;> intro h <;> linarith
+
+/-- **Shrinking more where the variance is higher lowers the level** (Chebyshev's sum
+inequality). For any `xⱼ` (the `σ̂ⱼ²`) and factors `ζⱼ` ordered against them (`ζ` lower where `x`
+is higher), the shrunk values `ζⱼxⱼ + (1 − ζⱼ)x̄` sum to at most `Σⱼ xⱼ`. Pointwise, in every draw. -/
+theorem sum_shrink_le (x ζ : J → ℝ) (h : Antivary ζ x) :
+    ∑ j, (ζ j * x j + (1 - ζ j) * ((∑ i, x i) / (Fintype.card J : ℝ))) ≤ ∑ j, x j := by
+  rcases isEmpty_or_nonempty J with hJ | hJ
+  · simp
+  have hn : (0 : ℝ) < Fintype.card J := by exact_mod_cast Fintype.card_pos
+  have hm : Monovary (fun j => 1 - ζ j) x := fun i j hij => by
+    have := h hij; simp only; linarith
+  have hc := hm.sum_mul_sum_le_card_mul_sum
+  refine (sum_shrink_le_iff x ζ).mpr ?_
+  have e : ∑ j, (1 - ζ j) * (x j - (∑ i, x i) / (Fintype.card J : ℝ))
+      = ∑ j, (1 - ζ j) * x j - (∑ j, (1 - ζ j)) * ((∑ i, x i) / Fintype.card J) := by
+    rw [sum_mul, ← sum_sub_distrib]; exact sum_congr rfl fun j _ => by ring
+  have : (∑ j, (1 - ζ j)) * ((∑ i, x i) / Fintype.card J) ≤ ∑ j, (1 - ζ j) * x j := by
+    rw [← mul_div_assoc, div_le_iff₀ hn]; linarith
+  rw [e]; linarith
+
+omit [Fintype J] in
+/-- The credibility factors `ζⱼ = β/(β + Wⱼ)` (`β > 0`, `Wⱼ ≥ 0`) are ordered against the `σ̂ⱼ²`
+whenever the `Wⱼ` are ordered with them (e.g. the normal-theory `Wⱼ = 2σ̂ⱼ⁴/(T − 1)`). -/
+theorem antivary_zeta (x Wh : J → ℝ) (β : ℝ) (hβ : 0 < β) (hW0 : ∀ j, 0 ≤ Wh j)
+    (hW : Monovary Wh x) : Antivary (fun j => β / (β + Wh j)) x := fun i j hij =>
+  div_le_div_of_nonneg_left hβ.le (by linarith [hW0 i]) (by linarith [hW hij])
+
+/-- **The `σ̃ⱼ²` of corrBS average below the `σ̂ⱼ²`** (Finding 48): with `ζⱼ = β/(β + Wⱼ)` and
+`Wⱼ` ordered with `σ̂ⱼ²`, `Σⱼ σ̃ⱼ² ≤ Σⱼ σ̂ⱼ²` in every draw; so `E Σⱼ σ̃ⱼ² ≤ Σⱼ σⱼ²`. -/
+theorem sum_sigTilde_le (x Wh : J → ℝ) (β : ℝ) (hβ : 0 < β) (hW0 : ∀ j, 0 ≤ Wh j)
+    (hW : Monovary Wh x) :
+    ∑ j, (β / (β + Wh j) * x j + (1 - β / (β + Wh j)) * ((∑ i, x i) / (Fintype.card J : ℝ)))
+      ≤ ∑ j, x j :=
+  sum_shrink_le x _ (antivary_zeta x Wh β hβ hW0 hW)
+
+/-- **The level of the `σ̃ⱼ` passes into `ρ̂` and not into the covariances.** For the pooled `ρ̂` of
+the thesis's estimation (`Unequal.rhoPooled`, base standard deviations `sig`), scaling every `sigⱼ` by
+`λ ≠ 0` divides `ρ̂` by `λ²` and leaves each off-diagonal `ρ̂ sigᵢsigⱼ` unchanged. -/
+theorem rhoPooled_smul {T : Type*} [DecidableEq J] [Fintype T] [DecidableEq T] (M : Unequal J T)
+    (w : J → T → ℝ) (sig : J → ℝ) (X : J × T → ℝ) (lam : ℝ) (hl : lam ≠ 0) :
+    M.rhoPooled w (fun j => lam * sig j) X = M.rhoPooled w sig X / lam ^ 2 ∧
+    ∀ i j, M.rhoPooled w (fun j => lam * sig j) X * (lam * sig i) * (lam * sig j)
+      = M.rhoPooled w sig X * sig i * sig j := by
+  have e : ∑ p ∈ (univ : Finset J).offDiag, lam * sig p.1 * (lam * sig p.2)
+        * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2))
+      = lam ^ 2 * ∑ p ∈ (univ : Finset J).offDiag, sig p.1 * sig p.2
+        * (M.count w p.1 p.2 + M.sqrtSum w p.1 p.2 ^ 2 / (M.wtot w p.1 * M.wtot w p.2)) := by
+    rw [mul_sum]; exact sum_congr rfl fun p _ => by ring
+  have h1 : M.rhoPooled w (fun j => lam * sig j) X = M.rhoPooled w sig X / lam ^ 2 := by
+    simp only [Unequal.rhoPooled]
+    rw [e, div_div, mul_comm (lam ^ 2)]
+  refine ⟨h1, fun i j => ?_⟩
+  rw [h1]
+  have hl2 : lam ^ 2 ≠ 0 := pow_ne_zero 2 hl
+  field_simp
+
+/-- **corrBS's `ρ̂` is at least the level-matched one** (Finding 48). Let `σ̃ⱼ² = ζⱼxⱼ + (1 − ζⱼ)x̄`
+with standard deviations `sigⱼ` (`sigⱼ² = σ̃ⱼ²`), `Σ σ̃² > 0`, and let the regions shrunk
+more be on balance the higher ones (`Σⱼ (1 − ζⱼ)(xⱼ − x̄) ≥ 0`, `sum_shrink_le_iff`). With
+`λ = √(Σx / Σσ̃²)` (`λσ̃` has the `σ̂ⱼ²`'s level), if the level-matched `ρ̂(λ sig)` is `≥ 0` then
+`ρ̂(sig) ≥ ρ̂(λ sig)`: the low level biases `ρ̂` up. -/
+theorem rhoPooled_ge_levelMatched {T : Type*} [DecidableEq J] [Fintype T] [DecidableEq T]
+    (M : Unequal J T) (w : J → T → ℝ) (X : J × T → ℝ) (x ζ sig : J → ℝ)
+    (hsig : ∀ j, sig j ^ 2 = ζ j * x j + (1 - ζ j) * ((∑ i, x i) / (Fintype.card J : ℝ)))
+    (hpos : 0 < ∑ j, sig j ^ 2)
+    (hcond : 0 ≤ ∑ j, (1 - ζ j) * (x j - (∑ i, x i) / (Fintype.card J : ℝ)))
+    (hρ : 0 ≤ M.rhoPooled w (fun j => √((∑ i, x i) / ∑ i, sig i ^ 2) * sig j) X) :
+    M.rhoPooled w (fun j => √((∑ i, x i) / ∑ i, sig i ^ 2) * sig j) X ≤ M.rhoPooled w sig X := by
+  set lam := √((∑ i, x i) / ∑ i, sig i ^ 2)
+  have hle : ∑ j, sig j ^ 2 ≤ ∑ j, x j := by
+    simp only [hsig]; exact (sum_shrink_le_iff x ζ).mpr hcond
+  have hq : 1 ≤ (∑ i, x i) / ∑ i, sig i ^ 2 := by rw [le_div_iff₀ hpos]; linarith
+  have hl2 : lam ^ 2 = (∑ i, x i) / ∑ i, sig i ^ 2 := Real.sq_sqrt (by linarith)
+  have hl : lam ≠ 0 := by
+    intro h; rw [h] at hl2; norm_num at hl2; linarith
+  have hs := (rhoPooled_smul M w sig X lam hl).1
+  have : M.rhoPooled w sig X = lam ^ 2 * M.rhoPooled w (fun j => lam * sig j) X := by
+    rw [hs]; field_simp
+  rw [this, hl2]
+  nlinarith
+
+end Level
 
 end Credibility.VcW

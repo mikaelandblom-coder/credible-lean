@@ -1324,6 +1324,86 @@ $m_2(G, v, \kappa) = (\sum_s G_{ss}v_s)^2 + 2\sum_{s,r}G_{sr}^2v_sv_r + \sum_s\k
   better $\zeta_j$ for the rates. The app keeps the raw $W_j$.
 \end{remark}
 
+\section{\texorpdfstring{The level of the $\tilde\sigma_j^2$ and $\hat\rho$ (G1c)}{The level of the sigma-tilde and rho-hat (G1c)}}
+
+\begin{theorem}[Exact condition for a lower level]\label{thm:sum_shrink_le_iff}
+  \lean{Credibility.VcW.sum_shrink_le_iff}
+  \leanok
+  For any $x_j$ and $\zeta_j$, $\sum_j(\zeta_jx_j + (1-\zeta_j)\bar x) \le \sum_j x_j$ iff
+  $\sum_j(1-\zeta_j)(x_j - \bar x) \ge 0$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  The difference of the two sums is $\sum_j(1-\zeta_j)(x_j - \bar x)$.
+\end{proof}
+
+\begin{theorem}[Shrinking the higher values more lowers the level]\label{thm:sum_shrink_le}
+  \lean{Credibility.VcW.sum_shrink_le}
+  \leanok
+  If $\zeta$ is ordered against $x$, then $\sum_j(\zeta_jx_j + (1-\zeta_j)\bar x) \le \sum_j x_j$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:sum_shrink_le_iff}
+  Chebyshev's sum inequality for $1 - \zeta$ and $x$, which are ordered alike, gives the condition of
+  Theorem~\ref{thm:sum_shrink_le_iff}.
+\end{proof}
+
+\begin{lemma}[The credibility factors of the variances]\label{lem:antivary_zeta}
+  \lean{Credibility.VcW.antivary_zeta}
+  \leanok
+  With $\beta > 0$, $W_j \ge 0$ ordered like $x_j$, $\zeta_j = \beta/(\beta + W_j)$ is ordered against $x$.
+\end{lemma}
+\begin{proof}
+  \leanok
+  $\beta/(\beta + W)$ decreases in $W$.
+\end{proof}
+
+\begin{theorem}[The $\tilde\sigma_j^2$ average below the $\hat\sigma_j^2$]\label{thm:sum_sigTilde_le}
+  \lean{Credibility.VcW.sum_sigTilde_le}
+  \leanok
+  With $\zeta_j = \beta/(\beta + W_j)$ and $W_j$ ordered like $\hat\sigma_j^2$,
+  $\sum_j\tilde\sigma_j^2 \le \sum_j\hat\sigma_j^2$ in every draw.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:sum_shrink_le, lem:antivary_zeta}
+  Theorem~\ref{thm:sum_shrink_le} with Lemma~\ref{lem:antivary_zeta}.
+\end{proof}
+
+\begin{theorem}[The level passes into $\hat\rho$, not into the covariances]\label{thm:rhoPooled_smul}
+  \lean{Credibility.VcW.rhoPooled_smul}
+  \leanok
+  For the pooled $\hat\rho$ of Definition~\ref{def:U_pooled} with base standard deviations $s$, scaling $s$
+  by $\lambda \ne 0$ divides $\hat\rho$ by $\lambda^2$ and leaves each $\hat\rho\,s_is_j$ unchanged.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{def:U_pooled}
+  The denominator scales by $\lambda^2$.
+\end{proof}
+
+\begin{theorem}[corrBS's $\hat\rho$ is at least the level-matched one]\label{thm:rhoPooled_ge_levelMatched}
+  \lean{Credibility.VcW.rhoPooled_ge_levelMatched}
+  \leanok
+  Let $\tilde\sigma_j^2 = \zeta_j\hat\sigma_j^2 + (1-\zeta_j)\bar\sigma^2$ satisfy the condition of
+  Theorem~\ref{thm:sum_shrink_le_iff}, and $\lambda^2 = \sum\hat\sigma_j^2/\sum\tilde\sigma_j^2$. If
+  $\hat\rho(\lambda\tilde\sigma) \ge 0$ then $\hat\rho(\tilde\sigma) \ge \hat\rho(\lambda\tilde\sigma)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{thm:sum_shrink_le_iff, thm:rhoPooled_smul}
+  $\lambda \ge 1$ by Theorem~\ref{thm:sum_shrink_le_iff}, and $\hat\rho(\tilde\sigma) = \lambda^2\hat\rho(\lambda\tilde\sigma)$.
+\end{proof}
+
+\begin{remark}[Finding 48: $\hat\rho$ is biased up through the level of the $\tilde\sigma_j^2$]\label{rem:rhoLevel}
+  The condition of Theorem~\ref{thm:sum_shrink_le_iff} holds in every draw of the app's worlds (the ordering of
+  Theorem~\ref{thm:sum_shrink_le} in only 2--42\%), the level is $0.63$--$0.97$, and by
+  Theorem~\ref{thm:rhoPooled_ge_levelMatched} $\hat\rho$ is biased up, by $+0.06$ to $+0.13$ at $\rho = 0.6$ with spread-out
+  $\sigma_j$ (study S81); $\hat K$'s off-diagonal is unaffected. Taking $\hat\rho$ from the own $\hat\sigma_j$, or
+  rescaling the $\tilde\sigma_j^2$, changes corrBS's error by $+0.4$ and $+0.3$ points of the floor on average.
+\end{remark}
+
 \section{Under a variance function (distribution layer)}
 
 Under a variance function the noise cumulants depend on the cell's own mean, which is random:

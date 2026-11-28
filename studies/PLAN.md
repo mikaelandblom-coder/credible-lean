@@ -162,7 +162,7 @@ a recipe from data.
 |---|---|---|---|
 | Bühlmann–Straub | yes | `bs_z`, `bs_balance`, `σ̂ⱼ²` (`sigRhoHat_self`), `τ̂²` of eq. (13) (`tauHatBS_unbiased`) | |
 | Correlation, full `K̂` | yes: eqs. (37)–(41), damping | `KHat_unbiased`, `dampedK_posDef` | choice of the damping `θ` (G2) |
-| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` with σ̃ plugged in (G1); `Wⱼ` biased low, kept (Finding 47, S80); jackknife MSEP is numerical only |
+| Correlated BS, credibility-weighted variances (`fitVC`, default reference) | yes: σ̃ⱼ², ρ̂, τ̂² by moment equations, no damping | `K_posDef` (common ρ̂ ∈ [0, 1)), GLS `b`, `z`, `ρ̂` unbiased with true σ (`rhoPooled_unbiased`) | `ρ̂` biased up through σ̃'s level, kept (Finding 48, S81); `Wⱼ` biased low, kept (Finding 47, S80); jackknife MSEP is numerical only |
 | Correlation, one common covariance (not recommended, finding S4) | average of the pairwise estimators | closed form for `z` (`bestZ_of_equalCov`), `ĉ` unbiased (`commonCovHat_unbiased`) | — (`ĉⱼ`, `τ̂²` on `ĉ`: `tauHatCommon_unbiased`) |
 | Unequal lengths | yes | `Unequal.KHat_unbiased`, count `nᵢⱼ` | |
 | Group levels | `φτ²` from pairs, one GLS pass; groups or none on held-out years (fit "BLUP groups", 2026-11-27) | `phiTauPooled_unbiasedG`, best weights `phiTauPool_blue_optimal`, choice `CrossFit.integral_heldOutScore_sub` | the GLS pass with plug-in `V̂` (λ̂ 20–40% high) |
@@ -190,7 +190,7 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
 *Partly closed* (what is proved):
 - **G1.** `ĉ`, `ĉⱼ`, `τ̂²` on the common `ĉ`, and `ρ̂` with the **true** `σⱼ` are unbiased
   (`Unequal.qHat_unbiased`, `commonCovHat_unbiased`, `rhoPooled_unbiased`, `cHatCommon_unbiased`,
-  `tauHatCommon_unbiased`). `E Wⱼ` exactly and `β̂²` unbiased given the corrected `W̃` (`VcW.lean`, Finding 47; the app keeps the raw `Wⱼ`, S80). Open: `σ̃ⱼ²`, `ρ̂` with `σ̃ⱼ` plugged in, `τ̂²` on the common-ρ `Σ̂`.
+  `tauHatCommon_unbiased`). `E Wⱼ` exactly and `β̂²` unbiased given the corrected `W̃` (`VcW.lean`, Finding 47; the app keeps the raw `Wⱼ`, S80). `ρ̂` with `σ̃ⱼ` plugged in: biased up through σ̃'s level (Finding 48). Open, low value: `σ̃ⱼ²` as `bestZ`, `τ̂²` on the common-ρ `Σ̂`.
 - **G2.** `θ* = Σs²/(Σs² + ΣV)` optimal for the table loss, safe range `safe_iff` (`Damping.lean`);
   exact `V` and κ̂₄ tried and closed (S38–S42: S3 stays); `K̂ ≻ 0` by theorem in every draw (step 1, done).
   Open: the rates' MSE.
@@ -215,10 +215,9 @@ close them (agreed with the owner 2026-11-28), in the order of work below.
    unbiased with the corrected `W̃` for uncorrelated regions; with `ρ ≠ 0` it needs cross terms `Ŵᵢⱼ`
    (logged in Finding 47, not chased: S80 says unbiased inputs do not help the rates). `σ̃ⱼ²` as `bestZ` stays
    open but is low value for the same reason.
-4. **G1c. `ρ̂` with `σ̃ⱼ` plugged in** (lean env, then a study). A ratio is never exactly unbiased:
-   the target is its first-order bias (the pattern of `BlupPrice`, `FitCrossTerm`), a Finding with the
-   leading term, and a bias-corrected `ρ̂` if the term is large in the app's worlds. `τ̂²` on the
-   common-ρ `Σ̂` inherits it (first order).
+4. **G1c. `ρ̂` with `σ̃ⱼ` plugged in** — *Done 2026-11-28* (`VcW.sum_shrink_le_iff`, `rhoPooled_ge_levelMatched`, Finding 48,
+   S81): `ρ̂` is biased up (+0.06 to +0.13) through σ̃'s low level, which is exact and pointwise; neither `ρ̂` from
+   the own σ̂ⱼ nor a rescaled σ̃ helps the rates, so no app change. `τ̂²` on the common-ρ `Σ̂` not pursued (same reason).
 5. **G3b. Clipping an estimated `ẑ`** (lean env). If `ẑ` is independent of the cohort's data
    (cross-fitted, held out): condition on `ẑ` and apply `errVar_clipZ_le_iff`, a clean theorem. If `ẑ`
    is fitted in sample: a study looking for a counterexample, logged as a Finding if one turns up.

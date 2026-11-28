@@ -1,4 +1,4 @@
-The log of all numbered simulation studies (S1–S80, index below); scripts and outputs are in
+The log of all numbered simulation studies (S1–S81, index below); scripts and outputs are in
 `runs/`. It began as the damping study (formerly `damping-theta.md`). Its first part was
 absorbed into paper §7 and §8 on 2026-11-16.
 
@@ -105,6 +105,7 @@ continue the numbering here; the full text and its trust label are below.
 | S70 | `runs/crossed-small.js` | Small crossed tables: REML on the cell means is never much worse than the default and often far better |
 | S71 | `runs/crossed-fit.js` | REML holds on larger crossed tables (up to 6×4): the app's crossed default |
 | S72 | `runs/recommended-fit.js` | Balanced, no fit wins: the BLUP gains with equal σⱼ and high ρ, loses with a wide σⱼ spread; g/p adds nothing |
+| S81 | `runs/rho-level.js` | ρ̂ is biased up (+0.06 to +0.13) by σ̃'s low level (0.63–0.97 of σ̂'s, every draw); ρ̂ from own σ̂ or rescaled σ̃: +0.4, +0.3 points, no default change |
 | S80 | `runs/vcw-corr.js` | The corrected Wⱼ (unbiased, Finding 47) fixes Var σ̂ⱼ² and β̂² but worsens corrBS's rates: +4 mean, up to +44 points (T = 3, σⱼ spread 2) |
 | S79 | `runs/volume-noise.js` | Volumes that vary by year: the fits and their ranking stand; the balance rule had silently always balanced (no cross-fitted level), up to +110 points; now prices the exposure-weighted level |
 | S78 | `runs/psd-projection.js` | K̂ on the nearest PSD Σ̂⁺: the error moves ≤ 0.5 points; Σ̂ is PSD whenever volumes share one shape over the years, and fails at T = 3 with J > T otherwise; the gain is that K̂ ≻ 0 is a theorem in every draw |
@@ -1111,3 +1112,13 @@ divisor `T − 2p + tr(PᵢPⱼ)` (Zellner's SUR estimator, `unbiasedMean_cross`
     T = 3). **Consequence.** The app keeps the raw `Wⱼ` (`opts.corrW` gives the corrected one). The bias in
     `Wⱼ` shrinks the σ̂ⱼ² less towards the pool, which pays when the σⱼ² differ. Hypothesis, not chased: the
     rates' loss in `ζ` is asymmetric, so the best plug-in `ζ` is not `β²/(β² + Var σ̂²)`.
+- S81. *[numerical; the mechanism is exact]* **ρ̂'s bias comes from σ̃'s level, and the rates ignore it** (G1c,
+    Finding 48). `runs/rho-level.js`: app's world, gamma noise, J = 8; part A at ρ = 0.6, σⱼ spread {0, 1, 2},
+    T {5, 10}; part B the 24 worlds regime × spread × ρ {0, 0.6} × T; 600 paired draws. E ρ̂ − ρ by the σ in ρ̂'s
+    denominator: true σⱼ ≈ 0 (as proved), own σ̂ⱼ −0.03 to −0.06, the app's σ̃ⱼ −0.05 (no spread) to +0.13 (spread
+    2), pooled σ̄ −0.05 to −0.35. Σσ̃²/Σσ̂² = 0.63–0.97; below 1 in 100% of draws, while Wⱼ is fully ordered like
+    σ̂ⱼ² in only 2–42% (so `sum_shrink_le_iff`, not Chebyshev, is the operative statement). corrBS's MSE: ρ̂ from
+    own σ̂ⱼ +0.4 mean (−1.1 to +5.1), σ̃ rescaled to σ̂'s level +0.3 (−39.4 to +13.7: large gain at app volume, σⱼ
+    spread 2, ρ = 0, losses with equal σⱼ). **Consequence.** No change to the app. Like S80: the plug-in variances'
+    biases are exact and large, but correcting them does not help the rates.
+

@@ -102,6 +102,8 @@ paper §n on <date>; kept as the working record" and is not updated again.
 may need a paragraph.)
 - [ ] Finding 47 (2026-11-28): corrBS's `Wⱼ` is low by a relative O(1/T), and the unbiased `W̃` worsens the
   rates (S80): a sentence where the paper explains credibility for the variances (`ζⱼ`).
+- [ ] Finding 48 (2026-11-28): the σ̃ⱼ² average below the σ̂ⱼ², which biases ρ̂ up but not `K̂`'s off-diagonal;
+  fixing it does not help the rates (S81). Same place as Finding 47.
 - (Cleared 2026-11-22 for v3.0.0: plug-in MSE and unbiasedness, Finding 35 and balance, tapering
   in §8; the general target, season, factor model, its estimation, valid tables and choosing
   between fits on data in §10.4; known trend and serial correlation in §12. The items below are
