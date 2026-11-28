@@ -12,6 +12,8 @@ corrected claim, a new section); renumbered handbook citations and typo fixes
 are not listed.
 
 ## 2026-11-28
+- §3 What ignoring correlation costs: with equal noise covariances the fitted Bühlmann–Straub costs at most
+  `vⱼ/(vⱼ − c)` and under-weights own experience, for any number of cohorts (Finding 50).
 - §3 What ignoring correlation costs: a fitted Bühlmann–Straub also lowers `τ²` (Finding 49); for two
   cohorts the cost stays within `1/(1 − ρ²)`, from three cohorts it can exceed the true-`τ²` worst case
   (63.5% against 56% at `r = 0.5`).

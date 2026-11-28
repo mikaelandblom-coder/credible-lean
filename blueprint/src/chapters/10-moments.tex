@@ -1973,8 +1973,40 @@ example ignoring the correlation between cohorts. How much can that cost?
   $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$.
 \end{proof}
 
-\begin{remark}[Finding 49: fitting Bühlmann--Straub on correlated cohorts]\label{rem:pseudoTrue}
-  \uses{thm:TwoCohorts_pseudoTrue, cor:Core_ignoreCorr_equicorr}
+\begin{corollary}[The shifted fit gives less weight to the own data]\label{cor:Core_shift_self_le}
+  \lean{Credibility.Core.blupWeight_shift_self_le}
+  \leanok
+  \uses{def:Core_blup}
+  Under the hypotheses of Lemma~\ref{lem:Core_quad_blupWeight_shift} with $c > 0$:
+  $\tilde d^*_j \le d^*_j$.
+\end{corollary}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_quad_blupWeight_shift}
+  $0 \le h^TKh = -c\,h_j$.
+\end{proof}
+
+\begin{theorem}[Bühlmann--Straub fitted on equal noise covariances]\label{thm:Core_shift_diagonal}
+  \lean{Credibility.Core.linMse_shift_diagonal_le}
+  \leanok
+  \uses{def:Core_blup}
+  Let $K = \mathrm{diag}(k_i) + c\,\mathbf 1\mathbf 1^T$ be positive definite, $k_i > 0$, $c \ge 0$,
+  $L = \tau^2I$, $\tau^2 \ge 0$, so the noise variances are $v_i = k_i - \tau^2 + c$, and let
+  $v_j \ge c$. The best predictor $\tilde d^*$ of $\tilde K = \mathrm{diag}(k_i)$,
+  $\tilde L = (\tau^2 - c)I$ (Bühlmann--Straub with its fitted $\tilde\tau^2 = \tau^2 - c$) satisfies
+  $(v_j - c)\,\mathrm{mse}_j(\tilde d^*) \le v_j\,\mathrm{mse}_j(d^*)$.
+\end{theorem}
+\begin{proof}
+  \leanok
+  \uses{lem:Core_quad_blupWeight_shift, thm:Core_blup_optimal, lem:Core_blup_foc}
+  For $\sum_i x_i = 1$ or $0$, $x^TKx = \sum_i k_ix_i^2 + c(\sum_i x_i)^2$. So
+  $k_jh_j^2 \le h^TKh = -c\,h_j$ (Lemma~\ref{lem:Core_quad_blupWeight_shift}), i.e.
+  $0 \le -h_j \le c/k_j$, and $k_j\,\mathrm{mse}_j(d^*) \ge k_j(k_jd_j^2 - 2\tau^2d_j + \tau^2 + c)
+  \ge k_j(c + \tau^2) - \tau^4$. Then $(k_j - \tau^2)(-h_j) \le \mathrm{mse}_j(d^*)$, and multiply by $c$.
+\end{proof}
+
+\begin{remark}[Findings 49, 50: fitting Bühlmann--Straub on correlated cohorts]\label{rem:pseudoTrue}
+  \uses{thm:TwoCohorts_pseudoTrue, cor:Core_ignoreCorr_equicorr, thm:Core_shift_diagonal, cor:Core_shift_self_le}
   Fitted on correlated cohorts (common $\sigma$, volumes $w_i$), Bühlmann--Straub's $\hat\tau^2$
   is unbiased not for $\tau^2$ but for $\tilde\tau^2 = \tau^2 - \bar c$,
   $\bar c = \sum_{i\ne k} w_iw_kC_{ik}/\sum_{i\ne k}w_iw_k$, the volume-weighted average noise
@@ -1987,6 +2019,11 @@ example ignoring the correlation between cohorts. How much can that cost?
   $\tilde\tau^2 \to 0$ with one cohort's noise very large; the same with $\hat\tau^2$
   truncated at $0$). Kantorovich's route (Theorem~\ref{thm:Core_working}) gives no useful
   bound here: the working forms are not within constant factors of the true ones.
+  Finding 50: with equal noise covariances $c$ the same shift works for any $J$
+  (Theorem~\ref{thm:Core_shift_diagonal}), and the fit then gives the own data less weight than
+  the best predictor (Corollary~\ref{cor:Core_shift_self_le}). With equal correlations and unequal
+  $v_i$ it need not: $v = (1, 1, 36)$, $r = \tfrac12$, $\tau^2 = 1$, cohort 3 gets $5/176$ from the
+  fit and $-1/43$ from the best predictor.
 \end{remark}
 
 \begin{theorem}[The price of ignoring correlation in true MSE]\label{thm:Core_ignoreCorr_mse}

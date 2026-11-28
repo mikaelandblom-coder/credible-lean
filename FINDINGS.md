@@ -885,4 +885,20 @@ Gaps, extra hypotheses and new results found while formalizing.
    sharp general-`J` bound for the fitted model; for equal covariances `c` (Finding 5) the shift lemma
    applies at any `J` and gives `hᵀKh = c²/(kⱼ + (Σᵢ≠ⱼ 1/kᵢ)⁻¹)`, `kᵢ = τ² + vᵢ − c` (derivation).
 
+50. **Under equal noise covariances the fitted Bühlmann–Straub under-weights own data and costs at most
+   `vⱼ/(vⱼ − c)`, for any `J`; with unequal covariances neither holds (new; proved:
+   `Core.blupWeight_shift_self_le`, `Core.linMse_shift_diagonal_le`).** Exploration from Finding 49. If
+   every noise covariance is `c > 0` (Finding 5's case; e.g. a common shock with one volume profile), BS's
+   `τ̂²` estimates `τ² − c` and its working model is `K − c·11ᵀ`, so by `quad_blupWeight_shift`
+   `0 ≤ hᵀKh = −c·hⱼ`: the fit's own-data weight is below the BLUP's, by `−hⱼ ≤ c/kⱼ`, `kᵢ = τ² + vᵢ − c`.
+   Its MSE is at most `vⱼ/(vⱼ − c)` times the best (proved, needs `vⱼ ≥ c`); exactly
+   `1 + c²/(vⱼ(τ² + c + H) − c²)`, `H = (Σᵢ≠ⱼ 1/kᵢ)⁻¹` (derivation, checked to 1e-14 for `J = 2..6`). At
+   `J = 2` this is Finding 49's formula and the sharper `1/(1 − ρ²)`. With equal *correlations* and unequal
+   `vᵢ` the own-weight order fails: `v = (1, 1, 36)`, `r = 1/2`, `τ² = 1`, target cohort 3: `τ̃² = 7/19`,
+   fit weights `(171/352, 171/352, 5/176)`, BLUP `(22/43, 22/43, −1/43)` (exact); the BLUP *subtracts* the
+   noisy cohort's own estimate to cancel the noise it shares, and the fit loses 3.9%. In random worlds
+   (`J = 3..6`) the BLUP's own weight is below the fit's in 18% of equicorrelated draws, 16% with positive
+   correlations, 33% with any. So "BS under-weights own experience" is a statement for two segments or
+   equal covariances only.
+
 Equation numbers refer to `thesis/original/main.tex` as compiled.

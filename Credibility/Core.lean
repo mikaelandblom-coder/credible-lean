@@ -1747,6 +1747,90 @@ theorem quad_blupWeight_shift (hK : K.PosDef) {K' : Matrix J J ℝ} (hK' : K'.Po
   simp [h, Matrix.one_apply, mul_comm]
   ring
 
+/-- **The shifted working model gives less weight to the own data** (`c > 0`): the best
+predictor `e` of `K̃ = K - c·11ᵀ`, `L̃ = L - cI` has `eⱼ ≤ d*ⱼ`, since
+`0 ≤ hᵀKh = -c(eⱼ - d*ⱼ)` (`quad_blupWeight_shift`). For Bühlmann–Straub fitted on cohorts
+with equal noise covariances (two cohorts always), the fit under-weights each cohort's own
+experience (Finding 50). -/
+theorem blupWeight_shift_self_le (hK : K.PosDef) {K' : Matrix J J ℝ} (hK' : K'.PosDef)
+    (L : Matrix J J ℝ) (j : J) {c : ℝ} (hc0 : 0 < c) (hc : ∀ i k, K' i k = K i k - c) :
+    blupWeight K' (L - c • 1) j j ≤ blupWeight K L j j := by
+  have hq := quad_blupWeight_shift hK hK' L j c hc
+  set h := blupWeight K' (L - c • 1) j - blupWeight K L j
+  have hp : 0 ≤ h ⬝ᵥ (K *ᵥ h) := by
+    simpa using hK.posSemidef.dotProduct_mulVec_nonneg h
+  nlinarith
+
+/-- **Bühlmann–Straub fitted on equal noise covariances** (Finding 50): let
+`K = diag(kᵢ) + c·11ᵀ` (`K i l = kᵢδᵢₗ + c`), `L = τ²I`, so that the noise variances are
+`vᵢ = kᵢ - τ² + c` and every noise covariance is `c ≥ 0`. Bühlmann–Straub's `τ̂²` estimates
+`τ̃² = τ² - c`, and its blend is the best predictor of `K̃ = diag(kᵢ) = diag(τ̃² + vᵢ)`,
+`L̃ = τ̃²I`. Its mean squared error is at most `vⱼ/(vⱼ - c)` times the smallest, for any
+number of cohorts (needs `vⱼ ≥ c`). Exactly it is `1 + c²/(vⱼ(τ² + c + H) - c²)` with
+`H = (Σᵢ≠ⱼ 1/kᵢ)⁻¹` (derivation). Proof: `hᵀKh = -c hⱼ ≥ kⱼhⱼ²` and
+`kⱼ·mse(d*) ≥ kⱼ(c + τ²) - τ⁴`. -/
+theorem linMse_shift_diagonal_le {k : J → ℝ} (hk : ∀ i, 0 < k i) {c τ2 : ℝ} (hc0 : 0 ≤ c)
+    (hτ : 0 ≤ τ2) (hK : K.PosDef) (hKk : ∀ i l, K i l = diagonal k i l + c) (j : J)
+    (hkj : τ2 ≤ k j) :
+    (k j - τ2) * linMse K (τ2 • 1) j (blupWeight (diagonal k) ((τ2 - c) • 1) j)
+      ≤ (k j - τ2 + c) * linMse K (τ2 • 1) j (blupWeight K (τ2 • 1) j) := by
+  have : Nonempty J := ⟨j⟩
+  have hK' : (diagonal k).PosDef := posDef_diagonal_iff.2 hk
+  have hc : ∀ i l, diagonal k i l = K i l - c := fun i l => by rw [hKk]; ring
+  have hL : (τ2 • (1 : Matrix J J ℝ) - c • 1) = (τ2 - c) • 1 := (sub_smul _ _ _).symm
+  have hq := quad_blupWeight_shift hK hK' (τ2 • 1) j c hc
+  rw [hL] at hq
+  have hpy := linMse_eq_blupWeight_add hK (τ2 • 1) j
+    (blupWeight (diagonal k) ((τ2 - c) • 1) j) (sum_blupWeight hK' _ j)
+  have hd1 := sum_blupWeight hK (τ2 • 1) j
+  have he1 := sum_blupWeight hK' ((τ2 - c) • 1) j
+  generalize blupWeight (diagonal k) ((τ2 - c) • 1) j = e at *
+  generalize blupWeight K (τ2 • 1) j = d at *
+  -- `xᵀKx = Σᵢ kᵢxᵢ² + c(Σᵢ xᵢ)²`, and `Σᵢ kᵢxᵢ² ≥ kⱼxⱼ²`.
+  have hform : ∀ x : J → ℝ, x ⬝ᵥ (K *ᵥ x) = ∑ i, k i * x i ^ 2 + c * (∑ i, x i) ^ 2 := by
+    intro x
+    simp only [dotProduct, mulVec, hKk, add_mul, sum_add_distrib, diagonal_apply,
+      ite_mul, zero_mul, sum_ite_eq, mem_univ, ite_true, ← mul_sum, mul_add]
+    rw [← sum_mul]
+    simp only [sq]
+    rw [sum_congr rfl fun i _ => (by ring : x i * (k i * x i) = k i * (x i * x i))]
+    ring
+  have hsingle : ∀ x : J → ℝ, k j * x j ^ 2 ≤ ∑ i, k i * x i ^ 2 := fun x =>
+    single_le_sum (f := fun i => k i * x i ^ 2) (fun i _ => mul_nonneg (hk i).le (sq_nonneg _))
+      (mem_univ j)
+  set h := e - d
+  have hh0 : ∑ i, h i = 0 := by simp [h, sum_sub_distrib, he1, hd1]
+  have hq' : h ⬝ᵥ (K *ᵥ h) = -c * h j := hq
+  have hqk : k j * h j ^ 2 ≤ -c * h j := by
+    rw [← hq', hform, hh0]; simpa using hsingle h
+  -- `mse(d*) = Σᵢ kᵢdᵢ² + c - 2τ²dⱼ + τ²`.
+  have hm : linMse K (τ2 • 1) j d = ∑ i, k i * d i ^ 2 + c - 2 * τ2 * d j + τ2 := by
+    rw [linMse, hform, hd1]
+    simp only [dotProduct, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul, mul_ite, mul_one,
+      mul_zero, sum_ite_eq, mem_univ, ite_true]
+    ring
+  have hmk := hsingle d
+  rw [hpy, hq']
+  have hkj0 := hk j
+  -- `-hⱼ ≤ c/kⱼ` and `kⱼ·mse(d*) ≥ kⱼ(c + τ²) - τ⁴`, then `(kⱼ - τ²)c ≤ kⱼc + kⱼτ² - τ⁴`.
+  have hx : k j * (-h j) ≤ c := by
+    rcases eq_or_lt_of_le (sq_nonneg (h j)) with h0 | h0
+    · have : h j = 0 := by simpa using h0.symm
+      rw [this]; simpa using hc0
+    · nlinarith
+  have hxn : 0 ≤ -h j := by
+    by_contra hneg
+    have hpos : 0 < h j := by linarith
+    nlinarith [mul_pos hkj0 (pow_pos hpos 2), mul_nonneg hc0 hpos.le]
+  have hmd : k j * (k j * d j ^ 2 + c - 2 * τ2 * d j + τ2) ≥ k j * (c + τ2) - τ2 ^ 2 := by
+    nlinarith [sq_nonneg (k j * d j - τ2)]
+  rw [hm]
+  have key : k j * ((k j - τ2) * (-h j)) ≤ k j * (∑ i, k i * d i ^ 2 + c - 2 * τ2 * d j + τ2) := by
+    nlinarith [mul_le_mul_of_nonneg_left hx (sub_nonneg.2 hkj), mul_nonneg hτ hc0,
+      mul_nonneg hτ (sub_nonneg.2 hkj)]
+  have key' := le_of_mul_le_mul_left key hkj0
+  nlinarith [mul_le_mul_of_nonneg_left key' hc0]
+
 end Misspec
 
 end Core

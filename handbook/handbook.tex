@@ -414,12 +414,16 @@ $\rho = \rho_{12}$.
   \]
   For two cohorts $\bar c = \sigma_1\sigma_2\rho$, and the fitted blend's mean squared error is
   $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2) \le 1/(1-\rho^2)$ times the best (cohort 1).
+  With equal noise covariances $c \ge 0$ and any $J$: at most $v_j/(v_j - c)$ times the best, and the
+  fit's own-data weight is below the best predictor's.
   \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
   \lean{Credibility.Core.quad_blupWeight_shift}
+  \lean{Credibility.Core.linMse_shift_diagonal_le}
+  \lean{Credibility.Core.blupWeight_shift_self_le}
 \end{result}
 \use The fit lowers $\tau^2$ as well as dropping the correlation; for two cohorts this costs nothing beyond Result~\ref{res:ignoreCorr}.
 \begin{caveat}
-  From three cohorts it can cost more: $1.635$ against $1.5625$ at $r = 0.5$ (numerical worst case).
+  From three cohorts with unequal covariances it can cost more ($1.635$ against $1.5625$ at $r = 0.5$, numerical), and the best predictor may give a noisy cohort a negative own weight.
 \end{caveat}
 
 % ===========================================================================
@@ -1973,6 +1977,9 @@ which has the details. The paper explains each where it belongs.
   \item[{49. Bühlmann--Straub fitted on correlated cohorts misses twice.}] $\hat\tau^2$ estimates $\tau^2$ minus the volume-weighted average noise covariance. Two cohorts: still at most $1/(1-\rho^2)$, exactly $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$; three, $r = 0.5$: $1.635 > 1.5625$ (numerical).
   \lean{Credibility.TwoCohorts.linMse_pseudoTrue_le}
   \lean{Credibility.Core.quad_blupWeight_shift}
+  \item[{50. With equal noise covariances the fit under-weights own data.}] At most $v_j/(v_j - c)$ times the best MSE, any $J$. Not with equal correlations: $v = (1, 1, 36)$, $r = \tfrac12$, $\tau^2 = 1$, cohort 3: fit $5/176$, best predictor $-1/43$.
+  \lean{Credibility.Core.linMse_shift_diagonal_le}
+  \lean{Credibility.Core.blupWeight_shift_self_le}
 \end{description}
 
 \end{document}

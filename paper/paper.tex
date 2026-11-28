@@ -847,7 +847,12 @@ still at most $1/(1-\rho^2)$ times the best, exactly
 $1 + \rho^2\sigma_2^2/(2\tau^2 + (1-\rho^2)\sigma_2^2)$ for cohort 1
 (\hb{res:pseudoTrue}{17}). From three cohorts it can exceed the worst case
 above, $63.5\%$ instead of $56\%$ at $r = 0.5$, again only when $\tau^2$ is
-small and one cohort is very noisy.
+small and one cohort is very noisy. When all noise covariances are equal, as
+under a common shock, the two misses combine for any number of cohorts: the
+fit costs at most $v_j/(v_j - c)$ and always gives a cohort's own experience
+too little weight (\finding{50}). That rule of thumb fails with unequal
+covariances, where the best predictor can even give a very noisy cohort a
+negative weight on its own data.
 
 \watch
 \begin{itemize}
